@@ -7,8 +7,10 @@ from typing import Dict
 import pymorphy2
 import ujson
 
-BOOKS_QUEUE_PATH = Path('book_queue.csv')
-LOG_PATH = Path('log.json')
+DATA_FOLDER = Path('data')
+
+BOOKS_QUEUE_PATH = DATA_FOLDER / 'book_queue.csv'
+LOG_PATH = DATA_FOLDER / 'log.json'
 
 PAGES_PER_DAY = 50
 START_DATE = datetime.date(2020, 12, 12)
