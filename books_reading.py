@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import argparse
 import csv
 import datetime
 from pathlib import Path
@@ -137,15 +138,47 @@ def print_log(log: Dict) -> None:
 
 
 def main() -> None:
-    try:
-        log = get_log()
-    except ValueError:
-        log = {}
+    parser = argparse.ArgumentParser(
+        description="Books queue"
+    )
+    parser.add_argument(
+        '-pl', '--print-log',
+        default=False,
+        action="store_true",
+        dest='pl'
+    )
+    parser.add_argument(
+        '-pq', '--print-queue',
+        default=False,
+        action="store_true",
+        dest='pq'
+    )
+    parser.add_argument(
+        '--today',
+        type=int,
+        dest='today',
+        required=False
+    )
 
-    books = get_books()
+    args = parser.parse_args()
 
-    print_queue(books)
-    print_log(log)
+    if args.pl:
+        try:
+            log = get_log()
+        except ValueError:
+            pass
+        else:
+            print_log(log)
+    if args.pq:
+        books = get_books()
+        print_queue(books)
+    if args.today is not None:
+        try:
+            log = get_log()
+        except ValueError:
+            log = {}
+        log[today()] = args.today
+        dump_log(log)
 
 
 if __name__ == "__main__":
