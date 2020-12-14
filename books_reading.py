@@ -50,7 +50,7 @@ def get_log(path: Path = LOG_PATH) -> Dict[datetime.date, int]:
 
     res = {}
     for date, count in data.items():
-        date = datetime.datetime.strptime(date, DATE_FORMAT).date()
+        date = datetime.datetime.strptime(date, DATE_FORMAT)
         res[date] = count
 
     return data
@@ -64,11 +64,14 @@ def dump_log(data, path: Path = LOG_PATH) -> None:
     :return: None.
     """
     with path.open('w', encoding='utf-8') as f:
-        data = {
-            date.strftime(DATE_FORMAT): count
-            for date, count in data.items()
-        }
-        ujson.dump(data, f, indent=4)
+        data_str = {}
+        for date, count in data.items():
+            try:
+                date = date.strftime(DATE_FORMAT)
+            except AttributeError:
+                pass
+            data_str[date] = count
+        ujson.dump(data_str, f, indent=4)
 
 
 def today() -> datetime.date:
