@@ -159,6 +159,12 @@ def main() -> None:
         dest='today',
         required=False
     )
+    parser.add_argument(
+        '--yesterday',
+        type=int,
+        dest='yesterday',
+        required=False
+    )
 
     args = parser.parse_args()
 
@@ -172,13 +178,21 @@ def main() -> None:
     if args.pq:
         books = get_books()
         print_queue(books)
+
+    if not (args.today is None or args.yesterday is None):
+        raise ValueError("Only today or yesterday, not together")
+
+    try:
+        log = get_log()
+    except ValueError:
+        log = {}
+
     if args.today is not None:
-        try:
-            log = get_log()
-        except ValueError:
-            log = {}
         log[today()] = args.today
-        dump_log(log)
+    if args.yesterday is not None:
+        log[today() - datetime.timedelta(days=1)] = args.yesterday
+
+    dump_log(log)
 
 
 if __name__ == "__main__":
