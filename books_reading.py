@@ -126,15 +126,41 @@ def print_queue(books: Dict) -> None:
         print()
 
 
+def get_avg(log: Dict) -> int:
+    """ Get average count of read pages.
+
+    :param log:
+    :return: int, acerage count of read pages.
+    """
+    try:
+        return sum(log.values()) // len(log)
+    except ZeroDivisionError:
+        return 0
+
+
 def print_log(log: Dict) -> None:
     """ Print log.
 
     :param log: dict, log data.
     :return: None.
     """
+    sum_ = 0
     for date, read_pages in log.items():
         print(f"{date}: {read_pages} "
               f"{with_num('страница', read_pages)}")
+        sum_ += read_pages
+    print()
+
+    avg = get_avg(log)
+    print(f"В среднем {avg} {with_num('страница', avg)}")
+
+    print("Это ", end='')
+    if avg == PAGES_PER_DAY:
+        print('равно ожидаемому среднему значению')
+    elif avg < PAGES_PER_DAY:
+        print('меньше ожидаемого среднего значения')
+    else:
+        print('больше ожидаемого среднего значения')
 
 
 def main() -> None:
