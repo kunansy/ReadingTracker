@@ -83,10 +83,12 @@ def today() -> datetime.date:
     return datetime.date.today()
 
 
-def get_books(path: Path = BOOKS_QUEUE_PATH) -> Dict:
+def get_books(path: Path = BOOKS_QUEUE_PATH,
+              avg: int = PAGES_PER_DAY) -> Dict:
     """
 
     :param path: path to book queue file.
+    :param avg: int, average count of read pages.
     :return: book queue.
     """
     books = {}
@@ -96,7 +98,7 @@ def get_books(path: Path = BOOKS_QUEUE_PATH) -> Dict:
         last_date = START_DATE
         for name, pages in reader:
             pages = int(pages)
-            how_long = pages // PAGES_PER_DAY + 1
+            how_long = pages // avg + 1
             date = last_date + datetime.timedelta(days=how_long)
 
             books[name] = {
@@ -194,24 +196,21 @@ def main() -> None:
 
     args = parser.parse_args()
 
-    if args.pl:
-        try:
-            log = get_log()
-        except ValueError:
-            pass
-        else:
-            print_log(log)
-    if args.pq:
-        books = get_books()
-        print_queue(books)
-
-    if not (args.today is None or args.yesterday is None):
-        raise ValueError("Only today or yesterday, not together")
-
     try:
         log = get_log()
     except ValueError:
         log = {}
+
+    avg = get_avg(log) or 1
+
+    if args.pl:
+        print_log(log)
+    if args.pq:
+        books = get_books(avg=avg)
+        print_queue(books)
+
+    if not (args.today is None or args.yesterday is None):
+        raise ValueError("Only today or yesterday, not together")
 
     if args.today is not None:
         log[today()] = args.today
