@@ -157,12 +157,13 @@ def print_log(log: Dict) -> None:
     print(f"В среднем {avg} {with_num('страница', avg)}")
 
     print("Это ", end='')
+    diff = abs(PAGES_PER_DAY - avg)
     if avg == PAGES_PER_DAY:
         print('равно ожидаемому среднему значению')
     elif avg < PAGES_PER_DAY:
-        print('меньше ожидаемого среднего значения')
+        print(f'на {diff} меньше ожидаемого среднего значения')
     else:
-        print('больше ожидаемого среднего значения')
+        print(f'на {diff} больше ожидаемого среднего значения')
 
 
 def main() -> None:
