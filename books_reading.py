@@ -83,8 +83,7 @@ def today() -> datetime.date:
     return datetime.date.today()
 
 
-def get_books(path: Path = BOOKS_QUEUE_PATH,
-              avg: int = PAGES_PER_DAY) -> Dict:
+def get_books(path: Path = BOOKS_QUEUE_PATH) -> Dict:
     """
 
     :param path: path to book queue file.
@@ -95,37 +94,35 @@ def get_books(path: Path = BOOKS_QUEUE_PATH,
     with path.open(encoding='utf-8') as f:
         reader = csv.reader(f, delimiter=';')
 
-        last_date = START_DATE
         for name, pages in reader:
-            pages = int(pages)
-            how_long = pages // avg + 1
-            date = last_date + datetime.timedelta(days=how_long)
-
             books[name] = {
-                'pages': pages,
-                'start': last_date,
-                'stop': date,
-                'days': how_long
+                'pages': int(pages),
             }
-            last_date = date + datetime.timedelta(days=1)
 
         return books
 
 
-def print_queue(books: Dict) -> None:
+def print_queue(books: Dict,
+                avg: int = PAGES_PER_DAY) -> None:
     """ Print books queue.
 
     :param books: dict, books queue.
     :return: None.
     """
+    last_date = START_DATE
     for key, val in books.items():
-        days_count = val['days']
+        days_count = val['pages'] // avg + 1
+        finish_date = last_date + datetime.timedelta(days=days_count)
+
         days = f"{days_count} {with_num('день', days_count)}"
         print(f"«{key}» будет прочитана за {days}")
-        start = val['start'].strftime(DATE_FORMAT)
-        stop = val['stop'].strftime(DATE_FORMAT)
+
+        start = last_date.strftime(DATE_FORMAT)
+        stop = finish_date.strftime(DATE_FORMAT)
         print(f"С {start} по {stop}")
         print()
+
+        last_date = finish_date + datetime.timedelta(days=1)
 
 
 def get_avg(log: Dict) -> int:
@@ -166,6 +163,16 @@ def print_log(log: Dict) -> None:
         print(f'на {diff} больше ожидаемого среднего значения')
 
 
+def is_ok(num: int or None) -> bool:
+    """
+    Check that the arg is int > 0.
+
+    :param num: int or None, value to validate.
+    :return: bool, whether the arg is int > 0.
+    """
+    return num is not None and num > 0
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Books queue"
@@ -183,18 +190,33 @@ def main() -> None:
         dest='pq'
     )
     parser.add_argument(
-        '--today',
+        '-tday', '--today',
         type=int,
         dest='today',
         required=False
     )
     parser.add_argument(
-        '--yesterday',
+        '-yday', '--yesterday',
         type=int,
         dest='yesterday',
         required=False
     )
-
+    parser.add_argument(
+        '-tdayc', '--todayc',
+        metavar='Calculate how many pages was read today '
+                'accorging to the last read page number',
+        type=int,
+        dest='todayc',
+        required=False
+    )
+    parser.add_argument(
+        '-ydayc', '--yesterdayc',
+        metavar='Calculate how many pages was read yesterday '
+                'accorging to the last read page number',
+        type=int,
+        dest='yesterdayc',
+        required=False
+    )
     args = parser.parse_args()
 
     try:
@@ -203,21 +225,34 @@ def main() -> None:
         log = {}
 
     avg = get_avg(log) or 1
+    books = get_books()
 
     if args.pl:
         print_log(log)
     if args.pq:
-        books = get_books(avg=avg)
-        print_queue(books)
+        print_queue(books, avg)
 
     if not (args.today is None or args.yesterday is None):
         raise ValueError("Only today or yesterday, not together")
+    if not (args.todayc is None or args.yesterdayc is None):
+        raise ValueError("Only todayc or yesterdayc, not together")
+    if not (args.today is None or args.todayc is None):
+        raise ValueError("Only -c or -, not together")
 
-    if args.today is not None:
+    if is_ok(args.today):
         log[today()] = args.today
-    if args.yesterday is not None:
+    elif is_ok(args.yesterday):
         log[today() - datetime.timedelta(days=1)] = args.yesterday
 
+    even_read = sum(log.values())
+    if is_ok(args.todayc):
+        assert args.todayc >= even_read,
+            'Last page num must be > even read'
+        log[today()] = args.todayc - even_read
+    elif is_ok(args.yesterdayc):
+        assert args.yesterdayc >= even_read,
+            'Last page num must be > even read'
+        log[today() - datetime.timedelta(days=1)] = args.yesterdayc - even_read
     dump_log(log)
 
 
