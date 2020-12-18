@@ -246,15 +246,14 @@ def main() -> None:
 
     even_read = sum(log.values())
     if is_ok(args.todayc):
-        assert args.todayc >= even_read,
-            'Last page num must be > even read'
+        assert args.todayc >= even_read, 'Last page num must be > even read'
         log[today()] = args.todayc - even_read
     elif is_ok(args.yesterdayc):
-        assert args.yesterdayc >= even_read,
-            'Last page num must be > even read'
+        assert args.yesterdayc >= even_read, 'Last page num must be > even read'
         log[today() - datetime.timedelta(days=1)] = args.yesterdayc - even_read
     dump_log(log)
 
 
 if __name__ == "__main__":
     main()
+
