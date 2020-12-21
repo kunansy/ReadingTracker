@@ -195,12 +195,14 @@ def main() -> None:
     )
     parser.add_argument(
         '-tday', '--today',
+        metavar="Set count of read page for today",
         type=int,
         dest='today',
         required=False
     )
     parser.add_argument(
         '-yday', '--yesterday',
+        metavar="Set count of read page for yesterday",
         type=int,
         dest='yesterday',
         required=False
