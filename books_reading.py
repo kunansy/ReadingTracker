@@ -318,6 +318,14 @@ def main() -> None:
     args = parser.parse_args()
     books_queue = BooksQueue()
 
+    if not (args.today is None or args.yesterday is None):
+        raise ValueError("Only today or yesterday, not together")
+
+    if is_ok(args.today):
+        books_queue.set_today_log(args.today)
+    elif is_ok(args.yesterday):
+        books_queue.set_yesterday_log(args.yesterday)
+
     if args.pall:
         print(books_queue)
     else:
@@ -328,15 +336,6 @@ def main() -> None:
         if args.pt:
             books_queue.print_total()
 
-    if not (args.today is None or args.yesterday is None):
-        raise ValueError("Only today or yesterday, not together")
-
-    if is_ok(args.today):
-        books_queue.set_today_log(args.today)
-    elif is_ok(args.yesterday):
-        books_queue.set_yesterday_log(args.yesterday)
-
 
 if __name__ == "__main__":
     main()
-
