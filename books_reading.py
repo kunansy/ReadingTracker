@@ -216,7 +216,7 @@ class BooksQueue:
             res += f"С {start} по {stop}\n\n"
 
             last_date = finish_date + datetime.timedelta(days=1)
-        return res.strip()
+        return f"{res.strip()}\n{'-' * 70}"
 
     def _str_log(self) -> str:
         """ Convert log to str to print.
@@ -254,7 +254,8 @@ class BooksQueue:
         :return: this str.
         """
         return f"Всего прочитано {self.total} " \
-               f"{self.inflect_page(self.total)}"
+               f"{self.inflect_page(self.total)}\n" \
+               f"{'-' * 70}"
 
     def print_queue(self) -> None:
         """
@@ -286,7 +287,9 @@ class BooksQueue:
 
         :return: this str.
         """
-        return f"{self._str_log()}\n{self._str_queue()}\n\n{self._str_total()}"
+        return f"{self._str_log()}\n\n" \
+               f"{self._str_queue()}\n\n" \
+               f"{self._str_total()}"
 
     def __del__(self) -> None:
         """
