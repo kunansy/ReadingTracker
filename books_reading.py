@@ -188,6 +188,12 @@ def main() -> None:
         dest='pq'
     )
     parser.add_argument(
+        '-pall', '--print-all',
+        default=False,
+        action="store_true",
+        dest='pall'
+    )
+    parser.add_argument(
         '-tday', '--today',
         type=int,
         dest='today',
@@ -229,6 +235,8 @@ def main() -> None:
         print_log(log)
     if args.pq:
         print_queue(books, avg)
+    if args.pall:
+        print(sum(log.values()))
 
     if not (args.today is None or args.yesterday is None):
         raise ValueError("Only today or yesterday, not together")
