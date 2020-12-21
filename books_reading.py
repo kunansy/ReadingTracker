@@ -91,14 +91,12 @@ def get_books(path: Path = BOOKS_QUEUE_PATH) -> Dict:
     :return: book queue.
     """
     books = {}
-    with path.open(encoding='utf-8') as f:
-        reader = csv.reader(f, delimiter=';')
-
+    with path.open(encoding='utf-8', newline='') as f:
+        reader = csv.reader(f, delimiter='\t')
         for name, pages in reader:
             books[name] = {
                 'pages': int(pages),
             }
-
         return books
 
 
