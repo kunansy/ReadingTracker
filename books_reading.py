@@ -87,7 +87,6 @@ def get_books(path: Path = BOOKS_QUEUE_PATH) -> Dict:
     """
 
     :param path: path to book queue file.
-    :param avg: int, average count of read pages.
     :return: book queue.
     """
     books = {}
@@ -105,6 +104,7 @@ def print_queue(books: Dict,
     """ Print books queue.
 
     :param books: dict, books queue.
+    :param avg: int, average count of read pages.
     :return: None.
     """
     last_date = START_DATE
@@ -127,7 +127,7 @@ def get_avg(log: Dict) -> int:
     """ Get average count of read pages.
 
     :param log:
-    :return: int, acerage count of read pages.
+    :return: int, average count of read pages.
     """
     try:
         return sum(log.values()) // len(log)
