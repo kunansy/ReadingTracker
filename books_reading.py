@@ -48,7 +48,11 @@ class BooksQueue:
 
     def __init__(self) -> None:
         self.__books = self._get_books()
-        self.__log = self._get_log()
+        try:
+            log = self._get_log()
+        except ValueError:
+            log = {}
+        self.__log = log
         self.inflect_page = inflect_word('страница')
 
     @property
@@ -164,9 +168,9 @@ class BooksQueue:
         res = {}
         for date, count in data.items():
             date = datetime.datetime.strptime(date, self.DATE_FORMAT)
-            res[date] = count
+            res[date.date()] = count
 
-        return data
+        return res
 
     def _dump_log(self) -> None:
         """ Dump dict to the log file.
@@ -176,7 +180,7 @@ class BooksQueue:
         with self.LOG_PATH.open('w', encoding='utf-8') as f:
             data_str = {}
             for date, count in self.log.items():
-                data_str[date] = count
+                data_str[date.strftime(self.DATE_FORMAT)] = count
             ujson.dump(data_str, f, indent=4)
 
     def _get_books(self) -> dict:
@@ -223,6 +227,7 @@ class BooksQueue:
         sum_ = 0
 
         for date, read_pages in self.log.items():
+            date = date.strftime(self.DATE_FORMAT)
             res += f"{date}: {read_pages} " \
                    f"{self.inflect_page(read_pages)}\n"
             sum_ += read_pages
