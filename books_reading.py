@@ -228,9 +228,10 @@ def main() -> None:
         raise ValueError("Only today or yesterday, not together")
 
     if is_ok(args.today):
-        log[today()] = args.today
+        log[today().strftime(DATE_FORMAT)] = args.today
     elif is_ok(args.yesterday):
-        log[today() - datetime.timedelta(days=1)] = args.yesterday
+        yesterday = today() - datetime.timedelta(days=1)
+        log[yesterday.strftime(DATE_FORMAT)] = args.yesterday
 
     dump_log(log)
 
