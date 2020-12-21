@@ -207,22 +207,6 @@ def main() -> None:
         dest='yesterday',
         required=False
     )
-    parser.add_argument(
-        '-tdayc', '--todayc',
-        metavar='Calculate how many pages was read today '
-                'accorging to the last read page number',
-        type=int,
-        dest='todayc',
-        required=False
-    )
-    parser.add_argument(
-        '-ydayc', '--yesterdayc',
-        metavar='Calculate how many pages was read yesterday '
-                'accorging to the last read page number',
-        type=int,
-        dest='yesterdayc',
-        required=False
-    )
     args = parser.parse_args()
 
     try:
@@ -242,23 +226,12 @@ def main() -> None:
 
     if not (args.today is None or args.yesterday is None):
         raise ValueError("Only today or yesterday, not together")
-    if not (args.todayc is None or args.yesterdayc is None):
-        raise ValueError("Only todayc or yesterdayc, not together")
-    if not (args.today is None or args.todayc is None):
-        raise ValueError("Only -c or -, not together")
 
     if is_ok(args.today):
         log[today()] = args.today
     elif is_ok(args.yesterday):
         log[today() - datetime.timedelta(days=1)] = args.yesterday
 
-    even_read = sum(log.values())
-    if is_ok(args.todayc):
-        assert args.todayc >= even_read, 'Last page num must be > even read'
-        log[today()] = args.todayc - even_read
-    elif is_ok(args.yesterdayc):
-        assert args.yesterdayc >= even_read, 'Last page num must be > even read'
-        log[today() - datetime.timedelta(days=1)] = args.yesterdayc - even_read
     dump_log(log)
 
 
