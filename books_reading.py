@@ -290,6 +290,12 @@ def main() -> None:
         dest='pq'
     )
     parser.add_argument(
+        '-pt', '--print-total',
+        default=False,
+        action="store_true",
+        dest='pt'
+    )
+    parser.add_argument(
         '-pall', '--print-all',
         default=False,
         action="store_true",
