@@ -28,6 +28,13 @@ def with_num(word: str, num: int) -> str:
     return word.word
 
 
+def inflect_word(word: str):
+    def wrapped(num: int) -> str:
+        return with_num(word, num)
+
+    return wrapped
+
+
 class BooksQueue:
     DATA_FOLDER = Path('data')
 
@@ -42,6 +49,7 @@ class BooksQueue:
     def __init__(self) -> None:
         self.__books = self._get_books()
         self.__log = self._get_log()
+        self.inflect_page = inflect_word('страница')
 
     @property
     def log(self) -> dict:
@@ -174,7 +182,7 @@ class BooksQueue:
             days_count = val['pages'] // self.avg + 1
             finish_date = last_date + datetime.timedelta(days=days_count)
 
-            days = f"{days_count} {with_num('день', days_count)}"
+            days = f"{days_count} {self.inflect_page(days_count)}"
             res += f"«{key}» будет прочитана за {days}\n"
 
             start = last_date.strftime(self.DATE_FORMAT)
@@ -194,12 +202,12 @@ class BooksQueue:
 
         for date, read_pages in self.log.items():
             res += f"{date}: {read_pages} " \
-                   f"{with_num('страница', read_pages)}\n"
+                   f"{self.inflect_page(read_pages)}\n"
             sum_ += read_pages
         res += '\n'
 
         avg = self.avg
-        res += f"В среднем {avg} {with_num('страница', avg)}\n"
+        res += f"В среднем {avg} {self.inflect_page(avg)}\n"
 
         res += "Это "
         diff = abs(self.PAGES_PER_DAY - avg)
@@ -219,7 +227,7 @@ class BooksQueue:
         :return: this str.
         """
         return f"Всего прочитано {self.total} " \
-                f"{with_num('страница', self.total)}"
+               f"{self.inflect_page(self.total)}"
 
     def print_queue(self) -> None:
         """
