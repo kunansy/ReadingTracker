@@ -8,16 +8,6 @@ from typing import Dict
 import pymorphy2
 import ujson
 
-DATA_FOLDER = Path('data')
-
-BOOKS_QUEUE_PATH = DATA_FOLDER / 'book_queue.csv'
-LOG_PATH = DATA_FOLDER / 'log.json'
-
-PAGES_PER_DAY = 50
-START_DATE = datetime.date(2020, 12, 12)
-
-DATE_FORMAT = '%d.%m.%Y'
-
 morph = pymorphy2.MorphAnalyzer()
 
 
