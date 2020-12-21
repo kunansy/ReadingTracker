@@ -316,32 +316,25 @@ def main() -> None:
         required=False
     )
     args = parser.parse_args()
+    books_queue = BooksQueue()
 
-    try:
-        log = get_log()
-    except ValueError:
-        log = {}
-
-    avg = get_avg(log) or 1
-    books = get_books()
-
-    if args.pl:
-        print_log(log)
-    if args.pq:
-        print_queue(books, avg)
     if args.pall:
-        print(sum(log.values()))
+        print(books_queue)
+    else:
+        if args.pl:
+            books_queue.print_log()
+        if args.pq:
+            books_queue.print_queue()
+        if args.pt:
+            books_queue.print_total()
 
     if not (args.today is None or args.yesterday is None):
         raise ValueError("Only today or yesterday, not together")
 
     if is_ok(args.today):
-        log[today().strftime(DATE_FORMAT)] = args.today
+        books_queue.set_today_log(args.today)
     elif is_ok(args.yesterday):
-        yesterday = today() - datetime.timedelta(days=1)
-        log[yesterday.strftime(DATE_FORMAT)] = args.yesterday
-
-    dump_log(log)
+        books_queue.set_yesterday_log(args.yesterday)
 
 
 if __name__ == "__main__":
