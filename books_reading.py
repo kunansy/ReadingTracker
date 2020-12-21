@@ -103,6 +103,34 @@ class BooksQueue:
         """
         return self.today - datetime.timedelta(days=1)
 
+    def _set_log(self,
+                 date: datetime.date or str,
+                 pages: int) -> None:
+        """
+        Set reading log for the day.
+        Check arguments valid.
+        Sort the log by dates.
+
+        :param date: datetime.date or str, date of read.
+        :param pages: int, count of read pages.
+        :return: None.
+
+        :exception ValueError: of pages < 0 or date format is wrong.
+        """
+        if pages < 0:
+            raise ValueError("Pages count must be >= 0")
+
+        try:
+            date = datetime.datetime.strptime(date, self.DATE_FORMAT)
+            date = date.date()
+        except TypeError:
+            pass
+        except ValueError as e:
+            raise ValueError(f"Wrong date format\n{e}")
+
+        self.__log[date] = pages
+        self.__log = dict(sorted(self.log.items(), key=lambda i: i[0]))
+
     def set_today_log(self,
                       pages: int) -> None:
         """
@@ -111,10 +139,7 @@ class BooksQueue:
         :param pages: int, count of pages read today.
         :return: None.
         """
-        if pages < 0:
-            raise ValueError("Pages count must be >= 0")
-
-        self.__log[self.today] = pages
+        self._set_log(self.today, pages)
 
     def set_yesterday_log(self,
                           pages: int) -> None:
@@ -124,10 +149,7 @@ class BooksQueue:
         :param pages: int, count of pages read yesterday.
         :return: None.
         """
-        if pages < 0:
-            raise ValueError("Pages count must be >= 0")
-
-        self.__log[self.yesterday] = pages
+        self._set_log(self.yesterday, pages)
 
     def _get_log(self) -> Dict[datetime.date, int]:
         """ Get log from the file and parse it to JSON dict.
