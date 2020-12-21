@@ -251,7 +251,7 @@ class BooksQueue:
 
         :return: this str.
         """
-        return f"{self._str_log()}\n{self._str_queue()}\n{self._str_total()}"
+        return f"{self._str_log()}\n{self._str_queue()}\n\n{self._str_total()}"
 
     def __del__(self) -> None:
         """
