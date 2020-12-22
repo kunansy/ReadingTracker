@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import argparse
-import csv
 import datetime
 from pathlib import Path
 from typing import Dict
@@ -319,16 +318,41 @@ class BooksQueue:
 
     def _get_books(self) -> dict:
         """
-        :return: book queue.
+        :return: dict, books.
         """
-        books = {}
-        with self.BOOKS_QUEUE_PATH.open(encoding='utf-8', newline='') as f:
-            reader = csv.reader(f, delimiter='\t')
-            for name, pages in reader:
-                books[name] = {
-                    'pages': int(pages),
-                }
-            return books
+        with self.BOOKS_PATH.open(encoding='utf-8') as f:
+            books = ujson.load(f)
+
+        return {
+            'queue': [
+                Book(**book)
+                for book in books['queue']
+            ],
+            'processed': [
+                Book(**book)
+                for book in books['processed']
+            ]
+        }
+
+    def _dump_books(self) -> None:
+        """
+        Dump books.
+
+        :return: None.
+        """
+        res = {
+            'queue': [
+                book.json()
+                for book in self.queue
+            ],
+            'processed': [
+                book.json()
+                for book in self.processed
+            ]
+        }
+
+        with self.BOOKS_PATH.open('w', encoding='utf-8') as f:
+            ujson.dump(res, f, indent=2, ensure_ascii=False)
 
     def _str_queue(self) -> str:
         """ Convert books queue to str to print.
