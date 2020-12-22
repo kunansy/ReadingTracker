@@ -403,7 +403,7 @@ class BooksQueue:
         :return: this str.
         """
         if len(self.processed) == 0:
-            return "Ни одна книга не прочитана"
+            return "Ни одна книга ещё не прочитана"
 
         res = ''
         for book in self.processed:
@@ -583,9 +583,10 @@ class BooksQueue:
 
         :return: this str.
         """
-        return f"{self._str_log()}\n\n" \
-               f"{self._str_queue()}\n\n" \
-               f"{self._str_total()}"
+        return f"Лог чтения:\n{self._str_log()}\n" \
+               f"{self._str_total()}\n" \
+               f"Очередь книг:\n{self._str_queue()}\n" \
+               f"Прочитанные книги:\n{self._str_processed()}"
 
     def __contains__(self,
                      id_: int) -> bool:
