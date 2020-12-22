@@ -36,6 +36,137 @@ def inflect_word(word: str):
     return wrapped
 
 
+class Book:
+    def __init__(self,
+                 id: int,
+                 title: str,
+                 author: str,
+                 pages: int,
+                 start_date: datetime.date = None,
+                 end_date: datetime.date = None) -> None:
+        self.__id = id
+        self.__title = title
+        self.__author = author
+        self.__pages = pages
+        self.__start_date = None
+        self.__end_date = None
+
+        self.start_date = start_date
+        self.end_date = end_date
+
+    @property
+    def id(self) -> int:
+        """
+        :return: int, book's id.
+        """
+        return self.__id
+
+    @property
+    def title(self) -> str:
+        """
+        :return: str, book's title.
+        """
+        return self.__title
+
+    @property
+    def author(self) -> str:
+        """
+        :return: str, book's authors.
+        """
+        return self.__author
+
+    @property
+    def pages(self) -> int:
+        """
+        :return: int, count of book's pages.
+        """
+        return self.__pages
+
+    @property
+    def start_date(self) -> datetime.date:
+        """
+        :return: datetime.date, date when the book was started.
+        """
+        return self.__start_date
+
+    @property
+    def end_date(self) -> datetime.date:
+        """
+        :return: datetime.date, date when the book was finished.
+        """
+        return self.__end_date
+
+    @start_date.setter
+    def start_date(self,
+                   date: datetime.date or str) -> None:
+        """
+        :param date: datetime.date or str, new start_date value.
+        :return: None.
+
+        :exception ValueError: if the date is str with wrong format.
+        """
+        try:
+            date = datetime.datetime.strptime(date, DATE_FORMAT)
+            date = date.date()
+        except TypeError:
+            pass
+        except ValueError:
+            raise ValueError(f"Wrong date format '{date=}'")
+
+        self.__start_date = date
+
+    @end_date.setter
+    def end_date(self,
+                 date: datetime.date or str) -> None:
+        """
+        :param date: datetime.date or str, new end_date value.
+        :return: None.
+
+        :exception ValueError: if the date is str with wrong format.
+        """
+        try:
+            date = datetime.datetime.strptime(date, DATE_FORMAT)
+            date = date.date()
+        except TypeError:
+            pass
+        except ValueError:
+            raise ValueError(f"Wrong date format '{date=}'")
+
+        self.__end_date = date
+
+    def json(self) -> dict:
+        """
+        :return: dict, fields' names and their values.
+        """
+        json = {
+            'id': self.id,
+            'title': self.title,
+            'author': self.author,
+            'pages': self.pages
+        }
+        if self.start_date is not None:
+            json['start_date'] = self.start_date.strftime(DATE_FORMAT)
+
+        if self.end_date is not None:
+            json['end_date'] = self.end_date.strftime(DATE_FORMAT)
+
+        return json
+
+    def __str__(self) -> str:
+        return '\n'.join(
+            f"{key}: {val}"
+            for key, val in self.json().items()
+        )
+
+    def __repr__(self) -> str:
+        res = f'{self.__class__.__name__}(\n'
+        res += '\n'.join(
+            f"\t{key=}: {val=}"
+            for key, val in self.json().items()
+        )
+        return res + '\n)'
+
+
 class BooksQueue:
     DATA_FOLDER = Path('data')
 
