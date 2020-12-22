@@ -706,7 +706,7 @@ def main() -> None:
     if is_dump_log:
         books_queue.dump_log()
     if is_dump_books:
-        books.dump_books()
+        books_queue.dump_books()
 
 
 if __name__ == "__main__":
