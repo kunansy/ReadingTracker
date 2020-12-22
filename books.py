@@ -168,6 +168,7 @@ class Book:
 
 class BooksQueue:
     DATA_FOLDER = Path('data')
+    INDENT = 2
 
     BOOKS_PATH = DATA_FOLDER / 'books.json'
     LOG_PATH = DATA_FOLDER / 'log.json'
@@ -332,7 +333,7 @@ class BooksQueue:
             data_str = {}
             for date, count in self.log.items():
                 data_str[date.strftime(DATE_FORMAT)] = count
-            ujson.dump(data_str, f, indent=4)
+            ujson.dump(data_str, f, indent=self.INDENT)
 
     def _get_books(self) -> dict:
         """
@@ -370,7 +371,7 @@ class BooksQueue:
         }
 
         with self.BOOKS_PATH.open('w', encoding='utf-8') as f:
-            ujson.dump(res, f, indent=2, ensure_ascii=False)
+            ujson.dump(res, f, indent=self.INDENT, ensure_ascii=False)
 
     def _str_queue(self) -> str:
         """
