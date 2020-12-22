@@ -254,6 +254,11 @@ class Log:
 
 
 class Book:
+    __slots__ = (
+        '__id', '__title', '__author',
+        '__pages', '__start_date', '__end_date'
+    )
+
     def __init__(self,
                  id: int,
                  title: str,
@@ -369,6 +374,10 @@ class Book:
 
 
 class BooksQueue:
+    __slots__ = (
+        '__books', '__log'
+    )
+
     BOOKS_PATH = DATA_FOLDER / 'books.json'
 
     def __init__(self,
