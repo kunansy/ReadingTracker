@@ -322,7 +322,7 @@ class BooksQueue:
 
         return res
 
-    def _dump_log(self) -> None:
+    def dump_log(self) -> None:
         """
         Dump dict to the log file.
 
@@ -352,7 +352,7 @@ class BooksQueue:
             ]
         }
 
-    def _dump_books(self) -> None:
+    def dump_books(self) -> None:
         """
         Dump books.
 
