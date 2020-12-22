@@ -395,6 +395,24 @@ class BooksQueue:
             last_date = finish_date + datetime.timedelta(days=1)
         return f"{res.strip()}\n{'-' * 70}"
 
+    def _str_processed(self) -> str:
+        """
+        Convert processed to str to print.
+
+        :return: this str.
+        """
+        if len(self.processed) == 0:
+            return "Ни одна книга не прочитана"
+
+        res = ''
+        for book in self.processed:
+            days = (book.end_date - book.start_date)
+            res += f"«{book.title}», стр: {book.pages} прочитана\n"
+            start = book.start_date.strftime(DATE_FORMAT)
+            stop = book.end_date.strftime(DATE_FORMAT)
+            res += f"С {start} по {stop}, за {days.days} дней\n"
+        return res
+
     def _str_log(self) -> str:
         """
         Convert log to str to print.
@@ -442,6 +460,14 @@ class BooksQueue:
         :return: None.
         """
         print(self._str_queue())
+
+    def print_processed(self) -> None:
+        """
+        Print processed books.
+
+        :return: None.
+        """
+        print(self._str_processed())
 
     def print_log(self) -> None:
         """
