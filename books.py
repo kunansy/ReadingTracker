@@ -666,6 +666,12 @@ def main() -> None:
         dest='yesterday',
         required=False
     )
+    parser.add_argument(
+        '-cb', '--complete-book',
+        default=False,
+        action="store_true",
+        dest='cb'
+    )
     args = parser.parse_args()
     books_queue = BooksQueue()
 
@@ -679,6 +685,11 @@ def main() -> None:
     elif is_ok(args.yesterday):
         books_queue.set_yesterday_log(args.yesterday)
         is_dump_log = True
+
+    is_dump_books = False
+    if args.cb:
+        books_queue.complete_book()
+        is_dump_books = True
 
     if args.pall:
         print(books_queue)
@@ -694,6 +705,8 @@ def main() -> None:
 
     if is_dump_log:
         books_queue.dump_log()
+    if is_dump_books:
+        books.dump_books()
 
 
 if __name__ == "__main__":
