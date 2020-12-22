@@ -53,6 +53,9 @@ def yesterday() -> datetime.date:
 
 
 def to_datetime(date: DATE_TYPE) -> datetime.date:
+    if date is None:
+        return
+
     if isinstance(date, str):
         try:
             date = datetime.datetime.strptime(date, DATE_FORMAT)
@@ -77,7 +80,7 @@ class Log:
     def __init__(self) -> None:
         try:
             log = self._get_log()
-        except ValueError:
+        except Exception:
             log = {}
         self.__log = log
 
@@ -178,6 +181,9 @@ class Log:
 
         :return: this str.
         """
+        if len(self.log) == 0:
+            return "Reading log is empty"
+
         res = ''
         sum_ = 0
 
@@ -208,6 +214,9 @@ class Log:
 
         :return: this str.
         """
+        if len(self.log) == 0:
+            return "Reading log is empty"
+
         return f"Total pages read: {self.total}\n" \
                f"{'-' * 70}"
 
@@ -241,10 +250,16 @@ class Log:
             ujson.dump(data_str, f, indent=INDENT)
 
     def __str__(self) -> str:
-        return f"Reading log:\n{self._str_log()}\n" \
+        if len(self.log) == 0:
+            return "Reading log is empty"
+
+        return f"{self._str_log()}\n" \
                f"{self._str_total()}"
 
     def __repr__(self) -> str:
+        if len(self.log) == 0:
+            return f"{self.__class__.__name__}()"
+
         res = f'{self.__class__.__name__}(\n'
         res += '\n'.join(
             f"\t{key=}: {val=}"
@@ -465,11 +480,14 @@ class BooksQueue:
 
         :return: this str.
         """
+        if len(self.queue) == 0:
+            return "No books in queue"
+
         res = ''
 
         last_date = self.start_date
         for book in self.queue:
-            days_count = book.pages // self.log.avg + 1
+            days_count = book.pages // (self.log.avg + 1)
             finish_date = last_date + datetime.timedelta(days=days_count)
 
             days = f"{days_count} {INFLECT_DAY(days_count)}"
@@ -543,7 +561,10 @@ class BooksQueue:
     def _last_id(self) -> int:
         """
         :return: int, id of the last book in queue.
+         0 if the query is empty.
         """
+        if len(self.queue) == 0:
+            return 0
         return self.queue[-1].id
 
     def add_book(self,
@@ -615,7 +636,7 @@ class BooksQueue:
 
         :return: this str.
         """
-        return f"{self.log}\n" \
+        return f"Reading log:\n{self.log}\n" \
                f"Books queue:\n{self._str_queue()}\n" \
                f"Processed books:\n{self._str_processed()}"
 
