@@ -125,7 +125,7 @@ class Log:
 
             res = {}
             for date, count in log.items():
-                res[Log._to_datetime(date)] = count
+                res[to_datetime(date)] = count
         return res
 
     def _set_log(self,
@@ -145,7 +145,7 @@ class Log:
         if pages < 0:
             raise ValueError("Pages count must be >= 0")
 
-        date = Log._to_datetime(date)
+        date = to_datetime(date)
         if date in self.__log:
             raise ValueError(f"The date {date} even exists in the log")
 
@@ -322,15 +322,7 @@ class Book:
 
         :exception ValueError: if the date is str with wrong format.
         """
-        try:
-            date = datetime.datetime.strptime(date, DATE_FORMAT)
-            date = date.date()
-        except TypeError:
-            pass
-        except ValueError:
-            raise ValueError(f"Wrong date format '{date=}'")
-
-        self.__start_date = date
+        self.__start_date = to_datetime(date)
 
     @end_date.setter
     def end_date(self,
@@ -341,15 +333,7 @@ class Book:
 
         :exception ValueError: if the date is str with wrong format.
         """
-        try:
-            date = datetime.datetime.strptime(date, DATE_FORMAT)
-            date = date.date()
-        except TypeError:
-            pass
-        except ValueError:
-            raise ValueError(f"Wrong date format '{date=}'")
-
-        self.__end_date = date
+        self.__end_date = to_datetime(date)
 
     def json(self) -> dict:
         """
