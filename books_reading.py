@@ -133,6 +133,9 @@ class BooksQueue:
         except ValueError as e:
             raise ValueError(f"Wrong date format\n{e}")
 
+        if date in self.__log:
+            raise ValueError(f"The date {date} even exists in the log")
+
         self.__log[date] = pages
         self.__log = dict(sorted(self.log.items(), key=lambda i: i[0]))
 
