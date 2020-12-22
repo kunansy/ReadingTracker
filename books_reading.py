@@ -173,7 +173,6 @@ class BooksQueue:
     LOG_PATH = DATA_FOLDER / 'log.json'
 
     PAGES_PER_DAY = 50
-    START_DATE = datetime.date(2020, 12, 12)
 
     def __init__(self) -> None:
         self.__books = self._get_books()
@@ -236,6 +235,14 @@ class BooksQueue:
         :return: datetime.date, yesterday.
         """
         return self.today - datetime.timedelta(days=1)
+
+    @property
+    def start_date(self) -> datetime.date:
+        """
+        :return: datetime.date, date when reading
+         of the first book started.
+        """
+        return self[1].start_date
 
     def _set_log(self,
                  date: datetime.date or str,
