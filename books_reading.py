@@ -9,6 +9,7 @@ import pymorphy2
 import ujson
 
 morph = pymorphy2.MorphAnalyzer()
+DATE_FORMAT = '%d.%m.%Y'
 
 
 def with_num(word: str, num: int) -> str:
@@ -43,8 +44,6 @@ class BooksQueue:
 
     PAGES_PER_DAY = 50
     START_DATE = datetime.date(2020, 12, 12)
-
-    DATE_FORMAT = '%d.%m.%Y'
 
     def __init__(self) -> None:
         self.__books = self._get_books()
@@ -126,7 +125,7 @@ class BooksQueue:
             raise ValueError("Pages count must be >= 0")
 
         try:
-            date = datetime.datetime.strptime(date, self.DATE_FORMAT)
+            date = datetime.datetime.strptime(date, DATE_FORMAT)
             date = date.date()
         except TypeError:
             pass
@@ -171,7 +170,7 @@ class BooksQueue:
 
         res = {}
         for date, count in data.items():
-            date = datetime.datetime.strptime(date, self.DATE_FORMAT)
+            date = datetime.datetime.strptime(date, DATE_FORMAT)
             res[date.date()] = count
 
         return res
@@ -184,7 +183,7 @@ class BooksQueue:
         with self.LOG_PATH.open('w', encoding='utf-8') as f:
             data_str = {}
             for date, count in self.log.items():
-                data_str[date.strftime(self.DATE_FORMAT)] = count
+                data_str[date.strftime(DATE_FORMAT)] = count
             ujson.dump(data_str, f, indent=4)
 
     def _get_books(self) -> dict:
@@ -215,8 +214,8 @@ class BooksQueue:
             days = f"{days_count} {self.inflect_day(days_count)}"
             res += f"«{key}» будет прочитана за {days}\n"
 
-            start = last_date.strftime(self.DATE_FORMAT)
-            stop = finish_date.strftime(self.DATE_FORMAT)
+            start = last_date.strftime(DATE_FORMAT)
+            stop = finish_date.strftime(DATE_FORMAT)
             res += f"С {start} по {stop}\n\n"
 
             last_date = finish_date + datetime.timedelta(days=1)
@@ -231,7 +230,7 @@ class BooksQueue:
         sum_ = 0
 
         for date, read_pages in self.log.items():
-            date = date.strftime(self.DATE_FORMAT)
+            date = date.strftime(DATE_FORMAT)
             res += f"{date}: {read_pages} " \
                    f"{self.inflect_page(read_pages)}\n"
             sum_ += read_pages
