@@ -2,7 +2,7 @@
 import argparse
 import datetime
 from pathlib import Path
-from typing import Dict, List, Iterator
+from typing import Dict, List, Iterator, Union
 
 import pymorphy2
 import ujson
@@ -39,6 +39,226 @@ def inflect_word(word: str):
         return with_num(word, num)
 
     return wrapped
+
+
+INFLECT_PAGE = inflect_word('страница')
+INFLECT_DAY = inflect_word('день')
+
+
+def today() -> datetime.date:
+    """
+    :return: datetime.date, today.
+    """
+    return datetime.date.today()
+
+
+def yesterday() -> datetime.date:
+    """
+    :return: datetime.date, yesterday.
+    """
+    return today() - datetime.timedelta(days=1)
+
+
+class Log:
+    __slots__ = '__log'
+
+    LOG_PATH = DATA_FOLDER / 'log.json'
+
+    def __init__(self) -> None:
+        try:
+            log = self._get_log()
+        except ValueError:
+            log = {}
+        self.__log = log
+
+    @property
+    def log(self) -> LOG_TYPE:
+        """
+        :return: dict, reading log.
+        """
+        return self.__log
+
+    @property
+    def path(self) -> Path:
+        """
+        :return: Path to log file.
+        """
+        return self.LOG_PATH
+
+    @property
+    def avg(self) -> int:
+        """
+        :return: int, average count of read pages.
+        """
+        try:
+            return sum(self.log.values()) // len(self.log)
+        except ZeroDivisionError:
+            return 0
+
+    @property
+    def total(self) -> int:
+        """
+        :return: int, total count of read pages.
+        """
+        return sum(self.log.values())
+
+    @staticmethod
+    def _to_datetime(date: DATE_TYPE) -> datetime.date:
+        if isinstance(date, str):
+            try:
+                date = datetime.datetime.strptime(date, DATE_FORMAT)
+                date = date.date()
+            except ValueError as e:
+                raise ValueError(f"Wrong str format\n{e}")
+            else:
+                return date
+        elif isinstance(date, datetime.datetime):
+            return date.date()
+        elif isinstance(date, datetime.date):
+            return date
+        else:
+            raise TypeError(f"Str or datetime expected, {type(date)} found")
+
+    def _get_log(self) -> Dict[datetime.date, int]:
+        """
+        Get log from the file and parse it to JSON dict.
+        Convert keys to datetime.date, values to int.
+
+        :return: JSON dict with the format.
+        :exception ValueError: if the file if empty.
+        """
+        with self.path.open(encoding='utf-8') as f:
+            log = ujson.load(f)
+
+            res = {}
+            for date, count in log.items():
+                res[Log._to_datetime(date)] = count
+        return res
+
+    def _set_log(self,
+                 date: datetime.date,
+                 pages: int) -> None:
+        """
+        Set reading log for the day.
+        Check arguments valid.
+        Sort the log by dates.
+
+        :param date: datetime.date or str, date of read.
+        :param pages: int, count of read pages.
+        :return: None.
+
+        :exception ValueError: of pages < 0 or date format is wrong.
+        """
+        if pages < 0:
+            raise ValueError("Pages count must be >= 0")
+
+        date = Log._to_datetime(date)
+        if date in self.__log:
+            raise ValueError(f"The date {date} even exists in the log")
+
+        self.__log[date] = pages
+        self.__log = dict(sorted(self.log.items(), key=lambda i: i[0]))
+
+    def set_today_log(self,
+                      pages: int) -> None:
+        """
+        Set today's reading log.
+
+        :param pages: int, count of pages read today.
+        :return: None.
+        """
+        self._set_log(today(), pages)
+
+    def set_yesterday_log(self,
+                          pages: int) -> None:
+        """
+        Set yesterday's reading log.
+
+        :param pages: int, count of pages read yesterday.
+        :return: None.
+        """
+        self._set_log(yesterday(), pages)
+
+    def _str_log(self) -> str:
+        """
+        Convert log to str to print.
+
+        :return: this str.
+        """
+        res = ''
+        sum_ = 0
+
+        for date, read_pages in self.log.items():
+            date = date.strftime(DATE_FORMAT)
+            res += f"{date}: {read_pages} " \
+                   f"{INFLECT_PAGE(read_pages)}\n"
+            sum_ += read_pages
+        res += '\n'
+
+        avg = self.avg
+        res += f"В среднем {avg} {INFLECT_PAGE(avg)}\n"
+
+        res += "Это "
+        diff = abs(PAGES_PER_DAY - avg)
+        if avg == PAGES_PER_DAY:
+            res += "равно ожидаемому среднему значению"
+        elif avg < PAGES_PER_DAY:
+            res += f"на {diff} меньше ожидаемого среднего значения"
+        else:
+            res += f"на {diff} больше ожидаемого среднего значения"
+
+        return f"{res}\n{'-' * 70}"
+
+    def _str_total(self) -> str:
+        """
+        Get total count of read pages to print.
+
+        :return: this str.
+        """
+        return f"Всего прочитано {self.total} " \
+               f"{INFLECT_PAGE(self.total)}\n" \
+               f"{'-' * 70}"
+
+    def print_log(self) -> None:
+        """
+        Print reading log.
+
+        :return: None.
+        """
+        print(self._str_log())
+
+    def print_total(self) -> None:
+        """
+        Print total count of read pages.
+
+        :return: None.
+        """
+        print(self._str_total())
+
+    def dump(self) -> None:
+        """
+        Dump dict to the log file.
+
+        :return: None.
+        """
+        data_str = {}
+        for date, count in self.log.items():
+            data_str[date.strftime(DATE_FORMAT)] = count
+
+        with self.path.open('w', encoding='utf-8') as f:
+            ujson.dump(data_str, f, indent=INDENT)
+
+    def __str__(self) -> str:
+        return f"Лог чтения:\n{self._str_log()}\n" \
+               f"{self._str_total()}"
+
+    def __repr__(self) -> str:
+        res = f'{self.__class__.__name__}(\n'
+        res += '\n'.join(
+            f"\t{key=}: {val=}"
+            for key, val in self.log.items()
+        )
+        return res + '\n)'
 
 
 class Book:
@@ -175,24 +395,15 @@ class Book:
 class BooksQueue:
     BOOKS_PATH = DATA_FOLDER / 'books.json'
 
-    PAGES_PER_DAY = 50
-
-    def __init__(self) -> None:
+    def __init__(self,
+                 log: Log) -> None:
         self.__books = self._get_books()
-
-        try:
-            log = self._get_log()
-        except ValueError:
-            log = {}
         self.__log = log
 
-        self.inflect_page = inflect_word('страница')
-        self.inflect_day = inflect_word('день')
-
     @property
-    def log(self) -> dict:
+    def log(self) -> Log:
         """
-        :return: dict, reading log.
+        :return: reading Log.
         """
         return self.__log
 
@@ -218,37 +429,6 @@ class BooksQueue:
         return self.books.get('processed', [])
 
     @property
-    def avg(self) -> int:
-        """
-        :return: int, average count of read pages.
-        """
-        try:
-            return sum(self.log.values()) // len(self.log)
-        except ZeroDivisionError:
-            return 0
-
-    @property
-    def total(self) -> int:
-        """
-        :return: int, total count of read pages.
-        """
-        return sum(self.log.values())
-
-    @property
-    def today(self) -> datetime.date:
-        """
-        :return: datetime.date, today.
-        """
-        return datetime.date.today()
-
-    @property
-    def yesterday(self) -> datetime.date:
-        """
-        :return: datetime.date, yesterday.
-        """
-        return self.today - datetime.timedelta(days=1)
-
-    @property
     def start_date(self) -> datetime.date:
         """
         :return: datetime.date, date when reading
@@ -256,88 +436,7 @@ class BooksQueue:
         """
         return self[1].start_date
 
-    def _set_log(self,
-                 date: datetime.date or str,
-                 pages: int) -> None:
-        """
-        Set reading log for the day.
-        Check arguments valid.
-        Sort the log by dates.
-
-        :param date: datetime.date or str, date of read.
-        :param pages: int, count of read pages.
-        :return: None.
-
-        :exception ValueError: of pages < 0 or date format is wrong.
-        """
-        if pages < 0:
-            raise ValueError("Pages count must be >= 0")
-
-        try:
-            date = datetime.datetime.strptime(date, DATE_FORMAT)
-            date = date.date()
-        except TypeError:
-            pass
-        except ValueError as e:
-            raise ValueError(f"Wrong date format\n{e}")
-
-        if date in self.__log:
-            raise ValueError(f"The date {date} even exists in the log")
-
-        self.__log[date] = pages
-        self.__log = dict(sorted(self.log.items(), key=lambda i: i[0]))
-
-    def set_today_log(self,
-                      pages: int) -> None:
-        """
-        Set today's reading log.
-
-        :param pages: int, count of pages read today.
-        :return: None.
-        """
-        self._set_log(self.today, pages)
-
-    def set_yesterday_log(self,
-                          pages: int) -> None:
-        """
-        Set yesterday's reading log.
-
-        :param pages: int, count of pages read yesterday.
-        :return: None.
-        """
-        self._set_log(self.yesterday, pages)
-
-    def _get_log(self) -> Dict[datetime.date, int]:
-        """
-        Get log from the file and parse it to JSON dict.
-        Convert keys to datetime.date, values to int.
-
-        :return: JSON dict with the format.
-        :exception ValueError: if the file if empty.
-        """
-        with self.LOG_PATH.open(encoding='utf-8') as f:
-            data = ujson.load(f)
-
-        res = {}
-        for date, count in data.items():
-            date = datetime.datetime.strptime(date, DATE_FORMAT)
-            res[date.date()] = count
-
-        return res
-
-    def dump_log(self) -> None:
-        """
-        Dump dict to the log file.
-
-        :return: None.
-        """
-        with self.LOG_PATH.open('w', encoding='utf-8') as f:
-            data_str = {}
-            for date, count in self.log.items():
-                data_str[date.strftime(DATE_FORMAT)] = count
-            ujson.dump(data_str, f, indent=self.INDENT)
-
-    def _get_books(self) -> dict:
+    def _get_books(self) -> Dict[str, List[Book]]:
         """
         :return: dict, books.
         """
@@ -355,7 +454,7 @@ class BooksQueue:
             ]
         }
 
-    def dump_books(self) -> None:
+    def dump(self) -> None:
         """
         Dump books.
 
@@ -385,7 +484,7 @@ class BooksQueue:
 
         last_date = self.start_date
         for book in self.queue:
-            days_count = book.pages // self.avg + 1
+            days_count = book.pages // self.log.avg + 1
             finish_date = last_date + datetime.timedelta(days=days_count)
 
             days = f"{days_count} {INFLECT_DAY(days_count)}"
@@ -416,46 +515,6 @@ class BooksQueue:
             res += f"С {start} по {stop}, за {days.days} дней\n"
         return res
 
-    def _str_log(self) -> str:
-        """
-        Convert log to str to print.
-
-        :return: this str.
-        """
-        res = ''
-        sum_ = 0
-
-        for date, read_pages in self.log.items():
-            date = date.strftime(DATE_FORMAT)
-            res += f"{date}: {read_pages} " \
-                   f"{self.inflect_page(read_pages)}\n"
-            sum_ += read_pages
-        res += '\n'
-
-        avg = self.avg
-        res += f"В среднем {avg} {self.inflect_page(avg)}\n"
-
-        res += "Это "
-        diff = abs(self.PAGES_PER_DAY - avg)
-        if avg == self.PAGES_PER_DAY:
-            res += "равно ожидаемому среднему значению"
-        elif avg < self.PAGES_PER_DAY:
-            res += f"на {diff} меньше ожидаемого среднего значения"
-        else:
-            res += f"на {diff} больше ожидаемого среднего значения"
-
-        return f"{res}\n{'-' * 70}"
-
-    def _str_total(self) -> str:
-        """
-        Get total count of read pages to print.
-
-        :return: this str.
-        """
-        return f"Всего прочитано {self.total} " \
-               f"{self.inflect_page(self.total)}\n" \
-               f"{'-' * 70}"
-
     def print_queue(self) -> None:
         """
         Print books queue.
@@ -471,22 +530,6 @@ class BooksQueue:
         :return: None.
         """
         print(self._str_processed())
-
-    def print_log(self) -> None:
-        """
-        Print reading log.
-
-        :return: None.
-        """
-        print(self._str_log())
-
-    def print_total(self) -> None:
-        """
-        Print total count of read pages.
-
-        :return: None.
-        """
-        print(self._str_total())
 
     def complete_book(self,
                       completed_date: datetime.date = None) -> None:
@@ -504,7 +547,7 @@ class BooksQueue:
 
         book = self.queue.pop(0)
 
-        completed_date = completed_date or self.today
+        completed_date = completed_date or today()
         book.end_date = completed_date
         self.processed.append(book)
 
@@ -585,8 +628,7 @@ class BooksQueue:
 
         :return: this str.
         """
-        return f"Лог чтения:\n{self._str_log()}\n" \
-               f"{self._str_total()}\n" \
+        return f"{self.log}\n" \
                f"Очередь книг:\n{self._str_queue()}\n" \
                f"Прочитанные книги:\n{self._str_processed()}"
 
@@ -656,14 +698,14 @@ def main() -> None:
     )
     parser.add_argument(
         '-tday', '--today',
-        metavar="Set count of read page for today",
+        metavar="Set count of read pages for today",
         type=int,
         dest='today',
         required=False
     )
     parser.add_argument(
         '-yday', '--yesterday',
-        metavar="Set count of read page for yesterday",
+        metavar="Set count of read pages for yesterday",
         type=int,
         dest='yesterday',
         required=False
@@ -675,17 +717,18 @@ def main() -> None:
         dest='cb'
     )
     args = parser.parse_args()
-    books_queue = BooksQueue()
+    log = Log()
+    books_queue = BooksQueue(log)
 
     if not (args.today is None or args.yesterday is None):
         raise ValueError("Only today or yesterday, not together")
 
     is_dump_log = False
     if is_ok(args.today):
-        books_queue.set_today_log(args.today)
+        log.set_today_log(args.today)
         is_dump_log = True
     elif is_ok(args.yesterday):
-        books_queue.set_yesterday_log(args.yesterday)
+        log.set_yesterday_log(args.yesterday)
         is_dump_log = True
 
     is_dump_books = False
@@ -697,18 +740,18 @@ def main() -> None:
         print(books_queue)
     else:
         if args.pl:
-            books_queue.print_log()
+            log.print_log()
         if args.pt:
-            books_queue.print_total()
+            log.print_total()
         if args.pq:
             books_queue.print_queue()
         if args.pp:
             books_queue.print_processed()
 
     if is_dump_log:
-        books_queue.dump_log()
+        log.dump()
     if is_dump_books:
-        books_queue.dump_books()
+        books_queue.dump()
 
 
 if __name__ == "__main__":
