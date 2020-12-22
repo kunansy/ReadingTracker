@@ -619,7 +619,7 @@ def is_ok(num: int or None) -> bool:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Books queue"
+        description="Books to read, processed books and reading log"
     )
     parser.add_argument(
         '-pl', '--print-log',
