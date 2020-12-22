@@ -637,10 +637,13 @@ def main() -> None:
     if not (args.today is None or args.yesterday is None):
         raise ValueError("Only today or yesterday, not together")
 
+    is_dump_log = False
     if is_ok(args.today):
         books_queue.set_today_log(args.today)
+        is_dump_log = True
     elif is_ok(args.yesterday):
         books_queue.set_yesterday_log(args.yesterday)
+        is_dump_log = True
 
     if args.pall:
         print(books_queue)
@@ -651,6 +654,9 @@ def main() -> None:
             books_queue.print_queue()
         if args.pt:
             books_queue.print_total()
+
+    if is_dump_log:
+        books_queue.dump_log()
 
 
 if __name__ == "__main__":
