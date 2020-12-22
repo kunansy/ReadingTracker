@@ -196,11 +196,23 @@ class BooksQueue:
     @property
     def books(self) -> dict:
         """
-        Get books queue.
-
-        :return: dict, books queue.
+        :return: dict, books.
         """
         return self.__books
+
+    @property
+    def queue(self) -> List[Book]:
+        """
+        :return: list of Books in queue.
+        """
+        return self.books.get('queue', [])
+
+    @property
+    def processed(self) -> List[Book]:
+        """
+        :return: list of Books in processed.
+        """
+        return self.books.get('processed', [])
 
     @property
     def avg(self) -> int:
