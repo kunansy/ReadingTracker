@@ -485,6 +485,70 @@ class BooksQueue:
         """
         print(self._str_total())
 
+    def complete_book(self,
+                      completed_date: datetime.date = None) -> None:
+        """
+        Move the first book in 'queue' to 'processed'.
+
+        :param completed_date: datetime.date or str with DATE_FORMAT,
+         date when the book was completed. Today by default.
+        :return: None.
+
+        :exception ValueError: if the books queue is empty.
+        """
+        if len(self.queue) == 0:
+            raise ValueError("Books queue is empty")
+
+        book = self.queue.pop(0)
+
+        completed_date = completed_date or self.today
+        book.end_date = completed_date
+        self.processed.append(book)
+
+        self.queue[0].start_date = completed_date + datetime.timedelta(days=1)
+
+    def __in(self,
+             **kwargs) -> Iterator[Book]:
+        where = kwargs.pop('where', 'queue')
+        for book in getattr(self, where):
+            if all(
+                getattr(book, arg) == val
+                for arg, val in kwargs.items()
+            ):
+                yield book
+
+    def in_queue(self,
+                 **kwargs) -> List[Book]:
+        """
+        :param kwargs: pairs: atr name - atr value.
+        :return: list of Books with these params from queue.
+        """
+        try:
+            res = [
+                book
+                for book in self.__in(where='queue', **kwargs)
+            ]
+        except AttributeError as e:
+            raise AttributeError(f"Book obj has no given attribute\n{e}")
+        else:
+            return res
+
+    def in_processed(self,
+                     **kwargs) -> List[Book]:
+        """
+        :param kwargs: pairs: atr name - atr value.
+        :return: list of Books with there params from processed.
+        """
+        try:
+            res = [
+                book
+                for book in self.__in(where='processed', **kwargs)
+            ]
+        except AttributeError as e:
+            raise AttributeError(f"Book obj has no given attribute\n{e}")
+        else:
+            return res
+
     def __str__(self) -> str:
         """
         Get log, books queue and total cunt of read pages.
