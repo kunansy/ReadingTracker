@@ -4,10 +4,8 @@ import datetime
 from pathlib import Path
 from typing import Dict, List, Iterator, Union
 
-import pymorphy2
 import ujson
 
-MORPH = pymorphy2.MorphAnalyzer()
 DATA_FOLDER = Path('data')
 LOG_TYPE = Dict[datetime.date, int]
 PAGES_PER_DAY = 50
@@ -20,18 +18,13 @@ DATE_TYPE = Union[str, datetime.date, datetime.datetime]
 def with_num(word: str, num: int) -> str:
     """
     Make the word agree with the number.
-    If it is not possible return the word.
+    Means add -s if num > 1.
 
-    :param word: str, Russian word to make agree with the number.
-    :param num: int, num to which the word will be agreed.
-    :return: str, agreed with the number word if it's possible.
+    :param word: str, English word to make agree with the number.
+    :param num: int, num.
+    :return: str, word with -s or without.
     """
-    try:
-        word = MORPH.parse(word)[0]
-    except AttributeError:
-        return word
-    word = word.make_agree_with_number(num)
-    return word.word
+    return f"{word}{'s' * (num > 1)}"
 
 
 def inflect_word(word: str):
@@ -41,8 +34,8 @@ def inflect_word(word: str):
     return wrapped
 
 
-INFLECT_PAGE = inflect_word('страница')
-INFLECT_DAY = inflect_word('день')
+INFLECT_PAGE = inflect_word('page')
+INFLECT_DAY = inflect_word('day')
 
 
 def today() -> datetime.date:
@@ -196,16 +189,16 @@ class Log:
         res += '\n'
 
         avg = self.avg
-        res += f"В среднем {avg} {INFLECT_PAGE(avg)}\n"
+        res += f"Average {avg} {INFLECT_PAGE(avg)}\n"
 
-        res += "Это "
+        res += "And that is "
         diff = abs(PAGES_PER_DAY - avg)
         if avg == PAGES_PER_DAY:
-            res += "равно ожидаемому среднему значению"
+            res += "equal to expected count"
         elif avg < PAGES_PER_DAY:
-            res += f"на {diff} меньше ожидаемого среднего значения"
+            res += f"{diff} less than expected"
         else:
-            res += f"на {diff} больше ожидаемого среднего значения"
+            res += f"{diff} better than expected"
 
         return f"{res}\n{'-' * 70}"
 
@@ -215,8 +208,7 @@ class Log:
 
         :return: this str.
         """
-        return f"Всего прочитано {self.total} " \
-               f"{INFLECT_PAGE(self.total)}\n" \
+        return f"Total pages read: {self.total}\n" \
                f"{'-' * 70}"
 
     def print_log(self) -> None:
@@ -249,7 +241,7 @@ class Log:
             ujson.dump(data_str, f, indent=INDENT)
 
     def __str__(self) -> str:
-        return f"Лог чтения:\n{self._str_log()}\n" \
+        return f"Reading log:\n{self._str_log()}\n" \
                f"{self._str_total()}"
 
     def __repr__(self) -> str:
@@ -488,11 +480,11 @@ class BooksQueue:
             finish_date = last_date + datetime.timedelta(days=days_count)
 
             days = f"{days_count} {INFLECT_DAY(days_count)}"
-            res += f"«{book.title}» будет прочитана за {days}\n"
+            res += f"«{book.title}» will be read\n"
 
             start = last_date.strftime(DATE_FORMAT)
             stop = finish_date.strftime(DATE_FORMAT)
-            res += f"С {start} по {stop}\n\n"
+            res += f"from {start} to {stop} in {days}\n\n"
 
             last_date = finish_date + datetime.timedelta(days=1)
         return f"{res.strip()}\n{'-' * 70}"
@@ -504,15 +496,17 @@ class BooksQueue:
         :return: this str.
         """
         if len(self.processed) == 0:
-            return "Ни одна книга ещё не прочитана"
+            return "No books have been read yet"
 
         res = ''
         for book in self.processed:
-            days = (book.end_date - book.start_date)
-            res += f"«{book.title}», стр: {book.pages} прочитана\n"
+            res += f"«{book.title}», pages: {book.pages} has been read\n"
+
             start = book.start_date.strftime(DATE_FORMAT)
             stop = book.end_date.strftime(DATE_FORMAT)
-            res += f"С {start} по {stop}, за {days.days} дней\n"
+            days = (book.end_date - book.start_date).days
+
+            res += f"From {start} by {stop} in {days} {INFLECT_DAY(days)}\n"
         return res
 
     def print_queue(self) -> None:
@@ -629,8 +623,8 @@ class BooksQueue:
         :return: this str.
         """
         return f"{self.log}\n" \
-               f"Очередь книг:\n{self._str_queue()}\n" \
-               f"Прочитанные книги:\n{self._str_processed()}"
+               f"Books queue:\n{self._str_queue()}\n" \
+               f"Processed books:\n{self._str_processed()}"
 
     def __contains__(self,
                      id_: int) -> bool:
