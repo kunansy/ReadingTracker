@@ -169,7 +169,7 @@ class Book:
 class BooksQueue:
     DATA_FOLDER = Path('data')
 
-    BOOKS_QUEUE_PATH = DATA_FOLDER / 'book_queue.csv'
+    BOOKS_PATH = DATA_FOLDER / 'books.json'
     LOG_PATH = DATA_FOLDER / 'log.json'
 
     PAGES_PER_DAY = 50
