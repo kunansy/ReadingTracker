@@ -2,7 +2,7 @@
 import argparse
 import datetime
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List, Iterator
 
 import pymorphy2
 import ujson
