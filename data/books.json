@@ -5,72 +5,55 @@
       "title": "Архитектура компьютера",
       "author": "Таненбаум, Остин",
       "pages": 816,
-      "start_date": "",
-      "end_date": ""
+      "start_date": "12.12.2020"
     },
     {
       "id": 2,
       "title": "Современные ОС",
       "author": "Таненбаум, Бос",
-      "pages": 1120,
-      "start_date": "",
-      "end_date": ""
+      "pages": 1120
     },
     {
       "id": 3,
       "title": "Паттерны ООП",
       "author": "Гамма, Хелм, Джонсон, Влиссидес",
-      "pages": 344,
-      "start_date": "",
-      "end_date": ""
+      "pages": 344
     },
     {
       "id": 4,
       "title": "Elasticsearch, Kibana, Logstash",
       "author": "",
-      "pages": 240,
-      "start_date": "",
-      "end_date": ""
+      "pages": 240
     },
     {
       "id": 5,
       "title": "Азы программирования, том 1",
       "author": "",
-      "pages": 467,
-      "start_date": "",
-      "end_date": ""
+      "pages": 467
     },
     {
       "id": 6,
       "title": "Азы программирования, том 2",
       "author": "",
-      "pages": 499,
-      "start_date": "",
-      "end_date": ""
+      "pages": 499
     },
     {
       "id": 7,
       "title": "Азы программирования, том 3",
       "author": "",
-      "pages": 403,
-      "start_date": "",
-      "end_date": ""
+      "pages": 403
     },
     {
       "id": 8,
       "title": "Азы программирования, том 4",
       "author": "",
-      "pages": 659,
-      "start_date": "",
-      "end_date": ""
+      "pages": 659
     },
     {
       "id": 9,
       "title": "Компьютерные сети",
       "author": "Таненбаум, Уэзеролл",
-      "pages": 960,
-      "start_date": "",
-      "end_date": ""
+      "pages": 960
     }
   ],
   "processed": [
