@@ -559,14 +559,24 @@ class BooksQueue:
                f"{self._str_queue()}\n\n" \
                f"{self._str_total()}"
 
-    def __del__(self) -> None:
+    def __contains__(self,
+                     id_: int) -> bool:
         """
-        Dump reading log and delete the object.
+        Whether the queue contains the book at id.
 
-        :return: None.
+        :param id_: int, book's id.
+        :return: bool.
         """
-        self._dump_log()
-        del self
+        return bool(self.in_queue(id=id_) + self.in_processed(id=id_))
+
+    def __getitem__(self,
+                    id_: int) -> Book:
+        if id_ not in self:
+            raise IndexError(f"Book with `{id_=}` doesn't exist")
+
+        for book in self.queue + self.processed:
+            if book.id == id_:
+                return book
 
 
 def is_ok(num: int or None) -> bool:
