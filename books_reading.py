@@ -606,6 +606,12 @@ def main() -> None:
         dest='pq'
     )
     parser.add_argument(
+        '-pp', '--print-processed',
+        default=False,
+        action="store_true",
+        dest='pp'
+    )
+    parser.add_argument(
         '-pt', '--print-total',
         default=False,
         action="store_true",
@@ -650,10 +656,12 @@ def main() -> None:
     else:
         if args.pl:
             books_queue.print_log()
-        if args.pq:
-            books_queue.print_queue()
         if args.pt:
             books_queue.print_total()
+        if args.pq:
+            books_queue.print_queue()
+        if args.pp:
+            books_queue.print_processed()
 
     if is_dump_log:
         books_queue.dump_log()
