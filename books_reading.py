@@ -176,19 +176,19 @@ class BooksQueue:
 
     def __init__(self) -> None:
         self.__books = self._get_books()
+
         try:
             log = self._get_log()
         except ValueError:
             log = {}
         self.__log = log
+
         self.inflect_page = inflect_word('страница')
         self.inflect_day = inflect_word('день')
 
     @property
     def log(self) -> dict:
         """
-        Get reading log.
-
         :return: dict, reading log.
         """
         return self.__log
@@ -216,8 +216,7 @@ class BooksQueue:
 
     @property
     def avg(self) -> int:
-        """ Get average count of read pages.
-
+        """
         :return: int, average count of read pages.
         """
         try:
@@ -228,22 +227,20 @@ class BooksQueue:
     @property
     def total(self) -> int:
         """
-        :return: int, total count read pages.
+        :return: int, total count of read pages.
         """
         return sum(self.log.values())
 
     @property
     def today(self) -> datetime.date:
-        """ Get today.
-
+        """
         :return: datetime.date, today.
         """
         return datetime.date.today()
 
     @property
     def yesterday(self) -> datetime.date:
-        """ Get yesterday.
-
+        """
         :return: datetime.date, yesterday.
         """
         return self.today - datetime.timedelta(days=1)
@@ -308,7 +305,8 @@ class BooksQueue:
         self._set_log(self.yesterday, pages)
 
     def _get_log(self) -> Dict[datetime.date, int]:
-        """ Get log from the file and parse it to JSON dict.
+        """
+        Get log from the file and parse it to JSON dict.
         Convert keys to datetime.date, values to int.
 
         :return: JSON dict with the format.
@@ -325,7 +323,8 @@ class BooksQueue:
         return res
 
     def _dump_log(self) -> None:
-        """ Dump dict to the log file.
+        """
+        Dump dict to the log file.
 
         :return: None.
         """
@@ -374,7 +373,8 @@ class BooksQueue:
             ujson.dump(res, f, indent=2, ensure_ascii=False)
 
     def _str_queue(self) -> str:
-        """ Convert books queue to str to print.
+        """
+        Convert books queue to str to print.
 
         :return: this str.
         """
@@ -396,7 +396,8 @@ class BooksQueue:
         return f"{res.strip()}\n{'-' * 70}"
 
     def _str_log(self) -> str:
-        """ Convert log to str to print.
+        """
+        Convert log to str to print.
 
         :return: this str.
         """
