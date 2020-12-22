@@ -7,8 +7,14 @@ from typing import Dict, List, Iterator
 import pymorphy2
 import ujson
 
-morph = pymorphy2.MorphAnalyzer()
+MORPH = pymorphy2.MorphAnalyzer()
+DATA_FOLDER = Path('data')
+LOG_TYPE = Dict[datetime.date, int]
+PAGES_PER_DAY = 50
+INDENT = 2
+
 DATE_FORMAT = '%d.%m.%Y'
+DATE_TYPE = Union[str, datetime.date, datetime.datetime]
 
 
 def with_num(word: str, num: int) -> str:
@@ -21,7 +27,7 @@ def with_num(word: str, num: int) -> str:
     :return: str, agreed with the number word if it's possible.
     """
     try:
-        word = morph.parse(word)[0]
+        word = MORPH.parse(word)[0]
     except AttributeError:
         return word
     word = word.make_agree_with_number(num)
@@ -167,11 +173,7 @@ class Book:
 
 
 class BooksQueue:
-    DATA_FOLDER = Path('data')
-    INDENT = 2
-
     BOOKS_PATH = DATA_FOLDER / 'books.json'
-    LOG_PATH = DATA_FOLDER / 'log.json'
 
     PAGES_PER_DAY = 50
 
@@ -371,7 +373,7 @@ class BooksQueue:
         }
 
         with self.BOOKS_PATH.open('w', encoding='utf-8') as f:
-            ujson.dump(res, f, indent=self.INDENT, ensure_ascii=False)
+            ujson.dump(res, f, indent=INDENT, ensure_ascii=False)
 
     def _str_queue(self) -> str:
         """
@@ -386,7 +388,7 @@ class BooksQueue:
             days_count = book.pages // self.avg + 1
             finish_date = last_date + datetime.timedelta(days=days_count)
 
-            days = f"{days_count} {self.inflect_day(days_count)}"
+            days = f"{days_count} {INFLECT_DAY(days_count)}"
             res += f"«{book.title}» будет прочитана за {days}\n"
 
             start = last_date.strftime(DATE_FORMAT)
