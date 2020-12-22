@@ -508,6 +508,33 @@ class BooksQueue:
 
         self.queue[0].start_date = completed_date + datetime.timedelta(days=1)
 
+    def _last_id(self) -> int:
+        """
+        :return: int, id of the last book in queue.
+        """
+        return self.queue[-1].id
+
+    def add_book(self,
+                 title: str,
+                 authors: str,
+                 pages: int) -> None:
+        """
+        Add book to and and the queue.
+
+        Id will be calculated as id
+        of the last book + 1.
+
+        :param title: str, book's title.
+        :param authors: str, book's authors.
+        :param pages: int, count of pages in the book.
+
+        :return: None.
+        """
+        book = Book(
+            self._last_id() + 1, title, authors, pages
+        )
+        self.queue.append(book)
+
     def __in(self,
              **kwargs) -> Iterator[Book]:
         where = kwargs.pop('where', 'queue')
