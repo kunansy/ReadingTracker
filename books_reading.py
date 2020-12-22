@@ -54,6 +54,7 @@ class BooksQueue:
             log = {}
         self.__log = log
         self.inflect_page = inflect_word('страница')
+        self.inflect_day = inflect_word('день')
 
     @property
     def log(self) -> dict:
@@ -208,7 +209,7 @@ class BooksQueue:
             days_count = val['pages'] // self.avg + 1
             finish_date = last_date + datetime.timedelta(days=days_count)
 
-            days = f"{days_count} {self.inflect_page(days_count)}"
+            days = f"{days_count} {self.inflect_day(days_count)}"
             res += f"«{key}» будет прочитана за {days}\n"
 
             start = last_date.strftime(self.DATE_FORMAT)
