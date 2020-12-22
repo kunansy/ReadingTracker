@@ -313,7 +313,7 @@ class BooksQueue:
         :exception ValueError: if the file if empty.
         """
         with self.LOG_PATH.open(encoding='utf-8') as f:
-            data = ujson.loads(f.read())
+            data = ujson.load(f)
 
         res = {}
         for date, count in data.items():
@@ -380,13 +380,13 @@ class BooksQueue:
         """
         res = ''
 
-        last_date = self.START_DATE
-        for key, val in self.books.items():
-            days_count = val['pages'] // self.avg + 1
+        last_date = self.start_date
+        for book in self.queue:
+            days_count = book.pages // self.avg + 1
             finish_date = last_date + datetime.timedelta(days=days_count)
 
             days = f"{days_count} {self.inflect_day(days_count)}"
-            res += f"«{key}» будет прочитана за {days}\n"
+            res += f"«{book.title}» будет прочитана за {days}\n"
 
             start = last_date.strftime(DATE_FORMAT)
             stop = finish_date.strftime(DATE_FORMAT)
