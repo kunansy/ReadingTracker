@@ -52,6 +52,23 @@ def yesterday() -> datetime.date:
     return today() - datetime.timedelta(days=1)
 
 
+def to_datetime(date: DATE_TYPE) -> datetime.date:
+    if isinstance(date, str):
+        try:
+            date = datetime.datetime.strptime(date, DATE_FORMAT)
+            date = date.date()
+        except ValueError as e:
+            raise ValueError(f"Wrong str format\n{e}")
+        else:
+            return date
+    elif isinstance(date, datetime.datetime):
+        return date.date()
+    elif isinstance(date, datetime.date):
+        return date
+    else:
+        raise TypeError(f"Str or datetime expected, {type(date)} found")
+
+
 class Log:
     __slots__ = '__log'
 
@@ -94,23 +111,6 @@ class Log:
         :return: int, total count of read pages.
         """
         return sum(self.log.values())
-
-    @staticmethod
-    def _to_datetime(date: DATE_TYPE) -> datetime.date:
-        if isinstance(date, str):
-            try:
-                date = datetime.datetime.strptime(date, DATE_FORMAT)
-                date = date.date()
-            except ValueError as e:
-                raise ValueError(f"Wrong str format\n{e}")
-            else:
-                return date
-        elif isinstance(date, datetime.datetime):
-            return date.date()
-        elif isinstance(date, datetime.date):
-            return date
-        else:
-            raise TypeError(f"Str or datetime expected, {type(date)} found")
 
     def _get_log(self) -> Dict[datetime.date, int]:
         """
