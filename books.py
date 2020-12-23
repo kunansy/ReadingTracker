@@ -667,7 +667,7 @@ def is_ok(num: int or None) -> bool:
     :param num: int or None, value to validate.
     :return: bool, whether the arg is int > 0.
     """
-    return num is not None and num > 0
+    return num is not None and num >= 0
 
 
 def main() -> None:
