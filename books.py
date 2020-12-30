@@ -728,14 +728,11 @@ def main() -> None:
     log = Log()
     books_queue = BooksQueue(log)
 
-    if not (args.today is None or args.yesterday is None):
-        raise ValueError("Only today or yesterday, not together")
-
     is_dump_log = False
     if is_ok(args.today):
         log.set_today_log(args.today)
         is_dump_log = True
-    elif is_ok(args.yesterday):
+    if is_ok(args.yesterday):
         log.set_yesterday_log(args.yesterday)
         is_dump_log = True
 
