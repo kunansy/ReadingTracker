@@ -588,6 +588,27 @@ class BooksQueue:
         )
         self.queue.append(book)
 
+    def push_front(self,
+                   title: str,
+                   authors: str,
+                   pages: int) -> None:
+        """
+        Add a book to the begin of the queue.
+
+        Id will be calculated as id
+         of the last book + 1.
+
+        :param title: str, book's title.
+        :param authors: str, book's authors.
+        :param pages: int, count of pages in the book.
+
+        :return: None.
+        """
+        book = Book(
+            self._last_id() + 1, title, authors, pages
+        )
+        self.queue.insert(book, 0)
+
     def __in(self,
              **kwargs) -> Iterator[Book]:
         where = kwargs.pop('where', 'queue')
