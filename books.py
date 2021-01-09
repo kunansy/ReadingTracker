@@ -734,18 +734,16 @@ def main() -> None:
     log = Log()
     books_queue = BooksQueue(log)
 
-    is_dump_log = False
     if is_ok(args.today):
         log.set_today_log(args.today)
-        is_dump_log = True
+        log.dump()
     if is_ok(args.yesterday):
         log.set_yesterday_log(args.yesterday)
-        is_dump_log = True
+        log.dump()
 
-    is_dump_books = False
     if args.cb:
         books_queue.complete_book()
-        is_dump_books = True
+        books_queue.dump()
 
     if args.pall:
         print(books_queue)
@@ -759,11 +757,7 @@ def main() -> None:
         if args.pp:
             books_queue.print_processed()
 
-    if is_dump_log:
-        log.dump()
-    if is_dump_books:
-        books_queue.dump()
-
 
 if __name__ == "__main__":
     main()
+
