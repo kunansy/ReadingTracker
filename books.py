@@ -567,12 +567,12 @@ class BooksQueue:
             return 0
         return self.queue[-1].id
 
-    def add_book(self,
-                 title: str,
-                 authors: str,
-                 pages: int) -> None:
+    def push_back(self,
+                  title: str,
+                  authors: str,
+                  pages: int) -> None:
         """
-        Add book to and and the queue.
+        Add a book to the end of the queue.
 
         Id will be calculated as id
         of the last book + 1.
