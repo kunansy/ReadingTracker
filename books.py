@@ -676,50 +676,56 @@ def main() -> None:
     )
     parser.add_argument(
         '-pl', '--print-log',
+        help="Print reading log",
         default=False,
         action="store_true",
         dest='pl'
     )
     parser.add_argument(
         '-pq', '--print-queue',
+        help="Print books queue",
         default=False,
         action="store_true",
         dest='pq'
     )
     parser.add_argument(
         '-pp', '--print-processed',
+        help="Print processed books",
         default=False,
         action="store_true",
         dest='pp'
     )
     parser.add_argument(
         '-pt', '--print-total',
+        help="Print total count of read pages",
         default=False,
         action="store_true",
         dest='pt'
     )
     parser.add_argument(
         '-pall', '--print-all',
+        help="Print all: reading log, books queue, processed books, total read pages count",
         default=False,
         action="store_true",
         dest='pall'
     )
     parser.add_argument(
         '-tday', '--today',
-        metavar="Set count of read pages for today",
+        help="Set count of pages read today",
         type=int,
         dest='today',
         required=False
     )
     parser.add_argument(
         '-yday', '--yesterday',
-        metavar="Set count of read pages for yesterday",
+        help="Set count of pages read yesterday",
         type=int,
         dest='yesterday',
         required=False
     )
     parser.add_argument(
         '-cb', '--complete-book',
+        help="Move the first book from 'queue' to 'processed'",
         default=False,
         action="store_true",
         dest='cb'
