@@ -725,7 +725,7 @@ def main() -> None:
     )
     parser.add_argument(
         '-pall', '--print-all',
-        help="Print all: reading log, materials queue, " /
+        help="Print all: reading log, materials queue, "
              "processed materials, total read pages count",
         default=False,
         action="store_true",
