@@ -268,7 +268,7 @@ class Log:
         return res + '\n)'
 
 
-class Book:
+class Material:
     __slots__ = (
         '__id', '__title', '__author',
         '__pages', '__start_date', '__end_date'
@@ -294,42 +294,42 @@ class Book:
     @property
     def id(self) -> int:
         """
-        :return: int, book's id.
+        :return: int, material's id.
         """
         return self.__id
 
     @property
     def title(self) -> str:
         """
-        :return: str, book's title.
+        :return: str, material's title.
         """
         return self.__title
 
     @property
     def author(self) -> str:
         """
-        :return: str, book's authors.
+        :return: str, material's authors.
         """
         return self.__author
 
     @property
     def pages(self) -> int:
         """
-        :return: int, count of book's pages.
+        :return: int, count of material's pages.
         """
         return self.__pages
 
     @property
     def start_date(self) -> datetime.date:
         """
-        :return: datetime.date, date when the book was started.
+        :return: datetime.date, date when the material was started.
         """
         return self.__start_date
 
     @property
     def end_date(self) -> datetime.date:
         """
-        :return: datetime.date, date when the book was finished.
+        :return: datetime.date, date when the material was finished.
         """
         return self.__end_date
 
@@ -388,16 +388,16 @@ class Book:
         return res + '\n)'
 
 
-class BooksQueue:
+class MaterialsQueue:
     __slots__ = (
-        '__books', '__log'
+        '__materials', '__log'
     )
 
-    BOOKS_PATH = DATA_FOLDER / 'books.json'
+    BOOKS_PATH = DATA_FOLDER / 'materials.json'
 
     def __init__(self,
                  log: Log) -> None:
-        self.__books = self._get_books()
+        self.__materials = self._get_materials()
         self.__log = log
 
     @property
@@ -408,66 +408,66 @@ class BooksQueue:
         return self.__log
 
     @property
-    def books(self) -> dict:
+    def materials(self) -> dict:
         """
-        :return: dict, books.
+        :return: dict, materials.
         """
-        return self.__books
+        return self.__materials
 
     @property
-    def queue(self) -> List[Book]:
+    def queue(self) -> List[Material]:
         """
-        :return: list of Books in queue.
+        :return: list of Materials in queue.
         """
-        return self.books.get('queue', [])
+        return self.materials.get('queue', [])
 
     @property
-    def processed(self) -> List[Book]:
+    def processed(self) -> List[Material]:
         """
-        :return: list of Books in processed.
+        :return: list of Materials in processed.
         """
-        return self.books.get('processed', [])
+        return self.materials.get('processed', [])
 
     @property
     def start_date(self) -> datetime.date:
         """
         :return: datetime.date, date when reading
-         of the first book started.
+         of the first material started.
         """
         return self[1].start_date
 
-    def _get_books(self) -> Dict[str, List[Book]]:
+    def _get_materials(self) -> Dict[str, List[Material]]:
         """
-        :return: dict, books.
+        :return: dict, materials.
         """
         with self.BOOKS_PATH.open(encoding='utf-8') as f:
-            books = ujson.load(f)
+            materials = ujson.load(f)
 
         return {
             'queue': [
-                Book(**book)
-                for book in books['queue']
+                Material(**material)
+                for material in materials['queue']
             ],
             'processed': [
-                Book(**book)
-                for book in books['processed']
+                Material(**material)
+                for material in materials['processed']
             ]
         }
 
     def dump(self) -> None:
         """
-        Dump books.
+        Dump materials.
 
         :return: None.
         """
         res = {
             'queue': [
-                book.json()
-                for book in self.queue
+                material.json()
+                for material in self.queue
             ],
             'processed': [
-                book.json()
-                for book in self.processed
+                material.json()
+                for material in self.processed
             ]
         }
 
@@ -476,22 +476,22 @@ class BooksQueue:
 
     def _str_queue(self) -> str:
         """
-        Convert books queue to str to print.
+        Convert materials queue to str to print.
 
         :return: this str.
         """
         if len(self.queue) == 0:
-            return "No books in queue"
+            return "No materials in queue"
 
         res = ''
 
         last_date = self.start_date
-        for book in self.queue:
-            days_count = book.pages // (self.log.avg + 1)
+        for material in self.queue:
+            days_count = material.pages // (self.log.avg + 1)
             finish_date = last_date + datetime.timedelta(days=days_count)
 
             days = f"{days_count} {INFLECT_DAY(days_count)}"
-            res += f"«{book.title}» will be read\n"
+            res += f"«{material.title}» will be read\n"
 
             start = last_date.strftime(DATE_FORMAT)
             stop = finish_date.strftime(DATE_FORMAT)
@@ -507,22 +507,22 @@ class BooksQueue:
         :return: this str.
         """
         if len(self.processed) == 0:
-            return "No books have been read yet"
+            return "No materials have been read yet"
 
         res = ''
-        for book in self.processed:
-            res += f"«{book.title}», pages: {book.pages} has been read\n"
+        for material in self.processed:
+            res += f"«{material.title}», pages: {material.pages} has been read\n"
 
-            start = book.start_date.strftime(DATE_FORMAT)
-            stop = book.end_date.strftime(DATE_FORMAT)
-            days = (book.end_date - book.start_date).days
+            start = material.start_date.strftime(DATE_FORMAT)
+            stop = material.end_date.strftime(DATE_FORMAT)
+            days = (material.end_date - material.start_date).days
 
             res += f"From {start} by {stop} in {days} {INFLECT_DAY(days)}\n"
         return res
 
     def print_queue(self) -> None:
         """
-        Print books queue.
+        Print materials queue.
 
         :return: None.
         """
@@ -530,37 +530,37 @@ class BooksQueue:
 
     def print_processed(self) -> None:
         """
-        Print processed books.
+        Print processed materials.
 
         :return: None.
         """
         print(self._str_processed())
 
-    def complete_book(self,
-                      completed_date: datetime.date = None) -> None:
+    def complete_material(self,
+                          completed_date: datetime.date = None) -> None:
         """
-        Move the first book in 'queue' to 'processed'.
+        Move the first material in 'queue' to 'processed'.
 
         :param completed_date: datetime.date or str with DATE_FORMAT,
-         date when the book was completed. Today by default.
+         date when the material was completed. Today by default.
         :return: None.
 
-        :exception ValueError: if the books queue is empty.
+        :exception ValueError: if the materials queue is empty.
         """
         if len(self.queue) == 0:
-            raise ValueError("Books queue is empty")
+            raise ValueError("Materials queue is empty")
 
-        book = self.queue.pop(0)
+        material = self.queue.pop(0)
 
         completed_date = completed_date or today()
-        book.end_date = completed_date
-        self.processed.append(book)
+        material.end_date = completed_date
+        self.processed.append(material)
 
         self.queue[0].start_date = completed_date + datetime.timedelta(days=1)
 
     def _last_id(self) -> int:
         """
-        :return: int, id of the last book in queue.
+        :return: int, id of the last material in queue.
          0 if the query is empty.
         """
         if len(self.queue) == 0:
@@ -572,113 +572,113 @@ class BooksQueue:
                   authors: str,
                   pages: int) -> None:
         """
-        Add a book to the end of the queue.
+        Add a material to the end of the queue.
 
         Id will be calculated as id
-        of the last book + 1.
+        of the last material + 1.
 
-        :param title: str, book's title.
-        :param authors: str, book's authors.
-        :param pages: int, count of pages in the book.
+        :param title: str, material's title.
+        :param authors: str, material's authors.
+        :param pages: int, count of pages in the material.
 
         :return: None.
         """
-        book = Book(
+        material = Material(
             self._last_id() + 1, title, authors, pages
         )
-        self.queue.append(book)
+        self.queue.append(material)
 
     def push_front(self,
                    title: str,
                    authors: str,
                    pages: int) -> None:
         """
-        Add a book to the begin of the queue.
+        Add a material to the begin of the queue.
 
         Id will be calculated as id
-         of the last book + 1.
+         of the last material + 1.
 
-        :param title: str, book's title.
-        :param authors: str, book's authors.
-        :param pages: int, count of pages in the book.
+        :param title: str, material's title.
+        :param authors: str, material's authors.
+        :param pages: int, count of pages in the material.
 
         :return: None.
         """
-        book = Book(
+        material = Material(
             self._last_id() + 1, title, authors, pages
         )
-        self.queue.insert(book, 0)
+        self.queue.insert(material, 0)
 
     def __in(self,
-             **kwargs) -> Iterator[Book]:
+             **kwargs) -> Iterator[Material]:
         where = kwargs.pop('where', 'queue')
-        for book in getattr(self, where):
+        for material in getattr(self, where):
             if all(
-                getattr(book, arg) == val
+                getattr(material, arg) == val
                 for arg, val in kwargs.items()
             ):
-                yield book
+                yield material
 
     def in_queue(self,
-                 **kwargs) -> List[Book]:
+                 **kwargs) -> List[Material]:
         """
         :param kwargs: pairs: atr name - atr value.
-        :return: list of Books with these params from queue.
+        :return: list of Materials with these params from queue.
         """
         try:
             res = [
-                book
-                for book in self.__in(where='queue', **kwargs)
+                material
+                for material in self.__in(where='queue', **kwargs)
             ]
         except AttributeError as e:
-            raise AttributeError(f"Book obj has no given attribute\n{e}")
+            raise AttributeError(f"Material obj has no given attribute\n{e}")
         else:
             return res
 
     def in_processed(self,
-                     **kwargs) -> List[Book]:
+                     **kwargs) -> List[Material]:
         """
         :param kwargs: pairs: atr name - atr value.
-        :return: list of Books with there params from processed.
+        :return: list of Materials with there params from processed.
         """
         try:
             res = [
-                book
-                for book in self.__in(where='processed', **kwargs)
+                material
+                for material in self.__in(where='processed', **kwargs)
             ]
         except AttributeError as e:
-            raise AttributeError(f"Book obj has no given attribute\n{e}")
+            raise AttributeError(f"Material obj has no given attribute\n{e}")
         else:
             return res
 
     def __str__(self) -> str:
         """
-        Get log, books queue and total cunt of read pages.
+        Get log, materials queue and total cunt of read pages.
 
         :return: this str.
         """
         return f"Reading log:\n{self.log}\n" \
-               f"Books queue:\n{self._str_queue()}\n" \
-               f"Processed books:\n{self._str_processed()}"
+               f"Materials queue:\n{self._str_queue()}\n" \
+               f"Processed materials:\n{self._str_processed()}"
 
     def __contains__(self,
                      id_: int) -> bool:
         """
-        Whether the queue contains the book at id.
+        Whether the queue contains the material at id.
 
-        :param id_: int, book's id.
+        :param id_: int, material's id.
         :return: bool.
         """
         return bool(self.in_queue(id=id_) + self.in_processed(id=id_))
 
     def __getitem__(self,
-                    id_: int) -> Book:
+                    id_: int) -> Material:
         if id_ not in self:
-            raise IndexError(f"Book with `{id_=}` doesn't exist")
+            raise IndexError(f"Material with `{id_=}` doesn't exist")
 
-        for book in self.queue + self.processed:
-            if book.id == id_:
-                return book
+        for material in self.queue + self.processed:
+            if material.id == id_:
+                return material
 
 
 def is_ok(num: int or None) -> bool:
@@ -693,7 +693,7 @@ def is_ok(num: int or None) -> bool:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Books to read, processed books and reading log"
+        description="Materials to read, processed materials and reading log"
     )
     parser.add_argument(
         '-pl', '--print-log',
@@ -704,14 +704,14 @@ def main() -> None:
     )
     parser.add_argument(
         '-pq', '--print-queue',
-        help="Print books queue",
+        help="Print materials queue",
         default=False,
         action="store_true",
         dest='pq'
     )
     parser.add_argument(
         '-pp', '--print-processed',
-        help="Print processed books",
+        help="Print processed materials",
         default=False,
         action="store_true",
         dest='pp'
@@ -725,7 +725,8 @@ def main() -> None:
     )
     parser.add_argument(
         '-pall', '--print-all',
-        help="Print all: reading log, books queue, processed books, total read pages count",
+        help="Print all: reading log, materials queue, "
+             "processed materials, total read pages count",
         default=False,
         action="store_true",
         dest='pall'
@@ -745,15 +746,15 @@ def main() -> None:
         required=False
     )
     parser.add_argument(
-        '-cb', '--complete-book',
-        help="Move the first book from 'queue' to 'processed'",
+        '-cb', '--complete-material',
+        help="Move the first material from 'queue' to 'processed'",
         default=False,
         action="store_true",
         dest='cb'
     )
     args = parser.parse_args()
     log = Log()
-    books_queue = BooksQueue(log)
+    materials_queue = MaterialsQueue(log)
 
     if is_ok(args.today):
         log.set_today_log(args.today)
@@ -763,20 +764,20 @@ def main() -> None:
         log.dump()
 
     if args.cb:
-        books_queue.complete_book()
-        books_queue.dump()
+        materials_queue.complete_material()
+        materials_queue.dump()
 
     if args.pall:
-        print(books_queue)
+        print(materials_queue)
     else:
         if args.pl:
             log.print_log()
         if args.pt:
             log.print_total()
         if args.pq:
-            books_queue.print_queue()
+            materials_queue.print_queue()
         if args.pp:
-            books_queue.print_processed()
+            materials_queue.print_processed()
 
 
 if __name__ == "__main__":
