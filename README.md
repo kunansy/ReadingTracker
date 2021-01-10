@@ -1,7 +1,6 @@
-# MaterialsQueue
-Reading tracker.
+# ReadingTracker
 
-It stores list of materials in `data/materials.json`, reading log in `data/log.json`.
+It stores list of materials to read in `data/materials.json`, reading log in `data/log.json`.
 
 
 ## Features
