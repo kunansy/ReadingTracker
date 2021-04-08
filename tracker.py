@@ -101,12 +101,20 @@ class Log:
         return self.LOG_PATH
 
     @property
+    def days(self) -> int:
+        """
+        :return: total amount of logged days.
+        """
+        # TODO: don't set empty days, but calculate its amount here
+        return len(self.log)
+
+    @property
     def avg(self) -> int:
         """
         :return: average count of read pages.
         """
         try:
-            return sum(self.log.values()) // len(self.log)
+            return sum(self.log.values()) // self.days
         except ZeroDivisionError:
             return 0
 
@@ -128,10 +136,10 @@ class Log:
         with self.path.open(encoding='utf-8') as f:
             log = ujson.load(f)
 
-            res = {}
-            for date, count in log.items():
-                res[to_datetime(date)] = count
-        return res
+            return {
+                to_datetime(date): int(count)
+                for date, count in log.items()
+            }
 
     def _set_log(self,
                  date: datetime.date,
@@ -226,11 +234,10 @@ class Log:
     def dump(self) -> None:
         """ Dump dict to the log file. """
 
-        :return: None.
-        """
-        data_str = {}
-        for date, count in self.log.items():
-            data_str[date.strftime(DATE_FORMAT)] = count
+        data_str = {
+            date.strftime(DATE_FORMAT): count
+            for date, count in self.log.items()
+        }
 
         with self.path.open('w', encoding='utf-8') as f:
             ujson.dump(data_str, f, indent=INDENT)
@@ -569,7 +576,7 @@ class MaterialsQueue:
         material = Material(
             self._last_id() + 1, title, authors, pages
         )
-        self.queue.insert(material, 0)
+        self.queue.insert(0, material)
 
     def __in(self,
              **kwargs) -> Iterator[Material]:
@@ -592,8 +599,8 @@ class MaterialsQueue:
                 material
                 for material in self.__in(where='queue', **kwargs)
             ]
-        except AttributeError as e:
-            raise AttributeError(f"Material obj has no given attribute\n{e}")
+        except AttributeError:
+            raise AttributeError("Material obj has no given attribute")
         else:
             return res
 
@@ -608,8 +615,8 @@ class MaterialsQueue:
                 material
                 for material in self.__in(where='processed', **kwargs)
             ]
-        except AttributeError as e:
-            raise AttributeError(f"Material obj has no given attribute\n{e}")
+        except AttributeError:
+            raise AttributeError("Material obj has no given attribute")
         else:
             return res
 
