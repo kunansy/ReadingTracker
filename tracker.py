@@ -379,7 +379,7 @@ class Material:
         return res + '\n)'
 
 
-class MaterialsQueue:
+class Tracker:
     __slots__ = (
         '__materials', '__log'
     )
@@ -720,7 +720,7 @@ def main() -> None:
     )
     args = parser.parse_args()
     log = Log()
-    materials_queue = MaterialsQueue(log)
+    materials_queue = Tracker(log)
 
     if is_ok(args.today):
         log.set_today_log(args.today)
