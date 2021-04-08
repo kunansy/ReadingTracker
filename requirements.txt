@@ -1,2 +1,1 @@
-ujson
-pymorphy2
+ujson==4.0.2
