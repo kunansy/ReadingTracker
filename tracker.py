@@ -2,12 +2,13 @@
 import argparse
 import datetime
 from pathlib import Path
-from typing import Dict, List, Iterator, Union
+from typing import Iterator, Union, Optional
 
 import ujson
 
+
 DATA_FOLDER = Path('data')
-LOG_TYPE = Dict[datetime.date, int]
+LOG_TYPE = dict[datetime.date, int]
 PAGES_PER_DAY = 50
 INDENT = 2
 
@@ -15,14 +16,15 @@ DATE_FORMAT = '%d.%m.%Y'
 DATE_TYPE = Union[str, datetime.date, datetime.datetime]
 
 
-def with_num(word: str, num: int) -> str:
+def with_num(word: str,
+             num: int) -> str:
     """
     Make the word agree with the number.
     Means add -s if num > 1.
 
-    :param word: str, English word to make agree with the number.
-    :param num: int, num.
-    :return: str, word with -s or without.
+    :param word: English word to make agree with the number.
+    :param num: num.
+    :return: word with -s or without.
     """
     return f"{word}{'s' * (num > 1)}"
 
@@ -40,19 +42,19 @@ INFLECT_DAY = inflect_word('day')
 
 def today() -> datetime.date:
     """
-    :return: datetime.date, today.
+    :return: today.
     """
     return datetime.date.today()
 
 
 def yesterday() -> datetime.date:
     """
-    :return: datetime.date, yesterday.
+    :return: yesterday.
     """
     return today() - datetime.timedelta(days=1)
 
 
-def to_datetime(date: DATE_TYPE) -> datetime.date:
+def to_datetime(date: DATE_TYPE) -> Optional[datetime.date]:
     if date is None:
         return
 
@@ -87,7 +89,7 @@ class Log:
     @property
     def log(self) -> LOG_TYPE:
         """
-        :return: dict, reading log.
+        :return: reading log.
         """
         return self.__log
 
@@ -101,7 +103,7 @@ class Log:
     @property
     def avg(self) -> int:
         """
-        :return: int, average count of read pages.
+        :return: average count of read pages.
         """
         try:
             return sum(self.log.values()) // len(self.log)
@@ -111,16 +113,16 @@ class Log:
     @property
     def total(self) -> int:
         """
-        :return: int, total count of read pages.
+        :return: total count of read pages.
         """
         return sum(self.log.values())
 
-    def _get_log(self) -> Dict[datetime.date, int]:
+    def _get_log(self) -> dict[datetime.date, int]:
         """
-        Get log from the file and parse it to JSON dict.
+        Get log from JSON file and parse it.
         Convert keys to datetime.date, values to int.
 
-        :return: JSON dict with the format.
+        :return: dict with the format.
         :exception ValueError: if the file if empty.
         """
         with self.path.open(encoding='utf-8') as f:
@@ -139,9 +141,8 @@ class Log:
         Check arguments valid.
         Sort the log by dates.
 
-        :param date: datetime.date or str, date of read.
-        :param pages: int, count of read pages.
-        :return: None.
+        :param date: date of log.
+        :param pages: count of read pages.
 
         :exception ValueError: of pages < 0 or date format is wrong.
         """
@@ -160,8 +161,7 @@ class Log:
         """
         Set today's reading log.
 
-        :param pages: int, count of pages read today.
-        :return: None.
+        :param pages: count of pages read today.
         """
         self._set_log(today(), pages)
 
@@ -170,16 +170,13 @@ class Log:
         """
         Set yesterday's reading log.
 
-        :param pages: int, count of pages read yesterday.
-        :return: None.
+        :param pages: count of pages read yesterday.
         """
         self._set_log(yesterday(), pages)
 
     def _str_log(self) -> str:
         """
-        Convert log to str to print.
-
-        :return: this str.
+        :return: converted to str log.
         """
         if len(self.log) == 0:
             return "Reading log is empty"
@@ -210,9 +207,7 @@ class Log:
 
     def _str_total(self) -> str:
         """
-        Get total count of read pages to print.
-
-        :return: this str.
+        :return: total count of read pages.
         """
         if len(self.log) == 0:
             return "Reading log is empty"
@@ -221,24 +216,15 @@ class Log:
                f"{'-' * 70}"
 
     def print_log(self) -> None:
-        """
-        Print reading log.
-
-        :return: None.
-        """
+        """ Print reading log. """
         print(self._str_log())
 
     def print_total(self) -> None:
-        """
-        Print total count of read pages.
-
-        :return: None.
-        """
+        """ Print total count of read pages. """
         print(self._str_total())
 
     def dump(self) -> None:
-        """
-        Dump dict to the log file.
+        """ Dump dict to the log file. """
 
         :return: None.
         """
@@ -294,51 +280,50 @@ class Material:
     @property
     def id(self) -> int:
         """
-        :return: int, material's id.
+        :return: material's id.
         """
         return self.__id
 
     @property
     def title(self) -> str:
         """
-        :return: str, material's title.
+        :return: material's title.
         """
         return self.__title
 
     @property
     def author(self) -> str:
         """
-        :return: str, material's authors.
+        :return: material's authors.
         """
         return self.__author
 
     @property
     def pages(self) -> int:
         """
-        :return: int, count of material's pages.
+        :return: count of material's pages.
         """
         return self.__pages
 
     @property
     def start_date(self) -> datetime.date:
         """
-        :return: datetime.date, date when the material was started.
+        :return: date when the material was started.
         """
         return self.__start_date
 
     @property
     def end_date(self) -> datetime.date:
         """
-        :return: datetime.date, date when the material was finished.
+        :return: date when the material was finished.
         """
         return self.__end_date
 
     @start_date.setter
     def start_date(self,
-                   date: datetime.date or str) -> None:
+                   date: Union[datetime.date, str]) -> None:
         """
-        :param date: datetime.date or str, new start_date value.
-        :return: None.
+        :param date: new start_date value.
 
         :exception ValueError: if the date is str with wrong format.
         """
@@ -346,10 +331,9 @@ class Material:
 
     @end_date.setter
     def end_date(self,
-                 date: datetime.date or str) -> None:
+                 date: Union[datetime.date, str]) -> None:
         """
-        :param date: datetime.date or str, new end_date value.
-        :return: None.
+        :param date: new end_date value.
 
         :exception ValueError: if the date is str with wrong format.
         """
@@ -357,7 +341,7 @@ class Material:
 
     def json(self) -> dict:
         """
-        :return: dict, fields' names and their values.
+        :return: fields' names and their values.
         """
         json = {
             'id': self.id,
@@ -410,19 +394,19 @@ class MaterialsQueue:
     @property
     def materials(self) -> dict:
         """
-        :return: dict, materials.
+        :return: materials.
         """
         return self.__materials
 
     @property
-    def queue(self) -> List[Material]:
+    def queue(self) -> list[Material]:
         """
         :return: list of Materials in queue.
         """
         return self.materials.get('queue', [])
 
     @property
-    def processed(self) -> List[Material]:
+    def processed(self) -> list[Material]:
         """
         :return: list of Materials in processed.
         """
@@ -431,14 +415,13 @@ class MaterialsQueue:
     @property
     def start_date(self) -> datetime.date:
         """
-        :return: datetime.date, date when reading
-         of the first material started.
+        :return: date when reading of the first material started.
         """
         return self[1].start_date
 
-    def _get_materials(self) -> Dict[str, List[Material]]:
+    def _get_materials(self) -> dict[str, list[Material]]:
         """
-        :return: dict, materials.
+        :return: materials.
         """
         with self.BOOKS_PATH.open(encoding='utf-8') as f:
             materials = ujson.load(f)
@@ -455,11 +438,7 @@ class MaterialsQueue:
         }
 
     def dump(self) -> None:
-        """
-        Dump materials.
-
-        :return: None.
-        """
+        """ Dump materials. """
         res = {
             'queue': [
                 material.json()
@@ -476,9 +455,7 @@ class MaterialsQueue:
 
     def _str_queue(self) -> str:
         """
-        Convert materials queue to str to print.
-
-        :return: this str.
+        :return: converted to str queue.
         """
         if len(self.queue) == 0:
             return "No materials in queue"
@@ -502,9 +479,7 @@ class MaterialsQueue:
 
     def _str_processed(self) -> str:
         """
-        Convert processed to str to print.
-
-        :return: this str.
+        :return: converted to str processed list.
         """
         if len(self.processed) == 0:
             return "No materials have been read yet"
@@ -521,19 +496,11 @@ class MaterialsQueue:
         return res
 
     def print_queue(self) -> None:
-        """
-        Print materials queue.
-
-        :return: None.
-        """
+        """ Print materials queue. """
         print(self._str_queue())
 
     def print_processed(self) -> None:
-        """
-        Print processed materials.
-
-        :return: None.
-        """
+        """ Print processed materials. """
         print(self._str_processed())
 
     def complete_material(self,
@@ -541,9 +508,8 @@ class MaterialsQueue:
         """
         Move the first material in 'queue' to 'processed'.
 
-        :param completed_date: datetime.date or str with DATE_FORMAT,
-         date when the material was completed. Today by default.
-        :return: None.
+        :param completed_date: date when the material was completed.
+        Today by default.
 
         :exception ValueError: if the materials queue is empty.
         """
@@ -560,7 +526,7 @@ class MaterialsQueue:
 
     def _last_id(self) -> int:
         """
-        :return: int, id of the last material in queue.
+        :return: id of the last material in queue.
          0 if the query is empty.
         """
         if len(self.queue) == 0:
@@ -577,11 +543,9 @@ class MaterialsQueue:
         Id will be calculated as id
         of the last material + 1.
 
-        :param title: str, material's title.
-        :param authors: str, material's authors.
-        :param pages: int, count of pages in the material.
-
-        :return: None.
+        :param title: material's title.
+        :param authors: material's authors.
+        :param pages: count of pages in the material.
         """
         material = Material(
             self._last_id() + 1, title, authors, pages
@@ -598,11 +562,9 @@ class MaterialsQueue:
         Id will be calculated as id
          of the last material + 1.
 
-        :param title: str, material's title.
-        :param authors: str, material's authors.
-        :param pages: int, count of pages in the material.
-
-        :return: None.
+        :param title: material's title.
+        :param authors: material's authors.
+        :param pages: count of pages in the material.
         """
         material = Material(
             self._last_id() + 1, title, authors, pages
@@ -620,7 +582,7 @@ class MaterialsQueue:
                 yield material
 
     def in_queue(self,
-                 **kwargs) -> List[Material]:
+                 **kwargs) -> list[Material]:
         """
         :param kwargs: pairs: atr name - atr value.
         :return: list of Materials with these params from queue.
@@ -636,10 +598,10 @@ class MaterialsQueue:
             return res
 
     def in_processed(self,
-                     **kwargs) -> List[Material]:
+                     **kwargs) -> list[Material]:
         """
         :param kwargs: pairs: atr name - atr value.
-        :return: list of Materials with there params from processed.
+        :return: list of Materials with these params from processed.
         """
         try:
             res = [
@@ -653,9 +615,7 @@ class MaterialsQueue:
 
     def __str__(self) -> str:
         """
-        Get log, materials queue and total cunt of read pages.
-
-        :return: this str.
+        :return: log, materials queue and total count of read pages.
         """
         return f"Reading log:\n{self.log}\n" \
                f"Materials queue:\n{self._str_queue()}\n" \
@@ -664,10 +624,8 @@ class MaterialsQueue:
     def __contains__(self,
                      id_: int) -> bool:
         """
-        Whether the queue contains the material at id.
-
-        :param id_: int, material's id.
-        :return: bool.
+        :param id_: material's id.
+        :return: whether the queue contains the material at id.
         """
         return bool(self.in_queue(id=id_) + self.in_processed(id=id_))
 
@@ -681,19 +639,20 @@ class MaterialsQueue:
                 return material
 
 
-def is_ok(num: int or None) -> bool:
+def is_ok(num: Optional[int]) -> bool:
     """
     Check that the arg is int > 0.
 
-    :param num: int or None, value to validate.
-    :return: bool, whether the arg is int > 0.
+    :param num: value to validate.
+    :return: whether the arg is valid.
     """
     return num is not None and num >= 0
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Materials to read, processed materials and reading log"
+        description="Reading tracker: materials to read, "
+                    "processed materials and reading log"
     )
     parser.add_argument(
         '-pl', '--print-log',
@@ -782,4 +741,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
