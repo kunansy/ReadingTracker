@@ -1,5 +1,12 @@
-from sqlalchemy import Column, ForeignKey, Integer, String, Date
+__all__ = '',
+
+from contextlib import contextmanager
+from os import environ
+from typing import ContextManager
+
+from sqlalchemy import Column, ForeignKey, Integer, String, Date, create_engine
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import Session
 
 
 DATE_FORMAT = '%d-%m-%Y'
@@ -43,3 +50,57 @@ class Status(Base):
         return "Status(" \
                f"{self.status_id}, {material_title}, " \
                f"{begin}, {end})"
+
+
+Base.metadata.create_all()
+
+engine = create_engine(environ['DB_URI'], echo=True)
+conn = engine.connect()
+
+
+@contextmanager
+def session(**kwargs) -> ContextManager[Session]:
+    new_session = Session(**kwargs)
+    try:
+        yield new_session
+        new_session.commit()
+    except:
+        new_session.rollback()
+        raise
+    finally:
+        new_session.close()
+
+
+def get_materials(**kwargs) -> list[Material]:
+    pass
+
+
+def get_free_materials() -> list[Material]:
+    pass
+
+
+def get_completed_materials() -> list[Material]:
+    pass
+
+
+def get_status(**kwargs) -> list[Status]:
+    pass
+
+
+def add_materials(materials: list[dict]) -> None:
+    pass
+
+
+def complete_material(*,
+                      material_id: int) -> None:
+    pass
+
+
+def delete_material(*,
+                    material_id: int) -> Material:
+    pass
+
+
+def delete_status(*,
+                  status_id: int) -> Status:
+    pass
