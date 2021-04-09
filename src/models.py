@@ -25,8 +25,10 @@ class Material(Base):
 class Status(Base):
     __tablename__ = 'status'
 
-    id = Column(Integer, primary_key=True)
-    material_id = Column(Integer, ForeignKey('material.material_id'))
+    status_id = Column(Integer, primary_key=True)
+    material_id = Column(Integer,
+                         ForeignKey('material.material_id'),
+                         nullable=False)
     begin = Column(Date)
     end = Column(Date)
 
@@ -39,5 +41,5 @@ class Status(Base):
             end = end.strftime(DATE_FORMAT)
 
         return "Status(" \
-               f"{self.id}, {material_title}, " \
+               f"{self.status_id}, {material_title}, " \
                f"{begin}, {end})"
