@@ -14,11 +14,12 @@ class Material(Base):
     title = Column(String, nullable=False)
     authors = Column(String, nullable=False)
     pages = Column(Integer, nullable=False)
+    tags = Column(String)
 
     def __repr__(self) -> str:
         return "Material(" \
                f"{self.material_id}, {self.title}, " \
-               f"{self.authors}, {self.pages})"
+               f"{self.authors}, {self.pages}, {self.tags})"
 
 
 class Status(Base):
