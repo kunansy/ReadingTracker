@@ -40,16 +40,10 @@ INFLECT_DAY = inflect_word('day')
 
 
 def today() -> datetime.date:
-    """
-    :return: today.
-    """
     return datetime.date.today()
 
 
 def yesterday() -> datetime.date:
-    """
-    :return: yesterday.
-    """
     return today() - datetime.timedelta(days=1)
 
 
