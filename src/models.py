@@ -126,6 +126,12 @@ def get_status(*,
 
 
 def add_materials(materials: list[dict]) -> None:
+    """
+    Add some materials to the table.
+
+    :param materials: list of dicts with all required for
+    class Material params.
+    """
     with session() as ses:
         for material in materials:
             material = Material(**material)
