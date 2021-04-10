@@ -83,10 +83,11 @@ def today() -> datetime.date:
 def get_materials(*,
                   materials_ids: list[int] = None) -> list[Material]:
     with session() as ses:
-        if materials_ids:
-            return ses.query(Material).filter(
-                Material.material_id.in_(materials_ids)).all()
-        return ses.query(Material).all()
+        if materials_ids is None:
+            return ses.query(Material).all()
+
+        return ses.query(Material).filter(
+            Material.material_id.in_(materials_ids)).all()
 
 
 def get_free_materials() -> list[Material]:
