@@ -1,5 +1,6 @@
 __all__ = ('get_materials', 'get_status', 'get_completed_materials',
-           'get_free_materials', 'complete_material')
+           'get_free_materials', 'complete_material', 'get_title',
+           'start_material', 'add_materials')
 
 import datetime
 from contextlib import contextmanager
