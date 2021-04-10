@@ -98,8 +98,12 @@ def get_completed_materials() -> list[Material]:
         return ses.query(Material).join(Status).filter(Status.end != None)
 
 
-def get_status(**kwargs) -> list[Status]:
-    pass
+def get_status(*,
+               status_id: int = None) -> list[Status]:
+    with session() as ses:
+        if status_id is None:
+            return ses.query(Status).all()
+        return ses.query(Status).filter(Status.status_id == status_id).all()
 
 
 def add_materials(materials: list[dict]) -> None:
