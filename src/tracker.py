@@ -87,6 +87,13 @@ class Log:
     def path(self) -> Path:
         return self.LOG_PATH
 
+    @property
+    def start(self) -> Optional[datetime.date]:
+        try:
+            return list(self.log.keys())[0]
+        except IndexError:
+            pass
+
     def _get_log(self) -> dict[datetime.date, int]:
         """
         Get log from JSON file and parse it.
