@@ -113,6 +113,21 @@ def add_materials(materials: list[dict]) -> None:
             ses.add(material)
 
 
+def start_material(*,
+                   material_id: int,
+                   start_date: datetime.date = None) -> None:
+    with session() as ses:
+        start_date = start_date or today()
+
+        if start_date > today():
+            raise ValueError("Start date mus be less than today,"
+                             "but %s found", start_date)
+
+        started_material = Status(
+            material_id=material_id, begin=start_date)
+        ses.add(started_material)
+
+
 def complete_material(*,
                       material_id: int) -> None:
     pass
