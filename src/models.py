@@ -118,11 +118,20 @@ def get_completed_materials() -> list[Material]:
 
 
 def get_status(*,
-               status_id: int = None) -> list[Status]:
+               status_ids: list[int] = None) -> list[Status]:
+    """
+    Get the status by their ids or all
+    rows of Status table if it is None.
+
+    :param status_ids: ids of Status row or None.
+    :return: list of found Status rows.
+    """
     with session() as ses:
-        if status_id is None:
+        if status_ids is None:
             return ses.query(Status).all()
-        return ses.query(Status).filter(Status.status_id == status_id).all()
+
+        return ses.query(Status).filter(
+            Status.status_id.in_(status_ids)).all()
 
 
 def add_materials(materials: list[dict]) -> None:
