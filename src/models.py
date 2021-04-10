@@ -98,6 +98,11 @@ def get_materials(*,
 
 
 def get_free_materials() -> list[Material]:
+    """
+    Get all free materials.
+
+    :return: list of Materials where 'end' is None.
+    """
     with session() as ses:
         return ses.query(Material).join(Status).filter(Status.end == None)
 
