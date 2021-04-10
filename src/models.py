@@ -80,7 +80,8 @@ def today() -> datetime.date:
     return datetime.datetime.now().date()
 
 
-def get_materials(materials_ids: list[int]) -> list[Material]:
+def get_materials(*,
+                  materials_ids: list[int] = None) -> list[Material]:
     with session() as ses:
         if materials_ids:
             return ses.query(Material).filter(
