@@ -1,4 +1,5 @@
-__all__ = '',
+__all__ = ('get_materials', 'get_status', 'get_completed_materials',
+           'get_free_materials', 'complete_material')
 
 from contextlib import contextmanager
 from os import environ
@@ -93,14 +94,4 @@ def add_materials(materials: list[dict]) -> None:
 
 def complete_material(*,
                       material_id: int) -> None:
-    pass
-
-
-def delete_material(*,
-                    material_id: int) -> Material:
-    pass
-
-
-def delete_status(*,
-                  status_id: int) -> Status:
     pass
