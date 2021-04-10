@@ -141,6 +141,15 @@ def add_materials(materials: list[dict]) -> None:
 def start_material(*,
                    material_id: int,
                    start_date: datetime.date = None) -> None:
+    """
+    Add new to to Status table.
+
+    :param material_id: id of material has been started.
+    :param start_date: date when the material was started.
+    Today by default.
+
+    :exception ValueError: if 'start_time' is more than today.
+    """
     with session() as ses:
         start_date = start_date or today()
 
