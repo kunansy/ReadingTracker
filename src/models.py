@@ -39,7 +39,8 @@ class Status(Base):
     status_id = Column(Integer, primary_key=True)
     material_id = Column(Integer,
                          ForeignKey('material.material_id'),
-                         nullable=False)
+                         nullable=False,
+                         unique=True)
     begin = Column(Date)
     end = Column(Date)
 
