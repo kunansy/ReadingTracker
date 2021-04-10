@@ -140,7 +140,7 @@ def complete_material(*,
 
         if status.end is not None:
             raise ValueError(f"Material {material_id=} even completed")
-        if status > completion_date:
+        if status.begin > completion_date:
             raise ValueError("Begin cannot be more than end, but"
                              f"{status.begin=} > {completion_date=}")
 
