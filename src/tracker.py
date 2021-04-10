@@ -5,6 +5,8 @@ from typing import Iterator, Union, Optional
 
 import ujson
 
+import src.models as db
+
 
 DATA_FOLDER = Path('data')
 LOG_TYPE = dict[datetime.date, int]
@@ -161,6 +163,32 @@ class Log:
 
         with self.path.open('w', encoding='utf-8') as f:
             ujson.dump(data_str, f, indent=INDENT)
+
+    def __str__(self) -> str:
+        """
+        If there are the same material on several days,
+        add title of it in the first day and '...' to next
+        one instead of printing out the title every time.
+        """
+        res, is_first = '', True
+        last_material_id, last_material_title = -1, ''
+        new_line = '\n'
+
+        for date, info in self.log.items():
+            if (material_id := info['material_id']) != last_material_id:
+                last_material_id = material_id
+                last_material_title = f"«{db.get_title(material_id)}»"
+            else:
+                last_material_title = '...'
+
+            date = date.strftime(DATE_FORMAT)
+            item = f"{new_line * (not is_first)}{date}: " \
+                   f"{info['count']}, {last_material_title}"
+
+            is_first = False
+            res = f"{res}{item}"
+
+        return res
 
     def __repr__(self) -> str:
         if len(self.log) == 0:
