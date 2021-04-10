@@ -1,6 +1,7 @@
 __all__ = ('get_materials', 'get_status', 'get_completed_materials',
            'get_free_materials', 'complete_material')
 
+import datetime
 from contextlib import contextmanager
 from os import environ
 from typing import ContextManager
@@ -72,6 +73,10 @@ def session(**kwargs) -> ContextManager[Session]:
         raise
     finally:
         new_session.close()
+
+
+def today() -> datetime.date:
+    return datetime.datetime.now().date()
 
 
 def get_materials(materials_ids: list[int]) -> list[Material]:
