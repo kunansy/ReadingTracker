@@ -113,6 +113,11 @@ def get_materials(*,
             Material.material_id.in_(materials_ids)).all()
 
 
+@cache
+def get_title(material_id: int) -> str:
+    return get_materials(materials_ids=[material_id])[0].title
+
+
 def get_free_materials() -> list[Material]:
     """
     Get all free materials.
