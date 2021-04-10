@@ -81,16 +81,10 @@ class Log:
 
     @property
     def log(self) -> LOG_TYPE:
-        """
-        :return: reading log.
-        """
         return self.__log
 
     @property
     def path(self) -> Path:
-        """
-        :return: Path to log file.
-        """
         return self.LOG_PATH
 
     def _get_log(self) -> dict[datetime.date, int]:
