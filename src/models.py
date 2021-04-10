@@ -97,7 +97,10 @@ def get_status(**kwargs) -> list[Status]:
 
 
 def add_materials(materials: list[dict]) -> None:
-    pass
+    with session() as ses:
+        for material in materials:
+            material = Material(**material)
+            ses.add(material)
 
 
 def complete_material(*,
