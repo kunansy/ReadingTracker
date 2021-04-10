@@ -93,7 +93,8 @@ def get_free_materials() -> list[Material]:
 
 
 def get_completed_materials() -> list[Material]:
-    pass
+    with session() as ses:
+        return ses.query(Material).join(Status).filter(Status.end != None)
 
 
 def get_status(**kwargs) -> list[Status]:
