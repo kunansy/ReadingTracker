@@ -93,31 +93,6 @@ class Log:
         """
         return self.LOG_PATH
 
-    @property
-    def days(self) -> int:
-        """
-        :return: total amount of logged days.
-        """
-        # TODO: don't set empty days, but calculate its amount here
-        return len(self.log)
-
-    @property
-    def avg(self) -> int:
-        """
-        :return: average count of read pages.
-        """
-        try:
-            return sum(self.log.values()) // self.days
-        except ZeroDivisionError:
-            return 0
-
-    @property
-    def total(self) -> int:
-        """
-        :return: total count of read pages.
-        """
-        return sum(self.log.values())
-
     def _get_log(self) -> dict[datetime.date, int]:
         """
         Get log from JSON file and parse it.
@@ -175,55 +150,6 @@ class Log:
         """
         self._set_log(yesterday(), pages)
 
-    def _str_log(self) -> str:
-        """
-        :return: converted to str log.
-        """
-        if len(self.log) == 0:
-            return "Reading log is empty"
-
-        res = ''
-        sum_ = 0
-
-        for date, read_pages in self.log.items():
-            date = date.strftime(DATE_FORMAT)
-            res += f"{date}: {read_pages} " \
-                   f"{INFLECT_PAGE(read_pages)}\n"
-            sum_ += read_pages
-        res += '\n'
-
-        avg = self.avg
-        res += f"Average {avg} {INFLECT_PAGE(avg)}\n"
-
-        res += "And that is "
-        diff = abs(PAGES_PER_DAY - avg)
-        if avg == PAGES_PER_DAY:
-            res += "equal to expected count"
-        elif avg < PAGES_PER_DAY:
-            res += f"{diff} less than expected"
-        else:
-            res += f"{diff} better than expected"
-
-        return f"{res}\n{'-' * 70}"
-
-    def _str_total(self) -> str:
-        """
-        :return: total count of read pages.
-        """
-        if len(self.log) == 0:
-            return "Reading log is empty"
-
-        return f"Total pages read: {self.total}\n" \
-               f"{'-' * 70}"
-
-    def print_log(self) -> None:
-        """ Print reading log. """
-        print(self._str_log())
-
-    def print_total(self) -> None:
-        """ Print total count of read pages. """
-        print(self._str_total())
-
     def dump(self) -> None:
         """ Dump dict to the log file. """
 
@@ -234,13 +160,6 @@ class Log:
 
         with self.path.open('w', encoding='utf-8') as f:
             ujson.dump(data_str, f, indent=INDENT)
-
-    def __str__(self) -> str:
-        if len(self.log) == 0:
-            return "Reading log is empty"
-
-        return f"{self._str_log()}\n" \
-               f"{self._str_total()}"
 
     def __repr__(self) -> str:
         if len(self.log) == 0:
