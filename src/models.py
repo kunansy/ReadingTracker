@@ -22,7 +22,7 @@ class Material(Base):
     material_id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
     authors = Column(String, nullable=False)
-    size = Column(Integer, nullable=False,
+    size = Column(String, nullable=False,
                   doc="Amount of pages, count of lectures etc.")
     tags = Column(String)
 
