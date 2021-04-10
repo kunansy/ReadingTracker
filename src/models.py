@@ -5,7 +5,8 @@ from contextlib import contextmanager
 from os import environ
 from typing import ContextManager
 
-from sqlalchemy import Column, ForeignKey, Integer, String, Date, create_engine
+from sqlalchemy import Column, ForeignKey, Integer, String, Date, create_engine, \
+    MetaData
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
@@ -54,9 +55,11 @@ class Status(Base):
                f"{begin}, {end})"
 
 
-Base.metadata.create_all()
+metadata = MetaData()
 
 engine = create_engine(environ['DB_URI'], echo=True)
+Base.metadata.create_all(engine)
+
 conn = engine.connect()
 
 
