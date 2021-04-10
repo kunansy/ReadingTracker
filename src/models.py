@@ -91,6 +91,7 @@ def session(**kwargs) -> ContextManager[Session]:
         new_session.close()
 
 
+@cache
 def today() -> datetime.date:
     return datetime.datetime.now().date()
 
