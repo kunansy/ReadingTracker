@@ -57,7 +57,7 @@ class Status(Base):
 
 metadata = MetaData()
 
-engine = create_engine(environ['DB_URI'], echo=True)
+engine = create_engine(environ['DB_URI'], echo=True, encoding='utf-8')
 Base.metadata.create_all(engine)
 
 conn = engine.connect()
