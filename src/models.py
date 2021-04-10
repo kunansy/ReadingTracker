@@ -129,5 +129,18 @@ def start_material(*,
 
 
 def complete_material(*,
-                      material_id: int) -> None:
-    pass
+                      material_id: int,
+                      completion_date: datetime.date = None) -> None:
+    with session() as ses:
+        completion_date = completion_date or today()
+
+        status = ses.query(Status).filter(
+            Status.material_id == material_id).all()[0]
+
+        if status.end is not None:
+            raise ValueError(f"Material {material_id=} even completed")
+        if status > completion_date:
+            raise ValueError("Begin cannot be more than end, but"
+                             f"{status.begin=} > {completion_date=}")
+
+        status.end = completion_date
