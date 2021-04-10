@@ -82,6 +82,13 @@ def today() -> datetime.date:
 
 def get_materials(*,
                   materials_ids: list[int] = None) -> list[Material]:
+    """
+    Get the materials by their ids or all
+    rows of Material table if it is None.
+
+    :param materials_ids: ids of Material row or None.
+    :return: list of found Material rows.
+    """
     with session() as ses:
         if materials_ids is None:
             return ses.query(Material).all()
