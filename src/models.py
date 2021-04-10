@@ -76,8 +76,12 @@ def session(**kwargs) -> ContextManager[Session]:
         new_session.close()
 
 
-def get_materials(**kwargs) -> list[Material]:
-    pass
+def get_materials(materials_ids: list[int]) -> list[Material]:
+    with session() as ses:
+        if materials_ids:
+            return ses.query(Material).filter(
+                Material.material_id.in_(materials_ids)).all()
+        return ses.query(Material).all()
 
 
 def get_free_materials() -> list[Material]:
