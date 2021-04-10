@@ -94,7 +94,7 @@ class Log:
         except IndexError:
             pass
 
-    def _get_log(self) -> dict[datetime.date, int]:
+    def _get_log(self) -> dict[datetime.date, dict[str, int]]:
         """
         Get log from JSON file and parse it.
         Convert keys to datetime.date, values to int.
@@ -106,8 +106,8 @@ class Log:
             log = ujson.load(f)
 
             return {
-                to_datetime(date): int(count)
-                for date, count in log.items()
+                to_datetime(date): info
+                for date, info in log.items()
             }
 
     def _set_log(self,
