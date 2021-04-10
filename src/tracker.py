@@ -11,7 +11,7 @@ LOG_TYPE = dict[datetime.date, int]
 PAGES_PER_DAY = 50
 INDENT = 2
 
-DATE_FORMAT = '%d.%m.%Y'
+DATE_FORMAT = '%d-%m-%Y'
 DATE_TYPE = Union[str, datetime.date, datetime.datetime]
 
 
