@@ -43,15 +43,13 @@ class Status(Base):
     end = Column(Date)
 
     def __repr__(self) -> str:
-        material_title = ...
-
         if begin := self.begin:
             begin = begin.strftime(DATE_FORMAT)
         if end := self.end:
             end = end.strftime(DATE_FORMAT)
 
         return "Status(" \
-               f"{self.status_id}, {material_title}, " \
+               f"{self.status_id}, {self.material_id}, " \
                f"{begin}, {end})"
 
 
