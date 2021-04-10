@@ -4,7 +4,7 @@ __all__ = ('get_materials', 'get_status', 'get_completed_materials',
 import datetime
 from contextlib import contextmanager
 from os import environ
-from typing import ContextManager
+from typing import ContextManager, Callable
 
 from sqlalchemy import Column, ForeignKey, Integer, String, Date, create_engine, \
     MetaData
@@ -61,6 +61,21 @@ engine = create_engine(environ['DB_URI'], encoding='utf-8')
 Base.metadata.create_all(engine)
 
 conn = engine.connect()
+
+
+def cache(func: Callable) -> Callable:
+    results = {}
+
+    def wrapped(arg=None):
+        nonlocal results
+
+        if arg in results:
+            return results[arg]
+
+        results[arg] = func(arg)
+        return results[arg]
+
+    return wrapped
 
 
 @contextmanager
