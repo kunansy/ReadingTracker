@@ -65,7 +65,7 @@ conn = engine.connect()
 
 @contextmanager
 def session(**kwargs) -> ContextManager[Session]:
-    new_session = Session(**kwargs)
+    new_session = Session(**kwargs, bind=engine, expire_on_commit=False)
     try:
         yield new_session
         new_session.commit()
