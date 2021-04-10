@@ -165,6 +165,16 @@ def start_material(*,
 def complete_material(*,
                       material_id: int,
                       completion_date: datetime.date = None) -> None:
+    """
+    Set end date to Status table by 'material_id'.
+
+    :param material_id: id of materials to complete.
+    :param completion_date: date when the material
+    was finished. Today by default.
+
+    :exception ValueError: if the material has been completed
+    yet or if 'completion_date' is less than start date.
+    """
     with session() as ses:
         completion_date = completion_date or today()
 
