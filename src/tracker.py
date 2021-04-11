@@ -3,7 +3,7 @@ import copy
 import datetime
 import logging
 from pathlib import Path
-from typing import Union, Optional
+from typing import Union, Optional, Iterator
 
 import ujson
 
@@ -262,17 +262,26 @@ class Log:
     def items(self):
         return self.log.items()
 
-    def data(self):
-        """ Get pairs: date, count.
+    def data(self) -> Iterator[tuple[datetime.date, dict[str, int]]]:
+        """ Get pairs: date, info of all days from start to stop.
         The function is expected to make graphics.
+
+        If the day is empty, material_id is supposed
+        as the material_id of the last not empty day.
         """
-        start, stop, step = self.start, self.stop, datetime.timedelta(days=1)
+        step = datetime.timedelta(days=1)
+        iter_ = self.start
+        last_material_id = -1
 
-        iter_ = start
-        while iter_ <= stop:
-            count = self.log.get(iter_, {'count': 0})['count']
+        while iter_ <= self.stop:
+            info = self.log.get(iter_)
+            info = info or {'material_id': last_material_id, 'count': 0}
 
-            yield iter_, count
+            if last_material_id == -1 or \
+                    last_material_id != info['material_id']:
+                last_material_id = info['material_id']
+
+            yield iter_, info
             iter_ += step
 
     def copy(self):
