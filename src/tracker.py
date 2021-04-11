@@ -294,12 +294,8 @@ class Tracker:
 
     @property
     def start_date(self) -> datetime.date:
-        """
-        :return: date when reading of the first material started.
-        """
-        return self[1].start_date
-
-
+        """ Get date of the first log record """
+        return self.__log.start
 
     def _str_queue(self) -> str:
         """
