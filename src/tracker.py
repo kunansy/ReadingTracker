@@ -114,25 +114,36 @@ class Log:
 
     def _set_log(self,
                  date: datetime.date,
-                 pages: int) -> None:
+                 count: int,
+                 material_id: int = None) -> None:
         """
         Set reading log for the day.
-        Check arguments valid.
-        Sort the log by dates.
 
         :param date: date of log.
-        :param pages: count of read pages.
+        :param count: count of read pages, listened lectures etc.
+        :param material_id: id of the learned material,
+        by default id of the last material if exists.
 
-        :exception ValueError: of pages < 0 or date format is wrong.
+        :exception ValueError: if count <= 0, the date
+        is more than today, the date even exists in
+        log, 'material_id' is None and log is empty.
         """
-        if pages < 0:
-            raise ValueError("Pages count must be >= 0")
+        if count <= 0:
+            raise ValueError(f"Count must be > 0, but 0 <= {count}")
+        if date > today():
+            raise ValueError("The date must be less than today,"
+                             f"but {date=} > {today()=}")
+        if (date := to_datetime(date)) in self.__log:
+            raise ValueError(f"The {date=} even exists in the log")
+        if material_id is None and len(self.log) == 0:
+            raise ValueError(f"{material_id=} and log dict is empty")
 
-        date = to_datetime(date)
-        if date in self.__log:
-            raise ValueError(f"The date {date} even exists in the log")
+        material_id = material_id or list(self.log.values())[-1]['material_id']
 
-        self.__log[date] = pages
+        self.__log[date] = {
+            'material_id': material_id,
+            'count': count
+        }
         self.__log = dict(sorted(self.log.items(), key=lambda i: i[0]))
 
     def set_today_log(self,
