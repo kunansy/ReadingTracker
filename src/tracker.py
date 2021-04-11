@@ -105,7 +105,11 @@ class Log:
     @property
     def reading_material(self) -> int:
         """ Get id of the reading material. """
-        return list(self.log.values())[-1]['material_id']
+        try:
+            return list(self.log.values())[-1]['material_id']
+        except IndexError:
+            logging.exception("Reading log is empty, no materials found")
+            raise
 
     def _get_log(self) -> LOG_TYPE:
         """
