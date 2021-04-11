@@ -210,6 +210,7 @@ def complete_material(*,
 
     :exception ValueError: if the material has been completed
     yet or if 'completion_date' is less than start date.
+    :exception IndexError: if the material has not been started yet.
     """
     with session() as ses:
         completion_date = completion_date or today()
