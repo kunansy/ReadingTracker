@@ -269,6 +269,17 @@ class Log:
         )
 
     @property
+    def median(self) -> int:
+        counts = sorted(
+            info['count']
+            for info in self.values()
+        )
+
+        if (middle := len(counts) // 2) % 2 == 0:
+            return (counts[middle] + counts[middle + 1]) // 2
+        return counts[middle]
+
+    @property
     def would_be_total(self) -> int:
         """ Get count would be if there were no empty days """
         return self.total + self.average * self.empty_days
