@@ -10,7 +10,7 @@ import src.models as db
 
 
 DATA_FOLDER = Path('data')
-LOG_TYPE = dict[datetime.date, int]
+LOG_TYPE = dict[datetime.date, dict[str, int]]
 PAGES_PER_DAY = 50
 INDENT = 2
 
