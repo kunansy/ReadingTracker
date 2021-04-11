@@ -28,6 +28,11 @@ class Material(Base):
                   doc="Amount of pages, count of lectures etc.")
     tags = Column(String)
 
+    def volume(self) -> int:
+        size, *trash = self.size.split()
+
+        return int(size)
+
     def __repr__(self) -> str:
         return "Material(" \
                f"{self.material_id}, {self.title}, " \
