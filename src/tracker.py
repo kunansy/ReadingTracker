@@ -537,19 +537,3 @@ class Tracker:
                f"Materials queue:\n{self._str_queue()}\n" \
                f"Processed materials:\n{self._str_processed()}"
 
-    def __contains__(self,
-                     id_: int) -> bool:
-        """
-        :param id_: material's id.
-        :return: whether the queue contains the material at id.
-        """
-        return bool(self.in_queue(id=id_) + self.in_processed(id=id_))
-
-    def __getitem__(self,
-                    id_: int) -> Material:
-        if id_ not in self:
-            raise IndexError(f"Material with `{id_=}` doesn't exist")
-
-        for material in self.queue + self.processed:
-            if material.id == id_:
-                return material
