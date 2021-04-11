@@ -507,22 +507,27 @@ class Tracker:
             logging.exception(f"{material_id=} has ot been started yet")
             raise
 
+    @staticmethod
+    def append(title: str,
+               authors: str,
+               size: str,
+               tags: str) -> None:
+        """
+        Add a material.
 
-    def in_processed(self,
-                     **kwargs) -> list[Material]:
+        :param title: material's title.
+        :param authors: material's authors.
+        :param size: size of the material: count of pages,
+        lectures etc.
+        :param tags: tags
         """
-        :param kwargs: pairs: atr name - atr value.
-        :return: list of Materials with these params from processed.
-        """
-        try:
-            res = [
-                material
-                for material in self.__in(where='processed', **kwargs)
-            ]
-        except AttributeError:
-            raise AttributeError("Material obj has no given attribute")
-        else:
-            return res
+        material = {
+            'title': title,
+            'authors': authors,
+            'size': size,
+            'tags': tags
+        }
+        db.add_materials([material])
 
     def __str__(self) -> str:
         """
