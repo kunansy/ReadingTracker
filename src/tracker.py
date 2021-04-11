@@ -376,11 +376,6 @@ class Tracker:
     def log(self) -> Log:
         return self.__log
 
-    @property
-    def start_date(self) -> datetime.date:
-        """ Get date of the first log record """
-        return self.__log.start
-
     def _str_queue(self) -> str:
         """
         :return: converted to str queue.
