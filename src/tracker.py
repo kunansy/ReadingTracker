@@ -102,6 +102,11 @@ class Log:
         except IndexError:
             pass
 
+    @property
+    def reading_material(self) -> int:
+        """ Get id of the reading material. """
+        return list(self.log.values())[-1]['material_id']
+
     def _get_log(self) -> LOG_TYPE:
         """
         Get log from JSON file and parse it.
