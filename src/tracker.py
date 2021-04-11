@@ -239,8 +239,12 @@ class Log:
             return 0
 
     @property
-    def average_of_every_material(self) -> dict[int, int]:
-        """ Calculate average count of time spent to every material. """
+    def average_of_every_materials(self) -> dict[int, int]:
+        """
+        Calculate average count of time spent to every material.
+
+        The data is expected to make chart.
+        """
         data = defaultdict(int)
 
         key_ = lambda item: item[1]['material_id']
