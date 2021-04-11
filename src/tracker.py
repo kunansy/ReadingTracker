@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import datetime
+import logging
 from pathlib import Path
 from typing import Iterator, Union, Optional
 
@@ -78,6 +79,7 @@ class Log:
         try:
             log = self._get_log()
         except Exception:
+            logging.exception('When load the log')
             log = {}
         self.__log = log
 
