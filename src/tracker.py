@@ -466,6 +466,16 @@ class Tracker:
         """ Print processed materials. """
         print(self._str_processed())
 
+    @staticmethod
+    def start_material(*,
+                       material_id: int,
+                       start_date: datetime.date = None) -> None:
+        try:
+            db.start_material(
+                material_id=material_id, start_date=start_date)
+        except ValueError:
+            logging.exception(f"date format is wrong, {start_date=}")
+
     def complete_material(self,
                           *,
                           material_id: int = None,
