@@ -288,11 +288,9 @@ class Tracker:
         return db.get_free_materials()
 
     @property
-    def processed(self) -> list[Material]:
-        """
-        :return: list of Materials in processed.
-        """
-        return self.materials.get('processed', [])
+    def processed(self) -> list[db.Material]:
+        """ Get list of Materials in processed. """
+        return db.get_completed_materials()
 
     @property
     def start_date(self) -> datetime.date:
