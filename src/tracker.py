@@ -558,21 +558,20 @@ class Tracker:
     @staticmethod
     def append(title: str,
                authors: str,
-               size: str,
+               pages: str,
                tags: str) -> None:
         """
         Add a material.
 
         :param title: material's title.
         :param authors: material's authors.
-        :param size: size of the material: count of pages,
-        lectures etc.
+        :param pages: count of pages.
         :param tags: tags
         """
         material = {
             'title': title,
             'authors': authors,
-            'size': size,
+            'pages': pages,
             'tags': tags
         }
         db.add_materials([material])
