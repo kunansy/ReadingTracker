@@ -207,6 +207,52 @@ class Log:
         with self.path.open('w', encoding='utf-8') as f:
             ujson.dump(data, f, indent=INDENT)
 
+    @property
+    def total(self) -> int:
+        """ Get total count (read pages, listened lectures etc.) """
+        return sum(
+            info['count']
+            for info in self.values()
+        )
+
+    @property
+    def duration(self) -> int:
+        """ Get duration of log """
+        return (self.stop - self.start).days + 1
+
+    @property
+    def empty_days(self) -> int:
+        return self.duration - len(self.log)
+
+    @property
+    def average(self) -> int:
+        """ Get average count (read pages, listened
+        lectures etc.) per day
+        """
+        try:
+            return self.total // self.duration
+        except ZeroDivisionError:
+            return 0
+
+    @property
+    def min(self) -> tuple[datetime.date, dict[str, int]]:
+        return min(
+            [(date, info) for date, info in self.items()],
+            key=lambda item: item[1]['count']
+        )
+
+    @property
+    def max(self) -> tuple[datetime.date, dict[str, int]]:
+        return max(
+            [(date, info) for date, info in self.items()],
+            key=lambda item: item[1]['count']
+        )
+
+    @property
+    def would_be_total(self) -> int:
+        """ Get count would be if there were no empty days """
+        return self.total + self.average * self.empty_days
+
     def values(self):
         return self.log.values()
 
