@@ -309,9 +309,8 @@ class Log:
             info = self.log.get(iter_)
             info = info or {'material_id': last_material_id, 'count': 0}
 
-            if last_material_id == -1 or \
-                    last_material_id != info['material_id']:
-                last_material_id = info['material_id']
+            if (material_id := info['material_id']) != last_material_id:
+                last_material_id = material_id
 
             yield iter_, info
             iter_ += step
