@@ -252,7 +252,8 @@ class Log:
 
             data[material_id] = count // days
 
-        return dict(data)
+        return dict(sorted(
+            data.items(), key=lambda item: item[1], reverse=True))
 
     @property
     def min(self) -> tuple[datetime.date, dict[str, int]]:
