@@ -280,7 +280,6 @@ class Tracker:
 
     def __init__(self,
                  log: Log) -> None:
-        self.__materials = self._get_materials()
         self.__log = log
 
     @property
