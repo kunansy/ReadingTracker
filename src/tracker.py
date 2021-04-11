@@ -300,6 +300,10 @@ class Tracker:
         return db.get_completed_materials()
 
     @property
+    def log(self) -> Log:
+        return self.__log
+
+    @property
     def start_date(self) -> datetime.date:
         """ Get date of the first log record """
         return self.__log.start
