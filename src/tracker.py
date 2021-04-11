@@ -283,11 +283,9 @@ class Tracker:
         self.__log = log
 
     @property
-    def queue(self) -> list[Material]:
-        """
-        :return: list of Materials in queue.
-        """
-        return self.materials.get('queue', [])
+    def queue(self) -> list[db.Material]:
+        """ Get list of free materials. """
+        return db.get_free_materials()
 
     @property
     def processed(self) -> list[Material]:
