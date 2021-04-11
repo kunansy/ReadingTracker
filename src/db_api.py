@@ -24,19 +24,13 @@ class Material(Base):
     material_id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
     authors = Column(String, nullable=False)
-    size = Column(String, nullable=False,
-                  doc="Amount of pages, count of lectures etc.")
+    pages = Column(Integer, nullable=False)
     tags = Column(String)
-
-    def volume(self) -> int:
-        size, *trash = self.size.split()
-
-        return int(size)
 
     def __repr__(self) -> str:
         return "Material(" \
                f"{self.material_id}, {self.title}, " \
-               f"{self.authors}, {self.size}, {self.tags})"
+               f"{self.authors}, {self.pages}, {self.tags})"
 
 
 class Status(Base):
