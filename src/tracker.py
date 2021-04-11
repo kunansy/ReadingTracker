@@ -159,13 +159,16 @@ class Log:
         self._set_log(today(), count, material_id)
 
     def set_yesterday_log(self,
-                          pages: int) -> None:
+                          count: int,
+                          material_id: int = None) -> None:
         """
         Set yesterday's reading log.
 
-        :param pages: count of pages read yesterday.
+        :param count: count of materials learned yesterday.
+        :param material_id: id of learned material.
+        The last learned material_id by default.
         """
-        self._set_log(yesterday(), pages)
+        self._set_log(yesterday(), count, material_id)
 
     def dump(self) -> None:
         """ Dump dict to the log file. """
