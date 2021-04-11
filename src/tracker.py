@@ -202,6 +202,15 @@ class Log:
         with self.path.open('w', encoding='utf-8') as f:
             ujson.dump(data, f, indent=INDENT)
 
+    def values(self):
+        return self.log.values()
+
+    def keys(self):
+        return self.log.keys()
+
+    def items(self):
+        return self.log.items()
+
     def copy(self):
         new_log = self
         new_log.__log = copy.deepcopy(self.log)
