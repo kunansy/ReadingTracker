@@ -305,22 +305,6 @@ class Tracker:
 
 
 
-    def dump(self) -> None:
-        """ Dump materials. """
-        res = {
-            'queue': [
-                material.json()
-                for material in self.queue
-            ],
-            'processed': [
-                material.json()
-                for material in self.processed
-            ]
-        }
-
-        with self.BOOKS_PATH.open('w', encoding='utf-8') as f:
-            ujson.dump(res, f, indent=INDENT, ensure_ascii=False)
-
     def _str_queue(self) -> str:
         """
         :return: converted to str queue.
