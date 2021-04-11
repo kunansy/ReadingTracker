@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import copy
 import datetime
 import logging
 from pathlib import Path
@@ -190,6 +191,12 @@ class Log:
 
         with self.path.open('w', encoding='utf-8') as f:
             ujson.dump(data, f, indent=INDENT)
+
+    def copy(self):
+        new_log = self
+        new_log.__log = copy.deepcopy(self.log)
+
+        return new_log
 
     def __str__(self) -> str:
         """
