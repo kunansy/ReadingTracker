@@ -9,7 +9,7 @@ from typing import Union, Optional, Iterator
 
 import ujson
 
-import src.models as db
+import src.db_api as db
 
 
 DATA_FOLDER = Path('data')
