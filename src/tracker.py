@@ -198,6 +198,38 @@ class Log:
 
         return new_log
 
+    def __getitem__(self,
+                    date: Union[datetime.date, slice]):
+        if not isinstance(date, (datetime.date, slice)):
+            raise TypeError(f"Date or slice of dates expected, "
+                            f"but {type(date)} found")
+
+        if isinstance(date, datetime.date):
+            return self.log[date]
+
+        assert date.start is None or isinstance(date.start, datetime.date)
+        assert date.stop is None or isinstance(date.stop, datetime.date)
+        assert date.step is None or isinstance(date.step, datetime.timedelta)
+
+        assert not (date.start and date.stop) or date.start <= date.stop
+
+        start = date.start or self.start
+        stop = date.stop or today()
+        step = date.step or datetime.timedelta(days=1)
+
+        iter_ = start
+        new_log_content = {}
+        new_log = self.copy()
+
+        while iter_ <= stop:
+            if start <= iter_ <= stop:
+                new_log_content[iter_] = new_log.log[iter_]
+            else:
+                break
+            iter_ += step
+        new_log.__log = new_log_content
+        return new_log
+
     def __str__(self) -> str:
         """
         If there are the same material on several days,
