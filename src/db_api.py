@@ -126,12 +126,21 @@ def get_title(material_id: int) -> str:
 
 def get_free_materials() -> list[Material]:
     """
-    Get all free materials.
-
-    :return: list of Materials where 'end' is None.
+    Get all free materials, means
+    all not completed materials.
     """
-    with session() as ses:
-        return ses.query(Material).join(Status).filter(Status.end == None)
+    all_materials = get_materials()
+    completed_materials = {
+        status.material_id
+        for status in get_status()
+        if status.end is not None
+    }
+
+    return [
+        material
+        for material in all_materials
+        if material.material_id not in completed_materials
+    ]
 
 
 def get_completed_materials() -> list[Material]:
