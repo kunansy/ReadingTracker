@@ -181,15 +181,15 @@ class Log:
                               f"{count=}, {material_id=}")
 
     def dump(self) -> None:
-        """ Dump dict to the log file. """
+        """ Dump log to the file. """
 
-        data_str = {
-            date.strftime(DATE_FORMAT): count
-            for date, count in self.log.items()
+        data = {
+            date.strftime(DATE_FORMAT): info
+            for date, info in self.log.items()
         }
 
         with self.path.open('w', encoding='utf-8') as f:
-            ujson.dump(data_str, f, indent=INDENT)
+            ujson.dump(data, f, indent=INDENT)
 
     def __str__(self) -> str:
         """
