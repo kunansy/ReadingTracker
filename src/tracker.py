@@ -359,98 +359,36 @@ class Tracker:
         print(self._str_processed())
 
     def complete_material(self,
-                          completed_date: datetime.date = None) -> None:
+                          *,
+                          material_id: int = None,
+                          completion_date: datetime.date = None) -> None:
         """
-        Move the first material in 'queue' to 'processed'.
+        Complete a material, set 'end' in its status.
 
-        :param completed_date: date when the material was completed.
+        :param material_id: id of completed material,
+        the material reading now by default.
+        :param completion_date: date when the material was completed.
         Today by default.
 
-        :exception ValueError: if the materials queue is empty.
+        :exception ValueError: if the material has been completed
+        yet or if 'completion_date' is less than start date.
+
+        :exception IndexError: if the material has not been started yet.
         """
-        if len(self.queue) == 0:
-            raise ValueError("Materials queue is empty")
+        material_id = material_id or self.log.reading_material
 
-        material = self.queue.pop(0)
-
-        completed_date = completed_date or today()
-        material.end_date = completed_date
-        self.processed.append(material)
-
-        self.queue[0].start_date = completed_date + datetime.timedelta(days=1)
-
-    def _last_id(self) -> int:
-        """
-        :return: id of the last material in queue.
-         0 if the query is empty.
-        """
-        if len(self.queue) == 0:
-            return 0
-        return self.queue[-1].id
-
-    def push_back(self,
-                  title: str,
-                  authors: str,
-                  pages: int) -> None:
-        """
-        Add a material to the end of the queue.
-
-        Id will be calculated as id
-        of the last material + 1.
-
-        :param title: material's title.
-        :param authors: material's authors.
-        :param pages: count of pages in the material.
-        """
-        material = Material(
-            self._last_id() + 1, title, authors, pages
-        )
-        self.queue.append(material)
-
-    def push_front(self,
-                   title: str,
-                   authors: str,
-                   pages: int) -> None:
-        """
-        Add a material to the begin of the queue.
-
-        Id will be calculated as id
-         of the last material + 1.
-
-        :param title: material's title.
-        :param authors: material's authors.
-        :param pages: count of pages in the material.
-        """
-        material = Material(
-            self._last_id() + 1, title, authors, pages
-        )
-        self.queue.insert(0, material)
-
-    def __in(self,
-             **kwargs) -> Iterator[Material]:
-        where = kwargs.pop('where', 'queue')
-        for material in getattr(self, where):
-            if all(
-                getattr(material, arg) == val
-                for arg, val in kwargs.items()
-            ):
-                yield material
-
-    def in_queue(self,
-                 **kwargs) -> list[Material]:
-        """
-        :param kwargs: pairs: atr name - atr value.
-        :return: list of Materials with these params from queue.
-        """
         try:
-            res = [
-                material
-                for material in self.__in(where='queue', **kwargs)
-            ]
-        except AttributeError:
-            raise AttributeError("Material obj has no given attribute")
-        else:
-            return res
+            db.complete_material(
+                material_id=material_id,
+                completion_date=completion_date)
+        except ValueError:
+            logging.exception(
+                f"Cannot complete {material_id=}, {completion_date=}")
+            raise
+        except IndexError:
+            logging.exception(f"{material_id=} has ot been started yet")
+            raise
+
 
     def in_processed(self,
                      **kwargs) -> list[Material]:
