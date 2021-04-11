@@ -283,20 +283,6 @@ class Tracker:
         self.__log = log
 
     @property
-    def log(self) -> Log:
-        """
-        :return: reading Log.
-        """
-        return self.__log
-
-    @property
-    def materials(self) -> dict:
-        """
-        :return: materials.
-        """
-        return self.__materials
-
-    @property
     def queue(self) -> list[Material]:
         """
         :return: list of Materials in queue.
