@@ -119,10 +119,7 @@ def get_title(material_id: int) -> str:
 
 
 def get_free_materials() -> list[Material]:
-    """
-    Get all free materials, means
-    all not completed materials.
-    """
+    """ Get all not completed materials """
     all_materials = get_materials()
     completed_materials = {
         status.material_id
@@ -168,8 +165,8 @@ def add_materials(materials: list[dict]) -> None:
     """
     Add some materials to the table.
 
-    :param materials: list of dicts with all required for
-    class Material params.
+    :param materials: list of dicts with all
+    required for class Material params.
     """
     with session() as ses:
         for material in materials:
@@ -181,13 +178,13 @@ def start_material(*,
                    material_id: int,
                    start_date: datetime.date = None) -> None:
     """
-    Add new to to Status table.
+    Start a material, add new record to Status table.
 
     :param material_id: id of material has been started.
     :param start_date: date when the material was started.
-    Today by default.
+     Today by default.
 
-    :exception ValueError: if 'start_time' is more than today.
+    :exception ValueError: if 'start_time' is better than today.
     """
     with session() as ses:
         start_date = start_date or today()
@@ -209,10 +206,10 @@ def complete_material(*,
 
     :param material_id: id of materials to complete.
     :param completion_date: date when the material
-    was finished. Today by default.
+     was finished. Today by default.
 
     :exception ValueError: if the material has been completed
-    yet or if 'completion_date' is less than start date.
+     yet or if 'completion_date' is less than start date.
     :exception IndexError: if the material has not been started yet.
     """
     with session() as ses:
