@@ -103,6 +103,11 @@ class Log:
             pass
 
     @property
+    def stop(self) -> Optional[datetime.date]:
+        if self.start is not None:
+            return today()
+
+    @property
     def reading_material(self) -> int:
         """ Get id of the reading material. """
         try:
