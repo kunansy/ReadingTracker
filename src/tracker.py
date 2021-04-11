@@ -303,23 +303,7 @@ class Tracker:
         """
         return self[1].start_date
 
-    def _get_materials(self) -> dict[str, list[Material]]:
-        """
-        :return: materials.
-        """
-        with self.BOOKS_PATH.open(encoding='utf-8') as f:
-            materials = ujson.load(f)
 
-        return {
-            'queue': [
-                Material(**material)
-                for material in materials['queue']
-            ],
-            'processed': [
-                Material(**material)
-                for material in materials['processed']
-            ]
-        }
 
     def dump(self) -> None:
         """ Dump materials. """
