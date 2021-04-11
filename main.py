@@ -3,6 +3,8 @@
 import argparse
 from typing import Optional
 
+import matplotlib.pyplot as plt
+
 from src.tracker import Tracker, Log
 
 
@@ -14,6 +16,19 @@ def is_ok(num: Optional[int]) -> bool:
     :return: whether the arg is valid.
     """
     return num is not None and num >= 0
+
+
+def reading_dynamic(log: Log) -> None:
+    x = log.dates()
+    y = log.counts()
+
+    plt.xlabel("Dates")
+    plt.ylabel("Pages")
+    plt.title("Reading dynamic", fontdict={'size': 20})
+
+    plt.plot(x, y)
+    plt.grid()
+    plt.show()
 
 
 def main() -> None:
