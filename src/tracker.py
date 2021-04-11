@@ -2,6 +2,8 @@
 import copy
 import datetime
 import logging
+from collections import defaultdict
+from itertools import groupby
 from pathlib import Path
 from typing import Union, Optional, Iterator
 
@@ -233,6 +235,24 @@ class Log:
             return self.total // self.duration
         except ZeroDivisionError:
             return 0
+
+    @property
+    def average_of_every_material(self) -> dict[int, int]:
+        """ Calculate average count of time spent to every material. """
+        data = defaultdict(int)
+
+        key_ = lambda item: item[1]['material_id']
+        sample = sorted(self.data(), key=key_)
+
+        for material_id, group in groupby(sample, key=key_):
+            days = count = 0
+            for date, info in group:
+                days += 1
+                count += info['count']
+
+            data[material_id] = count // days
+
+        return dict(data)
 
     @property
     def min(self) -> tuple[datetime.date, dict[str, int]]:
