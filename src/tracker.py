@@ -321,6 +321,37 @@ class Log:
 
         return new_log
 
+    def _statistics(self) -> str:
+        avg_of_every_material, is_first = '', True
+
+        for material_id, avg in self.average_of_every_material.items():
+            if not is_first:
+                avg_of_every_material += '\n'
+            is_first = False
+
+            material = db.get_materials(materials_ids=[material_id])[0]
+            avg_of_every_material += f"\t«{material.title}»: {avg}"
+
+        min_date, min_info = self.min
+        max_date, max_info = self.max
+
+        # TODO: add titles
+        min_count = min_info['count']
+        max_count = max_info['count']
+
+        min_date = min_date.strftime(DATE_FORMAT)
+        max_date = max_date.strftime(DATE_FORMAT)
+
+        return f"Duration: {self.duration} days\n" \
+               f"Empty days: {self.empty_days}\n" \
+               f"Max: {max_date} = {max_count}\n" \
+               f"Min: {min_date} = {min_count}\n" \
+               f"Average: {self.average}\n" \
+               f"Median: {self.median}\n" \
+               f"Total count: {self.total}\n" \
+               f"Would be total: {self.would_be_total}\n" \
+               f"Average of every material: \n{avg_of_every_material}"
+
     def __getitem__(self,
                     date: Union[datetime.date, slice]):
         if not isinstance(date, (datetime.date, slice)):
