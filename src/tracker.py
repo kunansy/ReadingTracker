@@ -142,13 +142,13 @@ class Log:
         Set reading log for the day.
 
         :param date: date of log.
-        :param count: count of read pages, listened lectures etc.
+        :param count: count of read pages.
         :param material_id: id of the learned material,
-        by default id of the last material if exists.
+         by default id of the last material if exists.
 
         :exception ValueError: if count <= 0, the date
-        is more than today, the date even exists in
-        log, 'material_id' is None and log is empty.
+         is more than today, the date even exists in
+         log, 'material_id' is None and log is empty.
         """
         if count <= 0:
             raise ValueError(f"Count must be > 0, but 0 <= {count}")
@@ -172,9 +172,9 @@ class Log:
         """
         Set today's reading log.
 
-        :param count: count of materials learned today.
+        :param count: count of pages read today.
         :param material_id: id of learned material.
-        The last learned material_id by default.
+         The last learned material_id by default.
         """
         try:
             self._set_log(today(), count, material_id)
@@ -188,9 +188,9 @@ class Log:
         """
         Set yesterday's reading log.
 
-        :param count: count of materials learned yesterday.
+        :param count: count of pages read yesterday.
         :param material_id: id of learned material.
-        The last learned material_id by default.
+         The last learned material_id by default.
         """
         try:
             self._set_log(yesterday(), count, material_id)
@@ -211,7 +211,7 @@ class Log:
 
     @property
     def total(self) -> int:
-        """ Get total count (read pages, listened lectures etc.) """
+        """ Get total count of read pages """
         return sum(
             info['count']
             for info in self.values()
@@ -228,9 +228,7 @@ class Log:
 
     @property
     def average(self) -> int:
-        """ Get average count (read pages, listened
-        lectures etc.) per day
-        """
+        """ get the average count of pages read per day """
         try:
             return self.total // self.duration
         except ZeroDivisionError:
@@ -282,7 +280,10 @@ class Log:
 
     @property
     def would_be_total(self) -> int:
-        """ Get count would be if there were no empty days """
+        """
+        Get count of pages would be total
+        if there were no empty days.
+        """
         return self.total + self.average * self.empty_days
 
     def values(self):
@@ -447,12 +448,15 @@ class Tracker:
 
     @property
     def queue(self) -> list[db.Material]:
-        """ Get list of free materials. """
+        """
+        Get list of uncompleted materials:
+        assigned but not completed and not assigned too
+        """
         return db.get_free_materials()
 
     @property
     def processed(self) -> list[db.Material]:
-        """ Get list of Materials in processed. """
+        """ Get list of completed Materials. """
         return db.get_completed_materials()
 
     @property
@@ -527,12 +531,12 @@ class Tracker:
         Complete a material, set 'end' in its status.
 
         :param material_id: id of completed material,
-        the material reading now by default.
+         the material reading now by default.
         :param completion_date: date when the material was completed.
-        Today by default.
+         Today by default.
 
         :exception ValueError: if the material has been completed
-        yet or if 'completion_date' is less than start date.
+         yet or if 'completion_date' is less than start date.
 
         :exception IndexError: if the material has not been started yet.
         """
