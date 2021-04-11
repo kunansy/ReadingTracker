@@ -262,6 +262,19 @@ class Log:
     def items(self):
         return self.log.items()
 
+    def data(self):
+        """ Get pairs: date, count.
+        The function is expected to make graphics.
+        """
+        start, stop, step = self.start, self.stop, datetime.timedelta(days=1)
+
+        iter_ = start
+        while iter_ <= stop:
+            count = self.log.get(iter_, {'count': 0})['count']
+
+            yield iter_, count
+            iter_ += step
+
     def copy(self):
         new_log = self
         new_log.__log = copy.deepcopy(self.log)
