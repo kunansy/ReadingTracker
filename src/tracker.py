@@ -3,7 +3,7 @@ import copy
 import datetime
 import logging
 from pathlib import Path
-from typing import Iterator, Union, Optional
+from typing import Union, Optional
 
 import ujson
 
@@ -94,12 +94,15 @@ class Log:
 
     @property
     def start(self) -> Optional[datetime.date]:
+        """ Get the date of the first logged day
+        (if there is, None otherwise).
+        """
         try:
             return list(self.log.keys())[0]
         except IndexError:
             pass
 
-    def _get_log(self) -> dict[datetime.date, dict[str, int]]:
+    def _get_log(self) -> LOG_TYPE:
         """
         Get log from JSON file and parse it.
         Convert keys to datetime.date, values to int.
@@ -234,7 +237,7 @@ class Log:
         """
         If there are the same material on several days,
         add title of it in the first day and '...' to next
-        one instead of printing out the title every time.
+        ones instead of printing out the title every time.
         """
         res, is_first = '', True
         last_material_id, last_material_title = -1, ''
