@@ -150,9 +150,9 @@ class Log:
         """
         if count <= 0:
             raise ValueError(f"Count must be > 0, but 0 <= {count}")
-        if date > today():
+        if date > self.stop:
             raise ValueError("The date must be less than today,"
-                             f"but {date=} > {today()=}")
+                             f"but {date=} > {self.stop=}")
         if (date := to_datetime(date)) in self.__log:
             raise ValueError(f"The {date=} even exists in the log")
         if material_id is None and len(self.log) == 0:
@@ -238,7 +238,7 @@ class Log:
         assert not (date.start and date.stop) or date.start <= date.stop
 
         start = date.start or self.start
-        stop = date.stop or today()
+        stop = date.stop or self.stop
         step = date.step or datetime.timedelta(days=1)
 
         iter_ = start
