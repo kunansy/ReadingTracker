@@ -174,7 +174,11 @@ class Log:
         :param material_id: id of learned material.
         The last learned material_id by default.
         """
-        self._set_log(yesterday(), count, material_id)
+        try:
+            self._set_log(yesterday(), count, material_id)
+        except ValueError:
+            logging.exception(f"Cannot set yesterday's log with "
+                              f"{count=}, {material_id=}")
 
     def dump(self) -> None:
         """ Dump dict to the log file. """
