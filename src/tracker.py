@@ -514,14 +514,6 @@ class Tracker:
             res += f"From {start} by {stop} in {days} {INFLECT_DAY(days)}\n"
         return res
 
-    def print_queue(self) -> None:
-        """ Print materials queue. """
-        print(self._str_queue())
-
-    def print_processed(self) -> None:
-        """ Print processed materials. """
-        print(self._str_processed())
-
     @staticmethod
     def start_material(*,
                        material_id: int,
