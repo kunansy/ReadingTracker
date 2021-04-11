@@ -315,6 +315,18 @@ class Log:
             yield iter_, info
             iter_ += step
 
+    def dates(self) -> list[datetime.date]:
+        return [
+            date
+            for date, _ in self.data()
+        ]
+
+    def counts(self) -> list[int]:
+        return [
+            info['count']
+            for _, info in self.data()
+        ]
+
     def copy(self):
         new_log = self
         new_log.__log = copy.deepcopy(self.log)
