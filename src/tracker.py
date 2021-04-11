@@ -149,10 +149,8 @@ class Log:
         if material_id is None and len(self.log) == 0:
             raise ValueError(f"{material_id=} and log dict is empty")
 
-        material_id = material_id or list(self.log.values())[-1]['material_id']
-
         self.__log[date] = {
-            'material_id': material_id,
+            'material_id': material_id or self.reading_material,
             'count': count
         }
         self.__log = dict(sorted(self.log.items(), key=lambda i: i[0]))
