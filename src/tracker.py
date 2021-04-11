@@ -147,13 +147,16 @@ class Log:
         self.__log = dict(sorted(self.log.items(), key=lambda i: i[0]))
 
     def set_today_log(self,
-                      pages: int) -> None:
+                      count: int,
+                      material_id: int = None) -> None:
         """
         Set today's reading log.
 
-        :param pages: count of pages read today.
+        :param count: count of materials learned today.
+        :param material_id: id of learned material.
+        The last learned material_id by default.
         """
-        self._set_log(today(), pages)
+        self._set_log(today(), count, material_id)
 
     def set_yesterday_log(self,
                           pages: int) -> None:
