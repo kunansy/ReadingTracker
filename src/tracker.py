@@ -73,6 +73,10 @@ def to_datetime(date: DATE_TYPE) -> Optional[datetime.date]:
         raise TypeError(f"Str or datetime expected, {type(date)} found")
 
 
+def fmt(date: datetime.date) -> str:
+    return date.strftime(DATE_FORMAT)
+
+
 class Log:
     __slots__ = '__log'
 
@@ -202,7 +206,7 @@ class Log:
         """ Dump log to the file. """
 
         data = {
-            date.strftime(DATE_FORMAT): info
+            fmt(date): info
             for date, info in self.log.items()
         }
 
