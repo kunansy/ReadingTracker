@@ -334,6 +334,16 @@ class Log:
             yield iter_, info
             iter_ += step
 
+    def total_read(self,
+                   material_id: int) -> int:
+        """ Calculate how many pages of the material even read """
+        return sum(
+            info['count']
+            for info in self.values()
+            if info['material_id'] == material_id
+        )
+
+
     def dates(self) -> list[datetime.date]:
         return [
             date
