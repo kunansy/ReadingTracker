@@ -377,31 +377,44 @@ class Log:
                f"Average of every material: \n{avg_of_every_materials}"
 
     def __getitem__(self,
-                    date: Union[datetime.date, slice]):
-        if not isinstance(date, (datetime.date, slice)):
+                    date: Union[datetime.date, str, slice]):
+        """
+        Get log record by date (datetime.date or str)
+        of by slice of dates.
+
+        If slice get new Log object with [start; stop).
+        """
+        if not isinstance(date, (datetime.date, slice, str)):
             raise TypeError(f"Date or slice of dates expected, "
                             f"but {type(date)} found")
 
-        if isinstance(date, datetime.date):
-            return self.log[date]
+        if isinstance(date, (datetime.date, str)):
+            return self.log[to_datetime(date)]
 
-        assert date.start is None or isinstance(date.start, datetime.date)
-        assert date.stop is None or isinstance(date.stop, datetime.date)
-        assert date.step is None or isinstance(date.step, datetime.timedelta)
+        start, stop, step = date.start, date.stop, date.step
 
-        assert not (date.start and date.stop) or date.start <= date.stop
+        assert start is None or isinstance(start, (datetime.date, str))
+        assert stop is None or isinstance(stop, (datetime.date, str))
+        assert step is None or isinstance(step, int)
 
-        start = date.start or self.start
-        stop = date.stop or self.stop
-        step = date.step or datetime.timedelta(days=1)
+        assert not (start and stop) or start <= stop
+
+        start = to_datetime(start or self.start)
+        stop = to_datetime(stop or self.stop)
+
+        if step is None:
+            step = datetime.timedelta(days=1)
+        else:
+            step = datetime.timedelta(days=step)
 
         iter_ = start
         new_log_content = {}
         new_log = self.copy()
 
-        while iter_ <= stop:
+        while iter_ < stop:
             if start <= iter_ <= stop:
-                new_log_content[iter_] = new_log.log[iter_]
+                if iter_ in new_log.log:
+                    new_log_content[iter_] = new_log.log[iter_]
             else:
                 break
             iter_ += step
