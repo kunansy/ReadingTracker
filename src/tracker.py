@@ -84,11 +84,10 @@ class Log:
 
     def __init__(self) -> None:
         try:
-            log = self._get_log()
-        except Exception:
-            logging.exception('When load the log')
-            log = {}
-        self.__log = log
+            self.__log = self._get_log()
+        except Exception as e:
+            logging.error(f"When load the log: {e}")
+            raise
 
     @property
     def log(self) -> LOG_TYPE:
