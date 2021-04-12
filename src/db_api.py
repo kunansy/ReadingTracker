@@ -142,6 +142,7 @@ def get_free_materials() -> list[Material]:
 
 
 def get_reading_materials() -> list[tuple[Material, Status]]:
+    """ Get all materials read now. """
     status = get_status()
 
     reading_materials_ids = [
@@ -163,13 +164,10 @@ def get_reading_materials() -> list[tuple[Material, Status]]:
 
 
 def get_completed_materials() -> list[Material]:
-    """
-    Get all completed materials.
-
-    :return: list of Materials where 'end' is not None.
-    """
+    """ Get all completed materials. """
     with session() as ses:
-        return ses.query(Material).join(Status).filter(Status.end != None).all()
+        return ses.query(Material).join(Status)\
+                  .filter(Status.end != None).all()
 
 
 def get_status(*,
