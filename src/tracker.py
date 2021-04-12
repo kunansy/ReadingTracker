@@ -249,13 +249,24 @@ class Log:
         key_ = lambda item: item[1]['material_id']
         sample = sorted(self.data(), key=key_)
 
+        status = {
+            status_.material_id: status_
+            for status_ in db.get_status()
+        }
+
         for material_id, group in groupby(sample, key=key_):
             days = count = 0
             for date, info in group:
+                if (item := status.get(info['material_id'])) and \
+                        date > item.end:
+                    break
                 days += 1
                 count += info['count']
 
-            data[material_id] = count // days
+            try:
+                data[material_id] = count // days
+            except ZeroDivisionError:
+                data[material_id] = 0
 
         return dict(sorted(
             data.items(), key=lambda item: item[1], reverse=True))
