@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import copy
 import datetime
+from datetime import timedelta
 import logging
 from collections import defaultdict
 from itertools import groupby
@@ -50,7 +51,7 @@ def today() -> datetime.date:
 
 
 def yesterday() -> datetime.date:
-    return today() - datetime.timedelta(days=1)
+    return today() - timedelta(days=1)
 
 
 def to_datetime(date: DATE_TYPE) -> Optional[datetime.date]:
@@ -320,7 +321,7 @@ class Log:
         If the day is empty, material_id is supposed
         as the material_id of the last not empty day.
         """
-        step = datetime.timedelta(days=1)
+        step = timedelta(days=1)
         iter_ = self.start
         last_material_id = -1
 
@@ -420,10 +421,7 @@ class Log:
         start = to_datetime(start or self.start)
         stop = to_datetime(stop or self.stop)
 
-        if step is None:
-            step = datetime.timedelta(days=1)
-        else:
-            step = datetime.timedelta(days=step)
+        step = timedelta(days=(step or 1))
 
         iter_ = start
         new_log_content = {}
@@ -598,7 +596,7 @@ class Tracker:
             remains_pages = material.pages - total_read
 
             expected_duration = remains_pages // avg
-            expected_end = today() + datetime.timedelta(days=expected_duration)
+            expected_end = today() + timedelta(days=expected_duration)
 
             start, stop = fmt(status_.begin), fmt(expected_end)
 
