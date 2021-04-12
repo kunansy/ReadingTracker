@@ -3,6 +3,7 @@ __all__ = ('get_materials', 'get_status', 'get_completed_materials',
            'start_material', 'add_materials')
 
 import datetime
+import logging
 from contextlib import contextmanager
 from os import environ
 from typing import ContextManager, Callable
@@ -115,7 +116,11 @@ def get_materials(*,
 
 @cache
 def get_title(material_id: int) -> str:
-    return get_materials(materials_ids=[material_id])[0].title
+    try:
+        return get_materials(materials_ids=[material_id])[0].title
+    except IndexError:
+        logging.error(f"Material {material_id=} not found")
+        raise
 
 
 def get_free_materials() -> list[Material]:
