@@ -546,6 +546,49 @@ class Tracker:
             res += f"From {start} by {stop} in {days} {INFLECT_DAY(days)}\n"
         return res
 
+    def _reading(self) -> str:
+        """
+        The func if expected to make strings like that:
+
+        id=2, «Мой лучший друг – желудок»
+        will be read from 03-04-2021 to 20-04-2021 in 17 days
+        254 pages read, 217 remains, 25 pages per day average
+
+        They should be divided by double \n symbol.
+        """
+        data = db.get_reading_materials()
+        if not data:
+            return "No materials reading"
+
+        # calculate these values one time, not every iteration
+        spec_avg = self.log.average_of_every_materials
+        average = self.log.average
+
+        res, is_first = '', True
+
+        for material, status_ in data:
+            if not is_first:
+                res += '\n\n'
+            is_first = False
+
+            avg = spec_avg.get(material.material_id) or average
+
+            total_read = self.log.total_read(material.material_id)
+            remains_pages = material.pages - total_read
+
+            expected_duration = remains_pages // avg
+            expected_end = today() + datetime.timedelta(days=expected_duration)
+
+            start, stop = fmt(status_.begin), fmt(expected_end)
+
+            res += f"id={material.material_id}, «{material.title}»\n"
+            res += f"will be read from {start} to {stop} " \
+                   f"in {(expected_end - status_.begin).days} days\n" \
+                   f"{total_read} pages read, " \
+                   f"{remains_pages} remains, " \
+                   f"{avg} pages per day average"
+        return res
+
     @staticmethod
     def start_material(*,
                        material_id: int,
