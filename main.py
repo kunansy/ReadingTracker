@@ -19,15 +19,25 @@ def is_ok(num: Optional[int]) -> bool:
 
 
 def reading_dynamic(log: Log) -> None:
-    x = log.dates()
-    y = log.counts()
+    labels = log.dates()
+    values = log.counts()
 
     plt.xlabel("Dates")
     plt.ylabel("Pages")
     plt.title("Reading dynamic", fontdict={'size': 20})
 
-    plt.plot(x, y)
+    plt.plot(labels, values, 'ro-')
     plt.grid()
+
+    for label, value in zip(labels, values):
+        if value == 0:
+            continue
+        plt.annotate(
+            str(value), xy=(label, value),
+            xytext=(label, value + 2), fontsize=12
+        )
+    plt.ylim(-10, log.max[1]['count'] + 10)
+
     plt.show()
 
 
