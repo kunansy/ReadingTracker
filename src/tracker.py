@@ -257,7 +257,7 @@ class Log:
         for material_id, group in groupby(sample, key=key_):
             days = count = 0
             for date, info in group:
-                if (item := status.get(info['material_id'])) and \
+                if (item := status.get(info['material_id'])) and item.end and \
                         date > item.end:
                     break
                 days += 1
