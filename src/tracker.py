@@ -497,6 +497,11 @@ class Tracker:
         return db.get_completed_materials()
 
     @property
+    def reading(self) -> list[tuple[db.Material, db.Status]]:
+        """ Get reading materials and their statuses """
+        return db.get_reading_materials()
+
+    @property
     def log(self) -> Log:
         return self.__log
 
@@ -573,8 +578,7 @@ class Tracker:
 
         They should be divided by double \n symbol.
         """
-        data = db.get_reading_materials()
-        if not data:
+        if not (data := self.reading):
             return "No materials reading"
 
         # calculate these values one time, not every iteration
