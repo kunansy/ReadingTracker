@@ -672,6 +672,10 @@ class Tracker:
         }
         db.add_materials([material])
 
+    @staticmethod
+    def get_status(material_id: int) -> db.Material:
+        return db.get_material_status(material_id=material_id)
+
     def __str__(self) -> str:
         """
         :return: log, materials queue and total count of read pages.
