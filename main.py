@@ -103,6 +103,12 @@ def main() -> None:
         action="store_true",
         dest='cb'
     )
+    parser.add_argument(
+        '-rd', '--reading-dynamic',
+        help="Show reading dynamic graphic",
+        action="store_true",
+        dest='rd'
+    )
     args = parser.parse_args()
     log = Log()
     tracker = Tracker(log)
