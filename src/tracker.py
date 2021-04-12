@@ -110,7 +110,7 @@ class Log:
     @property
     def stop(self) -> Optional[datetime.date]:
         if self.start is not None:
-            return today()
+            return list(self.keys())[-1]
 
     @property
     def reading_material(self) -> int:
