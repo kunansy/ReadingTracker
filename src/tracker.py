@@ -235,7 +235,7 @@ class Log:
         try:
             return self.total // self.duration
         except ZeroDivisionError:
-            return 0
+            return 1
 
     @property
     def average_of_every_materials(self) -> dict[int, int]:
@@ -266,7 +266,7 @@ class Log:
             try:
                 data[material_id] = count // days
             except ZeroDivisionError:
-                data[material_id] = 0
+                data[material_id] = 1
 
         return dict(sorted(
             data.items(), key=lambda item: item[1], reverse=True))
