@@ -505,29 +505,35 @@ class Tracker:
     def log(self) -> Log:
         return self.__log
 
-    def _str_queue(self) -> str:
+    def _queue(self) -> str:
         """
-        :return: converted to str queue.
+        The func if expected to make strings like that:
+
+        id=5 «Современные ОС», pages: 1120
+        will be read from 12-12-2020 to 15-03-2021 in 93 days
+
+        They should be divided by double \n symbol.
         """
-        if len(self.queue) == 0:
-            return "No materials in queue"
+        last_date = self.log.start
+        average = self.log.average
 
-        res = ''
+        res, is_first = '', True
 
-        last_date = self.start_date
         for material in self.queue:
-            days_count = material.pages // (self.log.avg + 1)
-            finish_date = last_date + datetime.timedelta(days=days_count)
+            if not is_first:
+                res = f"{res}\n\n"
+            is_first = False
 
-            days = f"{days_count} {INFLECT_DAY(days_count)}"
-            res += f"«{material.title}» will be read\n"
+            expected_duration = material.pages // average
+            expected_end = last_date + timedelta(days=expected_duration)
 
-            start = last_date.strftime(DATE_FORMAT)
-            stop = finish_date.strftime(DATE_FORMAT)
-            res += f"from {start} to {stop} in {days}\n\n"
+            res += f"id={material.material_id} «{material.title}», " \
+                   f"pages: {material.pages}\nwill be read " \
+                   f"from {fmt(last_date)} to {fmt(expected_end)} " \
+                   f"in {expected_duration} days"
 
-            last_date = finish_date + datetime.timedelta(days=1)
-        return f"{res.strip()}\n{'-' * 70}"
+            last_date = expected_end + timedelta(days=1)
+        return res
 
     def _processed(self) -> str:
         """
@@ -683,6 +689,6 @@ class Tracker:
         sep = '\n' + '_' * 70 + '\n'
         return f"Reading log:\n{self.log}{sep}" \
                f"Statistics:\n{self.log.statistics()}{sep}" \
-               f"Materials queue:\n{self._str_queue()}{sep}" \
+               f"Materials queue:\n{self._queue()}{sep}" \
                f"Reading materials:\n{self._reading()}{sep}" \
                f"Processed materials:\n{self._processed()}"
