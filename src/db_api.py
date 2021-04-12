@@ -73,7 +73,11 @@ def cache(func: Callable) -> Callable:
         if arg in results:
             return results[arg]
 
-        results[arg] = func(arg)
+        if arg is None:
+            results[arg] = func()
+        else:
+            results[arg] = func(arg)
+
         return results[arg]
 
     return wrapped
