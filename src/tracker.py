@@ -342,7 +342,6 @@ class Log:
             if info['material_id'] == material_id
         )
 
-
     def dates(self) -> list[datetime.date]:
         return [
             date
@@ -370,7 +369,7 @@ class Log:
             is_first = False
 
             title = db.get_title(material_id)
-            avg_of_every_materials += f"\t«{title}»: {avg}"
+            avg_of_every_materials += f"\t«{title}»: {avg} pages per day"
 
         min_date, min_info = self.min
         max_date, max_info = self.max
@@ -473,11 +472,7 @@ class Log:
 
 
 class Tracker:
-    __slots__ = (
-        '__materials', '__log'
-    )
-
-    BOOKS_PATH = DATA_FOLDER / 'materials.json'
+    __slots__ = '__log',
 
     def __init__(self,
                  log: Log) -> None:
@@ -565,7 +560,7 @@ class Tracker:
 
             start = status[material_id].begin
             stop = status[material_id].end
-            days = (stop - start).days
+            days = (stop - start).days + 1
 
             res += f"id={material_id} «{material.title}», " \
                    f"pages: {material.pages}\n" \
