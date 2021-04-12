@@ -523,7 +523,7 @@ class Tracker:
             expected_end = last_date + timedelta(days=expected_duration)
 
             res += f"id={material.material_id} «{material.title}», " \
-                   f"pages: {material.pages}\nwill be read " \
+                   f"pages: {material.pages}\nWill be read " \
                    f"from {fmt(last_date)} to {fmt(expected_end)} " \
                    f"in {expected_duration} days"
 
@@ -566,7 +566,7 @@ class Tracker:
                    f"pages: {material.pages}\n" \
                    f"From {fmt(start)} to {fmt(stop)} in " \
                    f"{days} {INFLECT_DAY(days)}\n" \
-                   f"average = {spec_avg.get(material_id, -1)} pages per day"
+                   f"Average = {spec_avg.get(material_id, -1)} pages per day"
         return res
 
     def _reading(self) -> str:
@@ -604,11 +604,11 @@ class Tracker:
             start, stop = fmt(status_.begin), fmt(expected_end)
 
             res += f"id={material.material_id}, «{material.title}»\n"
-            res += f"will be read from {start} to {stop} " \
+            res += f"Will be read from {start} to {stop} " \
                    f"in {(expected_end - status_.begin).days} days\n" \
                    f"{total_read} pages read, " \
                    f"{remains_pages} remains, " \
-                   f"{avg} pages per day average"
+                   f"average = {avg} pages per day"
         return res
 
     @staticmethod
