@@ -143,6 +143,24 @@ def get_free_materials() -> list[Material]:
     ]
 
 
+def get_reading_materials() -> tuple[list[Material], list[Status]]:
+    status = get_status()
+
+    reading_materials_ids = [
+        status_.material_id
+        for status_ in status
+        if status_.end is None
+    ]
+    status = [
+        status_
+        for status_ in status
+        if status_.material_id in reading_materials_ids
+    ]
+    materials = get_materials(materials_ids=reading_materials_ids)
+
+    return materials, status
+
+
 def get_completed_materials() -> list[Material]:
     """
     Get all completed materials.
