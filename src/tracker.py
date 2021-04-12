@@ -366,11 +366,8 @@ class Log:
         min_date, min_info = self.min
         max_date, max_info = self.max
 
-        min_count = min_info['count']
-        max_count = max_info['count']
-
-        min_id = min_info['material_id']
-        max_id = max_info['material_id']
+        min_count, min_id = min_info['count'], min_info['material_id']
+        max_count, max_id = max_info['count'], max_info['material_id']
 
         min_title = db.get_title(min_id)
         max_title = db.get_title(max_id)
@@ -449,8 +446,7 @@ class Log:
             else:
                 last_material_title = '...'
 
-            date = date.strftime(DATE_FORMAT)
-            item = f"{new_line * (not is_first)}{date}: " \
+            item = f"{new_line * (not is_first)}{fmt(date)}: " \
                    f"{info['count']}, {last_material_title}"
 
             is_first = False
