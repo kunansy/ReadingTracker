@@ -128,18 +128,16 @@ def get_title(material_id: int) -> str:
 
 
 def get_free_materials() -> list[Material]:
-    """ Get all not completed materials """
-    all_materials = get_materials()
-    completed_materials = {
+    """ Get all not assigned materials """
+    assigned_materials_ids = {
         status.material_id
         for status in get_status()
-        if status.end is not None
     }
 
     return [
         material
-        for material in all_materials
-        if material.material_id not in completed_materials
+        for material in get_materials()
+        if material.material_id not in assigned_materials_ids
     ]
 
 
