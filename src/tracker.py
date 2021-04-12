@@ -528,22 +528,43 @@ class Tracker:
             last_date = finish_date + datetime.timedelta(days=1)
         return f"{res.strip()}\n{'-' * 70}"
 
-    def _str_processed(self) -> str:
+    def _processed(self) -> str:
         """
-        :return: converted to str processed list.
+        The func if expected to make strings like that:
+
+        id=3 «Эйнштейн гуляет по Луне», pages: 384
+        From 17-03-2021 to 20-03-2021 in 3 days
+        average = 96 pages per day
+
+        They should be divided by double \n symbol.
         """
-        if len(self.processed) == 0:
+        if not (materials := self.processed):
             return "No materials have been read yet"
 
-        res = ''
-        for material in self.processed:
-            res += f"«{material.title}», pages: {material.pages} has been read\n"
+        status = {
+            status_.material_id: status_
+            for status_ in db.get_status()
+        }
 
-            start = material.start_date.strftime(DATE_FORMAT)
-            stop = material.end_date.strftime(DATE_FORMAT)
-            days = (material.end_date - material.start_date).days
+        spec_avg = self.log.average_of_every_materials
+        res, is_first = '', True
 
-            res += f"From {start} by {stop} in {days} {INFLECT_DAY(days)}\n"
+        for material in materials:
+            if not is_first:
+                res += '\n\n'
+            is_first = False
+
+            material_id = material.material_id
+
+            start = status[material_id].begin
+            stop = status[material_id].end
+            days = (stop - start).days
+
+            res += f"id={material_id} «{material.title}», " \
+                   f"pages: {material.pages}\n" \
+                   f"From {fmt(start)} to {fmt(stop)} in " \
+                   f"{days} {INFLECT_DAY(days)}\n" \
+                   f"average = {spec_avg.get(material_id, -1)} pages per day"
         return res
 
     def _reading(self) -> str:
@@ -660,5 +681,4 @@ class Tracker:
                f"Statistics:\n{self.log.statistics()}{sep}" \
                f"Materials queue:\n{self._str_queue()}{sep}" \
                f"Reading materials:\n{self._reading()}{sep}" \
-               f"Processed materials:\n{self._str_processed()}"
-
+               f"Processed materials:\n{self._processed()}"
