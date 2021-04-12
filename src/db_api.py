@@ -124,7 +124,7 @@ def get_title(material_id: int) -> str:
         return get_materials(materials_ids=[material_id])[0].title
     except IndexError:
         logging.error(f"Material {material_id=} not found")
-        raise
+        return ''
 
 
 def get_free_materials() -> list[Material]:
