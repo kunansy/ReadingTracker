@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import argparse
+import logging
 from typing import Optional
 
 import matplotlib.pyplot as plt
@@ -49,36 +50,31 @@ def main() -> None:
     parser.add_argument(
         '-pl', '--print-log',
         help="Print reading log",
-        default=False,
         action="store_true",
         dest='pl'
     )
     parser.add_argument(
+        '-pr', '--print-reading',
+        help="Print materials reading now",
+        action="store_true",
+        dest='pr'
+    )
+    parser.add_argument(
         '-pq', '--print-queue',
         help="Print materials queue",
-        default=False,
         action="store_true",
         dest='pq'
     )
     parser.add_argument(
         '-pp', '--print-processed',
         help="Print processed materials",
-        default=False,
         action="store_true",
         dest='pp'
     )
     parser.add_argument(
-        '-pt', '--print-total',
-        help="Print total count of read pages",
-        default=False,
-        action="store_true",
-        dest='pt'
-    )
-    parser.add_argument(
         '-pall', '--print-all',
         help="Print all: reading log, materials queue, "
-             "processed materials, total read pages count",
-        default=False,
+             "processed materials, statistics",
         action="store_true",
         dest='pall'
     )
@@ -87,21 +83,18 @@ def main() -> None:
         help="Set count of pages read today",
         type=int,
         dest='today',
-        required=False
     )
     parser.add_argument(
         '-yday', '--yesterday',
         help="Set count of pages read yesterday",
         type=int,
         dest='yesterday',
-        required=False
     )
     parser.add_argument(
-        '-cb', '--complete-material',
-        help="Move the first material from 'queue' to 'processed'",
-        default=False,
-        action="store_true",
-        dest='cb'
+        '-cm', '--complete-material',
+        help="Complete material by its id",
+        type=int,
+        dest='cm'
     )
     parser.add_argument(
         '-rd', '--reading-dynamic',
@@ -110,6 +103,8 @@ def main() -> None:
         dest='rd'
     )
     args = parser.parse_args()
+    sep = '\n' + '_' * 70 + '\n'
+
     log = Log()
     tracker = Tracker(log)
 
@@ -120,21 +115,34 @@ def main() -> None:
         log.set_yesterday_log(args.yesterday)
         log.dump()
 
-    if args.cb:
-        tracker.complete_material()
-        tracker.dump()
+    if material_id := args.cm:
+        try:
+            tracker.complete_material(material_id=material_id)
+        except ValueError as e:
+            logging.error(e)
+        except IndexError:
+            logging.error(f"Material {material_id=} not found")
 
     if args.pall:
         print(tracker)
     else:
         if args.pl:
-            log.print_log()
-        if args.pt:
-            log.print_total()
+            print("Reading log:")
+            print(log, end=sep)
+            print("Statistics:")
+            print(log.statistics(), end=sep)
+        if args.pr:
+            print("Reading materials:")
+            print(tracker._reading(), end=sep)
         if args.pq:
-            tracker.print_queue()
+            print("Materials queue:")
+            print(tracker._queue(), end=sep)
         if args.pp:
-            tracker.print_processed()
+            print("Processed materials:")
+            print(tracker._processed(), end=sep)
+
+    if args.rd:
+        reading_dynamic(log)
 
 
 if __name__ == '__main__':
