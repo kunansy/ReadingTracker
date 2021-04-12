@@ -187,6 +187,13 @@ def get_status(*,
             Status.status_id.in_(status_ids)).all()
 
 
+def get_material_status(*,
+                        material_id: int) -> Status:
+    with session() as ses:
+        return ses.query(Status).filter(
+            Status.material_id == material_id).one()
+
+
 def add_materials(materials: list[dict]) -> None:
     """
     Add some materials to the table.
