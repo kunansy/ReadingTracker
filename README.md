@@ -1,26 +1,19 @@
 # ReadingTracker
 
-It stores list of materials to read in `data/materials.json`, reading log in `data/log.json`.
-
-
-## Features
-It supports:
-* Materials list: materials to read, processed materials;
-* Reading log.
+It stores list of materials to read in `data/tracker.db`, reading log in `data/log.json`.
 
 
 ## Usage
-`materials.py [-h] [-pl] [-pq] [-pp] [-pt] [-pall] [-tday Set count of read pages 
-for today] [-yday Set count of read pages for yesterday] [-cb]`
+`usage: main.py [-h] [-pl] [-pr] [-pq] [-pp] [-pall] [-tday TODAY] [-yday YESTERDAY] [-cm CM] [-rd]`
 
-1. `-h, --help` – see help;
-2. `-pl, --print-log` – print log;
-3. `-pq, --print-queue` – print materials queue;
-4. `-pp, --print-processed` – print list of processed materials;
-5. `-pt, --print-total` – print total count of read pages;   
-6. `-pall, --print-all` – print all: log, materials queue, processed materials, total;
-7. `-tday, --today` – set today's reading log;
-8. `-yday, --yesterday` – set yesterday's reading log;
-9. `-cb, --complete-material` – remove the first material from the queue and add it to
-   `processed` list. Set `end_date` as the day when the command is called and 
-   `start_day` of the next material in queue as the day after it.
+Optional arguments:
+1. `-h, --help`                      Show this help message and exit
+1. `-pl, --print-log`                Print reading log
+1. `-pr, --print-reading`            Print materials reading now
+1. `-pq, --print-queue`              Print materials queue
+1. `-pp, --print-processed`          Print processed materials
+1. `-pall, --print-all`              Print all: reading log, materials queue, processed materials, statistics
+1. `-tday COUNT, --today COUNT`      Set count of pages read today
+1. `-yday COUNT, --yesterday COUNT`  Set count of pages read yesterday
+1. `-cm CM, --complete-material CM`  Complete material by its id
+1. `-rd, --reading-dynamic`          Show reading dynamic graphic
