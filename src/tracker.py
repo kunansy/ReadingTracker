@@ -3,7 +3,6 @@ import copy
 import datetime
 from datetime import timedelta
 import logging
-from collections import defaultdict
 from itertools import groupby
 from pathlib import Path
 from typing import Union, Optional, Iterator
@@ -245,8 +244,7 @@ class Log:
 
         The data is expected to make chart.
         """
-        data = defaultdict(int)
-
+        data = {}
         key_ = lambda item: item[1]['material_id']
         sample = sorted(self.data(), key=key_)
 
