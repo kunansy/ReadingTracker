@@ -70,5 +70,29 @@
   "20-03-2021": {
     "material_id": 3,
     "count": 135
+  },
+  "26-03-2021": {
+    "material_id": 4,
+    "count": 47
+  },
+  "27-03-2021": {
+    "material_id": 4,
+    "count": 55
+  },
+  "30-03-2021": {
+    "material_id": 4,
+    "count": 30
+  },
+  "31-03-2021": {
+    "material_id": 4,
+    "count": 53
+  },
+  "01-04-2021": {
+    "material_id": 4,
+    "count": 62
+  },
+  "02-04-2021": {
+    "material_id": 4,
+    "count": 50
   }
 }
