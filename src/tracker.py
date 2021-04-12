@@ -355,8 +355,11 @@ class Log:
         min_date, min_info = self.min
         max_date, max_info = self.max
 
-        min_count, min_id = min_info.values()
-        max_count, max_id = max_info.values()
+        min_count = min_info['count']
+        max_count = max_info['count']
+
+        min_id = min_info['material_id']
+        max_id = max_info['material_id']
 
         min_title = db.get_title(min_id)
         max_title = db.get_title(max_id)
@@ -367,9 +370,9 @@ class Log:
                f"Empty days: {self.empty_days}\n" \
                f"Max: {max_date} = {max_count}, «{max_title}»\n" \
                f"Min: {min_date} = {min_count}, «{min_title}»\n" \
-               f"Average: {self.average}\n" \
-               f"Median: {self.median}\n" \
-               f"Total count: {self.total}\n" \
+               f"Average: {self.average} pages per day\n" \
+               f"Median: {self.median} pages\n" \
+               f"Total pages count: {self.total}\n" \
                f"Would be total: {self.would_be_total}\n" \
                f"Average of every material: \n{avg_of_every_materials}"
 
