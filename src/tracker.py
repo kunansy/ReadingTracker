@@ -621,7 +621,7 @@ class Tracker:
         try:
             db.start_material(
                 material_id=material_id, start_date=start_date)
-        except ValueError:
+        except db.WrongDate:
             logging.exception(f"date format is wrong, {start_date=}")
 
     def complete_material(self,
@@ -646,13 +646,16 @@ class Tracker:
         try:
             db.complete_material(
                 material_id=material_id,
-                completion_date=completion_date)
-        except ValueError:
-            logging.exception(
-                f"Cannot complete {material_id=}, {completion_date=}")
+                completion_date=completion_date
+            )
+        except db.MaterialEvenCompleted as e:
+            logging.error(e)
             raise
-        except IndexError:
-            logging.exception(f"{material_id=} has ot been started yet")
+        except db.WrongDate as e:
+            logging.error(e)
+            raise
+        except db.MaterialNotAssigned as e:
+            logging.error(e)
             raise
 
     @staticmethod
