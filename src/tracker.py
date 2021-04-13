@@ -424,7 +424,7 @@ class Log:
         new_log_content = {}
         new_log = self.copy()
 
-        while iter_ < stop:
+        while iter_ <= stop:
             if start <= iter_ <= stop:
                 if iter_ in new_log.log:
                     new_log_content[iter_] = new_log.log[iter_]
