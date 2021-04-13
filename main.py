@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 
 import argparse
+import datetime
 import logging
 from typing import Optional
 
 import matplotlib.pyplot as plt
 
-from src.tracker import Tracker, Log
+from src.tracker import Tracker, Log, today, fmt
 
 
 def is_ok(num: Optional[int]) -> bool:
@@ -102,6 +103,12 @@ def main() -> None:
         action="store_true",
         dest='rd'
     )
+    parser.add_argument(
+        '--full-dynamic',
+        help="Show full graphic of reading dynamic.",
+        action="store_true",
+        dest='full'
+    )
     args = parser.parse_args()
     sep = '\n' + '_' * 70 + '\n'
 
@@ -142,7 +149,14 @@ def main() -> None:
             print(tracker._processed(), end=sep)
 
     if args.rd:
-        reading_dynamic(log)
+        if args.full:
+            reading_dynamic(log)
+        else:
+            today_ = today()
+            yy, mm = today_.year, today_.month
+            month_start = datetime.date(yy, mm, 1)
+
+            reading_dynamic(log[month_start:])
 
 
 if __name__ == '__main__':
