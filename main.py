@@ -53,6 +53,55 @@ def reading_dynamic(log: Log) -> None:
     plt.show()
 
 
+def g(log: Log):
+    import matplotlib.pyplot as plt
+    import numpy as np
+    import pandas as pd
+    from scipy.interpolate import make_interp_spline
+
+    labels = log.dates()
+    values = log.counts()
+    cols = ["value"]
+
+    df = pd.DataFrame(values, index=labels, columns=cols)
+    x = df.index
+    y = df.value
+
+    x_new = np.linspace(0, len(df.index), 300)
+    a_BSpline = make_interp_spline(
+        list(range(len(df.index))),
+        df.value,
+        k=5,
+    )
+    y_new = a_BSpline(x_new)
+
+    plt.plot(
+        x_new[:-50],
+        y_new[:-50],
+        "-",
+    )
+    plt.grid()
+
+    plt.ylim(-10, y_new.max() + 10)
+
+    plt.xlabel("Dates")
+    plt.ylabel("Pages")
+    plt.title("Reading dynamic", fontdict={'size': 20})
+
+    x = list(x.astype(str))
+    plt.plot(x, y, "ro-")
+
+    for label, value in zip(x, y):
+        if value == 0:
+            continue
+        plt.annotate(
+            str(value), xy=(label, value),
+            xytext=(label, value + 2), fontsize=12
+        )
+
+    plt.show()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Reading tracker: materials to read, "
