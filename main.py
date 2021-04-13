@@ -21,12 +21,10 @@ def is_ok(num: Optional[int]) -> bool:
 
 
 def reading_dynamic(log: Log) -> None:
-    labels = log.dates()
-    if len(log) <= 10:
-        labels = [
-            fmt(date)
-            for date in labels
-        ]
+    labels = [
+        fmt(date)
+        for date in log.dates()
+    ]
     values = log.counts()
 
     plt.xlabel("Dates")
@@ -35,6 +33,13 @@ def reading_dynamic(log: Log) -> None:
 
     plt.plot(labels, values, 'ro-')
     plt.grid()
+
+    step = 4 * (len(log) > 10) + 1
+    xt = [
+        labels[i]
+        for i in range(0, len(labels), step)
+    ]
+    plt.xticks(xt, rotation="vertical")
 
     for label, value in zip(labels, values):
         if value == 0:
