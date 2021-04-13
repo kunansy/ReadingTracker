@@ -20,6 +20,18 @@ DATE_FORMAT = '%d-%m-%Y'
 Base = declarative_base()
 
 
+class WrongDate(Exception):
+    pass
+
+
+class MaterialEvenCompleted(Exception):
+    pass
+
+
+class MaterialNotAssigned(Exception):
+    pass
+
+
 class Material(Base):
     __tablename__ = 'material'
 
@@ -224,8 +236,8 @@ def start_material(*,
         start_date = start_date or today()
 
         if start_date > today():
-            raise ValueError("Start date mus be less than today,"
-                             "but %s found", start_date)
+            raise WrongDate("Start date must be less than today,"
+                            "but %s found", start_date)
 
         started_material = Status(
             material_id=material_id, begin=start_date)
@@ -250,12 +262,16 @@ def complete_material(*,
         completion_date = completion_date or today()
 
         status = ses.query(Status).filter(
-            Status.material_id == material_id).all()[0]
+            Status.material_id == material_id).all()
+        try:
+            status = status[0]
+        except IndexError:
+            raise MaterialNotAssigned(f"Material {material_id=} not assigned")
 
         if status.end is not None:
-            raise ValueError(f"Material {material_id=} even completed")
+            raise MaterialEvenCompleted(f"Material {material_id=}")
         if status.begin > completion_date:
-            raise ValueError("Begin cannot be more than end, but"
-                             f"{status.begin=} > {completion_date=}")
+            raise WrongDate("Begin cannot be more than end, but"
+                            f"{status.begin=} > {completion_date=}")
 
         status.end = completion_date
