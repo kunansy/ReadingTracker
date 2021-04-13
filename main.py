@@ -22,6 +22,11 @@ def is_ok(num: Optional[int]) -> bool:
 
 def reading_dynamic(log: Log) -> None:
     labels = log.dates()
+    if len(log) <= 10:
+        labels = [
+            fmt(date)
+            for date in labels
+        ]
     values = log.counts()
 
     plt.xlabel("Dates")
