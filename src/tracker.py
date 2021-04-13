@@ -434,6 +434,9 @@ class Log:
         new_log.__log = new_log_content
         return new_log
 
+    def __len__(self) -> int:
+        return len(self.log)
+
     def __str__(self) -> str:
         """
         If there are the same material on several days,
