@@ -710,6 +710,32 @@ class Tracker:
     def get_status(material_id: int) -> db.Material:
         return db.get_material_status(material_id=material_id)
 
+    @staticmethod
+    def add_note(material_id: int,
+                 content: str,
+                 chapter: int,
+                 page: int,
+                 date: datetime.date = None) -> None:
+        try:
+            material = db.get_materials(materials_ids=[material_id])[0]
+        except IndexError:
+            msg = f"Material {material_id} not found"
+            logging.error(msg)
+            raise db.MaterialNotFound(msg)
+
+        if material.pages < page:
+            raise ValueError("Given page more than overall "
+                             "pages count in the material,"
+                             f"{page} > {material.pages}")
+
+        db.add_note(
+            material_id=material_id,
+            content=content,
+            chapter=chapter,
+            page=page,
+            date=date
+        )
+
     def __str__(self) -> str:
         """
         :return: log, materials queue and total count of read pages.
