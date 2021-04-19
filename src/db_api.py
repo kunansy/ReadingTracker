@@ -90,8 +90,8 @@ class Note(Base):
         date = self.date.strftime(DATE_FORMAT)
 
         return f"{self.__class__.__name__}(" \
-               f"{self.id=}, {self.material_id=}, " \
-               f"self.{date=}, {self.chapter=}, {self.page=})"
+               f"id={self.id}, material_id={self.material_id}, " \
+               f"{date=}, chapter={self.chapter}, page{self.page})"
 
 
 engine = create_engine(environ['DB_URI'], encoding='utf-8')
