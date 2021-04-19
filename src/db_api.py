@@ -32,6 +32,10 @@ class MaterialNotAssigned(Exception):
     pass
 
 
+class MaterialNotFound(Exception):
+    pass
+
+
 class Material(Base):
     __tablename__ = 'material'
 
