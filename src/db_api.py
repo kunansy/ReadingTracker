@@ -70,8 +70,8 @@ class Status(Base):
             end = end.strftime(DATE_FORMAT)
 
         return "Status(" \
-               f"{self.status_id}, {self.material_id}, " \
-               f"{begin}, {end})"
+               f"id={self.status_id}, material_id={self.material_id}, " \
+               f"{begin=}, {end=})"
 
 
 class Note(Base):
