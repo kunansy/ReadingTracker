@@ -10,7 +10,7 @@ from os import environ
 from typing import ContextManager, Callable
 
 from sqlalchemy import Column, ForeignKey, Integer, String, Date, create_engine, \
-    MetaData
+    MetaData, Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
@@ -67,6 +67,26 @@ class Status(Base):
         return "Status(" \
                f"{self.status_id}, {self.material_id}, " \
                f"{begin}, {end})"
+
+
+class Note(Base):
+    __tablename__ = 'note'
+
+    id = Column(Integer, primary_key=True)
+    content = Column(Text, nullable=False)
+    material_id = Column(Integer,
+                         ForeignKey('material.material_id'),
+                         nullable=False)
+    date = Column(Date, nullable=False)
+    chapter = Column(Integer, nullable=False)
+    page = Column(Integer, nullable=False)
+
+    def __repr__(self) -> str:
+        date = self.date.strftime(DATE_FORMAT)
+
+        return f"{self.__class__.__name__}(" \
+               f"{self.id=}, {self.material_id=}, " \
+               f"self.{date=}, {self.chapter=}, {self.page=})"
 
 
 metadata = MetaData()
