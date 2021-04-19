@@ -631,10 +631,10 @@ class Tracker:
                 res += '\n\n'
             is_first = False
 
-            res += f"id={material_id}, «{db.get_title(material_id)}»: "
-            res += '\n'.join(
+            res += f"id={material_id}, «{db.get_title(material_id)}»:\n"
+            res += '\n\n'.join(
                 f"\t{num}. {note.content}\n"
-                f"Added at {fmt(note.date)}\n"
+                f"\tAdded at: {fmt(note.date)}\n"
                 f"\tChapter {note.chapter}, page {note.page}"
                 for num, note in enumerate(group, 1)
             )
