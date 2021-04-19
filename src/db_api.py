@@ -250,7 +250,7 @@ def start_material(*,
     :param start_date: date when the material was started.
      Today by default.
 
-    :exception ValueError: if 'start_time' is better than today.
+    :exception WrongDate: if 'start_time' is better than today.
     """
     with session() as ses:
         start_date = start_date or today()
@@ -274,9 +274,9 @@ def complete_material(*,
     :param completion_date: date when the material
      was finished. Today by default.
 
-    :exception ValueError: if the material has been completed
-     yet or if 'completion_date' is less than start date.
-    :exception IndexError: if the material has not been started yet.
+    :exception MaterialEvenCompleted: if the material has been completed yet.
+    :exception WrongDate: if 'completion_date' is less than start date.
+    :exception MaterialNotAssigned: if the material has not been started yet.
     """
     with session() as ses:
         completion_date = completion_date or today()
