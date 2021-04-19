@@ -503,6 +503,10 @@ class Tracker:
     def log(self) -> Log:
         return self.__log
 
+    @property
+    def notes(self) -> list[db.Note]:
+        return db.get_notes()
+
     def _queue(self) -> str:
         """
         The func if expected to make strings like that:
@@ -556,7 +560,7 @@ class Tracker:
 
         for material in materials:
             if not is_first:
-                res += '\n\n'
+                res = f"{res}\n\n"
             is_first = False
 
             material_id = material.material_id
@@ -593,7 +597,7 @@ class Tracker:
 
         for material, status_ in data:
             if not is_first:
-                res += '\n\n'
+                res = f"{res}\n\n"
             is_first = False
 
             avg = spec_avg.get(material.material_id) or average
@@ -612,6 +616,29 @@ class Tracker:
                    f"{total_read} pages read, " \
                    f"{remains_pages} remains, " \
                    f"average = {avg} pages per day"
+        return res
+
+    def _notes(self) -> str:
+        if not (notes := self.notes):
+            return "No notes found"
+
+        key = lambda note: note.material_id
+        notes = sorted(notes, key=key)
+
+        res, is_first = '', True
+        for material_id, group in groupby(notes, key=key):
+            if not is_first:
+                res += '\n\n'
+            is_first = False
+
+            res += f"id={material_id}, «{db.get_title(material_id)}»:\n"
+            res += '\n\n'.join(
+                f"\t{num}. {note.content}\n"
+                f"\tAdded at: {fmt(note.date)}\n"
+                f"\tChapter {note.chapter}, page {note.page}"
+                for num, note in enumerate(group, 1)
+            )
+
         return res
 
     @staticmethod
@@ -682,6 +709,36 @@ class Tracker:
     @staticmethod
     def get_status(material_id: int) -> db.Material:
         return db.get_material_status(material_id=material_id)
+
+    @staticmethod
+    def get_notes(material_id: int) -> list[db.Note]:
+        return db.get_notes(materials_ids=[material_id])
+
+    @staticmethod
+    def add_note(material_id: int,
+                 content: str,
+                 chapter: int,
+                 page: int,
+                 date: datetime.date = None) -> None:
+        try:
+            material = db.get_materials(materials_ids=[material_id])[0]
+        except IndexError:
+            msg = f"Material {material_id} not found"
+            logging.error(msg)
+            raise db.MaterialNotFound(msg)
+
+        if material.pages < page:
+            raise ValueError("Given page more than overall "
+                             "pages count in the material,"
+                             f"{page} > {material.pages}")
+
+        db.add_note(
+            material_id=material_id,
+            content=content,
+            chapter=chapter,
+            page=page,
+            date=date
+        )
 
     def __str__(self) -> str:
         """

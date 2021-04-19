@@ -1,7 +1,7 @@
 __all__ = ('get_materials', 'get_status', 'get_completed_materials',
            'get_free_materials', 'complete_material', 'get_title',
            'start_material', 'add_materials', 'get_material_status',
-           'get_reading_materials')
+           'get_reading_materials', 'add_note', 'get_notes')
 
 import datetime
 import logging
@@ -10,7 +10,7 @@ from os import environ
 from typing import ContextManager, Callable
 
 from sqlalchemy import Column, ForeignKey, Integer, String, Date, create_engine, \
-    MetaData
+    Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
@@ -29,6 +29,10 @@ class MaterialEvenCompleted(Exception):
 
 
 class MaterialNotAssigned(Exception):
+    pass
+
+
+class MaterialNotFound(Exception):
     pass
 
 
@@ -69,12 +73,28 @@ class Status(Base):
                f"{begin}, {end})"
 
 
-metadata = MetaData()
+class Note(Base):
+    __tablename__ = 'note'
+
+    id = Column(Integer, primary_key=True)
+    content = Column(Text, nullable=False)
+    material_id = Column(Integer,
+                         ForeignKey('material.material_id'),
+                         nullable=False)
+    date = Column(Date, nullable=False)
+    chapter = Column(Integer, nullable=False)
+    page = Column(Integer, nullable=False)
+
+    def __repr__(self) -> str:
+        date = self.date.strftime(DATE_FORMAT)
+
+        return f"{self.__class__.__name__}(" \
+               f"{self.id=}, {self.material_id=}, " \
+               f"self.{date=}, {self.chapter=}, {self.page=})"
+
 
 engine = create_engine(environ['DB_URI'], encoding='utf-8')
 Base.metadata.create_all(engine)
-
-conn = engine.connect()
 
 
 def cache(func: Callable) -> Callable:
@@ -230,7 +250,7 @@ def start_material(*,
     :param start_date: date when the material was started.
      Today by default.
 
-    :exception ValueError: if 'start_time' is better than today.
+    :exception WrongDate: if 'start_time' is better than today.
     """
     with session() as ses:
         start_date = start_date or today()
@@ -254,9 +274,9 @@ def complete_material(*,
     :param completion_date: date when the material
      was finished. Today by default.
 
-    :exception ValueError: if the material has been completed
-     yet or if 'completion_date' is less than start date.
-    :exception IndexError: if the material has not been started yet.
+    :exception MaterialEvenCompleted: if the material has been completed yet.
+    :exception WrongDate: if 'completion_date' is less than start date.
+    :exception MaterialNotAssigned: if the material has not been started yet.
     """
     with session() as ses:
         completion_date = completion_date or today()
@@ -275,3 +295,33 @@ def complete_material(*,
                             f"{status.begin=} > {completion_date=}")
 
         status.end = completion_date
+
+
+def get_notes(*,
+              materials_ids: list[int] = None) -> list[Note]:
+    with session() as ses:
+        if materials_ids:
+            return ses.query(Note).filter(
+                Note.material_id.in_(materials_ids)).all()
+
+        return ses.query(Note).all()
+
+
+def add_note(*,
+             material_id: int,
+             content: str,
+             chapter: int,
+             page: int,
+             date: datetime.date = None) -> None:
+    with session() as ses:
+        date = date or today()
+
+        note = Note(
+            material_id=material_id,
+            content=content,
+            chapter=chapter,
+            page=page,
+            date=date
+        )
+
+        ses.add(note)
