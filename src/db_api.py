@@ -47,8 +47,9 @@ class Material(Base):
 
     def __repr__(self) -> str:
         return "Material(" \
-               f"{self.material_id}, {self.title}, " \
-               f"{self.authors}, {self.pages}, {self.tags})"
+               f"id={self.material_id}, title={self.title}, " \
+               f"authors={self.authors}, pages={self.pages}, " \
+               f"tags={self.tags})"
 
 
 class Status(Base):
