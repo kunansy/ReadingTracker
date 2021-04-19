@@ -560,7 +560,7 @@ class Tracker:
 
         for material in materials:
             if not is_first:
-                res += '\n\n'
+                res = f"{res}\n\n"
             is_first = False
 
             material_id = material.material_id
@@ -597,7 +597,7 @@ class Tracker:
 
         for material, status_ in data:
             if not is_first:
-                res += '\n\n'
+                res = f"{res}\n\n"
             is_first = False
 
             avg = spec_avg.get(material.material_id) or average
