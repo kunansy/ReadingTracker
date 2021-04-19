@@ -466,12 +466,11 @@ class Log:
         if len(self.log) == 0:
             return f"{self.__class__.__name__}()"
 
-        res = f'{self.__class__.__name__}(\n'
-        res += '\n'.join(
-            f"\t{key=}: {val=}"
-            for key, val in self.log.items()
+        log_records = ', '.join(
+            f"{date}: {info}"
+            for date, info in self.log.items()
         )
-        return res + '\n)'
+        return f"{self.__class__.__name__}({log_records})"
 
 
 class Tracker:
