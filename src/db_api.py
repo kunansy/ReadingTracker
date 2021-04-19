@@ -10,7 +10,7 @@ from os import environ
 from typing import ContextManager, Callable
 
 from sqlalchemy import Column, ForeignKey, Integer, String, Date, create_engine, \
-    MetaData, Text
+    Text
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
@@ -93,12 +93,8 @@ class Note(Base):
                f"self.{date=}, {self.chapter=}, {self.page=})"
 
 
-metadata = MetaData()
-
 engine = create_engine(environ['DB_URI'], encoding='utf-8')
 Base.metadata.create_all(engine)
-
-conn = engine.connect()
 
 
 def cache(func: Callable) -> Callable:
