@@ -503,6 +503,10 @@ class Tracker:
     def log(self) -> Log:
         return self.__log
 
+    @property
+    def notes(self) -> list[db.Note]:
+        return db.get_notes()
+
     def _queue(self) -> str:
         """
         The func if expected to make strings like that:
