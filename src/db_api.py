@@ -295,3 +295,33 @@ def complete_material(*,
                             f"{status.begin=} > {completion_date=}")
 
         status.end = completion_date
+
+
+def get_notes(*,
+              materials_ids: list[int] = None) -> list[Note]:
+    with session() as ses:
+        if materials_ids:
+            return ses.query(Note).filter(
+                Note.material_id.in_(materials_ids)).all()
+
+        return ses.query(Note).all()
+
+
+def add_note(*,
+             material_id: int,
+             content: str,
+             chapter: int,
+             page: int,
+             date: datetime.date = None) -> None:
+    with session() as ses:
+        date = date or today()
+
+        note = Note(
+            material_id=material_id,
+            content=content,
+            chapter=chapter,
+            page=page,
+            date=date
+        )
+
+        ses.add(note)
