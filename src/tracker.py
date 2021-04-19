@@ -711,6 +711,10 @@ class Tracker:
         return db.get_material_status(material_id=material_id)
 
     @staticmethod
+    def get_notes(material_id: int) -> list[db.Note]:
+        return db.get_notes(materials_ids=[material_id])
+
+    @staticmethod
     def add_note(material_id: int,
                  content: str,
                  chapter: int,
