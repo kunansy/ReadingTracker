@@ -4,6 +4,7 @@ from typing import Any
 from sanic import Sanic, Request, response
 from sanic_jinja2 import SanicJinja2
 
+from src import db_api
 from src.tracker import Tracker, Log, DATE_FORMAT
 
 
@@ -64,8 +65,19 @@ async def get_reading_materials(request: Request) -> dict[str, Any]:
 
 
 @app.get('/materials/completed')
-async def get_completed_materials(request: Request) -> response.HTTPResponse:
-    pass
+@jinja.template('completed.html')
+async def get_completed_materials(request: Request) -> dict:
+    # TODO: add statistics
+
+    status = {
+        status_.material_id: status_
+        for status_ in db_api.get_status()
+    }
+    return {
+        'materials': tracker.processed,
+        'status': status,
+        'DATE_FORMAT': DATE_FORMAT
+    }
 
 
 @app.get('/reading_log')
