@@ -9,18 +9,18 @@ header {
 	background-color: black;
 }
 
-nav {
+nav.navbar {
 	height: 15vh;
 	display: flex;
 	margin: auto;
 }
-nav a {
+nav.navbar a {
 	text-decoration: none;
 	color: white;
 	margin: auto;
 	font-size: 5vh;
 }
-nav a:hover {
+nav.navbar a:hover {
 	text-decoration: none;
     color: #004E7C;
 }
