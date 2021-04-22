@@ -1,0 +1,21 @@
+{% extends 'index.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='notes.css') }}">
+{% endblock style %}
+
+{% block main %}
+
+{% for note in notes %}
+{% set id = note['material_id'] %}
+<div class="note">
+    <p> id: {{ note.id }}</p>
+    <p> Content: {{ note.content }}</p>
+    <p> Added at: {{ note.date.strftime(DATE_FORMAT) }} </p>
+    <p> Material title: «{{ titles[id] }}» </p>
+    <p> Chapter: {{ note.chapter }} </p>
+    <p> Page: {{ note.page }} </p>
+</div>
+{% endfor %}
+
+{% endblock main %}
