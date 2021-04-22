@@ -1,0 +1,25 @@
+{% extends 'index.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='reading.css') }}">
+{% endblock style %}
+
+{% block main %}
+
+{% for material, status in materials %}
+{% set id = material['material_id'] %}
+<div class="material">
+    <p> id: {{ id }}</p>
+    <p> Author: {{ material['authors'] }} </p>
+    <p> Title: «{{ material['title'] }}» </p>
+    <p> Pages: {{ material['pages'] }} </p>
+    <p> Tags:  {{ material['tags'] }} </p>
+    <hr title="Analytics">
+    <p> Started at: {{ status['begin'].strftime(DATE_FORMAT) }}
+    <p> Total pages read: {{ statistics[id]['total'] }} </p>
+    <p> Average: {{ statistics[id]['average'] }} pages per day </p>
+    <p> Pages remain: {{ statistics[id]['remain'] }} </p>
+</div>
+{% endfor %}
+
+{% endblock main%}
