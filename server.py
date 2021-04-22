@@ -122,9 +122,17 @@ async def get_notes(request: Request):
     }
 
 
-@app.post('/notes')
+@app.get('/notes/add')
+@jinja.template('add_note.html')
 async def add_notes(request: Request) -> response.HTTPResponse:
     pass
+
+
+@app.post('/notes/add')
+async def add_notes(request: Request) -> response.HTTPResponse:
+    print(request.body)
+
+    return response.redirect('/notes/add')
 
 
 @app.get('/')
