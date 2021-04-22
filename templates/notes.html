@@ -6,6 +6,32 @@
 
 {% block main %}
 
+<menu>
+    <li> <a href="/notes"> Search notes </a> </li>
+    <li> <a href="/notes/add"> Add note </a> </li>
+</menu>
+
+
+<div class="form">
+    {% for message in get_flashed_messages() %}
+        <div class="alert alert-primary" role="alert">
+            {{ message }}
+            <p> Alert </p>
+        </div>
+    {% endfor %}
+
+    <form action="/notes" method="GET">
+        <input type="text" placeholder="Enter a material id" name="material_id" id="input-id">
+        <button type="submit" class="submit-button"> Search </button>
+    </form>
+</div>
+
+{% if not notes %}
+    <div class="note">
+        <p> No notes found </p>
+    </div>
+{% endif %}
+
 {% for note in notes %}
 {% set id = note['material_id'] %}
 <div class="note">
