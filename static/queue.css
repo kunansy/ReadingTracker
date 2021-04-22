@@ -1,0 +1,11 @@
+div.material {
+    border: black 0.25vh solid;
+    margin: 2vh auto;
+    width: 50vw;
+    border-radius: 3vh;
+    padding: 5vh;
+}
+div.material p {
+    word-wrap: break-word;
+}
+

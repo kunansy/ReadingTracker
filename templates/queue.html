@@ -1,0 +1,19 @@
+{% extends 'index.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='queue.css') }}">
+{% endblock style %}
+
+{% block main %}
+
+{% for material in materials %}
+<div class="material">
+    <p> id: {{ material['material_id'] }}</p>
+    <p> Author: {{ material['authors'] }} </p>
+    <p> Title: «{{ material['title'] }}» </p>
+    <p> Pages: {{ material['pages'] }} </p>
+    <p> Tags:  {{ material['tags'] }} </p>
+</div>
+{% endfor %}
+
+{% endblock main%}
