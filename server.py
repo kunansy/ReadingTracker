@@ -5,7 +5,7 @@ from sanic import Sanic, Request, response
 from sanic_jinja2 import SanicJinja2
 
 from src import db_api
-from src.tracker import Tracker, Log, DATE_FORMAT
+from src.tracker import Tracker, Log, DATE_FORMAT, PAGES_PER_DAY
 
 
 app = Sanic(__name__)
@@ -81,8 +81,20 @@ async def get_completed_materials(request: Request) -> dict:
 
 
 @app.get('/reading_log')
-async def get_reading_log(request: Request) -> response.HTTPResponse:
-    pass
+@jinja.template('reading_log.html')
+async def get_reading_log(request: Request) -> dict[str, Any]:
+    log_ = log.log
+    titles = {
+        info['material_id']: db_api.get_title(info['material_id'])
+        for date, info in log_ .items()
+    }
+
+    return {
+        'log': log_,
+        'titles': titles,
+        'DATE_FORMAT': DATE_FORMAT,
+        'EXPECTED_COUNT': PAGES_PER_DAY
+    }
 
 
 @app.post('/reading_log')
