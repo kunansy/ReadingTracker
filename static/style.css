@@ -24,3 +24,12 @@ nav a:hover {
 	text-decoration: none;
     color: #004E7C;
 }
+
+main {
+	min-height: 100vh;
+}
+
+footer {
+	background-color: black;
+	height: 50vh;
+}
