@@ -5,8 +5,11 @@ html, body {
 	font-family: Roboto, 'Open Sans', sans-serif;
 }
 
-nav {
+header {
 	background-color: black;
+}
+
+nav {
 	height: 15vh;
 	display: flex;
 	margin: auto;
@@ -23,7 +26,10 @@ nav a:hover {
 }
 
 main {
+	display: flex;
+	flex-direction: column;
 	min-height: 100vh;
+	margin: 10vh auto;
 }
 
 footer {
