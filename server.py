@@ -45,6 +45,9 @@ async def complete_material(request: Request,
 @app.get('/materials/reading')
 @jinja.template('reading.html')
 async def get_reading_materials(request: Request) -> dict[str, Any]:
+    # TODO: add statistics, make special method in tracker to
+    #  calculate all statistics about the material
+
     materials = tracker.reading
     avg = log.average_of_every_materials
 
