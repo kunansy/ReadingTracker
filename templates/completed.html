@@ -1,0 +1,23 @@
+{% extends 'index.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='completed.css') }}">
+{% endblock style %}
+
+{% block main %}
+
+{% for material in materials %}
+{% set id = material['material_id'] %}
+<div class="material">
+    <p> id: {{ id }}</p>
+    <p> Author: {{ material['authors'] }} </p>
+    <p> Title: «{{ material['title'] }}» </p>
+    <p> Pages: {{ material['pages'] }} </p>
+    <p> Tags:  {{ material['tags'] }} </p>
+    <hr title="Analytics">
+    <p> Started at: {{ status[id]['begin'].strftime(DATE_FORMAT) }} </p>
+    <p> Completed at: {{ status[id]['end'].strftime(DATE_FORMAT) }}</p>
+</div>
+{% endfor %}
+
+{% endblock main%}
