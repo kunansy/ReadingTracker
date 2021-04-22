@@ -21,30 +21,6 @@ DATE_FORMAT = '%d-%m-%Y'
 DATE_TYPE = Union[str, datetime.date, datetime.datetime]
 
 
-def with_num(word: str,
-             num: int) -> str:
-    """
-    Make the word agree with the number.
-    Means add -s if num > 1.
-
-    :param word: English word to make agree with the number.
-    :param num: num.
-    :return: word with -s or without.
-    """
-    return f"{word}{'s' * (num > 1)}"
-
-
-def inflect_word(word: str):
-    def wrapped(num: int) -> str:
-        return with_num(word, num)
-
-    return wrapped
-
-
-INFLECT_PAGE = inflect_word('page')
-INFLECT_DAY = inflect_word('day')
-
-
 def today() -> datetime.date:
     return datetime.date.today()
 
@@ -571,7 +547,7 @@ class Tracker:
             res += f"id={material_id} «{material.title}», " \
                    f"pages: {material.pages}\n" \
                    f"From {fmt(start)} to {fmt(stop)} in " \
-                   f"{days} {INFLECT_DAY(days)}\n" \
+                   f"{days} days\n" \
                    f"Average = {spec_avg.get(material_id, -1)} pages per day"
         return res
 
