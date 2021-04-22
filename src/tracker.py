@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 import copy
 import datetime
-from datetime import timedelta
 import logging
+from datetime import timedelta
 from itertools import groupby
 from pathlib import Path
 from typing import Union, Optional, Iterator
