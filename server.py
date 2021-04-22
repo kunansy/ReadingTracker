@@ -128,7 +128,8 @@ async def add_notes(request: Request) -> response.HTTPResponse:
 
 
 @app.get('/')
-async def home(request: Request) -> response.HTTPResponse:
+@jinja.template('index.html')
+async def home(request: Request) -> None:
     pass
 
 
