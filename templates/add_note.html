@@ -1,0 +1,32 @@
+{% extends 'index.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='add_note.css') }}">
+{% endblock style %}
+
+{% block main %}
+
+<menu>
+    <li> <a href="/notes"> Search notes </a> </li>
+    <li> <a href="/notes/add"> Add note </a> </li>
+</menu>
+
+
+<div class="form">
+    {% for message in get_flashed_messages() %}
+        <div class="alert alert-primary" role="alert">
+            {{ message }}
+            <p> Alert </p>
+        </div>
+    {% endfor %}
+
+    <form action="/notes/add" method="POST">
+        <input type="text" placeholder="Enter a material id" name="material_id" id="input-id"> <br/>
+        <input type="text" placeholder="Enter a content" name="content" id="input-content"> <br/>
+        <input type="text" placeholder="Enter a chapter number" name="chapter" id="input-chapter"> <br/>
+        <input type="text" placeholder="Enter a page number" name="page" id="input-page">  <br/>
+        <button type="submit" class="submit-button"> Add </button>
+    </form>
+</div>
+
+{% endblock main %}

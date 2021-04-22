@@ -1,0 +1,35 @@
+.form {
+	font-size: 1.5vw;
+    margin: auto;
+    text-align: center;
+}
+
+input {
+    margin-bottom: 4vh;
+	border: none;
+	height: 8vh;
+	width: 40vw;
+	padding-left: 0.5vw;
+	box-shadow: 0 0 .8vw rgba(0,0,0,0.5);
+}
+
+.submit-button {
+	height: 3vw;
+	width: 9vw;
+	border: none;
+	outline: none !important;
+	background-color: black;
+	color: white;
+	box-shadow: 0 0 1vw rgba(0,0,0,0.5);
+}
+
+.alert {
+	text-align: center;
+	width: 30vw;
+    background-color: #373252;
+	color: white;
+	border: none;
+	padding: 0.5vw;
+	border-radius: 0.4vw;
+    margin: -3% auto 1vw;
+}
