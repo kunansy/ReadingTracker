@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from typing import Any
+
 from sanic import Sanic, Request, response
 from sanic_jinja2 import SanicJinja2
 
@@ -14,8 +16,11 @@ tracker = Tracker(log)
 
 
 @app.get('/materials/queue')
-async def get_queue(request: Request) -> response.HTTPResponse:
-    pass
+@jinja.template('queue.html')
+async def get_queue(request: Request) -> dict[str, Any]:
+    return {
+        'materials': tracker.queue
+    }
 
 
 @app.post('/materials/add')
