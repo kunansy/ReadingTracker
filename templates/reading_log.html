@@ -1,0 +1,22 @@
+{% extends 'index.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='reading_log.css') }}">
+{% endblock style %}
+
+{% block main %}
+
+{% for date, info in log.items() %}
+{% set count = info['count'] %}
+{% if count >= EXPECTED_COUNT %}
+<div class="record good">
+{% else %}
+<div class="record bad">
+{% endif %}
+    <p> Date: {{ date.strftime(DATE_FORMAT) }} </p>
+    <p> Title: {{ titles[info['material_id']] }} </p>
+    <p> Count: {{ info['count'] }}</p>
+</div>
+{% endfor %}
+
+{% endblock main%}
