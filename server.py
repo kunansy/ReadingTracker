@@ -4,7 +4,7 @@ from typing import Any
 from sanic import Sanic, Request, response
 from sanic_jinja2 import SanicJinja2
 
-from src.tracker import Tracker, Log
+from src.tracker import Tracker, Log, DATE_FORMAT
 
 
 app = Sanic(__name__)
@@ -42,8 +42,25 @@ async def complete_material(request: Request,
 
 
 @app.get('/materials/reading')
-async def get_reading_materials(request: Request) -> response.HTTPResponse:
-    pass
+@jinja.template('reading.html')
+async def get_reading_materials(request: Request) -> dict[str, Any]:
+    materials = tracker.reading
+    avg = log.average_of_every_materials
+
+    statistics = {
+        material.material_id: {
+            'total': log.total_read(material.material_id),
+            'average': avg[material.material_id],
+            'remain': ''
+        }
+        for material, status in materials
+    }
+
+    return {
+        'materials': materials,
+        'DATE_FORMAT': DATE_FORMAT,
+        'statistics': statistics
+    }
 
 
 @app.get('/materials/completed')
