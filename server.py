@@ -103,8 +103,18 @@ async def add_reading_log(request: Request) -> response.HTTPResponse:
 
 
 @app.get('/notes')
-async def get_notes(request: Request) -> response.HTTPResponse:
-    pass
+@jinja.template('notes.html')
+async def get_notes(request: Request) -> dict[str, Any]:
+    notes = db_api.get_notes()
+    titles = {
+        note.material_id: db_api.get_title(note.material_id)
+        for note in notes
+    }
+    return {
+        'notes': db_api.get_notes(),
+        'titles': titles,
+        'DATE_FORMAT': DATE_FORMAT
+    }
 
 
 @app.post('/notes')
