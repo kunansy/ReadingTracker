@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from typing import Any
 
+from pydantic import BaseModel, ValidationError
 from sanic import Sanic, Request, response
 from sanic_jinja2 import SanicJinja2
 
@@ -14,6 +15,23 @@ jinja = SanicJinja2(app)
 
 log = Log()
 tracker = Tracker(log)
+
+
+class Note(BaseModel):
+    material_id: int
+    content: str
+    chapter: int
+    page: int
+
+    def __repr__(self) -> str:
+        fields = ', '.join(
+            f"{key}='{val}'"
+            for key, val in self.dict().items()
+        )
+        return f"{self.__class__.__name__}({fields})"
+
+    def __str__(self) -> str:
+        return repr(self)
 
 
 @app.get('/materials/queue')
