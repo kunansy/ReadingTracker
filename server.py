@@ -167,6 +167,12 @@ async def home(request: Request) -> None:
     pass
 
 
+@app.exception(ValidationError)
+def validation_error_handler(request: Request,
+                             exception: ValidationError) -> HTTPResponse:
+    return response.json(exception.errors(), status=400, indent=4)
+
+
 @app.exception(Exception)
 def error_handler(request: Request,
                   exception: Exception) -> HTTPResponse:
