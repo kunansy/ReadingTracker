@@ -2,7 +2,7 @@
 from typing import Any
 
 from pydantic import BaseModel, ValidationError
-from sanic import Sanic, Request, response
+from sanic import Sanic, Request, response, HTTPResponse
 from sanic_jinja2 import SanicJinja2
 
 from src import db_api
@@ -43,20 +43,20 @@ async def get_queue(request: Request) -> dict[str, Any]:
 
 
 @app.post('/materials/add')
-async def add_material(request: Request) -> response.HTTPResponse:
+async def add_material(request: Request) -> HTTPResponse:
     """ Add a material to the queue """
     pass
 
 
 @app.post('/materials/start/<material_id:int>')
 async def start_material(request: Request,
-                         material_id: int) -> response.HTTPResponse:
+                         material_id: int) -> HTTPResponse:
     pass
 
 
 @app.post('/materials/complete/<material_id:int>')
 async def complete_material(request: Request,
-                            materials_id: int) -> response.HTTPResponse:
+                            materials_id: int) -> HTTPResponse:
     pass
 
 
@@ -119,7 +119,7 @@ async def get_reading_log(request: Request) -> dict[str, Any]:
 
 
 @app.post('/reading_log')
-async def add_reading_log(request: Request) -> response.HTTPResponse:
+async def add_reading_log(request: Request) -> HTTPResponse:
     pass
 
 
@@ -145,7 +145,7 @@ async def get_notes(request: Request):
 
 @app.get('/notes/add')
 @jinja.template('add_note.html')
-async def add_notes(request: Request) -> response.HTTPResponse:
+async def add_notes(request: Request) -> HTTPResponse:
     pass
 
 
@@ -164,7 +164,7 @@ async def home(request: Request) -> None:
 
 @app.exception(Exception)
 def error_handler(request: Request,
-                  exception: Exception) -> response.HTTPResponse:
+                  exception: Exception) -> HTTPResponse:
     try:
         json = exception.json()
     except AttributeError:
