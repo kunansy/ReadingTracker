@@ -34,6 +34,11 @@ class Note(BaseModel):
         return repr(self)
 
 
+@app.get('/favicon.ico')
+async def favicon(request: Request) -> HTTPResponse:
+    return response.json({})
+
+
 @app.get('/materials/queue')
 @jinja.template('queue.html')
 async def get_queue(request: Request) -> dict[str, Any]:
