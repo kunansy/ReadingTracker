@@ -177,18 +177,22 @@ def validation_error_handler(request: Request,
 def error_handler(request: Request,
                   exception: Exception) -> HTTPResponse:
     try:
-        json = exception.json()
-    except AttributeError:
-        json = ''
+        ex_json = exception.json()
+    except:
+        ex_json = ''
+    try:
+        req_json = request.json
+    except:
+        req_json = ''
 
     context = {
         'ok': False,
-        "wrong_request": request.json,
+        "wrong_request": req_json,
         "error": {
             "type": exception.__class__.__name__,
             "text": str(exception),
             "args": exception.args,
-            "json": json
+            "json": ex_json
         }
     }
 
