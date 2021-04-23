@@ -162,8 +162,14 @@ async def add_notes(request: Request) -> dict[str, Any]:
 
 
 @app.post('/notes/add')
-async def add_notes(request: Request) -> response.HTTPResponse:
-    print(request.body)
+async def add_notes(request: Request) -> HTTPResponse:
+    key_val = {
+        key: val[0]
+        for key, val in request.form.items()
+    }
+
+    note = Note(**key_val)
+    db_api.add_note(**note.dict())
 
     return response.redirect('/notes/add')
 
