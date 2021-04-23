@@ -4,6 +4,7 @@ from typing import Any
 from pydantic import BaseModel, ValidationError
 from sanic import Sanic, Request, response, HTTPResponse
 from sanic_jinja2 import SanicJinja2
+from sanic_session import Session
 
 from src import db_api
 from src.tracker import Tracker, Log, DATE_FORMAT, PAGES_PER_DAY
@@ -11,7 +12,9 @@ from src.tracker import Tracker, Log, DATE_FORMAT, PAGES_PER_DAY
 
 app = Sanic(__name__)
 app.static('/static', './static')
-jinja = SanicJinja2(app)
+
+session = Session(app)
+jinja = SanicJinja2(app, session=session)
 
 log = Log()
 tracker = Tracker(log)
