@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 from typing import Any
 
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel, ValidationError, validator
 from sanic import Sanic, Request, response, HTTPResponse
 from sanic_jinja2 import SanicJinja2
 from sanic_session import Session
@@ -25,6 +25,11 @@ class Note(BaseModel):
     content: str
     chapter: int
     page: int
+
+    @validator('content')
+    def strip_content(cls,
+                      content: str) -> str:
+        return content.strip()
 
     def __repr__(self) -> str:
         fields = ', '.join(
