@@ -150,8 +150,15 @@ async def get_notes(request: Request):
 
 @app.get('/notes/add')
 @jinja.template('add_note.html')
-async def add_notes(request: Request) -> HTTPResponse:
-    pass
+async def add_notes(request: Request) -> dict[str, Any]:
+    # TODO: use cookies instead of headers.
+    #  See Sanic#2124 why headers don't work
+    return {
+        'material_id': request.headers.get('material_id', ''),
+        'content': request.headers.get('content', ''),
+        'page': request.headers.get('page', ''),
+        'chapter': request.headers.get('chapter', ''),
+    }
 
 
 @app.post('/notes/add')
