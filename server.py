@@ -169,10 +169,20 @@ async def add_notes(request: Request) -> HTTPResponse:
         for key, val in request.form.items()
     }
 
-    note = Note(**key_val)
-    db_api.add_note(**note.dict())
+    try:
+        note = Note(**key_val)
+    except ValidationError as e:
+        # log.warning(e)
+        jinja.flash(request, 'Validation error', 'error')
+    else:
+        db_api.add_note(**note.dict())
 
-    return response.redirect('/notes/add')
+        jinja.flash(request, 'Note added', 'success')
+        request.ctx.session.update(
+            **note.dict(exclude={'content'})
+        )
+    finally:
+        return response.redirect('/notes/add')
 
 
 @app.get('/')
