@@ -55,6 +55,13 @@ class Material(Base):
                f"authors={self.authors}, pages={self.pages}, " \
                f"tags={self.tags})"
 
+    def __str__(self) -> str:
+        return f"ID: {self.material_id}\n" \
+               f"Title: «{self.title}»\n" \
+               f"Authors: {self.authors}\n" \
+               f"Pages: {self.pages}\n" \
+               f"Tags: {self.tags}"
+
 
 class Status(Base):
     __tablename__ = 'status'
