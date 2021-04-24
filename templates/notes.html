@@ -4,6 +4,13 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='notes.css') }}">
 {% endblock style %}
 
+{% block header %}
+<nav class="subnavbar">
+    <a href="/notes"> Search notes </a>
+    <a href="/notes/add"> Add note </a>
+</nav>
+{% endblock header %}
+
 {% block main %}
 {% for cat, message in get_flashed_messages(with_categories=true) %}
 <div class="alert alert-primary {{ cat }}" role="alert">

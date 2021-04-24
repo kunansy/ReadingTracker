@@ -1,3 +1,15 @@
+.subnavbar {
+	background-color: white;
+	display: flex;
+	float: right;
+}
+
+.subnavbar a {
+	color: black;
+	margin-top: 1vh;
+	padding-right: 1.5vw;
+}
+
 div.note {
     border: black 0.25vh solid;
     margin: 2vh auto;
@@ -11,7 +23,7 @@ div.note p {
 
 .form {
 	font-size: 1vw;
-	margin: 7vh auto;
+	margin: 0 auto auto;
 }
 
 input {
