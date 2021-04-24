@@ -10,8 +10,8 @@ div.record p {
 }
 
 div.bad {
-    background-color: red;
+    background-color: #E74C3C;
 }
 div.good {
-    background-color: green;
+    background-color: #27AE60;
 }
