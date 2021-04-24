@@ -7,7 +7,7 @@ from sanic_jinja2 import SanicJinja2
 from sanic_session import Session
 
 from src import db_api
-from src.tracker import Tracker, Log, DATE_FORMAT, PAGES_PER_DAY
+from src import tracker as trc
 
 
 app = Sanic(__name__)
@@ -16,8 +16,8 @@ app.static('/static', './static')
 session = Session(app)
 jinja = SanicJinja2(app, session=session)
 
-log = Log()
-tracker = Tracker(log)
+log = trc.Log()
+tracker = trc.Tracker(log)
 
 
 class Note(BaseModel):
@@ -66,9 +66,9 @@ async def start_material(request: Request,
                          material_id: int) -> HTTPResponse:
     try:
         tracker.start_material(material_id)
-    except db_api.WrongDate as e:
+    except trc.WrongDate as e:
         jinja.flash(request, str(e), 'error')
-    except db_api.MaterialNotFound as e:
+    except trc.MaterialNotFound as e:
         jinja.flash(request, str(e), 'error')
     else:
         jinja.flash(request, f"Material {material_id=} started", 'success')
@@ -102,7 +102,7 @@ async def get_reading_materials(request: Request) -> dict[str, Any]:
 
     return {
         'materials': materials,
-        'DATE_FORMAT': DATE_FORMAT,
+        'DATE_FORMAT': trc.DATE_FORMAT,
         'statistics': statistics
     }
 
@@ -119,7 +119,7 @@ async def get_completed_materials(request: Request) -> dict:
     return {
         'materials': tracker.processed,
         'status': status,
-        'DATE_FORMAT': DATE_FORMAT
+        'DATE_FORMAT': trc.DATE_FORMAT
     }
 
 
@@ -135,8 +135,8 @@ async def get_reading_log(request: Request) -> dict[str, Any]:
     return {
         'log': log_,
         'titles': titles,
-        'DATE_FORMAT': DATE_FORMAT,
-        'EXPECTED_COUNT': PAGES_PER_DAY
+        'DATE_FORMAT': trc.DATE_FORMAT,
+        'EXPECTED_COUNT': trc.PAGES_PER_DAY
     }
 
 
@@ -171,7 +171,7 @@ async def get_notes(request: Request):
     return {
         'notes': notes,
         'titles': titles,
-        'DATE_FORMAT': DATE_FORMAT
+        'DATE_FORMAT': trc.DATE_FORMAT
     }
 
 
@@ -202,7 +202,7 @@ async def add_notes(request: Request) -> HTTPResponse:
 
     try:
         tracker.add_note(**note.dict())
-    except db_api.MaterialNotFound as e:
+    except trc.MaterialNotFound as e:
         jinja.flash(request, str(e), 'error')
         # log.error(e)
     except ValueError as e:
