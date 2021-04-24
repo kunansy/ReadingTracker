@@ -140,10 +140,20 @@ async def add_reading_log(request: Request) -> HTTPResponse:
 @jinja.template('notes.html')
 async def get_notes(request: Request):
     if material_id := request.args.get('material_id'):
-        material_id = int(material_id)
-        notes = db_api.get_notes(materials_ids=[material_id])
+        try:
+            material_id = int(material_id)
+        except ValueError:
+            jinja.flash(request, 'Enter an integer', 'error')
+            return response.redirect('/notes')
+        else:
+            notes = db_api.get_notes(materials_ids=[material_id])
     else:
         notes = db_api.get_notes()
+
+    if not notes:
+        jinja.flash(request, f'No notes {material_id=} found', 'error')
+    else:
+        jinja.flash(request, f"{len(notes)} notes found", 'success')
 
     titles = {
         note.material_id: db_api.get_title(note.material_id)
