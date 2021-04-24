@@ -21,7 +21,6 @@ PAGES_PER_DAY = 50
 INDENT = 2
 
 DATE_FORMAT = '%d-%m-%Y'
-DATE_TYPE = Union[str, datetime.date, datetime.datetime]
 
 
 class BaseTrackerError(Exception):
@@ -136,7 +135,7 @@ def yesterday() -> datetime.date:
     return today() - timedelta(days=1)
 
 
-def to_datetime(date: DATE_TYPE) -> Optional[datetime.date]:
+def to_datetime(date: str or datetime.date or datetime.datetime) -> Optional[datetime.date]:
     if date is None:
         return
 
