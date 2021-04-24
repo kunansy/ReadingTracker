@@ -232,11 +232,27 @@ def get_reading_materials() -> dict[int, MaterialStatus]:
     }
 
 
-def get_completed_materials() -> list[Material]:
-    """ Get all completed materials. """
+def get_completed_materials() -> dict[int, MaterialStatus]:
+    """ Get all completed materials and their statuses. """
     with session() as ses:
-        return ses.query(Material).join(Status)\
-                  .filter(Status.end != None).all()
+        completed_materials = ses.query(Material).join(Status)\
+                                 .filter(Status.end != None).all()
+
+    statuses = {
+        material.material_id:
+            get_material_status(material_id=material.material_id)
+        for material in completed_materials
+    }
+    material_status = [
+        MaterialStatus(material=material,
+                       status=statuses[material.material_id])
+        for material in completed_materials
+    ]
+
+    return {
+        ms.material.material_id: ms
+        for ms in material_status
+    }
 
 
 def get_status(*,
