@@ -595,7 +595,7 @@ class Log:
             start_date=self.start,
             stop_date=self.stop,
             duration=self.duration,
-            empty_days_count=self.empty_days,
+            lost_time=self.empty_days,
             average=self.average,
             total_pages_read=self.total,
             would_be_total=self.would_be_total,
