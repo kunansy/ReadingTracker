@@ -44,3 +44,10 @@ input {
 	border-radius: 0.4vw;
     margin: -3% auto 1vw;
 }
+.error {
+	background-color: #E74C3C;
+}
+
+.success {
+	background-color: #27AE60;
+}
