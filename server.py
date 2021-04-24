@@ -189,9 +189,17 @@ async def add_notes(request: Request) -> HTTPResponse:
     except ValidationError as e:
         # log.warning(e)
         jinja.flash(request, 'Validation error', 'error')
-    else:
-        db_api.add_note(**note.dict())
+        return response.redirect('/notes/add')
 
+    try:
+        tracker.add_note(**note.dict())
+    except db_api.MaterialNotFound as e:
+        jinja.flash(request, str(e), 'error')
+        # log.error(e)
+    except ValueError as e:
+        jinja.flash(request, str(e), 'error')
+        # log.error(e)
+    else:
         jinja.flash(request, 'Note added', 'success')
         request.ctx.session.update(
             **note.dict(exclude={'content'})
