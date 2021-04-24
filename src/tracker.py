@@ -613,12 +613,12 @@ class Tracker:
         return db.get_free_materials()
 
     @property
-    def processed(self) -> list[db.Material]:
+    def processed(self) -> db.MATERIAL_STATUS:
         """ Get list of completed Materials. """
         return db.get_completed_materials()
 
     @property
-    def reading(self) -> list[tuple[db.Material, db.Status]]:
+    def reading(self) -> db.MATERIAL_STATUS:
         """ Get reading materials and their statuses """
         return db.get_reading_materials()
 
