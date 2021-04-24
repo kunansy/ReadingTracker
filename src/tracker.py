@@ -227,7 +227,7 @@ class Log:
     def reading_material(self) -> int:
         """ Get id of the reading material. """
         try:
-            return list(self.log.values())[-1]['material_id']
+            return list(self.log.values())[-1].material_id
         except IndexError:
             msg = "Reading log is empty, no materials reading"
             logging.warning(msg)
@@ -327,7 +327,7 @@ class Log:
     def total(self) -> int:
         """ Get total count of read pages """
         return sum(
-            info['count']
+            info.count
             for info in self.values()
         )
 
@@ -356,7 +356,7 @@ class Log:
         The data is expected to make chart.
         """
         data = {}
-        key_ = lambda item: item[1]['material_id']
+        key_ = lambda item: item[1].material_id
         sample = sorted(self.data(), key=key_)
 
         status = {
@@ -367,11 +367,14 @@ class Log:
         for material_id, group in groupby(sample, key=key_):
             days = count = 0
             for date, info in group:
-                if (item := status.get(info['material_id'])) and item.end and \
-                        date > item.end:
+                info: LogRecord
+
+                item = status.get(info.material_id)
+                if item and item.end and date > item.end:
                     break
+
                 days += 1
-                count += info['count']
+                count += info.count
 
             try:
                 data[material_id] = count // days
@@ -385,31 +388,29 @@ class Log:
     def min(self) -> MinMax:
         date, info = min(
             [(date, info) for date, info in self.items()],
-            key=lambda item: item[1]['count']
+            key=lambda item: item[1].count
         )
         return MinMax(
             date=date,
-            count=info['count'],
-            material_id=info['material_id']
+            **info.dict()
         )
 
     @property
     def max(self) -> MinMax:
         date, info = max(
             [(date, info) for date, info in self.items()],
-            key=lambda item: item[1]['count']
+            key=lambda item: item[1].count
         )
 
         return MinMax(
             date=date,
-            count=info['count'],
-            material_id=info['material_id']
+            **info.dict()
         )
 
     @property
     def median(self) -> int:
         counts = sorted(
-            info['count']
+            info.count
             for info in self.values()
         )
 
@@ -434,7 +435,7 @@ class Log:
     def items(self):
         return self.log.items()
 
-    def data(self) -> Iterator[tuple[datetime.date, dict[str, int]]]:
+    def data(self) -> Iterator[tuple[datetime.date, LogRecord]]:
         """ Get pairs: date, info of all days from start to stop.
         The function is expected to make graphics.
 
@@ -447,9 +448,9 @@ class Log:
 
         while iter_ <= self.stop:
             info = self.log.get(iter_)
-            info = info or {'material_id': last_material_id, 'count': 0}
+            info = info or LogRecord(material_id=last_material_id, count=0)
 
-            if (material_id := info['material_id']) != last_material_id:
+            if (material_id := info.material_id) != last_material_id:
                 last_material_id = material_id
 
             yield iter_, info
@@ -459,9 +460,9 @@ class Log:
                    material_id: int) -> int:
         """ Calculate how many pages of the material even read """
         return sum(
-            info['count']
+            info.count
             for info in self.values()
-            if info['material_id'] == material_id
+            if info.material_id == material_id
         )
 
     def dates(self) -> list[datetime.date]:
@@ -472,7 +473,7 @@ class Log:
 
     def counts(self) -> list[int]:
         return [
-            info['count']
+            info.count
             for _, info in self.data()
         ]
 
@@ -570,14 +571,15 @@ class Log:
         new_line = '\n'
 
         for date, info in self.log.items():
-            if (material_id := info['material_id']) != last_material_id:
+            if (material_id := info.material_id) != last_material_id:
                 last_material_id = material_id
-                last_material_title = f"«{db.get_title(material_id)}»"
+                last_material_title = (info.material_title or
+                                       f"«{db.get_title(material_id)}»")
             else:
                 last_material_title = '...'
 
             item = f"{new_line * (not is_first)}{fmt(date)}: " \
-                   f"{info['count']}, {last_material_title}"
+                   f"{info.count}, {last_material_title}"
 
             is_first = False
             res = f"{res}{item}"
