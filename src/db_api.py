@@ -205,8 +205,8 @@ def get_free_materials() -> list[Material]:
     ]
 
 
-def get_reading_materials() -> list[tuple[Material, Status]]:
-    """ Get all materials read now. """
+def get_reading_materials() -> dict[int, MaterialStatus]:
+    """ Get all materials read now and their statuses. """
     status = get_status()
 
     reading_materials_ids = [
@@ -221,10 +221,15 @@ def get_reading_materials() -> list[tuple[Material, Status]]:
     }
     materials = get_materials(materials_ids=reading_materials_ids)
 
-    return [
-        (material, status[material.material_id])
+    material_status = [
+        MaterialStatus(material=material, status=status[material.material_id])
         for material in materials
     ]
+
+    return {
+        ms.material.material_id: ms
+        for ms in material_status
+    }
 
 
 def get_completed_materials() -> list[Material]:
