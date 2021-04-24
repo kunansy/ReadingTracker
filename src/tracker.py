@@ -2,6 +2,7 @@
 import copy
 import datetime
 import logging
+from dataclasses import dataclass
 from datetime import timedelta
 from itertools import groupby
 from pathlib import Path
@@ -33,6 +34,31 @@ class LoadingLogError(BaseTrackerError):
 
 class ReadingLogIsEmpty(BaseTrackerError):
     pass
+
+
+@dataclass
+class MinMax:
+    date: datetime.date
+    count: int
+    material_id: int
+    material_title: Optional[str] = None
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(" \
+               f"date={self.date}, count={self.count}, " \
+               f"material_id={self.material_id}, " \
+               f"material_title={self.material_title})"
+
+    def __str__(self) -> str:
+        date = fmt(self.date)
+        if material_title := self.material_title:
+            material = f"Title: «{material_title}»"
+        else:
+            material = f"Material id: {self.material_id}"
+
+        return f"Date: {date}\n" \
+               f"Count: {self.count}\n" \
+               f"{material}"
 
 
 def today() -> datetime.date:
