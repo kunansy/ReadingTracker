@@ -14,13 +14,13 @@ nav.navbar {
 	display: flex;
 	margin: auto;
 }
-nav.navbar a {
+nav a {
 	text-decoration: none;
 	color: white;
 	margin: auto;
 	font-size: 3.5vh;
 }
-nav.navbar a:hover {
+nav a:hover {
 	text-decoration: none;
     color: #004E7C;
 }
