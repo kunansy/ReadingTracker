@@ -726,17 +726,25 @@ class Tracker:
                  chapter: int,
                  page: int,
                  date: datetime.date = None) -> None:
+        """
+        Here it is expected that all fields are valid.
+
+        :exception MaterialNotFound: if the material doesn't exist.
+        :exception ValueError: if the given page number is better
+         than page count in the material.
+        """
         try:
             material = db.get_materials(materials_ids=[material_id])[0]
         except IndexError:
             msg = f"Material id={material_id} not found"
-            logging.error(msg)
-            raise db.MaterialNotFound(msg)
+            logging.warning(msg)
+            raise MaterialNotFound(msg)
 
         if material.pages < page:
-            raise ValueError("Given page more than overall "
-                             "pages count in the material, "
-                             f"{page} > {material.pages}")
+            msg = f"Given page number is better than overall pages count " \
+                  f"in the material, {page=} > {material.pages=}"
+            logging.warning(msg)
+            raise ValueError(msg)
 
         db.add_note(
             material_id=material_id,
