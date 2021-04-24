@@ -492,6 +492,46 @@ class Log:
             if info.material_id == material_id
         )
 
+    def min(self,
+            material_id: int) -> MinMax:
+        sample = [
+            (date, info)
+            for date, info in self.items()
+            if info.material_id == material_id
+        ]
+        date, info = min(
+            sample,
+            key=lambda item: item[1].count
+        )
+        return MinMax(
+            date=date,
+            **info.dict()
+        )
+
+    def max(self,
+            material_id: int) -> MinMax:
+        sample = [
+            (date, info)
+            for date, info in self.items()
+            if info.material_id == material_id
+        ]
+        date, info = max(
+            sample,
+            key=lambda item: item[1].count
+        )
+        return MinMax(
+            date=date,
+            **info.dict()
+        )
+
+    def average(self,
+                material_id: int) -> int:
+        try:
+            return (self.total_read(material_id) //
+                    self.total_days_spent(material_id))
+        except ZeroDivisionError:
+            return 1
+
     def dates(self) -> list[datetime.date]:
         return [
             date
