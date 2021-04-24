@@ -826,25 +826,16 @@ class Tracker:
                          f"at {completion_date=}")
 
     @staticmethod
-    def append(title: str,
-               authors: str,
-               pages: str,
-               tags: str) -> None:
-        """
-        Add a material.
-
-        :param title: material's title.
-        :param authors: material's authors.
-        :param pages: count of pages.
-        :param tags: tags
-        """
-        material = {
-            'title': title,
-            'authors': authors,
-            'pages': pages,
-            'tags': tags
-        }
-        db.add_materials([material])
+    def add_material(title: str,
+                     authors: str,
+                     pages: int,
+                     tags: str) -> None:
+        db.add_material(
+            title=title,
+            authors=authors,
+            pages=pages,
+            tags=tags
+        )
         logging.info("Material added")
 
     @staticmethod
