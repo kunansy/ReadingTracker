@@ -1,7 +1,19 @@
+.subnavbar {
+	background-color: white;
+	display: flex;
+	float: right;
+}
+
+.subnavbar a {
+	color: black;
+	margin-top: 1vh;
+    padding-right: 1.5vw;
+}
+
 .form {
 	font-size: 1.5vw;
-    margin: auto;
-    text-align: center;
+	text-align: center;
+	margin: 0 auto auto;
 }
 
 .input {
@@ -46,4 +58,8 @@
 #input-content {
 	padding: 1vh;
 	height: 20vh;
+}
+
+::-webkit-scrollbar {
+  width: 0;
 }
