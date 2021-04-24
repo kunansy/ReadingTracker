@@ -643,7 +643,6 @@ class Tracker:
             logging.info(f"Material {material_id=} started at {start_date}")
 
     def complete_material(self,
-                          *,
                           material_id: int = None,
                           completion_date: datetime.date = None) -> None:
         """
@@ -654,10 +653,11 @@ class Tracker:
         :param completion_date: date when the material was completed.
          Today by default.
 
-        :exception ValueError: if the material has been completed
-         yet or if 'completion_date' is less than start date.
-
-        :exception IndexError: if the material has not been started yet.
+        :exception MaterialEvenCompleted: if the material has been
+         completed yet.
+        :exception WrongDate: if completion_date is less than start_date.
+        :exception MaterialNotAssigned: if the material has not been
+         started yet.
         """
         material_id = material_id or self.log.reading_material
 
@@ -666,14 +666,14 @@ class Tracker:
                 material_id=material_id,
                 completion_date=completion_date
             )
-        except db.MaterialEvenCompleted as e:
-            logging.error(e)
+        except MaterialEvenCompleted as e:
+            logging.warning(e)
             raise
-        except db.WrongDate as e:
-            logging.error(e)
+        except WrongDate as e:
+            logging.warning(e)
             raise
-        except db.MaterialNotAssigned as e:
-            logging.error(e)
+        except MaterialNotAssigned as e:
+            logging.warning(e)
             raise
 
     @staticmethod
