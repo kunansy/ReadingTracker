@@ -10,7 +10,7 @@ import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
 from os import environ
-from typing import ContextManager, Callable
+from typing import ContextManager, Callable, Optional
 
 from sqlalchemy import Column, ForeignKey, Integer, String, Date, create_engine, \
     Text
@@ -206,7 +206,7 @@ def get_free_materials() -> list[Material]:
     ]
 
 
-def get_reading_materials() -> MATERIAL_STATUS:
+def get_reading_materials() -> Optional[MATERIAL_STATUS]:
     """ Get all materials read now and their statuses. """
     status = get_status()
 
@@ -215,6 +215,10 @@ def get_reading_materials() -> MATERIAL_STATUS:
         for status_ in status
         if status_.end is None
     ]
+
+    if not reading_materials_ids:
+        return
+
     status = {
         status_.material_id: status_
         for status_ in status
