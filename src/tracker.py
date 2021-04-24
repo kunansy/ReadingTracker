@@ -94,6 +94,11 @@ class LogStatistics:
                f"Median: {self.median} pages"
 
 
+@dataclass
+class TrackerStatistics:
+    pass
+
+
 def today() -> datetime.date:
     return datetime.date.today()
 
