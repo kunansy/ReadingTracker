@@ -505,6 +505,15 @@ class Log:
             if info.material_id == material_id
         )
 
+    def m_empty_days(self,
+                     material_id: int) -> int:
+        """ How many days was lost reading the material """
+        return sum(
+            1
+            for _, info in self.data()
+            if info.material_id == material_id and info.count == 0
+        )
+
     def m_min(self,
               material_id: int) -> MinMax:
         sample = [
