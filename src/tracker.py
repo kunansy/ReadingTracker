@@ -575,37 +575,20 @@ class Log:
 
         return new_log
 
-    def statistics(self) -> str:
-        avg_of_every_materials, is_first = '', True
-
-        for material_id, avg in self.average_of_every_materials.items():
-            if not is_first:
-                avg_of_every_materials += '\n'
-            is_first = False
-
-            title = db.get_title(material_id)
-            avg_of_every_materials += f"\t«{title}»: {avg} pages per day"
-
-        min_date, min_info = self.min
-        max_date, max_info = self.max
-
-        min_count, min_id = min_info['count'], min_info['material_id']
-        max_count, max_id = max_info['count'], max_info['material_id']
-
-        min_title = db.get_title(min_id)
-        max_title = db.get_title(max_id)
-
-        min_date, max_date = fmt(min_date), fmt(max_date)
-
-        return f"Duration: {self.duration} days\n" \
-               f"Empty days: {self.empty_days}\n" \
-               f"Max: {max_date} = {max_count}, «{max_title}»\n" \
-               f"Min: {min_date} = {min_count}, «{min_title}»\n" \
-               f"Average: {self.average} pages per day\n" \
-               f"Median: {self.median} pages\n" \
-               f"Total pages count: {self.total}\n" \
-               f"Would be total: {self.would_be_total}\n" \
-               f"Average of every material: \n{avg_of_every_materials}"
+    @property
+    def statistics(self) -> LogStatistics:
+        return LogStatistics(
+            start_date=self.start,
+            stop_date=self.stop,
+            duration=self.duration,
+            empty_days_count=self.empty_days,
+            average=self.average,
+            total_pages_read=self.total,
+            would_be_total=self.would_be_total,
+            min=self.min,
+            max=self.max,
+            median=self.median
+        )
 
     def __getitem__(self,
                     date: Union[datetime.date, str, slice]):
