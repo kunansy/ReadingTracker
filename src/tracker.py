@@ -702,8 +702,23 @@ class Tracker:
         return db.get_material_status(material_id=material_id)
 
     @staticmethod
-    def get_notes(material_id: int) -> list[db.Note]:
-        return db.get_notes(materials_ids=[material_id])
+    def get_notes(material_id: int = None) -> list[db.Note]:
+        """
+        :param material_id: get notes for this material.
+         By default, get all notes.
+
+        :exception ValueError: if the material_id is not integer.
+        """
+        if material_id is not None:
+            try:
+                material_id = int(material_id)
+            except ValueError:
+                logging.error("Material id must be ans integer, but "
+                              f"{material_id} found")
+                raise
+            else:
+                return db.get_notes(materials_ids=[material_id])
+        return db.get_notes()
 
     @staticmethod
     def add_note(material_id: int,
