@@ -78,8 +78,15 @@ async def start_material(request: Request,
 
 @app.post('/materials/complete/<material_id:int>')
 async def complete_material(request: Request,
-                            materials_id: int) -> HTTPResponse:
-    pass
+                            material_id: int) -> HTTPResponse:
+    try:
+        tracker.complete_material(material_id)
+    except trc.BaseDBError as e:
+        jinja.flash(request, str(e), 'error')
+    else:
+        jinja.flash(request, f"Material {material_id=} completed", 'success')
+    finally:
+        return response.redirect('/materials/reading')
 
 
 @app.get('/materials/reading')
