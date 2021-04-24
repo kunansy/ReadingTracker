@@ -1,7 +1,9 @@
 __all__ = ('get_materials', 'get_status', 'get_completed_materials',
            'get_free_materials', 'complete_material', 'get_title',
            'start_material', 'add_materials', 'get_material_status',
-           'get_reading_materials', 'add_note', 'get_notes')
+           'get_reading_materials', 'add_note', 'get_notes',
+           'BaseDBError', 'WrongDate', 'MaterialEvenCompleted',
+           'MaterialNotAssigned', 'MaterialNotFound')
 
 import datetime
 import logging
