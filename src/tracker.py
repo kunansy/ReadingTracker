@@ -193,9 +193,15 @@ class Log:
 
     LOG_PATH = DATA_FOLDER / 'log.json'
 
-    def __init__(self) -> None:
+    def __init__(self,
+                 *,
+                 full_info: bool = False) -> None:
+        """
+        :param full_info: if True get titles to all materials.
+         !!! there will be more queries to the database !!!
+        """
         try:
-            self.__log = self._get_log()
+            self.__log = self._get_log(full_info=full_info)
         except Exception as e:
             logging.error(f"When load the log: {e}")
             raise
@@ -233,20 +239,31 @@ class Log:
             logging.warning(msg)
             raise ReadingLogIsEmpty(msg)
 
-    def _get_log(self) -> dict[datetime.date, LogRecord]:
+    def _get_log(self,
+                 *,
+                 full_info: bool = False) -> dict[datetime.date, LogRecord]:
         """
         Get log from JSON file and parse it.
         Convert keys to datetime.date, values to LogRecord.
+
+        :param full_info: if True get titles to all materials.
+         !!! there will be more queries to the database !!!
 
         :return: dict with the format.
         """
         with self.path.open(encoding='utf-8') as f:
             log = ujson.load(f)
 
-            return {
-                to_datetime(date): LogRecord(**info)
-                for date, info in log.items()
-            }
+        res = {}
+        for date, info in log.items():
+            date = to_datetime(date)
+            record = LogRecord(**info)
+
+            if full_info:
+                record.material_title = db.get_title(record.material_id)
+
+            res[date] = record
+        return res
 
     def _set_log(self,
                  date: datetime.date,
