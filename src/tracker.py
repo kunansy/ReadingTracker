@@ -206,13 +206,18 @@ def to_datetime(date) -> Optional[datetime.date]:
         raise TypeError(f"Str or datetime expected, {type(date)} found")
 
 
-def time_span(span: timedelta) -> str:
+def time_span(span: Union[timedelta, int]) -> str:
+    if isinstance(span, timedelta):
+        days = timedelta.days
+    else:
+        days = span
+
     res = ''
-    if years := span.days // 365:
+    if years := days // 365:
         res += f"{years} years, "
-    if month := span.days % 365 // 30:
+    if month := days % 365 // 30:
         res += f"{month} months, "
-    if days := span.days % 365 % 30:
+    if days := days % 365 % 30:
         res += f"{days} days"
 
     return res
