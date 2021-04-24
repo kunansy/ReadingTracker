@@ -61,6 +61,27 @@ class MinMax:
 
 
 @dataclass
+class LogRecord:
+    count: int
+    material_id: int
+    material_title: Optional[str] = None
+    
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(" \
+               f"count={self.count}, material_id={self.material_id}, " \
+               f"material_title={self.material_title})"
+    
+    def __str__(self) -> str:
+        if title := self.material_title:
+            title = f"\nTitle: «{title}»"
+        else:
+            title = ''
+        return f"Count: {self.count}\n" \
+               f"Material id: {self.material_id}" \
+               f"{title}"
+
+
+@dataclass
 class LogStatistics:
     start_date: datetime.date
     stop_date: datetime.date
