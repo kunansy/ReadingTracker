@@ -96,7 +96,31 @@ class LogStatistics:
 
 @dataclass
 class MaterialStatistics:
-    pass
+    material: db.Material
+    started: datetime.date
+    completed: Optional[datetime.date]
+    duration: int
+    min: MinMax
+    max: MinMax
+    average: int
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(" \
+               f"started={self.started}, completed={self.completed}, " \
+               f"duration={self.duration}, min={self.min}, max={self.max}, " \
+               f"average={self.average})"
+
+    def __str__(self) -> str:
+        if completed := self.completed:
+            completed = f"Completed at: {fmt(completed)}\n"
+
+        return f"Material: «{self.material.title}»\n" \
+               f"Started at: {fmt(self.started)}\n" \
+               f"{completed}" \
+               f"Duration: {self.duration} days\n" \
+               f"Min: {self.min}" \
+               f"Max: {self.max}" \
+               f"Average: {self.average} pages per day"
 
 
 @dataclass
