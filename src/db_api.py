@@ -20,19 +20,23 @@ DATE_FORMAT = '%d-%m-%Y'
 Base = declarative_base()
 
 
-class WrongDate(Exception):
+class BaseDBError(Exception):
     pass
 
 
-class MaterialEvenCompleted(Exception):
+class WrongDate(BaseDBError):
     pass
 
 
-class MaterialNotAssigned(Exception):
+class MaterialEvenCompleted(BaseDBError):
     pass
 
 
-class MaterialNotFound(Exception):
+class MaterialNotAssigned(BaseDBError):
+    pass
+
+
+class MaterialNotFound(BaseDBError):
     pass
 
 
