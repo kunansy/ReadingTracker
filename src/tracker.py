@@ -633,10 +633,10 @@ class Tracker:
         try:
             db.start_material(
                 material_id=material_id, start_date=start_date)
-        except db.WrongDate as e:
+        except WrongDate as e:
             logging.error(str(e))
             raise
-        except db.MaterialNotFound as e:
+        except MaterialNotFound as e:
             logging.error(str(e))
             raise
         else:
