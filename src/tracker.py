@@ -156,6 +156,12 @@ class MaterialStatistics:
         else:
             completed = ''
 
+        if would_be_completed := self.would_be_completed:
+            would_be_completed = f"\nWould be completed at: " \
+                                 f"{fmt(would_be_completed)}"
+        else:
+            would_be_completed = ''
+
         return f"Material: «{self.material.title}»\n" \
                f"Pages: {self.material.pages}\n" \
                f"Started at: {fmt(self.started)}\n" \
@@ -165,7 +171,8 @@ class MaterialStatistics:
                f"Remain: {self.remain} pages\n" \
                f"Min: {self.min}" \
                f"Max: {self.max}" \
-               f"Average: {self.average} pages per day"
+               f"Average: {self.average} pages per day" \
+               f"{would_be_completed}"
 
 
 @dataclass
