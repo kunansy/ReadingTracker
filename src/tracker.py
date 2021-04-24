@@ -7,7 +7,7 @@ from itertools import groupby
 from pathlib import Path
 from typing import Union, Optional, Iterator
 from src.db_api import MaterialNotFound, MaterialNotAssigned
-from src.db_api import MaterialEvenCompleted, WrongDate
+from src.db_api import MaterialEvenCompleted, WrongDate, BaseDBError
 
 import ujson
 
