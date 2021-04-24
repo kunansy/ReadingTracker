@@ -266,6 +266,9 @@ def start_material(*,
             raise WrongDate("Start date must be less than today,"
                             "but %s found", start_date)
 
+        if not is_material_exists(material_id=material_id):
+            raise MaterialNotFound(f"Material {material_id=}")
+
         started_material = Status(
             material_id=material_id, begin=start_date)
         ses.add(started_material)
