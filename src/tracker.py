@@ -727,6 +727,40 @@ class Tracker:
     def notes(self) -> list[db.Note]:
         return db.get_notes()
 
+    def get_material_statistic(self,
+                               material_id: int,
+                               *,
+                               material: db.Material = None,
+                               status: db.Status = None) -> MaterialStatistics:
+        """ Calculate statistics for reading or completed material """
+        material = material or self.get_material(material_id)
+        status = status or self.get_status(material_id)
+
+        assert material.material_id == status.material_id == material_id
+
+        avg = self.log.m_average(material_id)
+        total = self.log.total_read(material_id)
+        remain = material.pages - total
+
+        if status.end is None:
+            would_be_completed = self.would_be_completed(
+                status.begin, avg, remain)
+        else:
+            would_be_completed = None
+
+        return MaterialStatistics(
+            material=material,
+            started=status.begin,
+            completed=status.end,
+            duration=self.log.total_days_spent(material_id),
+            total=total,
+            min=self.log.m_min(material_id),
+            max=self.log.m_max(material_id),
+            average=avg,
+            remain=remain,
+            would_be_completed=would_be_completed
+        )
+
     def _queue(self) -> str:
         """
         The func if expected to make strings like that:
