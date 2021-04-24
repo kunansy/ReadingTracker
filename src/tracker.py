@@ -945,7 +945,7 @@ class Tracker:
             raise MaterialNotFound(msg)
 
     @staticmethod
-    def get_status(material_id: int) -> db.Material:
+    def get_status(material_id: int) -> db.Status:
         return db.get_material_status(material_id=material_id)
 
     @staticmethod
