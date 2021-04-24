@@ -279,17 +279,20 @@ def get_material_status(*,
             Status.material_id == material_id).one()
 
 
-def add_materials(materials: list[dict]) -> None:
-    """
-    Add some materials to the table.
-
-    :param materials: list of dicts with all
-    required for class Material params.
-    """
+def add_material(*,
+                 title: str,
+                 authors: str,
+                 pages: int,
+                 tags: str) -> None:
+    """ Add a material to the table. """
     with session() as ses:
-        for material in materials:
-            material = Material(**material)
-            ses.add(material)
+        material = Material(
+            title=title,
+            authors=authors,
+            pages=pages,
+            tags=tags
+        )
+        ses.add(material)
 
 
 def start_material(*,
