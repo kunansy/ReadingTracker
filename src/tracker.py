@@ -539,7 +539,7 @@ class Log:
             if info.material_id == material_id
         )
 
-    def min(self,
+    def m_min(self,
             material_id: int) -> MinMax:
         sample = [
             (date, info)
@@ -555,7 +555,7 @@ class Log:
             **info.dict()
         )
 
-    def max(self,
+    def m_max(self,
             material_id: int) -> MinMax:
         sample = [
             (date, info)
@@ -571,7 +571,7 @@ class Log:
             **info.dict()
         )
 
-    def average(self,
+    def m_average(self,
                 material_id: int) -> int:
         try:
             return (self.total_read(material_id) //
