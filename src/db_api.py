@@ -53,7 +53,7 @@ class Material(Base):
     tags = Column(String)
 
     def __repr__(self) -> str:
-        return "Material(" \
+        return f"{self.__class__.__name__}(" \
                f"id={self.material_id}, title={self.title}, " \
                f"authors={self.authors}, pages={self.pages}, " \
                f"tags={self.tags})"
@@ -83,7 +83,7 @@ class Status(Base):
         if end := self.end:
             end = end.strftime(DATE_FORMAT)
 
-        return "Status(" \
+        return f"{self.__class__.__name__}(" \
                f"id={self.status_id}, material_id={self.material_id}, " \
                f"{begin=}, {end=})"
 
