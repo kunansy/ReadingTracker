@@ -6,6 +6,8 @@ from datetime import timedelta
 from itertools import groupby
 from pathlib import Path
 from typing import Union, Optional, Iterator
+from src.db_api import MaterialNotFound, MaterialNotAssigned
+from src.db_api import MaterialEvenCompleted, WrongDate
 
 import ujson
 
