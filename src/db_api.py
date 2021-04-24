@@ -237,11 +237,14 @@ def get_reading_materials() -> Optional[MATERIAL_STATUS]:
     }
 
 
-def get_completed_materials() -> MATERIAL_STATUS:
+def get_completed_materials() -> Optional[MATERIAL_STATUS]:
     """ Get all completed materials and their statuses. """
     with session() as ses:
         completed_materials = ses.query(Material).join(Status)\
                                  .filter(Status.end != None).all()
+
+    if not completed_materials:
+        return
 
     statuses = {
         material.material_id:
