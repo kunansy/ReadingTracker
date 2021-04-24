@@ -57,7 +57,7 @@ class MinMax:
             material = f"Material id: {self.material_id}"
 
         return f"Date: {date}\n" \
-               f"Count: {self.count}\n" \
+               f"Count: {self.count}\n pages" \
                f"{material}"
 
 
