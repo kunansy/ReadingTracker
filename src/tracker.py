@@ -617,14 +617,19 @@ class Tracker:
         return res
 
     @staticmethod
-    def start_material(*,
-                       material_id: int,
+    def start_material(material_id: int,
                        start_date: datetime.date = None) -> None:
         try:
             db.start_material(
                 material_id=material_id, start_date=start_date)
-        except db.WrongDate:
-            logging.exception(f"date format is wrong, {start_date=}")
+        except db.WrongDate as e:
+            logging.error(str(e))
+            raise
+        except db.MaterialNotFound as e:
+            logging.error(str(e))
+            raise
+        else:
+            logging.info(f"Material {material_id=} started at {start_date}")
 
     def complete_material(self,
                           *,
