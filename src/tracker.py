@@ -127,6 +127,7 @@ class MaterialStatistics:
     material: db.Material
     started: datetime.date
     duration: int
+    lost_time: int
     total: int
     min: MinMax
     max: MinMax
@@ -146,9 +147,10 @@ class MaterialStatistics:
 
         return f"{self.__class__.__name__}(" \
                f"started={self.started}, completed={self.completed}, " \
-               f"duration={self.duration}, total={self.total}, " \
-               f"min={self.min}, max={self.max}, average={self.average}, " \
-               f"remain={self.remain}, would_be_completed={would_be_completed})"
+               f"duration={self.duration}, lost_time={self.lost_time}, " \
+               f"total={self.total}, min={self.min}, max={self.max}, " \
+               f"average={self.average}, remain={self.remain}, " \
+               f"would_be_completed={would_be_completed})"
 
     def __str__(self) -> str:
         if completed := self.completed:
@@ -716,6 +718,7 @@ class Tracker:
             started=status.begin,
             completed=status.end,
             duration=self.log.m_duration(material_id),
+            lost_time=self.log.m_empty_days(material_id),
             total=total,
             min=self.log.m_min(material_id),
             max=self.log.m_max(material_id),
