@@ -126,7 +126,7 @@ class LogStatistics:
 class MaterialStatistics:
     material: db.Material
     started: datetime.date
-    duration: timedelta
+    duration: int
     total: int
     min: MinMax
     max: MinMax
@@ -154,13 +154,12 @@ class MaterialStatistics:
             completed = f"Completed at: {fmt(completed)}\n"
         else:
             completed = ''
-        duration = time_span(self.duration)
 
         return f"Material: «{self.material.title}»\n" \
                f"Pages: {self.material.pages}\n" \
                f"Started at: {fmt(self.started)}\n" \
                f"{completed}" \
-               f"Duration: {duration}\n" \
+               f"Duration: {time_span(self.duration)}\n" \
                f"Total: {self.total} pages\n" \
                f"Min: {self.min}" \
                f"Max: {self.max}" \
