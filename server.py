@@ -199,7 +199,9 @@ async def add_notes(request: Request) -> HTTPResponse:
     try:
         note = Note(**key_val)
     except ValidationError as e:
-        # log.warning(e)
+        context = ujson.dumps(e.errors(), indent=4)
+        logging.warning(f"Validation error:\n{context}")
+
         jinja.flash(request, 'Validation error', 'error')
         return response.redirect('/notes/add')
 
@@ -207,10 +209,8 @@ async def add_notes(request: Request) -> HTTPResponse:
         tracker.add_note(**note.dict())
     except trc.MaterialNotFound as e:
         jinja.flash(request, str(e), 'error')
-        # log.error(e)
     except ValueError as e:
         jinja.flash(request, str(e), 'error')
-        # log.error(e)
     else:
         jinja.flash(request, 'Note added', 'success')
         request.ctx.session.update(
