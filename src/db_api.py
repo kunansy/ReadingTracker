@@ -91,7 +91,7 @@ class Note(Base):
 
         return f"{self.__class__.__name__}(" \
                f"id={self.id}, material_id={self.material_id}, " \
-               f"{date=}, chapter={self.chapter}, page{self.page})"
+               f"{date=}, chapter={self.chapter}, page={self.page})"
 
 
 engine = create_engine(environ['DB_URI'], encoding='utf-8')

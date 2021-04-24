@@ -698,13 +698,13 @@ class Tracker:
         try:
             material = db.get_materials(materials_ids=[material_id])[0]
         except IndexError:
-            msg = f"Material {material_id} not found"
+            msg = f"Material id={material_id} not found"
             logging.error(msg)
             raise db.MaterialNotFound(msg)
 
         if material.pages < page:
             raise ValueError("Given page more than overall "
-                             "pages count in the material,"
+                             "pages count in the material, "
                              f"{page} > {material.pages}")
 
         db.add_note(
