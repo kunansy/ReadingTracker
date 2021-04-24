@@ -120,26 +120,39 @@ class LogStatistics:
 class MaterialStatistics:
     material: db.Material
     started: datetime.date
-    completed: Optional[datetime.date]
-    duration: int
+    duration: timedelta
+    total: int
     min: MinMax
     max: MinMax
     average: int
+    completed: Optional[datetime.date] = None
+    # date when the material would be completed
+    # according to average read pages count
+    would_be_completed: Optional[datetime.date] = None
 
     def __repr__(self) -> str:
+        if would_be_completed := self.would_be_completed:
+            would_be_completed = fmt(would_be_completed)
+
         return f"{self.__class__.__name__}(" \
                f"started={self.started}, completed={self.completed}, " \
-               f"duration={self.duration}, min={self.min}, max={self.max}, " \
-               f"average={self.average})"
+               f"duration={self.duration}, total={self.total}, " \
+               f"min={self.min}, max={self.max}, average={self.average}, " \
+               f"would_be_completed={would_be_completed})"
 
     def __str__(self) -> str:
         if completed := self.completed:
             completed = f"Completed at: {fmt(completed)}\n"
+        else:
+            completed = ''
+        duration = time_span(self.duration)
 
         return f"Material: «{self.material.title}»\n" \
+               f"Pages: {self.material.pages}\n" \
                f"Started at: {fmt(self.started)}\n" \
                f"{completed}" \
-               f"Duration: {self.duration} days\n" \
+               f"Duration: {duration}\n" \
+               f"Total: {self.total} pages\n" \
                f"Min: {self.min}" \
                f"Max: {self.max}" \
                f"Average: {self.average} pages per day"
