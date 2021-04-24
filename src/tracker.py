@@ -23,6 +23,18 @@ DATE_FORMAT = '%d-%m-%Y'
 DATE_TYPE = Union[str, datetime.date, datetime.datetime]
 
 
+class BaseTrackerError(Exception):
+    pass
+
+
+class LoadingLogError(BaseTrackerError):
+    pass
+
+
+class ReadingLogIsEmpty(BaseTrackerError):
+    pass
+
+
 def today() -> datetime.date:
     return datetime.date.today()
 
@@ -96,8 +108,9 @@ class Log:
         try:
             return list(self.log.values())[-1]['material_id']
         except IndexError:
-            logging.exception("Reading log is empty, no materials found")
-            raise
+            msg = "Reading log is empty, no materials reading"
+            logging.warning(msg)
+            raise ReadingLogIsEmpty(msg)
 
     def _get_log(self) -> LOG_TYPE:
         """
