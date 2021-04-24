@@ -91,7 +91,7 @@ class LogStatistics:
     start_date: datetime.date
     stop_date: datetime.date
     duration: int
-    empty_days_count: int
+    lost_time: int
     average: int
     total_pages_read: int
     would_be_total: int
@@ -112,8 +112,8 @@ class LogStatistics:
     def __str__(self) -> str:
         return f"Start: {fmt(self.start_date)}\n" \
                f"Stop: {fmt(self.stop_date)}\n" \
-               f"Duration: {self.duration} days\n" \
-               f"Empty days: {self.empty_days_count} days\n" \
+               f"Duration: {time_span(self.duration)}\n" \
+               f"Lost time: {time_span(self.lost_time)}\n" \
                f"Average: {self.average} pages per day\n" \
                f"Total pages read: {self.total_pages_read}\n" \
                f"Would be total: {self.would_be_total}\n" \
