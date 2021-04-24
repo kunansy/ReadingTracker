@@ -936,6 +936,15 @@ class Tracker:
         logging.info("Material added")
 
     @staticmethod
+    def get_material(material_id: int) -> db.Material:
+        try:
+            return db.get_materials(materials_ids=[material_id])[0]
+        except IndexError:
+            msg = f"Material {material_id=} not found"
+            logging.warning(msg)
+            raise MaterialNotFound(msg)
+
+    @staticmethod
     def get_status(material_id: int) -> db.Material:
         return db.get_material_status(material_id=material_id)
 
