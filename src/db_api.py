@@ -161,6 +161,12 @@ def get_title(material_id: int) -> str:
         return ''
 
 
+@cache
+def is_material_exists(*,
+                       material_id: int) -> bool:
+    return len(get_materials(materials_ids=[material_id])) == 1
+
+
 def get_free_materials() -> list[Material]:
     """ Get all not assigned materials """
     assigned_materials_ids = {
