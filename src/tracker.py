@@ -169,6 +169,7 @@ class MaterialStatistics:
                f"Started at: {fmt(self.started)}\n" \
                f"{completed}" \
                f"Duration: {time_span(self.duration)}\n" \
+               f"Lost time: {time_span(self.lost_time)}\n" \
                f"Total: {self.total} pages\n" \
                f"Remain: {self.remain} pages\n" \
                f"Min: {self.min}" \
