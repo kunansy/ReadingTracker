@@ -529,8 +529,8 @@ class Log:
             if info.material_id == material_id
         )
 
-    def total_read(self,
-                   material_id: int) -> int:
+    def m_total(self,
+                material_id: int) -> int:
         """ Calculate how many pages of the material even read """
         return sum(
             info.count
@@ -573,8 +573,8 @@ class Log:
     def m_average(self,
                 material_id: int) -> int:
         try:
-            return (self.total_read(material_id) //
-                    self.total_days_spent(material_id))
+            return (self.m_total(material_id) //
+                    self.m_duration(material_id))
         except ZeroDivisionError:
             return 1
 
@@ -738,7 +738,7 @@ class Tracker:
         assert material.material_id == status.material_id == material_id
 
         avg = self.log.m_average(material_id)
-        total = self.log.total_read(material_id)
+        total = self.log.m_total(material_id)
         remain = material.pages - total
 
         if status.end is None:
@@ -855,7 +855,7 @@ class Tracker:
 
             avg = spec_avg.get(material.material_id) or average
 
-            total_read = self.log.total_read(material.material_id)
+            total_read = self.log.m_total(material.material_id)
             remains_pages = material.pages - total_read
 
             expected_duration = remains_pages // avg
