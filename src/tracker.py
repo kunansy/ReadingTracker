@@ -688,6 +688,9 @@ class Tracker:
         except MaterialNotAssigned as e:
             logging.warning(e)
             raise
+        else:
+            logging.info(f"Material {material_id=} completed "
+                         f"at {completion_date=}")
 
     @staticmethod
     def append(title: str,
@@ -709,6 +712,7 @@ class Tracker:
             'tags': tags
         }
         db.add_materials([material])
+        logging.info("Material added")
 
     @staticmethod
     def get_status(material_id: int) -> db.Material:
@@ -726,8 +730,8 @@ class Tracker:
             try:
                 material_id = int(material_id)
             except ValueError:
-                logging.error("Material id must be ans integer, but "
-                              f"{material_id} found")
+                logging.warning("Material id must be ans integer, but "
+                                f"{material_id} found")
                 raise
             else:
                 return db.get_notes(materials_ids=[material_id])
@@ -766,6 +770,7 @@ class Tracker:
             page=page,
             date=date
         )
+        logging.info(f"Note for {material_id=} added")
 
     def __str__(self) -> str:
         """
