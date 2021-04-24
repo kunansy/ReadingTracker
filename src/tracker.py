@@ -520,10 +520,9 @@ class Log:
             yield iter_, info
             iter_ += step
 
-    def total_days_spent(self,
-                         material_id: int) -> int:
-        """ Calculate how many days the
-        material was being reading """
+    def m_duration(self,
+                   material_id: int) -> int:
+        """ Calculate how many days the material was being reading """
         return sum(
             1
             for _, info in self.data()
@@ -752,7 +751,7 @@ class Tracker:
             material=material,
             started=status.begin,
             completed=status.end,
-            duration=self.log.total_days_spent(material_id),
+            duration=self.log.m_duration(material_id),
             total=total,
             min=self.log.m_min(material_id),
             max=self.log.m_max(material_id),
