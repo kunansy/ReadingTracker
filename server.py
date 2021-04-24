@@ -66,9 +66,7 @@ async def start_material(request: Request,
                          material_id: int) -> HTTPResponse:
     try:
         tracker.start_material(material_id)
-    except trc.WrongDate as e:
-        jinja.flash(request, str(e), 'error')
-    except trc.MaterialNotFound as e:
+    except trc.BaseDBError as e:
         jinja.flash(request, str(e), 'error')
     else:
         jinja.flash(request, f"Material {material_id=} started", 'success')
