@@ -980,12 +980,7 @@ class Tracker:
         :exception ValueError: if the given page number is better
          than page count in the material.
         """
-        try:
-            material = db.get_materials(materials_ids=[material_id])[0]
-        except IndexError:
-            msg = f"Material id={material_id} not found"
-            logging.warning(msg)
-            raise MaterialNotFound(msg)
+        material = Tracker.get_material(material_id)
 
         if material.pages < page:
             msg = f"Given page number is better than overall pages count " \
