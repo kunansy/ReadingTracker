@@ -8,6 +8,7 @@ __all__ = ('get_materials', 'get_status', 'get_completed_materials',
 import datetime
 import logging
 from contextlib import contextmanager
+from dataclasses import dataclass
 from os import environ
 from typing import ContextManager, Callable
 
@@ -105,6 +106,16 @@ class Note(Base):
         return f"{self.__class__.__name__}(" \
                f"id={self.id}, material_id={self.material_id}, " \
                f"{date=}, chapter={self.chapter}, page={self.page})"
+
+
+@dataclass
+class MaterialStatus:
+    material: Material
+    status: Status
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(" \
+               f"material={self.material}, status={self.status})"
 
 
 engine = create_engine(environ['DB_URI'], encoding='utf-8')
