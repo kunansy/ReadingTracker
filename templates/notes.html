@@ -5,21 +5,13 @@
 {% endblock style %}
 
 {% block main %}
-
-<menu>
-    <li> <a href="/notes"> Search notes </a> </li>
-    <li> <a href="/notes/add"> Add note </a> </li>
-</menu>
-
+{% for cat, message in get_flashed_messages(with_categories=true) %}
+<div class="alert alert-primary {{ cat }}" role="alert">
+    {{ message }}
+</div>
+{% endfor %}
 
 <div class="form">
-    {% for message in get_flashed_messages() %}
-        <div class="alert alert-primary" role="alert">
-            {{ message }}
-            <p> Alert </p>
-        </div>
-    {% endfor %}
-
     <form action="/notes" method="GET">
         <input type="text" placeholder="Enter a material id" name="material_id" id="input-id">
         <button type="submit" class="submit-button"> Search </button>
