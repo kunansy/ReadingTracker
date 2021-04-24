@@ -413,42 +413,6 @@ class Log:
             return 1
 
     @property
-    def average_of_every_materials(self) -> dict[int, int]:
-        """
-        Calculate average count of time spent to every material.
-
-        The data is expected to make chart.
-        """
-        data = {}
-        key_ = lambda item: item[1].material_id
-        sample = sorted(self.data(), key=key_)
-
-        status = {
-            status_.material_id: status_
-            for status_ in db.get_status()
-        }
-
-        for material_id, group in groupby(sample, key=key_):
-            days = count = 0
-            for date, info in group:
-                info: LogRecord
-
-                item = status.get(info.material_id)
-                if item and item.end and date > item.end:
-                    break
-
-                days += 1
-                count += info.count
-
-            try:
-                data[material_id] = count // days
-            except ZeroDivisionError:
-                data[material_id] = 1
-
-        return dict(sorted(
-            data.items(), key=lambda item: item[1], reverse=True))
-
-    @property
     def min(self) -> MinMax:
         date, info = min(
             [(date, info) for date, info in self.items()],
