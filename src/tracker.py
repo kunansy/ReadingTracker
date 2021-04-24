@@ -619,6 +619,15 @@ class Tracker:
     @staticmethod
     def start_material(material_id: int,
                        start_date: datetime.date = None) -> None:
+        """ Create item in Status table.
+
+        :param material_id: material to start.
+        :param start_date: date when the material was started.
+         Today by default.
+
+        :exception WrongDate: if start date is better than today.
+        :exception MaterialNotFound: if the material doesn't exist.
+        """
         try:
             db.start_material(
                 material_id=material_id, start_date=start_date)
