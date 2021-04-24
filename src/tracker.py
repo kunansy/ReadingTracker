@@ -236,16 +236,15 @@ class Log:
     def _get_log(self) -> dict[datetime.date, LogRecord]:
         """
         Get log from JSON file and parse it.
-        Convert keys to datetime.date, values to int.
+        Convert keys to datetime.date, values to LogRecord.
 
         :return: dict with the format.
-        :exception ValueError: if the file if empty.
         """
         with self.path.open(encoding='utf-8') as f:
             log = ujson.load(f)
 
             return {
-                to_datetime(date): info
+                to_datetime(date): LogRecord(**info)
                 for date, info in log.items()
             }
 
