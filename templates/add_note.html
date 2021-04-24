@@ -12,13 +12,13 @@
 </menu>
 
 
-<div class="form">
-    {% for cat, message in get_flashed_messages(with_categories=true) %}
-        <div class="alert alert-primary {{ cat }}" role="alert">
-            {{ message }}
-        </div>
-    {% endfor %}
+{% for cat, message in get_flashed_messages(with_categories=true) %}
+    <div class="alert alert-primary {{ cat }}" role="alert">
+        {{ message }}
+    </div>
+{% endfor %}
 
+<div class="form">
     <form action="/notes/add" method="POST">
         <input class="input" type="text" placeholder="Enter a material id" name="material_id"
                id="input-id" value="{{ material_id }}" title="ID of the material"> <br/>
