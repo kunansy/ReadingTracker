@@ -135,7 +135,13 @@ def yesterday() -> datetime.date:
     return today() - timedelta(days=1)
 
 
-def to_datetime(date: str or datetime.date or datetime.datetime) -> Optional[datetime.date]:
+def to_datetime(date) -> Optional[datetime.date]:
+    """
+    :param date: str or date or datetime.
+
+    :exception ValueError: if date format is wrong.
+    :exception TypeError: if the param type is wrong.
+    """
     if date is None:
         return
 
@@ -144,7 +150,7 @@ def to_datetime(date: str or datetime.date or datetime.datetime) -> Optional[dat
             date = datetime.datetime.strptime(date, DATE_FORMAT)
             date = date.date()
         except ValueError as e:
-            raise ValueError(f"Wrong str format\n{e}")
+            raise ValueError(f"Wrong str format\n{e}:{date}")
         else:
             return date
     elif isinstance(date, datetime.datetime):
