@@ -3,7 +3,7 @@ __all__ = ('get_materials', 'get_status', 'get_completed_materials',
            'start_material', 'add_materials', 'get_material_status',
            'get_reading_materials', 'add_note', 'get_notes',
            'BaseDBError', 'WrongDate', 'MaterialEvenCompleted',
-           'MaterialNotAssigned', 'MaterialNotFound')
+           'MaterialNotAssigned', 'MaterialNotFound', 'MATERIAL_STATUS')
 
 import datetime
 import logging
@@ -118,6 +118,7 @@ class MaterialStatus:
                f"material={self.material}, status={self.status})"
 
 
+MATERIAL_STATUS = dict[int, MaterialStatus]
 engine = create_engine(environ['DB_URI'], encoding='utf-8')
 Base.metadata.create_all(engine)
 
@@ -205,7 +206,7 @@ def get_free_materials() -> list[Material]:
     ]
 
 
-def get_reading_materials() -> dict[int, MaterialStatus]:
+def get_reading_materials() -> MATERIAL_STATUS:
     """ Get all materials read now and their statuses. """
     status = get_status()
 
@@ -232,7 +233,7 @@ def get_reading_materials() -> dict[int, MaterialStatus]:
     }
 
 
-def get_completed_materials() -> dict[int, MaterialStatus]:
+def get_completed_materials() -> MATERIAL_STATUS:
     """ Get all completed materials and their statuses. """
     with session() as ses:
         completed_materials = ses.query(Material).join(Status)\
