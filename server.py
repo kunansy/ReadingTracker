@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
+import logging
 from typing import Any
 
+import ujson
 from pydantic import BaseModel, ValidationError, validator
 from sanic import Sanic, Request, response, HTTPResponse
 from sanic_jinja2 import SanicJinja2
@@ -233,6 +235,9 @@ async def home(request: Request) -> None:
 @app.exception(ValidationError)
 def validation_error_handler(request: Request,
                              exception: ValidationError) -> HTTPResponse:
+    context = ujson.dumps(exception.errors(), indent=4)
+    logging.error(f"Validation error was not handled:\n{context}")
+
     return response.json(exception.errors(), status=400, indent=4)
 
 
@@ -259,6 +264,7 @@ def error_handler(request: Request,
         }
     }
 
+    logging.error(ujson.dumps(context, indent=4))
     return response.json(context, status=500, indent=4)
 
 
