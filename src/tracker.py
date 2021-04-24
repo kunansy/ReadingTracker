@@ -95,6 +95,11 @@ class LogStatistics:
 
 
 @dataclass
+class MaterialStatistics:
+    pass
+
+
+@dataclass
 class TrackerStatistics:
     pass
 
