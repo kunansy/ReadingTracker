@@ -539,7 +539,7 @@ class Log:
         )
 
     def m_min(self,
-            material_id: int) -> MinMax:
+              material_id: int) -> MinMax:
         sample = [
             (date, info)
             for date, info in self.items()
@@ -555,7 +555,7 @@ class Log:
         )
 
     def m_max(self,
-            material_id: int) -> MinMax:
+              material_id: int) -> MinMax:
         sample = [
             (date, info)
             for date, info in self.items()
@@ -571,7 +571,7 @@ class Log:
         )
 
     def m_average(self,
-                material_id: int) -> int:
+                  material_id: int) -> int:
         try:
             return (self.m_total(material_id) //
                     self.m_duration(material_id))
