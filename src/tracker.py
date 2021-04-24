@@ -16,7 +16,6 @@ import src.db_api as db
 
 
 DATA_FOLDER = Path('data')
-LOG_TYPE = dict[datetime.date, dict[str, int]]
 PAGES_PER_DAY = 50
 INDENT = 2
 
@@ -199,7 +198,7 @@ class Log:
             raise
 
     @property
-    def log(self) -> LOG_TYPE:
+    def log(self) -> dict[datetime.date, LogRecord]:
         return self.__log
 
     @property
@@ -231,7 +230,7 @@ class Log:
             logging.warning(msg)
             raise ReadingLogIsEmpty(msg)
 
-    def _get_log(self) -> LOG_TYPE:
+    def _get_log(self) -> dict[datetime.date, LogRecord]:
         """
         Get log from JSON file and parse it.
         Convert keys to datetime.date, values to int.
