@@ -204,7 +204,7 @@ class Log:
             self.__log = self._get_log(full_info=full_info)
         except Exception as e:
             logging.error(f"When load the log: {e}")
-            raise
+            raise LoadingLogError(e)
 
     @property
     def log(self) -> dict[datetime.date, LogRecord]:
