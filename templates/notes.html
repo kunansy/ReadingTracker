@@ -18,12 +18,6 @@
     </form>
 </div>
 
-{% if not notes %}
-    <div class="note">
-        <p> No notes found </p>
-    </div>
-{% endif %}
-
 {% for note in notes %}
 {% set id = note['material_id'] %}
 <div class="note">
