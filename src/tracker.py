@@ -288,17 +288,28 @@ class Log:
             data.items(), key=lambda item: item[1], reverse=True))
 
     @property
-    def min(self) -> tuple[datetime.date, dict[str, int]]:
-        return min(
+    def min(self) -> MinMax:
+        date, info = min(
+            [(date, info) for date, info in self.items()],
+            key=lambda item: item[1]['count']
+        )
+        return MinMax(
+            date=date,
+            count=info['count'],
+            material_id=info['material_id']
+        )
+
+    @property
+    def max(self) -> MinMax:
+        date, info = max(
             [(date, info) for date, info in self.items()],
             key=lambda item: item[1]['count']
         )
 
-    @property
-    def max(self) -> tuple[datetime.date, dict[str, int]]:
-        return max(
-            [(date, info) for date, info in self.items()],
-            key=lambda item: item[1]['count']
+        return MinMax(
+            date=date,
+            count=info['count'],
+            material_id=info['material_id']
         )
 
     @property
