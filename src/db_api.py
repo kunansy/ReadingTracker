@@ -182,7 +182,7 @@ def get_title(material_id: int) -> str:
     try:
         return get_materials(materials_ids=[material_id])[0].title
     except IndexError:
-        logging.error(f"Material {material_id=} not found")
+        logging.warning(f"Material {material_id=} not found")
         return ''
 
 
