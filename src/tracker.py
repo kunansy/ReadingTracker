@@ -41,6 +41,9 @@ class MinMax:
     material_id: int
     material_title: Optional[str] = None
 
+    def dict(self) -> dict:
+        return self.__dict__
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(" \
                f"date={self.date}, count={self.count}, " \
@@ -96,6 +99,9 @@ class LogStatistics:
     max: MinMax
     median: int
 
+    def dict(self) -> dict:
+        return self.__dict__
+
     def __repr__(self) -> str:
         data = ',\n'.join(
             f"{field}={value}"
@@ -129,6 +135,9 @@ class MaterialStatistics:
     # date when the material would be completed
     # according to average read pages count
     would_be_completed: Optional[datetime.date] = None
+
+    def dict(self) -> dict:
+        return self.__dict__
 
     def __repr__(self) -> str:
         if would_be_completed := self.would_be_completed:
