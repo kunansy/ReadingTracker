@@ -473,6 +473,16 @@ class Log:
             yield iter_, info
             iter_ += step
 
+    def total_days_spent(self,
+                         material_id: int) -> int:
+        """ Calculate how many days the
+        material was being reading """
+        return sum(
+            1
+            for _, info in self.data()
+            if info.material_id == material_id
+        )
+
     def total_read(self,
                    material_id: int) -> int:
         """ Calculate how many pages of the material even read """
