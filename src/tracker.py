@@ -131,6 +131,7 @@ class MaterialStatistics:
     min: MinMax
     max: MinMax
     average: int
+    remain: int
     completed: Optional[datetime.date] = None
     # date when the material would be completed
     # according to average read pages count
@@ -147,7 +148,7 @@ class MaterialStatistics:
                f"started={self.started}, completed={self.completed}, " \
                f"duration={self.duration}, total={self.total}, " \
                f"min={self.min}, max={self.max}, average={self.average}, " \
-               f"would_be_completed={would_be_completed})"
+               f"remain={self.remain}, would_be_completed={would_be_completed})"
 
     def __str__(self) -> str:
         if completed := self.completed:
@@ -161,6 +162,7 @@ class MaterialStatistics:
                f"{completed}" \
                f"Duration: {time_span(self.duration)}\n" \
                f"Total: {self.total} pages\n" \
+               f"Remain: {self.remain} pages\n" \
                f"Min: {self.min}" \
                f"Max: {self.max}" \
                f"Average: {self.average} pages per day"
