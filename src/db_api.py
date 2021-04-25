@@ -341,6 +341,8 @@ def add_material(*,
                  pages: int,
                  tags: str) -> None:
     """ Add a material to the table. """
+    logging.info(f"Adding material {title=}")
+
     with session() as ses:
         material = Material(
             title=title,
@@ -349,6 +351,8 @@ def add_material(*,
             tags=tags
         )
         ses.add(material)
+
+        logging.info("Material added")
 
 
 def start_material(*,
