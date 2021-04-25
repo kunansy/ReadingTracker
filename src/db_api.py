@@ -442,9 +442,10 @@ def add_note(*,
              chapter: int,
              page: int,
              date: datetime.date = None) -> None:
-    with session() as ses:
-        date = date or today()
+    date = date or today()
+    logging.info(f"Adding note for {material_id=} at {date=}")
 
+    with session() as ses:
         note = Note(
             material_id=material_id,
             content=content,
@@ -454,3 +455,4 @@ def add_note(*,
         )
 
         ses.add(note)
+        logging.info("Note added")
