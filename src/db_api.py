@@ -367,9 +367,10 @@ def start_material(*,
 
     :exception WrongDate: if 'start_time' is better than today.
     """
-    with session() as ses:
-        start_date = start_date or today()
+    start_date = start_date or today()
+    logging.info(f"Starting material {material_id=} at {start_date=}")
 
+    with session() as ses:
         if start_date > today():
             raise WrongDate("Start date must be less than today,"
                             "but %s found", start_date)
@@ -380,6 +381,8 @@ def start_material(*,
         started_material = Status(
             material_id=material_id, begin=start_date)
         ses.add(started_material)
+
+        logging.info(f"Material {material_id=} started")
 
 
 def complete_material(*,
