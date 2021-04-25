@@ -190,6 +190,12 @@ def get_materials(*,
     :param materials_ids: ids of Material row or None.
     :return: list of found Material rows.
     """
+    how_many = 'all'
+    if materials_ids is not None:
+        how_many = str(len(materials_ids))
+
+    logging.info(f"Getting {how_many} materials")
+
     with session() as ses:
         if materials_ids is None:
             return ses.query(Material).all()
