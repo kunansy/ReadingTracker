@@ -104,7 +104,8 @@ class Note(Base):
         date = self.date.strftime(DATE_FORMAT)
 
         return f"{self.__class__.__name__}(" \
-               f"id={self.id}, material_id={self.material_id}, " \
+               f"id={self.id}, content={self.content}, " \
+               f"material_id={self.material_id}, " \
                f"{date=}, chapter={self.chapter}, page={self.page})"
 
 
