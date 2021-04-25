@@ -399,9 +399,10 @@ def complete_material(*,
     :exception WrongDate: if 'completion_date' is less than start date.
     :exception MaterialNotAssigned: if the material has not been started yet.
     """
-    with session() as ses:
-        completion_date = completion_date or today()
+    completion_date = completion_date or today()
+    logging.info(f"Completing material {material_id=} at {completion_date=}")
 
+    with session() as ses:
         status = ses.query(Status).filter(
             Status.material_id == material_id).all()
         try:
@@ -416,6 +417,7 @@ def complete_material(*,
                             f"{status.begin=} > {completion_date=}")
 
         status.end = completion_date
+        logging.info(f"Material {material_id=} completed")
 
 
 def get_notes(*,
