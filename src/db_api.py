@@ -223,6 +223,8 @@ def is_material_exists(*,
 
 def get_free_materials() -> list[Material]:
     """ Get all not assigned materials """
+    logging.info("Getting free materials")
+
     assigned_materials_ids = {
         status.material_id
         for status in get_status()
