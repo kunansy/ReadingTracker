@@ -328,6 +328,8 @@ def get_status(*,
 
 def get_material_status(*,
                         material_id: int) -> Status:
+    logging.info(f"Getting status for material {material_id=}")
+
     with session() as ses:
         return ses.query(Status).filter(
             Status.material_id == material_id).one()
