@@ -238,7 +238,12 @@ def get_free_materials() -> list[Material]:
 
 
 def get_reading_materials() -> Optional[MATERIAL_STATUS]:
-    """ Get all materials read now and their statuses. """
+    """
+    Get all assigned but not completed
+    materials and their statuses.
+    """
+    logging.info("Getting reading materials")
+
     status = get_status()
 
     reading_materials_ids = [
@@ -248,6 +253,7 @@ def get_reading_materials() -> Optional[MATERIAL_STATUS]:
     ]
 
     if not reading_materials_ids:
+        logging.info("Reading materials not found")
         return
 
     status = {
