@@ -113,6 +113,14 @@ class MaterialStatus:
     material: Material
     status: Status
 
+    def __init__(self,
+                 material: Material,
+                 status: Status) -> None:
+        assert material.material_id == status.material_id
+
+        self.material = material
+        self.status = status
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(" \
                f"material={self.material}, status={self.status})"
