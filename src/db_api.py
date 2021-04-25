@@ -312,6 +312,12 @@ def get_status(*,
     :param status_ids: ids of Status row or None.
     :return: list of found Status rows.
     """
+    how_many = 'all'
+    if status_ids is not None:
+        how_many = str(len(status_ids))
+
+    logging.info(f"Getting {how_many} statuses")
+
     with session() as ses:
         if status_ids is None:
             return ses.query(Status).all()
