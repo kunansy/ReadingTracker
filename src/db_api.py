@@ -422,6 +422,12 @@ def complete_material(*,
 
 def get_notes(*,
               materials_ids: list[int] = None) -> list[Note]:
+    how_many = 'all'
+    if materials_ids is not None:
+        how_many = str(len(materials_ids))
+
+    logging.info(f"Getting notes for {how_many} materials")
+
     with session() as ses:
         if materials_ids:
             return ses.query(Note).filter(
