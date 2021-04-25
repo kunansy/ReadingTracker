@@ -160,13 +160,20 @@ def cache(func: Callable) -> Callable:
 def session(**kwargs) -> ContextManager[Session]:
     new_session = Session(**kwargs, bind=engine, expire_on_commit=False)
     try:
+        logging.info("New session created and yielded")
         yield new_session
+
+        logging.info("Operations with the session finished, commiting")
         new_session.commit()
-    except:
+    except Exception as e:
+        logging.error(f"Error with the session: {e}")
+        logging.info("Rollback all changes")
+
         new_session.rollback()
         raise
     finally:
         new_session.close()
+        logging.info("Session closed")
 
 
 @cache
