@@ -184,11 +184,8 @@ def today() -> datetime.date:
 def get_materials(*,
                   materials_ids: list[int] = None) -> list[Material]:
     """
-    Get the materials by their ids or all
-    rows of Material table if it is None.
-
-    :param materials_ids: ids of Material row or None.
-    :return: list of found Material rows.
+    Get the materials by their ids or all rows
+    of Material table if materials_ids is None.
     """
     how_many = 'all'
     if materials_ids is not None:
@@ -306,11 +303,8 @@ def get_completed_materials() -> Optional[MATERIAL_STATUS]:
 def get_status(*,
                status_ids: list[int] = None) -> list[Status]:
     """
-    Get the status by their ids or all
-    rows of Status table if it is None.
-
-    :param status_ids: ids of Status row or None.
-    :return: list of found Status rows.
+    Get the statuses by their ids or all
+    rows of Status table if status_ids is None.
     """
     how_many = 'all'
     if status_ids is not None:
@@ -366,6 +360,7 @@ def start_material(*,
      Today by default.
 
     :exception WrongDate: if 'start_time' is better than today.
+    :exception MaterialNotFound: if material with the id not found.
     """
     start_date = start_date or today()
     logging.info(f"Starting material {material_id=} at {start_date=}")
@@ -389,7 +384,7 @@ def complete_material(*,
                       material_id: int,
                       completion_date: datetime.date = None) -> None:
     """
-    Set end date to Status table by 'material_id'.
+    Set end date to Status table.
 
     :param material_id: id of materials to complete.
     :param completion_date: date when the material
