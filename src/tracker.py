@@ -149,8 +149,8 @@ class LogStatistics:
                f"Average: {self.average} pages per day\n" \
                f"Total pages read: {self.total_pages_read}\n" \
                f"Would be total: {self.would_be_total}\n" \
-               f"Min: \n{min_}\n" \
-               f"Max: \n{max_}\n" \
+               f"Min:\n{min_}\n" \
+               f"Max:\n{max_}\n" \
                f"Median: {self.median} pages"
 
 
@@ -206,15 +206,13 @@ class MaterialStatistics:
         remaining_days = (f"Remaining days: {self.remaining_days}\n" *
                           bool(self.remaining_days))
 
-        min_ = '\n'.join(
-            f"\t{field}: {value}"
-            for field, value in self.min.dict(exclude={'material_id'}).items()
-        )
+        min_ = self.min
+        min_ = f"\tDate: {fmt(min_.date)}\n" \
+               f"\tCount: {min_.count} pages"
 
-        max_ = '\n'.join(
-            f"\t{field}: {value}"
-            for field, value in self.max.dict(exclude={'material_id'}).items()
-        )
+        max_ = self.max
+        max_ = f"\tDate: {fmt(max_.date)}\n" \
+               f"\tCount: {max_.count} pages"
 
         return f"Material: «{self.material.title}»\n" \
                f"Pages: {self.material.pages}\n" \
@@ -768,8 +766,8 @@ class Tracker:
 
         if status.end is None:
             remaining_pages = material.pages - total
-            remaining_days = remaining_pages // avg + 1
-            would_be_completed = status.begin + timedelta(days=remaining_days)
+            remaining_days = round(remaining_pages // avg)
+            would_be_completed = today() + timedelta(days=remaining_days)
         else:
             would_be_completed = remaining_days = remaining_pages = None
 
