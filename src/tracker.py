@@ -123,6 +123,16 @@ class LogStatistics:
         return f"{self.__class__.__name__}({data})"
 
     def __str__(self) -> str:
+        min_ = '\n'.join(
+            f"\t{field.capitalize()}: {value}"
+            for field, value in self.min.dict(exclude={'material_id'}).items()
+        )
+
+        max_ = '\n'.join(
+            f"\t{field.capitalize()}: {value}"
+            for field, value in self.max.dict(exclude={'material_id'}).items()
+        )
+
         return f"Start: {fmt(self.start_date)}\n" \
                f"Stop: {fmt(self.stop_date)}\n" \
                f"Duration: {time_span(self.duration)}\n" \
@@ -130,8 +140,8 @@ class LogStatistics:
                f"Average: {self.average} pages per day\n" \
                f"Total pages read: {self.total_pages_read}\n" \
                f"Would be total: {self.would_be_total}\n" \
-               f"Min: {self.min}\n" \
-               f"Max: {self.max}\n" \
+               f"Min: \n{min_}\n" \
+               f"Max: \n{max_}\n" \
                f"Median: {self.median} pages"
 
 
