@@ -14,6 +14,7 @@ from typing import ContextManager, Callable, Optional
 
 from sqlalchemy import Column, ForeignKey, Integer, String, Date, create_engine, \
     Text
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
@@ -325,8 +326,14 @@ def get_material_status(*,
     logging.info(f"Getting status for material {material_id=}")
 
     with session() as ses:
-        return ses.query(Status).filter(
-            Status.material_id == material_id).one()
+        query = ses.query(Status).filter(
+            Status.material_id == material_id)
+        try:
+            return query.one()
+        except NoResultFound as e:
+            msg = f"Material {material_id=} not found"
+            logging.error(f"{msg}\n{e}")
+            raise MaterialNotFound(msg)
 
 
 def add_material(*,
