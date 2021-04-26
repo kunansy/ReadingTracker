@@ -13,18 +13,6 @@ from src import tracker as trc
 from src import logging_config
 
 
-MSG_FMT = "[{asctime},{msecs:3.0f}] [{name}:{levelname:^8}] " \
-          "[{module}:{funcName}] [{process}] {message}"
-DATE_FMT = "%d-%m-%Y %H:%M:%S"
-
-logging.basicConfig(
-    style='{',
-    format=MSG_FMT,
-    datefmt=DATE_FMT,
-    level=logging.DEBUG,
-
-)
-
 logging.getLogger('sanic.error').disabled = True
 
 
