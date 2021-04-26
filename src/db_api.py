@@ -272,7 +272,7 @@ def get_reading_materials() -> MATERIAL_STATUS:
     }
 
 
-def get_completed_materials() -> Optional[MATERIAL_STATUS]:
+def get_completed_materials() -> MATERIAL_STATUS:
     """ Get all completed materials and their statuses. """
     logging.info("Getting completed materials")
 
@@ -282,7 +282,7 @@ def get_completed_materials() -> Optional[MATERIAL_STATUS]:
 
     if not completed_materials:
         logging.info("No completed materials found")
-        return
+        return {}
 
     statuses = {
         material.material_id:
