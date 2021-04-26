@@ -140,7 +140,8 @@ def cache(func: Callable) -> Callable:
         nonlocal results
 
         if arg in results:
-            logging.debug(f"Result for {func.__name__}({arg}) got from cache")
+            logging.debug(f"Result for {func.__name__}({arg})='{results[arg]}' "
+                          "got from cache")
             return results[arg]
 
         if arg is None:
