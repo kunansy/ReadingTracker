@@ -12,6 +12,18 @@ from src import db_api
 from src import tracker as trc
 
 
+MSG_FMT = "[{asctime},{msecs:3.0f}] [{levelname:^8}] " \
+          "[{module}:{funcName}] {message}"
+DATE_FMT = "%d-%m-%Y %H:%M:%S"
+
+logging.basicConfig(
+    style='{',
+    format=MSG_FMT,
+    datefmt=DATE_FMT,
+    level=logging.DEBUG,
+
+)
+
 app = Sanic(__name__)
 app.static('/static', './static')
 
