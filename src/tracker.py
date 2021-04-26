@@ -104,8 +104,8 @@ class LogStatistics:
 
     def __repr__(self) -> str:
         data = ',\n'.join(
-            f"{field}={value}"
-            for field, value in self.__dict__.items()
+            f"{field}={value}\n"
+            for field, value in self.dict().items()
         )
         return f"{self.__class__.__name__}(\n{data})"
 
