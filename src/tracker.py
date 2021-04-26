@@ -132,7 +132,8 @@ class MaterialStatistics:
     min: MinMax
     max: MinMax
     average: int
-    remain: int
+    remaining_pages: Optional[int] = None
+    remaining_days: Optional[int] = None
     completed: Optional[datetime.date] = None
     # date when the material would be completed
     # according to average read pages count
@@ -160,6 +161,10 @@ class MaterialStatistics:
                                  f"{fmt(would_be_completed)}"
         else:
             would_be_completed = ''
+        remaining_pages = (f"Remaining pages: {self.remaining_pages}\n" *
+                           bool(self.remaining_pages))
+        remaining_days = (f"Remaining days: {self.remaining_days}\n" *
+                          bool(self.remaining_days))
 
         return f"Material: «{self.material.title}»\n" \
                f"Pages: {self.material.pages}\n" \
@@ -168,7 +173,8 @@ class MaterialStatistics:
                f"Duration: {time_span(self.duration)}\n" \
                f"Lost time: {time_span(self.lost_time)}\n" \
                f"Total: {self.total} pages\n" \
-               f"Remain: {self.remain} pages\n" \
+               f"{remaining_pages}" \
+               f"{remaining_days}" \
                f"Min: {self.min}" \
                f"Max: {self.max}" \
                f"Average: {self.average} pages per day" \
