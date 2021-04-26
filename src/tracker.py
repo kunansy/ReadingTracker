@@ -61,13 +61,14 @@ class MinMax:
 
     def __str__(self) -> str:
         date = fmt(self.date)
+
         if material_title := self.material_title:
             material = f"Title: «{material_title}»"
         else:
             material = f"Material id: {self.material_id}"
 
         return f"Date: {date}\n" \
-               f"Count: {self.count}\n pages" \
+               f"Count: {self.count} pages\n" \
                f"{material}"
 
 
@@ -96,6 +97,7 @@ class LogRecord:
             title = f"\nTitle: «{title}»"
         else:
             title = ''
+
         return f"Count: {self.count}\n" \
                f"Material id: {self.material_id}" \
                f"{title}"
@@ -106,9 +108,11 @@ class LogStatistics:
     start_date: datetime.date
     stop_date: datetime.date
     duration: int
+    # amount of empty days
     lost_time: int
     average: int
     total_pages_read: int
+    # would be total if there were no empty days
     would_be_total: int
     min: MinMax
     max: MinMax
