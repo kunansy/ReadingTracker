@@ -10,10 +10,10 @@ import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
 from os import environ
-from typing import ContextManager, Callable, Optional
+from typing import ContextManager, Callable
 
-from sqlalchemy import Column, ForeignKey, Integer, String, Date, create_engine, \
-    Text
+from sqlalchemy import Column, ForeignKey, Integer, \
+                       String, Date, create_engine, Text
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
