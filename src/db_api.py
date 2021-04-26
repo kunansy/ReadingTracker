@@ -185,8 +185,8 @@ def today() -> datetime.date:
 def get_materials(*,
                   materials_ids: list[int] = None) -> list[Material]:
     """
-    Get the materials by their ids or all rows
-    of Material table if materials_ids is None.
+    Get the materials by their ids.
+    If it's None, get all materials.
     """
     how_many = 'all'
     if materials_ids is not None:
@@ -304,8 +304,8 @@ def get_completed_materials() -> MATERIAL_STATUS:
 def get_status(*,
                status_ids: list[int] = None) -> list[Status]:
     """
-    Get the statuses by their ids or all
-    rows of Status table if status_ids is None.
+    Get the statuses by their ids.
+    If it's None, get all statuses.
     """
     how_many = 'all'
     if status_ids is not None:
@@ -323,6 +323,10 @@ def get_status(*,
 
 def get_material_status(*,
                         material_id: int) -> Status:
+    """ Get material status.
+
+    :exception MaterialNotFound: if the material doesn't exist.
+    """
     logging.info(f"Getting status for material {material_id=}")
 
     with session() as ses:
@@ -341,7 +345,7 @@ def add_material(*,
                  authors: str,
                  pages: int,
                  tags: str) -> None:
-    """ Add a material to the table. """
+    """ Add a material to the database. """
     logging.info(f"Adding material {title=}")
 
     with session() as ses:
@@ -424,6 +428,9 @@ def complete_material(*,
 
 def get_notes(*,
               materials_ids: list[int] = None) -> list[Note]:
+    """ Get notes by material ids.
+    If it's None, get all notes.
+    """
     how_many = 'all'
     if materials_ids is not None:
         how_many = str(len(materials_ids))
@@ -444,6 +451,7 @@ def add_note(*,
              chapter: int,
              page: int,
              date: datetime.date = None) -> None:
+    """ Add note to the database. """
     date = date or today()
     logging.info(f"Adding note for {material_id=} at {date=}")
 
