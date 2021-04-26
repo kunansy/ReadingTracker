@@ -30,7 +30,7 @@ app.static('/static', './static')
 session = Session(app)
 jinja = SanicJinja2(app, session=session)
 
-log = trc.Log()
+log = trc.Log(full_info=True)
 tracker = trc.Tracker(log)
 
 
