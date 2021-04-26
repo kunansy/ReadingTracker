@@ -21,6 +21,8 @@ INDENT = 2
 
 DATE_FORMAT = '%d-%m-%Y'
 
+logger = logging.getLogger('ReadingTracker')
+
 
 class BaseTrackerError(Exception):
     pass
@@ -304,7 +306,7 @@ class Log:
         try:
             self.__log = self._get_log(full_info=full_info)
         except Exception as e:
-            logging.error(f"When load the log: {e}")
+            logger.error(f"When load the log: {e}")
             raise LoadingLogError(e)
 
     @property
@@ -337,7 +339,7 @@ class Log:
             return list(self.log.values())[-1].material_id
         except IndexError:
             msg = "Reading log is empty, no materials reading"
-            logging.warning(msg)
+            logger.warning(msg)
             raise ReadingLogIsEmpty(msg)
 
     def _get_log(self,
@@ -411,8 +413,8 @@ class Log:
         try:
             self._set_log(today(), count, material_id)
         except ValueError:
-            logging.exception(f"Cannot set today's log with "
-                              f"{count=}, {material_id=}")
+            logger.exception(f"Cannot set today's log with "
+                             f"{count=}, {material_id=}")
 
     def set_yesterday_log(self,
                           count: int,
@@ -427,8 +429,8 @@ class Log:
         try:
             self._set_log(yesterday(), count, material_id)
         except ValueError:
-            logging.exception(f"Cannot set yesterday's log with "
-                              f"{count=}, {material_id=}")
+            logger.exception(f"Cannot set yesterday's log with "
+                             f"{count=}, {material_id=}")
 
     def dump(self) -> None:
         """ Dump log to the file. """
@@ -936,13 +938,13 @@ class Tracker:
             db.start_material(
                 material_id=material_id, start_date=start_date)
         except WrongDate as e:
-            logging.error(str(e))
+            logger.error(e)
             raise
         except MaterialNotFound as e:
-            logging.error(str(e))
+            logger.error(e)
             raise
         else:
-            logging.info(f"Material {material_id=} started at {start_date}")
+            logger.info(f"Material {material_id=} started at {start_date}")
 
     def complete_material(self,
                           material_id: int = None,
@@ -969,17 +971,17 @@ class Tracker:
                 completion_date=completion_date
             )
         except MaterialEvenCompleted as e:
-            logging.warning(e)
+            logger.warning(e)
             raise
         except WrongDate as e:
-            logging.warning(e)
+            logger.warning(e)
             raise
         except MaterialNotAssigned as e:
-            logging.warning(e)
+            logger.warning(e)
             raise
         else:
-            logging.info(f"Material {material_id=} completed "
-                         f"at {completion_date=}")
+            logger.info(f"Material {material_id=} completed "
+                        f"at {completion_date=}")
 
     @staticmethod
     def add_material(title: str,
@@ -992,7 +994,7 @@ class Tracker:
             pages=pages,
             tags=tags
         )
-        logging.info("Material added")
+        logger.info("Material added")
 
     @staticmethod
     def get_material(material_id: int) -> db.Material:
@@ -1000,7 +1002,7 @@ class Tracker:
             return db.get_materials(materials_ids=[material_id])[0]
         except IndexError:
             msg = f"Material {material_id=} not found"
-            logging.warning(msg)
+            logger.warning(msg)
             raise MaterialNotFound(msg)
 
     @staticmethod
@@ -1019,8 +1021,8 @@ class Tracker:
             try:
                 material_id = int(material_id)
             except ValueError:
-                logging.warning("Material id must be ans integer, but "
-                                f"{material_id} found")
+                logger.warning("Material id must be ans integer, but "
+                               f"{material_id} found")
                 raise
             else:
                 return db.get_notes(materials_ids=[material_id])
@@ -1044,7 +1046,7 @@ class Tracker:
         if material.pages < page:
             msg = f"Given page number is better than overall pages count " \
                   f"in the material, {page=} > {material.pages=}"
-            logging.warning(msg)
+            logger.warning(msg)
             raise ValueError(msg)
 
         db.add_note(
@@ -1054,7 +1056,7 @@ class Tracker:
             page=page,
             date=date
         )
-        logging.info(f"Note for {material_id=} added")
+        logger.info(f"Note for {material_id=} added")
 
     def __str__(self) -> str:
         """
