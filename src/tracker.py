@@ -171,10 +171,15 @@ class MaterialStatistics:
     # according to average read pages count
     would_be_completed: Optional[datetime.date] = None
 
-    def dict(self) -> dict:
+    def dict(self,
+             *,
+             exclude: Iterable[str] = None) -> dict:
+        exclude = exclude or ()
+
         return {
             field: getattr(self, field, None)
             for field in self.__annotations__.keys()
+            if field not in exclude
         }
 
     def __repr__(self) -> str:
