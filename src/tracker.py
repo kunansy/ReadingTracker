@@ -389,15 +389,18 @@ class Log:
         if date <= self.stop:
             raise ValueError("The date must be less than today,"
                              f"but {date=} > {self.stop=}")
-        if (date := to_datetime(date)) in self.__log:
+        if date in self.__log:
             raise ValueError(f"The {date=} even exists in the log")
         if material_id is None and len(self.log) == 0:
             raise ValueError(f"{material_id=} and log dict is empty")
 
-        self.__log[date] = {
-            'material_id': material_id or self.reading_material,
-            'count': count
-        }
+        record = LogRecord(
+            material_id=material_id or self.reading_material,
+            count=count,
+            material_title=db.get_title(material_id=material_id)
+        )
+        self.__log[date] = record
+
         self.__log = dict(sorted(self.log.items(), key=lambda i: i[0]))
 
     def set_today_log(self,
