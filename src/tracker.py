@@ -439,7 +439,10 @@ class Log:
         """ Dump log to the file. """
 
         data = {
-            fmt(date): info
+            fmt(date): {
+                'material_id': info.material_id,
+                'count': info.count
+            }
             for date, info in self.log.items()
         }
 
