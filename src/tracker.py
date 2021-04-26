@@ -42,7 +42,10 @@ class MinMax:
     material_title: Optional[str] = None
 
     def dict(self) -> dict:
-        return self.__dict__
+        return {
+            field: getattr(self, field, None)
+            for field in self.__annotations__.keys()
+        }
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(" \
@@ -69,8 +72,11 @@ class LogRecord:
     material_title: Optional[str] = None
 
     def dict(self) -> dict:
-        return self.__dict__
-    
+        return {
+            field: getattr(self, field, None)
+            for field in self.__annotations__.keys()
+        }
+
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(" \
                f"count={self.count}, material_id={self.material_id}, " \
@@ -100,7 +106,10 @@ class LogStatistics:
     median: int
 
     def dict(self) -> dict:
-        return self.__dict__
+        return {
+            field: getattr(self, field, None)
+            for field in self.__annotations__.keys()
+        }
 
     def __repr__(self) -> str:
         data = ',\n'.join(
@@ -140,7 +149,10 @@ class MaterialStatistics:
     would_be_completed: Optional[datetime.date] = None
 
     def dict(self) -> dict:
-        return self.__dict__
+        return {
+            field: getattr(self, field, None)
+            for field in self.__annotations__.keys()
+        }
 
     def __repr__(self) -> str:
         data = ', '.join(
