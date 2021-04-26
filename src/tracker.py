@@ -48,10 +48,11 @@ class MinMax:
         }
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(" \
-               f"date={self.date}, count={self.count}, " \
-               f"material_id={self.material_id}, " \
-               f"material_title={self.material_title})"
+        data = ', '.join(
+            f"{field}={value}"
+            for field, value in self.dict().items()
+        )
+        return f"{self.__class__.__name__}({data})"
 
     def __str__(self) -> str:
         date = fmt(self.date)
@@ -78,9 +79,12 @@ class LogRecord:
         }
 
     def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(" \
-               f"count={self.count}, material_id={self.material_id}, " \
-               f"material_title={self.material_title})"
+        data = ', '.join(
+            f"{field}={value}"
+            for field, value in self.dict().items()
+        )
+
+        return f"{self.__class__.__name__}({data})"
     
     def __str__(self) -> str:
         if title := self.material_title:
@@ -113,10 +117,10 @@ class LogStatistics:
 
     def __repr__(self) -> str:
         data = ',\n'.join(
-            f"{field}={value}\n"
+            f"{field}={value}"
             for field, value in self.dict().items()
         )
-        return f"{self.__class__.__name__}(\n{data})"
+        return f"{self.__class__.__name__}({data})"
 
     def __str__(self) -> str:
         return f"Start: {fmt(self.start_date)}\n" \
@@ -156,11 +160,11 @@ class MaterialStatistics:
 
     def __repr__(self) -> str:
         data = ', '.join(
-            f"{field}={value}\n"
+            f"{field}={value}"
             for field, value in self.dict().items()
         )
 
-        return f"{self.__class__.__name__}(\n{data})"
+        return f"{self.__class__.__name__}({data})"
 
     def __str__(self) -> str:
         if completed := self.completed:
