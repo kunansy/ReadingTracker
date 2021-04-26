@@ -142,15 +142,12 @@ class MaterialStatistics:
         return self.__dict__
 
     def __repr__(self) -> str:
-        if would_be_completed := self.would_be_completed:
-            would_be_completed = fmt(would_be_completed)
+        data = ', '.join(
+            f"{field}={value}\n"
+            for field, value in self.dict().items()
+        )
 
-        return f"{self.__class__.__name__}(" \
-               f"started={self.started}, completed={self.completed}, " \
-               f"duration={self.duration}, lost_time={self.lost_time}, " \
-               f"total={self.total}, min={self.min}, max={self.max}, " \
-               f"average={self.average}, remain={self.remain}, " \
-               f"would_be_completed={would_be_completed})"
+        return f"{self.__class__.__name__}(\n{data})"
 
     def __str__(self) -> str:
         if completed := self.completed:
