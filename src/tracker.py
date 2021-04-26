@@ -873,14 +873,6 @@ class Tracker:
         return res
 
     @staticmethod
-    def would_be_completed(start: datetime.date,
-                           average: int,
-                           remain: int) -> datetime.date:
-        """ Calculate when the material will be completed """
-        days = remain // average + 1
-        return start + timedelta(days=days)
-
-    @staticmethod
     def start_material(material_id: int,
                        start_date: datetime.date = None) -> None:
         """ Create item in Status table.
