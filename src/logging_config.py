@@ -1,6 +1,25 @@
 import sys
+import logging
 
 
+MSG_FMT = "[{asctime},{msecs:3.0f}] [{name}] [{levelname:^8}] " \
+          "[{module}:{funcName}] [{process}] {message}"
+DATE_FMT = "%d-%m-%Y %H:%M:%S"
+
+formatter = logging.Formatter(
+    fmt=MSG_FMT, datefmt=DATE_FMT, style='{')
+
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+stream_handler.setFormatter(formatter)
+
+logger = logging.getLogger('ReadingTracker')
+logger.setLevel(logging.DEBUG)
+
+logger.addHandler(stream_handler)
+
+
+# ---- config for sanic log ----
 BASE_MESSAGE_FORMAT = "[%(asctime)s] [%(name)s:%(levelname)s] " \
                       "[%(module)s:%(funcName)s():%(process)d]"
 DATE_FORMAT = "%d-%m-%Y %H:%M:%S"
