@@ -206,6 +206,16 @@ class MaterialStatistics:
         remaining_days = (f"Remaining days: {self.remaining_days}\n" *
                           bool(self.remaining_days))
 
+        min_ = '\n'.join(
+            f"\t{field}: {value}"
+            for field, value in self.min.dict(exclude={'material_id'}).items()
+        )
+
+        max_ = '\n'.join(
+            f"\t{field}: {value}"
+            for field, value in self.max.dict(exclude={'material_id'}).items()
+        )
+
         return f"Material: «{self.material.title}»\n" \
                f"Pages: {self.material.pages}\n" \
                f"Started at: {fmt(self.started)}\n" \
@@ -215,8 +225,8 @@ class MaterialStatistics:
                f"Total: {self.total} pages\n" \
                f"{remaining_pages}" \
                f"{remaining_days}" \
-               f"Min: {self.min}" \
-               f"Max: {self.max}" \
+               f"Min:\n{min_}\n" \
+               f"Max:\n{max_}\n" \
                f"Average: {self.average} pages per day" \
                f"{would_be_completed}"
 
