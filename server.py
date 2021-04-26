@@ -10,6 +10,7 @@ from sanic_session import Session
 
 from src import db_api
 from src import tracker as trc
+from src import logging_config
 
 
 MSG_FMT = "[{asctime},{msecs:3.0f}] [{name}:{levelname:^8}] " \
@@ -24,7 +25,10 @@ logging.basicConfig(
 
 )
 
-app = Sanic(__name__)
+logging.getLogger('sanic.error').disabled = True
+
+
+app = Sanic(__name__, log_config=logging_config.LOGGING_CONFIG)
 app.static('/static', './static')
 
 session = Session(app)
