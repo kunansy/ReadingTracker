@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import timedelta
 from itertools import groupby
 from pathlib import Path
-from typing import Union, Optional, Iterator
+from typing import Union, Optional, Iterator, Iterable
 from src.db_api import MaterialNotFound, MaterialNotAssigned
 from src.db_api import MaterialEvenCompleted, WrongDate, BaseDBError
 
@@ -41,10 +41,15 @@ class MinMax:
     material_id: int
     material_title: Optional[str] = None
 
-    def dict(self) -> dict:
+    def dict(self,
+             *,
+             exclude: Iterable[str] = None) -> dict:
+        exclude = exclude or ()
+
         return {
             field: getattr(self, field, None)
             for field in self.__annotations__.keys()
+            if field not in exclude
         }
 
     def __repr__(self) -> str:
