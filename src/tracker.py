@@ -715,13 +715,13 @@ class Tracker:
 
         avg = self.log.m_average(material_id)
         total = self.log.m_total(material_id)
-        remain = material.pages - total
 
         if status.end is None:
-            would_be_completed = self.would_be_completed(
-                status.begin, avg, remain)
+            remaining_pages = material.pages - total
+            remaining_days = remaining_pages // avg + 1
+            would_be_completed = status.begin + timedelta(days=remaining_days)
         else:
-            would_be_completed = None
+            would_be_completed = remaining_days = remaining_pages = None
 
         return MaterialStatistics(
             material=material,
@@ -733,7 +733,8 @@ class Tracker:
             min=self.log.m_min(material_id),
             max=self.log.m_max(material_id),
             average=avg,
-            remain=remain,
+            remaining_pages=remaining_pages,
+            remaining_days=remaining_days,
             would_be_completed=would_be_completed
         )
 
