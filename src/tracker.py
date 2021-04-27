@@ -805,6 +805,8 @@ class Tracker:
                                material: db.Material = None,
                                status: db.Status = None) -> MaterialStatistics:
         """ Calculate statistics for reading or completed material """
+        logger.debug(f"Calculating material statistics for {material_id=}")
+
         material = material or self.get_material(material_id)
         status = status or self.get_status(material_id)
 
@@ -849,15 +851,12 @@ class Tracker:
         """
         try:
             db.start_material(
-                material_id=material_id, start_date=start_date)
-        except WrongDate as e:
-            logger.error(e)
+                material_id=material_id,
+                start_date=start_date
+            )
+        except BaseDBError as e:
+            logger.warning(e)
             raise
-        except MaterialNotFound as e:
-            logger.error(e)
-            raise
-        else:
-            logger.info(f"Material {material_id=} started at {start_date}")
 
     def complete_material(self,
                           material_id: int = None,
@@ -883,18 +882,9 @@ class Tracker:
                 material_id=material_id,
                 completion_date=completion_date
             )
-        except MaterialEvenCompleted as e:
+        except BaseDBError as e:
             logger.warning(e)
             raise
-        except WrongDate as e:
-            logger.warning(e)
-            raise
-        except MaterialNotAssigned as e:
-            logger.warning(e)
-            raise
-        else:
-            logger.info(f"Material {material_id=} completed "
-                        f"at {completion_date=}")
 
     @staticmethod
     def add_material(title: str,
@@ -907,10 +897,11 @@ class Tracker:
             pages=pages,
             tags=tags
         )
-        logger.info("Material added")
 
     @staticmethod
     def get_material(material_id: int) -> db.Material:
+        logger.debug(f"Getting material {material_id=}")
+
         try:
             return db.get_materials(materials_ids=[material_id])[0]
         except IndexError:
@@ -969,5 +960,4 @@ class Tracker:
             page=page,
             date=date
         )
-        logger.info(f"Note for {material_id=} added")
 
