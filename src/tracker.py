@@ -794,36 +794,6 @@ class Tracker:
             would_be_completed=would_be_completed
         )
 
-    def _queue(self) -> str:
-        """
-        The func if expected to make strings like that:
-
-        id=5 «Современные ОС», pages: 1120
-        will be read from 12-12-2020 to 15-03-2021 in 93 days
-
-        They should be divided by double \n symbol.
-        """
-        last_date = self.log.start
-        average = self.log.average
-
-        res, is_first = '', True
-
-        for material in self.queue:
-            if not is_first:
-                res = f"{res}\n\n"
-            is_first = False
-
-            expected_duration = material.pages // average
-            expected_end = last_date + timedelta(days=expected_duration)
-
-            res += f"id={material.material_id} «{material.title}», " \
-                   f"pages: {material.pages}\nWill be read " \
-                   f"from {fmt(last_date)} to {fmt(expected_end)} " \
-                   f"in {expected_duration} days"
-
-            last_date = expected_end + timedelta(days=1)
-        return res
-
     def _processed(self) -> str:
         """
         The func if expected to make strings like that:
