@@ -835,45 +835,6 @@ class Tracker:
             would_be_completed=would_be_completed
         )
 
-    def _processed(self) -> str:
-        """
-        The func if expected to make strings like that:
-
-        id=3 «Эйнштейн гуляет по Луне», pages: 384
-        From 17-03-2021 to 20-03-2021 in 3 days
-        average = 96 pages per day
-
-        They should be divided by double \n symbol.
-        """
-        if not (materials := self.processed):
-            return "No materials have been read yet"
-
-        status = {
-            status_.material_id: status_
-            for status_ in db.get_status()
-        }
-
-        spec_avg = self.log.average_of_every_materials
-        res, is_first = '', True
-
-        for material in materials:
-            if not is_first:
-                res = f"{res}\n\n"
-            is_first = False
-
-            material_id = material.material_id
-
-            start = status[material_id].begin
-            stop = status[material_id].end
-            days = (stop - start).days + 1
-
-            res += f"id={material_id} «{material.title}», " \
-                   f"pages: {material.pages}\n" \
-                   f"From {fmt(start)} to {fmt(stop)} in " \
-                   f"{days} days\n" \
-                   f"Average = {spec_avg.get(material_id, -1)} pages per day"
-        return res
-
     def _reading(self) -> str:
         """
         The func if expected to make strings like that:
