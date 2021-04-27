@@ -971,13 +971,3 @@ class Tracker:
         )
         logger.info(f"Note for {material_id=} added")
 
-    def __str__(self) -> str:
-        """
-        :return: log, materials queue and total count of read pages.
-        """
-        sep = '\n' + '_' * 70 + '\n'
-        return f"Reading log:\n{self.log}{sep}" \
-               f"Statistics:\n{self.log.statistics()}{sep}" \
-               f"Materials queue:\n{self._queue()}{sep}" \
-               f"Reading materials:\n{self._reading()}{sep}" \
-               f"Processed materials:\n{self._processed()}"
