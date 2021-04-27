@@ -463,6 +463,8 @@ class Log:
     @property
     def total(self) -> int:
         """ Get total count of read pages """
+        logger.debug("Calculating total count of read pages in log")
+
         return sum(
             info.count
             for info in self.values()
@@ -471,15 +473,18 @@ class Log:
     @property
     def duration(self) -> int:
         """ Get duration of log """
+        logger.debug("Calculating log duration")
         return (self.stop - self.start).days + 1
 
     @property
     def empty_days(self) -> int:
+        logger.debug("Calculating empty days count for log")
         return self.duration - len(self.log)
 
     @property
     def average(self) -> int:
         """ get the average count of pages read per day """
+        logger.debug("Calculating average count of read pages in log")
         try:
             return self.total // self.duration
         except ZeroDivisionError:
@@ -487,6 +492,8 @@ class Log:
 
     @property
     def min(self) -> MinMax:
+        logger.debug("Calculating min for log")
+
         date, info = min(
             [(date, info) for date, info in self.items()],
             key=lambda item: item[1].count
@@ -498,6 +505,8 @@ class Log:
 
     @property
     def max(self) -> MinMax:
+        logger.debug("Calculating max for log")
+
         date, info = max(
             [(date, info) for date, info in self.items()],
             key=lambda item: item[1].count
@@ -510,6 +519,8 @@ class Log:
 
     @property
     def median(self) -> int:
+        logger.debug("Calculating median for log")
+
         counts = sorted(
             info.count
             for info in self.values()
@@ -525,6 +536,7 @@ class Log:
         Get count of pages would be total
         if there were no empty days.
         """
+        logger.debug("Calculating ... for log")
         return self.total + self.average * self.empty_days
 
     def values(self):
@@ -543,6 +555,8 @@ class Log:
         If the day is empty, material_id is supposed
         as the material_id of the last not empty day.
         """
+        logger.debug("Getting data from log")
+
         step = timedelta(days=1)
         iter_ = self.start
         last_material_id = -1
@@ -560,6 +574,8 @@ class Log:
     def m_duration(self,
                    material_id: int) -> int:
         """ Calculate how many days the material was being reading """
+        logger.debug(f"Calculating duration for material {material_id=}")
+
         return sum(
             1
             for _, info in self.data()
@@ -569,6 +585,8 @@ class Log:
     def m_total(self,
                 material_id: int) -> int:
         """ Calculate how many pages of the material even read """
+        logger.debug(f"Calculating total for material {material_id=}")
+
         return sum(
             info.count
             for info in self.values()
@@ -578,6 +596,8 @@ class Log:
     def m_empty_days(self,
                      material_id: int) -> int:
         """ How many days was lost reading the material """
+        logger.debug(f"Calculating lost time for material {material_id=}")
+
         return sum(
             1
             for _, info in self.data()
@@ -586,6 +606,8 @@ class Log:
 
     def m_min(self,
               material_id: int) -> MinMax:
+        logger.debug(f"Calculating min for material {material_id=}")
+
         sample = [
             (date, info)
             for date, info in self.items()
@@ -602,6 +624,8 @@ class Log:
 
     def m_max(self,
               material_id: int) -> MinMax:
+        logger.debug(f"Calculating max for material {material_id=}")
+
         sample = [
             (date, info)
             for date, info in self.items()
@@ -618,6 +642,8 @@ class Log:
 
     def m_average(self,
                   material_id: int) -> int:
+        logger.debug(f"Calculating average for material {material_id=}")
+
         try:
             return (self.m_total(material_id) //
                     self.m_duration(material_id))
@@ -644,6 +670,8 @@ class Log:
 
     @property
     def statistics(self) -> LogStatistics:
+        logger.debug("Calculating statistics of the log")
+
         return LogStatistics(
             start_date=self.start,
             stop_date=self.stop,
@@ -665,6 +693,8 @@ class Log:
 
         If slice get new Log object with [start; stop).
         """
+        logger.debug(f"Getting item {date=} from the log")
+
         if not isinstance(date, (datetime.date, slice, str)):
             raise TypeError(f"Date or slice of dates expected, "
                             f"but {type(date)} found")
