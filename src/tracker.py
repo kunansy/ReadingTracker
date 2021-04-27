@@ -835,48 +835,6 @@ class Tracker:
             would_be_completed=would_be_completed
         )
 
-    def _reading(self) -> str:
-        """
-        The func if expected to make strings like that:
-
-        id=2, «Мой лучший друг – желудок»
-        will be read from 03-04-2021 to 20-04-2021 in 17 days
-        254 pages read, 217 remains, 25 pages per day average
-
-        They should be divided by double \n symbol.
-        """
-        if not (data := self.reading):
-            return "No materials reading"
-
-        # calculate these values one time, not every iteration
-        spec_avg = self.log.average_of_every_materials
-        average = self.log.average
-
-        res, is_first = '', True
-
-        for material, status_ in data:
-            if not is_first:
-                res = f"{res}\n\n"
-            is_first = False
-
-            avg = spec_avg.get(material.material_id) or average
-
-            total_read = self.log.m_total(material.material_id)
-            remains_pages = material.pages - total_read
-
-            expected_duration = remains_pages // avg
-            expected_end = today() + timedelta(days=expected_duration)
-
-            start, stop = fmt(status_.begin), fmt(expected_end)
-
-            res += f"id={material.material_id}, «{material.title}»\n"
-            res += f"Will be read from {start} to {stop} " \
-                   f"in {(expected_end - status_.begin).days} days\n" \
-                   f"{total_read} pages read, " \
-                   f"{remains_pages} remains, " \
-                   f"average = {avg} pages per day"
-        return res
-
     def _notes(self) -> str:
         if not (notes := self.notes):
             return "No notes found"
