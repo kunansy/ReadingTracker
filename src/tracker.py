@@ -835,29 +835,6 @@ class Tracker:
             would_be_completed=would_be_completed
         )
 
-    def _notes(self) -> str:
-        if not (notes := self.notes):
-            return "No notes found"
-
-        key = lambda note: note.material_id
-        notes = sorted(notes, key=key)
-
-        res, is_first = '', True
-        for material_id, group in groupby(notes, key=key):
-            if not is_first:
-                res += '\n\n'
-            is_first = False
-
-            res += f"id={material_id}, «{db.get_title(material_id)}»:\n"
-            res += '\n\n'.join(
-                f"\t{num}. {note.content}\n"
-                f"\tAdded at: {fmt(note.date)}\n"
-                f"\tChapter {note.chapter}, page {note.page}"
-                for num, note in enumerate(group, 1)
-            )
-
-        return res
-
     @staticmethod
     def start_material(material_id: int,
                        start_date: datetime.date = None) -> None:
