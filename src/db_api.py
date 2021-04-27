@@ -359,7 +359,7 @@ def add_material(*,
         )
         ses.add(material)
 
-        logger.info("Material added")
+        logger.info(f"Material added, {material.material_id}")
 
 
 def start_material(*,
@@ -390,7 +390,8 @@ def start_material(*,
             material_id=material_id, begin=start_date)
         ses.add(started_material)
 
-        logger.info(f"Material {material_id=} started")
+        logger.info(f"Material {material_id=} started"
+                    f"at {start_date=}")
 
 
 def complete_material(*,
@@ -425,7 +426,8 @@ def complete_material(*,
                             f"{status.begin=} > {completion_date=}")
 
         status.end = completion_date
-        logger.info(f"Material {material_id=} completed")
+        logger.info(f"Material {material_id=} "
+                    f"completed at {completion_date=}")
 
 
 def get_notes(*,
