@@ -324,12 +324,6 @@ async def add_note(request: Request) -> HTTPResponse:
         return response.redirect('/notes/add')
 
 
-@app.get('/analytics')
-@jinja.template('analytics.html')
-async def analytics(request: Request) -> dict[str, Any]:
-    pass
-
-
 @app.get('/')
 @jinja.template('index.html')
 async def home(request: Request) -> None:
