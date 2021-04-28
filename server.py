@@ -4,7 +4,7 @@ import logging
 from typing import Any
 
 import ujson
-from pydantic import BaseModel, ValidationError, validator
+from pydantic import BaseModel, ValidationError, validator, constr, conint
 from sanic import Sanic, Request, response, HTTPResponse
 from sanic_jinja2 import SanicJinja2
 from sanic_session import Session
@@ -26,6 +26,16 @@ jinja = SanicJinja2(app, session=session)
 log = trc.Log(full_info=True)
 tracker = trc.Tracker(log)
 logger = logging.getLogger('ReadingTracker')
+
+
+class Material(BaseModel):
+    class Config:
+        extra = 'forbid'
+
+    title: constr(strip_whitespace=True, min_length=1)
+    authors: constr(strip_whitespace=True, min_length=1)
+    pages: conint(gt=0)
+    tags: constr(required=False, strip_whitespace=True,)
 
 
 class Note(BaseModel):
