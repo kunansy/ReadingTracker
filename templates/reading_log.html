@@ -4,6 +4,13 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='reading_log.css') }}">
 {% endblock style %}
 
+{% block header %}
+<nav class="subnavbar">
+    <a href="/reading_log"> See reading log </a>
+    <a href="/reading_log/add"> Add reading log </a>
+</nav>
+{% endblock header %}
+
 {% block main %}
 
 {% for date, info in log.items() %}
