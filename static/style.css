@@ -1,5 +1,4 @@
 html, body {
-	min-height: 100vh;
 	padding: 0;
 	margin: 0;
 	font-family: Roboto, 'Open Sans', sans-serif;
@@ -31,6 +30,7 @@ main {
 	margin: 10vh auto;
 }
 
+/* styles for forms */
 .form {
 	font-size: 2.5vh;
 	margin: 0 auto auto;
@@ -51,11 +51,12 @@ main {
 	width: 9vw;
 	border: none;
 	outline: none !important;
-	background-color: black;;
+	background-color: black;
 	color: white;
 	box-shadow: 0 0 1vw rgba(0,0,0,0.5);
 }
 
+/* styles for flash messages */
 .alert {
 	text-align: center;
 	width: 30vw;
