@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet"
+          href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
+          integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk"
+          crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block style %} {% endblock style %}
+</head>
+<body>
+<header>
+    <nav class="navbar">
+        <a href="/materials/queue"> Queue </a>
+        <a href="/materials/reading"> Reading materials </a>
+        <a href="/materials/completed"> Completed materials </a>
+        <a href="/reading_log"> Reading log </a>
+        <a href="/notes"> Notes </a>
+    </nav>
+    {% block header %} {% endblock header %}
+</header>
+
+<main>
+    {% for cat, message in get_flashed_messages(with_categories=true) %}
+    <div class="alert alert-primary {{ cat }}" role="alert">
+        {{ message }}
+    </div>
+    {% endfor %}
+
+    {% block main %} {% endblock main %}
+</main>
+
+<footer> {% block footer %} {% endblock footer %} </footer>
+</body>
+</html>

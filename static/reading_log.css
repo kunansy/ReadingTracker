@@ -1,0 +1,17 @@
+div.record {
+    border: black 0.25vh solid;
+    margin: 2vh auto;
+    width: 50vw;
+    border-radius: 3vh;
+    padding: 5vh;
+}
+div.record p {
+    word-wrap: break-word;
+}
+
+div.bad {
+    background-color: #E74C3C;
+}
+div.good {
+    background-color: #27AE60;
+}

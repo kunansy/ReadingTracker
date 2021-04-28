@@ -1,16 +1,20 @@
 __all__ = ('get_materials', 'get_status', 'get_completed_materials',
            'get_free_materials', 'complete_material', 'get_title',
-           'start_material', 'add_materials', 'get_material_status',
-           'get_reading_materials', 'add_note', 'get_notes')
+           'start_material', 'add_material', 'get_material_status',
+           'get_reading_materials', 'add_note', 'get_notes',
+           'BaseDBError', 'WrongDate', 'MaterialEvenCompleted',
+           'MaterialNotAssigned', 'MaterialNotFound', 'MATERIAL_STATUS')
 
 import datetime
 import logging
 from contextlib import contextmanager
+from dataclasses import dataclass
 from os import environ
 from typing import ContextManager, Callable
 
-from sqlalchemy import Column, ForeignKey, Integer, String, Date, create_engine, \
-    Text
+from sqlalchemy import Column, ForeignKey, Integer, \
+                       String, Date, create_engine, Text
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
@@ -18,21 +22,26 @@ from sqlalchemy.orm import Session
 DATE_FORMAT = '%d-%m-%Y'
 
 Base = declarative_base()
+logger = logging.getLogger('ReadingTracker')
 
 
-class WrongDate(Exception):
+class BaseDBError(Exception):
     pass
 
 
-class MaterialEvenCompleted(Exception):
+class WrongDate(BaseDBError):
     pass
 
 
-class MaterialNotAssigned(Exception):
+class MaterialEvenCompleted(BaseDBError):
     pass
 
 
-class MaterialNotFound(Exception):
+class MaterialNotAssigned(BaseDBError):
+    pass
+
+
+class MaterialNotFound(BaseDBError):
     pass
 
 
@@ -46,10 +55,17 @@ class Material(Base):
     tags = Column(String)
 
     def __repr__(self) -> str:
-        return "Material(" \
+        return f"{self.__class__.__name__}(" \
                f"id={self.material_id}, title={self.title}, " \
                f"authors={self.authors}, pages={self.pages}, " \
                f"tags={self.tags})"
+
+    def __str__(self) -> str:
+        return f"ID: {self.material_id}\n" \
+               f"Title: «{self.title}»\n" \
+               f"Authors: {self.authors}\n" \
+               f"Pages: {self.pages}\n" \
+               f"Tags: {self.tags}"
 
 
 class Status(Base):
@@ -69,7 +85,7 @@ class Status(Base):
         if end := self.end:
             end = end.strftime(DATE_FORMAT)
 
-        return "Status(" \
+        return f"{self.__class__.__name__}(" \
                f"id={self.status_id}, material_id={self.material_id}, " \
                f"{begin=}, {end=})"
 
@@ -90,10 +106,30 @@ class Note(Base):
         date = self.date.strftime(DATE_FORMAT)
 
         return f"{self.__class__.__name__}(" \
-               f"id={self.id}, material_id={self.material_id}, " \
-               f"{date=}, chapter={self.chapter}, page{self.page})"
+               f"id={self.id}, content={self.content}, " \
+               f"material_id={self.material_id}, " \
+               f"{date=}, chapter={self.chapter}, page={self.page})"
 
 
+@dataclass
+class MaterialStatus:
+    material: Material
+    status: Status
+
+    def __init__(self,
+                 material: Material,
+                 status: Status) -> None:
+        assert material.material_id == status.material_id
+
+        self.material = material
+        self.status = status
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(" \
+               f"material={self.material}, status={self.status})"
+
+
+MATERIAL_STATUS = list[MaterialStatus]
 engine = create_engine(environ['DB_URI'], encoding='utf-8')
 Base.metadata.create_all(engine)
 
@@ -105,12 +141,18 @@ def cache(func: Callable) -> Callable:
         nonlocal results
 
         if arg in results:
+            logger.debug(f"Result for {func.__name__}({arg})='{results[arg]}' "
+                         "got from cache")
             return results[arg]
 
         if arg is None:
             results[arg] = func()
         else:
             results[arg] = func(arg)
+
+        logger.debug(f"Result for {func.__name__}({arg}) calculated and "
+                     f"put into cache"
+        )
 
         return results[arg]
 
@@ -121,13 +163,20 @@ def cache(func: Callable) -> Callable:
 def session(**kwargs) -> ContextManager[Session]:
     new_session = Session(**kwargs, bind=engine, expire_on_commit=False)
     try:
+        logger.info("New session created and yielded")
         yield new_session
+
+        logger.info("Operations with the session finished, commiting")
         new_session.commit()
-    except:
+    except Exception as e:
+        logger.error(f"Error with the session: {e}")
+        logger.info("Rollback all changes")
+
         new_session.rollback()
         raise
     finally:
         new_session.close()
+        logger.info("Session closed")
 
 
 @cache
@@ -138,12 +187,15 @@ def today() -> datetime.date:
 def get_materials(*,
                   materials_ids: list[int] = None) -> list[Material]:
     """
-    Get the materials by their ids or all
-    rows of Material table if it is None.
-
-    :param materials_ids: ids of Material row or None.
-    :return: list of found Material rows.
+    Get the materials by their ids.
+    If it's None, get all materials.
     """
+    how_many = 'all'
+    if materials_ids is not None:
+        how_many = str(len(materials_ids))
+
+    logger.info(f"Getting {how_many} materials")
+
     with session() as ses:
         if materials_ids is None:
             return ses.query(Material).all()
@@ -154,15 +206,24 @@ def get_materials(*,
 
 @cache
 def get_title(material_id: int) -> str:
+    logger.info(f"Getting title for {material_id=}")
     try:
         return get_materials(materials_ids=[material_id])[0].title
     except IndexError:
-        logging.error(f"Material {material_id=} not found")
+        logger.warning(f"Material {material_id=} not found")
         return ''
+
+
+def does_material_exist(*,
+                        material_id: int) -> bool:
+    logger.info(f"Whether {material_id=} exists")
+    return len(get_materials(materials_ids=[material_id])) == 1
 
 
 def get_free_materials() -> list[Material]:
     """ Get all not assigned materials """
+    logger.info("Getting free materials")
+
     assigned_materials_ids = {
         status.material_id
         for status in get_status()
@@ -175,8 +236,13 @@ def get_free_materials() -> list[Material]:
     ]
 
 
-def get_reading_materials() -> list[tuple[Material, Status]]:
-    """ Get all materials read now. """
+def get_reading_materials() -> MATERIAL_STATUS:
+    """
+    Get all assigned but not completed
+    materials and their statuses.
+    """
+    logger.info("Getting reading materials")
+
     status = get_status()
 
     reading_materials_ids = [
@@ -184,6 +250,11 @@ def get_reading_materials() -> list[tuple[Material, Status]]:
         for status_ in status
         if status_.end is None
     ]
+
+    if not reading_materials_ids:
+        logger.info("Reading materials not found")
+        return []
+
     status = {
         status_.material_id: status_
         for status_ in status
@@ -192,27 +263,48 @@ def get_reading_materials() -> list[tuple[Material, Status]]:
     materials = get_materials(materials_ids=reading_materials_ids)
 
     return [
-        (material, status[material.material_id])
+        MaterialStatus(
+            material=material, status=status[material.material_id])
         for material in materials
     ]
 
 
-def get_completed_materials() -> list[Material]:
-    """ Get all completed materials. """
+def get_completed_materials() -> MATERIAL_STATUS:
+    """ Get all completed materials and their statuses. """
+    logger.info("Getting completed materials")
+
     with session() as ses:
-        return ses.query(Material).join(Status)\
-                  .filter(Status.end != None).all()
+        completed_materials = ses.query(Material).join(Status)\
+                                 .filter(Status.end != None).all()
+
+    if not completed_materials:
+        logger.info("No completed materials found")
+        return []
+
+    statuses = {
+        material.material_id:
+            get_material_status(material_id=material.material_id)
+        for material in completed_materials
+    }
+    return [
+        MaterialStatus(
+            material=material, status=statuses[material.material_id])
+        for material in completed_materials
+    ]
 
 
 def get_status(*,
                status_ids: list[int] = None) -> list[Status]:
     """
-    Get the status by their ids or all
-    rows of Status table if it is None.
-
-    :param status_ids: ids of Status row or None.
-    :return: list of found Status rows.
+    Get the statuses by their ids.
+    If it's None, get all statuses.
     """
+    how_many = 'all'
+    if status_ids is not None:
+        how_many = str(len(status_ids))
+
+    logger.info(f"Getting {how_many} statuses")
+
     with session() as ses:
         if status_ids is None:
             return ses.query(Status).all()
@@ -223,22 +315,41 @@ def get_status(*,
 
 def get_material_status(*,
                         material_id: int) -> Status:
-    with session() as ses:
-        return ses.query(Status).filter(
-            Status.material_id == material_id).one()
+    """ Get material status.
 
-
-def add_materials(materials: list[dict]) -> None:
+    :exception MaterialNotFound: if the material doesn't exist.
     """
-    Add some materials to the table.
+    logger.info(f"Getting status for material {material_id=}")
 
-    :param materials: list of dicts with all
-    required for class Material params.
-    """
     with session() as ses:
-        for material in materials:
-            material = Material(**material)
-            ses.add(material)
+        query = ses.query(Status).filter(
+            Status.material_id == material_id)
+        try:
+            return query.one()
+        except NoResultFound as e:
+            msg = f"Material {material_id=} not found"
+            logger.error(f"{msg}\n{e}")
+            raise MaterialNotFound(msg)
+
+
+def add_material(*,
+                 title: str,
+                 authors: str,
+                 pages: int,
+                 tags: str) -> None:
+    """ Add a material to the database. """
+    logger.info(f"Adding material {title=}")
+
+    with session() as ses:
+        material = Material(
+            title=title,
+            authors=authors,
+            pages=pages,
+            tags=tags
+        )
+        ses.add(material)
+
+        logger.info(f"Material added, {material.material_id}")
 
 
 def start_material(*,
@@ -252,24 +363,32 @@ def start_material(*,
      Today by default.
 
     :exception WrongDate: if 'start_time' is better than today.
+    :exception MaterialNotFound: if material with the id not found.
     """
-    with session() as ses:
-        start_date = start_date or today()
+    start_date = start_date or today()
+    logger.info(f"Starting material {material_id=} at {start_date=}")
 
+    with session() as ses:
         if start_date > today():
             raise WrongDate("Start date must be less than today,"
                             "but %s found", start_date)
 
+        if not does_material_exist(material_id=material_id):
+            raise MaterialNotFound(f"Material {material_id=}")
+
         started_material = Status(
             material_id=material_id, begin=start_date)
         ses.add(started_material)
+
+        logger.info(f"Material {material_id=} started"
+                    f"at {start_date=}")
 
 
 def complete_material(*,
                       material_id: int,
                       completion_date: datetime.date = None) -> None:
     """
-    Set end date to Status table by 'material_id'.
+    Set end date to Status table.
 
     :param material_id: id of materials to complete.
     :param completion_date: date when the material
@@ -279,9 +398,10 @@ def complete_material(*,
     :exception WrongDate: if 'completion_date' is less than start date.
     :exception MaterialNotAssigned: if the material has not been started yet.
     """
-    with session() as ses:
-        completion_date = completion_date or today()
+    completion_date = completion_date or today()
+    logger.info(f"Completing material {material_id=} at {completion_date=}")
 
+    with session() as ses:
         status = ses.query(Status).filter(
             Status.material_id == material_id).all()
         try:
@@ -296,10 +416,21 @@ def complete_material(*,
                             f"{status.begin=} > {completion_date=}")
 
         status.end = completion_date
+        logger.info(f"Material {material_id=} "
+                    f"completed at {completion_date=}")
 
 
 def get_notes(*,
               materials_ids: list[int] = None) -> list[Note]:
+    """ Get notes by material ids.
+    If it's None, get all notes.
+    """
+    how_many = 'all'
+    if materials_ids is not None:
+        how_many = str(len(materials_ids))
+
+    logger.info(f"Getting notes for {how_many} materials")
+
     with session() as ses:
         if materials_ids:
             return ses.query(Note).filter(
@@ -314,9 +445,11 @@ def add_note(*,
              chapter: int,
              page: int,
              date: datetime.date = None) -> None:
-    with session() as ses:
-        date = date or today()
+    """ Add note to the database. """
+    date = date or today()
+    logger.info(f"Adding note for {material_id=} at {date=}")
 
+    with session() as ses:
         note = Note(
             material_id=material_id,
             content=content,
@@ -326,3 +459,4 @@ def add_note(*,
         )
 
         ses.add(note)
+        logger.info("Note added")

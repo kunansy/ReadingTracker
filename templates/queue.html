@@ -1,0 +1,29 @@
+{% extends 'index.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='queue.css') }}">
+{% endblock style %}
+
+{% block header %}
+<nav class="subnavbar">
+    <a href="/materials/queue"> See queue </a>
+    <a href="/materials/add"> Add material </a>
+</nav>
+{% endblock header %}
+
+{% block main %}
+{% for material in materials %}
+<div class="material">
+    <p> id: {{ material.material_id }}</p>
+    <p> Title: «{{ material.title }}» </p>
+    <p> Author: {{ material.authors }} </p>
+    <p> Pages: {{ material.pages }} </p>
+    <p> Tags:  {{ material.tags }} </p>
+
+    <form class="form start" action="/materials/start/{{ material.material_id }}" METHOD="POST" title="Start the material id={{ material.material_id }}">
+        <button type="submit" class="submit-button"> Start </button>
+    </form>
+</div>
+{% endfor %}
+
+{% endblock main%}

@@ -1,0 +1,34 @@
+{% extends 'index.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='notes.css') }}">
+{% endblock style %}
+
+{% block header %}
+<nav class="subnavbar">
+    <a href="/notes"> Search notes </a>
+    <a href="/notes/add"> Add note </a>
+</nav>
+{% endblock header %}
+
+{% block main %}
+<div class="form">
+    <form action="/notes" method="GET">
+        <input class="input" type="number" placeholder="Enter a material id" name="material_id">
+        <button type="submit" class="submit-button"> Search </button>
+    </form>
+</div>
+
+{% for note in notes %}
+{% set id = note['material_id'] %}
+<div class="note">
+    <p> id: {{ note.id }}</p>
+    <p> Content: {{ note.content }}</p>
+    <p> Added at: {{ note.date.strftime(DATE_FORMAT) }} </p>
+    <p> Material title: «{{ titles[id] }}» </p>
+    <p> Chapter: {{ note.chapter }} </p>
+    <p> Page: {{ note.page }} </p>
+</div>
+{% endfor %}
+
+{% endblock main %}

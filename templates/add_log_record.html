@@ -1,0 +1,24 @@
+{% extends 'index.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='add_log_record.css') }}">
+{% endblock style %}
+
+{% block header %}
+<nav class="subnavbar">
+    <a href="/reading_log"> See reading log </a>
+    <a href="/reading_log/add"> Add reading log </a>
+</nav>
+{% endblock header %}
+
+{% block main %}
+<div class="form">
+    <form action="/reading_log/add" method="POST">
+        <input class="input" type="number" placeholder="Enter a material id" name="material_id" value="{{ material_id }}" title="ID of the material">
+        <input class="input" type="date" placeholder="Enter the date" name="date" value="{{ date }}" title="Date of the record">
+        <input class="input" type="number" placeholder="Enter a count of pages" name="count" title="Count of read pages">
+        <button type="submit" class="submit-button"> Add </button>
+    </form>
+</div>
+
+{% endblock main %}

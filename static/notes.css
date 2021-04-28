@@ -1,0 +1,19 @@
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+.submit-button {
+    margin: 2vh auto;
+}
+
+div.note {
+    border: black 0.25vh solid;
+    margin: 2vh auto;
+    width: 50vw;
+    border-radius: 3vh;
+    padding: 5vh;
+}
+div.note p {
+    word-wrap: break-word;
+}

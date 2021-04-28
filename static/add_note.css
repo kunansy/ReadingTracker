@@ -1,0 +1,8 @@
+#input-content {
+	padding: 1vh;
+	height: 20vh;
+}
+
+::-webkit-scrollbar {
+  width: 0;
+}
