@@ -104,13 +104,11 @@ async def complete_material(request: Request,
 @app.get('/materials/reading')
 @jinja.template('reading.html')
 async def get_reading_materials(request: Request) -> dict[str, Any]:
-    materials = tracker.reading
-
     stat = [
         tracker.get_material_statistic(
             ms.material.material_id, material=ms.material, status=ms.status
         )
-        for ms in materials
+        for ms in tracker.reading
     ]
     return {
         'statistics': stat,
