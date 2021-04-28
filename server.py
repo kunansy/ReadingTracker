@@ -248,7 +248,6 @@ async def add_log_record(request: Request) -> HTTPResponse:
     try:
         tracker.log._set_log(**record.dict())
     except Exception as e:
-        logger.warning(f"When adding log record: {e}")
         jinja.flash(request, str(e), 'error')
     else:
         log.dump()
@@ -378,4 +377,3 @@ if __name__ == "__main__":
         port=8080,
         debug=True,
     )
-
