@@ -11,6 +11,13 @@ div.material p {
 
 hr {
     color: black;
-    size: 10px;
 }
 
+form.complete {
+    display: flex;
+}
+.submit-button {
+    margin: auto;
+    height: 7vh;
+    width: 15vw;
+}
