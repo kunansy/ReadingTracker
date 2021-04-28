@@ -810,6 +810,14 @@ class Tracker:
     def notes(self) -> list[db.Note]:
         return db.get_notes()
 
+    @staticmethod
+    def does_material_exist(material_id: int) -> bool:
+        try:
+            return db.does_material_exist(material_id=material_id)
+        except Exception as e:
+            logger.error(f"Error checking {material_id=} exists:\n{e}")
+            return False
+
     def get_material_statistic(self,
                                material_id: int,
                                *,
