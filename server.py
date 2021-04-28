@@ -284,7 +284,7 @@ async def get_notes(request: Request):
 
 @app.get('/notes/add')
 @jinja.template('add_note.html')
-async def add_notes(request: Request) -> dict[str, Any]:
+async def add_note(request: Request) -> dict[str, Any]:
     return {
         'material_id': request.ctx.session.get('material_id', ''),
         'content': request.ctx.session.get('content', ''),
@@ -294,7 +294,7 @@ async def add_notes(request: Request) -> dict[str, Any]:
 
 
 @app.post('/notes/add')
-async def add_notes(request: Request) -> HTTPResponse:
+async def add_note(request: Request) -> HTTPResponse:
     key_val = {
         key: val[0]
         for key, val in request.form.items()
