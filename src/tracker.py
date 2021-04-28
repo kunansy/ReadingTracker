@@ -73,6 +73,17 @@ class MinMax:
                f"Count: {self.count} pages\n" \
                f"{material}"
 
+    def __setattr__(self,
+                    key: str,
+                    value) -> None:
+        if getattr(self, key, None) is not None:
+            raise NotImplementedError(
+                f"You can't change {self.__class__.__name__} values, but "
+                f"{key}={value} found, when {key}={getattr(self, key)}"
+            )
+
+        super().__setattr__(key, value)
+
 
 @dataclass
 class LogRecord:
