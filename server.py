@@ -56,9 +56,12 @@ class Note(BaseModel):
 
 
 class LogRecord(BaseModel):
-    material_id: int
+    class Config:
+        extra = 'forbid'
+
+    material_id: conint(gt=0)
     date: datetime.date
-    count: int
+    count: conint(gt=0)
 
     @validator('date')
     def validate_date(cls,
