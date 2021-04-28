@@ -411,8 +411,8 @@ class Log:
         if count <= 0:
             raise ValueError(f"Count must be > 0, but 0 <= {count}")
         if date <= self.stop:
-            raise ValueError("The date must be less than today,"
-                             f"but {date=} > {self.stop=}")
+            raise ValueError("The date must be less "
+                             f"than the last date, but {date=} < {self.stop=}")
         if date in self.__log:
             raise ValueError(f"The {date=} even exists in the log")
         if material_id is None and len(self.log) == 0:
