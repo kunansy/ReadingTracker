@@ -12,7 +12,6 @@
 {% endblock header %}
 
 {% block main %}
-
 {% for date, info in log.items() %}
     {% set count = info.count %}
     {% if count >= EXPECTED_COUNT %}
