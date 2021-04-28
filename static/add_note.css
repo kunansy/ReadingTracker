@@ -10,6 +10,15 @@
     padding-right: 1.5vw;
 }
 
+form {
+	display: flex;
+    margin: auto;
+    flex-direction: column;
+}
+.submit-button {
+	margin: auto;
+}
+
 #input-content {
 	padding: 1vh;
 	height: 20vh;
