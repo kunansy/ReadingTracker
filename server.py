@@ -162,9 +162,45 @@ async def get_reading_log(request: Request) -> dict[str, Any]:
     }
 
 
-@app.post('/reading_log')
-async def add_reading_log(request: Request) -> HTTPResponse:
-    pass
+@app.get('/reading_log/add')
+@jinja.template('add_log_record.html')
+async def add_reading_log(request: Request) -> dict[str, Any]:
+    return {
+        'material_id': log.reading_material,
+        'date': trc.today()
+    }
+
+
+@app.post('/reading_log/add')
+async def add_log_record(request: Request) -> HTTPResponse:
+    key_val = {
+        key: val[0]
+        for key, val in request.form.items()
+    }
+
+    try:
+        record = LogRecord(**key_val)
+    except ValidationError as e:
+        context = ujson.dumps(e.errors(), indent=4)
+        logger.warning(f"Validation error:\n{context}")
+
+        jinja.flash(
+            request,
+            f'Validation error: {e.raw_errors[0].exc}',
+            'error'
+        )
+        return response.redirect('/reading_log/add')
+
+    try:
+        tracker.log._set_log(**record.dict())
+    except Exception as e:
+        logger.warning(f"When adding log record: {e}")
+        jinja.flash(request, str(e), 'error')
+    else:
+        log.dump()
+        jinja.flash(request, 'Record added', 'success')
+    finally:
+        return response.redirect('/reading_log/add')
 
 
 @app.get('/notes')
