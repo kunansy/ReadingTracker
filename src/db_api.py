@@ -129,7 +129,7 @@ class MaterialStatus:
                f"material={self.material}, status={self.status})"
 
 
-MATERIAL_STATUS = dict[int, MaterialStatus]
+MATERIAL_STATUS = list[MaterialStatus]
 engine = create_engine(environ['DB_URI'], encoding='utf-8')
 Base.metadata.create_all(engine)
 
@@ -254,7 +254,7 @@ def get_reading_materials() -> MATERIAL_STATUS:
 
     if not reading_materials_ids:
         logger.info("Reading materials not found")
-        return {}
+        return []
 
     status = {
         status_.material_id: status_
@@ -263,15 +263,11 @@ def get_reading_materials() -> MATERIAL_STATUS:
     }
     materials = get_materials(materials_ids=reading_materials_ids)
 
-    material_status = [
-        MaterialStatus(material=material, status=status[material.material_id])
+    return [
+        MaterialStatus(
+            material=material, status=status[material.material_id])
         for material in materials
     ]
-
-    return {
-        ms.material.material_id: ms
-        for ms in material_status
-    }
 
 
 def get_completed_materials() -> MATERIAL_STATUS:
@@ -284,23 +280,18 @@ def get_completed_materials() -> MATERIAL_STATUS:
 
     if not completed_materials:
         logger.info("No completed materials found")
-        return {}
+        return []
 
     statuses = {
         material.material_id:
             get_material_status(material_id=material.material_id)
         for material in completed_materials
     }
-    material_status = [
-        MaterialStatus(material=material,
-                       status=statuses[material.material_id])
+    return [
+        MaterialStatus(
+            material=material, status=statuses[material.material_id])
         for material in completed_materials
     ]
-
-    return {
-        ms.material.material_id: ms
-        for ms in material_status
-    }
 
 
 def get_status(*,
