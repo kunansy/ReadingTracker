@@ -46,9 +46,6 @@ class Note(BaseModel):
         )
         return f"{self.__class__.__name__}({fields})"
 
-    def __str__(self) -> str:
-        return repr(self)
-
 
 class LogRecord(BaseModel):
     material_id: int
@@ -68,6 +65,13 @@ class LogRecord(BaseModel):
         if not tracker.does_material_exist(material_id):
             raise ValueError(f"Material {material_id=} doesn't exist")
         return material_id
+
+    def __repr__(self) -> str:
+        data = ', '.join(
+            f"{key}={value}"
+            for key, value in self.dict()
+        )
+        return f"{self.__class__.__name__}({data})"
 
 
 @app.get('/favicon.ico')
