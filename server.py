@@ -325,9 +325,8 @@ async def add_note(request: Request) -> HTTPResponse:
 
 
 @app.get('/')
-@jinja.template('index.html')
-async def home(request: Request) -> None:
-    pass
+async def home(request: Request) -> HTTPResponse:
+    return response.redirect('/materials/queue')
 
 
 @app.exception(ValidationError)
