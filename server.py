@@ -51,6 +51,7 @@ class Note(BaseModel):
 
 
 class LogRecord(BaseModel):
+    material_id: int
     date: datetime.date
     count: int
 
