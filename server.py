@@ -120,15 +120,14 @@ async def get_reading_materials(request: Request) -> dict[str, Any]:
 @app.get('/materials/completed')
 @jinja.template('completed.html')
 async def get_completed_materials(request: Request) -> dict:
-    # TODO: add statistics
-
-    status = {
-        status_.material_id: status_
-        for status_ in db_api.get_status()
-    }
+    stat = [
+        tracker.get_material_statistic(
+            ms.material.material_id, material=ms.material, status=ms.status
+        )
+        for ms in tracker.processed
+    ]
     return {
-        'materials': tracker.processed,
-        'status': status,
+        'statistics': stat,
         'DATE_FORMAT': trc.DATE_FORMAT
     }
 
