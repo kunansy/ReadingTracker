@@ -421,7 +421,7 @@ class Log:
         record = LogRecord(
             material_id=material_id or self.reading_material,
             count=count,
-            material_title=db.get_title(material_id=material_id)
+            material_title=db.get_title(material_id)
         )
         self.__log[date] = record
 
