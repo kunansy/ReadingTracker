@@ -10,13 +10,13 @@ from sanic_session import Session
 
 from src import db_api
 from src import tracker as trc
-from src import logger
+from src import logger as logger_
 
 
 logging.getLogger('sanic.error').disabled = True
 
 
-app = Sanic(__name__, log_config=logger.LOGGING_CONFIG)
+app = Sanic(__name__, log_config=logger_.LOGGING_CONFIG)
 app.static('/static', './static')
 
 session = Session(app)
@@ -24,6 +24,7 @@ jinja = SanicJinja2(app, session=session)
 
 log = trc.Log(full_info=True)
 tracker = trc.Tracker(log)
+logger = logging.getLogger('ReadingTracker')
 
 
 class Note(BaseModel):
@@ -202,7 +203,7 @@ async def add_notes(request: Request) -> HTTPResponse:
         note = Note(**key_val)
     except ValidationError as e:
         context = ujson.dumps(e.errors(), indent=4)
-        logging.warning(f"Validation error:\n{context}")
+        logger.warning(f"Validation error:\n{context}")
 
         jinja.flash(request, 'Validation error', 'error')
         return response.redirect('/notes/add')
@@ -238,7 +239,7 @@ async def home(request: Request) -> None:
 def validation_error_handler(request: Request,
                              exception: ValidationError) -> HTTPResponse:
     context = ujson.dumps(exception.errors(), indent=4)
-    logging.error(f"Validation error was not handled:\n{context}")
+    logger.error(f"Validation error was not handled:\n{context}")
 
     return response.json(exception.errors(), status=400, indent=4)
 
@@ -266,7 +267,7 @@ def error_handler(request: Request,
         }
     }
 
-    logging.error(ujson.dumps(context, indent=4))
+    logger.error(ujson.dumps(context, indent=4))
     return response.json(context, status=500, indent=4)
 
 
