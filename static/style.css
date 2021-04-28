@@ -28,12 +28,11 @@ nav a:hover {
 main {
 	display: flex;
 	flex-direction: column;
-	min-height: 100vh;
 	margin: 10vh auto;
 }
 
 .form {
-	font-size: 1vw;
+	font-size: 2.5vh;
 	margin: 0 auto auto;
 }
 
