@@ -12,12 +12,6 @@
 {% endblock header %}
 
 {% block main %}
-{% for cat, message in get_flashed_messages(with_categories=true) %}
-<div class="alert alert-primary {{ cat }}" role="alert">
-    {{ message }}
-</div>
-{% endfor %}
-
 <div class="form">
     <form action="/notes" method="GET">
         <input class="input" type="text" placeholder="Enter a material id" name="material_id" id="input-id">
