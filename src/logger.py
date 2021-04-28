@@ -20,7 +20,7 @@ logger.addHandler(stream_handler)
 
 
 # ---- config for sanic log ----
-BASE_MESSAGE_FORMAT = "[%(asctime)s] [%(name)s:%(levelname)s] " \
+BASE_MESSAGE_FORMAT = "[%(asctime)s] [%(name)s] [%(levelname)s] " \
                       "[%(module)s:%(funcName)s():%(process)d]"
 DATE_FORMAT = "%d-%m-%Y %H:%M:%S"
 
