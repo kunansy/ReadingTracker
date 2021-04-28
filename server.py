@@ -39,15 +39,13 @@ class Material(BaseModel):
 
 
 class Note(BaseModel):
-    material_id: int
-    content: str
-    chapter: int
-    page: int
+    class Config:
+        extra = 'forbid'
 
-    @validator('content')
-    def strip_content(cls,
-                      content: str) -> str:
-        return content.strip()
+    material_id: conint(gt=0)
+    content: constr(strip_whitespace=True, min_length=1)
+    chapter: conint(gt=0)
+    page: conint(gt=0)
 
     def __repr__(self) -> str:
         fields = ', '.join(
