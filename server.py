@@ -53,20 +53,19 @@ class Note(BaseModel):
 class LogRecord(BaseModel):
     date: datetime.date
     count: int
-    material_id: int
 
-    @validator('count')
-    def validate_count(self,
-                       count: int) -> int:
-        if count <= 0:
-            raise ValidationError("Count must be positive number")
-        return count
+    @validator('date')
+    def validate_date(cls,
+                      date: datetime.date) -> datetime.date:
+        if date > trc.today():
+            raise ValueError("You cannot set log to the future")
+        return date
 
     @validator('material_id')
-    def validate_material_id(self,
+    def validate_material_id(cls,
                              material_id: int) -> int:
         if not tracker.does_material_exist(material_id):
-            raise ValidationError(f"Material {material_id=} doesn't exist")
+            raise ValueError(f"Material {material_id=} doesn't exist")
         return material_id
 
 
