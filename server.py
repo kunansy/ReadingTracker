@@ -134,15 +134,8 @@ async def get_completed_materials(request: Request) -> dict:
 @app.get('/reading_log')
 @jinja.template('reading_log.html')
 async def get_reading_log(request: Request) -> dict[str, Any]:
-    log_ = log.log
-    titles = {
-        info['material_id']: db_api.get_title(info['material_id'])
-        for date, info in log_ .items()
-    }
-
     return {
-        'log': log_,
-        'titles': titles,
+        'log': log.log,
         'DATE_FORMAT': trc.DATE_FORMAT,
         'EXPECTED_COUNT': trc.PAGES_PER_DAY
     }
