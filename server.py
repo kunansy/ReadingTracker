@@ -10,8 +10,8 @@ from sanic_jinja2 import SanicJinja2
 from sanic_session import Session
 
 from src import db_api
-from src import tracker as trc
 from src import logger as logger_
+from src import tracker as trc
 
 
 logging.getLogger('sanic.error').disabled = True
