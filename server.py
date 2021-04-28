@@ -270,10 +270,15 @@ async def get_notes(request: Request):
         jinja.flash(request, f'No notes {material_id=} found', 'error')
     else:
         jinja.flash(request, f"{len(notes)} notes found", 'success')
-
-    titles = {
-        note.material_id: db_api.get_title(note.material_id)
+    
+    ids = {
+        note.material_id
         for note in notes
+    }
+    
+    titles = {
+        material_id: db_api.get_title(material_id)
+        for material_id in ids
     }
     return {
         'notes': notes,
