@@ -215,8 +215,8 @@ def get_title(material_id: int) -> str:
 
 
 @cache
-def is_material_exists(*,
-                       material_id: int) -> bool:
+def does_material_exist(*,
+                        material_id: int) -> bool:
     logger.info(f"Whether {material_id=} exists")
     return len(get_materials(materials_ids=[material_id])) == 1
 
@@ -374,7 +374,7 @@ def start_material(*,
             raise WrongDate("Start date must be less than today,"
                             "but %s found", start_date)
 
-        if not is_material_exists(material_id=material_id):
+        if not does_material_exist(material_id=material_id):
             raise MaterialNotFound(f"Material {material_id=}")
 
         started_material = Status(
