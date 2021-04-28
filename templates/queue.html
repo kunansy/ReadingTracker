@@ -4,6 +4,13 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='queue.css') }}">
 {% endblock style %}
 
+{% block header %}
+<nav class="subnavbar">
+    <a href="/materials/queue"> See queue </a>
+    <a href="/materials/add"> Add material </a>
+</nav>
+{% endblock header %}
+
 {% block main %}
 
 {% for material in materials %}
