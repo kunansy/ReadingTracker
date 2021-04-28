@@ -14,9 +14,9 @@
 {% block main %}
 <div class="form">
     <form action="/reading_log/add" method="POST">
-        <input class="input" type="number" placeholder="Enter a material id" name="material_id" id="input-id" value="{{ material_id }}" title="ID of the material">
-        <input class="input" type="date" placeholder="Enter the date" name="date" id="input-chapter" value="{{ date }}" title="Date of the record">
-        <input class="input" type="number" placeholder="Enter a count of pages" name="count" id="input-pages" title="Count of read pages">
+        <input class="input" type="number" placeholder="Enter a material id" name="material_id" value="{{ material_id }}" title="ID of the material">
+        <input class="input" type="date" placeholder="Enter the date" name="date" value="{{ date }}" title="Date of the record">
+        <input class="input" type="number" placeholder="Enter a count of pages" name="count" title="Count of read pages">
         <button type="submit" class="submit-button"> Add </button>
     </form>
 </div>

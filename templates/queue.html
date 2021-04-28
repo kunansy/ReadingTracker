@@ -15,13 +15,12 @@
 {% for material in materials %}
 <div class="material">
     <p> id: {{ material.material_id }}</p>
-    <p> Author: {{ material.authors }} </p>
     <p> Title: «{{ material.title }}» </p>
+    <p> Author: {{ material.authors }} </p>
     <p> Pages: {{ material.pages }} </p>
     <p> Tags:  {{ material.tags }} </p>
 
-    <form class="form start" action="/materials/start/{{ material.material_id }}" METHOD="POST"
-          title="Start the material id={{ material.material_id }}">
+    <form class="form start" action="/materials/start/{{ material.material_id }}" METHOD="POST" title="Start the material id={{ material.material_id }}">
         <button type="submit" class="submit-button"> Start </button>
     </form>
 </div>

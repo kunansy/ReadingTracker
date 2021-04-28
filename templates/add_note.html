@@ -14,10 +14,10 @@
 {% block main %}
 <div class="form">
     <form action="/notes/add" method="POST">
-        <input class="input" type="number" placeholder="Enter a material id" name="material_id" id="input-id" value="{{ material_id }}" title="ID of the material">
-        <textarea class="input" placeholder="Enter a content" name="content" id="input-content" value="{{ content }}" title="Text of the note"> </textarea>
-        <input class="input" type="number" placeholder="Enter a chapter number" name="chapter" id="input-chapter" value="{{ chapter }}" title="Chapter where the note might be found">
-        <input class="input" type="number" placeholder="Enter a page number" name="page" id="input-page" value="{{ page }}" title="Page where the not might be found">
+        <input class="input" type="number" placeholder="Enter a material id" name="material_id" value="{{ material_id }}" title="ID of the material">
+        <textarea class="input" placeholder="Enter a content" name="content" value="{{ content }}" title="Text of the note"> </textarea>
+        <input class="input" type="number" placeholder="Enter a chapter number" name="chapter" value="{{ chapter }}" title="Chapter where the note might be found">
+        <input class="input" type="number" placeholder="Enter a page number" name="page" value="{{ page }}" title="Page where the not might be found">
         <button type="submit" class="submit-button"> Add </button>
     </form>
 </div>

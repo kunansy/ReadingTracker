@@ -10,8 +10,8 @@
 {% set material = ms.material %}
 <div class="material">
     <p> id: {{ material.material_id }}</p>
-    <p> Author: {{ material.authors }} </p>
     <p> Title: «{{ material.title }}» </p>
+    <p> Author: {{ material.authors }} </p>
     <p> Pages: {{ material.pages }} </p>
     <p> Tags:  {{ material.tags }} </p>
     <hr title="Analytics">
@@ -28,8 +28,7 @@
     <p> Max: {{ ms.max.count }} pages, {{ ms.max.date.strftime(DATE_FORMAT) }} </p>
     <p> Min: {{ ms.min.count }} pages, {{ ms.min.date.strftime(DATE_FORMAT) }} </p>
 
-    <form class="complete" action="/materials/complete/{{ material.material_id }}" METHOD="POST"
-          title="Complete the material id={{ material.material_id }}">
+    <form class="complete" action="/materials/complete/{{ material.material_id }}" METHOD="POST" title="Complete the material id={{ material.material_id }}">
         <button type="submit" class="submit-button"> Complete </button>
     </form>
 </div>
