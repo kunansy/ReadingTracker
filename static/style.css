@@ -28,6 +28,7 @@ main {
 	display: flex;
 	flex-direction: column;
 	margin: 10vh auto;
+    min-height: 20vh;
 }
 
 /* styles for nav bars in inheritors */
