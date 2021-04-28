@@ -102,7 +102,12 @@ async def get_queue(request: Request) -> dict[str, Any]:
 @jinja.template('add_material.html')
 async def add_material(request: Request) -> dict[str, Any]:
     """ Add a material to the queue """
-    pass
+    return {
+        'title': request.ctx.session.get('title', ''),
+        'authors': request.ctx.session.get('authors', ''),
+        'pages': request.ctx.session.get('pages', ''),
+        'tags': request.ctx.session.get('tags', ''),
+    }
 
 
 @app.post('/materials/add')
