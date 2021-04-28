@@ -35,7 +35,7 @@ class Material(BaseModel):
     title: constr(strip_whitespace=True, min_length=1)
     authors: constr(strip_whitespace=True, min_length=1)
     pages: conint(gt=0)
-    tags: constr(required=False, strip_whitespace=True,)
+    tags: constr(strip_whitespace=True)
 
 
 class Note(BaseModel):
