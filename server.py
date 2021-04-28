@@ -113,7 +113,41 @@ async def add_material(request: Request) -> dict[str, Any]:
 @app.post('/materials/add')
 async def add_material(request: Request) -> HTTPResponse:
     """ Add a material to the queue """
-    pass
+    key_val = {
+        key: val[0]
+        for key, val in request.form.items()
+    }
+    try:
+        material = Material(**key_val)
+    except ValidationError as e:
+        context = ujson.dumps(e.errors(), indent=4)
+        logger.warning(f"Validation error:\n{context}")
+
+        jinja.flash(
+            request,
+            f'Validation error: {e.raw_errors[0].exc}',
+            'error'
+        )
+        request.ctx.session.update(
+            **key_val
+        )
+        return response.redirect('/materials/add')
+    else:
+        request.ctx.session.clear()
+
+    try:
+        tracker.add_material(**material.dict())
+    except Exception as e:
+        jinja.flash(request, str(e), 'error')
+
+        request.ctx.session.update(
+            **material.dict()
+        )
+    else:
+        request.ctx.session.clear()
+        jinja.flash(request, "Material added", 'success')
+    finally:
+        return response.redirect('/materials/add')
 
 
 @app.post('/materials/start/<material_id:int>')
