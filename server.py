@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import datetime
 import logging
 from typing import Any
 
@@ -47,6 +48,26 @@ class Note(BaseModel):
 
     def __str__(self) -> str:
         return repr(self)
+
+
+class LogRecord(BaseModel):
+    date: datetime.date
+    count: int
+    material_id: int
+
+    @validator('count')
+    def validate_count(self,
+                       count: int) -> int:
+        if count <= 0:
+            raise ValidationError("Count must be positive number")
+        return count
+
+    @validator('material_id')
+    def validate_material_id(self,
+                             material_id: int) -> int:
+        if not tracker.does_material_exist(material_id):
+            raise ValidationError(f"Material {material_id=} doesn't exist")
+        return material_id
 
 
 @app.get('/favicon.ico')
