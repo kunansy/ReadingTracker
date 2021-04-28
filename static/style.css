@@ -30,6 +30,20 @@ main {
 	margin: 10vh auto;
 }
 
+/* styles for nav bars in inheritors */
+.subnavbar {
+	background-color: white;
+	display: flex;
+	float: right;
+}
+
+.subnavbar a {
+	color: black;
+	margin-top: 1vh;
+	padding-right: 1.5vw;
+}
+
+
 /* styles for forms */
 .form {
 	font-size: 2.5vh;
