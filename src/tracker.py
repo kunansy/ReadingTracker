@@ -406,6 +406,8 @@ class Log:
          is more than today, the date even exists in
          log, 'material_id' is None and log is empty.
         """
+        logger.debug(f"Setting log for: {date=}, {count=}, {material_id=}")
+
         if count <= 0:
             raise ValueError(f"Count must be > 0, but 0 <= {count}")
         if date <= self.stop:
@@ -459,6 +461,7 @@ class Log:
 
     def dump(self) -> None:
         """ Dump log to the file. """
+        logger.debug("Dumping log")
 
         data = {
             fmt(date): {
@@ -470,6 +473,8 @@ class Log:
 
         with self.path.open('w', encoding='utf-8') as f:
             ujson.dump(data, f, indent=INDENT)
+
+        logger.debug("Log dumped")
 
     @property
     def total(self) -> int:
