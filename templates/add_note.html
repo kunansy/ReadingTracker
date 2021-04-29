@@ -14,7 +14,13 @@
 {% block main %}
 <div class="form">
     <form action="/notes/add" method="POST">
-        <input class="input" type="number" placeholder="Enter a material id" name="material_id" value="{{ material_id }}" title="ID of the material">
+        <input class="input" type="number" list="books" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
+        <datalist id="books">
+            {% for material_id, title in titles.items() %}
+            <option value="{{ material_id }}"> «{{ title }}»
+                {% endfor %}
+        </datalist>
+
         <textarea class="input" id="input-content" placeholder="Enter a content" name="content" value="{{ content }}" title="Text of the note"></textarea>
         <input class="input" type="number" placeholder="Enter a chapter number" name="chapter" value="{{ chapter }}" title="Chapter where the note might be found">
         <input class="input" type="number" placeholder="Enter a page number" name="page" value="{{ page }}" title="Page where the not might be found">

@@ -296,11 +296,16 @@ async def get_notes(request: Request):
 @app.get('/notes/add')
 @jinja.template('add_note.html')
 async def add_note(request: Request) -> dict[str, Any]:
+    titles = {
+        ms.material.material_id: ms.material.title
+        for ms in tracker.reading + tracker.processed
+    }
     return {
         'material_id': request.ctx.session.get('material_id', ''),
         'content': request.ctx.session.get('content', ''),
         'page': request.ctx.session.get('page', ''),
         'chapter': request.ctx.session.get('chapter', ''),
+        'titles': titles
     }
 
 
