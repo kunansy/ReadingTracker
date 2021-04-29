@@ -2,13 +2,14 @@
 
 {% block style %}
 <link rel="stylesheet" href="{{ url_for('static', filename='reading.css') }}">
+<script src="{{ url_for('static', filename='js/common.js') }}"></script>
 {% endblock style %}
 
 {% block main %}
 
 {% for ms in statistics %}
 {% set material = ms.material %}
-<div class="material">
+<div class="material" onclick=openNotes({{ material.material_id }}) title="Click to see notes">
     <p> id: {{ material.material_id }}</p>
     <p> Title: «{{ material.title }}» </p>
     <p> Author: {{ material.authors }} </p>
