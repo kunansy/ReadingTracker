@@ -679,10 +679,7 @@ class Log:
         ]
 
     def copy(self):
-        new_log = self
-        new_log.__log = copy.deepcopy(self.log)
-
-        return new_log
+        return copy.deepcopy(self)
 
     @property
     def statistics(self) -> LogStatistics:
