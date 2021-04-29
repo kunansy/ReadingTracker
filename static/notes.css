@@ -1,9 +1,6 @@
 .submit-button {
     margin: 2vh auto 5vh;
 }
-.input {
-    margin-bottom: 0.5vh;
-}
 .input::-webkit-calendar-picker-indicator {
     display: none;
 }
