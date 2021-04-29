@@ -31,6 +31,11 @@ main {
     min-height: 20vh;
 }
 
+.hover:hover {
+    box-shadow: 0 0 5vh rgba(33, 33, 33, .5);
+    transition: box-shadow .2s ease-in-out;
+}
+
 /* styles for nav bars in inheritors */
 .subnavbar {
 	background-color: white;
