@@ -25,7 +25,7 @@
 </div>
 
 {% for note in notes %}
-{% set id = note['material_id'] %}
+{% set id = note.material_id %}
 <div class="note">
     <p> id: {{ note.id }}</p>
     <p> Content: {{ note.content }}</p>
