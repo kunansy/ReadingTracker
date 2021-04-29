@@ -26,7 +26,7 @@
 
 {% for note in notes %}
 {% set id = note.material_id %}
-<div class="note">
+<div class="note hover">
     <p> id: {{ note.id }}</p>
     <p> Content: {{ note.content }}</p>
     <p> Added at: {{ note.date.strftime(DATE_FORMAT) }} </p>
