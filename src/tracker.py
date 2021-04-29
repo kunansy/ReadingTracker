@@ -731,12 +731,17 @@ class Log:
 
         step = timedelta(days=(step or 1))
 
+        inside_if = lambda _start, _iter, _stop: _start <= _iter <= _stop
+        if step.days < 0:
+            start, stop = stop, start
+            inside_if = lambda _start, _iter, _stop: _start >= _iter >= _stop
+
         iter_ = start
         new_log_content = {}
         new_log = self.copy()
 
-        while iter_ <= stop:
-            if start <= iter_ <= stop:
+        while True:
+            if inside_if(start, iter_, stop):
                 if iter_ in new_log.log:
                     new_log_content[iter_] = new_log.log[iter_]
             else:
