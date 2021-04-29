@@ -14,8 +14,13 @@
 {% block main %}
 <div class="form">
     <form action="/notes" method="GET">
-        <input class="input" type="number" placeholder="Enter a material id" name="material_id">
-        <button type="submit" class="submit-button"> Search </button>
+        <input type="number" class="input" list="books" name="material_id" placeholder="Choose a material">
+        <datalist id="books">
+          {% for material_id, title in titles.items() %}
+              <option value="{{ material_id }}"> «{{ title }}»
+          {% endfor %}
+      </datalist>
+      <button type="submit" class="submit-button"> Search </button>
     </form>
 </div>
 

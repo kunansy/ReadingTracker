@@ -260,11 +260,12 @@ async def add_log_record(request: Request) -> HTTPResponse:
 @jinja.template('notes.html')
 async def get_notes(request: Request):
     material_id = request.args.get('material_id')
-    try:
-        notes = tracker.get_notes(material_id)
-    except ValueError:
-        jinja.flash(request, 'Enter an integer', 'error')
-        return response.redirect('/notes')
+    all_notes = tracker.get_notes()
+    notes = [
+        note
+        for note in all_notes
+        if material_id is None or note.material_id == int(material_id)
+    ]
 
     if not notes:
         jinja.flash(request, f'No notes {material_id=} found', 'error')
@@ -273,7 +274,7 @@ async def get_notes(request: Request):
     
     ids = {
         note.material_id
-        for note in notes
+        for note in all_notes
     }
     
     titles = {
