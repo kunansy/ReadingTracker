@@ -210,7 +210,7 @@ async def get_completed_materials(request: Request) -> dict:
 @jinja.template('reading_log.html')
 async def get_reading_log(request: Request) -> dict[str, Any]:
     return {
-        'log': log.log,
+        'log': log[::-1].log,
         'DATE_FORMAT': trc.DATE_FORMAT,
         'EXPECTED_COUNT': trc.PAGES_PER_DAY
     }
