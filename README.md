@@ -16,7 +16,7 @@ The project is expected to help you read books:
 * Reading log: `date: {'count': count, 'material_id': material_id}` in `data/log.json`.
 
 ### ERD of the database
-```
+```sql
 material:
   - material_id SERIAL PRIMARY KEY,
   - title VARCHAR NOT NULL,
