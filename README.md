@@ -1,10 +1,53 @@
 # ReadingTracker
 
-It stores list of materials to read in `data/tracker.db`, reading log in `data/log.json`.
 
+## What is that?
+The project is expected to help you read books:
+1. Keep a list of books to read;
+2. Keep a list of reading and completed materials;
+3. Calculate statistics;
+4. Track the read log;
+4. Keep notes to help you remember some important points from the material;
+5. (*_In developing_*) use Janki method to remember notes.
+
+
+## Data
+* Materials to read, reading and completed materials and `Notes` for them in `data/materials.db`.
+* Reading log: `date: {'count': count, 'material_id': material_id}` in `data/log.json`.
+
+### ERD of the database
+```
+material:
+  - material_id SERIAL PRIMARY KEY,
+  - title VARCHAR NOT NULL,
+  - authors VARCHAR NOT NULL,
+  - pages INTEGER NOT NULL,
+  - tags VARCHAR;
+
+status:
+  - status_id SERIAL PRIMARY KEY,
+  - material_id INTEGER REFERENCES(material.material_id) UNIQUE,
+  - begin DATE,
+  - end DATE;
+
+note:
+  - id SERIAL PRIMARY KEY,
+  - material_id INTEGER REFERENCES(material.material_id),
+  - content TEXT NOT NULL,
+  - date DATE NOT NULL,
+  - chapter INTEGER NOT NULL,
+  - page INTEGER NOT NULL;
+```
 
 ## Usage
-`usage: main.py [-h] [-pl] [-pr] [-pq] [-pp] [-pall] [-tday TODAY] [-yday YESTERDAY] [-cm CM] [-rd]`
+### WEB
+```shell
+. venv/bin/activate
+./server.py
+```
+
+### CLI (_Deprecated_)
+`usage: main.py [-h] [-pl] [-pr] [-pq] [-pp] [-pall] [-tday TODAY] [-yday YESTERDAY] [-cm MATERIAL_ID] [-rd]`
 
 Optional arguments:
 1. `-h, --help`                      Show this help message and exit
