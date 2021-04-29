@@ -1,3 +1,9 @@
 ::-webkit-scrollbar {
   width: 0;
 }
+.input {
+  margin-bottom: 0.5vh;
+}
+.input::-webkit-calendar-picker-indicator {
+  display: none;
+}

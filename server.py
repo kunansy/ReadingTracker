@@ -219,8 +219,13 @@ async def get_reading_log(request: Request) -> dict[str, Any]:
 @app.get('/reading_log/add')
 @jinja.template('add_log_record.html')
 async def add_reading_log(request: Request) -> dict[str, Any]:
+    titles = {
+        ms.material.material_id: ms.material.title
+        for ms in tracker.reading
+    }
     return {
         'material_id': log.reading_material,
+        'titles': titles,
         'date': trc.today()
     }
 

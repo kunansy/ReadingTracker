@@ -14,7 +14,13 @@
 {% block main %}
 <div class="form">
     <form action="/reading_log/add" method="POST">
-        <input class="input" type="number" placeholder="Enter a material id" name="material_id" value="{{ material_id }}" title="ID of the material">
+        <input class="input" type="number" list="books" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
+        <datalist id="books">
+            {% for material_id, title in titles.items() %}
+            <option value="{{ material_id }}"> «{{ title }}»
+                {% endfor %}
+        </datalist>
+
         <input class="input" type="date" placeholder="Enter the date" name="date" value="{{ date }}" title="Date of the record">
         <input class="input" type="number" placeholder="Enter a count of pages" name="count" title="Count of read pages">
         <button type="submit" class="submit-button"> Add </button>
