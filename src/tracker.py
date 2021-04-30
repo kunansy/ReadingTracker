@@ -258,6 +258,39 @@ class TrackerStatistics:
     pass
 
 
+@dataclass
+class MaterialEstimate:
+    material: db.Material
+    will_be_started: datetime.date
+    will_be_completed: datetime.date
+    expected_duration: int
+
+    def dict(self,
+             *,
+             exclude: Iterable[str] = None) -> dict:
+        exclude = exclude or ()
+
+        return {
+            field: getattr(self, field, None)
+            for field in self.__annotations__.keys()
+            if field not in exclude
+        }
+
+    def __repr__(self) -> str:
+        data = ', '.join(
+            f"{field}={value}"
+            for field, value in self.dict().items()
+        )
+        return f"{self.__class__.__name__}({date})"
+
+    def __str__(self) -> str:
+        return f"Material: «{self.material.title}»\n" \
+               f"Pages: {self.material.pages}\n" \
+               f"Will be started: {fmt(self.will_be_started)}\n" \
+               f"Will be completed: {fmt(self.will_be_completed)}\n" \
+               f"Expected duration: {time_span(self.expected_duration)}"
+
+
 def today() -> datetime.date:
     return datetime.date.today()
 
