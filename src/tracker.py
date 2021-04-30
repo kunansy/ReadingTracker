@@ -258,6 +258,39 @@ class TrackerStatistics:
     pass
 
 
+@dataclass
+class MaterialEstimate:
+    material: db.Material
+    will_be_started: datetime.date
+    will_be_completed: datetime.date
+    expected_duration: int
+
+    def dict(self,
+             *,
+             exclude: Iterable[str] = None) -> dict:
+        exclude = exclude or ()
+
+        return {
+            field: getattr(self, field, None)
+            for field in self.__annotations__.keys()
+            if field not in exclude
+        }
+
+    def __repr__(self) -> str:
+        data = ', '.join(
+            f"{field}={value}"
+            for field, value in self.dict().items()
+        )
+        return f"{self.__class__.__name__}({date})"
+
+    def __str__(self) -> str:
+        return f"Material: «{self.material.title}»\n" \
+               f"Pages: {self.material.pages}\n" \
+               f"Will be started: {fmt(self.will_be_started)}\n" \
+               f"Will be completed: {fmt(self.will_be_completed)}\n" \
+               f"Expected duration: {time_span(self.expected_duration)}"
+
+
 def today() -> datetime.date:
     return datetime.date.today()
 
@@ -862,6 +895,51 @@ class Tracker:
             remaining_days=remaining_days,
             would_be_completed=would_be_completed
         )
+    
+    def statistics(self, 
+                   materials: list[db.MaterialStatus]) -> list[MaterialStatistics]:
+        return [
+            self.get_material_statistic(
+                ms.material.material_id, material=ms.material, status=ms.status
+            )
+            for ms in materials
+        ]
+
+    def estimate(self) -> list[MaterialEstimate]:
+        """ Get materials from queue with estimated time to read """
+        a_day = timedelta(days=1)
+
+        # start when all reading material will be completed
+        start = self._end_of_reading()
+        avg = self.log.average
+
+        last_date = start + a_day
+        forecasts = []
+
+        for material in self.queue:
+            expected_duration = round(material.pages / avg)
+            expected_end = last_date + timedelta(days=expected_duration)
+
+            forecast = MaterialEstimate(
+                material=material,
+                will_be_started=last_date,
+                will_be_completed=expected_end,
+                expected_duration=expected_duration
+            )
+            forecasts += [forecast]
+
+            last_date = expected_end + a_day
+
+        return forecasts
+
+    def _end_of_reading(self) -> datetime.date:
+        """ Calculate when all reading materials will be completed """
+        remaining_days = sum(
+            stat.remaining_days
+            for stat in self.statistics(self.reading)
+        )
+
+        return today() + timedelta(days=remaining_days + 1)
 
     @staticmethod
     def start_material(material_id: int,

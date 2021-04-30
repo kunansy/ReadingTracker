@@ -94,7 +94,8 @@ async def favicon(request: Request) -> HTTPResponse:
 @jinja.template('queue.html')
 async def get_queue(request: Request) -> dict[str, Any]:
     return {
-        'materials': tracker.queue
+        'estimates': tracker.estimate(),
+        'DATE_FORMAT': trc.DATE_FORMAT
     }
 
 
@@ -179,14 +180,10 @@ async def complete_material(request: Request,
 @app.get('/materials/reading')
 @jinja.template('reading.html')
 async def get_reading_materials(request: Request) -> dict[str, Any]:
-    stat = [
-        tracker.get_material_statistic(
-            ms.material.material_id, material=ms.material, status=ms.status
-        )
-        for ms in tracker.reading
-    ]
+    statistics = tracker.statistics(tracker.reading)
+
     return {
-        'statistics': stat,
+        'statistics': statistics,
         'DATE_FORMAT': trc.DATE_FORMAT
     }
 
@@ -194,14 +191,10 @@ async def get_reading_materials(request: Request) -> dict[str, Any]:
 @app.get('/materials/completed')
 @jinja.template('completed.html')
 async def get_completed_materials(request: Request) -> dict:
-    stat = [
-        tracker.get_material_statistic(
-            ms.material.material_id, material=ms.material, status=ms.status
-        )
-        for ms in tracker.processed
-    ]
+    statistics = tracker.statistics(tracker.processed)
+
     return {
-        'statistics': stat,
+        'statistics': statistics,
         'DATE_FORMAT': trc.DATE_FORMAT
     }
 
