@@ -1,0 +1,21 @@
+```
+/etc/systemd/system/reading_tracker.service 
+
+sudo chmod 644 /etc/systemd/system/reading_tracker.service 
+sudo service reading_tracker status
+sudo systemctl enable reading_tracker.service 
+sudo service reading_tracker restart
+```
+
+[Unit]
+Description=ReadingTracker
+
+[Service]
+WorkingDirectory=/home/kirill/ReadingTracker
+ExecStart=/bin/sh -c 'cd /home/kirill/ReadingTracker && . venv/bin/activate && python server.py'
+RestartSec=5
+User=kirill
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
