@@ -862,6 +862,15 @@ class Tracker:
             remaining_days=remaining_days,
             would_be_completed=would_be_completed
         )
+    
+    def statistics(self, 
+                   materials: list[db.MaterialStatus]) -> list[MaterialStatistics]:
+        return [
+            self.get_material_statistic(
+                ms.material.material_id, material=ms.material, status=ms.status
+            )
+            for ms in materials
+        ]
 
     @staticmethod
     def start_material(material_id: int,
