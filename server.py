@@ -94,7 +94,8 @@ async def favicon(request: Request) -> HTTPResponse:
 @jinja.template('queue.html')
 async def get_queue(request: Request) -> dict[str, Any]:
     return {
-        'materials': tracker.queue
+        'estimates': tracker.estimate(),
+        'DATE_FORMAT': trc.DATE_FORMAT
     }
 
 
