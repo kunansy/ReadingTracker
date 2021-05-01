@@ -57,10 +57,9 @@ class MinMax:
     def __str__(self) -> str:
         date = fmt(self.date)
 
+        material = f"Material id: {self.material_id}"
         if material_title := self.material_title:
             material = f"Title: «{material_title}»"
-        else:
-            material = f"Material id: {self.material_id}"
 
         return f"Date: {date}\n" \
                f"Count: {self.count} pages\n" \
