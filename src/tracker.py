@@ -213,7 +213,7 @@ class MaterialStatistics:
                f"{would_be_completed}"
 
 
-@dataclass
+@dataclass(frozen=True)
 class TrackerStatistics:
     pass
 
