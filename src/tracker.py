@@ -4,7 +4,6 @@ import datetime
 import logging
 from dataclasses import dataclass
 from datetime import timedelta
-from itertools import groupby
 from pathlib import Path
 from typing import Union, Optional, Iterator, Iterable
 from src.db_api import MaterialNotFound, MaterialNotAssigned
