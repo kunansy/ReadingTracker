@@ -23,11 +23,11 @@
 </header>
 
 <main>
-    {% for cat, message in get_flashed_messages(with_categories=true) %}
+    {%- for cat, message in get_flashed_messages(with_categories=true) -%}
     <div class="alert alert-primary {{ cat }}" role="alert">
         {{ message }}
     </div>
-    {% endfor %}
+    {%- endfor -%}
 
     {% block main %} {% endblock main %}
 </main>

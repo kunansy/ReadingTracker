@@ -1,18 +1,18 @@
 {% extends 'index.html' %}
 
-{% block style %}
+{%- block style -%}
 <link rel="stylesheet" href="{{ url_for('static', filename='queue.css') }}">
-{% endblock style %}
+{%- endblock style -%}
 
-{% block header %}
+{%- block header -%}
 <nav class="subnavbar">
     <a href="/materials/queue"> Queue </a>
     <a href="/materials/add"> Add material </a>
 </nav>
-{% endblock header %}
+{%- endblock header -%}
 
 {% block main %}
-{% for estimate in estimates %}
+{%- for estimate in estimates -%}
 {% set material = estimate.material %}
 <div class="material hover">
     <p> id: {{ material.material_id }} </p>
@@ -29,5 +29,4 @@
     </form>
 </div>
 {% endfor %}
-
-{% endblock main%}
+{%- endblock main -%}
