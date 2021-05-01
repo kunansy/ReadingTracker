@@ -146,7 +146,7 @@ class LogStatistics:
                f"Median: {self.median} pages"
 
 
-@dataclass
+@dataclass(frozen=True)
 class MaterialStatistics:
     material: db.Material
     started: datetime.date
