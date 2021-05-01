@@ -102,7 +102,7 @@ class LogRecord:
         super().__setattr__(key, value)
 
 
-@dataclass
+@dataclass(frozen=True)
 class LogStatistics:
     start_date: datetime.date
     stop_date: datetime.date
