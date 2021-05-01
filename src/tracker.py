@@ -54,13 +54,6 @@ class MinMax:
             if field not in exclude
         }
 
-    def __repr__(self) -> str:
-        data = ', '.join(
-            f"{field}={value}"
-            for field, value in self.dict().items()
-        )
-        return f"{self.__class__.__name__}({data})"
-
     def __str__(self) -> str:
         date = fmt(self.date)
 
@@ -97,14 +90,6 @@ class LogRecord:
             for field in self.__annotations__.keys()
         }
 
-    def __repr__(self) -> str:
-        data = ', '.join(
-            f"{field}={value}"
-            for field, value in self.dict().items()
-        )
-
-        return f"{self.__class__.__name__}({data})"
-    
     def __str__(self) -> str:
         if title := self.material_title:
             title = f"\nTitle: «{title}»"
@@ -147,13 +132,6 @@ class LogStatistics:
             field: getattr(self, field, None)
             for field in self.__annotations__.keys()
         }
-
-    def __repr__(self) -> str:
-        data = ',\n'.join(
-            f"{field}={value}"
-            for field, value in self.dict().items()
-        )
-        return f"{self.__class__.__name__}({data})"
 
     def __str__(self) -> str:
         min_ = '\n'.join(
@@ -205,14 +183,6 @@ class MaterialStatistics:
             for field in self.__annotations__.keys()
             if field not in exclude
         }
-
-    def __repr__(self) -> str:
-        data = ', '.join(
-            f"{field}={value}"
-            for field, value in self.dict().items()
-        )
-
-        return f"{self.__class__.__name__}({data})"
 
     def __str__(self) -> str:
         if completed := self.completed:
@@ -275,13 +245,6 @@ class MaterialEstimate:
             for field in self.__annotations__.keys()
             if field not in exclude
         }
-
-    def __repr__(self) -> str:
-        data = ', '.join(
-            f"{field}={value}"
-            for field, value in self.dict().items()
-        )
-        return f"{self.__class__.__name__}({date})"
 
     def __str__(self) -> str:
         return f"Material: «{self.material.title}»\n" \
