@@ -37,6 +37,16 @@ class Material(BaseModel):
     pages: conint(gt=0)
     tags: constr(strip_whitespace=True)
 
+    def __repr__(self) -> str:
+        fields = ', '.join(
+            f"{key}='{val}'"
+            for key, val in self.dict().items()
+        )
+        return f"{self.__class__.__name__}({fields})"
+
+    def __str__(self) -> str:
+        return repr(self)
+
 
 class Note(BaseModel):
     class Config:
@@ -53,6 +63,9 @@ class Note(BaseModel):
             for key, val in self.dict().items()
         )
         return f"{self.__class__.__name__}({fields})"
+
+    def __str__(self) -> str:
+        return repr(self)
 
 
 class LogRecord(BaseModel):
@@ -83,6 +96,9 @@ class LogRecord(BaseModel):
             for key, value in self.dict()
         )
         return f"{self.__class__.__name__}({data})"
+
+    def __str__(self) -> str:
+        return repr(self)
 
 
 @app.get('/favicon.ico')
