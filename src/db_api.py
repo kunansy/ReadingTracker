@@ -124,6 +124,17 @@ class MaterialStatus:
         self.material = material
         self.status = status
 
+    def __setattr__(self,
+                    key: str,
+                    value) -> None:
+        if getattr(self, key, None) is not None:
+            raise NotImplementedError(
+                f"You can't change {self.__class__.__name__} values, but "
+                f"{key}={value} found, when {key}={getattr(self, key)}"
+            )
+
+        super().__setattr__(key, value)
+
 
 MATERIAL_STATUS = list[MaterialStatus]
 engine = create_engine(environ['DB_URI'], encoding='utf-8')
