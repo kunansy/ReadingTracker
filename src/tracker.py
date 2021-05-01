@@ -218,7 +218,7 @@ class TrackerStatistics:
     pass
 
 
-@dataclass
+@dataclass(frozen=True)
 class MaterialEstimate:
     material: db.Material
     will_be_started: datetime.date
