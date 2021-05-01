@@ -93,7 +93,7 @@ class LogRecord(BaseModel):
     def __repr__(self) -> str:
         data = ', '.join(
             f"{key}={value}"
-            for key, value in self.dict()
+            for key, value in self.dict().items()
         )
         return f"{self.__class__.__name__}({data})"
 
