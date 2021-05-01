@@ -124,10 +124,6 @@ class MaterialStatus:
         self.material = material
         self.status = status
 
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(" \
-               f"material={self.material}, status={self.status})"
-
 
 MATERIAL_STATUS = list[MaterialStatus]
 engine = create_engine(environ['DB_URI'], encoding='utf-8')
