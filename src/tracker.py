@@ -67,8 +67,7 @@ class MinMax:
                f"{material}"
 
 
-
-@dataclass
+@dataclass(unsafe_hash=True)
 class LogRecord:
     count: int
     material_id: int
