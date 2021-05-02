@@ -10,7 +10,6 @@
 {% for ms in statistics %}
 {% set material = ms.material %}
 <div class="material hover" onclick=openNotes({{ material.material_id }}) title="Click to see notes">
-    <p> id: {{ material.material_id }}</p>
     <p> Title: «{{ material.title }}» </p>
     <p> Author: {{ material.authors }} </p>
     <p> Pages: {{ material.pages }} </p>
