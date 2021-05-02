@@ -16,7 +16,7 @@
     <form action="/notes/add" method="POST">
         <input class="input" type="number" list="books" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
         <datalist id="books">
-            {% for material_id, title in titles.items() %}
+            {% for material_id, title in titles|dictsort %}
             <option value="{{ material_id }}"> «{{ title }}»
                 {% endfor %}
         </datalist>
