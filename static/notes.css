@@ -5,6 +5,24 @@
     display: none;
 }
 
+div.group {
+    display: flex;
+    flex-direction: column;
+}
+
+.material_title {
+    margin: auto;
+}
+.chapter_number {
+    margin: 4vh auto 1vh;
+}
+
+.material_divider {
+    color: black;
+    background-color: black;
+    margin-top: 8vh;
+}
+
 div.note {
     border: black 0.25vh solid;
     margin: 2vh auto;
