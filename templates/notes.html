@@ -24,12 +24,23 @@
     </form>
 </div>
 
-{% for note in notes %}
-{%- set id = note.material_id -%}
-<div class="note hover">
-    <p> Content: {{ note.content }}</p>
-    <p> Material: «{{ titles[id] }}» </p>
-    <p> Page: {{ note.page }} </p>
+{% for material_id, notes_m in notes|groupby('material_id') %}
+{% if not loop.first %}
+    <hr class="material_divider">
+{% endif %}
+
+<div class="group">
+    <h3 class="material_title"> «{{ titles[material_id] }}» </h3>
+
+    {% for chapter, note_c in notes_m|groupby('chapter') %}
+        <h4 class="chapter_number"> Chapter: {{ chapter }} </h4>
+        {% for note in note_c %}
+        <div class="note hover">
+            <p> Content: {{ note.content }}</p>
+            <p> Page: {{ note.page }} </p>
+        </div>
+        {% endfor %}
+    {% endfor %}
 </div>
 {% endfor -%}
 {% endblock main %}
