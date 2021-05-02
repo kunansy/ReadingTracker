@@ -15,11 +15,11 @@
 {%- for estimate in estimates -%}
 {% set material = estimate.material %}
 <div class="material hover">
-    <p> id: {{ material.material_id }} </p>
     <p> Title: «{{ material.title }}» </p>
     <p> Author: {{ material.authors }} </p>
     <p> Pages: {{ material.pages }} </p>
     <p> Tags:  {{ material.tags }} </p>
+    <hr/>
     <p> Will be started: {{ estimate.will_be_started.strftime(DATE_FORMAT) }} </p>
     <p> Will be completed: {{ estimate.will_be_completed.strftime(DATE_FORMAT) }} </p>
     <p> Expected duration: {{ estimate.expected_duration }} days </p>
