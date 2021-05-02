@@ -1,15 +1,15 @@
 {% extends 'index.html' %}
 
-{% block style %}
+{%- block style -%}
 <link rel="stylesheet" href="{{ url_for('static', filename='notes.css') }}">
-{% endblock style %}
+{%- endblock style -%}
 
-{% block header %}
+{%- block header -%}
 <nav class="subnavbar">
     <a href="/notes"> Search notes </a>
     <a href="/notes/add"> Add note </a>
 </nav>
-{% endblock header %}
+{%- endblock header -%}
 
 {% block main %}
 <div class="form">
@@ -25,7 +25,7 @@
 </div>
 
 {% for note in notes %}
-{% set id = note.material_id %}
+{%- set id = note.material_id -%}
 <div class="note hover">
     <p> id: {{ note.id }}</p>
     <p> Content: {{ note.content }}</p>
@@ -34,6 +34,5 @@
     <p> Chapter: {{ note.chapter }} </p>
     <p> Page: {{ note.page }} </p>
 </div>
-{% endfor %}
-
+{% endfor -%}
 {% endblock main %}
