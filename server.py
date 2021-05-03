@@ -333,6 +333,10 @@ async def add_note(request: Request) -> HTTPResponse:
         logger.warning(f"Validation error:\n{context}")
 
         jinja.flash(request, 'Validation error', 'error')
+
+        request.ctx.session.update(
+            **key_val
+        )
         return response.redirect('/notes/add')
 
     try:
@@ -343,6 +347,7 @@ async def add_note(request: Request) -> HTTPResponse:
         jinja.flash(request, str(e), 'error')
     else:
         jinja.flash(request, 'Note added', 'success')
+    finally:
         request.ctx.session.update(
             **note.dict(exclude={'content'})
         )
