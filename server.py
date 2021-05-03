@@ -351,7 +351,6 @@ async def add_note(request: Request) -> HTTPResponse:
         request.ctx.session.update(
             **note.dict(exclude={'content'})
         )
-    finally:
         return response.redirect('/notes/add')
 
 
