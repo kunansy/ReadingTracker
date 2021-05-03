@@ -56,6 +56,12 @@ class Note(BaseModel):
     content: constr(strip_whitespace=True, min_length=1)
     chapter: conint(ge=0)
     page: conint(gt=0)
+    
+    @validator('content')
+    def validate_content(cls,
+                         content: str) -> str:
+        return f"{content[0].upper()}{content[1:]}" \
+               f"{'.' * (not content.endswith('.'))}"
 
     def __repr__(self) -> str:
         fields = ', '.join(
