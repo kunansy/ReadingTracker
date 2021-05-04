@@ -7,17 +7,21 @@ document.addEventListener("DOMContentLoaded", () => {
 
     let onClick = (e) => {
         let input = e.target;
-
-        if (e.key == 'q' && e.altKey) {
+        
+        // on Alt-Q
+        if (e.keyCode == 81 && e.altKey) {
             input.value += '«»';
         }
-        else if (e.key == 't' && e.altKey) {
+        // on Alt-T
+        else if (e.keyCode == 84 && e.altKey) {
             input.value += '–';
         }
-        else if (e.key == 'b' && e.ctrlKey) {
+        // on Ctrl-B
+        else if (e.keyCode == 66 && e.ctrlKey) {
             input.value += '<b></b>';
         }
-        else if (e.key == 'i' && e.ctrlKey) {
+        // on Ctrl-I
+        else if (e.keyCode == 73 && e.ctrlKey) {
             input.value += '<i></i>';
         }
     }
