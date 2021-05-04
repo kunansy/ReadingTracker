@@ -24,7 +24,7 @@
     </form>
 </div>
 
-{% for material_id, notes_m in notes|groupby('material_id') %}
+{% for material_id, notes_m in notes|sort(attribute='page')|groupby('material_id') %}
 {% if not loop.first %}
     <hr class="material_divider">
 {% endif %}
