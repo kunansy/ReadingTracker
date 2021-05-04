@@ -60,6 +60,7 @@ class Note(BaseModel):
     @validator('content')
     def validate_content(cls,
                          content: str) -> str:
+        content = ' '.join(content.replace('\n', '<br/>').split())
         return f"{content[0].upper()}{content[1:]}" \
                f"{'.' * (not content.endswith('.'))}"
 
