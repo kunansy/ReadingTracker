@@ -499,6 +499,10 @@ class Log:
     def duration(self) -> int:
         """ Get duration of log """
         logger.debug("Calculating log duration")
+
+        if not self.log:
+            return 0
+
         return (self.stop - self.start).days + 1
 
     @property
