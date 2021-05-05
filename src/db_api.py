@@ -182,6 +182,9 @@ def session(**kwargs) -> ContextManager[Session]:
         logger.info("Rollback all changes")
 
         new_session.rollback()
+
+        if isinstance(e, BaseDBError):
+            raise e
         raise BaseDBError(e)
     finally:
         new_session.close()
