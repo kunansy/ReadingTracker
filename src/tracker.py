@@ -43,6 +43,10 @@ class NoMaterialInLog(BaseTrackerError):
     pass
 
 
+class DatabaseError(BaseTrackerError):
+    pass
+
+
 @dataclass(frozen=True)
 class MinMax:
     date: datetime.date
@@ -384,6 +388,8 @@ class Log:
          !!! there will be more queries to the database !!!
 
         :return: dict with the format.
+
+        :exception DatabaseError:
         """
         with self.path.open(encoding='utf-8') as f:
             log = ujson.load(f)
@@ -394,7 +400,13 @@ class Log:
             record = LogRecord(**info)
 
             if full_info:
-                record.material_title = db.get_title(record.material_id)
+                try:
+                    material_title = db.get_title(record.material_id)
+                except Exception as e:
+                    logger.error(str(e))
+                    raise DatabaseError(e)
+                else:
+                    record.material_title = material_title
 
             log_records[date] = record
         return log_records
@@ -413,6 +425,7 @@ class Log:
         :exception WrongLogParam: if count <= 0, the date
          is more than today, the date even exists in
          log, 'material_id' not given and log is empty.
+        :exception DatabaseError:
         """
         logger.debug(f"Setting log for: {date=}, {count=}, {material_id=}")
 
@@ -428,10 +441,16 @@ class Log:
         if material_id is None and len(self.log) == 0:
             raise WrongLogParam(f"{material_id=} and log dict is empty")
 
+        try:
+            material_title = db.get_title(material_id)
+        except Exception as e:
+            logger.error(str(e))
+            raise DatabaseError(e)
+
         record = LogRecord(
             material_id=material_id or self.reading_material,
             count=count,
-            material_title=db.get_title(material_id)
+            material_title=material_title
         )
         self.__log[date] = record
 
@@ -769,6 +788,9 @@ class Log:
 
     @property
     def statistics(self) -> LogStatistics:
+        """
+        :exception ReadingLogIsEmpty:
+        """
         logger.debug("Calculating statistics of the log")
 
         if not self.log:
@@ -794,6 +816,8 @@ class Log:
         of by slice of dates.
 
         If slice get new Log object with [start; stop).
+
+        :exception ReadingLogIsEmpty:
         """
         logger.debug(f"Getting item {date=} from the log")
 
@@ -866,8 +890,14 @@ class Log:
         for date, info in self.log.items():
             if (material_id := info.material_id) != last_material_id:
                 last_material_id = material_id
-                last_material_title = (info.material_title or
-                                       f"«{db.get_title(material_id)}»")
+                try:
+                    title = info.material_title or \
+                            f"«{db.get_title(material_id)}»"
+                except Exception as e:
+                    logger.error(str(e))
+                    title = 'None'
+
+                last_material_title = title
             else:
                 last_material_title = '...'
 
@@ -899,18 +929,38 @@ class Tracker:
         """
         Get list of uncompleted materials:
         assigned but not completed and not assigned too
+
+        :exception DatabaseError:
         """
-        return db.get_free_materials()
+        try:
+            return db.get_free_materials()
+        except Exception as e:
+            logger.error(str(e))
+            raise DatabaseError
 
     @property
     def processed(self) -> db.MATERIAL_STATUS:
-        """ Get list of completed Materials. """
-        return db.get_completed_materials()
+        """ Get list of completed Materials.
+
+        :exception DatabaseError:
+        """
+        try:
+            return db.get_completed_materials()
+        except Exception as e:
+            logger.error(str(e))
+            raise DatabaseError
 
     @property
     def reading(self) -> db.MATERIAL_STATUS:
-        """ Get reading materials and their statuses """
-        return db.get_reading_materials()
+        """ Get reading materials and their statuses
+
+        :exception DatabaseError:
+        """
+        try:
+            return db.get_reading_materials()
+        except Exception as e:
+            logger.error(str(e))
+            raise DatabaseError
 
     @property
     def log(self) -> Log:
@@ -918,7 +968,14 @@ class Tracker:
 
     @property
     def notes(self) -> list[db.Note]:
-        return db.get_notes()
+        """
+        :exception DatabaseError:
+        """
+        try:
+            return db.get_notes()
+        except Exception as e:
+            logger.error(str(e))
+            raise DatabaseError
 
     @staticmethod
     def does_material_exist(material_id: int) -> bool:
@@ -1030,17 +1087,16 @@ class Tracker:
         :param start_date: date when the material was started.
          Today by default.
 
-        :exception WrongDate: if start date is better than today.
-        :exception MaterialNotFound: if the material doesn't exist.
+        :exception DatabaseError:
         """
         try:
             db.start_material(
                 material_id=material_id,
                 start_date=start_date
             )
-        except BaseDBError as e:
-            logger.warning(e)
-            raise
+        except Exception as e:
+            logger.error(e)
+            raise DatabaseError(e)
 
     def complete_material(self,
                           material_id: int = None,
@@ -1053,11 +1109,7 @@ class Tracker:
         :param completion_date: date when the material was completed.
          Today by default.
 
-        :exception MaterialEvenCompleted: if the material has been
-         completed yet.
-        :exception WrongDate: if completion_date is less than start_date.
-        :exception MaterialNotAssigned: if the material has not been
-         started yet.
+        :exception DatabaseError:
         """
         material_id = material_id or self.log.reading_material
 
@@ -1066,24 +1118,34 @@ class Tracker:
                 material_id=material_id,
                 completion_date=completion_date
             )
-        except BaseDBError as e:
-            logger.warning(e)
-            raise
+        except Exception as e:
+            logger.error(e)
+            raise DatabaseError(e)
 
     @staticmethod
     def add_material(title: str,
                      authors: str,
                      pages: int,
                      tags: str) -> None:
-        db.add_material(
-            title=title,
-            authors=authors,
-            pages=pages,
-            tags=tags
-        )
+        """
+        :exception DatabaseError:
+        """
+        try:
+            db.add_material(
+                title=title,
+                authors=authors,
+                pages=pages,
+                tags=tags
+            )
+        except Exception as e:
+            logger.error(str(e))
+            raise DatabaseError
 
     @staticmethod
     def get_material(material_id: int) -> db.Material:
+        """
+        :exception DatabaseError:
+        """
         logger.debug(f"Getting material {material_id=}")
 
         try:
@@ -1091,11 +1153,21 @@ class Tracker:
         except IndexError:
             msg = f"Material {material_id=} not found"
             logger.warning(msg)
-            raise MaterialNotFound(msg)
+            raise DatabaseError(msg)
+        except Exception as e:
+            logger.error(e)
+            raise DatabaseError(e)
 
     @staticmethod
     def get_status(material_id: int) -> db.Status:
-        return db.get_material_status(material_id=material_id)
+        """
+        :exception DatabaseError:
+        """
+        try:
+            return db.get_material_status(material_id=material_id)
+        except Exception as e:
+            logger.error(str(e))
+            raise DatabaseError(e)
 
     @staticmethod
     def get_notes(material_id: int = None) -> list[db.Note]:
@@ -1103,18 +1175,20 @@ class Tracker:
         :param material_id: get notes for this material.
          By default, get all notes.
 
-        :exception ValueError: if the material_id is not integer.
+        :exception DatabaseError:
         """
         if material_id is not None:
             try:
-                material_id = int(material_id)
-            except ValueError:
-                logger.warning("Material id must be ans integer, but "
-                               f"{material_id} found")
-                raise
-            else:
                 return db.get_notes(materials_ids=[material_id])
-        return db.get_notes()
+            except Exception as e:
+                logger.error(str(e))
+                raise DatabaseError(e)
+
+        try:
+            return db.get_notes()
+        except Exception as e:
+            logger.error(str(e))
+            raise DatabaseError(e)
 
     @staticmethod
     def add_note(material_id: int,
@@ -1125,7 +1199,7 @@ class Tracker:
         """
         Here it is expected that all fields are valid.
 
-        :exception MaterialNotFound: if the material doesn't exist.
+        :exception DatabaseError:
         :exception ValueError: if the given page number is better
          than page count in the material.
         """
@@ -1137,11 +1211,14 @@ class Tracker:
             logger.warning(msg)
             raise ValueError(msg)
 
-        db.add_note(
-            material_id=material_id,
-            content=content,
-            chapter=chapter,
-            page=page,
-            date=date
-        )
-
+        try:
+            db.add_note(
+                material_id=material_id,
+                content=content,
+                chapter=chapter,
+                page=page,
+                date=date
+            )
+        except Exception as e:
+            logger.error(str(e))
+            raise DatabaseError(e)
