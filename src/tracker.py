@@ -634,6 +634,9 @@ class Log:
         """ Calculate how many pages of the material even read """
         logger.debug(f"Calculating total for material {material_id=}")
 
+        if material_id not in self:
+            return 0
+
         return sum(
             info.count
             for info in self.log.values()
