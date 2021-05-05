@@ -928,11 +928,11 @@ class Tracker:
             logger.error(f"Error checking {material_id=} exists:\n{e}")
             return False
 
-    def get_material_statistic(self,
-                               material_id: int,
-                               *,
-                               material: db.Material = None,
-                               status: db.Status = None) -> MaterialStatistics:
+    def get_material_statistics(self,
+                                material_id: int,
+                                *,
+                                material: db.Material = None,
+                                status: db.Status = None) -> MaterialStatistics:
         """ Calculate statistics for reading or completed material """
         logger.debug(f"Calculating material statistics for {material_id=}")
 
