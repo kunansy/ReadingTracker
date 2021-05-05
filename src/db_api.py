@@ -182,7 +182,7 @@ def session(**kwargs) -> ContextManager[Session]:
         logger.info("Rollback all changes")
 
         new_session.rollback()
-        raise
+        raise BaseDBError(e)
     finally:
         new_session.close()
         logger.info("Session closed")
@@ -214,7 +214,7 @@ def get_materials(*,
 
 
 @cache
-def get_title(material_id: int) -> str:
+def get_title(material_id: int, /) -> str:
     logger.info(f"Getting title for {material_id=}")
     try:
         return get_materials(materials_ids=[material_id])[0].title
