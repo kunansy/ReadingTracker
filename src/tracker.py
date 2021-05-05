@@ -568,6 +568,9 @@ class Log:
     def median(self) -> int:
         logger.debug("Calculating median for log")
 
+        if not self.log:
+            return 0
+
         counts = sorted(
             info.count
             for info in self.log.values()
@@ -594,6 +597,9 @@ class Log:
         as the material_id of the last not empty day.
         """
         logger.debug("Getting data from log")
+
+        if not self.log:
+            return
 
         step = timedelta(days=1)
         iter_ = self.start
@@ -651,6 +657,10 @@ class Log:
             for date, info in self.log.items()
             if info.material_id == material_id
         ]
+
+        if not sample:
+            return
+
         date, info = min(
             sample,
             key=lambda item: item[1].count
@@ -669,6 +679,10 @@ class Log:
             for date, info in self.log.items()
             if info.material_id == material_id
         ]
+
+        if not sample:
+            return
+
         date, info = max(
             sample,
             key=lambda item: item[1].count
