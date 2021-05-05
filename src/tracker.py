@@ -640,8 +640,8 @@ class Log:
             if info.material_id == material_id
         )
 
-    def m_empty_days(self,
-                     material_id: int) -> int:
+    def m_lost_time(self,
+                    material_id: int) -> int:
         """ How many days was lost reading the material """
         logger.debug(f"Calculating lost time for material {material_id=}")
 
@@ -915,7 +915,7 @@ class Tracker:
             started=status.begin,
             completed=status.end,
             duration=self.log.m_duration(material_id),
-            lost_time=self.log.m_empty_days(material_id),
+            lost_time=self.log.m_lost_time(material_id),
             total=total,
             min=self.log.m_min(material_id),
             max=self.log.m_max(material_id),
