@@ -223,8 +223,8 @@ def get_title(material_id: int, /) -> str:
         return ''
 
 
-def does_material_exist(*,
-                        material_id: int) -> bool:
+@cache
+def does_material_exist(material_id: int, /) -> bool:
     logger.info(f"Whether {material_id=} exists")
     return len(get_materials(materials_ids=[material_id])) == 1
 
