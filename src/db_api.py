@@ -236,15 +236,15 @@ def get_free_materials() -> list[Material]:
     """ Get all not assigned materials """
     logger.info("Getting free materials")
 
-    assigned_materials_ids = {
-        status.material_id
-        for status in get_status()
-    }
+    with session() as ses:
+        res = ses.query(Status, Material) \
+            .join(Status, isouter=True) \
+            .all()
 
     return [
         material
-        for material in get_materials()
-        if material.material_id not in assigned_materials_ids
+        for status, material in res
+        if status is None
     ]
 
 
