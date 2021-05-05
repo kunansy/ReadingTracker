@@ -263,7 +263,6 @@ async def add_log_record(request: Request) -> HTTPResponse:
     except Exception as e:
         jinja.flash(request, str(e), 'error')
     else:
-        log.dump()
         jinja.flash(request, 'Record added', 'success')
     finally:
         return response.redirect('/reading_log/add')
