@@ -979,7 +979,7 @@ class Tracker:
     def statistics(self, 
                    materials: list[db.MaterialStatus]) -> list[MaterialStatistics]:
         return [
-            self.get_material_statistic(
+            self.get_material_statistics(
                 ms.material.material_id, material=ms.material, status=ms.status
             )
             for ms in materials
