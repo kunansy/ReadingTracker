@@ -718,6 +718,9 @@ class Log:
                   material_id: int) -> int:
         logger.debug(f"Calculating average for material {material_id=}")
 
+        if material_id not in self:
+            return 0
+
         total = duration = 0
         for date, info in self.data():
             if info.material_id == material_id:
