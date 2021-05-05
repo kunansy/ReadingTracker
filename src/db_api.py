@@ -362,7 +362,7 @@ def start_material(*,
         raise WrongDate("Start date must be less than today,"
                         "but %s found", start_date)
 
-    if not does_material_exist(material_id=material_id):
+    if not does_material_exist(material_id):
         raise MaterialNotFound(f"Material {material_id=}")
 
     with session() as ses:
