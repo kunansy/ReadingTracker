@@ -158,8 +158,8 @@ class MaterialStatistics:
     duration: int
     lost_time: int
     total: int
-    min: MinMax
-    max: MinMax
+    min: Optional[MinMax]
+    max: Optional[MinMax]
     average: int
     remaining_pages: Optional[int] = None
     remaining_days: Optional[int] = None
@@ -195,13 +195,17 @@ class MaterialStatistics:
         remaining_days = (f"Remaining days: {self.remaining_days}\n" *
                           bool(self.remaining_days))
 
-        min_ = self.min
-        min_ = f"\tDate: {fmt(min_.date)}\n" \
-               f"\tCount: {min_.count} pages"
+        if min_ := self.min:
+            min_ = f"Min:\n\tDate: {fmt(min_.date)}\n" \
+                   f"\tCount: {min_.count} pages\n"
+        else:
+            min_ = ''
 
-        max_ = self.max
-        max_ = f"\tDate: {fmt(max_.date)}\n" \
-               f"\tCount: {max_.count} pages"
+        if max_ := self.max:
+            max_ = f"Max:\n\tDate: {fmt(max_.date)}\n" \
+                   f"\tCount: {max_.count} pages\n"
+        else:
+            max_ = ''
 
         return f"Material: «{self.material.title}»\n" \
                f"Pages: {self.material.pages}\n" \
@@ -212,8 +216,8 @@ class MaterialStatistics:
                f"Total: {self.total} pages\n" \
                f"{remaining_pages}" \
                f"{remaining_days}" \
-               f"Min:\n{min_}\n" \
-               f"Max:\n{max_}\n" \
+               f"{min_}" \
+               f"{max_}" \
                f"Average: {self.average} pages per day" \
                f"{would_be_completed}"
 
