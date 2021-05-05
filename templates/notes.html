@@ -36,8 +36,8 @@
         <h4 class="chapter_number"> Chapter: {{ chapter }} </h4>
         {% for note in note_c %}
         <div class="note hover">
-            <p> Content: {{ note.content }}</p>
-            <p> Page: {{ note.page }} </p>
+            <p class="note-content"> {{ note.content }}</p>
+            <p class="note-page"> Page: {{ note.page }} </p>
         </div>
         {% endfor %}
     {% endfor %}

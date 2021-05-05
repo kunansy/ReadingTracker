@@ -29,6 +29,11 @@ div.note {
     width: 50vw;
     border-radius: 3vh;
     padding: 5vh;
+    text-align: center;
+}
+.note-page {
+    font-size: 4vh;
+    font-weight: 500;
 }
 div.note p {
     word-wrap: break-word;
