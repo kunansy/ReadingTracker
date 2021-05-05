@@ -390,6 +390,7 @@ class Log:
                  material_id: int = None) -> None:
         """
         Set reading log for the day.
+        Dump changes to the file.
 
         :param date: date of log.
         :param count: count of read pages.
@@ -420,6 +421,8 @@ class Log:
         self.__log[date] = record
 
         self.__log = dict(sorted(self.log.items(), key=lambda i: i[0]))
+
+        self.dump()
 
     def set_today_log(self,
                       count: int,
