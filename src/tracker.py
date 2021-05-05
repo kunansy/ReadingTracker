@@ -492,7 +492,7 @@ class Log:
 
         return sum(
             info.count
-            for info in self.values()
+            for info in self.log.values()
         )
 
     @property
@@ -533,7 +533,7 @@ class Log:
             raise ReadingLogIsEmpty
 
         date, info = min(
-            [(date, info) for date, info in self.items()],
+            [(date, info) for date, info in self.log.items()],
             key=lambda item: item[1].count
         )
         return MinMax(
@@ -555,7 +555,7 @@ class Log:
             raise ReadingLogIsEmpty
 
         date, info = max(
-            [(date, info) for date, info in self.items()],
+            [(date, info) for date, info in self.log.items()],
             key=lambda item: item[1].count
         )
 
@@ -570,7 +570,7 @@ class Log:
 
         counts = sorted(
             info.count
-            for info in self.values()
+            for info in self.log.values()
         )
 
         if (middle := len(counts) // 2) % 2 == 0:
@@ -585,15 +585,6 @@ class Log:
         """
         logger.debug("Calculating ... for log")
         return self.total + self.average * self.empty_days
-
-    def values(self):
-        return self.log.values()
-
-    def keys(self):
-        return self.log.keys()
-
-    def items(self):
-        return self.log.items()
 
     def data(self) -> Iterator[tuple[datetime.date, LogRecord]]:
         """ Get pairs: date, info of all days from start to stop.
@@ -636,7 +627,7 @@ class Log:
 
         return sum(
             info.count
-            for info in self.values()
+            for info in self.log.values()
             if info.material_id == material_id
         )
 
@@ -657,7 +648,7 @@ class Log:
 
         sample = [
             (date, info)
-            for date, info in self.items()
+            for date, info in self.log.items()
             if info.material_id == material_id
         ]
         date, info = min(
@@ -675,7 +666,7 @@ class Log:
 
         sample = [
             (date, info)
-            for date, info in self.items()
+            for date, info in self.log.items()
             if info.material_id == material_id
         ]
         date, info = max(
