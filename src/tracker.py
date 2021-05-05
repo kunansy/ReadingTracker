@@ -437,12 +437,16 @@ class Log:
         :param count: count of pages read today.
         :param material_id: id of learned material.
          The last learned material_id by default.
+
+        :exception WrongLogParam: if count <= 0, the date
+         is more than today, the date even exists in
+         log, 'material_id' not given and log is empty.
         """
         try:
             self._set_log(today(), count, material_id)
-        except ValueError:
-            logger.exception(f"Cannot set today's log with "
-                             f"{count=}, {material_id=}")
+        except WrongLogParam as e:
+            logger.error(str(e))
+            raise
 
     def set_yesterday_log(self,
                           count: int,
