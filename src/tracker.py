@@ -696,11 +696,16 @@ class Log:
                   material_id: int) -> int:
         logger.debug(f"Calculating average for material {material_id=}")
 
+        total = duration = 0
+        for date, info in self.data():
+            if info.material_id == material_id:
+                total += info.count
+                duration += 1
+
         try:
-            return (self.m_total(material_id) //
-                    self.m_duration(material_id))
+            return total // duration
         except ZeroDivisionError:
-            return 1
+            return 0
 
     def dates(self) -> list[datetime.date]:
         return [
