@@ -323,14 +323,17 @@ class Log:
         return self.LOG_PATH
 
     @property
-    def start(self) -> Optional[datetime.date]:
-        """ Get the date of the first logged day
-        (if there is, None otherwise).
+    def start(self) -> datetime.date:
+        """ Get the date of the first logged day.
+
+        :exception ReadingLogIsEmpty:
         """
         try:
             return list(self.log.keys())[0]
         except IndexError:
-            pass
+            msg = "Reading log is empty, no start date"
+            logger.warning(msg)
+            raise ReadingLogIsEmpty(msg)
 
     @property
     def stop(self) -> Optional[datetime.date]:
