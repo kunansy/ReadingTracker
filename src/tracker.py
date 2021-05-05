@@ -336,9 +336,17 @@ class Log:
             raise ReadingLogIsEmpty(msg)
 
     @property
-    def stop(self) -> Optional[datetime.date]:
-        if self.start is not None:
-            return list(self.keys())[-1]
+    def stop(self) -> datetime.date:
+        """ Get the date of the last logged day.
+
+        :exception ReadingLogIsEmpty:
+        """
+        try:
+            return list(self.log.keys())[-1]
+        except IndexError:
+            msg = "Reading log is empty, no stop date"
+            logger.warning(msg)
+            raise ReadingLogIsEmpty(msg)
 
     @property
     def reading_material(self) -> int:
