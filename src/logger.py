@@ -83,7 +83,7 @@ LOGGING_CONFIG = {
         },
         "sanic.error": {
             "level": "WARNING",
-            "handlers": ["internalFile"]
+            "handlers": ["errorFile"]
         }
     }
 }
