@@ -176,7 +176,7 @@ async def start_material(request: Request,
     else:
         jinja.flash(request, f"Material {material_id=} started", 'success')
     finally:
-        return response.redirect('/material/queue')
+        return response.redirect('/materials/queue')
 
 
 @app.post('/materials/complete/<material_id:int>')
