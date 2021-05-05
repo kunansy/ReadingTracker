@@ -35,6 +35,10 @@ class ReadingLogIsEmpty(BaseTrackerError):
     pass
 
 
+class WrongLogParam(BaseTrackerError):
+    pass
+
+
 @dataclass(frozen=True)
 class MinMax:
     date: datetime.date
@@ -392,26 +396,26 @@ class Log:
         Set reading log for the day.
         Dump changes to the file.
 
-        :param date: date of log.
-        :param count: count of read pages.
         :param material_id: id of the learned material,
-         by default id of the last material if exists.
+         by default id of the last material.
 
-        :exception ValueError: if count <= 0, the date
+        :exception WrongLogParam: if count <= 0, the date
          is more than today, the date even exists in
-         log, 'material_id' is None and log is empty.
+         log, 'material_id' not given and log is empty.
         """
         logger.debug(f"Setting log for: {date=}, {count=}, {material_id=}")
 
         if count <= 0:
-            raise ValueError(f"Count must be > 0, but 0 <= {count}")
+            raise WrongLogParam(f"Count must be > 0, but 0 <= {count}")
         if date <= self.stop:
-            raise ValueError("The date must be less "
-                             f"than the last date, but {date=} < {self.stop=}")
+            raise WrongLogParam(
+                "The date must be less than the last "
+                f"date, but {date=} < {self.stop=}"
+            )
         if date in self.__log:
-            raise ValueError(f"The {date=} even exists in the log")
+            raise WrongLogParam(f"The {date=} even exists in the log")
         if material_id is None and len(self.log) == 0:
-            raise ValueError(f"{material_id=} and log dict is empty")
+            raise WrongLogParam(f"{material_id=} and log dict is empty")
 
         record = LogRecord(
             material_id=material_id or self.reading_material,
