@@ -354,7 +354,10 @@ class Log:
 
     @property
     def reading_material(self) -> int:
-        """ Get id of the reading material. """
+        """ Get id of the reading material.
+
+        :exception ReadingLogIsEmpty:
+        """
         try:
             return list(self.log.values())[-1].material_id
         except IndexError:
@@ -377,7 +380,7 @@ class Log:
         with self.path.open(encoding='utf-8') as f:
             log = ujson.load(f)
 
-        res = {}
+        log_records = {}
         for date, info in log.items():
             date = to_datetime(date)
             record = LogRecord(**info)
@@ -385,8 +388,8 @@ class Log:
             if full_info:
                 record.material_title = db.get_title(record.material_id)
 
-            res[date] = record
-        return res
+            log_records[date] = record
+        return log_records
 
     def _set_log(self,
                  date: datetime.date,
@@ -649,7 +652,13 @@ class Log:
         )
 
     def m_min(self,
-              material_id: int) -> MinMax:
+              material_id: int) -> Optional[MinMax]:
+        """ Get info of the record with
+        the min number of read pages of the material.
+
+        :return: MinMax obj or None.
+        :exception ReadingLogIsEmpty:
+        """
         logger.debug(f"Calculating min for material {material_id=}")
 
         sample = [
@@ -671,7 +680,13 @@ class Log:
         )
 
     def m_max(self,
-              material_id: int) -> MinMax:
+              material_id: int) -> Optional[MinMax]:
+        """ Get info of the record with
+        the max number of read pages of the material.
+
+        :return: MinMax obj or None.
+        :exception ReadingLogIsEmpty:
+        """
         logger.debug(f"Calculating max for material {material_id=}")
 
         sample = [
