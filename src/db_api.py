@@ -261,10 +261,10 @@ def get_reading_materials() -> MATERIAL_STATUS:
             .filter(Status.end == None) \
             .all()
 
-        return [
-            MaterialStatus(material=ms[0], status=ms[1])
-            for ms in res
-        ]
+    return [
+        MaterialStatus(material=ms[0], status=ms[1])
+        for ms in res
+    ]
 
 
 def get_completed_materials() -> MATERIAL_STATUS:
@@ -277,10 +277,10 @@ def get_completed_materials() -> MATERIAL_STATUS:
             .filter(Status.end != None)\
             .all()
 
-        return [
-            MaterialStatus(material=ms[0], status=ms[1])
-            for ms in res
-        ]
+    return [
+        MaterialStatus(material=ms[0], status=ms[1])
+        for ms in res
+    ]
 
 
 def get_status(*,
