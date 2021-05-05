@@ -39,6 +39,10 @@ class WrongLogParam(BaseTrackerError):
     pass
 
 
+class NoMaterialInLog(BaseTrackerError):
+    pass
+
+
 @dataclass(frozen=True)
 class MinMax:
     date: datetime.date
@@ -620,11 +624,14 @@ class Log:
 
     def m_duration(self,
                    material_id: int) -> int:
-        """ Calculate how many days the material was being reading """
+        """ Calculate how many days the material was being reading.
+
+        :exception NoMaterialInLog:
+        """
         logger.debug(f"Calculating duration for material {material_id=}")
 
         if material_id not in self:
-            return 0
+            raise NoMaterialInLog
 
         return sum(
             1
@@ -634,11 +641,14 @@ class Log:
 
     def m_total(self,
                 material_id: int) -> int:
-        """ Calculate how many pages of the material even read """
+        """ Calculate how many pages of the material even read.
+
+        :exception NoMaterialInLog:
+        """
         logger.debug(f"Calculating total for material {material_id=}")
 
         if material_id not in self:
-            return 0
+            raise NoMaterialInLog
 
         return sum(
             info.count
@@ -648,11 +658,14 @@ class Log:
 
     def m_lost_time(self,
                     material_id: int) -> int:
-        """ How many days was lost reading the material """
+        """ How many days was lost reading the material.
+
+        :exception NoMaterialInLog:
+        """
         logger.debug(f"Calculating lost time for material {material_id=}")
 
         if material_id not in self:
-            return 0
+            raise NoMaterialInLog
 
         return sum(
             1
@@ -661,16 +674,16 @@ class Log:
         )
 
     def m_min(self,
-              material_id: int) -> Optional[MinMax]:
+              material_id: int) -> MinMax:
         """ Get info of the record with
         the min number of read pages of the material.
 
-        :return: MinMax obj or None.
+        :exception NoMaterialInLog:
         """
         logger.debug(f"Calculating min for material {material_id=}")
 
         if material_id not in self:
-            return
+            raise NoMaterialInLog
 
         sample = [
             (date, info)
@@ -688,16 +701,16 @@ class Log:
         )
 
     def m_max(self,
-              material_id: int) -> Optional[MinMax]:
+              material_id: int) -> MinMax:
         """ Get info of the record with
         the max number of read pages of the material.
 
-        :return: MinMax obj or None.
+        :exception NoMaterialInLog:
         """
         logger.debug(f"Calculating max for material {material_id=}")
 
         if material_id not in self:
-            return
+            raise NoMaterialInLog
 
         sample = [
             (date, info)
@@ -716,10 +729,13 @@ class Log:
 
     def m_average(self,
                   material_id: int) -> int:
+        """
+        :exception NoMaterialInLog:
+        """
         logger.debug(f"Calculating average for material {material_id=}")
 
         if material_id not in self:
-            return 0
+            raise NoMaterialInLog
 
         total = duration = 0
         for date, info in self.data():
