@@ -812,6 +812,17 @@ class Log:
     def __len__(self) -> int:
         return len(self.log)
 
+    def __contains__(self,
+                     material_id: int) -> bool:
+        logger.debug(f"Whether {material_id=} is in a log record")
+        if not self.log:
+            return False
+
+        return any(
+            info.material_id == material_id
+            for info in self.log.values()
+        )
+
     def __str__(self) -> str:
         """
         If there are the same material on several days,
