@@ -940,9 +940,19 @@ class Tracker:
         status = status or self.get_status(material_id)
 
         assert material.material_id == status.material_id == material_id
+        material_exists = material_id in self.log
 
-        avg = self.log.m_average(material_id)
-        total = self.log.m_total(material_id)
+        if material_exists:
+            avg = self.log.m_average(material_id)
+            total = self.log.m_total(material_id)
+            duration = self.log.m_duration(material_id)
+            max_ = self.log.m_max(material_id)
+            min_ = self.log.m_min(material_id)
+            lost_time = self.log.m_lost_time(material_id)
+        else:
+            avg = self.log.average
+            total = duration = lost_time = 0
+            max_ = min_ = None
 
         if status.end is None:
             remaining_pages = material.pages - total
@@ -955,11 +965,11 @@ class Tracker:
             material=material,
             started=status.begin,
             completed=status.end,
-            duration=self.log.m_duration(material_id),
-            lost_time=self.log.m_lost_time(material_id),
+            duration=duration,
+            lost_time=lost_time,
             total=total,
-            min=self.log.m_min(material_id),
-            max=self.log.m_max(material_id),
+            min=min_,
+            max=max_,
             average=avg,
             remaining_pages=remaining_pages,
             remaining_days=remaining_days,
