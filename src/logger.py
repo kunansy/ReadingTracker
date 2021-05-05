@@ -75,7 +75,7 @@ LOGGING_CONFIG = {
     "loggers": {
         "sanic.root": {
             "level": "DEBUG",
-            "handlers": ["internalStream", "internalFile"]
+            "handlers": ["internalStream"]
         },
         "sanic.access": {
             "level": "DEBUG",
