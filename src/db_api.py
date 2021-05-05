@@ -358,14 +358,14 @@ def start_material(*,
     start_date = start_date or today()
     logger.info(f"Starting material {material_id=} at {start_date=}")
 
+    if start_date > today():
+        raise WrongDate("Start date must be less than today,"
+                        "but %s found", start_date)
+
+    if not does_material_exist(material_id=material_id):
+        raise MaterialNotFound(f"Material {material_id=}")
+
     with session() as ses:
-        if start_date > today():
-            raise WrongDate("Start date must be less than today,"
-                            "but %s found", start_date)
-
-        if not does_material_exist(material_id=material_id):
-            raise MaterialNotFound(f"Material {material_id=}")
-
         started_material = Status(
             material_id=material_id, begin=start_date)
         ses.add(started_material)
