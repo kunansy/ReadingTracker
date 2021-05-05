@@ -1,9 +1,9 @@
 #input-content {
-	padding: 1vh;
-	height: 20vh;
+    padding: 1vh;
+    height: 20vh;
 }
 .input::-webkit-calendar-picker-indicator {
-	display: none;
+    display: none;
 }
 ::-webkit-scrollbar {
   width: 0;
