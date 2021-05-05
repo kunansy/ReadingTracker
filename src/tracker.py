@@ -509,7 +509,7 @@ class Log:
         return (self.stop - self.start).days + 1
 
     @property
-    def empty_days(self) -> int:
+    def lost_time(self) -> int:
         logger.debug("Calculating empty days count for log")
         return self.duration - len(self.log)
 
@@ -590,7 +590,7 @@ class Log:
         if there were no empty days.
         """
         logger.debug("Calculating ... for log")
-        return self.total + self.average * self.empty_days
+        return self.total + self.average * self.lost_time
 
     def data(self) -> Iterator[tuple[datetime.date, LogRecord]]:
         """ Get pairs: date, info of all days from start to stop.
@@ -748,7 +748,7 @@ class Log:
             start_date=self.start,
             stop_date=self.stop,
             duration=self.duration,
-            lost_time=self.empty_days,
+            lost_time=self.lost_time,
             average=self.average,
             total_pages_read=self.total,
             would_be_total=self.would_be_total,
