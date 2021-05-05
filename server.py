@@ -259,8 +259,8 @@ async def add_log_record(request: Request) -> HTTPResponse:
         return response.redirect('/reading_log/add')
 
     try:
-        tracker.log._set_log(**record.dict())
-    except Exception as e:
+        log._set_log(**record.dict())
+    except trc.WrongLogParam as e:
         jinja.flash(request, str(e), 'error')
     else:
         jinja.flash(request, 'Record added', 'success')
@@ -329,7 +329,11 @@ async def add_note(request: Request) -> HTTPResponse:
         context = ujson.dumps(e.errors(), indent=4)
         logger.warning(f"Validation error:\n{context}")
 
-        jinja.flash(request, 'Validation error', 'error')
+        jinja.flash(
+            request,
+            f'Validation error: {e.raw_errors[0].exc}',
+            'error'
+        )
 
         request.ctx.session.update(
             **key_val
