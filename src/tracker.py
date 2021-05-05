@@ -502,7 +502,16 @@ class Log:
 
     @property
     def min(self) -> MinMax:
+        """ Get info of the record with
+        the min number of read pages.
+
+        :return: MinMax obj.
+        :exception ReadingLogIsEmpty:
+        """
         logger.debug("Calculating min for log")
+
+        if not self.log:
+            raise ReadingLogIsEmpty
 
         date, info = min(
             [(date, info) for date, info in self.items()],
