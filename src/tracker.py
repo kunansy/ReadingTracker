@@ -6,8 +6,6 @@ from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
 from typing import Union, Optional, Iterator, Iterable
-from src.db_api import MaterialNotFound, MaterialNotAssigned
-from src.db_api import MaterialEvenCompleted, WrongDate, BaseDBError
 
 import ujson
 
