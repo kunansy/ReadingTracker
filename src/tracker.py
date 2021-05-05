@@ -723,6 +723,9 @@ class Log:
         """
         logger.debug(f"Getting item {date=} from the log")
 
+        if not self.log:
+            raise ReadingLogIsEmpty
+
         if not isinstance(date, (datetime.date, slice, str)):
             raise TypeError(f"Date or slice of dates expected, "
                             f"but {type(date)} found")
