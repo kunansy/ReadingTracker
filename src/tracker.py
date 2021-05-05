@@ -697,6 +697,9 @@ class Log:
     def statistics(self) -> LogStatistics:
         logger.debug("Calculating statistics of the log")
 
+        if not self.log:
+            raise ReadingLogIsEmpty
+
         return LogStatistics(
             start_date=self.start,
             stop_date=self.stop,
