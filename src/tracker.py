@@ -6,8 +6,6 @@ from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
 from typing import Union, Optional, Iterator, Iterable
-from src.db_api import MaterialNotFound, MaterialNotAssigned
-from src.db_api import MaterialEvenCompleted, WrongDate, BaseDBError
 
 import ujson
 
@@ -32,6 +30,18 @@ class LoadingLogError(BaseTrackerError):
 
 
 class ReadingLogIsEmpty(BaseTrackerError):
+    pass
+
+
+class WrongLogParam(BaseTrackerError):
+    pass
+
+
+class NoMaterialInLog(BaseTrackerError):
+    pass
+
+
+class DatabaseError(BaseTrackerError):
     pass
 
 
@@ -150,8 +160,8 @@ class MaterialStatistics:
     duration: int
     lost_time: int
     total: int
-    min: MinMax
-    max: MinMax
+    min: Optional[MinMax]
+    max: Optional[MinMax]
     average: int
     remaining_pages: Optional[int] = None
     remaining_days: Optional[int] = None
@@ -187,13 +197,17 @@ class MaterialStatistics:
         remaining_days = (f"Remaining days: {self.remaining_days}\n" *
                           bool(self.remaining_days))
 
-        min_ = self.min
-        min_ = f"\tDate: {fmt(min_.date)}\n" \
-               f"\tCount: {min_.count} pages"
+        if min_ := self.min:
+            min_ = f"Min:\n\tDate: {fmt(min_.date)}\n" \
+                   f"\tCount: {min_.count} pages\n"
+        else:
+            min_ = ''
 
-        max_ = self.max
-        max_ = f"\tDate: {fmt(max_.date)}\n" \
-               f"\tCount: {max_.count} pages"
+        if max_ := self.max:
+            max_ = f"Max:\n\tDate: {fmt(max_.date)}\n" \
+                   f"\tCount: {max_.count} pages\n"
+        else:
+            max_ = ''
 
         return f"Material: «{self.material.title}»\n" \
                f"Pages: {self.material.pages}\n" \
@@ -204,8 +218,8 @@ class MaterialStatistics:
                f"Total: {self.total} pages\n" \
                f"{remaining_pages}" \
                f"{remaining_days}" \
-               f"Min:\n{min_}\n" \
-               f"Max:\n{max_}\n" \
+               f"{min_}" \
+               f"{max_}" \
                f"Average: {self.average} pages per day" \
                f"{would_be_completed}"
 
@@ -323,23 +337,37 @@ class Log:
         return self.LOG_PATH
 
     @property
-    def start(self) -> Optional[datetime.date]:
-        """ Get the date of the first logged day
-        (if there is, None otherwise).
+    def start(self) -> datetime.date:
+        """ Get the date of the first logged day.
+
+        :exception ReadingLogIsEmpty:
         """
         try:
             return list(self.log.keys())[0]
         except IndexError:
-            pass
+            msg = "Reading log is empty, no start date"
+            logger.warning(msg)
+            raise ReadingLogIsEmpty(msg)
 
     @property
-    def stop(self) -> Optional[datetime.date]:
-        if self.start is not None:
-            return list(self.keys())[-1]
+    def stop(self) -> datetime.date:
+        """ Get the date of the last logged day.
+
+        :exception ReadingLogIsEmpty:
+        """
+        try:
+            return list(self.log.keys())[-1]
+        except IndexError:
+            msg = "Reading log is empty, no stop date"
+            logger.warning(msg)
+            raise ReadingLogIsEmpty(msg)
 
     @property
     def reading_material(self) -> int:
-        """ Get id of the reading material. """
+        """ Get id of the reading material.
+
+        :exception ReadingLogIsEmpty:
+        """
         try:
             return list(self.log.values())[-1].material_id
         except IndexError:
@@ -358,20 +386,28 @@ class Log:
          !!! there will be more queries to the database !!!
 
         :return: dict with the format.
+
+        :exception DatabaseError:
         """
         with self.path.open(encoding='utf-8') as f:
             log = ujson.load(f)
 
-        res = {}
+        log_records = {}
         for date, info in log.items():
             date = to_datetime(date)
             record = LogRecord(**info)
 
             if full_info:
-                record.material_title = db.get_title(record.material_id)
+                try:
+                    material_title = db.get_title(record.material_id)
+                except db.BaseDBError as e:
+                    logger.error(str(e))
+                    raise DatabaseError(e)
+                else:
+                    record.material_title = material_title
 
-            res[date] = record
-        return res
+            log_records[date] = record
+        return log_records
 
     def _set_log(self,
                  date: datetime.date,
@@ -379,36 +415,46 @@ class Log:
                  material_id: int = None) -> None:
         """
         Set reading log for the day.
+        Dump changes to the file.
 
-        :param date: date of log.
-        :param count: count of read pages.
         :param material_id: id of the learned material,
-         by default id of the last material if exists.
+         by default id of the last material.
 
-        :exception ValueError: if count <= 0, the date
+        :exception WrongLogParam: if count <= 0, the date
          is more than today, the date even exists in
-         log, 'material_id' is None and log is empty.
+         log, 'material_id' not given and log is empty.
+        :exception DatabaseError:
         """
         logger.debug(f"Setting log for: {date=}, {count=}, {material_id=}")
 
         if count <= 0:
-            raise ValueError(f"Count must be > 0, but 0 <= {count}")
+            raise WrongLogParam(f"Count must be > 0, but 0 <= {count}")
         if date <= self.stop:
-            raise ValueError("The date must be less "
-                             f"than the last date, but {date=} < {self.stop=}")
+            raise WrongLogParam(
+                "The date must be less than the last "
+                f"date, but {date=} < {self.stop=}"
+            )
         if date in self.__log:
-            raise ValueError(f"The {date=} even exists in the log")
+            raise WrongLogParam(f"The {date=} even exists in the log")
         if material_id is None and len(self.log) == 0:
-            raise ValueError(f"{material_id=} and log dict is empty")
+            raise WrongLogParam(f"{material_id=} and log dict is empty")
+
+        try:
+            material_title = db.get_title(material_id)
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError(e)
 
         record = LogRecord(
             material_id=material_id or self.reading_material,
             count=count,
-            material_title=db.get_title(material_id)
+            material_title=material_title
         )
         self.__log[date] = record
 
         self.__log = dict(sorted(self.log.items(), key=lambda i: i[0]))
+
+        self.dump()
 
     def set_today_log(self,
                       count: int,
@@ -419,12 +465,16 @@ class Log:
         :param count: count of pages read today.
         :param material_id: id of learned material.
          The last learned material_id by default.
+
+        :exception WrongLogParam: if count <= 0, the date
+         is more than today, the date even exists in
+         log, 'material_id' not given and log is empty.
         """
         try:
             self._set_log(today(), count, material_id)
-        except ValueError:
-            logger.exception(f"Cannot set today's log with "
-                             f"{count=}, {material_id=}")
+        except WrongLogParam as e:
+            logger.error(str(e))
+            raise
 
     def set_yesterday_log(self,
                           count: int,
@@ -435,12 +485,16 @@ class Log:
         :param count: count of pages read yesterday.
         :param material_id: id of learned material.
          The last learned material_id by default.
+
+        :exception WrongLogParam: if count <= 0, the date
+         is more than today, the date even exists in
+         log, 'material_id' not given and log is empty.
         """
         try:
             self._set_log(yesterday(), count, material_id)
-        except ValueError:
-            logger.exception(f"Cannot set yesterday's log with "
-                             f"{count=}, {material_id=}")
+        except WrongLogParam as e:
+            logger.error(str(e))
+            raise
 
     def dump(self) -> None:
         """ Dump log to the file. """
@@ -466,17 +520,21 @@ class Log:
 
         return sum(
             info.count
-            for info in self.values()
+            for info in self.log.values()
         )
 
     @property
     def duration(self) -> int:
         """ Get duration of log """
         logger.debug("Calculating log duration")
+
+        if not self.log:
+            return 0
+
         return (self.stop - self.start).days + 1
 
     @property
-    def empty_days(self) -> int:
+    def lost_time(self) -> int:
         logger.debug("Calculating empty days count for log")
         return self.duration - len(self.log)
 
@@ -491,10 +549,19 @@ class Log:
 
     @property
     def min(self) -> MinMax:
+        """ Get info of the record with
+        the min number of read pages.
+
+        :return: MinMax obj.
+        :exception ReadingLogIsEmpty:
+        """
         logger.debug("Calculating min for log")
 
+        if not self.log:
+            raise ReadingLogIsEmpty
+
         date, info = min(
-            [(date, info) for date, info in self.items()],
+            [(date, info) for date, info in self.log.items()],
             key=lambda item: item[1].count
         )
         return MinMax(
@@ -504,10 +571,19 @@ class Log:
 
     @property
     def max(self) -> MinMax:
+        """ Get info of the record with
+        the max number of read pages.
+
+        :return: MinMax obj.
+        :exception ReadingLogIsEmpty:
+        """
         logger.debug("Calculating max for log")
 
+        if not self.log:
+            raise ReadingLogIsEmpty
+
         date, info = max(
-            [(date, info) for date, info in self.items()],
+            [(date, info) for date, info in self.log.items()],
             key=lambda item: item[1].count
         )
 
@@ -520,9 +596,12 @@ class Log:
     def median(self) -> int:
         logger.debug("Calculating median for log")
 
+        if not self.log:
+            return 0
+
         counts = sorted(
             info.count
-            for info in self.values()
+            for info in self.log.values()
         )
 
         if (middle := len(counts) // 2) % 2 == 0:
@@ -536,16 +615,7 @@ class Log:
         if there were no empty days.
         """
         logger.debug("Calculating ... for log")
-        return self.total + self.average * self.empty_days
-
-    def values(self):
-        return self.log.values()
-
-    def keys(self):
-        return self.log.keys()
-
-    def items(self):
-        return self.log.items()
+        return self.total + self.average * self.lost_time
 
     def data(self) -> Iterator[tuple[datetime.date, LogRecord]]:
         """ Get pairs: date, info of all days from start to stop.
@@ -555,6 +625,9 @@ class Log:
         as the material_id of the last not empty day.
         """
         logger.debug("Getting data from log")
+
+        if not self.log:
+            return
 
         step = timedelta(days=1)
         iter_ = self.start
@@ -572,8 +645,14 @@ class Log:
 
     def m_duration(self,
                    material_id: int) -> int:
-        """ Calculate how many days the material was being reading """
+        """ Calculate how many days the material was being reading.
+
+        :exception NoMaterialInLog:
+        """
         logger.debug(f"Calculating duration for material {material_id=}")
+
+        if material_id not in self:
+            raise NoMaterialInLog
 
         return sum(
             1
@@ -583,19 +662,31 @@ class Log:
 
     def m_total(self,
                 material_id: int) -> int:
-        """ Calculate how many pages of the material even read """
+        """ Calculate how many pages of the material even read.
+
+        :exception NoMaterialInLog:
+        """
         logger.debug(f"Calculating total for material {material_id=}")
+
+        if material_id not in self:
+            raise NoMaterialInLog
 
         return sum(
             info.count
-            for info in self.values()
+            for info in self.log.values()
             if info.material_id == material_id
         )
 
-    def m_empty_days(self,
-                     material_id: int) -> int:
-        """ How many days was lost reading the material """
+    def m_lost_time(self,
+                    material_id: int) -> int:
+        """ How many days was lost reading the material.
+
+        :exception NoMaterialInLog:
+        """
         logger.debug(f"Calculating lost time for material {material_id=}")
+
+        if material_id not in self:
+            raise NoMaterialInLog
 
         return sum(
             1
@@ -605,13 +696,22 @@ class Log:
 
     def m_min(self,
               material_id: int) -> MinMax:
+        """ Get info of the record with
+        the min number of read pages of the material.
+
+        :exception NoMaterialInLog:
+        """
         logger.debug(f"Calculating min for material {material_id=}")
+
+        if material_id not in self:
+            raise NoMaterialInLog
 
         sample = [
             (date, info)
-            for date, info in self.items()
+            for date, info in self.log.items()
             if info.material_id == material_id
         ]
+
         date, info = min(
             sample,
             key=lambda item: item[1].count
@@ -623,13 +723,22 @@ class Log:
 
     def m_max(self,
               material_id: int) -> MinMax:
+        """ Get info of the record with
+        the max number of read pages of the material.
+
+        :exception NoMaterialInLog:
+        """
         logger.debug(f"Calculating max for material {material_id=}")
+
+        if material_id not in self:
+            raise NoMaterialInLog
 
         sample = [
             (date, info)
-            for date, info in self.items()
+            for date, info in self.log.items()
             if info.material_id == material_id
         ]
+
         date, info = max(
             sample,
             key=lambda item: item[1].count
@@ -641,13 +750,24 @@ class Log:
 
     def m_average(self,
                   material_id: int) -> int:
+        """
+        :exception NoMaterialInLog:
+        """
         logger.debug(f"Calculating average for material {material_id=}")
 
+        if material_id not in self:
+            raise NoMaterialInLog
+
+        total = duration = 0
+        for date, info in self.data():
+            if info.material_id == material_id:
+                total += info.count
+                duration += 1
+
         try:
-            return (self.m_total(material_id) //
-                    self.m_duration(material_id))
+            return total // duration
         except ZeroDivisionError:
-            return 1
+            return 0
 
     def dates(self) -> list[datetime.date]:
         return [
@@ -666,13 +786,19 @@ class Log:
 
     @property
     def statistics(self) -> LogStatistics:
+        """
+        :exception ReadingLogIsEmpty:
+        """
         logger.debug("Calculating statistics of the log")
+
+        if not self.log:
+            raise ReadingLogIsEmpty
 
         return LogStatistics(
             start_date=self.start,
             stop_date=self.stop,
             duration=self.duration,
-            lost_time=self.empty_days,
+            lost_time=self.lost_time,
             average=self.average,
             total_pages_read=self.total,
             would_be_total=self.would_be_total,
@@ -688,8 +814,13 @@ class Log:
         of by slice of dates.
 
         If slice get new Log object with [start; stop).
+
+        :exception ReadingLogIsEmpty:
         """
         logger.debug(f"Getting item {date=} from the log")
+
+        if not self.log:
+            raise ReadingLogIsEmpty
 
         if not isinstance(date, (datetime.date, slice, str)):
             raise TypeError(f"Date or slice of dates expected, "
@@ -733,6 +864,17 @@ class Log:
     def __len__(self) -> int:
         return len(self.log)
 
+    def __contains__(self,
+                     material_id: int) -> bool:
+        logger.debug(f"Whether {material_id=} is in a log record")
+        if not self.log:
+            return False
+
+        return any(
+            info.material_id == material_id
+            for info in self.log.values()
+        )
+
     def __str__(self) -> str:
         """
         If there are the same material on several days,
@@ -746,8 +888,14 @@ class Log:
         for date, info in self.log.items():
             if (material_id := info.material_id) != last_material_id:
                 last_material_id = material_id
-                last_material_title = (info.material_title or
-                                       f"«{db.get_title(material_id)}»")
+                try:
+                    title = info.material_title or \
+                            f"«{db.get_title(material_id)}»"
+                except db.BaseDBError as e:
+                    logger.error(str(e))
+                    title = 'None'
+
+                last_material_title = title
             else:
                 last_material_title = '...'
 
@@ -779,18 +927,38 @@ class Tracker:
         """
         Get list of uncompleted materials:
         assigned but not completed and not assigned too
+
+        :exception DatabaseError:
         """
-        return db.get_free_materials()
+        try:
+            return db.get_free_materials()
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError
 
     @property
     def processed(self) -> db.MATERIAL_STATUS:
-        """ Get list of completed Materials. """
-        return db.get_completed_materials()
+        """ Get list of completed Materials.
+
+        :exception DatabaseError:
+        """
+        try:
+            return db.get_completed_materials()
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError
 
     @property
     def reading(self) -> db.MATERIAL_STATUS:
-        """ Get reading materials and their statuses """
-        return db.get_reading_materials()
+        """ Get reading materials and their statuses
+
+        :exception DatabaseError:
+        """
+        try:
+            return db.get_reading_materials()
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError
 
     @property
     def log(self) -> Log:
@@ -798,21 +966,28 @@ class Tracker:
 
     @property
     def notes(self) -> list[db.Note]:
-        return db.get_notes()
+        """
+        :exception DatabaseError:
+        """
+        try:
+            return db.get_notes()
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError
 
     @staticmethod
     def does_material_exist(material_id: int) -> bool:
         try:
-            return db.does_material_exist(material_id=material_id)
-        except Exception as e:
+            return db.does_material_exist(material_id)
+        except db.BaseDBError as e:
             logger.error(f"Error checking {material_id=} exists:\n{e}")
             return False
 
-    def get_material_statistic(self,
-                               material_id: int,
-                               *,
-                               material: db.Material = None,
-                               status: db.Status = None) -> MaterialStatistics:
+    def get_material_statistics(self,
+                                material_id: int,
+                                *,
+                                material: db.Material = None,
+                                status: db.Status = None) -> MaterialStatistics:
         """ Calculate statistics for reading or completed material """
         logger.debug(f"Calculating material statistics for {material_id=}")
 
@@ -820,13 +995,23 @@ class Tracker:
         status = status or self.get_status(material_id)
 
         assert material.material_id == status.material_id == material_id
+        material_exists = material_id in self.log
 
-        avg = self.log.m_average(material_id)
-        total = self.log.m_total(material_id)
+        if material_exists:
+            avg = self.log.m_average(material_id)
+            total = self.log.m_total(material_id)
+            duration = self.log.m_duration(material_id)
+            max_ = self.log.m_max(material_id)
+            min_ = self.log.m_min(material_id)
+            lost_time = self.log.m_lost_time(material_id)
+        else:
+            avg = self.log.average
+            total = duration = lost_time = 0
+            max_ = min_ = None
 
         if status.end is None:
             remaining_pages = material.pages - total
-            remaining_days = round(remaining_pages // avg)
+            remaining_days = round(remaining_pages / avg)
             would_be_completed = today() + timedelta(days=remaining_days)
         else:
             would_be_completed = remaining_days = remaining_pages = None
@@ -835,11 +1020,11 @@ class Tracker:
             material=material,
             started=status.begin,
             completed=status.end,
-            duration=self.log.m_duration(material_id),
-            lost_time=self.log.m_empty_days(material_id),
+            duration=duration,
+            lost_time=lost_time,
             total=total,
-            min=self.log.m_min(material_id),
-            max=self.log.m_max(material_id),
+            min=min_,
+            max=max_,
             average=avg,
             remaining_pages=remaining_pages,
             remaining_days=remaining_days,
@@ -849,7 +1034,7 @@ class Tracker:
     def statistics(self, 
                    materials: list[db.MaterialStatus]) -> list[MaterialStatistics]:
         return [
-            self.get_material_statistic(
+            self.get_material_statistics(
                 ms.material.material_id, material=ms.material, status=ms.status
             )
             for ms in materials
@@ -900,17 +1085,16 @@ class Tracker:
         :param start_date: date when the material was started.
          Today by default.
 
-        :exception WrongDate: if start date is better than today.
-        :exception MaterialNotFound: if the material doesn't exist.
+        :exception DatabaseError:
         """
         try:
             db.start_material(
                 material_id=material_id,
                 start_date=start_date
             )
-        except BaseDBError as e:
-            logger.warning(e)
-            raise
+        except db.BaseDBError as e:
+            logger.error(e)
+            raise DatabaseError(e)
 
     def complete_material(self,
                           material_id: int = None,
@@ -923,11 +1107,7 @@ class Tracker:
         :param completion_date: date when the material was completed.
          Today by default.
 
-        :exception MaterialEvenCompleted: if the material has been
-         completed yet.
-        :exception WrongDate: if completion_date is less than start_date.
-        :exception MaterialNotAssigned: if the material has not been
-         started yet.
+        :exception DatabaseError:
         """
         material_id = material_id or self.log.reading_material
 
@@ -936,24 +1116,34 @@ class Tracker:
                 material_id=material_id,
                 completion_date=completion_date
             )
-        except BaseDBError as e:
-            logger.warning(e)
-            raise
+        except db.BaseDBError as e:
+            logger.error(e)
+            raise DatabaseError(e)
 
     @staticmethod
     def add_material(title: str,
                      authors: str,
                      pages: int,
                      tags: str) -> None:
-        db.add_material(
-            title=title,
-            authors=authors,
-            pages=pages,
-            tags=tags
-        )
+        """
+        :exception DatabaseError:
+        """
+        try:
+            db.add_material(
+                title=title,
+                authors=authors,
+                pages=pages,
+                tags=tags
+            )
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError
 
     @staticmethod
     def get_material(material_id: int) -> db.Material:
+        """
+        :exception DatabaseError:
+        """
         logger.debug(f"Getting material {material_id=}")
 
         try:
@@ -961,11 +1151,21 @@ class Tracker:
         except IndexError:
             msg = f"Material {material_id=} not found"
             logger.warning(msg)
-            raise MaterialNotFound(msg)
+            raise DatabaseError(msg)
+        except db.BaseDBError as e:
+            logger.error(e)
+            raise DatabaseError(e)
 
     @staticmethod
     def get_status(material_id: int) -> db.Status:
-        return db.get_material_status(material_id=material_id)
+        """
+        :exception DatabaseError:
+        """
+        try:
+            return db.get_material_status(material_id=material_id)
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError(e)
 
     @staticmethod
     def get_notes(material_id: int = None) -> list[db.Note]:
@@ -973,18 +1173,20 @@ class Tracker:
         :param material_id: get notes for this material.
          By default, get all notes.
 
-        :exception ValueError: if the material_id is not integer.
+        :exception DatabaseError:
         """
         if material_id is not None:
             try:
-                material_id = int(material_id)
-            except ValueError:
-                logger.warning("Material id must be ans integer, but "
-                               f"{material_id} found")
-                raise
-            else:
                 return db.get_notes(materials_ids=[material_id])
-        return db.get_notes()
+            except db.BaseDBError as e:
+                logger.error(str(e))
+                raise DatabaseError(e)
+
+        try:
+            return db.get_notes()
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError(e)
 
     @staticmethod
     def add_note(material_id: int,
@@ -995,7 +1197,7 @@ class Tracker:
         """
         Here it is expected that all fields are valid.
 
-        :exception MaterialNotFound: if the material doesn't exist.
+        :exception DatabaseError:
         :exception ValueError: if the given page number is better
          than page count in the material.
         """
@@ -1007,11 +1209,14 @@ class Tracker:
             logger.warning(msg)
             raise ValueError(msg)
 
-        db.add_note(
-            material_id=material_id,
-            content=content,
-            chapter=chapter,
-            page=page,
-            date=date
-        )
-
+        try:
+            db.add_note(
+                material_id=material_id,
+                content=content,
+                chapter=chapter,
+                page=page,
+                date=date
+            )
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError(e)

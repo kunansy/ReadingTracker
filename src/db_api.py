@@ -12,8 +12,10 @@ from dataclasses import dataclass
 from os import environ
 from typing import ContextManager, Callable
 
-from sqlalchemy import Column, ForeignKey, Integer, \
-                       String, Date, create_engine, Text
+from sqlalchemy import (
+    Column, ForeignKey, Integer,
+    String, Date, create_engine, Text
+)
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
@@ -180,7 +182,10 @@ def session(**kwargs) -> ContextManager[Session]:
         logger.info("Rollback all changes")
 
         new_session.rollback()
-        raise
+
+        if isinstance(e, BaseDBError):
+            raise e
+        raise BaseDBError(e)
     finally:
         new_session.close()
         logger.info("Session closed")
@@ -212,7 +217,7 @@ def get_materials(*,
 
 
 @cache
-def get_title(material_id: int) -> str:
+def get_title(material_id: int, /) -> str:
     logger.info(f"Getting title for {material_id=}")
     try:
         return get_materials(materials_ids=[material_id])[0].title
@@ -221,8 +226,8 @@ def get_title(material_id: int) -> str:
         return ''
 
 
-def does_material_exist(*,
-                        material_id: int) -> bool:
+@cache
+def does_material_exist(material_id: int, /) -> bool:
     logger.info(f"Whether {material_id=} exists")
     return len(get_materials(materials_ids=[material_id])) == 1
 
@@ -231,15 +236,15 @@ def get_free_materials() -> list[Material]:
     """ Get all not assigned materials """
     logger.info("Getting free materials")
 
-    assigned_materials_ids = {
-        status.material_id
-        for status in get_status()
-    }
+    with session() as ses:
+        res = ses.query(Status, Material) \
+            .join(Status, isouter=True) \
+            .all()
 
     return [
         material
-        for material in get_materials()
-        if material.material_id not in assigned_materials_ids
+        for status, material in res
+        if status is None
     ]
 
 
@@ -250,29 +255,15 @@ def get_reading_materials() -> MATERIAL_STATUS:
     """
     logger.info("Getting reading materials")
 
-    status = get_status()
-
-    reading_materials_ids = [
-        status_.material_id
-        for status_ in status
-        if status_.end is None
-    ]
-
-    if not reading_materials_ids:
-        logger.info("Reading materials not found")
-        return []
-
-    status = {
-        status_.material_id: status_
-        for status_ in status
-        if status_.material_id in reading_materials_ids
-    }
-    materials = get_materials(materials_ids=reading_materials_ids)
+    with session() as ses:
+        res = ses.query(Material, Status)\
+            .join(Status, Material.material_id == Status.material_id) \
+            .filter(Status.end == None) \
+            .all()
 
     return [
-        MaterialStatus(
-            material=material, status=status[material.material_id])
-        for material in materials
+        MaterialStatus(material=ms[0], status=ms[1])
+        for ms in res
     ]
 
 
@@ -281,22 +272,14 @@ def get_completed_materials() -> MATERIAL_STATUS:
     logger.info("Getting completed materials")
 
     with session() as ses:
-        completed_materials = ses.query(Material).join(Status)\
-                                 .filter(Status.end != None).all()
+        res = ses.query(Material, Status)\
+            .join(Status, Material.material_id == Status.material_id)\
+            .filter(Status.end != None)\
+            .all()
 
-    if not completed_materials:
-        logger.info("No completed materials found")
-        return []
-
-    statuses = {
-        material.material_id:
-            get_material_status(material_id=material.material_id)
-        for material in completed_materials
-    }
     return [
-        MaterialStatus(
-            material=material, status=statuses[material.material_id])
-        for material in completed_materials
+        MaterialStatus(material=ms[0], status=ms[1])
+        for ms in res
     ]
 
 
@@ -375,14 +358,14 @@ def start_material(*,
     start_date = start_date or today()
     logger.info(f"Starting material {material_id=} at {start_date=}")
 
+    if start_date > today():
+        raise WrongDate("Start date must be less than today,"
+                        "but %s found", start_date)
+
+    if not does_material_exist(material_id):
+        raise MaterialNotFound(f"Material {material_id=}")
+
     with session() as ses:
-        if start_date > today():
-            raise WrongDate("Start date must be less than today,"
-                            "but %s found", start_date)
-
-        if not does_material_exist(material_id=material_id):
-            raise MaterialNotFound(f"Material {material_id=}")
-
         started_material = Status(
             material_id=material_id, begin=start_date)
         ses.add(started_material)

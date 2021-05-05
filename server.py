@@ -14,9 +14,6 @@ from src import logger as logger_
 from src import tracker as trc
 
 
-logging.getLogger('sanic.error').disabled = True
-
-
 app = Sanic(__name__, log_config=logger_.LOGGING_CONFIG)
 app.static('/static', './static')
 
@@ -156,7 +153,7 @@ async def add_material(request: Request) -> HTTPResponse:
 
     try:
         tracker.add_material(**material.dict())
-    except Exception as e:
+    except trc.DatabaseError as e:
         jinja.flash(request, str(e), 'error')
 
         request.ctx.session.update(
@@ -174,12 +171,12 @@ async def start_material(request: Request,
                          material_id: int) -> HTTPResponse:
     try:
         tracker.start_material(material_id)
-    except trc.BaseDBError as e:
+    except trc.DatabaseError as e:
         jinja.flash(request, str(e), 'error')
     else:
         jinja.flash(request, f"Material {material_id=} started", 'success')
     finally:
-        return response.redirect('/material/queue')
+        return response.redirect('/materials/queue')
 
 
 @app.post('/materials/complete/<material_id:int>')
@@ -187,7 +184,7 @@ async def complete_material(request: Request,
                             material_id: int) -> HTTPResponse:
     try:
         tracker.complete_material(material_id)
-    except trc.BaseDBError as e:
+    except trc.DatabaseError as e:
         jinja.flash(request, str(e), 'error')
     else:
         jinja.flash(request, f"Material {material_id=} completed", 'success')
@@ -262,11 +259,10 @@ async def add_log_record(request: Request) -> HTTPResponse:
         return response.redirect('/reading_log/add')
 
     try:
-        tracker.log._set_log(**record.dict())
-    except Exception as e:
+        log._set_log(**record.dict())
+    except trc.WrongLogParam as e:
         jinja.flash(request, str(e), 'error')
     else:
-        log.dump()
         jinja.flash(request, 'Record added', 'success')
     finally:
         return response.redirect('/reading_log/add')
@@ -333,7 +329,11 @@ async def add_note(request: Request) -> HTTPResponse:
         context = ujson.dumps(e.errors(), indent=4)
         logger.warning(f"Validation error:\n{context}")
 
-        jinja.flash(request, 'Validation error', 'error')
+        jinja.flash(
+            request,
+            f'Validation error: {e.raw_errors[0].exc}',
+            'error'
+        )
 
         request.ctx.session.update(
             **key_val
@@ -342,7 +342,7 @@ async def add_note(request: Request) -> HTTPResponse:
 
     try:
         tracker.add_note(**note.dict())
-    except trc.MaterialNotFound as e:
+    except trc.DatabaseError as e:
         jinja.flash(request, str(e), 'error')
     except ValueError as e:
         jinja.flash(request, str(e), 'error')
