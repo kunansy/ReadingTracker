@@ -1184,7 +1184,7 @@ class Tracker:
 
         try:
             return db.get_notes()
-        except Exception as e:
+        except db.BaseDBError as e:
             logger.error(str(e))
             raise DatabaseError(e)
 
