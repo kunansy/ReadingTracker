@@ -14,9 +14,6 @@ from src import logger as logger_
 from src import tracker as trc
 
 
-logging.getLogger('sanic.error').disabled = True
-
-
 app = Sanic(__name__, log_config=logger_.LOGGING_CONFIG)
 app.static('/static', './static')
 
