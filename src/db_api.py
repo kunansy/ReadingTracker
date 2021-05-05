@@ -269,23 +269,15 @@ def get_completed_materials() -> MATERIAL_STATUS:
     logger.info("Getting completed materials")
 
     with session() as ses:
-        completed_materials = ses.query(Material).join(Status)\
-                                 .filter(Status.end != None).all()
+        res = ses.query(Material, Status)\
+            .join(Status, Material.material_id == Status.material_id)\
+            .filter(Status.end != None)\
+            .all()
 
-    if not completed_materials:
-        logger.info("No completed materials found")
-        return []
-
-    statuses = {
-        material.material_id:
-            get_material_status(material_id=material.material_id)
-        for material in completed_materials
-    }
-    return [
-        MaterialStatus(
-            material=material, status=statuses[material.material_id])
-        for material in completed_materials
-    ]
+        return [
+            MaterialStatus(material=ms[0], status=ms[1])
+            for ms in res
+        ]
 
 
 def get_status(*,
