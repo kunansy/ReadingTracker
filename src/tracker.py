@@ -400,7 +400,7 @@ class Log:
             if full_info:
                 try:
                     material_title = db.get_title(record.material_id)
-                except Exception as e:
+                except db.BaseDBError as e:
                     logger.error(str(e))
                     raise DatabaseError(e)
                 else:
@@ -441,7 +441,7 @@ class Log:
 
         try:
             material_title = db.get_title(material_id)
-        except Exception as e:
+        except db.BaseDBError as e:
             logger.error(str(e))
             raise DatabaseError(e)
 
@@ -891,7 +891,7 @@ class Log:
                 try:
                     title = info.material_title or \
                             f"«{db.get_title(material_id)}»"
-                except Exception as e:
+                except db.BaseDBError as e:
                     logger.error(str(e))
                     title = 'None'
 
@@ -932,7 +932,7 @@ class Tracker:
         """
         try:
             return db.get_free_materials()
-        except Exception as e:
+        except db.BaseDBError as e:
             logger.error(str(e))
             raise DatabaseError
 
@@ -944,7 +944,7 @@ class Tracker:
         """
         try:
             return db.get_completed_materials()
-        except Exception as e:
+        except db.BaseDBError as e:
             logger.error(str(e))
             raise DatabaseError
 
@@ -956,7 +956,7 @@ class Tracker:
         """
         try:
             return db.get_reading_materials()
-        except Exception as e:
+        except db.BaseDBError as e:
             logger.error(str(e))
             raise DatabaseError
 
@@ -971,7 +971,7 @@ class Tracker:
         """
         try:
             return db.get_notes()
-        except Exception as e:
+        except db.BaseDBError as e:
             logger.error(str(e))
             raise DatabaseError
 
@@ -979,7 +979,7 @@ class Tracker:
     def does_material_exist(material_id: int) -> bool:
         try:
             return db.does_material_exist(material_id)
-        except Exception as e:
+        except db.BaseDBError as e:
             logger.error(f"Error checking {material_id=} exists:\n{e}")
             return False
 
@@ -1092,7 +1092,7 @@ class Tracker:
                 material_id=material_id,
                 start_date=start_date
             )
-        except Exception as e:
+        except db.BaseDBError as e:
             logger.error(e)
             raise DatabaseError(e)
 
@@ -1116,7 +1116,7 @@ class Tracker:
                 material_id=material_id,
                 completion_date=completion_date
             )
-        except Exception as e:
+        except db.BaseDBError as e:
             logger.error(e)
             raise DatabaseError(e)
 
@@ -1135,7 +1135,7 @@ class Tracker:
                 pages=pages,
                 tags=tags
             )
-        except Exception as e:
+        except db.BaseDBError as e:
             logger.error(str(e))
             raise DatabaseError
 
@@ -1152,7 +1152,7 @@ class Tracker:
             msg = f"Material {material_id=} not found"
             logger.warning(msg)
             raise DatabaseError(msg)
-        except Exception as e:
+        except db.BaseDBError as e:
             logger.error(e)
             raise DatabaseError(e)
 
@@ -1163,7 +1163,7 @@ class Tracker:
         """
         try:
             return db.get_material_status(material_id=material_id)
-        except Exception as e:
+        except db.BaseDBError as e:
             logger.error(str(e))
             raise DatabaseError(e)
 
@@ -1178,7 +1178,7 @@ class Tracker:
         if material_id is not None:
             try:
                 return db.get_notes(materials_ids=[material_id])
-            except Exception as e:
+            except db.BaseDBError as e:
                 logger.error(str(e))
                 raise DatabaseError(e)
 
@@ -1217,6 +1217,6 @@ class Tracker:
                 page=page,
                 date=date
             )
-        except Exception as e:
+        except db.BaseDBError as e:
             logger.error(str(e))
             raise DatabaseError(e)
