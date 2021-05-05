@@ -978,7 +978,7 @@ class Tracker:
     @staticmethod
     def does_material_exist(material_id: int) -> bool:
         try:
-            return db.does_material_exist(material_id=material_id)
+            return db.does_material_exist(material_id)
         except Exception as e:
             logger.error(f"Error checking {material_id=} exists:\n{e}")
             return False
