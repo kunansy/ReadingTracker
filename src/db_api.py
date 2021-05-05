@@ -252,30 +252,16 @@ def get_reading_materials() -> MATERIAL_STATUS:
     """
     logger.info("Getting reading materials")
 
-    status = get_status()
+    with session() as ses:
+        res = ses.query(Material, Status)\
+            .join(Status, Material.material_id == Status.material_id) \
+            .filter(Status.end == None) \
+            .all()
 
-    reading_materials_ids = [
-        status_.material_id
-        for status_ in status
-        if status_.end is None
-    ]
-
-    if not reading_materials_ids:
-        logger.info("Reading materials not found")
-        return []
-
-    status = {
-        status_.material_id: status_
-        for status_ in status
-        if status_.material_id in reading_materials_ids
-    }
-    materials = get_materials(materials_ids=reading_materials_ids)
-
-    return [
-        MaterialStatus(
-            material=material, status=status[material.material_id])
-        for material in materials
-    ]
+        return [
+            MaterialStatus(material=ms[0], status=ms[1])
+            for ms in res
+        ]
 
 
 def get_completed_materials() -> MATERIAL_STATUS:
