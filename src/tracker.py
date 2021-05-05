@@ -1011,7 +1011,7 @@ class Tracker:
 
         if status.end is None:
             remaining_pages = material.pages - total
-            remaining_days = round(remaining_pages // avg)
+            remaining_days = round(remaining_pages / avg)
             would_be_completed = today() + timedelta(days=remaining_days)
         else:
             would_be_completed = remaining_days = remaining_pages = None
