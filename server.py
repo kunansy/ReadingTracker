@@ -153,7 +153,7 @@ async def add_material(request: Request) -> HTTPResponse:
 
     try:
         tracker.add_material(**material.dict())
-    except Exception as e:
+    except trc.DatabaseError as e:
         jinja.flash(request, str(e), 'error')
 
         request.ctx.session.update(
@@ -171,7 +171,7 @@ async def start_material(request: Request,
                          material_id: int) -> HTTPResponse:
     try:
         tracker.start_material(material_id)
-    except trc.BaseDBError as e:
+    except trc.DatabaseError as e:
         jinja.flash(request, str(e), 'error')
     else:
         jinja.flash(request, f"Material {material_id=} started", 'success')
@@ -184,7 +184,7 @@ async def complete_material(request: Request,
                             material_id: int) -> HTTPResponse:
     try:
         tracker.complete_material(material_id)
-    except trc.BaseDBError as e:
+    except trc.DatabaseError as e:
         jinja.flash(request, str(e), 'error')
     else:
         jinja.flash(request, f"Material {material_id=} completed", 'success')
@@ -339,7 +339,7 @@ async def add_note(request: Request) -> HTTPResponse:
 
     try:
         tracker.add_note(**note.dict())
-    except trc.MaterialNotFound as e:
+    except trc.DatabaseError as e:
         jinja.flash(request, str(e), 'error')
     except ValueError as e:
         jinja.flash(request, str(e), 'error')
