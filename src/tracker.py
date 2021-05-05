@@ -651,6 +651,9 @@ class Log:
         """ How many days was lost reading the material """
         logger.debug(f"Calculating lost time for material {material_id=}")
 
+        if material_id not in self:
+            return 0
+
         return sum(
             1
             for _, info in self.data()
