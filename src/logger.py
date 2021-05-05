@@ -37,6 +37,7 @@ BASE_MESSAGE_FORMAT = "[%(asctime)s] [%(name)s] [%(levelname)s] " \
                       "[%(module)s:%(funcName)s():%(process)d]"
 DATE_FORMAT = "%d-%m-%Y %H:%M:%S"
 SANIC_LOG_FILE = LOG_FOLDER / 'sanic.log'
+SANIC_ERROR_LOG_FILE = LOG_FOLDER / 'sanic_error.log'
 
 LOGGING_CONFIG = {
     "version": 1,
@@ -59,9 +60,9 @@ LOGGING_CONFIG = {
             "stream": sys.stderr,
             "level": "DEBUG"
         },
-        "internalFile": {
+        "errorFile": {
             "class": "logging.FileHandler",
-            "filename": SANIC_LOG_FILE,
+            "filename": SANIC_ERROR_LOG_FILE,
             "formatter": "simple",
             "level": "WARNING"
         },
