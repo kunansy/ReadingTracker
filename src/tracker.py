@@ -666,18 +666,17 @@ class Log:
         the min number of read pages of the material.
 
         :return: MinMax obj or None.
-        :exception ReadingLogIsEmpty:
         """
         logger.debug(f"Calculating min for material {material_id=}")
+
+        if material_id not in self:
+            return
 
         sample = [
             (date, info)
             for date, info in self.log.items()
             if info.material_id == material_id
         ]
-
-        if not sample:
-            return
 
         date, info = min(
             sample,
