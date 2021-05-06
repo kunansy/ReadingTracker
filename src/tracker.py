@@ -2,6 +2,7 @@
 import copy
 import datetime
 import logging
+import random
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
@@ -1216,6 +1217,53 @@ class Tracker:
                 chapter=chapter,
                 page=page,
                 date=date
+            )
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError(e)
+
+    @staticmethod
+    def add_card(material_id: int,
+                 question: str,
+                 answer: Optional[str] = None,
+                 note_id: Optional[int] = None) -> None:
+        """
+        :exception DatabaseError:
+        """
+        try:
+            db.add_card(
+                material_id=material_id,
+                answer=answer,
+                question=question,
+                note_id=note_id
+            )
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError(e)
+
+    @staticmethod
+    def get_card(material_id: Optional[int] = None) -> list[db.Card]:
+        """
+        :exception DatabaseError:
+        """
+        # TODO: optimize
+        try:
+            cards = db.get_cards(material_id=material_id)
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError(e)
+
+        return random.choice(cards)
+
+    @staticmethod
+    def complete_card(card_id: int,
+                      result: db.RepeatResult) -> None:
+        """
+        :exception DatabaseError:
+        """
+        try:
+            db.complete_card(
+                card_id=card_id, result=result
             )
         except db.BaseDBError as e:
             logger.error(str(e))
