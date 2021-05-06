@@ -10,7 +10,7 @@ import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
 from os import environ
-from typing import ContextManager, Callable
+from typing import ContextManager, Callable, Optional
 
 from sqlalchemy import (
     Column, ForeignKey, Integer,
@@ -230,7 +230,7 @@ def today() -> datetime.date:
 
 
 def get_materials(*,
-                  materials_ids: list[int] = None) -> list[Material]:
+                  materials_ids: Optional[list[int]] = None) -> list[Material]:
     """
     Get the materials by their ids.
     If it's None, get all materials.
@@ -317,7 +317,7 @@ def get_completed_materials() -> MATERIAL_STATUS:
 
 
 def get_status(*,
-               status_ids: list[int] = None) -> list[Status]:
+               status_ids: Optional[list[int]] = None) -> list[Status]:
     """
     Get the statuses by their ids.
     If it's None, get all statuses.
@@ -377,7 +377,7 @@ def add_material(*,
 
 def start_material(*,
                    material_id: int,
-                   start_date: datetime.date = None) -> None:
+                   start_date: Optional[datetime.date] = None) -> None:
     """
     Start a material, add new record to Status table.
 
@@ -409,7 +409,7 @@ def start_material(*,
 
 def complete_material(*,
                       material_id: int,
-                      completion_date: datetime.date = None) -> None:
+                      completion_date: Optional[datetime.date] = None) -> None:
     """
     Set end date to Status table.
 
@@ -444,7 +444,7 @@ def complete_material(*,
 
 
 def get_notes(*,
-              materials_ids: list[int] = None) -> list[Note]:
+              materials_ids: Optional[list[int]] = None) -> list[Note]:
     """ Get notes by material ids.
     If it's None, get all notes.
     """
@@ -467,7 +467,7 @@ def add_note(*,
              content: str,
              chapter: int,
              page: int,
-             date: datetime.date = None) -> None:
+             date: Optional[datetime.date] = None) -> None:
     """ Add note to the database. """
     date = date or today()
     logger.info(f"Adding note for {material_id=} at {date=}")
