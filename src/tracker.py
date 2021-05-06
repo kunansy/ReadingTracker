@@ -412,7 +412,7 @@ class Log:
     def _set_log(self,
                  date: datetime.date,
                  count: int,
-                 material_id: int = None) -> None:
+                 material_id: Optional[int] = None) -> None:
         """
         Set reading log for the day.
         Dump changes to the file.
@@ -458,7 +458,7 @@ class Log:
 
     def set_today_log(self,
                       count: int,
-                      material_id: int = None) -> None:
+                      material_id: Optional[int] = None) -> None:
         """
         Set today's reading log.
 
@@ -478,7 +478,7 @@ class Log:
 
     def set_yesterday_log(self,
                           count: int,
-                          material_id: int = None) -> None:
+                          material_id: Optional[int] = None) -> None:
         """
         Set yesterday's reading log.
 
@@ -986,8 +986,8 @@ class Tracker:
     def get_material_statistics(self,
                                 material_id: int,
                                 *,
-                                material: db.Material = None,
-                                status: db.Status = None) -> MaterialStatistics:
+                                material: Optional[db.Material] = None,
+                                status: Optional[db.Status] = None) -> MaterialStatistics:
         """ Calculate statistics for reading or completed material """
         logger.debug(f"Calculating material statistics for {material_id=}")
 
@@ -1078,7 +1078,7 @@ class Tracker:
 
     @staticmethod
     def start_material(material_id: int,
-                       start_date: datetime.date = None) -> None:
+                       start_date: Optional[datetime.date] = None) -> None:
         """ Create item in Status table.
 
         :param material_id: material to start.
@@ -1097,8 +1097,8 @@ class Tracker:
             raise DatabaseError(e)
 
     def complete_material(self,
-                          material_id: int = None,
-                          completion_date: datetime.date = None) -> None:
+                          material_id: Optional[int] = None,
+                          completion_date: Optional[datetime.date] = None) -> None:
         """
         Complete a material, set 'end' in its status.
 
@@ -1168,7 +1168,7 @@ class Tracker:
             raise DatabaseError(e)
 
     @staticmethod
-    def get_notes(material_id: int = None) -> list[db.Note]:
+    def get_notes(material_id: Optional[int] = None) -> list[db.Note]:
         """
         :param material_id: get notes for this material.
          By default, get all notes.
@@ -1193,7 +1193,7 @@ class Tracker:
                  content: str,
                  chapter: int,
                  page: int,
-                 date: datetime.date = None) -> None:
+                 date: Optional[datetime.date] = None) -> None:
         """
         Here it is expected that all fields are valid.
 
