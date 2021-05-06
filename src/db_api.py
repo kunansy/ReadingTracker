@@ -14,7 +14,7 @@ from typing import ContextManager, Callable
 
 from sqlalchemy import (
     Column, ForeignKey, Integer,
-    String, Date, create_engine, Text
+    String, Date, create_engine, Text, Float
 )
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.declarative import declarative_base
@@ -136,6 +136,39 @@ class MaterialStatus:
             )
 
         super().__setattr__(key, value)
+
+
+class Card(Base):
+    __tablename__ = 'card'
+
+    card_id = Column(Integer, primary_key=True)
+    question = Column(Text, nullable=False)
+    answer = Column(Text, nullable=True, default=None)
+    date = Column(Date, nullable=False)
+    material_id = Column(Integer,
+                         ForeignKey('material.material_id'),
+                         nullable=False)
+    note_id = Column(Integer,
+                     ForeignKey('note.id'),
+                     nullable=True)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(" \
+               f"card_id={self.card_id}, question={self.question}, " \
+               f"answer={self.answer}, date={self.date}, " \
+               f"material_id={self.material_id}, note_id={self.note_id})"
+
+
+class Recall(Base):
+    __tablename__ = 'recall'
+
+    recall_id = Column(Integer, primary_key=True)
+    card_id = Column(Integer,
+                     ForeignKey('card.card_id'),
+                     nullable=False)
+    last_repeat_date = Column(Date, nullable=False)
+    next_repeat_date = Column(Date, nullable=False)
+    mult = Column(Float, nullable=False, default=1.)
 
 
 MATERIAL_STATUS = list[MaterialStatus]
