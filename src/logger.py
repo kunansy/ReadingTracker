@@ -38,6 +38,7 @@ BASE_MESSAGE_FORMAT = "[%(asctime)s] [%(name)s] [%(levelname)s] " \
 DATE_FORMAT = "%d-%m-%Y %H:%M:%S"
 SANIC_LOG_FILE = LOG_FOLDER / 'sanic.log'
 SANIC_ERROR_LOG_FILE = LOG_FOLDER / 'sanic_error.log'
+SANIC_ACCESS_LOG_FILE = LOG_FOLDER / 'access.log'
 
 LOGGING_CONFIG = {
     "version": 1,
@@ -70,6 +71,12 @@ LOGGING_CONFIG = {
             "class": "logging.StreamHandler",
             "formatter": "access",
             "level": "DEBUG"
+        },
+        "accessFile": {
+            "class": "logging.FileHandler",
+            "filename": SANIC_ACCESS_LOG_FILE,
+            "formatter": "access",
+            "level": "DEBUG"
         }
     },
     "loggers": {
@@ -79,7 +86,7 @@ LOGGING_CONFIG = {
         },
         "sanic.access": {
             "level": "DEBUG",
-            "handlers": ["accessStream"]
+            "handlers": ["accessStream", "accessFile"]
         },
         "sanic.error": {
             "level": "WARNING",
