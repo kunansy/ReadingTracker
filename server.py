@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import datetime
 import logging
+from collections import defaultdict
 from typing import Any
 
 import ujson
@@ -284,18 +285,25 @@ async def get_notes(request: Request):
     else:
         jinja.flash(request, f"{len(notes)} notes found", 'success')
     
-    ids = {
+    all_ids = {
         note.material_id
         for note in all_notes
     }
-    
-    titles = {
+    all_titles = {
         material_id: db_api.get_title(material_id)
-        for material_id in ids
+        for material_id in all_ids
     }
+    
+    # chapters of the shown materials, 
+    #  it should help to create menu
+    chapters = defaultdict(set)
+    for note in notes:
+        chapters[note.material_id].add(note.chapter)
+
     return {
         'notes': notes,
-        'titles': titles,
+        'all_titles': all_titles,
+        'chapters': chapters,
         'DATE_FORMAT': trc.DATE_FORMAT
     }
 
