@@ -16,12 +16,32 @@
     <form action="/notes" method="GET">
         <input type="number" class="input" list="books" name="material_id" placeholder="Choose a material">
         <datalist id="books">
-          {% for material_id, title in titles.items() %}
+          {% for material_id, title in all_titles.items() %}
               <option value="{{ material_id }}"> «{{ title }}»
           {% endfor %}
       </datalist>
       <button type="submit" class="submit-button"> Search </button>
     </form>
+</div>
+
+<div class="menu">
+<details class="menu">
+    <summary> Menu </summary>
+    <div class="menu-items">
+    {% for material_id, chapters in chapters.items() %}
+        <div class="material-link">
+        <details class="chapters">
+            <summary> <a class="title-link" href="#material-{{ material_id }}"> «{{ all_titles[material_id] }}» </a> </summary>
+            <div class="chapters">
+                {% for chapter in chapters|sort %}
+                    <a class="chapter-link" href="#material-{{ material_id }}-chapter-{{ chapter }}"> Chapter {{ chapter }} </a>
+                {% endfor %}
+            </div>
+        </details>
+        </div>
+    {% endfor %}
+    </div>
+</details>
 </div>
 
 {% for material_id, notes_m in notes|sort(attribute='page')|groupby('material_id') %}
@@ -30,10 +50,10 @@
 {% endif %}
 
 <div class="group">
-    <h3 class="material_title"> «{{ titles[material_id] }}» </h3>
+    <h3 class="material_title"> <a name="material-{{material_id}}"> «{{ all_titles[material_id] }}» </a> </h3>
 
     {% for chapter, note_c in notes_m|groupby('chapter') %}
-        <h4 class="chapter_number"> Chapter: {{ chapter }} </h4>
+        <h4 class="chapter_number"> <a name="material-{{material_id}}-chapter-{{chapter}}"> Chapter: {{ chapter }} </a> </h4>
         {% for note in note_c %}
         <div class="note hover">
             <p class="note-content"> {{ note.content }}</p>
