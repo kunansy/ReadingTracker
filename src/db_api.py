@@ -483,3 +483,54 @@ def add_note(*,
 
         ses.add(note)
         logger.info("Note added")
+
+
+def add_card(*,
+             material_id: int,
+             question: str,
+             answer: Optional[str] = None,
+             note_id: Optional[int]) -> None:
+    logger.debug("Adding new card")
+    today_ = today()
+
+    with session() as ses:
+        card = Card(
+            material_id=material_id,
+            question=question,
+            answer=answer,
+            note_id=note_id,
+            date=today_
+        )
+        ses.add(card)
+        logger.info("Card added")
+
+        logger.debug("Starting the card")
+        recall = Recall(
+            card_id=card.card_id,
+            last_repeat_date=today_,
+            next_repeat_date=today_
+        )
+        ses.add(recall)
+        logger.debug("Card started")
+
+
+def get_cards(*,
+              material_id: Optional[int] = None) -> list[Card]:
+    with session() as ses:
+        if material_id:
+            return ses.query(Card)\
+                .join(Recall, Card.card_id == Recall.card_id)\
+                .filter(Card.material_id == material_id)\
+                .filter(Recall.next_repeat_date <= today())\
+                .all()
+
+        return ses.query(Card) \
+            .join(Recall, Card.card_id == Recall.card_id) \
+            .filter(Recall.next_repeat_date <= today()) \
+            .all()
+
+
+def complete_card(*,
+                  card_id: int,
+                  result: RecallResult) -> None:
+    pass
