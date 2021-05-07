@@ -1,0 +1,9 @@
+.alert.bad, .alert.tomorrow {
+    background-color: #E74C3C;
+}
+.alert.good {
+    background-color: #27AE60;
+}
+.alert.excellent {
+    background-color: #373252;
+}
