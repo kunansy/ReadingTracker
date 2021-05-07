@@ -106,6 +106,26 @@ class LogRecord(BaseModel):
         return repr(self)
 
 
+class Card(BaseModel):
+    class Config:
+        extra = 'forbid'
+
+    material_id: conint(gt=0)
+    note_id: conint(gt=0)
+    question: constr(strip_whitespaces=True, min_length=1)
+    answer: constr(strip_whitespaces=True)
+
+    def __repr__(self) -> str:
+        data = ', '.join(
+            f"{key}={value}"
+            for key, value in self.dict().items()
+        )
+        return f"{self.__class__.__name__}({data})"
+
+    def __str__(self) -> str:
+        return repr(self)
+
+
 @app.get('/materials/queue')
 @jinja.template('queue.html')
 async def get_queue(request: Request) -> dict[str, Any]:
