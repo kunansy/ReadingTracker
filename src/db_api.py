@@ -10,7 +10,6 @@ import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
 from os import environ
-from random import shuffle
 from typing import ContextManager, Callable, Optional
 
 from sqlalchemy import (
@@ -514,24 +513,6 @@ def add_note(*,
         logger.info("Note added")
 
 
-def card_cache(func: Callable) -> Callable:
-    cards: dict[int, list[Card]] = {}
-
-    def wrapped(material_id: int = None) -> list[Card]:
-        nonlocal cards
-
-        if not (material_id in cards and cards[material_id]):
-            logger.debug(f"Getting card for {material_id=} from func")
-            cards[material_id] = func(material_id)
-            shuffle(cards[material_id])
-        else:
-            logger.debug(f"Getting card for {material_id=} from cache")
-
-        return cards[material_id].pop()
-
-    return wrapped
-
-
 def add_card(*,
              material_id: int,
              question: str,
@@ -561,7 +542,6 @@ def add_card(*,
         logger.debug("Card started")
 
 
-@card_cache
 def get_cards(material_id: Optional[int] = None,
               /) -> list[CardNoteRecall]:
     with session() as ses:
