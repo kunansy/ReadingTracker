@@ -1,0 +1,36 @@
+{% extends 'index.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='add_card.css') }}">
+{% endblock style %}
+
+{% block header %}
+<nav class="subnavbar">
+    <a href="/recall"> Repeat </a>
+    <a href="/recall/add"> Add card </a>
+</nav>
+{% endblock header %}
+
+{% block main %}
+<div class="form">
+    <form action="/recall/add" method="POST">
+        <input class="input" type="number" list="materials" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
+        <datalist id="materials">
+            {% for material_id, title in titles|dictsort %}
+                <option value="{{ material_id }}"> «{{ title }}»
+            {% endfor %}
+        </datalist>
+
+        <input class="input" type="number" list="notes" placeholder="Choose a note" name="note_id" value="{{ note_id }}">
+        <datalist id="notes">
+            {% for note_id, note in notes|dictsort %}
+                <option value="{{ note_id }}"> {{ note.content }}
+            {% endfor %}
+        </datalist>
+
+        <textarea class="input altch" id="input-question" placeholder="Enter a question" name="question" value="{{ question }}"></textarea>
+        <textarea class="input altch" id="input-answer" placeholder="Enter an answer" name="answer" value="{{ answer }}" title="Text of the note"></textarea>
+        <button type="submit" class="submit-button"> Add </button>
+    </form>
+</div>
+{% endblock main %}
