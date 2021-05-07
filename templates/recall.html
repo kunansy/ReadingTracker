@@ -23,11 +23,11 @@
 
     <form class="card" action="/recall/{{ card.id }}" method="POST">
         <div class="results">
-            <button class="tomorrow" name="result" value="tomorrow"> Tomorrow </button>
-            <button class="bad" name="result" value="bad"> {{ card.bad }} days </button>
-            <button class="good" name="result" value="good"> {{ card.good }} days </button>
-            <button class="excellent" name="result" value="excellent"> {{ card.excellent }} days </button>
-            <button class="d10" name="result" value="d10"> 10 days </button>
+            <button class="result-button tomorrow" name="result" value="tomorrow"> Tomorrow </button>
+            <button class="result-button bad" name="result" value="bad"> {{ card.bad }} days </button>
+            <button class="result-button good" name="result" value="good"> {{ card.good }} days </button>
+            <button class="result-button excellent" name="result" value="excellent"> {{ card.excellent }} days </button>
+            <button class="result-button d10" name="result" value="d10"> 10 days </button>
         </div>
     </form>
 </div>
