@@ -363,6 +363,41 @@ async def add_note(request: Request) -> HTTPResponse:
         return response.redirect('/notes/add')
 
 
+@app.get('/recall')
+@jinja.template('recall.html')
+async def recall(request: Request) -> dict[str, Any]:
+    card = {
+        "id": 1,
+        "question": "How?",
+        "answer": "da hui knows",
+        "bad": 1,
+        "good": 5,
+        "excellent": 10
+    }
+    return {
+        'card': card
+    }
+
+
+@app.post('/recall/<card_id:int>')
+async def recall(request: Request,
+                 card_id: int) -> HTTPResponse:
+    try:
+        result = request.form['result'][0]
+    except KeyError:
+        jinja.flash(request, "Wrong form structure", 'error')
+        return response.redirect('/recall')
+
+    try:
+        tracker.complete_card(card_id, result)
+    except trc.DatabaseError as e:
+        jinja.flash(request, str(e), 'error')
+    else:
+        jinja.flash(request, f"Card {card_id=} marked as {result}", result)
+
+    return response.redirect('/recall')
+
+
 @app.get('/')
 async def home(request: Request) -> HTTPResponse:
     return response.redirect('/materials/queue')
