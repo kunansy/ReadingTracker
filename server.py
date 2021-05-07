@@ -23,6 +23,7 @@ jinja = SanicJinja2(app, session=session)
 
 log = trc.Log(full_info=True)
 tracker = trc.Tracker(log)
+cards = trc.Cards()
 logger = logging.getLogger('ReadingTracker')
 
 
@@ -409,7 +410,7 @@ async def recall(request: Request,
         return response.redirect('/recall')
 
     try:
-        tracker.complete_card(card_id, result)
+        cards.complete_card(card_id, result)
     except trc.DatabaseError as e:
         jinja.flash(request, str(e), 'error')
     else:
@@ -466,7 +467,7 @@ async def add_card(request: Request) -> HTTPResponse:
         return response.redirect('/recall/add')
 
     try:
-        tracker.add_card(
+        cards.add_card(
             **card.dict()
         )
     except trc.DatabaseError as e:
