@@ -1225,16 +1225,16 @@ class Tracker:
     @staticmethod
     def add_card(material_id: int,
                  question: str,
-                 answer: Optional[str] = None,
-                 note_id: Optional[int] = None) -> None:
+                 note_id: int,
+                 answer: Optional[str] = None) -> None:
         """
         :exception DatabaseError:
         """
         try:
             db.add_card(
                 material_id=material_id,
-                answer=answer,
                 question=question,
+                answer=answer,
                 note_id=note_id
             )
         except db.BaseDBError as e:
@@ -1257,7 +1257,7 @@ class Tracker:
 
     @staticmethod
     def complete_card(card_id: int,
-                      result: db.RepeatResult) -> None:
+                      result) -> None:
         """
         :exception DatabaseError:
         """

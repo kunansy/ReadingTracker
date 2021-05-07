@@ -561,5 +561,5 @@ def get_cards(material_id: Optional[int] = None,
 
 def complete_card(*,
                   card_id: int,
-                  result: RecallResult) -> None:
+                  result: str) -> None:
     pass
