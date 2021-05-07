@@ -1222,6 +1222,31 @@ class Tracker:
             logger.error(str(e))
             raise DatabaseError(e)
 
+
+class Cards:
+    # max count of cards repeated per day
+    _MAX_PER_DAY = 25
+
+    def __init__(self) -> None:
+        try:
+            cards = self._get_cards()
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            cards = []
+
+        self.__cards = cards
+
+    def get_card(self) -> Optional[db.CardNoteRecall]:
+        if db.repeated_today() >= self._MAX_PER_DAY:
+            return
+
+        if not self.__cards and not (cards := self._get_cards()):
+            return
+        elif not self.__cards:
+            self.__cards = cards
+
+        return self.__cards.pop()
+
     @staticmethod
     def add_card(material_id: int,
                  question: str,
@@ -1242,7 +1267,7 @@ class Tracker:
             raise DatabaseError(e)
 
     @staticmethod
-    def get_card(material_id: Optional[int] = None) -> list[db.Card]:
+    def _get_cards(material_id: Optional[int] = None) -> list[db.CardNoteRecall]:
         """
         :exception DatabaseError:
         """
@@ -1253,7 +1278,8 @@ class Tracker:
             logger.error(str(e))
             raise DatabaseError(e)
 
-        return random.choice(cards)
+        random.shuffle(cards)
+        return cards
 
     @staticmethod
     def complete_card(card_id: int,
