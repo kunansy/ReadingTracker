@@ -16,9 +16,16 @@
     <p class="question"> {{ card.question }} </p>
     <details class="answer">
         <summary class="answer"> Show answer </summary>
+        {% if card.answer %}
+            <p class="answer">
+                {{ card.answer }}`
+            </p>
+        {% endif %}
         <p class="answer">
-            {{ card.answer }}
+            {{ card.note.content }}
         </p>
+        <p class="material_title"> «{{ titles[card.note.id] }}» </p>
+        <p class="material_page"> «{{ card.page }}» </p>
     </details>
 
     <form class="card" action="/recall/{{ card.id }}" method="POST">
