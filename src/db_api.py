@@ -542,13 +542,20 @@ def add_card(*,
         logger.debug("Card started")
 
 
-def get_cards(material_id: Optional[int] = None,
-              /) -> list[CardNoteRecall]:
+def get_cards(*,
+              material_id: Optional[int] = None) -> list[CardNoteRecall]:
+
+    how_many = 'all materials'
+    if material_id is not None:
+        how_many = f"material {material_id=}"
+
+    logger.info(f"Getting cards for {how_many}")
+
     with session() as ses:
         query = ses.query(Card, Recall, Note)\
             .join(Recall, Card.card_id == Recall.card_id)\
             .join(Note, Card.note_id == Note.id)\
-            .filter(Recall.next_repeat_date <= today())\
+            .filter(Recall.next_repeat_date <= today())
 
         if material_id:
             query = query.filter(Card.material_id == material_id)
