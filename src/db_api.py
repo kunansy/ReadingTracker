@@ -9,6 +9,8 @@ import datetime
 import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import timedelta
+from enum import Enum
 from os import environ
 from typing import ContextManager, Callable, Optional
 
@@ -197,6 +199,14 @@ class CardNoteRecall:
             )
 
         super().__setattr__(key, value)
+
+
+class RepeatResults(Enum):
+    tomorrow = 1
+    d10 = 1
+    bad = 1
+    good = 1.5
+    excellent = 2
 
 
 MATERIAL_STATUS = list[MaterialStatus]
