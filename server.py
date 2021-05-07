@@ -112,8 +112,8 @@ class Card(BaseModel):
 
     material_id: conint(gt=0)
     note_id: conint(gt=0)
-    question: constr(strip_whitespaces=True, min_length=1)
-    answer: constr(strip_whitespaces=True)
+    question: constr(strip_whitespace=True, min_length=1)
+    answer: constr(strip_whitespace=True)
 
     def __repr__(self) -> str:
         data = ', '.join(
@@ -475,9 +475,10 @@ async def add_card(request: Request) -> HTTPResponse:
         request.ctx.session.update(
             card.dict(exclude={'question', 'answer', 'note_id'})
         )
+    else:
+        jinja.flash(request, "Card added", 'success')
+    finally:
         return response.redirect('/recall/add')
-
-    return response.redirect('/recall/add')
 
 
 @app.get('/')
