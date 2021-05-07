@@ -561,20 +561,22 @@ def add_card(*,
         logger.debug("Card started")
 
 
-def get_cards(*,
-              material_id: Optional[int] = None) -> list[Card]:
+@card_cache
+def get_cards(material_id: Optional[int] = None,
+              /) -> list[CardNoteRecall]:
     with session() as ses:
-        if material_id:
-            return ses.query(Card)\
-                .join(Recall, Card.card_id == Recall.card_id)\
-                .filter(Card.material_id == material_id)\
-                .filter(Recall.next_repeat_date <= today())\
-                .all()
+        query = ses.query(Card, Recall, Note)\
+            .join(Recall, Card.card_id == Recall.card_id)\
+            .join(Note, Card.note_id == Note.id)\
+            .filter(Recall.next_repeat_date <= today())\
 
-        return ses.query(Card) \
-            .join(Recall, Card.card_id == Recall.card_id) \
-            .filter(Recall.next_repeat_date <= today()) \
-            .all()
+        if material_id:
+            query = query.filter(Card.material_id == material_id)
+
+    return [
+        CardNoteRecall(card=card, note=note, recall=recall)
+        for card, recall, note in query.all()
+    ]
 
 
 def complete_card(*,
