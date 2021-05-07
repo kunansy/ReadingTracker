@@ -49,6 +49,10 @@ class MaterialNotFound(BaseDBError):
     pass
 
 
+class WrongRepeatResult(BaseDBError):
+    pass
+
+
 class Material(Base):
     __tablename__ = 'material'
 
@@ -579,7 +583,39 @@ def get_cards(*,
 def complete_card(*,
                   card_id: int,
                   result: str) -> None:
-    pass
+    """
+    :exception WrongRepeatResult:
+    """
+    logger.debug(f"Completing card {card_id=} as {result=}")
+
+    with session() as ses:
+        card, recall = ses.query(Card, Recall)\
+            .join(Card.card_id == Recall.card_id)\
+            .filter(Card.card_id == card_id)\
+            .all()
+
+        try:
+            coeff = RepeatResults[result]
+        except KeyError:
+            logger.error(f"{result=} is wrong")
+            raise WrongRepeatResult
+
+        old_duration = (recall.next_repeat_date -
+                        recall.last_repeat_date).days
+        # repeat dates might be equal
+        old_duration = old_duration or 2
+
+        recall.mult *= coeff
+        recall.last_repeat_date = today()
+        new_duration = old_duration * recall.mult
+
+        # TODO: fix the hardcore
+        if result == 'tomorrow':
+            recall.next_repeat_date = today() + timedelta(days=1)
+        elif result == 'd10':
+            recall.next_repeat_date = today() + timedelta(days=10)
+        else:
+            recall.next_repeat_date = today() + timedelta(days=new_duration)
 
 
 def repeated_today(*,
