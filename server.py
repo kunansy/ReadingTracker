@@ -418,6 +418,68 @@ async def recall(request: Request,
     return response.redirect('/recall')
 
 
+@app.get('/recall/add')
+@jinja.template('add_card.html')
+async def add_card(request: Request) -> dict[str, Any]:
+    titles = {
+        ms.material.material_id: ms.material.title
+        for ms in tracker.reading + tracker.processed
+    }
+    notes = {
+        note.id: note
+        for note in tracker.get_notes()
+    }
+
+    return {
+        'material_id': request.ctx.session.get('material_id', ''),
+        'note_id': request.ctx.session.get('note_id', ''),
+        'question': request.ctx.session.get('question', ''),
+        'answer': request.ctx.session.get('answer', ''),
+        'chapter': request.ctx.session.get('chapter', ''),
+        'titles': titles,
+        'notes': notes
+    }
+
+
+@app.post('/recall/add')
+async def add_card(request: Request) -> HTTPResponse:
+    key_val = {
+        key: val[0]
+        for key, val in request.form.items()
+    }
+
+    try:
+        card = Card(**key_val)
+    except ValidationError as e:
+        context = ujson.dumps(e.errors(), indent=4)
+        logger.warning(f"Validation error:\n{context}")
+
+        jinja.flash(
+            request,
+            f'Validation error: {e.raw_errors[0].exc}',
+            'error'
+        )
+
+        request.ctx.session.update(
+            **key_val
+        )
+        return response.redirect('/recall/add')
+
+    try:
+        tracker.add_card(
+            **card.dict()
+        )
+    except trc.DatabaseError as e:
+        jinja.flash(request, str(e), 'error')
+
+        request.ctx.session.update(
+            card.dict(exclude={'question', 'answer', 'note_id'})
+        )
+        return response.redirect('/recall/add')
+
+    return response.redirect('/recall/add')
+
+
 @app.get('/')
 async def home(request: Request) -> HTTPResponse:
     return response.redirect('/materials/queue')
