@@ -13,14 +13,21 @@
 
 {% block main %}
 <div class="card">
+    <p class="question"> {{ card.question }} </p>
+    <details class="answer">
+        <summary class="answer"> Show answer </summary>
+        <p class="answer">
+            {{ card.answer }}
+        </p>
+    </details>
+
     <form class="card" action="/recall/{{ card.id }}" method="POST">
-        <p class="question"> {{ card.question }} </p>
-        <div class="answers">
-            <button class="tomorrow" name="tomorrow" value="tomorrow"> Tomorrow </button>
-            <button class="bad" name="bad" value="bad"> {{ card.bad }} </button>
-            <button class="good" name="good" value="good"> {{ card.good }} </button>
-            <button class="excellent" name="excellent" value="excellent"> {{ card.excellent }} </button>
-            <button class="d10" name="d10" value="d10"> Before 10 days </button>
+        <div class="results">
+            <button class="tomorrow" name="result" value="tomorrow"> Tomorrow </button>
+            <button class="bad" name="result" value="bad"> {{ card.bad }} days </button>
+            <button class="good" name="result" value="good"> {{ card.good }} days </button>
+            <button class="excellent" name="result" value="excellent"> {{ card.excellent }} days </button>
+            <button class="d10" name="result" value="d10"> 10 days </button>
         </div>
     </form>
 </div>
