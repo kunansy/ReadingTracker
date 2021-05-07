@@ -171,6 +171,34 @@ class Recall(Base):
     mult = Column(Float, nullable=False, default=1.)
 
 
+@dataclass
+class CardNoteRecall:
+    card: Card
+    recall: Recall
+    note: Optional[Note] = None
+
+    def __init__(self,
+                 card: Card,
+                 recall: Recall,
+                 note: Optional[Note] = None) -> None:
+        assert card.card_id == recall.card_id
+
+        self.card = card
+        self.recall = recall
+        self.note = note
+
+    def __setattr__(self,
+                    key: str,
+                    value) -> None:
+        if getattr(self, key, None) is not None:
+            raise NotImplementedError(
+                f"You can't change {self.__class__.__name__} values, but "
+                f"{key}={value} found, when {key}={getattr(self, key)}"
+            )
+
+        super().__setattr__(key, value)
+
+
 MATERIAL_STATUS = list[MaterialStatus]
 engine = create_engine(environ['DB_URI'], encoding='utf-8')
 Base.metadata.create_all(engine)
