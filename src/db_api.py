@@ -151,7 +151,7 @@ class Card(Base):
                          nullable=False)
     note_id = Column(Integer,
                      ForeignKey('note.id'),
-                     nullable=True)
+                     nullable=False)
 
     def __repr__(self) -> str:
         return f"{self.__class__.__name__}(" \
@@ -535,8 +535,8 @@ def card_cache(func: Callable) -> Callable:
 def add_card(*,
              material_id: int,
              question: str,
-             answer: Optional[str] = None,
-             note_id: Optional[int]) -> None:
+             note_id: int,
+             answer: Optional[str] = None) -> None:
     logger.debug("Adding new card")
     today_ = today()
 
