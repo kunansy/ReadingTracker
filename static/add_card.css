@@ -1,0 +1,7 @@
+#input-question, #input-answer {
+    padding: 1vh;
+    height: 20vh;
+}
+::-webkit-scrollbar {
+  width: 0;
+}
