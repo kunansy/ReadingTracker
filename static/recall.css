@@ -1,3 +1,35 @@
+div.card {
+    display: flex;
+    margin: auto;
+    border: black .3vh solid;
+    border-radius: 2vh;
+    padding: 2vh;
+}
+form.card {
+    border: none;
+}
+div.results {
+    margin-top: 5vh;
+}
+button.result-button {
+    margin: auto auto auto 2vh;
+    height: 4vw;
+    width: 9vw;
+    border: none;
+    outline: none !important;
+    background-color: black;
+    color: white;
+    box-shadow: 0 0 1vw rgba(0,0,0,0.5);
+}
+
+p.question {
+    font-size: 5vh;
+    text-align: center;
+}
+p.answer {
+    text-align: center;
+    font-size: 4vh;
+}
 .alert.bad, .alert.tomorrow {
     background-color: #E74C3C;
 }
