@@ -563,3 +563,21 @@ def complete_card(*,
                   card_id: int,
                   result: str) -> None:
     pass
+
+
+def repeated_today(*,
+                   material_id: Optional[int] = None) -> int:
+    """
+    Get count of cards repeated today
+    """
+    logger.debug("calculating how many cards repeated today")
+
+    with session() as ses:
+        query = ses.query(Card, Recall) \
+            .join(Recall, Card.card_id == Recall.card_id) \
+            .filter(Recall.last_repeat_date == today())
+
+        if material_id:
+            query = query.filter(Card.material_id == material_id)
+
+        return len(query.all())
