@@ -426,13 +426,20 @@ async def add_card(request: Request) -> dict[str, Any]:
         ms.material.material_id: ms.material.title
         for ms in tracker.reading + tracker.processed
     }
+
+    material_id = request.args.get('material_id')
+    if material_id:
+        request.ctx.session['material_id'] = material_id
+    material_id = material_id or request.ctx.session.get('material_id')
+
     notes = {
         note.id: note
         for note in tracker.get_notes()
+        if material_id is None or note.material_id == int(material_id)
     }
 
     return {
-        'material_id': request.ctx.session.get('material_id', ''),
+        'material_id': material_id,
         'note_id': request.ctx.session.get('note_id', ''),
         'question': request.ctx.session.get('question', ''),
         'answer': request.ctx.session.get('answer', ''),
