@@ -17,13 +17,18 @@
 <div class="notes">
     <h3 class="search-notes-label"> Search notes </h3>
     <ul class="notes">
-        {% for note_id, note in notes|dictsort %}
-        <li class="note hover" onclick="chooseNote({{ note_id }}, {{ note.material_id }})" title="Click to choose this note">
-            <p class="note-content"> {{ note.content }}</p>
-            <p class="note-page"> Page: {{ note.page }} </p>
-            <p class="note-id"> ID: {{ note.id }} </p>
-        </li>
-        {% endfor %}
+        {%- if notes -%}
+            {% for note_id, note in notes|dictsort %}
+            <li class="note hover" onclick="chooseNote({{ note_id }}, {{ note.material_id }})" title="Click to choose this note">
+                <p class="note-content"> {{ note.content }}</p>
+                <p class="note-page"> Page: {{ note.page }} </p>
+                <p class="note-id"> ID: {{ note.id }} </p>
+            </li>
+            {% endfor %}
+        {%- else -%}
+            {%- import 'not_found.html' as not_found -%}
+            {% call not_found.not_found('notes') %} {% endcall %}
+        {%- endif -%}
     </ul>
 </div>
 
