@@ -239,8 +239,12 @@ async def get_completed_materials(request: Request) -> dict:
 @app.get('/reading_log')
 @jinja.template('reading_log.html')
 async def get_reading_log(request: Request) -> dict[str, Any]:
+    try:
+        log_ = log[::-1].log
+    except trc.BaseTrackerError:
+        log_ = None
     return {
-        'log': log[::-1].log,
+        'log': log_,
         'DATE_FORMAT': trc.DATE_FORMAT,
         'EXPECTED_COUNT': trc.PAGES_PER_DAY
     }
@@ -253,8 +257,12 @@ async def add_reading_log(request: Request) -> dict[str, Any]:
         ms.material.material_id: ms.material.title
         for ms in tracker.reading
     }
+    try:
+        reading_material_id = log.reading_material
+    except trc.BaseTrackerError:
+        reading_material_id = None
     return {
-        'material_id': log.reading_material,
+        'material_id': reading_material_id,
         'titles': titles,
         'date': trc.today()
     }
