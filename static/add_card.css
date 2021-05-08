@@ -2,6 +2,31 @@
     padding: 1vh;
     height: 20vh;
 }
-::-webkit-scrollbar {
-  width: 0;
+
+h3.search-notes-label {
+    text-align: center;
+}
+ul {
+    display: flex;
+    overflow: auto;
+    margin: auto 2vw;
+    max-height: 80vh;
+}
+
+li.note {
+    border: black 0.25vh solid;
+    max-width: 80vw;
+    border-radius: 3vh;
+    padding: 5vh;
+    text-align: center;
+    margin: auto 3vw auto auto;
+    display: inline;
+}
+p.note-content {
+    width: 50vh;
+}
+.note-page, .note-id {
+    font-size: 4vh;
+    font-weight: 500;
+    margin: 0;
 }
