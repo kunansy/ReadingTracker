@@ -12,21 +12,26 @@
 {%- endblock header -%}
 
 {% block main %}
-{%- for estimate in estimates -%}
-{% set material = estimate.material %}
-<div class="material hover">
-    <p> Title: «{{ material.title }}» </p>
-    <p> Author: {{ material.authors }} </p>
-    <p> Pages: {{ material.pages }} </p>
-    <p> Tags:  {{ material.tags }} </p>
-    <hr/>
-    <p> Will be started: {{ estimate.will_be_started.strftime(DATE_FORMAT) }} </p>
-    <p> Will be completed: {{ estimate.will_be_completed.strftime(DATE_FORMAT) }} </p>
-    <p> Expected duration: {{ estimate.expected_duration }} days </p>
+{% if estimates %}
+    {%- for estimate in estimates -%}
+    {% set material = estimate.material %}
+    <div class="material hover">
+        <p> Title: «{{ material.title }}» </p>
+        <p> Author: {{ material.authors }} </p>
+        <p> Pages: {{ material.pages }} </p>
+        <p> Tags:  {{ material.tags }} </p>
+        <hr/>
+        <p> Will be started: {{ estimate.will_be_started.strftime(DATE_FORMAT) }} </p>
+        <p> Will be completed: {{ estimate.will_be_completed.strftime(DATE_FORMAT) }} </p>
+        <p> Expected duration: {{ estimate.expected_duration }} days </p>
 
-    <form class="form start" action="/materials/start/{{ material.material_id }}" METHOD="POST" title="Start the material id={{ material.material_id }}">
-        <button type="submit" class="submit-button"> Start </button>
-    </form>
-</div>
-{% endfor %}
+        <form class="form start" action="/materials/start/{{ material.material_id }}" METHOD="POST" title="Start the material id={{ material.material_id }}">
+            <button type="submit" class="submit-button"> Start </button>
+        </form>
+    </div>
+    {% endfor %}
+{%- else -%}
+    {% import 'not_found.html' as not_found %}
+    {% call not_found.not_found('materials') %} {% endcall %}
+{% endif %}
 {%- endblock main -%}
