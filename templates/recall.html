@@ -19,13 +19,9 @@
     <details class="answer">
         <summary class="answer"> Show answer </summary>
         {%- if card.card.answer -%}
-            <p class="answer">
-                {{ card.card.answer }}`
-            </p>
+            <p class="answer">{{ card.card.answer }}</p>
         {%- endif -%}
-        <p class="answer note-answer">
-            {{ card.note.content }}
-        </p>
+        <p class="answer note-answer"> {{ card.note.content }} </p>
         <p class="material_title"> «{{ titles[card.note.material_id] }}» </p>
         <p class="material_page"> Page: {{ card.note.page }} </p>
     </details>
