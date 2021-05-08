@@ -3,7 +3,7 @@
     height: 20vh;
 }
 
-h3.search-notes-label {
+h3.search-notes-label, h3.material-title {
     text-align: center;
 }
 ul {
