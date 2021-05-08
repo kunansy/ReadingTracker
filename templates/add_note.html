@@ -12,20 +12,25 @@
 {% endblock header %}
 
 {% block main %}
-<div class="form">
-    <form action="/notes/add" method="POST">
-        <input class="input" type="number" list="books" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
-        <datalist id="books">
-            {% for material_id, title in titles|dictsort %}
-            <option value="{{ material_id }}"> «{{ title }}»
-                {% endfor %}
-        </datalist>
+{% if titles %}
+    <div class="form">
+        <form action="/notes/add" method="POST">
+            <input class="input" type="number" list="books" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
+            <datalist id="books">
+                {% for material_id, title in titles|dictsort %}
+                <option value="{{ material_id }}"> «{{ title }}»
+                    {% endfor %}
+            </datalist>
 
-        <textarea class="input altch" id="input-content" placeholder="Enter a content" name="content" value="{{ content }}" title="Text of the note"></textarea>
-        <input class="input" type="number" placeholder="Enter a chapter number" name="chapter" value="{{ chapter }}" title="Chapter where the note might be found">
-        <input class="input" type="number" placeholder="Enter a page number" name="page" value="{{ page }}" title="Page where the not might be found">
-        <button type="submit" class="submit-button"> Add </button>
-    </form>
-</div>
+            <textarea class="input altch" id="input-content" placeholder="Enter a content" name="content" value="{{ content }}" title="Text of the note"></textarea>
+            <input class="input" type="number" placeholder="Enter a chapter number" name="chapter" value="{{ chapter }}" title="Chapter where the note might be found">
+            <input class="input" type="number" placeholder="Enter a page number" name="page" value="{{ page }}" title="Page where the not might be found">
+            <button type="submit" class="submit-button"> Add </button>
+        </form>
+    </div>
+{%- else -%}
+    {% import 'not_found.html' as not_found %}
+    {% call not_found.not_found('materials') %} {% endcall %}
+{% endif %}
 
 {% endblock main %}
