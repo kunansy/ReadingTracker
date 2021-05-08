@@ -544,6 +544,9 @@ def add_card(*,
             date=today_
         )
         ses.add(card)
+
+        # commit required to get card_id
+        ses.commit()
         logger.info("Card added")
 
         logger.debug("Starting the card")
