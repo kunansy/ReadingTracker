@@ -2,7 +2,7 @@
 import datetime
 import logging
 from collections import defaultdict
-from typing import Any
+from typing import Any, Optional
 
 import ujson
 from pydantic import BaseModel, ValidationError, validator, constr, conint
@@ -114,7 +114,7 @@ class Card(BaseModel):
     material_id: conint(gt=0)
     note_id: conint(gt=0)
     question: constr(strip_whitespace=True, min_length=1)
-    answer: constr(strip_whitespace=True)
+    answer: Optional[constr(strip_whitespace=True)]
 
     def __repr__(self) -> str:
         data = ', '.join(
