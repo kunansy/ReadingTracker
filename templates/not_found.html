@@ -1,0 +1,6 @@
+{%- macro not_found(what) -%}
+    {{ caller() }}
+    <div class="not-found"> 
+        <p class="message"> No {{ what }} found </p> 
+    </div>
+{%- endmacro -%}
