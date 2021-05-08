@@ -324,10 +324,11 @@ class Log:
          !!! there will be more queries to the database !!!
         """
         try:
-            self.__log = self._get_log(full_info=full_info)
+            log = self._get_log(full_info=full_info)
         except Exception as e:
             logger.error(f"When load the log: {e}")
-            raise LoadingLogError(e)
+            log = {}
+        self.__log = log
 
     @property
     def log(self) -> dict[datetime.date, LogRecord]:
