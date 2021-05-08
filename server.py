@@ -387,16 +387,15 @@ async def add_note(request: Request) -> HTTPResponse:
 @app.get('/recall')
 @jinja.template('recall.html')
 async def recall(request: Request) -> dict[str, Any]:
-    card = {
-        "id": 1,
-        "question": "How?",
-        "answer": "da hui knows",
-        "bad": 1,
-        "good": 5,
-        "excellent": 10
+    card = cards.get_card()
+    titles = {
+        ms.material.material_id: ms.material.title
+        for ms in tracker.reading + tracker.processed
     }
     return {
-        'card': card
+        'card': card,
+        'titles': titles,
+        'remains': 1
     }
 
 
