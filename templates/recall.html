@@ -5,10 +5,9 @@
 {%- endblock style -%}
 
 {%- block header -%}
-<nav class="subnavbar">
-    <a href="/recall"> Repeat </a>
-    <a href="/recall/add"> Add card </a>
-</nav>
+    {% from 'submenu.html' import submenu %}
+    {% call submenu(('Repeat', '/recall'), ('Add card', '/recall/add')) %}
+    {% endcall %}
 {%- endblock header -%}
 
 {% block main %}
