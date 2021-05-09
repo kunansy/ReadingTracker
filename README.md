@@ -8,11 +8,11 @@ The project is expected to help you read books:
 3. Calculate statistics;
 4. Track the read log;
 4. Keep notes to help you remember some important points from the material;
-5. (*_In developing_*) use Janki method to remember notes.
+5. Use Janki method to remember notes.
 
 
 ## Data
-* Materials to read, reading and completed materials and `Notes` for them in `data/materials.db`.
+* Materials to read, reading and completed materials, Notes for them and Cards to recall in `data/materials.db`.
 * Reading log: `date: {'count': count, 'material_id': material_id}` in `data/log.json`.
 
 ### ERD of the database
@@ -37,6 +37,21 @@ note:
   - date DATE NOT NULL,
   - chapter INTEGER NOT NULL,
   - page INTEGER NOT NULL;
+
+card:
+  - card_id SERIAL PRIMARY KEY,
+  - question TEXT NOT NULL,
+  - answer TEXT,
+  - date DATE NOT NULL,
+  - material_id REFERENCES(material.material_id) NOT NULL,
+  - note_id REFERENCES(note.id);
+
+recall:
+  - recall_id SERIAL PRIMARY KEY,
+  - card_id REFERENCES(card.card_id) NOT NULL,
+  - last_repeat_date DATE NOT NULL,
+  - next_repeat_date DATE NOT NULL,
+  - mult FLOAT NOT NULL;
 ```
 
 ## Usage
