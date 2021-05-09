@@ -23,7 +23,6 @@ jinja = SanicJinja2(app, session=session)
 
 log = trc.Log(full_info=True)
 tracker = trc.Tracker(log)
-cards = trc.Cards()
 logger = logging.getLogger('ReadingTracker')
 
 
@@ -394,8 +393,13 @@ async def add_note(request: Request) -> HTTPResponse:
 
 @app.get('/recall')
 @jinja.template('recall.html')
-async def recall(request: Request) -> dict[str, Any]:
-    card = cards.get_card()
+async def recall(request: Request) -> dict[str, Any] or HTTPResponse:
+    try:
+        card = trc.get_card()
+    except trc.DatabaseError as e:
+        jinja.flash(request, str(e), 'error')
+        return response.redirect('/materials/queue')
+
     titles = {
         ms.material.material_id: ms.material.title
         for ms in tracker.reading + tracker.processed
@@ -417,7 +421,7 @@ async def recall(request: Request,
         return response.redirect('/recall')
 
     try:
-        cards.complete_card(card_id, result)
+        trc.complete_card(card_id, result)
     except trc.DatabaseError as e:
         jinja.flash(request, str(e), 'error')
     else:
@@ -481,7 +485,7 @@ async def add_card(request: Request) -> HTTPResponse:
         return response.redirect('/recall/add')
 
     try:
-        cards.add_card(
+        trc.add_card(
             **card.dict()
         )
     except trc.DatabaseError as e:
