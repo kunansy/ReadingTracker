@@ -53,6 +53,10 @@ class WrongRepeatResult(BaseDBError):
     pass
 
 
+class CardNotFound(BaseDBError):
+    pass
+
+
 class Material(Base):
     __tablename__ = 'material'
 
@@ -601,7 +605,7 @@ def add_card(*,
 
 
 def get_card(*,
-             material_id: Optional[int] = None) -> list[CardNoteRecall]:
+             material_id: Optional[int] = None) -> CardNoteRecall:
     how_many = 'all materials'
     if material_id is not None:
         how_many = f"material {material_id=}"
@@ -617,10 +621,11 @@ def get_card(*,
         if material_id:
             query = query.filter(Card.material_id == material_id)
 
-    return [
-        CardNoteRecall(card=card, note=note, recall=recall)
-        for card, recall, note in query.one()
-    ]
+    if (result := query.first()) is None:
+        raise CardNotFound
+
+    card, recall, note = result
+    return CardNoteRecall(card=card, note=note, recall=recall)
 
 
 def complete_card(*,
