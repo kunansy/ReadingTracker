@@ -91,6 +91,22 @@ form {
     margin: 0;
 }
 
+/* not found message */
+div.not-found {
+    display: flex;
+    margin: auto;
+    margin-top: 7vh;
+    margin-bottom: 7vh;
+    border: black .3vh solid;
+    border-radius: 2vh;
+}
+div.not-found p.message {
+    padding: 15vh;
+    margin: auto;
+    font-size: 5vh;
+    font-weight: 500;
+}
+
 /* styles for flash messages */
 .alert {
     text-align: center;

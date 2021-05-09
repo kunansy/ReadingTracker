@@ -5,24 +5,29 @@
 {% endblock style %}
 
 {% block main %}
-
-{% for ms in statistics %}
-{% set material = ms.material %}
-<div class="material hover" onclick=openNotes({{ material.material_id }}) title="Click to see notes">
-    <p> Title: «{{ material.title }}» </p>
-    <p> Author: {{ material.authors }} </p>
-    <p> Pages: {{ material.pages }} </p>
-    <p> Tags:  {{ material.tags }} </p>
-    <hr title="Analytics">
-    <p> Started at: {{ ms.started.strftime(DATE_FORMAT) }} </p>
-    <p> Completed at: {{ ms.completed.strftime(DATE_FORMAT) }} </p>
-    <p> Was being reading: {{ ms.duration }} days </p>
-    <p> Lost time: {{ ms.lost_time }} days </p>
-    <p> Average: {{ ms.average }} pages per day </p>
-    <hr title="Min/max">
-    <p> Max: {{ ms.max.count }} pages, {{ ms.max.date.strftime(DATE_FORMAT) }} </p>
-    <p> Min: {{ ms.min.count }} pages, {{ ms.min.date.strftime(DATE_FORMAT) }} </p>
-</div>
-{% endfor %}
-
+{% if statistics %}
+    {% for ms in statistics %}
+    {% set material = ms.material %}
+    <div class="material hover" onclick=openNotes({{ material.material_id }}) title="Click to see notes">
+        <p> Title: «{{ material.title }}» </p>
+        <p> Author: {{ material.authors }} </p>
+        <p> Pages: {{ material.pages }} </p>
+        <p> Tags:  {{ material.tags }} </p>
+        <hr title="Analytics">
+        <p> Started at: {{ ms.started.strftime(DATE_FORMAT) }} </p>
+        <p> Completed at: {{ ms.completed.strftime(DATE_FORMAT) }} </p>
+        <p> Was being reading: {{ ms.duration }} days </p>
+        <p> Lost time: {{ ms.lost_time }} days </p>
+        <p> Average: {{ ms.average }} pages per day </p>
+        {%- if ms.max and ms.min -%}
+            <hr title="Min/max">
+            <p> Max: {{ ms.max.count }} pages, {{ ms.max.date.strftime(DATE_FORMAT) }} </p>
+            <p> Min: {{ ms.min.count }} pages, {{ ms.min.date.strftime(DATE_FORMAT) }} </p>
+        {%- endif -%}
+    </div>
+    {% endfor %}
+{%- else -%}
+    {% import 'not_found.html' as not_found %}
+    {% call not_found.not_found('completed materials') %} {% endcall %}
+{% endif %}
 {% endblock main%}

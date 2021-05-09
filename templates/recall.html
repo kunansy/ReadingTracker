@@ -1,0 +1,43 @@
+{% extends 'index.html' %}
+
+{%- block style -%}
+<link rel="stylesheet" href="{{ url_for('static', filename='recall.css') }}">
+{%- endblock style -%}
+
+{%- block header -%}
+    {% from 'submenu.html' import submenu %}
+    {% call submenu(('Repeat', '/recall'), ('Add card', '/recall/add')) %}
+    {% endcall %}
+{%- endblock header -%}
+
+{% block main %}
+{%- if card -%}
+    <p class="remains"> Remains {{ remains }} cards</p>
+
+    <div class="card">
+        <p class="question"> {{ card.card.question }} </p>
+        <details class="answer">
+            <summary class="answer"> Show answer </summary>
+            {%- if card.card.answer -%}
+                <p class="answer">{{ card.card.answer }}</p>
+            {%- endif -%}
+            <p class="answer note-answer"> {{ card.note.content }} </p>
+            <p class="material_title"> «{{ titles[card.note.material_id] }}» </p>
+            <p class="material_page"> Page: {{ card.note.page }} </p>
+        </details>
+
+        <form class="card" action="/recall/{{ card.card.card_id }}" method="POST">
+            <div class="results">
+                <button class="result-button tomorrow" name="result" value="tomorrow"> Tomorrow </button>
+                <button class="result-button bad" name="result" value="bad"> {{ card.bad }} days </button>
+                <button class="result-button good" name="result" value="good"> {{ card.good }} days </button>
+                <button class="result-button excellent" name="result" value="excellent"> {{ card.excellent }} days </button>
+                <button class="result-button d10" name="result" value="d10"> 10 days </button>
+            </div>
+        </form>
+    </div>
+{%- else -%}
+    {% import 'not_found.html' as not_found %}
+    {% call not_found.not_found('cards') %} {% endcall %}
+{% endif %}
+{% endblock main %}

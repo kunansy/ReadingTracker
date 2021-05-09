@@ -2,7 +2,7 @@
 import datetime
 import logging
 from collections import defaultdict
-from typing import Any
+from typing import Any, Optional
 
 import ujson
 from pydantic import BaseModel, ValidationError, validator, constr, conint
@@ -94,6 +94,26 @@ class LogRecord(BaseModel):
         if not tracker.does_material_exist(material_id):
             raise ValueError(f"Material {material_id=} doesn't exist")
         return material_id
+
+    def __repr__(self) -> str:
+        data = ', '.join(
+            f"{key}={value}"
+            for key, value in self.dict().items()
+        )
+        return f"{self.__class__.__name__}({data})"
+
+    def __str__(self) -> str:
+        return repr(self)
+
+
+class Card(BaseModel):
+    class Config:
+        extra = 'forbid'
+
+    material_id: conint(gt=0)
+    note_id: conint(gt=0)
+    question: constr(strip_whitespace=True, min_length=1)
+    answer: Optional[constr(strip_whitespace=True)]
 
     def __repr__(self) -> str:
         data = ', '.join(
@@ -218,8 +238,12 @@ async def get_completed_materials(request: Request) -> dict:
 @app.get('/reading_log')
 @jinja.template('reading_log.html')
 async def get_reading_log(request: Request) -> dict[str, Any]:
+    try:
+        log_ = log[::-1].log
+    except trc.BaseTrackerError:
+        log_ = None
     return {
-        'log': log[::-1].log,
+        'log': log_,
         'DATE_FORMAT': trc.DATE_FORMAT,
         'EXPECTED_COUNT': trc.PAGES_PER_DAY
     }
@@ -232,8 +256,12 @@ async def add_reading_log(request: Request) -> dict[str, Any]:
         ms.material.material_id: ms.material.title
         for ms in tracker.reading
     }
+    try:
+        reading_material_id = log.reading_material
+    except trc.BaseTrackerError:
+        reading_material_id = None
     return {
-        'material_id': log.reading_material,
+        'material_id': reading_material_id,
         'titles': titles,
         'date': trc.today()
     }
@@ -361,6 +389,123 @@ async def add_note(request: Request) -> HTTPResponse:
             **note.dict(exclude={'content'})
         )
         return response.redirect('/notes/add')
+
+
+@app.get('/recall')
+@jinja.template('recall.html')
+async def recall(request: Request) -> dict[str, Any] or HTTPResponse:
+    try:
+        card = trc.get_card()
+    except trc.DatabaseError as e:
+        jinja.flash(request, str(e), 'error')
+        return response.redirect('/materials/queue')
+    except trc.CardNotFound:
+        card = None
+
+    if card is None:
+        return {
+            'card': None
+        }
+
+    titles = {
+        ms.material.material_id: ms.material.title
+        for ms in tracker.reading + tracker.processed
+    }
+    return {
+        'card': card,
+        'titles': titles,
+        'remains': trc.cards_remain()
+    }
+
+
+@app.post('/recall/<card_id:int>')
+async def recall(request: Request,
+                 card_id: int) -> HTTPResponse:
+    try:
+        result = request.form['result'][0]
+    except KeyError:
+        jinja.flash(request, "Wrong form structure", 'error')
+        return response.redirect('/recall')
+
+    try:
+        trc.complete_card(card_id, result)
+    except trc.DatabaseError as e:
+        jinja.flash(request, str(e), 'error')
+    else:
+        jinja.flash(request, f"Card {card_id=} marked as {result}", result)
+
+    return response.redirect('/recall')
+
+
+@app.get('/recall/add')
+@jinja.template('add_card.html')
+async def add_card(request: Request) -> dict[str, Any]:
+    titles = {
+        ms.material.material_id: ms.material.title
+        for ms in tracker.reading + tracker.processed
+    }
+
+    if material_id := request.args.get('material_id'):
+        request.ctx.session['material_id'] = material_id
+    material_id = material_id or request.ctx.session.get('material_id')
+
+    notes = {
+        note.id: note
+        for note in tracker.get_notes()
+        if material_id is None or note.material_id == int(material_id)
+    }
+
+    return {
+        'material_id': material_id,
+        'note_id': request.ctx.session.get('note_id', ''),
+        'question': request.ctx.session.get('question', ''),
+        'answer': request.ctx.session.get('answer', ''),
+        'chapter': request.ctx.session.get('chapter', ''),
+        'titles': titles,
+        'notes': notes
+    }
+
+
+@app.post('/recall/add')
+async def add_card(request: Request) -> HTTPResponse:
+    key_val = {
+        key: val[0]
+        for key, val in request.form.items()
+    }
+
+    try:
+        card = Card(**key_val)
+    except ValidationError as e:
+        context = ujson.dumps(e.errors(), indent=4)
+        logger.warning(f"Validation error:\n{context}")
+
+        jinja.flash(
+            request,
+            f'Validation error: {e.raw_errors[0].exc}',
+            'error'
+        )
+
+        request.ctx.session.update(
+            **key_val
+        )
+        return response.redirect('/recall/add')
+
+    try:
+        trc.add_card(
+            **card.dict()
+        )
+    except trc.DatabaseError as e:
+        jinja.flash(request, str(e), 'error')
+
+        request.ctx.session.update(
+            card.dict(exclude={'question', 'answer', 'note_id'})
+        )
+    else:
+        jinja.flash(request, "Card added", 'success')
+        request.ctx.session.pop('question')
+        request.ctx.session.pop('answer')
+    finally:
+        return response.redirect('/recall/add')
 
 
 @app.get('/')

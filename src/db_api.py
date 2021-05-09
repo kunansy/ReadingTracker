@@ -9,12 +9,14 @@ import datetime
 import logging
 from contextlib import contextmanager
 from dataclasses import dataclass
+from datetime import timedelta
+from enum import Enum
 from os import environ
-from typing import ContextManager, Callable
+from typing import ContextManager, Callable, Optional
 
 from sqlalchemy import (
     Column, ForeignKey, Integer,
-    String, Date, create_engine, Text
+    String, Date, create_engine, Text, Float
 )
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.declarative import declarative_base
@@ -44,6 +46,14 @@ class MaterialNotAssigned(BaseDBError):
 
 
 class MaterialNotFound(BaseDBError):
+    pass
+
+
+class WrongRepeatResult(BaseDBError):
+    pass
+
+
+class CardNotFound(BaseDBError):
     pass
 
 
@@ -138,6 +148,116 @@ class MaterialStatus:
         super().__setattr__(key, value)
 
 
+class Card(Base):
+    __tablename__ = 'card'
+
+    card_id = Column(Integer, primary_key=True)
+    question = Column(Text, nullable=False)
+    answer = Column(Text, nullable=True, default=None)
+    date = Column(Date, nullable=False)
+    material_id = Column(Integer,
+                         ForeignKey('material.material_id'),
+                         nullable=False)
+    note_id = Column(Integer,
+                     ForeignKey('note.id'),
+                     nullable=False)
+
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(" \
+               f"card_id={self.card_id}, question={self.question}, " \
+               f"answer={self.answer}, date={self.date}, " \
+               f"material_id={self.material_id}, note_id={self.note_id})"
+
+
+class Recall(Base):
+    __tablename__ = 'recall'
+
+    recall_id = Column(Integer, primary_key=True)
+    card_id = Column(Integer,
+                     ForeignKey('card.card_id'),
+                     nullable=False)
+    last_repeat_date = Column(Date, nullable=False)
+    next_repeat_date = Column(Date, nullable=False)
+    mult = Column(Float, nullable=False, default=1.)
+
+
+@dataclass
+class CardNoteRecall:
+    card: Card
+    recall: Recall
+    note: Optional[Note] = None
+
+    def __init__(self,
+                 card: Card,
+                 recall: Recall,
+                 note: Optional[Note] = None) -> None:
+        assert card.card_id == recall.card_id
+
+        self.card = card
+        self.recall = recall
+        self.note = note
+
+    @property
+    def old_duration(self) -> int:
+        return (self.recall.next_repeat_date -
+                self.recall.last_repeat_date).days or 2
+
+    @property
+    def bad(self) -> int:
+        return round(
+            self.old_duration * self.recall.mult *
+            RepeatResults['bad'].value
+        )
+
+    @property
+    def good(self) -> int:
+        return round(
+            self.old_duration * self.recall.mult *
+            RepeatResults['good'].value
+        )
+
+    @property
+    def excellent(self) -> int:
+        return round(
+            self.old_duration * self.recall.mult *
+            RepeatResults['excellent'].value
+        )
+
+    @property
+    def tomorrow(self) -> int:
+        return 1
+
+    @property
+    def d10(self) -> int:
+        return 10
+
+    def __getitem__(self,
+                    item: str) -> int:
+        try:
+            return getattr(super(), item)
+        except AttributeError:
+            return getattr(self, item, None)
+
+    def __setattr__(self,
+                    key: str,
+                    value) -> None:
+        if getattr(self, key, None) is not None:
+            raise NotImplementedError(
+                f"You can't change {self.__class__.__name__} values, but "
+                f"{key}={value} found, when {key}={getattr(self, key)}"
+            )
+
+        super().__setattr__(key, value)
+
+
+class RepeatResults(Enum):
+    tomorrow = 1
+    d10 = 1
+    bad = 1
+    good = 1.5
+    excellent = 2
+
+
 MATERIAL_STATUS = list[MaterialStatus]
 engine = create_engine(environ['DB_URI'], encoding='utf-8')
 Base.metadata.create_all(engine)
@@ -197,7 +317,7 @@ def today() -> datetime.date:
 
 
 def get_materials(*,
-                  materials_ids: list[int] = None) -> list[Material]:
+                  materials_ids: Optional[list[int]] = None) -> list[Material]:
     """
     Get the materials by their ids.
     If it's None, get all materials.
@@ -284,7 +404,7 @@ def get_completed_materials() -> MATERIAL_STATUS:
 
 
 def get_status(*,
-               status_ids: list[int] = None) -> list[Status]:
+               status_ids: Optional[list[int]] = None) -> list[Status]:
     """
     Get the statuses by their ids.
     If it's None, get all statuses.
@@ -344,7 +464,7 @@ def add_material(*,
 
 def start_material(*,
                    material_id: int,
-                   start_date: datetime.date = None) -> None:
+                   start_date: Optional[datetime.date] = None) -> None:
     """
     Start a material, add new record to Status table.
 
@@ -376,7 +496,7 @@ def start_material(*,
 
 def complete_material(*,
                       material_id: int,
-                      completion_date: datetime.date = None) -> None:
+                      completion_date: Optional[datetime.date] = None) -> None:
     """
     Set end date to Status table.
 
@@ -411,7 +531,7 @@ def complete_material(*,
 
 
 def get_notes(*,
-              materials_ids: list[int] = None) -> list[Note]:
+              materials_ids: Optional[list[int]] = None) -> list[Note]:
     """ Get notes by material ids.
     If it's None, get all notes.
     """
@@ -434,7 +554,7 @@ def add_note(*,
              content: str,
              chapter: int,
              page: int,
-             date: datetime.date = None) -> None:
+             date: Optional[datetime.date] = None) -> None:
     """ Add note to the database. """
     date = date or today()
     logger.info(f"Adding note for {material_id=} at {date=}")
@@ -450,3 +570,122 @@ def add_note(*,
 
         ses.add(note)
         logger.info("Note added")
+
+
+def add_card(*,
+             material_id: int,
+             question: str,
+             note_id: int,
+             answer: Optional[str] = None) -> None:
+    logger.debug("Adding new card")
+    today_ = today()
+
+    with session() as ses:
+        card = Card(
+            material_id=material_id,
+            question=question,
+            answer=answer,
+            note_id=note_id,
+            date=today_
+        )
+        ses.add(card)
+
+        # commit required to get card_id
+        ses.commit()
+        logger.info("Card added")
+
+        logger.debug("Starting the card")
+        recall = Recall(
+            card_id=card.card_id,
+            last_repeat_date=today_,
+            next_repeat_date=today_
+        )
+        ses.add(recall)
+        logger.debug("Card started")
+
+
+def get_card(*,
+             material_id: Optional[int] = None) -> CardNoteRecall:
+    how_many = 'all materials'
+    if material_id is not None:
+        how_many = f"material {material_id=}"
+
+    logger.info(f"Getting card for {how_many}")
+
+    with session() as ses:
+        query = ses.query(Card, Recall, Note)\
+            .join(Recall, Card.card_id == Recall.card_id)\
+            .join(Note, Card.note_id == Note.id)\
+            .filter(Recall.next_repeat_date <= today())
+
+        if material_id:
+            query = query.filter(Card.material_id == material_id)
+
+    if (result := query.first()) is None:
+        raise CardNotFound
+
+    card, recall, note = result
+    return CardNoteRecall(card=card, note=note, recall=recall)
+
+
+def complete_card(*,
+                  card_id: int,
+                  result: str) -> None:
+    """
+    :exception WrongRepeatResult:
+    """
+    logger.debug(f"Completing card {card_id=} as {result=}")
+
+    with session() as ses:
+        res = ses.query(Card, Recall)\
+            .join(Card, Card.card_id == Recall.card_id)\
+            .filter(Card.card_id == card_id)\
+            .all()
+
+        card_, recall = res[0]
+        card = CardNoteRecall(card=card_, recall=recall)
+
+        recall.last_repeat_date = today()
+
+        if days := card[result]:
+            recall.next_repeat_date = today() + timedelta(days=days)
+        else:
+            raise WrongRepeatResult
+
+        coeff = RepeatResults[result].value
+        recall.mult *= coeff
+
+
+def repeated_today(*,
+                   material_id: Optional[int] = None) -> int:
+    """
+    Get count of cards repeated today
+    """
+    logger.debug("calculating how many cards repeated today")
+
+    with session() as ses:
+        query = ses.query(Card, Recall) \
+            .join(Recall, Card.card_id == Recall.card_id) \
+            .filter(Recall.last_repeat_date == today())
+
+        if material_id:
+            query = query.filter(Card.material_id == material_id)
+
+        # TODO: somehow use func.count() instead
+        return len(query.all())
+
+
+def remains_for_today(*,
+                      material_id: Optional[int] = None) -> int:
+    logger.debug("Calculating how many cards remains for today")
+
+    with session() as ses:
+        query = ses.query(Card, Recall) \
+            .join(Recall, Card.card_id == Recall.card_id) \
+            .filter(Recall.next_repeat_date == today())
+
+        if material_id:
+            query = query.filter(Card.material_id == material_id)
+
+        # TODO: somehow use func.count() instead
+        return len(query.all())
