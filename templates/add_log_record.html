@@ -5,10 +5,9 @@
 {% endblock style %}
 
 {% block header %}
-<nav class="subnavbar">
-    <a href="/reading_log"> Reading log </a>
-    <a href="/reading_log/add"> Add log record </a>
-</nav>
+    {% from 'submenu.html' import submenu %}
+    {% call submenu(('Reading log', '/reading_log'), ('Add log record', '/reading_log/add')) %}
+    {% endcall %}
 {% endblock header %}
 
 {% block main %}
