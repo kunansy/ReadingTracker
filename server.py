@@ -503,6 +503,8 @@ async def add_card(request: Request) -> HTTPResponse:
         )
     else:
         jinja.flash(request, "Card added", 'success')
+        request.ctx.session.pop('question')
+        request.ctx.session.pop('answer')
     finally:
         return response.redirect('/recall/add')
 
