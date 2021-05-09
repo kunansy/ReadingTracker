@@ -445,8 +445,7 @@ async def add_card(request: Request) -> dict[str, Any]:
         for ms in tracker.reading + tracker.processed
     }
 
-    material_id = request.args.get('material_id')
-    if material_id:
+    if material_id := request.args.get('material_id'):
         request.ctx.session['material_id'] = material_id
     material_id = material_id or request.ctx.session.get('material_id')
 
