@@ -380,7 +380,8 @@ class Log:
             msg = "Reading log is empty, no materials reading"
             logger.warning(msg)
             raise ReadingLogIsEmpty(msg)
-        
+
+        last = 0
         for _, info in self.data():
             last = info.material_id
 
