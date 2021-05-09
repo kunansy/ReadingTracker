@@ -559,14 +559,13 @@ def add_card(*,
         logger.debug("Card started")
 
 
-def get_cards(*,
-              material_id: Optional[int] = None) -> list[CardNoteRecall]:
-
+def get_card(*,
+             material_id: Optional[int] = None) -> list[CardNoteRecall]:
     how_many = 'all materials'
     if material_id is not None:
         how_many = f"material {material_id=}"
 
-    logger.info(f"Getting cards for {how_many}")
+    logger.info(f"Getting card for {how_many}")
 
     with session() as ses:
         query = ses.query(Card, Recall, Note)\
@@ -579,7 +578,7 @@ def get_cards(*,
 
     return [
         CardNoteRecall(card=card, note=note, recall=recall)
-        for card, recall, note in query.all()
+        for card, recall, note in query.one()
     ]
 
 
