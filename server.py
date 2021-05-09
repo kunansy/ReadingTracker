@@ -399,6 +399,13 @@ async def recall(request: Request) -> dict[str, Any] or HTTPResponse:
     except trc.DatabaseError as e:
         jinja.flash(request, str(e), 'error')
         return response.redirect('/materials/queue')
+    except trc.CardNotFound:
+        card = None
+
+    if card is None:
+        return {
+            'card': None
+        }
 
     titles = {
         ms.material.material_id: ms.material.title
@@ -407,7 +414,7 @@ async def recall(request: Request) -> dict[str, Any] or HTTPResponse:
     return {
         'card': card,
         'titles': titles,
-        'remains': 1
+        'remains': trc.cards_remain()
     }
 
 
