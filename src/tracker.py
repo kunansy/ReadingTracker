@@ -18,6 +18,9 @@ PAGES_PER_DAY = 50
 INDENT = 2
 
 DATE_FORMAT = '%d-%m-%Y'
+# max count of cards repeated per day
+_MAX_PER_DAY = 25
+
 
 logger = logging.getLogger('ReadingTracker')
 
@@ -1224,74 +1227,50 @@ class Tracker:
             raise DatabaseError(e)
 
 
-class Cards:
-    # max count of cards repeated per day
-    _MAX_PER_DAY = 25
+def get_card(material_id: Optional[int] = None) -> Optional[db.CardNoteRecall]:
+    """
+    :exception DatabaseError:
+    """
+    if db.repeated_today() >= _MAX_PER_DAY:
+        return
 
-    def __init__(self) -> None:
-        try:
-            cards = self._get_cards()
-        except db.BaseDBError as e:
-            logger.error(str(e))
-            cards = []
+    try:
+        return db.get_card(material_id=material_id)[0]
+    except db.BaseDBError as e:
+        logger.error(str(e))
+        raise DatabaseError(e)
+    except IndexError:
+        return
 
-        self.__cards = cards
 
-    def get_card(self) -> Optional[db.CardNoteRecall]:
-        if db.repeated_today() >= self._MAX_PER_DAY:
-            return
+def add_card(material_id: int,
+             question: str,
+             note_id: int,
+             answer: Optional[str] = None) -> None:
+    """
+    :exception DatabaseError:
+    """
+    try:
+        db.add_card(
+            material_id=material_id,
+            question=question,
+            answer=answer,
+            note_id=note_id
+        )
+    except db.BaseDBError as e:
+        logger.error(str(e))
+        raise DatabaseError(e)
 
-        if not self.__cards and not (cards := self._get_cards()):
-            return
-        elif not self.__cards:
-            self.__cards = cards
 
-        return self.__cards.pop()
-
-    @staticmethod
-    def add_card(material_id: int,
-                 question: str,
-                 note_id: int,
-                 answer: Optional[str] = None) -> None:
-        """
-        :exception DatabaseError:
-        """
-        try:
-            db.add_card(
-                material_id=material_id,
-                question=question,
-                answer=answer,
-                note_id=note_id
-            )
-        except db.BaseDBError as e:
-            logger.error(str(e))
-            raise DatabaseError(e)
-
-    @staticmethod
-    def _get_cards(material_id: Optional[int] = None) -> list[db.CardNoteRecall]:
-        """
-        :exception DatabaseError:
-        """
-        # TODO: optimize
-        try:
-            cards = db.get_cards(material_id=material_id)
-        except db.BaseDBError as e:
-            logger.error(str(e))
-            raise DatabaseError(e)
-
-        random.shuffle(cards)
-        return cards
-
-    @staticmethod
-    def complete_card(card_id: int,
-                      result) -> None:
-        """
-        :exception DatabaseError:
-        """
-        try:
-            db.complete_card(
-                card_id=card_id, result=result
-            )
-        except db.BaseDBError as e:
-            logger.error(str(e))
-            raise DatabaseError(e)
+def complete_card(card_id: int,
+                  result) -> None:
+    """
+    :exception DatabaseError:
+    """
+    try:
+        db.complete_card(
+            card_id=card_id, result=result
+        )
+    except db.BaseDBError as e:
+        logger.error(str(e))
+        raise DatabaseError(e)
