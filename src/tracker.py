@@ -45,6 +45,10 @@ class NoMaterialInLog(BaseTrackerError):
     pass
 
 
+class CardNotFound(BaseTrackerError):
+    pass
+
+
 class DatabaseError(BaseTrackerError):
     pass
 
@@ -1235,12 +1239,12 @@ def get_card(material_id: Optional[int] = None) -> Optional[db.CardNoteRecall]:
         return
 
     try:
-        return db.get_card(material_id=material_id)[0]
+        return db.get_card(material_id=material_id)
+    except db.CardNotFound:
+        raise CardNotFound
     except db.BaseDBError as e:
         logger.error(str(e))
         raise DatabaseError(e)
-    except IndexError:
-        return
 
 
 def add_card(material_id: int,
