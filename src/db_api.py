@@ -193,6 +193,47 @@ class CardNoteRecall:
         self.recall = recall
         self.note = note
 
+    @property
+    def old_duration(self) -> int:
+        return (self.recall.next_repeat_date -
+                self.recall.last_repeat_date).days or 2
+
+    @property
+    def bad(self) -> int:
+        return round(
+            self.old_duration * self.recall.mult *
+            RepeatResults['bad'].value
+        )
+
+    @property
+    def good(self) -> int:
+        return round(
+            self.old_duration * self.recall.mult *
+            RepeatResults['good'].value
+        )
+
+    @property
+    def excellent(self) -> int:
+        return round(
+            self.old_duration * self.recall.mult *
+            RepeatResults['excellent'].value
+        )
+
+    @property
+    def tomorrow(self) -> int:
+        return 1
+
+    @property
+    def d10(self) -> int:
+        return 10
+
+    def __getitem__(self,
+                    item: str) -> int:
+        try:
+            return getattr(super(), item)
+        except AttributeError:
+            return getattr(self, item, None)
+
     def __setattr__(self,
                     key: str,
                     value) -> None:
