@@ -1274,3 +1274,18 @@ def complete_card(card_id: int,
     except db.BaseDBError as e:
         logger.error(str(e))
         raise DatabaseError(e)
+
+
+def cards_remain(material_id: Optional[int] = None) -> int:
+    try:
+        repeated_today = db.repeated_today(material_id=material_id)
+        remains_for_today = db.remains_for_today(material_id=material_id)
+    except db.BaseDBError as e:
+        logger.error(str(e))
+        return 0
+
+    if repeated_today >= _MAX_PER_DAY:
+        return 0
+    if repeated_today + remains_for_today >= _MAX_PER_DAY:
+        return _MAX_PER_DAY - repeated_today
+    return remains_for_today
