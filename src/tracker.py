@@ -376,12 +376,15 @@ class Log:
 
         :exception ReadingLogIsEmpty:
         """
-        try:
-            return list(self.log.values())[-1].material_id
-        except IndexError:
+        if not self.log:
             msg = "Reading log is empty, no materials reading"
             logger.warning(msg)
             raise ReadingLogIsEmpty(msg)
+        
+        for _, info in self.data():
+            last = info.material_id
+
+        return last
 
     def _get_log(self,
                  *,
