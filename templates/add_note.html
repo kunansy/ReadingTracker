@@ -5,10 +5,9 @@
 {% endblock style %}
 
 {% block header %}
-<nav class="subnavbar">
-    <a href="/notes"> Search notes </a>
-    <a href="/notes/add"> Add note </a>
-</nav>
+    {% from 'submenu.html' import submenu %}
+    {% call submenu(('Search notes', '/notes'), ('Add note', '/notes/add')) %}
+    {% endcall %}
 {% endblock header %}
 
 {% block main %}
