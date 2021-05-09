@@ -652,7 +652,7 @@ class Log:
         }
 
         # TODO: the most ugly solution I've ever seen, fix it
-        while iter_ <= self.stop:
+        while iter_ <= today():
             if not (info := self.log.get(iter_)):
                 if materials:
                     material_id = materials[-1]
