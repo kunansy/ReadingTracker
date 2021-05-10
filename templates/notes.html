@@ -30,7 +30,7 @@
     <details class="menu">
         <summary> Menu </summary>
         <div class="menu-items">
-        {% for material_id, chapters in chapters.items() %}
+        {% for material_id, chapters in chapters|dictsort %}
             <div class="material-link">
             <details class="chapters">
                 <summary> <a class="title-link" href="#material-{{ material_id }}"> «{{ all_titles[material_id] }}» </a> </summary>
