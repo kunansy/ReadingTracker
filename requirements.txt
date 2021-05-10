@@ -5,3 +5,4 @@ sanic===21.3.4
 sanic-jinja2==0.9.1
 sanic-session==0.8.0
 pydantic==1.8.1
+environs==9.3.2
