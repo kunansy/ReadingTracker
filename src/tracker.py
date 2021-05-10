@@ -1046,6 +1046,17 @@ class Tracker:
             logger.error(f"Error checking {material_id=} exists:\n{e}")
             return False
 
+    @staticmethod
+    def get_material_titles() -> dict[int, str]:
+        """
+        :exception DatabaseError:
+        """
+        try:
+            return db.get_material_titles()
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError(e)
+
     def get_material_statistics(self,
                                 material_id: int,
                                 *,
