@@ -7,6 +7,7 @@ from typing import Any, Optional
 import ujson
 from pydantic import BaseModel, ValidationError, validator, constr, conint
 from sanic import Sanic, Request, response, HTTPResponse
+from sanic.log import logger as sanic_logger
 from sanic_jinja2 import SanicJinja2
 from sanic_session import Session
 
@@ -23,7 +24,6 @@ jinja = SanicJinja2(app, session=session)
 
 log = trc.Log(full_info=True)
 tracker = trc.Tracker(log)
-logger = logging.getLogger('ReadingTracker')
 
 
 class Material(BaseModel):
@@ -158,7 +158,7 @@ async def add_material(request: Request) -> HTTPResponse:
         material = Material(**key_val)
     except ValidationError as e:
         context = ujson.dumps(e.errors(), indent=4)
-        logger.warning(f"Validation error:\n{context}")
+        sanic_logger.warning(f"Validation error:\n{context}")
 
         jinja.flash(
             request,
@@ -278,7 +278,7 @@ async def add_log_record(request: Request) -> HTTPResponse:
         record = LogRecord(**key_val)
     except ValidationError as e:
         context = ujson.dumps(e.errors(), indent=4)
-        logger.warning(f"Validation error:\n{context}")
+        sanic_logger.warning(f"Validation error:\n{context}")
 
         jinja.flash(
             request,
@@ -363,7 +363,7 @@ async def add_note(request: Request) -> HTTPResponse:
         note = Note(**key_val)
     except ValidationError as e:
         context = ujson.dumps(e.errors(), indent=4)
-        logger.warning(f"Validation error:\n{context}")
+        sanic_logger.warning(f"Validation error:\n{context}")
 
         jinja.flash(
             request,
@@ -477,7 +477,7 @@ async def add_card(request: Request) -> HTTPResponse:
         card = Card(**key_val)
     except ValidationError as e:
         context = ujson.dumps(e.errors(), indent=4)
-        logger.warning(f"Validation error:\n{context}")
+        sanic_logger.warning(f"Validation error:\n{context}")
 
         jinja.flash(
             request,
@@ -517,7 +517,7 @@ async def home(request: Request) -> HTTPResponse:
 def validation_error_handler(request: Request,
                              exception: ValidationError) -> HTTPResponse:
     context = ujson.dumps(exception.errors(), indent=4)
-    logger.error(f"Validation error was not handled:\n{context}")
+    sanic_logger.error(f"Validation error was not handled:\n{context}")
 
     return response.json(exception.errors(), status=400, indent=4)
 
@@ -545,7 +545,7 @@ def error_handler(request: Request,
         }
     }
 
-    logger.error(ujson.dumps(context, indent=4))
+    sanic_logger.error(ujson.dumps(context, indent=4))
     return response.json(context, status=500, indent=4)
 
 
