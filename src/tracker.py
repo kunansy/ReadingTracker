@@ -408,18 +408,22 @@ class Log:
             log = ujson.load(f)
 
         log_records = {}
+        material_titles = {}
+
+        if full_info:
+            try:
+                material_titles = db.get_material_titles()
+            except db.BaseDBError as e:
+                logger.error(str(e))
+                raise DatabaseError(e)
+
         for date, info in log.items():
             date = to_datetime(date)
             record = LogRecord(**info)
 
             if full_info:
-                try:
-                    material_title = db.get_title(record.material_id)
-                except db.BaseDBError as e:
-                    logger.error(str(e))
-                    raise DatabaseError(e)
-                else:
-                    record.material_title = material_title
+                record.material_title = \
+                    material_titles.get(record.material_id, '')
 
             log_records[date] = record
         return log_records
@@ -938,12 +942,18 @@ class Log:
         last_material_id, last_material_title = -1, ''
         new_line = '\n'
 
+        try:
+            material_titles = db.get_material_titles()
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError(e)
+
         for date, info in self.log.items():
             if (material_id := info.material_id) != last_material_id:
                 last_material_id = material_id
                 try:
                     title = info.material_title or \
-                            f"«{db.get_title(material_id)}»"
+                            f"«{material_titles.get(material_id, '')}»"
                 except db.BaseDBError as e:
                     logger.error(str(e))
                     title = 'None'
