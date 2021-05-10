@@ -7,6 +7,7 @@ __all__ = ('get_materials', 'get_status', 'get_completed_materials',
 
 import datetime
 import logging
+from collections import defaultdict
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import timedelta
@@ -270,29 +271,52 @@ engine = create_engine(env('DB_URI'), encoding='utf-8')
 Base.metadata.create_all(engine)
 
 
-def cache(func: Callable) -> Callable:
-    results = {}
+def cache(*,
+          update: bool,
+          times: int = 10) -> Callable:
+    def decorator(func: Callable) -> Callable:
+        results = {}
+        call_st = defaultdict(int)
+        fname = func.__name__
 
-    def wrapped(arg=None):
-        nonlocal results
+        def wrapped(*args, **kwargs):
+            nonlocal results, call_st
 
-        if arg in results:
-            logger.debug(f"Result for {func.__name__}({arg})='{results[arg]}' "
-                         "got from cache")
-            return results[arg]
+            assert not kwargs, "Kwargs not supported here"
 
-        if arg is None:
-            results[arg] = func()
-        else:
-            results[arg] = func(arg)
+            arg_id = hash(args)
+            call_st[arg_id] += 1
 
-        logger.debug(f"Result for {func.__name__}({arg}) calculated and "
-                     f"put into cache"
-        )
+            if results.get(arg_id) is None:
+                logger.debug(f"{fname}{args} called first time "
+                             "calculating the result")
 
-        return results[arg]
+                results[arg_id] = func(*args)
+                return results[arg_id]
 
-    return wrapped
+            called_numbers = call_st[arg_id]
+            if (update and called_numbers >= times and
+                    not called_numbers % times):
+                logger.debug(
+                    f"{fname}{args} called "
+                    f"{called_numbers} times, updating the value"
+                )
+
+                if (new_res := func(*args)) == results[arg_id]:
+                    logger.debug('New result == to the last one')
+                else:
+                    logger.debug('New result != to the last one')
+
+                results[arg_id] = new_res
+            else:
+                res = str(results[arg_id])
+                shorted_res = res[:5] + '...' + res[-5:]
+                logger.debug(f"{fname}{args}='{shorted_res}' "
+                             "got from cache")
+
+            return results[arg_id]
+        return wrapped
+    return decorator
 
 
 @contextmanager
