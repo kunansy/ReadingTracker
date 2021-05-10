@@ -360,7 +360,6 @@ def get_materials(*,
             Material.material_id.in_(materials_ids)).all()
 
 
-@cache(update=True)
 def get_material_titles() -> dict[int, str]:
     with session() as ses:
         res = ses.query(Material.material_id, Material.title)\
@@ -372,7 +371,6 @@ def get_material_titles() -> dict[int, str]:
         }
 
 
-@cache(update=True)
 def get_title(material_id: int, /) -> str:
     logger.info(f"Getting title for {material_id=}")
     try:
@@ -382,13 +380,11 @@ def get_title(material_id: int, /) -> str:
         return ''
 
 
-@cache(update=True)
 def does_material_exist(material_id: int, /) -> bool:
     logger.info(f"Whether {material_id=} exists")
     return len(get_materials(materials_ids=[material_id])) == 1
 
 
-@cache(update=True)
 def get_free_materials() -> list[Material]:
     """ Get all not assigned materials """
     logger.info("Getting free materials")
@@ -405,7 +401,6 @@ def get_free_materials() -> list[Material]:
     ]
 
 
-@cache(update=True)
 def get_reading_materials() -> MATERIAL_STATUS:
     """
     Get all assigned but not completed
@@ -425,7 +420,6 @@ def get_reading_materials() -> MATERIAL_STATUS:
     ]
 
 
-@cache(update=True)
 def get_completed_materials() -> MATERIAL_STATUS:
     """ Get all completed materials and their statuses. """
     logger.info("Getting completed materials")
