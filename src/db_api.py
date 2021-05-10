@@ -180,6 +180,12 @@ class Recall(Base):
     next_repeat_date = Column(Date, nullable=False)
     mult = Column(Float, nullable=False, default=1.)
 
+    def __repr__(self) -> str:
+        return f"{self.__class__.__name__}(" \
+               f"recall_id={self.recall_id}, card_id={self.card_id}, " \
+               f"last_repeat_date={self.last_repeat_date}, " \
+               f"next_repeat_date={self.next_repeat_date}, mult={self.mult}"
+
 
 @dataclass
 class CardNoteRecall:
