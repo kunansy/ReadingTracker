@@ -8,20 +8,23 @@ from pathlib import Path
 from typing import Union, Optional, Iterator, Iterable
 
 import ujson
+from environs import Env
 
 import src.db_api as db
 
 
+env = Env()
+
 DATA_FOLDER = Path('data')
-PAGES_PER_DAY = 50
+PAGES_PER_DAY = env.int('READ_PER_DAY', 50)
 INDENT = 2
 
 DATE_FORMAT = '%d-%m-%Y'
 # max count of cards repeated per day
-_MAX_PER_DAY = 25
+_MAX_PER_DAY = env.int('CARDS_PER_DAY', 25)
 
 
-logger = logging.getLogger('ReadingTracker')
+logger = logging.getLogger(env('LOGGER_NAME'))
 
 
 class BaseTrackerError(Exception):
