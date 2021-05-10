@@ -5,6 +5,7 @@ from collections import defaultdict
 from typing import Any, Optional
 
 import ujson
+from environs import Env
 from pydantic import BaseModel, ValidationError, validator, constr, conint
 from sanic import Sanic, Request, response, HTTPResponse
 from sanic.log import logger as sanic_logger
@@ -16,6 +17,7 @@ from src import logger as logger_
 from src import tracker as trc
 
 
+env = Env()
 app = Sanic(__name__, log_config=logger_.LOGGING_CONFIG)
 app.static('/static', './static')
 
@@ -553,4 +555,6 @@ if __name__ == "__main__":
     app.run(
         port=8080,
         debug=True,
+        workers=env.int('WORKERS', 1),
+        access_log=env.bool('SANIC_ACCESS', False)
     )
