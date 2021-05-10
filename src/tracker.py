@@ -984,7 +984,7 @@ class Tracker:
             return db.get_free_materials()
         except db.BaseDBError as e:
             logger.error(str(e))
-            raise DatabaseError
+            raise DatabaseError(e)
 
     @property
     def processed(self) -> db.MATERIAL_STATUS:
@@ -996,7 +996,7 @@ class Tracker:
             return db.get_completed_materials()
         except db.BaseDBError as e:
             logger.error(str(e))
-            raise DatabaseError
+            raise DatabaseError(e)
 
     @property
     def reading(self) -> db.MATERIAL_STATUS:
@@ -1008,7 +1008,7 @@ class Tracker:
             return db.get_reading_materials()
         except db.BaseDBError as e:
             logger.error(str(e))
-            raise DatabaseError
+            raise DatabaseError(e)
 
     @property
     def log(self) -> Log:
@@ -1023,7 +1023,7 @@ class Tracker:
             return db.get_notes()
         except db.BaseDBError as e:
             logger.error(str(e))
-            raise DatabaseError
+            raise DatabaseError(e)
 
     @staticmethod
     def does_material_exist(material_id: int) -> bool:
