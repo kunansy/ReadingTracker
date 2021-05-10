@@ -11,9 +11,9 @@ from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import timedelta
 from enum import Enum
-from os import environ
 from typing import ContextManager, Callable, Optional
 
+from environs import Env
 from sqlalchemy import (
     Column, ForeignKey, Integer,
     String, Date, create_engine, Text, Float
@@ -23,10 +23,11 @@ from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
 
+env = Env()
 DATE_FORMAT = '%d-%m-%Y'
 
 Base = declarative_base()
-logger = logging.getLogger('ReadingTracker')
+logger = logging.getLogger(env('LOGGER_NAME'))
 
 
 class BaseDBError(Exception):
@@ -265,7 +266,7 @@ class RepeatResults(Enum):
 
 
 MATERIAL_STATUS = list[MaterialStatus]
-engine = create_engine(environ['DB_URI'], encoding='utf-8')
+engine = create_engine(env('DB_URI'), encoding='utf-8')
 Base.metadata.create_all(engine)
 
 
