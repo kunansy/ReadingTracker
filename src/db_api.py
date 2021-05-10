@@ -342,7 +342,7 @@ def session(**kwargs) -> ContextManager[Session]:
         logger.info("Session closed")
 
 
-@cache
+@cache(update=False)
 def today() -> datetime.date:
     return datetime.datetime.now().date()
 
@@ -379,7 +379,7 @@ def get_material_titles() -> dict[int, str]:
         }
 
 
-@cache
+@cache(update=True)
 def get_title(material_id: int, /) -> str:
     logger.info(f"Getting title for {material_id=}")
     try:
@@ -389,12 +389,13 @@ def get_title(material_id: int, /) -> str:
         return ''
 
 
-@cache
+@cache(update=True)
 def does_material_exist(material_id: int, /) -> bool:
     logger.info(f"Whether {material_id=} exists")
     return len(get_materials(materials_ids=[material_id])) == 1
 
 
+@cache(update=True)
 def get_free_materials() -> list[Material]:
     """ Get all not assigned materials """
     logger.info("Getting free materials")
@@ -411,6 +412,7 @@ def get_free_materials() -> list[Material]:
     ]
 
 
+@cache(update=True)
 def get_reading_materials() -> MATERIAL_STATUS:
     """
     Get all assigned but not completed
@@ -430,6 +432,7 @@ def get_reading_materials() -> MATERIAL_STATUS:
     ]
 
 
+@cache(update=True)
 def get_completed_materials() -> MATERIAL_STATUS:
     """ Get all completed materials and their statuses. """
     logger.info("Getting completed materials")
