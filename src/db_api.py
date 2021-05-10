@@ -281,7 +281,7 @@ def cache(*,
             call_st[arg_id] += 1
 
             if results.get(arg_id) is None:
-                logger.debug(f"{fname}{args} called first time "
+                logger.debug(f"{fname}{args} called first time, "
                              "calculating the result")
 
                 results[arg_id] = func(*args)
