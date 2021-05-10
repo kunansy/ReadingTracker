@@ -367,6 +367,18 @@ def get_materials(*,
             Material.material_id.in_(materials_ids)).all()
 
 
+@cache(update=True)
+def get_material_titles() -> dict[int, str]:
+    with session() as ses:
+        res = ses.query(Material.material_id, Material.title)\
+                .all()
+
+        return {
+            material_id: material_title
+            for material_id, material_title in res
+        }
+
+
 @cache
 def get_title(material_id: int, /) -> str:
     logger.info(f"Getting title for {material_id=}")
