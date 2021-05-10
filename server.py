@@ -254,10 +254,11 @@ async def get_reading_log(request: Request) -> dict[str, Any]:
 @app.get('/reading_log/add')
 @jinja.template('add_log_record.html')
 async def add_reading_log(request: Request) -> dict[str, Any]:
-    titles = {
-        ms.material.material_id: ms.material.title
-        for ms in tracker.reading
-    }
+    try:
+        titles = tracker.get_material_titles()
+    except trc.BaseTrackerError:
+        titles = {}
+
     try:
         reading_material_id = log.reading_material
     except trc.BaseTrackerError:
@@ -315,16 +316,12 @@ async def get_notes(request: Request):
     else:
         jinja.flash(request, f"{len(notes)} notes found", 'success')
     
-    all_ids = {
-        note.material_id
-        for note in all_notes
-    }
-    all_titles = {
-        material_id: db_api.get_title(material_id)
-        for material_id in all_ids
-    }
-    
-    # chapters of the shown materials, 
+    try:
+        all_titles = tracker.get_material_titles()
+    except trc.BaseTrackerError:
+        all_titles = {}
+
+    # chapters of the shown materials,
     #  it should help to create menu
     chapters = defaultdict(set)
     for note in notes:
@@ -341,10 +338,11 @@ async def get_notes(request: Request):
 @app.get('/notes/add')
 @jinja.template('add_note.html')
 async def add_note(request: Request) -> dict[str, Any]:
-    titles = {
-        ms.material.material_id: ms.material.title
-        for ms in tracker.reading + tracker.processed
-    }
+    try:
+        titles = tracker.get_material_titles()
+    except trc.BaseTrackerError:
+        titles = {}
+
     return {
         'material_id': request.ctx.session.get('material_id', ''),
         'content': request.ctx.session.get('content', ''),
@@ -409,10 +407,11 @@ async def recall(request: Request) -> dict[str, Any] or HTTPResponse:
             'card': None
         }
 
-    titles = {
-        ms.material.material_id: ms.material.title
-        for ms in tracker.reading + tracker.processed
-    }
+    try:
+        titles = tracker.get_material_titles()
+    except trc.BaseTrackerError:
+        titles = {}
+
     return {
         'card': card,
         'titles': titles,
@@ -442,10 +441,10 @@ async def recall(request: Request,
 @app.get('/recall/add')
 @jinja.template('add_card.html')
 async def add_card(request: Request) -> dict[str, Any]:
-    titles = {
-        ms.material.material_id: ms.material.title
-        for ms in tracker.reading + tracker.processed
-    }
+    try:
+        titles = tracker.get_material_titles()
+    except trc.BaseTrackerError:
+        titles = {}
 
     if material_id := request.args.get('material_id'):
         request.ctx.session['material_id'] = material_id
