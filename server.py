@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import datetime
-import logging
 from collections import defaultdict
 from typing import Any, Optional
 
