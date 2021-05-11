@@ -197,6 +197,8 @@ async def start_material(request: Request,
                          material_id: int) -> HTTPResponse:
     try:
         tracker.start_material(material_id)
+    except trc.MaterialNotFound as e:
+        raise exceptions.NotFound(e)
     except trc.DatabaseError as e:
         jinja.flash(request, str(e), 'error')
     else:
@@ -210,6 +212,8 @@ async def complete_material(request: Request,
                             material_id: int) -> HTTPResponse:
     try:
         tracker.complete_material(material_id)
+    except trc.MaterialNotFound as e:
+        raise exceptions.NotFound(e)
     except trc.DatabaseError as e:
         jinja.flash(request, str(e), 'error')
     else:
@@ -491,6 +495,8 @@ async def recall(request: Request,
 
     try:
         trc.complete_card(card_id, result)
+    except trc.CardNotFound as e:
+        raise exceptions.NotFound(e)
     except trc.DatabaseError as e:
         jinja.flash(
             request,
