@@ -693,6 +693,7 @@ def complete_card(*,
                   result: str) -> None:
     """
     :exception WrongRepeatResult:
+    :exception CardNotFound:
     """
     logger.debug(f"Completing card {card_id=} as {result=}")
 
@@ -701,6 +702,9 @@ def complete_card(*,
             .join(Card, Card.card_id == Recall.card_id)\
             .filter(Card.card_id == card_id)\
             .all()
+
+        if not res:
+            raise CardNotFound(f"Card {card_id=} not found")
 
         card_, recall = res[0]
         card = CardNoteRecall(card=card_, recall=recall)
