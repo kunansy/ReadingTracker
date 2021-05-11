@@ -129,8 +129,14 @@ class Card(BaseModel):
 @app.get('/materials/queue')
 @jinja.template('queue.html')
 async def get_queue(request: Request) -> dict[str, Any]:
+    try:
+        materials = tracker.estimate()
+    except trc.DatabaseError as e:
+        jinja.flash(request, f"Error getting queue: {e}", 'error')
+        materials = []
+
     return {
-        'estimates': tracker.estimate(),
+        'estimates': materials,
         'DATE_FORMAT': trc.DATE_FORMAT
     }
 
