@@ -9,19 +9,19 @@ document.addEventListener("DOMContentLoaded", () => {
         let input = e.target;
         
         // on Alt-Q
-        if (e.keyCode == 81 && e.altKey) {
+        if (e.keyCode === 81 && e.altKey) {
             input.value += '«»';
         }
         // on Alt-T
-        else if (e.keyCode == 84 && e.altKey) {
+        else if (e.keyCode === 84 && e.altKey) {
             input.value += '–';
         }
         // on Ctrl-B
-        else if (e.keyCode == 66 && e.ctrlKey) {
+        else if (e.keyCode === 66 && e.ctrlKey) {
             input.value += '<span class="font-weight-bold"></span>';
         }
         // on Ctrl-I
-        else if (e.keyCode == 73 && e.ctrlKey) {
+        else if (e.keyCode === 73 && e.ctrlKey) {
             input.value += '<span class="font-italic"></span>';
         }
     }
