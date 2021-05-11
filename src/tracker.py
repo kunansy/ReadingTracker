@@ -421,7 +421,8 @@ class Log:
 
         if full_info:
             try:
-                material_titles = db.get_material_titles()
+                material_titles = db.get_material_titles(
+                    reading=True, completed=True)
             except db.BaseDBError as e:
                 logger.error(str(e))
                 raise DatabaseError(e)
