@@ -1353,11 +1353,15 @@ def complete_card(card_id: int,
                   result) -> None:
     """
     :exception DatabaseError:
+    :exception CardNotFound:
     """
     try:
         db.complete_card(
             card_id=card_id, result=result
         )
+    except db.CardNotFound as e:
+        logger.error(str(e))
+        raise CardNotFound(e)
     except db.BaseDBError as e:
         logger.error(str(e))
         raise DatabaseError(e)
