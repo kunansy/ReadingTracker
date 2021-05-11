@@ -594,8 +594,8 @@ async def add_card(request: Request) -> HTTPResponse:
     else:
         jinja.flash(request, "Card added", 'success')
 
-        request.ctx.session.clear()
-        request.ctx.session['material_id'] = card.material_id
+        request.ctx.session.pop('question')
+        request.ctx.session.pop('note_id')
     finally:
         return response.redirect('/recall/add')
 
