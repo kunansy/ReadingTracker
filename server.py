@@ -341,9 +341,14 @@ async def add_log_record(request: Request) -> HTTPResponse:
 
 @app.get('/notes')
 @jinja.template('notes.html')
-async def get_notes(request: Request):
+async def get_notes(request: Request) -> dict[str, Any]:
     material_id = request.args.get('material_id')
-    all_notes = tracker.get_notes()
+    try:
+        all_notes = tracker.get_notes()
+    except trc.DatabaseError as e:
+        jinja.flash(request, f"Cannot get notes: {e}", 'error')
+        all_notes = []
+
     notes = [
         note
         for note in all_notes
@@ -352,6 +357,7 @@ async def get_notes(request: Request):
 
     if not notes:
         jinja.flash(request, f'No notes {material_id=} found', 'error')
+        return {}
     else:
         jinja.flash(request, f"{len(notes)} notes found", 'success')
     
