@@ -1208,6 +1208,9 @@ class Tracker:
                 material_id=material_id,
                 completion_date=completion_date
             )
+        except db.MaterialNotAssigned as e:
+            logger.error(str(e))
+            raise MaterialNotFound(e)
         except db.BaseDBError as e:
             logger.error(e)
             raise DatabaseError(e)
