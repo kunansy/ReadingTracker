@@ -5,3 +5,13 @@
 ::-webkit-scrollbar {
   width: 0;
 }
+
+fieldset.add-note-fieldset {
+    display: flex;
+    margin: auto;
+    flex-direction: column;
+}
+
+legend.add-note-legend {
+    text-align: center;
+}
