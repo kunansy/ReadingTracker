@@ -331,6 +331,8 @@ async def add_log_record(request: Request) -> HTTPResponse:
         log._set_log(**record.dict())
     except trc.WrongLogParam as e:
         jinja.flash(request, str(e), 'error')
+    except trc.DatabaseError as e:
+        jinja.flash(request, str(e), 'error')
     else:
         jinja.flash(request, 'Record added', 'success')
     finally:
