@@ -97,9 +97,7 @@ form {
 /* not found message */
 div.not-found {
     display: flex;
-    margin: auto;
-    margin-top: 7vh;
-    margin-bottom: 7vh;
+    margin: 7vh auto;
     border: black .3vh solid;
     border-radius: 2vh;
 }
@@ -107,6 +105,21 @@ div.not-found p.message {
     padding: 15vh;
     margin: auto;
     font-size: 5vh;
+    font-weight: 500;
+}
+
+/* styles for special symbols in notes, cards etc */
+span.sub {
+    vertical-align: sub;
+}
+span.sup {
+    vertical-align: super;
+}
+
+span.font-italic {
+    font-style: italic;
+}
+span.font-weight-bold {
     font-weight: 500;
 }
 
