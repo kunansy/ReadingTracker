@@ -360,10 +360,37 @@ def get_materials(*,
             Material.material_id.in_(materials_ids)).all()
 
 
-def get_material_titles() -> dict[int, str]:
+def get_material_titles(*,
+                        reading: bool = False,
+                        completed: bool = False,
+                        free: bool = False,
+                        all: bool = False) -> dict[int, str]:
     with session() as ses:
-        res = ses.query(Material.material_id, Material.title)\
-                .all()
+        query = ses.query(Material.material_id, Material.title)
+        res = []
+
+        if all:
+            res = query.all()
+        else:
+            if reading:
+                res += query\
+                    .join(Status, Status.material_id == Material.material_id)\
+                    .filter(Status.end == None)\
+                    .all()
+            if completed:
+                res += query \
+                    .join(Status, Status.material_id == Material.material_id) \
+                    .filter(Status.end != None) \
+                    .all()
+            if free:
+                free_materials = ses.query(Material, Status)\
+                    .join(Status, isauter=True)\
+                    .all()
+                res += [
+                    (material.material_id, material.title)
+                    for material, status in free_materials
+                    if status is None
+                ]
 
         return {
             material_id: material_title
