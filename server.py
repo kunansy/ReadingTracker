@@ -457,7 +457,7 @@ async def recall(request: Request) -> dict[str, Any] or HTTPResponse:
     try:
         card = trc.get_card()
     except trc.DatabaseError as e:
-        jinja.flash(request, str(e), 'error')
+        jinja.flash(request, f"Error getting card: {e}", 'error')
         return response.redirect('/materials/queue')
     except trc.CardNotFound:
         card = None
@@ -469,9 +469,9 @@ async def recall(request: Request) -> dict[str, Any] or HTTPResponse:
 
     try:
         titles = tracker.get_material_titles(
-            reading=True, completed=True
-        )
-    except trc.BaseTrackerError:
+            reading=True, completed=True)
+    except trc.DatabaseError as e:
+        jinja.flash(request, f"Cannot get material titles: {e}", 'error')
         titles = {}
 
     return {
