@@ -445,7 +445,9 @@ async def recall(request: Request,
 @jinja.template('add_card.html')
 async def add_card(request: Request) -> dict[str, Any]:
     try:
-        titles = tracker.get_material_titles()
+        titles = tracker.get_material_titles(
+            reading=True, completed=True
+        )
     except trc.BaseTrackerError:
         titles = {}
 
@@ -457,6 +459,16 @@ async def add_card(request: Request) -> dict[str, Any]:
         note.id: note
         for note in tracker.get_notes()
         if material_id is None or note.material_id == int(material_id)
+    }
+
+    all_ids = {
+        note.material_id
+        for note in notes.values()
+    }
+    titles = {
+        material_id: material_title
+        for material_id, material_title in titles.items()
+        if material_id in all_ids
     }
 
     return {
