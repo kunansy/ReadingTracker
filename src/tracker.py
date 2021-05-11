@@ -1047,12 +1047,12 @@ class Tracker:
             return False
 
     @staticmethod
-    def get_material_titles() -> dict[int, str]:
+    def get_material_titles(**kwargs) -> dict[int, str]:
         """
         :exception DatabaseError:
         """
         try:
-            return db.get_material_titles()
+            return db.get_material_titles(**kwargs)
         except db.BaseDBError as e:
             logger.error(str(e))
             raise DatabaseError(e)
