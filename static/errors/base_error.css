@@ -1,0 +1,26 @@
+::-webkit-scrollbar {
+    width: 0;
+}
+
+.base-error {
+    display: flex;
+    margin: 10vh auto;
+    flex-direction: column;
+    text-align: center;
+    padding: 5vh;
+    border: black .3vh solid;
+    border-radius: 2vh;
+    max-width: 40vw;
+}
+h3.error-code {
+    font-size: 9vh;
+    margin: 0;
+}
+h4.error-title {
+    margin: 0;
+    font-size: 7vh;
+}
+p.what {
+    margin-top: 3vh;
+    word-wrap: break-word;
+}
