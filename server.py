@@ -507,7 +507,7 @@ async def add_card(request: Request) -> dict[str, Any]:
         titles = tracker.get_material_titles(
             reading=True, completed=True
         )
-    except trc.BaseTrackerError as e:
+    except trc.DatabaseError as e:
         jinja.flash(request, f'Cannot get material titles: {e}', 'error')
         titles = {}
 
@@ -515,9 +515,15 @@ async def add_card(request: Request) -> dict[str, Any]:
         request.ctx.session['material_id'] = material_id
     material_id = material_id or request.ctx.session.get('material_id')
 
+    try:
+        all_notes = tracker.get_notes()
+    except trc.DatabaseError as e:
+        jinja.flash(request, f"Error getting notes: {e}", 'error')
+        return {}
+
     notes = {
         note.id: note
-        for note in tracker.get_notes()
+        for note in all_notes
         if material_id is None or note.material_id == int(material_id)
     }
 
