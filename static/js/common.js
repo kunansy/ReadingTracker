@@ -24,6 +24,14 @@ document.addEventListener("DOMContentLoaded", () => {
         else if (e.keyCode === 73 && e.ctrlKey) {
             input.value += '<span class="font-italic"></span>';
         }
+        // on Alt-B
+        else if (e.keyCode === 66 && e.altKey) {
+            input.value += '<span class="sub"></span>';
+        }
+        // on Alt-P
+        else if (e.keyCode === 80 && e.altKey) {
+            input.value += '<span class="sup"></span>';
+        }
     }
     for (textInput of textInputs) {
         textInput.addEventListener('keyup', onClick, true);
