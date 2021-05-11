@@ -577,15 +577,16 @@ async def add_card(request: Request) -> HTTPResponse:
             **card.dict()
         )
     except trc.DatabaseError as e:
-        jinja.flash(request, str(e), 'error')
+        jinja.flash(request, f"Error adding card: {e}", 'error')
 
         request.ctx.session.update(
-            card.dict(exclude={'question', 'answer', 'note_id'})
+            **card.dict()
         )
     else:
         jinja.flash(request, "Card added", 'success')
-        request.ctx.session.pop('question')
-        request.ctx.session.pop('answer')
+
+        request.ctx.session.clear()
+        request.ctx.session['material_id'] = card.material_id
     finally:
         return response.redirect('/recall/add')
 
