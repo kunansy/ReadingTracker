@@ -187,7 +187,6 @@ async def add_material(request: Request) -> HTTPResponse:
             **material.dict()
         )
     else:
-        request.ctx.session.clear()
         jinja.flash(request, "Material added", 'success')
     finally:
         return response.redirect('/materials/add')
