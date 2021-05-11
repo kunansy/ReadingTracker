@@ -338,7 +338,9 @@ async def get_notes(request: Request):
 @jinja.template('add_note.html')
 async def add_note(request: Request) -> dict[str, Any]:
     try:
-        titles = tracker.get_material_titles()
+        titles = tracker.get_material_titles(
+            reading=True, completed=True
+        )
     except trc.BaseTrackerError:
         titles = {}
 
