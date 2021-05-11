@@ -493,11 +493,15 @@ async def recall(request: Request,
     try:
         trc.complete_card(card_id, result)
     except trc.DatabaseError as e:
-        jinja.flash(request, str(e), 'error')
+        jinja.flash(
+            request,
+            f"Error completing card {card_id=}: {e}",
+            'error'
+        )
     else:
         jinja.flash(request, f"Card {card_id=} marked as {result}", result)
-
-    return response.redirect('/recall')
+    finally:
+        return response.redirect('/recall')
 
 
 @app.get('/recall/add')
