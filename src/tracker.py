@@ -28,7 +28,16 @@ logger = logging.getLogger(env('LOGGER_NAME'))
 
 
 class BaseTrackerError(Exception):
-    pass
+    def __repr__(self) -> str:
+        args = '; '.join(
+            str(arg)
+            for arg in self.args
+        )
+        return f"{self.__class__.__name__}(" \
+               f"{args}, {self.__cause__})"
+
+    def __str__(self) -> str:
+        return repr(self)
 
 
 class LoadingLogError(BaseTrackerError):
