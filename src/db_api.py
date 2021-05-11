@@ -730,7 +730,8 @@ def repeated_today(*,
     with session() as ses:
         query = ses.query(Card, Recall) \
             .join(Recall, Card.card_id == Recall.card_id) \
-            .filter(Recall.last_repeat_date == today())
+            .filter(Recall.last_repeat_date == today())\
+            .filter(Recall.next_repeat_date != today())
 
         if material_id:
             query = query.filter(Card.material_id == material_id)
