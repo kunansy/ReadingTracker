@@ -254,7 +254,7 @@ async def get_reading_log(request: Request) -> dict[str, Any]:
 @jinja.template('add_log_record.html')
 async def add_reading_log(request: Request) -> dict[str, Any]:
     try:
-        titles = tracker.get_material_titles()
+        titles = tracker.get_material_titles(reading=True)
     except trc.BaseTrackerError:
         titles = {}
 
