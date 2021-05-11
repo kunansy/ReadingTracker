@@ -42,8 +42,8 @@
         </form>
 
         <form action="/recall/add" method="POST">
-            <input class="input" id="material_id" list="materials" type="number" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
-            <input class="input" id="note_id" type="number" list="notes" placeholder="Choose a note" name="note_id" value="{{ note_id }}">
+            <input class="input input-datalist" id="material_id" list="materials" type="number" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
+            <input class="input input-datalist" id="note_id" type="number" list="notes" placeholder="Choose a note" name="note_id" value="{{ note_id }}">
             <datalist id="notes">
                 {% for note_id, note in notes|dictsort %}
                     <option value="{{ note_id }}"> {{ note.content }}
