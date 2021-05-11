@@ -1,6 +1,11 @@
 ::-webkit-scrollbar {
   width: 0;
 }
-.input::-webkit-calendar-picker-indicator {
-  display: none;
+fieldset.log-record-fieldset {
+    display: flex;
+    margin: auto;
+    flex-direction: column;
+}
+legend.log-record-legend {
+    text-align: center;
 }

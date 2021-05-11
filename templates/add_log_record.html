@@ -14,7 +14,9 @@
 {% if titles %}
     <div class="form">
         <form action="/reading_log/add" method="POST">
-            <input class="input" type="number" list="books" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
+            <fieldset class="log-record-fieldset">
+            <legend class="log-record-legend"> Add a log record </legend>
+            <input class="input input-datalist" type="number" list="books" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
             <datalist id="books">
                 {% for material_id, title in titles.items() %}
                 <option value="{{ material_id }}"> «{{ title }}»
@@ -24,6 +26,7 @@
             <input class="input" type="date" placeholder="Enter the date" name="date" value="{{ date }}" title="Date of the record">
             <input class="input" type="number" placeholder="Enter a count of pages" name="count" title="Count of read pages">
             <button type="submit" class="submit-button"> Add </button>
+            </fieldset>
         </form>
     </div>
 {%- else -%}
