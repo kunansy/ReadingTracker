@@ -409,7 +409,9 @@ async def recall(request: Request) -> dict[str, Any] or HTTPResponse:
         }
 
     try:
-        titles = tracker.get_material_titles()
+        titles = tracker.get_material_titles(
+            reading=True, completed=True
+        )
     except trc.BaseTrackerError:
         titles = {}
 
