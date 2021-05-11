@@ -18,11 +18,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
         // on Ctrl-B
         else if (e.keyCode == 66 && e.ctrlKey) {
-            input.value += '<b></b>';
+            input.value += '<span class="font-weight-bold"></span>';
         }
         // on Ctrl-I
         else if (e.keyCode == 73 && e.ctrlKey) {
-            input.value += '<i></i>';
+            input.value += '<span class="font-italic"></span>';
         }
     }
     for (textInput of textInputs) {
