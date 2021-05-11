@@ -11,12 +11,12 @@
 {%- endblock header -%}
 
 {% block main %}
-{% if all_titles %}
+{% if titles %}
     <div class="form">
         <form action="/notes" method="GET">
             <input type="number" class="input" list="books" name="material_id" placeholder="Choose a material">
             <datalist id="books">
-              {% for material_id, title in all_titles.items() %}
+              {% for material_id, title in titles.items() %}
                   <option value="{{ material_id }}"> «{{ title }}»
               {% endfor %}
           </datalist>
@@ -33,7 +33,7 @@
         {% for material_id, chapters in chapters|dictsort %}
             <div class="material-link">
             <details class="chapters">
-                <summary> <a class="title-link" href="#material-{{ material_id }}"> «{{ all_titles[material_id] }}» </a> </summary>
+                <summary> <a class="title-link" href="#material-{{ material_id }}"> «{{ titles[material_id] }}» </a> </summary>
                 <div class="chapters">
                     {% for chapter in chapters|sort %}
                         <a class="chapter-link" href="#material-{{ material_id }}-chapter-{{ chapter }}"> Chapter {{ chapter }} </a>
@@ -54,7 +54,7 @@
     {% endif %}
 
     <div class="group">
-        <h3 class="material_title"> <a name="material-{{material_id}}"> «{{ all_titles[material_id] }}» </a> </h3>
+        <h3 class="material_title"> <a name="material-{{material_id}}"> «{{ titles[material_id] }}» </a> </h3>
 
         {% for chapter, note_c in notes_m|groupby('chapter') %}
             <h4 class="chapter_number"> <a name="material-{{material_id}}-chapter-{{chapter}}"> Chapter: {{ chapter }} </a> </h4>
