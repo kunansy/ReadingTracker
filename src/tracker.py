@@ -60,6 +60,10 @@ class CardNotFound(BaseTrackerError):
     pass
 
 
+class MaterialNotFound(BaseTrackerError):
+    pass
+
+
 class DatabaseError(BaseTrackerError):
     pass
 
