@@ -262,8 +262,14 @@ async def get_completed_materials(request: Request) -> dict:
 async def get_reading_log(request: Request) -> dict[str, Any]:
     try:
         log_ = log[::-1].log
-    except trc.BaseTrackerError:
-        log_ = None
+    except trc.ReadingLogIsEmpty as e:
+        jinja.flash(
+            request,
+            f"Error getting log: {e}",
+            'error'
+        )
+        log_ = {}
+
     return {
         'log': log_,
         'DATE_FORMAT': trc.DATE_FORMAT,
