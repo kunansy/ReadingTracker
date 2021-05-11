@@ -2,9 +2,6 @@
     padding: 1vh;
     height: 20vh;
 }
-::-webkit-scrollbar {
-    width: 0;
-}
 
 h3.search-notes-label, h3.material-title {
     text-align: center;
