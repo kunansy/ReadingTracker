@@ -13,11 +13,14 @@
 {% block main %}
 <div class="form">
     <form action="/materials/add" method="POST">
-        <input class="input altch" type="text" placeholder="Enter a title" name="title" value="{{ title }}" title="Title of the material">
-        <input class="input" type="text" placeholder="Enter authors" name="authors" value="{{ authors }}" title="Authors of the material">
-        <input class="input" type="number" placeholder="Enter a count of pages" name="pages" value="{{ pages }}" title="Count of pages in the materials">
-        <input class="input" type="text" placeholder="Enter tags" name="tags" value="{{ tags }}" title="Tags of the material">
-        <button type="submit" class="submit-button"> Add </button>
+        <fieldset class="material-fieldset">
+            <legend class="material-legend"> Add a material </legend>
+            <input class="input altch" type="text" placeholder="Enter a title" name="title" value="{{ title }}" title="Title of the material">
+            <input class="input" type="text" placeholder="Enter authors" name="authors" value="{{ authors }}" title="Authors of the material">
+            <input class="input" type="number" placeholder="Enter a count of pages" name="pages" value="{{ pages }}" title="Count of pages in the materials">
+            <input class="input" type="text" placeholder="Enter tags" name="tags" value="{{ tags }}" title="Tags of the material">
+            <button type="submit" class="submit-button"> Add </button>
+        </fieldset>
     </form>
 </div>
 
