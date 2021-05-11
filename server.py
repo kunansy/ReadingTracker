@@ -615,16 +615,13 @@ def validation_error_handler(request: Request,
 
 
 @app.exception(exceptions.NotFound)
-@jinja.template('errors/404.html')
 def not_found(request: Request,
               exception: exceptions.NotFound) -> dict[str, Any]:
     args = '; '.join(
         arg
         for arg in exception.args
     )
-    return {
-        'what': args
-    }
+    return jinja.render('errors/404.html', request, what=args, status=404)
 
 
 @app.exception(Exception)
