@@ -252,8 +252,8 @@ class CardNoteRecall:
 
 
 class RepeatResults(Enum):
-    tomorrow = 1
-    d10 = 1
+    tomorrow = .75
+    d10 = 2.5
     bad = 1
     good = 1.5
     excellent = 2
