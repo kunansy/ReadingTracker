@@ -399,7 +399,7 @@ async def add_note(request: Request) -> dict[str, Any]:
         titles = tracker.get_material_titles(
             reading=True, completed=True
         )
-    except trc.BaseTrackerError as e:
+    except trc.DatabaseError as e:
         jinja.flash(request, f'Cannot get material titles: {e}', 'error')
         titles = {}
 
