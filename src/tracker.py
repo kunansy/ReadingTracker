@@ -1174,14 +1174,18 @@ class Tracker:
          Today by default.
 
         :exception DatabaseError:
+        :exception MaterialNotFound:
         """
         try:
             db.start_material(
                 material_id=material_id,
                 start_date=start_date
             )
+        except db.MaterialNotFound as e:
+            logger.error(str(e))
+            raise MaterialNotFound(e)
         except db.BaseDBError as e:
-            logger.error(e)
+            logger.error(str(e))
             raise DatabaseError(e)
 
     def complete_material(self,
