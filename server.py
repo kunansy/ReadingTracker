@@ -282,13 +282,24 @@ async def get_reading_log(request: Request) -> dict[str, Any]:
 async def add_reading_log(request: Request) -> dict[str, Any]:
     try:
         titles = tracker.get_material_titles(reading=True)
-    except trc.BaseTrackerError:
+    except trc.DatabaseError as e:
+        jinja.flash(
+            request,
+            f"Error getting material titles: {e}",
+            'error'
+        )
         titles = {}
 
     try:
         reading_material_id = log.reading_material
-    except trc.BaseTrackerError:
+    except trc.ReadingLogIsEmpty as e:
+        jinja.flash(
+            request,
+            f"Error getting the reading material: {e}",
+            'error'
+        )
         reading_material_id = None
+
     return {
         'material_id': reading_material_id,
         'titles': titles,
