@@ -316,9 +316,21 @@ async def get_notes(request: Request):
         jinja.flash(request, f"{len(notes)} notes found", 'success')
     
     try:
-        all_titles = tracker.get_material_titles()
-    except trc.BaseTrackerError:
-        all_titles = {}
+        titles = tracker.get_material_titles(
+            reading=True, completed=True)
+    except trc.BaseTrackerError as e:
+        jinja.flash(request, f'Cannot get material titles: {e}', 'error')
+        titles = {}
+
+    all_ids = {
+        note.material_id
+        for note in all_notes
+    }
+    titles = {
+        material_id: material_title
+        for material_id, material_title in titles.items()
+        if material_id in all_ids
+    }
 
     # chapters of the shown materials,
     #  it should help to create menu
@@ -328,7 +340,7 @@ async def get_notes(request: Request):
 
     return {
         'notes': notes,
-        'all_titles': all_titles,
+        'titles': titles,
         'chapters': chapters,
         'DATE_FORMAT': trc.DATE_FORMAT
     }
