@@ -2,9 +2,6 @@
     padding: 1vh;
     height: 20vh;
 }
-.input::-webkit-calendar-picker-indicator {
-    display: none;
-}
 ::-webkit-scrollbar {
   width: 0;
 }

@@ -73,6 +73,9 @@ form {
     margin-top: 2vh;
     margin-bottom: 0.5vh;
 }
+.input-datalist::-webkit-calendar-picker-indicator {
+    display: none;
+}
 
 .submit-button {
     margin: auto;
