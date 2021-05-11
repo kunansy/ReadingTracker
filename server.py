@@ -6,7 +6,7 @@ from typing import Any, Optional
 import ujson
 from environs import Env
 from pydantic import BaseModel, ValidationError, validator, constr, conint
-from sanic import Sanic, Request, response, HTTPResponse
+from sanic import Sanic, Request, response, HTTPResponse, exceptions
 from sanic.log import logger as sanic_logger
 from sanic_jinja2 import SanicJinja2
 from sanic_session import Session
@@ -606,6 +606,19 @@ def validation_error_handler(request: Request,
     sanic_logger.error(f"Validation error was not handled:\n{context}")
 
     return response.json(exception.errors(), status=400, indent=4)
+
+
+@app.exception(exceptions.NotFound)
+@jinja.template('errors/404.html')
+def not_found(request: Request,
+              exception: exceptions.NotFound) -> dict[str, Any]:
+    args = '; '.join(
+        arg
+        for arg in exception.args
+    )
+    return {
+        'what': args
+    }
 
 
 @app.exception(Exception)
