@@ -1,0 +1,17 @@
+{% extends 'index.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', filename='errors/base_error.css') }}">
+{% endblock style %}
+
+{% block main %}
+<div class="base-error">
+    <h3 class="error-code"> 500 </h3>
+    <h4 class="error-title"> {{ error['type'] }} </h4>
+    <p class="what"> <span class="font-weight-bold">Error:</span> {{ error['args']|join }} </p>
+    {% if error['json'] %}
+        <p class="error-json"> <span class="font-weight-bold">JSON:</span> {{ error['json'] }} </p>
+    {% endif %}
+    <p class="wrong-request"> <span class="font-weight-bold">Wrong request:</span> {{ wrong_request }} </p>
+</div>
+{% endblock main%}
