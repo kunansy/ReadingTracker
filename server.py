@@ -625,20 +625,16 @@ def not_found(request: Request,
 
 
 @app.exception(Exception)
+@jinja.template('errors/500.html')
 def error_handler(request: Request,
-                  exception: Exception) -> HTTPResponse:
+                  exception: Exception) -> dict[str, Any]:
     try:
         ex_json = exception.json()
     except:
         ex_json = ''
-    try:
-        req_json = request.json
-    except:
-        req_json = ''
 
     context = {
-        'ok': False,
-        "wrong_request": req_json,
+        "wrong_request": request.url,
         "error": {
             "type": exception.__class__.__name__,
             "text": str(exception),
@@ -646,9 +642,8 @@ def error_handler(request: Request,
             "json": ex_json
         }
     }
-
     sanic_logger.error(ujson.dumps(context, indent=4))
-    return response.json(context, status=500, indent=4)
+    return jinja.render('errors/500.html', request, **context, status=500)
 
 
 if __name__ == "__main__":
