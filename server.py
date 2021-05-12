@@ -24,6 +24,7 @@ jinja = SanicJinja2(app, session=session)
 
 log = trc.Log(full_info=True)
 tracker = trc.Tracker(log)
+cards = trc.Cards()
 
 
 class Material(BaseModel):
@@ -458,11 +459,9 @@ async def add_note(request: Request) -> HTTPResponse:
 @jinja.template('recall.html')
 async def recall(request: Request) -> dict[str, Any] or HTTPResponse:
     try:
-        card = trc.get_card()
-    except trc.DatabaseError as e:
-        jinja.flash(request, f"Error getting card: {e}", 'error')
-        return response.redirect('/materials/queue')
-    except trc.CardNotFound:
+        card = cards.card
+    except trc.CardsLimitExceeded:
+        jinja.flash(request, 'All cards for today repeated', 'success')
         card = None
 
     if card is None:
@@ -480,7 +479,7 @@ async def recall(request: Request) -> dict[str, Any] or HTTPResponse:
     return {
         'card': card,
         'titles': titles,
-        'remains': trc.cards_remain()
+        'remains': cards.cards_remain()
     }
 
 
@@ -494,7 +493,7 @@ async def recall(request: Request,
         return response.redirect('/recall')
 
     try:
-        trc.complete_card(card_id, result)
+        cards.complete_card(result)
     except trc.CardNotFound as e:
         raise exceptions.NotFound(e)
     except trc.DatabaseError as e:
@@ -582,7 +581,7 @@ async def add_card(request: Request) -> HTTPResponse:
         return response.redirect('/recall/add')
 
     try:
-        trc.add_card(
+        cards.add_card(
             **card.dict()
         )
     except trc.DatabaseError as e:
