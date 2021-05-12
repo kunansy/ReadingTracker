@@ -7,8 +7,8 @@ div.card {
     margin: auto;
     border: black .3vh solid;
     border-radius: 2vh;
-    padding: 2vh;
-    max-width: 55vw;
+    padding: 7vh;
+    max-width: 60vw;
 }
 form.card {
     border: none;
@@ -28,9 +28,10 @@ button.result-button {
 }
 
 p.question {
-    font-size: 5vh;
+    font-size: 4vh;
     text-align: center;
     word-wrap: break-word;
+    margin-bottom: 5vh;
 }
 p.answer {
     text-align: center;
