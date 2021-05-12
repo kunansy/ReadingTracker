@@ -597,7 +597,8 @@ async def add_card(request: Request) -> HTTPResponse:
         request.ctx.session.pop('question')
         request.ctx.session.pop('note_id')
     finally:
-        return response.redirect('/recall/add')
+        url = f"/recall/add#note-{card.note_id}"
+        return response.redirect(url)
 
 
 @app.get('/')
