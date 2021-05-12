@@ -10,7 +10,7 @@ from typing import ContextManager, Callable, Optional
 from environs import Env
 from sqlalchemy import (
     Column, ForeignKey, Integer,
-    String, Date, create_engine, Text, Float
+    String, Date, create_engine, Text, Float, func
 )
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.declarative import declarative_base
@@ -730,7 +730,8 @@ def repeated_today(*,
     logger.info("Calculating how many cards repeated today")
 
     with session() as ses:
-        query = ses.query(Card, Recall) \
+        query = ses.query(func.count())\
+            .select_from(Card, Recall) \
             .join(Recall, Card.card_id == Recall.card_id) \
             .filter(Recall.last_repeat_date == today())\
             .filter(Recall.next_repeat_date != today())
@@ -738,8 +739,7 @@ def repeated_today(*,
         if material_id:
             query = query.filter(Card.material_id == material_id)
 
-        # TODO: somehow use func.count() instead
-        return len(query.all())
+        return query.one()[0]
 
 
 def remains_for_today(*,
