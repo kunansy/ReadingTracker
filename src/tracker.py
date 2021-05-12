@@ -1419,3 +1419,14 @@ class Cards:
         except db.BaseDBError as e:
             logger.error(str(e))
             return _MAX_PER_DAY
+
+    @staticmethod
+    def notes_with_cards() -> set[int]:
+        """
+        :exception DatabaseError:
+        """
+        try:
+            return db.notes_with_cards()
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError(e)
