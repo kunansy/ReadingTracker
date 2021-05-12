@@ -2,6 +2,7 @@
 import copy
 import datetime
 import logging
+import random
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
@@ -57,6 +58,10 @@ class NoMaterialInLog(BaseTrackerError):
 
 
 class CardNotFound(BaseTrackerError):
+    pass
+
+
+class CardsLimitExceeded(BaseTrackerError):
     pass
 
 
@@ -1317,69 +1322,100 @@ class Tracker:
             raise DatabaseError(e)
 
 
-def get_card(material_id: Optional[int] = None) -> Optional[db.CardNoteRecall]:
-    """
-    :exception DatabaseError:
-    """
-    if db.repeated_today() >= _MAX_PER_DAY:
-        return
+class Cards:
+    def __init__(self) -> None:
+        self.__cards = self._get_cards()
+        self.__current_card = None
 
-    try:
-        return db.get_card(material_id=material_id)
-    except db.CardNotFound:
-        raise CardNotFound
-    except db.BaseDBError as e:
-        logger.error(str(e))
-        raise DatabaseError(e)
+    @property
+    def card(self) -> Optional[db.CardNoteRecall]:
+        """
+        :exception CardsLimitExceeded:
+        """
+        if self.repeated_today() >= _MAX_PER_DAY:
+            raise CardsLimitExceeded
 
+        if self.__current_card is None:
+            if not (cards := self._get_cards()):
+                return
+            self.__cards = cards
+            self.__current_card = self.__cards.pop()
 
-def add_card(material_id: int,
-             question: str,
-             note_id: int,
-             answer: Optional[str] = None) -> None:
-    """
-    :exception DatabaseError:
-    """
-    try:
-        db.add_card(
-            material_id=material_id,
-            question=question,
-            answer=answer,
-            note_id=note_id
-        )
-    except db.BaseDBError as e:
-        logger.error(str(e))
-        raise DatabaseError(e)
+        return self.__current_card
 
+    @staticmethod
+    def _get_cards() -> list[db.CardNoteRecall]:
+        try:
+            cards = db.get_cards()
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            cards = []
 
-def complete_card(card_id: int,
-                  result) -> None:
-    """
-    :exception DatabaseError:
-    :exception CardNotFound:
-    """
-    try:
-        db.complete_card(
-            card_id=card_id, result=result
-        )
-    except db.CardNotFound as e:
-        logger.error(str(e))
-        raise CardNotFound(e)
-    except db.BaseDBError as e:
-        logger.error(str(e))
-        raise DatabaseError(e)
+        random.shuffle(cards)
+        return cards
 
+    @staticmethod
+    def add_card(material_id: int,
+                 question: str,
+                 note_id: int,
+                 answer: Optional[str] = None) -> None:
+        """
+        :exception DatabaseError:
+        """
+        try:
+            db.add_card(
+                material_id=material_id,
+                question=question,
+                answer=answer,
+                note_id=note_id
+            )
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError(e)
 
-def cards_remain(material_id: Optional[int] = None) -> int:
-    try:
-        repeated_today = db.repeated_today(material_id=material_id)
-        remains_for_today = db.remains_for_today(material_id=material_id)
-    except db.BaseDBError as e:
-        logger.error(str(e))
-        return 0
+    def complete_card(self,
+                      result: str) -> None:
+        """
+        :exception DatabaseError:
+        :exception CardNotFound:
+        """
+        if self.__current_card is None:
+            raise CardNotFound
 
-    if repeated_today >= _MAX_PER_DAY:
-        return 0
-    if repeated_today + remains_for_today >= _MAX_PER_DAY:
-        return _MAX_PER_DAY - repeated_today
-    return remains_for_today
+        card_id = self.__current_card.card.card_id
+
+        try:
+            db.complete_card(
+                card_id=card_id, result=result
+            )
+        except db.CardNotFound as e:
+            logger.error(str(e))
+            raise CardNotFound(e)
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError(e)
+        else:
+            self.__current_card = None
+
+    @staticmethod
+    def cards_remain() -> int:
+        try:
+            repeated_today = db.repeated_today()
+            remains_for_today = db.remains_for_today()
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            return 0
+
+        if repeated_today >= _MAX_PER_DAY:
+            return 0
+        if repeated_today + remains_for_today >= _MAX_PER_DAY:
+            return _MAX_PER_DAY - repeated_today
+        return remains_for_today
+
+    @staticmethod
+    def repeated_today() -> int:
+        try:
+            return db.repeated_today()
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            return _MAX_PER_DAY
