@@ -365,6 +365,9 @@ def get_material_titles(*,
                         completed: bool = False,
                         free: bool = False,
                         all: bool = False) -> dict[int, str]:
+    logger.info(f"Getting material titles with: "
+                f"{reading=}, {completed=}, {free=}, {all=}")
+
     with session() as ses:
         query = ses.query(Material.material_id, Material.title)
         res = []
@@ -694,7 +697,7 @@ def complete_card(*,
     :exception WrongRepeatResult:
     :exception CardNotFound:
     """
-    logger.debug(f"Completing card {card_id=} as {result=}")
+    logger.info(f"Completing card {card_id=} as {result=}")
 
     with session() as ses:
         res = ses.query(Card, Recall)\
@@ -724,7 +727,7 @@ def repeated_today(*,
     """
     Get count of cards repeated today
     """
-    logger.debug("calculating how many cards repeated today")
+    logger.info("Calculating how many cards repeated today")
 
     with session() as ses:
         query = ses.query(Card, Recall) \
@@ -741,7 +744,7 @@ def repeated_today(*,
 
 def remains_for_today(*,
                       material_id: Optional[int] = None) -> int:
-    logger.debug("Calculating how many cards remains for today")
+    logger.info("Calculating how many cards remains for today")
 
     with session() as ses:
         query = ses.query(Card, Recall) \
