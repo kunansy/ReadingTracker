@@ -747,12 +747,12 @@ def remains_for_today(*,
     logger.info("Calculating how many cards remains for today")
 
     with session() as ses:
-        query = ses.query(Card, Recall) \
+        query = ses.query(func.count())\
+            .select_from(Card, Recall) \
             .join(Recall, Card.card_id == Recall.card_id) \
             .filter(Recall.next_repeat_date == today())
 
         if material_id:
             query = query.filter(Card.material_id == material_id)
 
-        # TODO: somehow use func.count() instead
-        return len(query.all())
+        return query.one()[0]
