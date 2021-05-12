@@ -20,7 +20,7 @@
         {% endif %}
         <ul class="notes">
             {% for note_id, note in notes|dictsort %}
-            <li class="note hover" onclick="chooseNote({{ note_id }}, {{ note.material_id }})" title="Click to choose this note">
+            <li class="note hover" id="note-{{ note_id }}" onclick="chooseNote({{ note_id }}, {{ note.material_id }})" title="Click to choose this note">
                 <p class="note-content"> {{ note.content }}</p>
                 <p class="note-page"> Page: {{ note.page }} </p>
                 <p class="note-id"> ID: {{ note.id }} </p>
