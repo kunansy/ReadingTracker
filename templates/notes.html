@@ -54,10 +54,10 @@
     {% endif %}
 
     <div class="group">
-        <h3 class="material_title"> <a name="material-{{material_id}}"> «{{ titles[material_id] }}» </a> </h3>
+        <h3 class="material_title" id="material-{{material_id}}"> «{{ titles[material_id] }}» </h3>
 
         {% for chapter, note_c in notes_m|groupby('chapter') %}
-            <h4 class="chapter_number"> <a name="material-{{material_id}}-chapter-{{chapter}}"> Chapter: {{ chapter }} </a> </h4>
+            <h4 class="chapter_number" id="material-{{material_id}}-chapter-{{chapter}}"> Chapter: {{ chapter }} </h4>
             {% for note in note_c %}
             <div class="note hover">
                 <p class="note-content"> {{ note.content }}</p>
