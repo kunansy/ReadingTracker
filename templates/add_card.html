@@ -28,6 +28,10 @@
             {% endfor %}
         </ul>
     </div>
+{%- else -%}
+    {%- import 'not_found.html' as not_found -%}
+    {% call not_found.not_found('notes') %} {% endcall %}
+{%- endif -%}
 
     <div class="form">
         <form action="/recall/add" method="GET">
@@ -55,8 +59,4 @@
             <button type="submit" class="submit-button"> Add </button>
         </form>
     </div>
-{%- else -%}
-    {%- import 'not_found.html' as not_found -%}
-    {% call not_found.not_found('notes') %} {% endcall %}
-{%- endif -%}
 {% endblock main %}
