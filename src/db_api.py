@@ -316,14 +316,14 @@ def cache(*,
 def session(**kwargs) -> ContextManager[Session]:
     new_session = Session(**kwargs, bind=engine, expire_on_commit=False)
     try:
-        logger.info("New session created and yielded")
+        logger.debug("New session created and yielded")
         yield new_session
 
-        logger.info("Operations with the session finished, commiting")
+        logger.debug("Operations with the session finished, committing")
         new_session.commit()
     except Exception as e:
         logger.error(f"Error with the session: {e}")
-        logger.info("Rollback all changes")
+        logger.debug("Rollback all changes")
 
         new_session.rollback()
 
@@ -332,7 +332,7 @@ def session(**kwargs) -> ContextManager[Session]:
         raise BaseDBError(e)
     finally:
         new_session.close()
-        logger.info("Session closed")
+        logger.debug("Session closed")
 
 
 @cache(update=False)
