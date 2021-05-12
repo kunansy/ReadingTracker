@@ -576,7 +576,16 @@ async def add_card(request: Request) -> HTTPResponse:
         request.ctx.session.update(
             **key_val
         )
-        return response.redirect('/recall/add')
+        if material_id := key_val.get('material_id'):
+            material_id = f"?{material_id=}"
+        else:
+            material_id = ''
+        if note_id := key_val.get('note_id'):
+            note_id = f"#note-{note_id}"
+        else:
+            note_id = ''
+        url = f"/recall/add{material_id}{note_id}"
+        return response.redirect(url)
 
     try:
         cards.add_card(
@@ -594,7 +603,7 @@ async def add_card(request: Request) -> HTTPResponse:
         request.ctx.session.pop('question')
         request.ctx.session.pop('note_id')
     finally:
-        url = f"/recall/add#note-{card.note_id}"
+        url = f"/recall/add?material_id={card.material_id}#note-{card.note_id}"
         return response.redirect(url)
 
 
