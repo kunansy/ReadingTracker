@@ -519,10 +519,6 @@ async def add_card(request: Request) -> dict[str, Any]:
         jinja.flash(request, f'Cannot get material titles: {e}', 'error')
         titles = {}
 
-    if material_id := request.args.get('material_id'):
-        request.ctx.session['material_id'] = material_id
-    material_id = material_id or request.ctx.session.get('material_id')
-
     try:
         all_notes = tracker.get_notes()
     except trc.DatabaseError as e:
@@ -533,16 +529,6 @@ async def add_card(request: Request) -> dict[str, Any]:
         note.id: note
         for note in all_notes
         if material_id is None or note.material_id == int(material_id)
-    }
-
-    all_ids = {
-        note.material_id
-        for note in notes.values()
-    }
-    titles = {
-        material_id: material_title
-        for material_id, material_title in titles.items()
-        if material_id in all_ids
     }
 
     return {
