@@ -718,8 +718,7 @@ def complete_card(*,
         else:
             raise WrongRepeatResult
 
-        coeff = RepeatResults[result].value
-        recall.mult *= coeff
+        recall.mult *= RepeatResults[result].value
 
 
 def repeated_today(*,
