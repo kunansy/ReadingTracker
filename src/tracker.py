@@ -669,10 +669,11 @@ class Log:
 
         # stack for materials
         materials = []
-        completion_dates = {
-            ms.material.material_id: ms.status.end
-            for ms in db.get_completed_materials()
-        }
+        try:
+            completion_dates = db.get_completion_dates()
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            completion_dates = {}
 
         # TODO: the most ugly solution I've ever seen, fix it
         while iter_ <= today():
