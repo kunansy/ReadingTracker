@@ -1421,12 +1421,13 @@ class Cards:
             return _MAX_PER_DAY
 
     @staticmethod
-    def notes_with_cards() -> set[int]:
+    def notes_with_cards(material_id: Optional[int] = None) -> set[int]:
         """
         :exception DatabaseError:
         """
+        material_ids = [material_id] * (material_id is not None)
         try:
-            return db.notes_with_cards()
+            return db.notes_with_cards(material_ids=material_ids)
         except db.BaseDBError as e:
             logger.error(str(e))
             raise DatabaseError(e)
