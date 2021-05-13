@@ -403,6 +403,21 @@ def get_material_titles(*,
         }
 
 
+def get_completion_dates() -> dict[int, datetime.date]:
+    logger.info("Getting completion dates")
+
+    with session() as ses:
+        res = ses.query(Material.material_id, Status.end)\
+            .join(Status, Material.material_id == Status.material_id)\
+            .filter(Status.end != None)\
+            .all()
+
+    return {
+        material_id: completion_date
+        for material_id, completion_date in res
+    }
+
+
 def get_title(material_id: int, /) -> str:
     logger.info(f"Getting title for {material_id=}")
     try:
