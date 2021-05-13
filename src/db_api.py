@@ -737,9 +737,10 @@ def complete_card(*,
         card_, recall = res[0]
         card = CardNoteRecall(card=card_, recall=recall)
 
-        recall.last_repeat_date = today()
-
         if days := card[result]:
+            assert days > 0, "Wrong days count"
+
+            recall.last_repeat_date = today()
             recall.next_repeat_date = today() + timedelta(days=days)
         else:
             raise WrongRepeatResult
