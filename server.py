@@ -525,8 +525,9 @@ async def add_card(request: Request) -> dict[str, Any]:
         jinja.flash(request, f"Error getting notes: {e}", 'error')
         return {}
 
+    material_id = request.args.get('material_id')
     try:
-        notes_with_cards = cards.notes_with_cards()
+        notes_with_cards = cards.notes_with_cards(material_id)
     except trc.DatabaseError as e:
         jinja.flash(
             request,
@@ -535,7 +536,6 @@ async def add_card(request: Request) -> dict[str, Any]:
         )
         notes_with_cards = {}
 
-    material_id = request.args.get('material_id')
     notes = {
         note.id: note
         for note in all_notes
