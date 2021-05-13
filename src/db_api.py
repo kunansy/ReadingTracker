@@ -775,7 +775,7 @@ def remains_for_today(*,
         query = ses.query(func.count())\
             .select_from(Card, Recall) \
             .join(Recall, Card.card_id == Recall.card_id) \
-            .filter(Recall.next_repeat_date == today())
+            .filter(Recall.next_repeat_date <= today())
 
         if material_id:
             query = query.filter(Card.material_id == material_id)
