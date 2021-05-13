@@ -193,6 +193,8 @@ class CardNoteRecall:
                  recall: Recall,
                  note: Optional[Note] = None) -> None:
         assert card.card_id == recall.card_id
+        assert recall.last_repeat_date <= recall.next_repeat_date, \
+            f"Wrong card, card_id={card.card_id}"
 
         self.card = card
         self.recall = recall
