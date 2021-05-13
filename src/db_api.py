@@ -635,22 +635,29 @@ def add_note(*,
         logger.info("Note added")
 
 
-def notes_with_cards() -> set[int]:
+def notes_with_cards(*,
+                     material_ids: Optional[list[int]] = None) -> set[int]:
     """
     Get notes for which there is a card.
 
     :return: set if ids of there notes.
     """
-    logger.info("Getting notes with a card")
+    how_many = 'all'
+    if material_ids:
+        how_many = len(material_ids)
+    logger.info(f"Getting notes with a card for {how_many} materials")
 
     with session() as ses:
-        res = ses.query(Note.id)\
+        query = ses.query(Note.id)\
             .join(Card, Card.note_id == Note.id)\
-            .all()
+
+        if material_ids:
+            query = query\
+                .filter(Note.material_id.in_(material_ids))
 
         return {
             item[0]
-            for item in res
+            for item in query.all()
         }
 
 
