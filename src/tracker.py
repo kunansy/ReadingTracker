@@ -3,6 +3,7 @@ import copy
 import datetime
 import logging
 import random
+import statistics
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
@@ -637,14 +638,10 @@ class Log:
         if not self.log:
             return 0
 
-        counts = sorted(
+        return statistics.median(
             info.count
             for info in self.log.values()
         )
-
-        if (middle := len(counts) // 2) % 2 == 0:
-            return (counts[middle] + counts[middle + 1]) // 2
-        return counts[middle]
 
     @property
     def would_be_total(self) -> int:
