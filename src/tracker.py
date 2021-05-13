@@ -1275,15 +1275,9 @@ class Tracker:
 
         :exception DatabaseError:
         """
-        if material_id is not None:
-            try:
-                return db.get_notes(materials_ids=[material_id])
-            except db.BaseDBError as e:
-                logger.error(str(e))
-                raise DatabaseError(e)
-
+        material_ids = [material_id] * (material_id is not None)
         try:
-            return db.get_notes()
+            return db.get_notes(materials_ids=material_ids)
         except db.BaseDBError as e:
             logger.error(str(e))
             raise DatabaseError(e)
