@@ -684,44 +684,27 @@ class Log:
             logger.error(str(e))
             completion_dates = {}
 
-        # TODO: the most ugly solution I've ever seen, fix it
         while iter_ <= today():
+            last_material_id = safe_list_get(materials, -1, 0)
+
+            if ((completion_date := completion_dates.get(last_material_id)) and
+                    completion_date <= iter_):
+                materials.pop()
+                last_material_id = safe_list_get(materials, -1, 0)
+
             if not (info := self.log.get(iter_)):
-                if materials:
-                    material_id = materials[-1]
-                else:
-                    # means there are no materials reading
-                    material_id = 0
-
-                completion_date = completion_dates.get(material_id)
-                if completion_date and completion_date <= iter_:
-                    materials.pop()
-
-                info = LogRecord(material_id=material_id, count=0)
+                info = LogRecord(material_id=last_material_id, count=0)
             else:
                 material_id = info.material_id
 
-                if not materials:
+                if not (materials and material_id in materials):
+                    # new material started, the last one completed
                     materials += [material_id]
-                elif material_id not in materials:
-                    # new material started, the last on completed
-                    completion_date = completion_dates.get(material_id)
-                    if completion_date and completion_date <= iter_:
-                        materials.pop()
-                    # or the new material started when the last one pending
-                    materials += [material_id]
-                elif material_id != materials[-1]:
+                elif material_id != last_material_id:
                     # in this case several materials
                     # are being reading one by one
-                    completion_date = completion_dates.get(materials[-1])
-                    if completion_date and completion_date <= iter_:
-                        materials.pop()
                     materials.remove(material_id)
                     materials += [material_id]
-                else:
-                    completion_date = completion_dates.get(materials[-1])
-                    if completion_date and completion_date <= iter_:
-                        materials.pop()
 
             yield iter_, info
             iter_ += step
