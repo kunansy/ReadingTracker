@@ -284,14 +284,17 @@ class MaterialEstimate:
                f"Expected duration: {time_span(self.expected_duration)}"
 
 
+@db.cache(update=False)
 def today() -> datetime.date:
     return datetime.date.today()
 
 
+@db.cache(update=False)
 def yesterday() -> datetime.date:
     return today() - timedelta(days=1)
 
 
+@db.cache(update=False)
 def to_datetime(date) -> Optional[datetime.date]:
     """
     :param date: str or date or datetime.
@@ -318,6 +321,7 @@ def to_datetime(date) -> Optional[datetime.date]:
         raise TypeError(f"Str or datetime expected, {type(date)} found")
 
 
+@db.cache(update=False)
 def time_span(span: Union[timedelta, int]) -> str:
     if isinstance(span, timedelta):
         days = timedelta.days
@@ -335,6 +339,7 @@ def time_span(span: Union[timedelta, int]) -> str:
     return res
 
 
+@db.cache(update=False)
 def fmt(date: datetime.date) -> str:
     return date.strftime(DATE_FORMAT)
 
