@@ -7,7 +7,7 @@ import statistics
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
-from typing import Union, Optional, Iterator, Iterable
+from typing import Union, Optional, Iterator, Iterable, Any
 
 import ujson
 from environs import Env
@@ -337,6 +337,15 @@ def time_span(span: Union[timedelta, int]) -> str:
 
 def fmt(date: datetime.date) -> str:
     return date.strftime(DATE_FORMAT)
+
+
+def safe_list_get(list_: list[Any],
+                  index: int,
+                  default: Any = None) -> Any:
+    try:
+        return list_[index]
+    except IndexError:
+        return default
 
 
 class Log:
