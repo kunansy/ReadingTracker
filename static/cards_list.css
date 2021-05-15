@@ -4,6 +4,10 @@ p.repeated-today {
 }
 p.total-cards {
     text-align: center;
+    margin: 0;
+}
+p.remains-cards {
+    text-align: center;
     margin-bottom: 5vh;
 }
 

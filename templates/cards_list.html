@@ -14,6 +14,7 @@
 {%- if cards -%}
     <p class="repeated-today"> Today {{ repeated_today }} cards repeated </p>
     <p class="total-cards"> Total {{ total }} cards </p>
+    <p class="remains-cards"> Remains to repeat {{ remains }} cards </p>
     {% for card in cards|sort(attribute="recall.next_repeat_date") %}
         <div class="card hover" id="card-{{ card.card.card_id }}">
             <p class="question"> {{ card.card.question }} </p>

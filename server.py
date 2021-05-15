@@ -628,7 +628,8 @@ async def cards_list(request: Request) -> dict[str, Any]:
         'repeated_today': cards.repeated_today(),
         'DATE_FORMAT': trc.DATE_FORMAT,
         'titles': titles,
-        'total': len(cards)
+        'total': len(cards),
+        'remains': cards.remains_for_today()
     }
 
 
