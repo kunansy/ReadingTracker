@@ -349,17 +349,19 @@ def get_materials(*,
     If it's None, get all materials.
     """
     how_many = 'all'
-    if materials_ids is not None:
+    if materials_ids:
         how_many = str(len(materials_ids))
 
     logger.info(f"Getting {how_many} materials")
 
     with session() as ses:
-        if materials_ids is None:
-            return ses.query(Material).all()
+        query = ses.query(Material)
 
-        return ses.query(Material).filter(
-            Material.material_id.in_(materials_ids)).all()
+        if materials_ids:
+            query = query\
+                .filter(Material.material_id.in_(materials_ids))
+
+        return query.all()
 
 
 def get_material_titles(*,
