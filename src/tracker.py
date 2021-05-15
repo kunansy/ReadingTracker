@@ -1429,3 +1429,10 @@ class Cards:
         except db.BaseDBError as e:
             logger.error(str(e))
             raise DatabaseError(e)
+
+    def __len__(self) -> int:
+        try:
+            return db.cards_count()
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            return 0
