@@ -740,6 +740,29 @@ def get_cards(*,
     ]
 
 
+def all_cards(*,
+              material_ids: Optional[list[int]] = None) -> list[CardNoteRecall]:
+    how_many = 'all materials'
+    if material_ids:
+        how_many = f"material {material_ids=}"
+
+    logger.info(f"Getting all cards for {how_many}")
+
+    with session() as ses:
+        query = ses.query(Card, Recall, Note) \
+            .join(Recall, Card.card_id == Recall.card_id) \
+            .join(Note, Card.note_id == Note.id)\
+
+        if material_ids:
+            query = query\
+                .filter(Card.material_id.in_(material_ids))
+
+    return [
+        CardNoteRecall(card=card, note=note, recall=recall)
+        for card, recall, note in query.all()
+    ]
+
+
 def complete_card(*,
                   card_id: int,
                   result: str) -> None:
