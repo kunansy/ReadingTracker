@@ -1420,3 +1420,12 @@ class Cards:
         except db.BaseDBError as e:
             logger.error(str(e))
             raise DatabaseError(e)
+
+    @staticmethod
+    def list(material_id: Optional[int] = None) -> list[db.CardNoteRecall]:
+        material_ids = [material_id] * (material_id is not None)
+        try:
+            return db.all_cards(material_ids=material_ids)
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            raise DatabaseError(e)
