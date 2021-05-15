@@ -64,6 +64,7 @@ All params are in environ:
 6. `WORKERS` – count of ASGI workers, 1 by default;
 7. `SANIC_ACCESS` – write access log or not, not by default;
 8. `DB_URI` – path to the database;
+9. `DEBUG` – use debug mode or not, not by default.
 
 
 ## Usage
