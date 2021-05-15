@@ -829,3 +829,22 @@ def remains_for_today(*,
             query = query.filter(Card.material_id == material_id)
 
         return query.one()[0]
+
+
+def cards_count(*,
+                material_ids: Optional[list[int]] = None) -> int:
+    how_many = 'all materials'
+    if material_ids:
+        how_many = f"material {material_ids=}"
+
+    logger.info(f"Getting amount of cards for {how_many}")
+
+    with session() as ses:
+        query = ses.query(func.count())\
+            .select_from(Card)
+
+        if material_ids:
+            query = query\
+                .filter(Card.material_id.in_(material_ids))
+
+        return query.one()[0]
