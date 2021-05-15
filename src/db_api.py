@@ -620,17 +620,19 @@ def get_notes(*,
     If it's None, get all notes.
     """
     how_many = 'all'
-    if materials_ids is not None:
+    if materials_ids:
         how_many = str(len(materials_ids))
 
     logger.info(f"Getting notes for {how_many} materials")
 
     with session() as ses:
-        if materials_ids:
-            return ses.query(Note).filter(
-                Note.material_id.in_(materials_ids)).all()
+        query = ses.query(Note)
 
-        return ses.query(Note).all()
+        if materials_ids:
+            query = query\
+                .filter(Note.material_id.in_(materials_ids)).all()
+
+        return query.all()
 
 
 def add_note(*,
