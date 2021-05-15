@@ -719,7 +719,7 @@ def add_card(*,
 def get_cards(*,
               material_ids: Optional[list[int]] = None) -> list[CardNoteRecall]:
     how_many = 'all materials'
-    if material_ids is not None:
+    if material_ids:
         how_many = f"material {material_ids=}"
 
     logger.info(f"Getting cards for {how_many}")
