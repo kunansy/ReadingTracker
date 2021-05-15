@@ -711,10 +711,10 @@ def add_card(*,
 
 
 def get_cards(*,
-              material_id: Optional[int] = None) -> list[CardNoteRecall]:
+              material_ids: Optional[list[int]] = None) -> list[CardNoteRecall]:
     how_many = 'all materials'
-    if material_id is not None:
-        how_many = f"material {material_id=}"
+    if material_ids is not None:
+        how_many = f"material {material_ids=}"
 
     logger.info(f"Getting cards for {how_many}")
 
@@ -724,8 +724,9 @@ def get_cards(*,
             .join(Note, Card.note_id == Note.id)\
             .filter(Recall.next_repeat_date <= today())
 
-        if material_id:
-            query = query.filter(Card.material_id == material_id)
+        if material_ids:
+            query = query\
+                .filter(Card.material_id.in_(material_ids))
 
     return [
         CardNoteRecall(card=card, note=note, recall=recall)
