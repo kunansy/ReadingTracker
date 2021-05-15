@@ -492,17 +492,19 @@ def get_status(*,
     If it's None, get all statuses.
     """
     how_many = 'all'
-    if status_ids is not None:
+    if status_ids:
         how_many = str(len(status_ids))
 
     logger.info(f"Getting {how_many} statuses")
 
     with session() as ses:
-        if status_ids is None:
-            return ses.query(Status).all()
+        query = ses.query(Status)
 
-        return ses.query(Status).filter(
-            Status.status_id.in_(status_ids)).all()
+        if status_ids:
+            query = query\
+                .filter(Status.status_id.in_(status_ids))
+
+        return query.all()
 
 
 def get_material_status(*,
