@@ -1402,6 +1402,14 @@ class Cards:
         return remains_for_today
 
     @staticmethod
+    def remains_for_today() -> int:
+        try:
+            return db.remains_for_today()
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            return 0
+
+    @staticmethod
     def repeated_today() -> int:
         try:
             return db.repeated_today()
