@@ -693,7 +693,7 @@ class Log:
             last_material_id = safe_list_get(materials, -1, 0)
 
             if ((completion_date := completion_dates.get(last_material_id)) and
-                    completion_date <= iter_):
+                    completion_date < iter_):
                 materials.pop()
                 last_material_id = safe_list_get(materials, -1, 0)
 
