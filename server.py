@@ -656,7 +656,7 @@ def error_handler(request: Request,
 if __name__ == "__main__":
     app.run(
         port=8080,
-        debug=True,
+        debug=env.bool('DEBUG', False),
         workers=env.int('WORKERS', 1),
         access_log=env.bool('SANIC_ACCESS', False)
     )
