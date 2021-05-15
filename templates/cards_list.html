@@ -1,0 +1,40 @@
+{% extends 'index.html' %}
+
+{%- block style -%}
+<link rel="stylesheet" href="{{ url_for('static', filename='cards_list.css') }}">
+{%- endblock style -%}
+
+{%- block header -%}
+    {% from 'submenu.html' import submenu %}
+    {% call submenu(('Repeat', '/recall'), ('Add card', '/recall/add'), ('Cards list', '/recall/list')) %}
+    {% endcall %}
+{%- endblock header -%}
+
+{% block main %}
+{%- if cards -%}
+    <p class="repeated-today"> Today {{ repeated_today }} cards repeated </p>
+    <p class="total-cards"> Total {{ total }} cards </p>
+    {% for card in cards|sort(attribute="recall.next_repeat_date") %}
+        <div class="card hover" id="card-{{ card.card.card_id }}">
+            <p class="question"> {{ card.card.question }} </p>
+            <p class="txt card-id"> Card ID: {{ card.card.card_id }} </p>
+            <p class="txt next-repeat-date"> Will be repeated: {{ card.recall.next_repeat_date.strftime(DATE_FORMAT) }}</p>
+            <p class="txt mult"> Mult: {{ card.recall.mult }} </p>
+            <hr class="question-divider"/>
+            <details class="answer">
+                <summary class="answer"> Show answer </summary>
+                {%- if card.card.answer -%}
+                <p class="answer">{{ card.card.answer }}</p>
+                {%- endif -%}
+                <p class="answer note-answer"> {{ card.note.content }} </p>
+                <p class="txt material-title"> «{{ titles[card.note.material_id] }}» </p>
+                <p class="txt material-page"> Page: {{ card.note.page }} </p>
+                <p class="txt note-id"> Note ID: {{ card.note.id }} </p>
+            </details>
+        </div>
+    {% endfor %}
+{%- else -%}
+    {% import 'not_found.html' as not_found %}
+    {% call not_found.not_found('cards') %} {% endcall %}
+{% endif %}
+{% endblock main %}

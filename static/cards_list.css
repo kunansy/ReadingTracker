@@ -1,0 +1,48 @@
+p.repeated-today {
+    text-align: center;
+    margin: 0;
+}
+p.total-cards {
+    text-align: center;
+    margin-bottom: 5vh;
+}
+
+div.card {
+    display: flex;
+    border: black .3vh solid;
+    border-radius: 2vh;
+    padding: 7vh;
+    width: 60vw;
+    margin: auto auto 7vh;
+}
+.txt {
+    text-align: center;
+    font-size: 3.5vh;
+    margin: 0;
+}
+p.question {
+    font-size: 4vh;
+    text-align: center;
+    word-wrap: break-word;
+    margin-bottom: 5vh;
+}
+p.answer {
+    text-align: center;
+    font-size: 3vh;
+    word-wrap: break-word;
+    margin: 0;
+}
+p.note-answer {
+    margin-top: 4vh;
+}
+p.material-title {
+    font-size: 5vh;
+    margin-top: 2vh;
+    word-wrap: break-word;
+}
+p.material-page {
+    font-size: 4.5vh;
+}
+p.note-id {
+    font-size: 4.5vh;
+}
