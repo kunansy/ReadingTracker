@@ -12,7 +12,7 @@
 
 {% block main %}
 {% if log %}
-    {% for date, info in log.items() %}
+    {% for date, info in log | dictsort(reverse=True) %}
         {% set count = info.count %}
         {% if count >= EXPECTED_COUNT %}
             <div class="record good">
