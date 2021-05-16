@@ -264,18 +264,8 @@ async def get_completed_materials(request: Request) -> dict:
 @app.get('/reading_log')
 @jinja.template('reading_log.html')
 async def get_reading_log(request: Request) -> dict[str, Any]:
-    try:
-        log_ = log[::-1].log
-    except trc.ReadingLogIsEmpty as e:
-        jinja.flash(
-            request,
-            f"Error getting log: {e}",
-            'error'
-        )
-        log_ = {}
-
     return {
-        'log': log_,
+        'log': log.log,
         'DATE_FORMAT': trc.DATE_FORMAT,
         'EXPECTED_COUNT': trc.PAGES_PER_DAY
     }
