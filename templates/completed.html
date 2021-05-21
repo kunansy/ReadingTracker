@@ -6,7 +6,7 @@
 
 {% block main %}
 {% if statistics %}
-    {% for ms in statistics %}
+    {% for ms in statistics | sort(attribute='completed') %}
     {% set material = ms.material %}
     <div class="material hover" onclick=openNotes({{ material.material_id }}) title="Click to see notes">
         <p> Title: «{{ material.title }}» </p>
