@@ -432,24 +432,11 @@ async def add_card(request: Request) -> HTTPResponse:
 @app.get('/recall/list')
 @jinja.template('cards_list.html')
 async def cards_list(request: Request) -> dict[str, Any]:
-    try:
-        cards_ = cards.list()
-    except trc.DatabaseError as e:
-        jinja.flash(request, f"Error getting cards: {e}", 'error')
-        cards_ = {}
-
-    try:
-        titles = tracker.get_material_titles(
-            completed=True, reading=True)
-    except trc.DatabaseError as e:
-        jinja.flash(request, f"Error getting titles: {e}", 'error')
-        titles = {}
-
     return {
-        'cards': cards_,
+        'cards': cards.list(),
         'repeated_today': cards.repeated_today(),
         'DATE_FORMAT': trc.DATE_FORMAT,
-        'titles': titles,
+        'titles': tracker.get_material_titles(completed=True, reading=True),
         'total': len(cards),
         'remains': cards.remains_for_today()
     }
