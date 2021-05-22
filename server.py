@@ -228,26 +228,9 @@ async def get_reading_log(request: Request) -> dict[str, Any]:
 
 @app.get('/reading_log/add')
 @jinja.template('add_log_record.html')
-async def add_reading_log(request: Request) -> dict[str, Any]:
-    try:
-        titles = tracker.get_material_titles(reading=True)
-    except trc.DatabaseError as e:
-        jinja.flash(
-            request,
-            f"Error getting material titles: {e}",
-            'error'
-        )
-        titles = {}
-
-    try:
-        reading_material_id = log.reading_material
-    except trc.ReadingLogIsEmpty as e:
-        jinja.flash(
-            request,
-            f"Error getting the reading material: {e}",
-            'error'
-        )
-        reading_material_id = None
+async def add_log_record(request: Request) -> dict[str, Any]:
+    titles = tracker.get_material_titles(reading=True)
+    reading_material_id = log.reading_material
 
     return {
         'material_id': reading_material_id,
