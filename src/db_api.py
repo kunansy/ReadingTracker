@@ -431,7 +431,9 @@ def get_title(material_id: int, /) -> str:
 
 def does_material_exist(material_id: int, /) -> bool:
     logger.info(f"Whether {material_id=} exists")
-    return len(get_materials(materials_ids=[material_id])) == 1
+
+    with session() as ses:
+        return ses.query(Material).get(material_id) is not None
 
 
 def does_note_exist(note_id: int, /) -> bool:
