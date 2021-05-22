@@ -12,7 +12,7 @@ from sqlalchemy import (
     Column, ForeignKey, Integer,
     String, Date, create_engine, Text, Float, func
 )
-from sqlalchemy.exc import NoResultFound
+import sqlalchemy.exc as sa_ex
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
@@ -528,7 +528,7 @@ def get_material_status(*,
             Status.material_id == material_id)
         try:
             return query.one()
-        except NoResultFound as e:
+        except sa_ex.NoResultFound as e:
             msg = f"Material {material_id=} not found"
             logger.error(f"{msg}\n{e}")
             raise ex.MaterialNotFound(msg)
