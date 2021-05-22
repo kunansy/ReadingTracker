@@ -41,6 +41,14 @@ class Note(BaseModel):
     chapter: conint(ge=0)
     page: conint(gt=0)
 
+    @validator('material_id')
+    def validate_material_id(cls,
+                             material_id: int) -> int:
+        if not db.does_material_exist(material_id):
+            raise ValueError(f"Material {material_id=} not found")
+
+        return material_id
+
     @validator('content')
     def validate_content(cls,
                          content: str) -> str:
