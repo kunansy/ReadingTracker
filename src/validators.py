@@ -1,0 +1,105 @@
+import datetime
+from typing import Optional
+
+from pydantic import BaseModel, constr, conint, validator
+from src import db_api as db
+
+
+class Material(BaseModel):
+    class Config:
+        extra = 'forbid'
+
+    title: constr(strip_whitespace=True, min_length=1)
+    authors: constr(strip_whitespace=True, min_length=1)
+    pages: conint(gt=0)
+    tags: constr(strip_whitespace=True)
+
+    def __repr__(self) -> str:
+        fields = ', '.join(
+            f"{key}='{val}'"
+            for key, val in self.dict().items()
+        )
+        return f"{self.__class__.__name__}({fields})"
+
+    def __str__(self) -> str:
+        return repr(self)
+
+
+class Note(BaseModel):
+    class Config:
+        extra = 'forbid'
+
+    material_id: conint(gt=0)
+    content: constr(strip_whitespace=True, min_length=1)
+    chapter: conint(ge=0)
+    page: conint(gt=0)
+
+    @validator('content')
+    def validate_content(cls,
+                         content: str) -> str:
+        content = ' '.join(content.replace('\n', '<br/>').split())
+        return f"{content[0].upper()}{content[1:]}" \
+               f"{'.' * (not content.endswith('.'))}"
+
+    def __repr__(self) -> str:
+        fields = ', '.join(
+            f"{key}='{val}'"
+            for key, val in self.dict().items()
+        )
+        return f"{self.__class__.__name__}({fields})"
+
+    def __str__(self) -> str:
+        return repr(self)
+
+
+class LogRecord(BaseModel):
+    class Config:
+        extra = 'forbid'
+
+    material_id: conint(gt=0)
+    date: datetime.date
+    count: conint(gt=0)
+
+    @validator('date')
+    def validate_date(cls,
+                      date: datetime.date) -> datetime.date:
+        if date > db.today():
+            raise ValueError("You cannot set log to the future")
+        return date
+
+    @validator('material_id')
+    def validate_material_id(cls,
+                             material_id: int) -> int:
+        if not db.does_material_exist(material_id):
+            raise ValueError(f"Material {material_id=} doesn't exist")
+        return material_id
+
+    def __repr__(self) -> str:
+        data = ', '.join(
+            f"{key}={value}"
+            for key, value in self.dict().items()
+        )
+        return f"{self.__class__.__name__}({data})"
+
+    def __str__(self) -> str:
+        return repr(self)
+
+
+class Card(BaseModel):
+    class Config:
+        extra = 'forbid'
+
+    material_id: conint(gt=0)
+    note_id: conint(gt=0)
+    question: constr(strip_whitespace=True, min_length=1)
+    answer: Optional[constr(strip_whitespace=True)]
+
+    def __repr__(self) -> str:
+        data = ', '.join(
+            f"{key}={value}"
+            for key, value in self.dict().items()
+        )
+        return f"{self.__class__.__name__}({data})"
+
+    def __str__(self) -> str:
+        return repr(self)

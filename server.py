@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-import datetime
 from collections import defaultdict
-from typing import Any, Optional
+from typing import Any
 
 import ujson
 from environs import Env
-from pydantic import BaseModel, ValidationError, validator, constr, conint
+from pydantic import ValidationError
 from sanic import Sanic, Request, response, HTTPResponse, exceptions
 from sanic.log import logger as sanic_logger
 from sanic_jinja2 import SanicJinja2
@@ -13,6 +12,7 @@ from sanic_session import Session
 
 from src import logger as logger_
 from src import tracker as trc
+from src import validators
 
 
 env = Env()
@@ -25,106 +25,6 @@ jinja = SanicJinja2(app, session=session)
 log = trc.Log(full_info=True)
 tracker = trc.Tracker(log)
 cards = trc.Cards()
-
-
-class Material(BaseModel):
-    class Config:
-        extra = 'forbid'
-
-    title: constr(strip_whitespace=True, min_length=1)
-    authors: constr(strip_whitespace=True, min_length=1)
-    pages: conint(gt=0)
-    tags: constr(strip_whitespace=True)
-
-    def __repr__(self) -> str:
-        fields = ', '.join(
-            f"{key}='{val}'"
-            for key, val in self.dict().items()
-        )
-        return f"{self.__class__.__name__}({fields})"
-
-    def __str__(self) -> str:
-        return repr(self)
-
-
-class Note(BaseModel):
-    class Config:
-        extra = 'forbid'
-
-    material_id: conint(gt=0)
-    content: constr(strip_whitespace=True, min_length=1)
-    chapter: conint(ge=0)
-    page: conint(gt=0)
-    
-    @validator('content')
-    def validate_content(cls,
-                         content: str) -> str:
-        content = ' '.join(content.replace('\n', '<br/>').split())
-        return f"{content[0].upper()}{content[1:]}" \
-               f"{'.' * (not content.endswith('.'))}"
-
-    def __repr__(self) -> str:
-        fields = ', '.join(
-            f"{key}='{val}'"
-            for key, val in self.dict().items()
-        )
-        return f"{self.__class__.__name__}({fields})"
-
-    def __str__(self) -> str:
-        return repr(self)
-
-
-class LogRecord(BaseModel):
-    class Config:
-        extra = 'forbid'
-
-    material_id: conint(gt=0)
-    date: datetime.date
-    count: conint(gt=0)
-
-    @validator('date')
-    def validate_date(cls,
-                      date: datetime.date) -> datetime.date:
-        if date > trc.today():
-            raise ValueError("You cannot set log to the future")
-        return date
-
-    @validator('material_id')
-    def validate_material_id(cls,
-                             material_id: int) -> int:
-        if not tracker.does_material_exist(material_id):
-            raise ValueError(f"Material {material_id=} doesn't exist")
-        return material_id
-
-    def __repr__(self) -> str:
-        data = ', '.join(
-            f"{key}={value}"
-            for key, value in self.dict().items()
-        )
-        return f"{self.__class__.__name__}({data})"
-
-    def __str__(self) -> str:
-        return repr(self)
-
-
-class Card(BaseModel):
-    class Config:
-        extra = 'forbid'
-
-    material_id: conint(gt=0)
-    note_id: conint(gt=0)
-    question: constr(strip_whitespace=True, min_length=1)
-    answer: Optional[constr(strip_whitespace=True)]
-
-    def __repr__(self) -> str:
-        data = ', '.join(
-            f"{key}={value}"
-            for key, value in self.dict().items()
-        )
-        return f"{self.__class__.__name__}({data})"
-
-    def __str__(self) -> str:
-        return repr(self)
 
 
 async def get_form_items(request: Request) -> dict[str, Any]:
@@ -161,7 +61,7 @@ async def add_material(request: Request) -> HTTPResponse:
     form_items = await get_form_items(request)
 
     try:
-        material = Material(**form_items)
+        material = validators.Material(**form_items)
     except ValidationError as e:
         context = ujson.dumps(e.errors(), indent=4)
         sanic_logger.warning(f"Validation error:\n{context}")
@@ -244,7 +144,7 @@ async def add_log_record(request: Request) -> HTTPResponse:
     form_items = await get_form_items(request)
 
     try:
-        record = LogRecord(**form_items)
+        record = validators.LogRecord(**form_items)
     except ValidationError as e:
         context = ujson.dumps(e.errors(), indent=4)
         sanic_logger.warning(f"Validation error:\n{context}")
@@ -326,7 +226,7 @@ async def add_note(request: Request) -> HTTPResponse:
     form_items = await get_form_items(request)
 
     try:
-        note = Note(**form_items)
+        note = validators.Note(**form_items)
     except ValidationError as e:
         context = ujson.dumps(e.errors(), indent=4)
         sanic_logger.warning(f"Validation error:\n{context}")
@@ -401,7 +301,7 @@ async def add_card(request: Request) -> HTTPResponse:
     form_items = await get_form_items(request)
 
     try:
-        card = Card(**form_items)
+        card = validators.Card(**form_items)
     except ValidationError as e:
         context = ujson.dumps(e.errors(), indent=4)
         sanic_logger.warning(f"Validation error:\n{context}")
