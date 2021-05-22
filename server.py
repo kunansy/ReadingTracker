@@ -21,7 +21,7 @@ app = Sanic(__name__, log_config=logger_.LOGGING_CONFIG)
 app.static('/static', './static')
 
 session = Session(app)
-jinja = SanicJinja2(app, session=session)
+jinja = SanicJinja2(app, session=session, enable_async=True)
 
 log = trc.Log(full_info=True)
 tracker = trc.Tracker(log)
@@ -359,21 +359,22 @@ def validation_error_handler(request: Request,
 
 @app.exception(exceptions.NotFound,
                ex.BaseNotFoundError)
-def not_found(request: Request,
-              exception: Exception) -> dict[str, Any]:
+async def not_found(request: Request,
+                    exception: Exception) -> dict[str, Any]:
     args = '; '.join(
         arg
         for arg in exception.args
     )
 
     sanic_logger.error(f"Not found error: {args}")
-    return jinja.render('errors/404.html', request, what=args, status=404)
+    return await jinja.render_async(
+        'errors/404.html', request, what=args, status=404)
 
 
 @app.exception(ex.BaseTrackerError)
 @jinja.template('errors/500.html')
-def error_handler(request: Request,
-                  exception: Exception) -> dict[str, Any]:
+async def error_handler(request: Request,
+                        exception: Exception) -> dict[str, Any]:
     try:
         ex_json = exception.json()
     except:
@@ -390,7 +391,8 @@ def error_handler(request: Request,
     }
 
     sanic_logger.error(ujson.dumps(context, indent=4))
-    return jinja.render('errors/500.html', request, **context, status=500)
+    return await jinja.render_async(
+        'errors/500.html', request, **context, status=500)
 
 
 if __name__ == "__main__":
