@@ -456,6 +456,18 @@ def is_material_reading(material_id: int, /) -> bool:
         return material.first() is not None
 
 
+def is_material_assigned(material_id: int, /) -> bool:
+    logger.info(f"Whether {material_id=} reading or completed")
+
+    with session() as ses:
+        material = ses.query(Material) \
+            .join(Status, Material.material_id == Status.material_id) \
+            .filter(Status.begin != None) \
+            .filter(Material.material_id == material_id)
+
+        return material.first() is not None
+
+
 def get_free_materials() -> list[Material]:
     """ Get all not assigned materials """
     logger.info("Getting free materials")
