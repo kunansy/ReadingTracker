@@ -376,31 +376,10 @@ async def recall(request: Request,
 @app.get('/recall/add')
 @jinja.template('add_card.html')
 async def add_card(request: Request) -> dict[str, Any]:
-    try:
-        titles = tracker.get_material_titles(
-            reading=True, completed=True
-        )
-    except trc.DatabaseError as e:
-        jinja.flash(request, f'Cannot get material titles: {e}', 'error')
-        titles = {}
-
-    try:
-        all_notes = tracker.get_notes()
-    except trc.DatabaseError as e:
-        jinja.flash(request, f"Error getting notes: {e}", 'error')
-        return {}
-
     material_id = request.args.get('material_id')
-    try:
-        notes_with_cards = cards.notes_with_cards(material_id)
-    except trc.DatabaseError as e:
-        jinja.flash(
-            request,
-            f"Error getting notes with cards: {e}",
-            'error'
-        )
-        notes_with_cards = {}
+    notes_with_cards = cards.notes_with_cards(material_id)
 
+    all_notes = tracker.get_notes()
     notes = {
         note.id: note
         for note in all_notes
@@ -413,7 +392,7 @@ async def add_card(request: Request) -> dict[str, Any]:
         'question': request.ctx.session.get('question', ''),
         'answer': request.ctx.session.get('answer', ''),
         'chapter': request.ctx.session.get('chapter', ''),
-        'titles': titles,
+        'titles': tracker.get_material_titles(reading=True, completed=True),
         'notes': notes,
         'notes_with_cards': notes_with_cards
     }
