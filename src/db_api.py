@@ -604,12 +604,13 @@ def complete_material(*,
     logger.info(f"Completing material {material_id=} at {completion_date=}")
 
     with session() as ses:
-        status = ses.query(Status).filter(
-            Status.material_id == material_id).all()
-        try:
-            status = status[0]
-        except IndexError:
-            raise MaterialNotAssigned(f"Material {material_id=} not assigned")
+        status = ses.query(Status)\
+            .filter(Status.material_id == material_id)\
+            .first()
+
+        if status is None:
+            raise ex.MaterialNotAssigned(
+                f"Material {material_id=} not assigned")
 
         if status.end is not None:
             raise ex.MaterialEvenCompleted(f"Material {material_id=}")
