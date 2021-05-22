@@ -556,14 +556,12 @@ async def add_card(request: Request) -> HTTPResponse:
         request.ctx.session.update(
             **key_val
         )
-        if material_id := key_val.get('material_id'):
+
+        if material_id := key_val.get('material_id', ''):
             material_id = f"?{material_id=}"
-        else:
-            material_id = ''
-        if note_id := key_val.get('note_id'):
+        if note_id := key_val.get('note_id', ''):
             note_id = f"#note-{note_id}"
-        else:
-            note_id = ''
+
         url = f"/recall/add{material_id}{note_id}"
         return response.redirect(url)
 
