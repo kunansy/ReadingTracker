@@ -135,14 +135,9 @@ class Card(BaseModel):
     question: constr(strip_whitespace=True, min_length=1)
     answer: Optional[constr(strip_whitespace=True)]
 
-    @validator('material_id')
-    def validate_material_id(cls,
-                             material_id: int) -> int:
-        return validate_material_exists(material_id)
-
     @validator('note_id')
-    def validate_note_id(cls,
-                         note_id: int) -> int:
+    def validate_note_exists(cls,
+                             note_id: int) -> int:
         if not db.does_note_exist(note_id):
             raise ValueError(f"Note {note_id=} not found")
 
