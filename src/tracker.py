@@ -1329,11 +1329,8 @@ class Cards:
 
     @property
     def card(self) -> Optional[db.CardNoteRecall]:
-        """
-        :exception CardsLimitExceeded:
-        """
         if self.repeated_today() >= _MAX_PER_DAY:
-            raise CardsLimitExceeded
+            return
 
         if self.__current_card is None:
             if not (cards := self._get_cards()):
