@@ -23,12 +23,28 @@ class DatabaseError(BaseTrackerError):
     pass
 
 
+class LoadingLogError(BaseTrackerError):
+    pass
+
+
+class ReadingLogIsEmpty(BaseTrackerError):
+    pass
+
+
+class NoMaterialInLog(BaseTrackerError):
+    pass
+
+
 # ------ invalid argument errors -----
 class WrongDate(BaseWrongArgumentError):
     pass
 
 
 class WrongRepeatResult(BaseWrongArgumentError):
+    pass
+
+
+class WrongLogParam(BaseWrongArgumentError):
     pass
 
 
@@ -39,4 +55,3 @@ class MaterialNotFound(BaseNotFoundError):
 
 class CardNotFound(BaseNotFoundError):
     pass
-

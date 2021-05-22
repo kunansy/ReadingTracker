@@ -13,6 +13,7 @@ import ujson
 from environs import Env
 
 import src.db_api as db
+from src import exceptions as ex
 
 
 env = Env()
@@ -27,51 +28,6 @@ _MAX_PER_DAY = env.int('CARDS_PER_DAY', 25)
 
 
 logger = logging.getLogger(env('LOGGER_NAME'))
-
-
-class BaseTrackerError(Exception):
-    def __repr__(self) -> str:
-        args = '; '.join(
-            str(arg)
-            for arg in self.args
-        )
-        return f"{self.__class__.__name__}(" \
-               f"{args}, {self.__cause__})"
-
-    def __str__(self) -> str:
-        return repr(self)
-
-
-class LoadingLogError(BaseTrackerError):
-    pass
-
-
-class ReadingLogIsEmpty(BaseTrackerError):
-    pass
-
-
-class WrongLogParam(BaseTrackerError):
-    pass
-
-
-class NoMaterialInLog(BaseTrackerError):
-    pass
-
-
-class CardNotFound(BaseTrackerError):
-    pass
-
-
-class CardsLimitExceeded(BaseTrackerError):
-    pass
-
-
-class MaterialNotFound(BaseTrackerError):
-    pass
-
-
-class DatabaseError(BaseTrackerError):
-    pass
 
 
 @dataclass(frozen=True)
@@ -391,7 +347,7 @@ class Log:
         except IndexError:
             msg = "Reading log is empty, no start date"
             logger.warning(msg)
-            raise ReadingLogIsEmpty(msg)
+            raise ex.ReadingLogIsEmpty(msg)
 
     @property
     def stop(self) -> datetime.date:
@@ -404,7 +360,7 @@ class Log:
         except IndexError:
             msg = "Reading log is empty, no stop date"
             logger.warning(msg)
-            raise ReadingLogIsEmpty(msg)
+            raise ex.ReadingLogIsEmpty(msg)
 
     @property
     def reading_material(self) -> Optional[int]:
@@ -425,14 +381,13 @@ class Log:
         #  and there's no log records for it
         try:
             reading_materials = db.get_reading_materials()
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
             return 0
         if (reading_material := safe_list_get(reading_materials, -1, 0)) == 0:
             return 0
 
         return reading_material.material.material_id
-
 
     def _get_log(self,
                  *,
@@ -458,9 +413,9 @@ class Log:
             try:
                 material_titles = db.get_material_titles(
                     reading=True, completed=True)
-            except db.BaseDBError as e:
+            except ex.DatabaseError as e:
                 logger.error(str(e))
-                raise DatabaseError(e)
+                raise
 
         for date, info in log.items():
             date = to_datetime(date)
@@ -492,22 +447,22 @@ class Log:
         logger.debug(f"Setting log for: {date=}, {count=}, {material_id=}")
 
         if count <= 0:
-            raise WrongLogParam(f"Count must be > 0, but 0 <= {count}")
+            raise ex.WrongLogParam(f"Count must be > 0, but 0 <= {count}")
         if date <= self.stop:
-            raise WrongLogParam(
-                "The date must be less than the last "
+            raise ex.WrongLogParam(
+                "The date must be better than the last "
                 f"date, but {date=} < {self.stop=}"
             )
         if date in self.__log:
-            raise WrongLogParam(f"The {date=} even exists in the log")
+            raise ex.WrongLogParam(f"The {date=} even exists in the log")
         if material_id is None and len(self.log) == 0:
-            raise WrongLogParam(f"{material_id=} and log dict is empty")
+            raise ex.WrongLogParam(f"{material_id=} and log dict is empty")
 
         try:
             material_title = db.get_title(material_id)
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
-            raise DatabaseError(e)
+            raise
 
         record = LogRecord(
             material_id=material_id or self.reading_material,
@@ -536,7 +491,7 @@ class Log:
         """
         try:
             self._set_log(today(), count, material_id)
-        except WrongLogParam as e:
+        except ex.WrongLogParam as e:
             logger.error(str(e))
             raise
 
@@ -556,7 +511,7 @@ class Log:
         """
         try:
             self._set_log(yesterday(), count, material_id)
-        except WrongLogParam as e:
+        except ex.WrongLogParam as e:
             logger.error(str(e))
             raise
 
@@ -622,7 +577,7 @@ class Log:
         logger.debug("Calculating min for log")
 
         if not self.log:
-            raise ReadingLogIsEmpty
+            raise ex.ReadingLogIsEmpty
 
         date, info = min(
             [(date, info) for date, info in self.log.items()],
@@ -644,7 +599,7 @@ class Log:
         logger.debug("Calculating max for log")
 
         if not self.log:
-            raise ReadingLogIsEmpty
+            raise ex.ReadingLogIsEmpty
 
         date, info = max(
             [(date, info) for date, info in self.log.items()],
@@ -696,7 +651,7 @@ class Log:
         materials = []
         try:
             completion_dates = db.get_completion_dates()
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
             completion_dates = {}
 
@@ -734,7 +689,7 @@ class Log:
         logger.debug(f"Calculating duration for material {material_id=}")
 
         if material_id not in self:
-            raise NoMaterialInLog
+            raise ex.NoMaterialInLog
 
         return sum(
             1
@@ -751,7 +706,7 @@ class Log:
         logger.debug(f"Calculating total for material {material_id=}")
 
         if material_id not in self:
-            raise NoMaterialInLog
+            raise ex.NoMaterialInLog
 
         return sum(
             info.count
@@ -768,7 +723,7 @@ class Log:
         logger.debug(f"Calculating lost time for material {material_id=}")
 
         if material_id not in self:
-            raise NoMaterialInLog
+            raise ex.NoMaterialInLog
 
         return sum(
             1
@@ -786,7 +741,7 @@ class Log:
         logger.debug(f"Calculating min for material {material_id=}")
 
         if material_id not in self:
-            raise NoMaterialInLog
+            raise ex.NoMaterialInLog
 
         sample = [
             (date, info)
@@ -813,7 +768,7 @@ class Log:
         logger.debug(f"Calculating max for material {material_id=}")
 
         if material_id not in self:
-            raise NoMaterialInLog
+            raise ex.NoMaterialInLog
 
         sample = [
             (date, info)
@@ -838,7 +793,7 @@ class Log:
         logger.debug(f"Calculating average for material {material_id=}")
 
         if material_id not in self:
-            raise NoMaterialInLog
+            raise ex.NoMaterialInLog
 
         total = duration = 0
         for date, info in self.data():
@@ -874,7 +829,7 @@ class Log:
         logger.debug("Calculating statistics of the log")
 
         if not self.log:
-            raise ReadingLogIsEmpty
+            raise ex.ReadingLogIsEmpty
 
         return LogStatistics(
             start_date=self.start,
@@ -902,7 +857,7 @@ class Log:
         logger.debug(f"Getting item {date=} from the log")
 
         if not self.log:
-            raise ReadingLogIsEmpty
+            raise ex.ReadingLogIsEmpty
 
         if not isinstance(date, (datetime.date, slice, str)):
             raise TypeError(f"Date or slice of dates expected, "
@@ -969,9 +924,9 @@ class Log:
 
         try:
             material_titles = db.get_material_titles()
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
-            raise DatabaseError(e)
+            raise
 
         for date, info in self.log.items():
             if (material_id := info.material_id) != last_material_id:
@@ -979,7 +934,7 @@ class Log:
                 try:
                     title = info.material_title or \
                             f"«{material_titles.get(material_id, '')}»"
-                except db.BaseDBError as e:
+                except ex.DatabaseError as e:
                     logger.error(str(e))
                     title = 'None'
 
@@ -1020,9 +975,9 @@ class Tracker:
         """
         try:
             return db.get_free_materials()
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
-            raise DatabaseError(e)
+            raise
 
     @property
     def processed(self) -> db.MATERIAL_STATUS:
@@ -1032,9 +987,9 @@ class Tracker:
         """
         try:
             return db.get_completed_materials()
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
-            raise DatabaseError(e)
+            raise
 
     @property
     def reading(self) -> db.MATERIAL_STATUS:
@@ -1044,9 +999,9 @@ class Tracker:
         """
         try:
             return db.get_reading_materials()
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
-            raise DatabaseError(e)
+            raise
 
     @property
     def log(self) -> Log:
@@ -1059,15 +1014,15 @@ class Tracker:
         """
         try:
             return db.get_notes()
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
-            raise DatabaseError(e)
+            raise
 
     @staticmethod
     def does_material_exist(material_id: int) -> bool:
         try:
             return db.does_material_exist(material_id)
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(f"Error checking {material_id=} exists:\n{e}")
             return False
 
@@ -1078,9 +1033,9 @@ class Tracker:
         """
         try:
             return db.get_material_titles(**kwargs)
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
-            raise DatabaseError(e)
+            raise
 
     def get_material_statistics(self,
                                 material_id: int,
@@ -1192,12 +1147,12 @@ class Tracker:
                 material_id=material_id,
                 start_date=start_date
             )
-        except db.MaterialNotFound as e:
+        except ex.MaterialNotFound as e:
             logger.error(str(e))
-            raise MaterialNotFound(e)
-        except db.BaseDBError as e:
+            raise
+        except ex.DatabaseError as e:
             logger.error(str(e))
-            raise DatabaseError(e)
+            raise
 
     def complete_material(self,
                           material_id: Optional[int] = None,
@@ -1211,6 +1166,7 @@ class Tracker:
          Today by default.
 
         :exception DatabaseError:
+        :exception MaterialNotFound:
         """
         material_id = material_id or self.log.reading_material
 
@@ -1219,12 +1175,12 @@ class Tracker:
                 material_id=material_id,
                 completion_date=completion_date
             )
-        except db.MaterialNotAssigned as e:
+        except ex.MaterialNotAssigned as e:
             logger.error(str(e))
-            raise MaterialNotFound(e)
-        except db.BaseDBError as e:
+            raise
+        except ex.DatabaseError as e:
             logger.error(e)
-            raise DatabaseError(e)
+            raise
 
     @staticmethod
     def add_material(title: str,
@@ -1241,9 +1197,9 @@ class Tracker:
                 pages=pages,
                 tags=tags
             )
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
-            raise DatabaseError
+            raise
 
     @staticmethod
     def get_material(material_id: int) -> db.Material:
@@ -1257,10 +1213,10 @@ class Tracker:
         except IndexError:
             msg = f"Material {material_id=} not found"
             logger.warning(msg)
-            raise DatabaseError(msg)
-        except db.BaseDBError as e:
+            raise ex.MaterialNotFound(msg)
+        except ex.DatabaseError as e:
             logger.error(e)
-            raise DatabaseError(e)
+            raise
 
     @staticmethod
     def get_status(material_id: int) -> db.Status:
@@ -1269,9 +1225,9 @@ class Tracker:
         """
         try:
             return db.get_material_status(material_id=material_id)
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
-            raise DatabaseError(e)
+            raise
 
     @staticmethod
     def get_notes(material_id: Optional[int] = None) -> list[db.Note]:
@@ -1284,9 +1240,9 @@ class Tracker:
         material_ids = [material_id] * (material_id is not None)
         try:
             return db.get_notes(materials_ids=material_ids)
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
-            raise DatabaseError(e)
+            raise
 
     @staticmethod
     def add_note(material_id: int,
@@ -1317,9 +1273,9 @@ class Tracker:
                 page=page,
                 date=date
             )
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
-            raise DatabaseError(e)
+            raise
 
 
 class Cards:
@@ -1344,7 +1300,7 @@ class Cards:
     def _get_cards() -> list[db.CardNoteRecall]:
         try:
             cards = db.get_cards()
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
             cards = []
 
@@ -1366,9 +1322,9 @@ class Cards:
                 answer=answer,
                 note_id=note_id
             )
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
-            raise DatabaseError(e)
+            raise
 
     def complete_card(self,
                       result: str) -> None:
@@ -1377,7 +1333,7 @@ class Cards:
         :exception CardNotFound:
         """
         if self.__current_card is None:
-            raise CardNotFound
+            raise ex.CardNotFound
 
         card_id = self.__current_card.card.card_id
 
@@ -1385,12 +1341,12 @@ class Cards:
             db.complete_card(
                 card_id=card_id, result=result
             )
-        except db.CardNotFound as e:
+        except ex.CardNotFound as e:
             logger.error(str(e))
-            raise CardNotFound(e)
-        except db.BaseDBError as e:
+            raise
+        except ex.DatabaseError as e:
             logger.error(str(e))
-            raise DatabaseError(e)
+            raise
         else:
             self.__current_card = None
 
@@ -1399,7 +1355,7 @@ class Cards:
         try:
             repeated_today = db.repeated_today()
             remains_for_today = db.remains_for_today()
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
             return 0
 
@@ -1413,7 +1369,7 @@ class Cards:
     def remains_for_today() -> int:
         try:
             return db.remains_for_today()
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
             return 0
 
@@ -1421,7 +1377,7 @@ class Cards:
     def repeated_today() -> int:
         try:
             return db.repeated_today()
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
             return _MAX_PER_DAY
 
@@ -1433,22 +1389,22 @@ class Cards:
         material_ids = [material_id] * (material_id is not None)
         try:
             return db.notes_with_cards(material_ids=material_ids)
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
-            raise DatabaseError(e)
+            raise
 
     @staticmethod
     def list(material_id: Optional[int] = None) -> list[db.CardNoteRecall]:
         material_ids = [material_id] * (material_id is not None)
         try:
             return db.all_cards(material_ids=material_ids)
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
-            raise DatabaseError(e)
+            raise
 
     def __len__(self) -> int:
         try:
             return db.cards_count()
-        except db.BaseDBError as e:
+        except ex.DatabaseError as e:
             logger.error(str(e))
             return 0
