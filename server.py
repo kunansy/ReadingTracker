@@ -158,12 +158,10 @@ async def add_material(request: Request) -> dict[str, Any]:
 @app.post('/materials/add')
 async def add_material(request: Request) -> HTTPResponse:
     """ Add a material to the queue """
-    key_val = {
-        key: val[0]
-        for key, val in request.form.items()
-    }
+    form_items = await get_form_items(request)
+
     try:
-        material = Material(**key_val)
+        material = Material(**form_items)
     except ValidationError as e:
         context = ujson.dumps(e.errors(), indent=4)
         sanic_logger.warning(f"Validation error:\n{context}")
@@ -171,25 +169,15 @@ async def add_material(request: Request) -> HTTPResponse:
         for error in e.errors():
             jinja.flash(request, f"{error['loc'][0]}: {error['msg']}", 'error')
 
-        request.ctx.session.update(
-            **key_val
-        )
+        request.ctx.session.update(**form_items)
         return response.redirect('/materials/add')
     else:
         request.ctx.session.clear()
 
-    try:
-        tracker.add_material(**material.dict())
-    except trc.DatabaseError as e:
-        jinja.flash(request, str(e), 'error')
+    tracker.add_material(**material.dict())
+    jinja.flash(request, "Material added", 'success')
 
-        request.ctx.session.update(
-            **material.dict()
-        )
-    else:
-        jinja.flash(request, "Material added", 'success')
-    finally:
-        return response.redirect('/materials/add')
+    return response.redirect('/materials/add')
 
 
 @app.post('/materials/start/<material_id:int>')
