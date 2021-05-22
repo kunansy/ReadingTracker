@@ -58,9 +58,12 @@ class Note(BaseModel):
     page: conint(gt=0)
 
     @validator('material_id')
-    def validate_material_id(cls,
-                             material_id: int) -> int:
-        return validate_material_exists(material_id)
+    def validate_material_assigned(cls,
+                                   material_id: int) -> int:
+        if not db.is_material_assigned(material_id):
+            raise ValueError(f"Material {material_id=} is not assigned")
+
+        return material_id
 
     @validator('page')
     def validate_page(cls,
