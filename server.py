@@ -135,7 +135,7 @@ async def add_log_record(request: Request) -> dict[str, Any]:
     return {
         'material_id': reading_material_id,
         'titles': titles,
-        'date': trc.today()
+        'date': trc.db.today()
     }
 
 

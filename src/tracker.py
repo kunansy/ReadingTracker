@@ -241,13 +241,8 @@ class MaterialEstimate:
 
 
 @db.cache(update=False)
-def today() -> datetime.date:
-    return datetime.date.today()
-
-
-@db.cache(update=False)
 def yesterday() -> datetime.date:
-    return today() - timedelta(days=1)
+    return db.today() - timedelta(days=1)
 
 
 @db.cache(update=False)
@@ -490,7 +485,7 @@ class Log:
          log, 'material_id' not given and log is empty.
         """
         try:
-            self._set_log(today(), count, material_id)
+            self._set_log(db.today(), count, material_id)
         except ex.WrongLogParam as e:
             logger.error(str(e))
             raise
@@ -655,7 +650,7 @@ class Log:
             logger.error(str(e))
             completion_dates = {}
 
-        while iter_ <= today():
+        while iter_ <= db.today():
             last_material_id = safe_list_get(materials, -1, 0)
 
             if ((completion_date := completion_dates.get(last_material_id)) and
@@ -1066,7 +1061,7 @@ class Tracker:
         if status.end is None:
             remaining_pages = material.pages - total
             remaining_days = round(remaining_pages / avg)
-            would_be_completed = today() + timedelta(days=remaining_days)
+            would_be_completed = db.today() + timedelta(days=remaining_days)
         else:
             would_be_completed = remaining_days = remaining_pages = None
 
@@ -1128,7 +1123,7 @@ class Tracker:
             for stat in self.statistics(self.reading)
         )
 
-        return today() + timedelta(days=remaining_days + 1)
+        return db.today() + timedelta(days=remaining_days + 1)
 
     @staticmethod
     def start_material(material_id: int,
