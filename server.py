@@ -210,18 +210,8 @@ async def get_reading_materials(request: Request) -> dict[str, Any]:
 @app.get('/materials/completed')
 @jinja.template('completed.html')
 async def get_completed_materials(request: Request) -> dict:
-    try:
-        statistics = tracker.statistics(tracker.processed)
-    except trc.DatabaseError as e:
-        jinja.flash(
-            request,
-            f"Error getting completed materials: {e}",
-            'error'
-        )
-        statistics = []
-
     return {
-        'statistics': statistics,
+        'statistics': tracker.statistics(tracker.processed),
         'DATE_FORMAT': trc.DATE_FORMAT
     }
 
