@@ -100,9 +100,17 @@ class LogRecord(BaseModel):
         return date
 
     @validator('material_id')
-    def validate_material_id(cls,
-                             material_id: int) -> int:
-        return validate_material_id(material_id)
+    def validate_material_exists(cls,
+                                 material_id: int) -> int:
+        return validate_material_exists(material_id)
+
+    @validator('material_id')
+    def validate_material_reading(cls,
+                                  material_id: int) -> int:
+        if not db.is_material_reading(material_id):
+            raise ValueError(f"Material {material_id=} is not reading")
+
+        return material_id
 
     def __repr__(self) -> str:
         data = ', '.join(
