@@ -434,6 +434,13 @@ def does_material_exist(material_id: int, /) -> bool:
     return len(get_materials(materials_ids=[material_id])) == 1
 
 
+def does_note_exist(note_id: int, /) -> bool:
+    logger.info(f"Whether {note_id=} exists")
+
+    with session() as ses:
+        return ses.query(Note).get(note_id) is not None
+
+
 def get_free_materials() -> list[Material]:
     """ Get all not assigned materials """
     logger.info("Getting free materials")
