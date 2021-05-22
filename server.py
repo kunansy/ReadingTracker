@@ -323,13 +323,10 @@ async def add_note(request: Request) -> dict[str, Any]:
 
 @app.post('/notes/add')
 async def add_note(request: Request) -> HTTPResponse:
-    key_val = {
-        key: val[0]
-        for key, val in request.form.items()
-    }
+    form_items = await get_form_items(request)
 
     try:
-        note = Note(**key_val)
+        note = Note(**form_items)
     except ValidationError as e:
         context = ujson.dumps(e.errors(), indent=4)
         sanic_logger.warning(f"Validation error:\n{context}")
@@ -337,23 +334,17 @@ async def add_note(request: Request) -> HTTPResponse:
         for error in e.errors():
             jinja.flash(request, f"{error['loc'][0]}: {error['msg']}", 'error')
 
-        request.ctx.session.update(
-            **key_val
-        )
+        request.ctx.session.update(**form_items)
         return response.redirect('/notes/add')
 
     try:
         tracker.add_note(**note.dict())
-    except trc.DatabaseError as e:
-        jinja.flash(request, str(e), 'error')
     except ValueError as e:
         jinja.flash(request, str(e), 'error')
     else:
         jinja.flash(request, 'Note added', 'success')
     finally:
-        request.ctx.session.update(
-            **note.dict(exclude={'content'})
-        )
+        request.ctx.session.update(**note.dict(exclude={'content'}))
         return response.redirect('/notes/add')
 
 
