@@ -49,6 +49,12 @@ class Note(BaseModel):
 
         return material_id
 
+    @validator('page')
+    def validate_page(cls,
+                      page: int) -> int:
+        # TODO: need an access to the material_id
+        return page
+
     @validator('content')
     def validate_content(cls,
                          content: str) -> str:
