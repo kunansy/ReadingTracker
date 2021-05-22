@@ -13,6 +13,13 @@ def validate_string(string: str,
            f"{'.' * (not string.endswith(ends))}"
 
 
+def validate_material_id(material_id: int) -> int:
+    if not db.does_material_exist(material_id):
+        raise ValueError(f"Material {material_id=} not found")
+
+    return material_id
+
+
 class Material(BaseModel):
     class Config:
         extra = 'forbid'
@@ -52,10 +59,7 @@ class Note(BaseModel):
     @validator('material_id')
     def validate_material_id(cls,
                              material_id: int) -> int:
-        if not db.does_material_exist(material_id):
-            raise ValueError(f"Material {material_id=} not found")
-
-        return material_id
+        return validate_material_id(material_id)
 
     @validator('page')
     def validate_page(cls,
@@ -97,9 +101,7 @@ class LogRecord(BaseModel):
     @validator('material_id')
     def validate_material_id(cls,
                              material_id: int) -> int:
-        if not db.does_material_exist(material_id):
-            raise ValueError(f"Material {material_id=} doesn't exist")
-        return material_id
+        return validate_material_id(material_id)
 
     def __repr__(self) -> str:
         data = ', '.join(
