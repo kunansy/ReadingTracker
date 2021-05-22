@@ -16,40 +16,14 @@ from sqlalchemy.exc import NoResultFound
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
+from src import exceptions as ex
+
 
 env = Env()
 DATE_FORMAT = '%d-%m-%Y'
 
 Base = declarative_base()
 logger = logging.getLogger(env('LOGGER_NAME'))
-
-
-class BaseDBError(Exception):
-    pass
-
-
-class WrongDate(BaseDBError):
-    pass
-
-
-class MaterialEvenCompleted(BaseDBError):
-    pass
-
-
-class MaterialNotAssigned(BaseDBError):
-    pass
-
-
-class MaterialNotFound(BaseDBError):
-    pass
-
-
-class WrongRepeatResult(BaseDBError):
-    pass
-
-
-class CardNotFound(BaseDBError):
-    pass
 
 
 class Material(Base):
@@ -329,9 +303,9 @@ def session(**kwargs) -> ContextManager[Session]:
 
         new_session.rollback()
 
-        if isinstance(e, BaseDBError):
+        if isinstance(e, ex.DatabaseError):
             raise e
-        raise BaseDBError(e)
+        raise ex.DatabaseError(e)
     finally:
         new_session.close()
         logger.debug("Session closed")
@@ -557,7 +531,7 @@ def get_material_status(*,
         except NoResultFound as e:
             msg = f"Material {material_id=} not found"
             logger.error(f"{msg}\n{e}")
-            raise MaterialNotFound(msg)
+            raise ex.MaterialNotFound(msg)
 
 
 def add_material(*,
@@ -597,11 +571,11 @@ def start_material(*,
     logger.info(f"Starting material {material_id=} at {start_date=}")
 
     if start_date > today():
-        raise WrongDate("Start date must be less than today,"
-                        "but %s found", start_date)
+        raise ex.WrongDate("Start date must be less than today,"
+                           "but %s found", start_date)
 
     if not does_material_exist(material_id):
-        raise MaterialNotFound(f"Material {material_id=}")
+        raise ex.MaterialNotFound(f"Material {material_id=}")
 
     with session() as ses:
         started_material = Status(
@@ -638,10 +612,10 @@ def complete_material(*,
             raise MaterialNotAssigned(f"Material {material_id=} not assigned")
 
         if status.end is not None:
-            raise MaterialEvenCompleted(f"Material {material_id=}")
+            raise ex.MaterialEvenCompleted(f"Material {material_id=}")
         if status.begin > completion_date:
-            raise WrongDate("Begin cannot be more than end, but"
-                            f"{status.begin=} > {completion_date=}")
+            raise ex.WrongDate("Begin cannot be more than end, but"
+                               f"{status.begin=} > {completion_date=}")
 
         status.end = completion_date
         logger.info(f"Material {material_id=} "
@@ -813,7 +787,7 @@ def complete_card(*,
             .all()
 
         if not res:
-            raise CardNotFound(f"Card {card_id=} not found")
+            raise ex.CardNotFound(f"Card {card_id=} not found")
 
         card_, recall = res[0]
         card = CardNoteRecall(card=card_, recall=recall)
@@ -824,7 +798,7 @@ def complete_card(*,
             recall.last_repeat_date = today()
             recall.next_repeat_date = today() + timedelta(days=days)
         else:
-            raise WrongRepeatResult
+            raise ex.WrongRepeatResult
 
         recall.mult *= RepeatResults[result].value
 
