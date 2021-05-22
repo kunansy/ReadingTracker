@@ -303,7 +303,7 @@ def session(**kwargs) -> ContextManager[Session]:
 
         new_session.rollback()
 
-        if isinstance(e, ex.DatabaseError):
+        if isinstance(e, ex.BaseTrackerError):
             raise e
         raise ex.DatabaseError(e)
     finally:
