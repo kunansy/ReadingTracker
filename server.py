@@ -367,20 +367,10 @@ async def recall(request: Request,
         jinja.flash(request, "Wrong form structure", 'error')
         return response.redirect('/recall')
 
-    try:
-        cards.complete_card(result)
-    except trc.CardNotFound as e:
-        raise exceptions.NotFound(e)
-    except trc.DatabaseError as e:
-        jinja.flash(
-            request,
-            f"Error completing card {card_id=}: {e}",
-            'error'
-        )
-    else:
-        jinja.flash(request, f"Card {card_id=} marked as {result}", result)
-    finally:
-        return response.redirect('/recall')
+    cards.complete_card(result)
+    jinja.flash(request, f"Card {card_id=} marked as {result}", result)
+
+    return response.redirect('/recall')
 
 
 @app.get('/recall/add')
