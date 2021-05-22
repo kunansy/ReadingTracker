@@ -183,16 +183,10 @@ async def add_material(request: Request) -> HTTPResponse:
 @app.post('/materials/start/<material_id:int>')
 async def start_material(request: Request,
                          material_id: int) -> HTTPResponse:
-    try:
-        tracker.start_material(material_id)
-    except trc.MaterialNotFound as e:
-        raise exceptions.NotFound(e)
-    except trc.DatabaseError as e:
-        jinja.flash(request, str(e), 'error')
-    else:
-        jinja.flash(request, f"Material {material_id=} started", 'success')
-    finally:
-        return response.redirect('/materials/queue')
+    tracker.start_material(material_id)
+    jinja.flash(request, f"Material {material_id=} started", 'success')
+
+    return response.redirect('/materials/queue')
 
 
 @app.post('/materials/complete/<material_id:int>')
