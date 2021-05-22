@@ -13,6 +13,7 @@ from sanic_session import Session
 from src import logger as logger_
 from src import tracker as trc
 from src import validators
+from src import exceptions as ex
 
 
 env = Env()
@@ -156,7 +157,7 @@ async def add_log_record(request: Request) -> HTTPResponse:
 
     try:
         log._set_log(**record.dict())
-    except trc.WrongLogParam as e:
+    except ex.WrongLogParam as e:
         jinja.flash(request, str(e), 'error')
     else:
         jinja.flash(request, 'Record added', 'success')
@@ -357,8 +358,7 @@ def validation_error_handler(request: Request,
 
 
 @app.exception(exceptions.NotFound,
-               trc.MaterialNotFound,
-               trc.CardNotFound)
+               ex.BaseNotFoundError)
 def not_found(request: Request,
               exception: Exception) -> dict[str, Any]:
     args = '; '.join(
@@ -370,7 +370,7 @@ def not_found(request: Request,
     return jinja.render('errors/404.html', request, what=args, status=404)
 
 
-@app.exception(Exception)
+@app.exception(ex.BaseTrackerError)
 @jinja.template('errors/500.html')
 def error_handler(request: Request,
                   exception: Exception) -> dict[str, Any]:
