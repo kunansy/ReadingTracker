@@ -127,6 +127,13 @@ class Card(BaseModel):
         return repr(self)
 
 
+async def get_form_items(request: Request) -> dict[str, Any]:
+    return {
+        key: val[0]
+        for key, val in request.form.items()
+    }
+
+
 @app.get('/materials/queue')
 @jinja.template('queue.html')
 async def get_queue(request: Request) -> dict[str, Any]:
