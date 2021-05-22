@@ -241,13 +241,10 @@ async def add_log_record(request: Request) -> dict[str, Any]:
 
 @app.post('/reading_log/add')
 async def add_log_record(request: Request) -> HTTPResponse:
-    key_val = {
-        key: val[0]
-        for key, val in request.form.items()
-    }
+    form_items = await get_form_items(request)
 
     try:
-        record = LogRecord(**key_val)
+        record = LogRecord(**form_items)
     except ValidationError as e:
         context = ujson.dumps(e.errors(), indent=4)
         sanic_logger.warning(f"Validation error:\n{context}")
@@ -260,8 +257,6 @@ async def add_log_record(request: Request) -> HTTPResponse:
     try:
         log._set_log(**record.dict())
     except trc.WrongLogParam as e:
-        jinja.flash(request, str(e), 'error')
-    except trc.DatabaseError as e:
         jinja.flash(request, str(e), 'error')
     else:
         jinja.flash(request, 'Record added', 'success')
