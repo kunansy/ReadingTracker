@@ -27,7 +27,7 @@ class Material(BaseModel):
     def validate_title(cls,
                        item: str) -> str:
         if '"' in item or '«' in item or '»' in item:
-            raise ValueError("The brackets is unexpected here")
+            raise ValueError("The brackets are unexpected here")
         return item
 
     def __str__(self) -> str:
