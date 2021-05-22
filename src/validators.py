@@ -5,6 +5,14 @@ from pydantic import BaseModel, constr, conint, validator
 from src import db_api as db
 
 
+def validate_string(string: str,
+                    ends: tuple[str]) -> str:
+    string = ' '.join(string.replace('\n', '<br/>').split())
+
+    return f"{string[0].upper()}{string[1:]}" \
+           f"{'.' * (not string.endswith(ends))}"
+
+
 class Material(BaseModel):
     class Config:
         extra = 'forbid'
@@ -58,9 +66,7 @@ class Note(BaseModel):
     @validator('content')
     def validate_content(cls,
                          content: str) -> str:
-        content = ' '.join(content.replace('\n', '<br/>').split())
-        return f"{content[0].upper()}{content[1:]}" \
-               f"{'.' * (not content.endswith('.'))}"
+        return validate_string(content, ('.',))
 
     def __repr__(self) -> str:
         fields = ', '.join(
