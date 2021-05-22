@@ -312,20 +312,12 @@ async def get_notes(request: Request) -> dict[str, Any]:
 @app.get('/notes/add')
 @jinja.template('add_note.html')
 async def add_note(request: Request) -> dict[str, Any]:
-    try:
-        titles = tracker.get_material_titles(
-            reading=True, completed=True
-        )
-    except trc.DatabaseError as e:
-        jinja.flash(request, f'Cannot get material titles: {e}', 'error')
-        titles = {}
-
     return {
         'material_id': request.ctx.session.get('material_id', ''),
         'content': request.ctx.session.get('content', ''),
         'page': request.ctx.session.get('page', ''),
         'chapter': request.ctx.session.get('chapter', ''),
-        'titles': titles
+        'titles': tracker.get_material_titles(reading=True, completed=True)
     }
 
 
