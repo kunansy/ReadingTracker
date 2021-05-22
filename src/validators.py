@@ -123,6 +123,30 @@ class Card(BaseModel):
     question: constr(strip_whitespace=True, min_length=1)
     answer: Optional[constr(strip_whitespace=True)]
 
+    @validator('material_id')
+    def validate_material_id(cls,
+                             material_id: int) -> int:
+        return validate_material_id(material_id)
+
+    @validator('note_id')
+    def validate_note_id(cls,
+                         note_id: int) -> int:
+        if not db.does_note_exist(note_id):
+            raise ValueError(f"Note {note_id=} not found")
+
+        return note_id
+
+    @validator('question')
+    def validate_question(cls,
+                          question: str) -> str:
+        return validate_string(question, ('.', '?'))
+
+    @validator('answer')
+    def validate_answer(cls,
+                        answer: Optional[str]) -> Optional[str]:
+        if answer:
+            return validate_string(answer, ('.',))
+
     def __repr__(self) -> str:
         data = ', '.join(
             f"{key}={value}"
