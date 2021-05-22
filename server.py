@@ -456,13 +456,17 @@ def validation_error_handler(request: Request,
     return response.json(exception.errors(), status=400, indent=4)
 
 
-@app.exception(exceptions.NotFound)
+@app.exception(exceptions.NotFound,
+               trc.MaterialNotFound,
+               trc.CardNotFound)
 def not_found(request: Request,
-              exception: exceptions.NotFound) -> dict[str, Any]:
+              exception: Exception) -> dict[str, Any]:
     args = '; '.join(
         arg
         for arg in exception.args
     )
+
+    sanic_logger.error(f"Not found error: {args}")
     return jinja.render('errors/404.html', request, what=args, status=404)
 
 
