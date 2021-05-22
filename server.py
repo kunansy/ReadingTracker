@@ -377,12 +377,10 @@ async def recall(request: Request,
 @jinja.template('add_card.html')
 async def add_card(request: Request) -> dict[str, Any]:
     material_id = request.args.get('material_id')
-    notes_with_cards = cards.notes_with_cards(material_id)
 
-    all_notes = tracker.get_notes()
     notes = {
         note.id: note
-        for note in all_notes
+        for note in tracker.get_notes()
         if material_id is None or note.material_id == int(material_id)
     }
 
@@ -394,7 +392,7 @@ async def add_card(request: Request) -> dict[str, Any]:
         'chapter': request.ctx.session.get('chapter', ''),
         'titles': tracker.get_material_titles(reading=True, completed=True),
         'notes': notes,
-        'notes_with_cards': notes_with_cards
+        'notes_with_cards': cards.notes_with_cards(material_id)
     }
 
 
