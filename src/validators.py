@@ -2,6 +2,7 @@ import datetime
 from typing import Optional
 
 from pydantic import BaseModel, constr, conint, validator
+
 from src import db_api as db
 
 
@@ -13,7 +14,7 @@ def validate_string(string: str,
            f"{'.' * (not string.endswith(ends))}"
 
 
-def validate_material_id(material_id: int) -> int:
+def validate_material_exists(material_id: int) -> int:
     if not db.does_material_exist(material_id):
         raise ValueError(f"Material {material_id=} not found")
 
@@ -59,7 +60,7 @@ class Note(BaseModel):
     @validator('material_id')
     def validate_material_id(cls,
                              material_id: int) -> int:
-        return validate_material_id(material_id)
+        return validate_material_exists(material_id)
 
     @validator('page')
     def validate_page(cls,
@@ -126,7 +127,7 @@ class Card(BaseModel):
     @validator('material_id')
     def validate_material_id(cls,
                              material_id: int) -> int:
-        return validate_material_id(material_id)
+        return validate_material_exists(material_id)
 
     @validator('note_id')
     def validate_note_id(cls,
