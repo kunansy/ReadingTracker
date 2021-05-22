@@ -6,7 +6,7 @@ from src import db_api as db
 
 
 def validate_string(string: str,
-                    ends: tuple[str]) -> str:
+                    ends: tuple[str, ...]) -> str:
     string = ' '.join(string.replace('\n', '<br/>').split())
 
     return f"{string[0].upper()}{string[1:]}" \
