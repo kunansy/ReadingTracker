@@ -351,27 +351,9 @@ async def add_note(request: Request) -> HTTPResponse:
 @app.get('/recall')
 @jinja.template('recall.html')
 async def recall(request: Request) -> dict[str, Any] or HTTPResponse:
-    try:
-        card = cards.card
-    except trc.CardsLimitExceeded:
-        jinja.flash(request, 'All cards for today repeated', 'success')
-        card = None
-
-    if card is None:
-        return {
-            'card': None
-        }
-
-    try:
-        titles = tracker.get_material_titles(
-            reading=True, completed=True)
-    except trc.DatabaseError as e:
-        jinja.flash(request, f"Cannot get material titles: {e}", 'error')
-        titles = {}
-
     return {
-        'card': card,
-        'titles': titles,
+        'card': cards.card,
+        'titles': tracker.get_material_titles(reading=True, completed=True),
         'remains': cards.cards_remain()
     }
 
