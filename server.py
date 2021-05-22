@@ -451,8 +451,8 @@ async def home(request: Request) -> HTTPResponse:
 def validation_error_handler(request: Request,
                              exception: ValidationError) -> HTTPResponse:
     context = ujson.dumps(exception.errors(), indent=4)
-    sanic_logger.error(f"Validation error was not handled:\n{context}")
 
+    sanic_logger.error(f"Validation error was not handled:\n{context}")
     return response.json(exception.errors(), status=400, indent=4)
 
 
@@ -484,6 +484,7 @@ def error_handler(request: Request,
             "json": ex_json
         }
     }
+
     sanic_logger.error(ujson.dumps(context, indent=4))
     return jinja.render('errors/500.html', request, **context, status=500)
 
