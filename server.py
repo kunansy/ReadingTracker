@@ -550,11 +550,8 @@ async def add_card(request: Request) -> HTTPResponse:
         context = ujson.dumps(e.errors(), indent=4)
         sanic_logger.warning(f"Validation error:\n{context}")
 
-        jinja.flash(
-            request,
-            f'Validation error: {e.raw_errors[0].exc}',
-            'error'
-        )
+        for error in e.errors():
+            jinja.flash(request, f"{error['loc'][0]}: {error['msg']}", 'error')
 
         request.ctx.session.update(
             **key_val
