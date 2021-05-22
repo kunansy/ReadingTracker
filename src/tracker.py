@@ -407,15 +407,12 @@ class Log:
             raise ReadingLogIsEmpty(msg)
 
     @property
-    def reading_material(self) -> int:
-        """ Get id of the reading material.
+    def reading_material(self) -> Optional[int]:
+        """ Get id of the reading material. """
 
-        :exception ReadingLogIsEmpty:
-        """
         if not self.log:
-            msg = "Reading log is empty, no materials reading"
-            logger.warning(msg)
-            raise ReadingLogIsEmpty(msg)
+            logger.warning("Reading log is empty, no materials reading")
+            return
 
         last = 0
         for _, info in self.data():
