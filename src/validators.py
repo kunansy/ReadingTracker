@@ -14,13 +14,6 @@ def validate_string(string: str,
            f"{'.' * (not string.endswith(ends))}"
 
 
-def validate_material_exists(material_id: int) -> int:
-    if not db.does_material_exist(material_id):
-        raise ValueError(f"Material {material_id=} not found")
-
-    return material_id
-
-
 class Material(BaseModel):
     class Config:
         extra = 'forbid'
