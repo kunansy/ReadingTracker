@@ -14,6 +14,13 @@ class Material(BaseModel):
     pages: conint(gt=0)
     tags: constr(strip_whitespace=True)
 
+    @validator('title', 'authors', 'tags')
+    def validate_title(cls,
+                       item: str) -> str:
+        if '"' in item or '«' in item or '»' in item:
+            raise ValueError("The brackets is unexpected here")
+        return item
+
     def __repr__(self) -> str:
         fields = ', '.join(
             f"{key}='{val}'"
