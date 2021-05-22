@@ -421,7 +421,21 @@ class Log:
         for _, info in self.data():
             last = info.material_id
 
-        return last
+        if last != 0:
+            return last
+
+        # means the new material started 
+        #  and there's no log records for it
+        try:
+            reading_materials = db.get_reading_materials()
+        except db.BaseDBError as e:
+            logger.error(str(e))
+            return 0
+        if (reading_material := safe_list_get(reading_materials, -1, 0)) == 0:
+            return 0
+
+        return reading_material.material.material_id
+
 
     def _get_log(self,
                  *,
