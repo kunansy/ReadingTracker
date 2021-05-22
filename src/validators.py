@@ -37,13 +37,6 @@ class Material(BaseModel):
             raise ValueError("The brackets is unexpected here")
         return item
 
-    def __repr__(self) -> str:
-        fields = ', '.join(
-            f"{key}='{val}'"
-            for key, val in self.dict().items()
-        )
-        return f"{self.__class__.__name__}({fields})"
-
     def __str__(self) -> str:
         return repr(self)
 
@@ -76,13 +69,6 @@ class Note(BaseModel):
                          content: str) -> str:
         return validate_string(content, ('.',))
 
-    def __repr__(self) -> str:
-        fields = ', '.join(
-            f"{key}='{val}'"
-            for key, val in self.dict().items()
-        )
-        return f"{self.__class__.__name__}({fields})"
-
     def __str__(self) -> str:
         return repr(self)
 
@@ -109,13 +95,6 @@ class LogRecord(BaseModel):
             raise ValueError(f"Material {material_id=} is not reading")
 
         return material_id
-
-    def __repr__(self) -> str:
-        data = ', '.join(
-            f"{key}={value}"
-            for key, value in self.dict().items()
-        )
-        return f"{self.__class__.__name__}({data})"
 
     def __str__(self) -> str:
         return repr(self)
@@ -148,13 +127,6 @@ class Card(BaseModel):
                         answer: Optional[str]) -> Optional[str]:
         if answer:
             return validate_string(answer, ('.',))
-
-    def __repr__(self) -> str:
-        data = ', '.join(
-            f"{key}={value}"
-            for key, value in self.dict().items()
-        )
-        return f"{self.__class__.__name__}({data})"
 
     def __str__(self) -> str:
         return repr(self)
