@@ -362,7 +362,7 @@ def validation_error_handler(request: Request,
 async def not_found(request: Request,
                     exception: Exception) -> dict[str, Any]:
     args = '; '.join(
-        arg
+        str(arg)
         for arg in exception.args
     )
 
