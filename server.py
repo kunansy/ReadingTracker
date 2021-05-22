@@ -137,14 +137,8 @@ async def get_form_items(request: Request) -> dict[str, Any]:
 @app.get('/materials/queue')
 @jinja.template('queue.html')
 async def get_queue(request: Request) -> dict[str, Any]:
-    try:
-        materials = tracker.estimate()
-    except trc.DatabaseError as e:
-        jinja.flash(request, f"Error getting queue: {e}", 'error')
-        materials = []
-
     return {
-        'estimates': materials,
+        'estimates': tracker.estimate(),
         'DATE_FORMAT': trc.DATE_FORMAT
     }
 
