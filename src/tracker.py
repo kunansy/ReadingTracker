@@ -1036,7 +1036,8 @@ class Tracker:
                                 material_id: int,
                                 *,
                                 material: Optional[db.Material] = None,
-                                status: Optional[db.Status] = None) -> MaterialStatistics:
+                                status: Optional[db.Status] = None
+                                ) -> MaterialStatistics:
         """ Calculate statistics for reading or completed material """
         logger.debug(f"Calculating material statistics for {material_id=}")
 
@@ -1081,7 +1082,8 @@ class Tracker:
         )
     
     def statistics(self, 
-                   materials: list[db.MaterialStatus]) -> list[MaterialStatistics]:
+                   materials: list[db.MaterialStatus]
+                   ) -> list[MaterialStatistics]:
         return [
             self.get_material_statistics(
                 ms.material.material_id, material=ms.material, status=ms.status
@@ -1151,7 +1153,8 @@ class Tracker:
 
     def complete_material(self,
                           material_id: Optional[int] = None,
-                          completion_date: Optional[datetime.date] = None) -> None:
+                          completion_date: Optional[datetime.date] = None
+                          ) -> None:
         """
         Complete a material, set 'end' in its status.
 
