@@ -398,13 +398,10 @@ async def add_card(request: Request) -> dict[str, Any]:
 
 @app.post('/recall/add')
 async def add_card(request: Request) -> HTTPResponse:
-    key_val = {
-        key: val[0]
-        for key, val in request.form.items()
-    }
+    form_items = await get_form_items(request)
 
     try:
-        card = Card(**key_val)
+        card = Card(**form_items)
     except ValidationError as e:
         context = ujson.dumps(e.errors(), indent=4)
         sanic_logger.warning(f"Validation error:\n{context}")
@@ -412,36 +409,24 @@ async def add_card(request: Request) -> HTTPResponse:
         for error in e.errors():
             jinja.flash(request, f"{error['loc'][0]}: {error['msg']}", 'error')
 
-        request.ctx.session.update(
-            **key_val
-        )
+        request.ctx.session.update(**form_items)
 
-        if material_id := key_val.get('material_id', ''):
+        if material_id := form_items.get('material_id', ''):
             material_id = f"?{material_id=}"
-        if note_id := key_val.get('note_id', ''):
+        if note_id := form_items.get('note_id', ''):
             note_id = f"#note-{note_id}"
 
         url = f"/recall/add{material_id}{note_id}"
         return response.redirect(url)
 
-    try:
-        cards.add_card(
-            **card.dict()
-        )
-    except trc.DatabaseError as e:
-        jinja.flash(request, f"Error adding card: {e}", 'error')
+    cards.add_card(**card.dict())
+    jinja.flash(request, "Card added", 'success')
 
-        request.ctx.session.update(
-            **card.dict()
-        )
-    else:
-        jinja.flash(request, "Card added", 'success')
+    request.ctx.session.pop('question')
+    request.ctx.session.pop('note_id')
 
-        request.ctx.session.pop('question')
-        request.ctx.session.pop('note_id')
-    finally:
-        url = f"/recall/add?material_id={card.material_id}#note-{card.note_id}"
-        return response.redirect(url)
+    url = f"/recall/add?material_id={card.material_id}#note-{card.note_id}"
+    return response.redirect(url)
 
 
 @app.get('/recall/list')
