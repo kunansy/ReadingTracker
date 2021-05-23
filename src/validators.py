@@ -1,9 +1,16 @@
 import datetime
 from typing import Optional
 
-from pydantic import BaseModel, constr, conint, validator
+from pydantic import constr, conint, validator
+from pydantic import BaseModel as PydanticBaseModel
 
 from src import db_api as db
+
+
+class BaseModel(PydanticBaseModel):
+    class Config:
+        extra = 'forbid'
+        allow_mutation = False
 
 
 def validate_string(string: str,
@@ -15,9 +22,6 @@ def validate_string(string: str,
 
 
 class Material(BaseModel):
-    class Config:
-        extra = 'forbid'
-
     title: constr(strip_whitespace=True, min_length=1)
     authors: constr(strip_whitespace=True, min_length=1)
     pages: conint(gt=0)
@@ -35,9 +39,6 @@ class Material(BaseModel):
 
 
 class Note(BaseModel):
-    class Config:
-        extra = 'forbid'
-
     material_id: conint(gt=0)
     content: constr(strip_whitespace=True, min_length=1)
     chapter: conint(ge=0)
@@ -67,9 +68,6 @@ class Note(BaseModel):
 
 
 class LogRecord(BaseModel):
-    class Config:
-        extra = 'forbid'
-
     material_id: conint(gt=0)
     date: datetime.date
     count: conint(gt=0)
@@ -94,9 +92,6 @@ class LogRecord(BaseModel):
 
 
 class Card(BaseModel):
-    class Config:
-        extra = 'forbid'
-
     material_id: conint(gt=0)
     note_id: conint(gt=0)
     question: constr(strip_whitespace=True, min_length=1)
