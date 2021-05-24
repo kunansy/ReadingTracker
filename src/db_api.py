@@ -787,7 +787,7 @@ def complete_card(*,
         if card is None:
             raise ex.CardNotFound(f"Card {card_id=} not found")
 
-        card, recall = card[0]
+        card, recall = card
         card = CardNoteRecall(card=card, recall=recall)
 
         if days := card[result]:
