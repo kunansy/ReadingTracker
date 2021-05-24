@@ -406,7 +406,7 @@ def does_material_exist(material_id: int, /) -> bool:
     logger.info(f"Whether {material_id=} exists")
 
     with session() as ses:
-        return ses.query(Material).get(material_id) is not None
+        return ses.get(Material, material_id) is not None
 
 
 def does_note_exist(note_id: int, /) -> bool:
