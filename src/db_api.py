@@ -521,14 +521,15 @@ def get_material_status(*,
     logger.info(f"Getting status for material {material_id=}")
 
     with session() as ses:
-        query = ses.query(Status).filter(
-            Status.material_id == material_id)
-        try:
-            return query.one()
-        except sa_ex.NoResultFound as e:
-            msg = f"Material {material_id=} not found"
-            logger.error(f"{msg}\n{e}")
+        material = ses.query(Status) \
+            .filter(Status.material_id == material_id) \
+            .first()
+
+        if material is None:
+            msg = f"Status for material {material_id=} not found"
+            logger.error(msg)
             raise ex.MaterialNotFound(msg)
+        return material
 
 
 def add_material(*,
