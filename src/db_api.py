@@ -447,15 +447,12 @@ def get_free_materials() -> list[Material]:
     logger.info("Getting free materials")
 
     with session() as ses:
-        res = ses.query(Status, Material) \
-            .join(Status, isouter=True) \
+        return ses.query(Material) \
+            .join(Status,
+                  Material.material_id == Status.material_id,
+                  isouter=True) \
+            .where(Status.material_id == None) \
             .all()
-
-    return [
-        material
-        for status, material in res
-        if status is None
-    ]
 
 
 def get_reading_materials() -> MATERIAL_STATUS:
