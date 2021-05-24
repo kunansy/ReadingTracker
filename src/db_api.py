@@ -12,7 +12,6 @@ from sqlalchemy import (
     Column, ForeignKey, Integer,
     String, Date, create_engine, Text, Float, func
 )
-import sqlalchemy.exc as sa_ex
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
