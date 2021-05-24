@@ -780,16 +780,16 @@ def complete_card(*,
     logger.info(f"Completing card {card_id=} as {result=}")
 
     with session() as ses:
-        res = ses.query(Card, Recall)\
+        card = ses.query(Card, Recall)\
             .join(Card, Card.card_id == Recall.card_id)\
             .filter(Card.card_id == card_id)\
-            .all()
+            .first()
 
-        if not res:
+        if card is None:
             raise ex.CardNotFound(f"Card {card_id=} not found")
 
-        card_, recall = res[0]
-        card = CardNoteRecall(card=card_, recall=recall)
+        card, recall = card[0]
+        card = CardNoteRecall(card=card, recall=recall)
 
         if days := card[result]:
             assert days > 0, "Wrong days count"
