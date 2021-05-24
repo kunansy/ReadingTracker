@@ -413,7 +413,7 @@ def does_note_exist(note_id: int, /) -> bool:
     logger.info(f"Whether {note_id=} exists")
 
     with session() as ses:
-        return ses.query(Note).get(note_id) is not None
+        return ses.get(Note, note_id) is not None
 
 
 def is_material_reading(material_id: int, /) -> bool:
