@@ -6,7 +6,7 @@ from tracker.materials import db, schemas
 
 
 router = APIRouter(
-    prefix="materials/",
+    prefix="/materials",
     tags=["materials"]
 )
 
