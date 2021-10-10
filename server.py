@@ -33,54 +33,6 @@ async def get_form_items(request: Request) -> dict[str, Any]:
     }
 
 
-@app.get('/reading_log')
-@jinja.template('reading_log.html')
-async def get_reading_log(request: Request) -> dict[str, Any]:
-    return {
-        'log': log.log,
-        'DATE_FORMAT': settings.DATE_FORMAT,
-        'EXPECTED_COUNT': settings.PAGES_PER_DAY
-    }
-
-
-@app.get('/reading_log/add')
-@jinja.template('add_log_record.html')
-async def add_log_record(request: Request) -> dict[str, Any]:
-    titles = tracker.get_material_titles(reading=True)
-    reading_material_id = log.reading_material
-
-    return {
-        'material_id': reading_material_id,
-        'titles': titles,
-        'date': trc.db.today()
-    }
-
-
-@app.post('/reading_log/add')
-async def add_log_record(request: Request) -> HTTPResponse:
-    form_items = await get_form_items(request)
-
-    try:
-        record = validators.LogRecord(**form_items)
-    except ValidationError as e:
-        context = ujson.dumps(e.errors(), indent=4)
-        sanic_logger.warning(f"Validation error:\n{context}")
-
-        for error in e.errors():
-            jinja.flash(request, f"{error['loc'][0]}: {error['msg']}", 'error')
-
-        return response.redirect('/reading_log/add')
-
-    try:
-        log._set_log(**record.dict())
-    except ex.WrongLogParam as e:
-        jinja.flash(request, str(e), 'error')
-    else:
-        jinja.flash(request, 'Record added', 'success')
-    finally:
-        return response.redirect('/reading_log/add')
-
-
 @app.get('/notes')
 @jinja.template('notes.html')
 async def get_notes(request: Request) -> dict[str, Any]:

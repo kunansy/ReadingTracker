@@ -7,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from tracker.common import database, settings
 from tracker.common.log import logger
 from tracker.materials.routes import router as materials_router
+from tracker.reading_log.routes import router as reading_log_router
 
 
 # TODO: make a database backup on
@@ -19,6 +20,7 @@ app = FastAPI(
 )
 
 app.include_router(materials_router)
+app.include_router(reading_log_router)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
