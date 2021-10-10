@@ -11,7 +11,7 @@ router = APIRouter(
 )
 
 
-@router.get('/materials/queue', response_class=HTMLResponse)
+@router.get('/queue', response_class=HTMLResponse)
 async def get_queue(request: Request):
     return {
         'request': request,
@@ -20,7 +20,7 @@ async def get_queue(request: Request):
     }
 
 
-@router.get('/materials/add', response_class=HTMLResponse)
+@router.get('/add', response_class=HTMLResponse)
 async def add_material_view(request: Request):
     """ Add a material to the queue """
     return {
@@ -32,7 +32,7 @@ async def add_material_view(request: Request):
     }
 
 
-@router.post('/materials/add', response_class=HTMLResponse)
+@router.post('/add', response_class=HTMLResponse)
 async def add_material(request: Request,
                        material: schemas.Material):
     """ Add a material to the queue """
@@ -58,7 +58,7 @@ async def add_material(request: Request,
     return response.redirect('/materials/add')
 
 
-@router.post('/materials/start/{material_id}')
+@router.post('/start/{material_id}')
 async def start_material(material_id: int):
     tracker.start_material(material_id)
     jinja.flash(request, f"Material {material_id=} started", 'success')
@@ -66,7 +66,7 @@ async def start_material(material_id: int):
     return response.redirect('/materials/queue')
 
 
-@router.post('/materials/complete/{material_id}')
+@router.post('/complete/{material_id}')
 async def complete_material(material_id: int):
     tracker.complete_material(material_id)
     jinja.flash(request, f"Material {material_id=} completed", 'success')
@@ -74,7 +74,7 @@ async def complete_material(material_id: int):
     return response.redirect('/materials/reading')
 
 
-@router.get('/materials/reading', response_class=HTMLResponse)
+@router.get('/reading', response_class=HTMLResponse)
 async def get_reading_materials(request: Request):
     return {
         'request': request,
@@ -83,7 +83,7 @@ async def get_reading_materials(request: Request):
     }
 
 
-@router.get('/materials/completed', response_class=HTMLResponse)
+@router.get('/completed', response_class=HTMLResponse)
 async def get_completed_materials(request: Request):
     return {
         'request': request,
