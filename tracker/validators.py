@@ -21,23 +21,6 @@ def validate_string(string: str,
            f"{'.' * (not string.endswith(ends))}"
 
 
-class Material(BaseModel):
-    title: constr(strip_whitespace=True, min_length=1)
-    authors: constr(strip_whitespace=True, min_length=1)
-    pages: conint(gt=0)
-    tags: constr(strip_whitespace=True)
-
-    @validator('title', 'authors', 'tags')
-    def validate_title(cls,
-                       item: str) -> str:
-        if '"' in item or '«' in item or '»' in item:
-            raise ValueError("The brackets are unexpected here")
-        return item
-
-    def __str__(self) -> str:
-        return repr(self)
-
-
 class Note(BaseModel):
     material_id: conint(gt=0)
     content: constr(strip_whitespace=True, min_length=1)
