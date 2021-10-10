@@ -1,5 +1,4 @@
 import os
-from pathlib import Path
 
 from environs import Env
 
@@ -8,7 +7,6 @@ env = Env()
 env.read_env()
 
 DATE_FORMAT = '%d-%m-%Y'
-DATA_FOLDER = Path('data')
 DSN_TEMPLATE = "postgresql+asyncpg://{username}:{password}" \
                "@{host}:{port}/{db_name}"
 
@@ -29,7 +27,7 @@ DB_URI = DSN_TEMPLATE.format(
 
 with env.prefixed("LOGGER_"):
     LOGGER_NAME = env("NAME")
-    LOGGER_LEVEL = env.log_level("LEVE")
+    LOGGER_LEVEL = env.log_level("LEVEL")
 
 with env.prefixed("PER_DAY_"):
     PAGES_PER_DAY = env.int('PER_DAY_PAGES', 50)
