@@ -7,15 +7,20 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.9"
-ujson = "4.0.2"
-SQLAlchemy = "1.4.18"
+ujson = "~4.2.0"
+SQLAlchemy = "~1.4.25"
 sanic = "=21.3.4"
 sanic-jinja2 = "0.10.0"
 sanic-session = "0.8.0"
 pydantic = "1.8.2"
-environs = "9.3.2"
+environs = "~9.3.4"
+types-ujson = "^0.1.1"
+types-aiofiles = "^0.1.9"
 
 [tool.poetry.dev-dependencies]
+flake8 = "~3.9.2"
+mypy = "~0.910"
+tox = "~3.24.4"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
