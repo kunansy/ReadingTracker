@@ -10,24 +10,14 @@ from pathlib import Path
 from typing import Union, Optional, Iterator, Iterable, Any
 
 import ujson
-from environs import Env
 
 import src.db_api as db
-from src import exceptions as ex
+from src import exceptions as ex, settings
 
 
-env = Env()
-
-DATA_FOLDER = Path('data')
-PAGES_PER_DAY = env.int('READ_PER_DAY', 50)
 INDENT = 2
 
-DATE_FORMAT = '%d-%m-%Y'
-# max count of cards repeated per day
-_MAX_PER_DAY = env.int('CARDS_PER_DAY', 25)
-
-
-logger = logging.getLogger(env('LOGGER_NAME'))
+logger = logging.getLogger(settings.LOGGER_NAME)
 
 
 @dataclass(frozen=True)
@@ -258,7 +248,7 @@ def to_datetime(date) -> Optional[datetime.date]:
 
     if isinstance(date, str):
         try:
-            date = datetime.datetime.strptime(date, DATE_FORMAT)
+            date = datetime.datetime.strptime(date, settings.DATE_FORMAT)
             date = date.date()
         except ValueError as e:
             raise ValueError(f"Wrong str format\n{e}:{date}")
@@ -292,7 +282,7 @@ def time_span(span: Union[timedelta, int]) -> str:
 
 @db.cache(update=False)
 def fmt(date: datetime.date) -> str:
-    return date.strftime(DATE_FORMAT)
+    return date.strftime(settings.DATE_FORMAT)
 
 
 def safe_list_get(list_: list[Any],
@@ -307,7 +297,7 @@ def safe_list_get(list_: list[Any],
 class Log:
     __slots__ = '__log'
 
-    LOG_PATH = DATA_FOLDER / 'log.json'
+    LOG_PATH = settings.DATA_FOLDER / 'log.json'
 
     def __init__(self,
                  *,
@@ -1283,7 +1273,7 @@ class Cards:
 
     @property
     def card(self) -> Optional[db.CardNoteRecall]:
-        if self.repeated_today() >= _MAX_PER_DAY:
+        if self.repeated_today() >= settings._MAX_PER_DAY:
             return
 
         if self.__current_card is None:
@@ -1357,10 +1347,10 @@ class Cards:
             logger.error(str(e))
             return 0
 
-        if repeated_today >= _MAX_PER_DAY:
+        if repeated_today >= settings._MAX_PER_DAY:
             return 0
-        if repeated_today + remains_for_today >= _MAX_PER_DAY:
-            return _MAX_PER_DAY - repeated_today
+        if repeated_today + remains_for_today >= settings._MAX_PER_DAY:
+            return settings._MAX_PER_DAY - repeated_today
         return remains_for_today
 
     @staticmethod
@@ -1377,7 +1367,7 @@ class Cards:
             return db.repeated_today()
         except ex.DatabaseError as e:
             logger.error(str(e))
-            return _MAX_PER_DAY
+            return settings._MAX_PER_DAY
 
     @staticmethod
     def notes_with_cards(material_id: Optional[int] = None) -> set[int]:

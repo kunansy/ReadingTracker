@@ -7,7 +7,6 @@ from datetime import timedelta
 from enum import Enum
 from typing import ContextManager, Callable, Optional
 
-from environs import Env
 from sqlalchemy import (
     Column, ForeignKey, Integer,
     String, Date, create_engine, Text, Float, func
@@ -15,14 +14,11 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import Session
 
-from src import exceptions as ex
+from src import exceptions as ex, settings
 
-
-env = Env()
-DATE_FORMAT = '%d-%m-%Y'
 
 Base = declarative_base()
-logger = logging.getLogger(env('LOGGER_NAME'))
+logger = logging.getLogger(settings.LOGGER_NAME)
 
 
 class Material(Base):
@@ -61,9 +57,9 @@ class Status(Base):
 
     def __repr__(self) -> str:
         if begin := self.begin:
-            begin = begin.strftime(DATE_FORMAT)
+            begin = begin.strftime(settings.DATE_FORMAT)
         if end := self.end:
-            end = end.strftime(DATE_FORMAT)
+            end = end.strftime(settings.DATE_FORMAT)
 
         return f"{self.__class__.__name__}(" \
                f"id={self.status_id}, material_id={self.material_id}, " \
@@ -235,7 +231,7 @@ class RepeatResults(Enum):
 
 
 MATERIAL_STATUS = list[MaterialStatus]
-engine = create_engine(env('DB_URI'), encoding='utf-8')
+engine = create_engine(settings.DB_HOST, encoding='utf-8')
 Base.metadata.create_all(engine)
 
 

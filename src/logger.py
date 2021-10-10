@@ -2,10 +2,8 @@ import logging
 import sys
 from pathlib import Path
 
-from environs import Env
+from src import settings
 
-
-env = Env()
 
 MSG_FMT = "[{asctime},{msecs:3.0f}] [{name}] [{levelname:^8}] " \
           "[{module}:{funcName}] [{process}] {message}"
@@ -29,11 +27,8 @@ file_handler = logging.FileHandler(
 file_handler.setLevel(logging.WARNING)
 file_handler.setFormatter(formatter)
 
-logger_level = env('LOGGER_LEVEL', logging.DEBUG)
-logger_name = env('LOGGER_NAME')
-
-logger = logging.getLogger(logger_name)
-logger.setLevel(logger_level)
+logger = logging.getLogger(settings.LOGGER_NAME)
+logger.setLevel(settings.LOGGER_LEVEL)
 
 logger.addHandler(stream_handler)
 logger.addHandler(file_handler)
@@ -88,7 +83,7 @@ LOGGING_CONFIG = {
     },
     "loggers": {
         "sanic.root": {
-            "level": env('SANIC_LOGGER_LEVEL', logging.DEBUG),
+            "level": logging.DEBUG,
             "handlers": ["internalStream"]
         },
         "sanic.access": {

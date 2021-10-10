@@ -3,20 +3,18 @@ from collections import defaultdict
 from typing import Any
 
 import ujson
-from environs import Env
 from pydantic import ValidationError
 from sanic import Sanic, Request, response, HTTPResponse, exceptions
 from sanic.log import logger as sanic_logger
 from sanic_jinja2 import SanicJinja2
 from sanic_session import Session
 
-from src import logger as logger_
+from src import logger as logger_, settings
 from src import tracker as trc
 from src import validators
 from src import exceptions as ex
 
 
-env = Env()
 app = Sanic(__name__, log_config=logger_.LOGGING_CONFIG)
 app.static('/static', './static')
 
@@ -40,7 +38,7 @@ async def get_form_items(request: Request) -> dict[str, Any]:
 async def get_queue(request: Request) -> dict[str, Any]:
     return {
         'estimates': tracker.estimate(),
-        'DATE_FORMAT': trc.DATE_FORMAT
+        'DATE_FORMAT': settings.DATE_FORMAT
     }
 
 
@@ -104,7 +102,7 @@ async def complete_material(request: Request,
 async def get_reading_materials(request: Request) -> dict[str, Any]:
     return {
         'statistics': tracker.statistics(tracker.reading),
-        'DATE_FORMAT': trc.DATE_FORMAT
+        'DATE_FORMAT': settings.DATE_FORMAT
     }
 
 
@@ -113,7 +111,7 @@ async def get_reading_materials(request: Request) -> dict[str, Any]:
 async def get_completed_materials(request: Request) -> dict:
     return {
         'statistics': tracker.statistics(tracker.processed),
-        'DATE_FORMAT': trc.DATE_FORMAT
+        'DATE_FORMAT': settings.DATE_FORMAT
     }
 
 
@@ -122,8 +120,8 @@ async def get_completed_materials(request: Request) -> dict:
 async def get_reading_log(request: Request) -> dict[str, Any]:
     return {
         'log': log.log,
-        'DATE_FORMAT': trc.DATE_FORMAT,
-        'EXPECTED_COUNT': trc.PAGES_PER_DAY
+        'DATE_FORMAT': settings.DATE_FORMAT,
+        'EXPECTED_COUNT': settings.PAGES_PER_DAY
     }
 
 
@@ -206,7 +204,7 @@ async def get_notes(request: Request) -> dict[str, Any]:
         'notes': notes,
         'titles': titles,
         'chapters': chapters,
-        'DATE_FORMAT': trc.DATE_FORMAT
+        'DATE_FORMAT': settings.DATE_FORMAT
     }
 
 
@@ -336,7 +334,7 @@ async def cards_list(request: Request) -> dict[str, Any]:
     return {
         'cards': cards.list(),
         'repeated_today': cards.repeated_today(),
-        'DATE_FORMAT': trc.DATE_FORMAT,
+        'DATE_FORMAT': settings.DATE_FORMAT,
         'titles': tracker.get_material_titles(completed=True, reading=True),
         'total': len(cards),
         'remains': cards.remains_for_today()
@@ -398,7 +396,7 @@ async def error_handler(request: Request,
 if __name__ == "__main__":
     app.run(
         port=8080,
-        debug=env.bool('DEBUG', False),
-        workers=env.int('WORKERS', 1),
-        access_log=env.bool('SANIC_ACCESS', False)
+        debug=True,
+        workers=1,
+        access_log=False
     )
