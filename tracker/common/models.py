@@ -49,6 +49,15 @@ Material = Table(
     Column('tags', Unicode(256), nullable=True)
 )
 
+ReadingLog = Table(
+    'reading_log',
+    metadata,
+
+    PrimaryKey('log_id'),
+    Column('material_id', ForeignKey('material.material_id'), index=True),
+    Column('count', Integer)
+)
+
 Status = Table(
     'status',
     metadata,
