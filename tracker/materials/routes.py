@@ -22,7 +22,6 @@ async def get_queue(request: Request):
         'estimates': estimates,
         'DATE_FORMAT': settings.DATE_FORMAT
     }
-
     return templates.TemplateResponse("queue.html", context)
 
 
@@ -36,7 +35,6 @@ async def add_material_view(request: Request):
         'pages': request.ctx.session.get('pages', ''),
         'tags': request.ctx.session.get('tags', ''),
     }
-
     return templates.TemplateResponse("add_material.html", context)
 
 
