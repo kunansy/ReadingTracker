@@ -1,314 +1,35 @@
 import datetime
-import logging
-from collections import defaultdict
-from contextlib import contextmanager
-from dataclasses import dataclass
+from contextlib import asynccontextmanager
 from datetime import timedelta
-from enum import Enum
-from typing import ContextManager, Callable, Optional
+from typing import AsyncGenerator, Optional
 
-from sqlalchemy import (
-    Column, ForeignKey, Integer,
-    String, Date, create_engine, Text, Float, func
-)
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
-from src import exceptions as ex, settings
+from tracker.common import models, settings
+from tracker.common.log import logger
 
 
-Base = declarative_base()
-logger = logging.getLogger(settings.LOGGER_NAME)
+class DatabaseError(Exception):
+    pass
 
 
-class Material(Base):
-    __tablename__ = 'material'
-
-    material_id = Column(Integer, primary_key=True)
-    title = Column(String, nullable=False)
-    authors = Column(String, nullable=False)
-    pages = Column(Integer, nullable=False)
-    tags = Column(String)
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(" \
-               f"id={self.material_id}, title={self.title}, " \
-               f"authors={self.authors}, pages={self.pages}, " \
-               f"tags={self.tags})"
-
-    def __str__(self) -> str:
-        return f"ID: {self.material_id}\n" \
-               f"Title: «{self.title}»\n" \
-               f"Authors: {self.authors}\n" \
-               f"Pages: {self.pages}\n" \
-               f"Tags: {self.tags}"
+engine = create_async_engine(settings.DB_URI, encoding='utf-8')
+engine.sync_engine.run(models.metadata.create_all())
 
 
-class Status(Base):
-    __tablename__ = 'status'
-
-    status_id = Column(Integer, primary_key=True)
-    material_id = Column(Integer,
-                         ForeignKey('material.material_id'),
-                         nullable=False,
-                         unique=True)
-    begin = Column(Date)
-    end = Column(Date)
-
-    def __repr__(self) -> str:
-        if begin := self.begin:
-            begin = begin.strftime(settings.DATE_FORMAT)
-        if end := self.end:
-            end = end.strftime(settings.DATE_FORMAT)
-
-        return f"{self.__class__.__name__}(" \
-               f"id={self.status_id}, material_id={self.material_id}, " \
-               f"{begin=}, {end=})"
-
-
-class Note(Base):
-    __tablename__ = 'note'
-
-    id = Column(Integer, primary_key=True)
-    content = Column(Text, nullable=False)
-    material_id = Column(Integer,
-                         ForeignKey('material.material_id'),
-                         nullable=False)
-    date = Column(Date, nullable=False)
-    chapter = Column(Integer, nullable=False)
-    page = Column(Integer, nullable=False)
-
-    def __repr__(self) -> str:
-        date = self.date.strftime(DATE_FORMAT)
-
-        return f"{self.__class__.__name__}(" \
-               f"id={self.id}, content={self.content}, " \
-               f"material_id={self.material_id}, " \
-               f"{date=}, chapter={self.chapter}, page={self.page})"
-
-
-@dataclass
-class MaterialStatus:
-    material: Material
-    status: Status
-
-    def __init__(self,
-                 material: Material,
-                 status: Status) -> None:
-        assert material.material_id == status.material_id
-
-        self.material = material
-        self.status = status
-
-    def __setattr__(self,
-                    key: str,
-                    value) -> None:
-        if getattr(self, key, None) is not None:
-            raise NotImplementedError(
-                f"You can't change {self.__class__.__name__} values, but "
-                f"{key}={value} found, when {key}={getattr(self, key)}"
-            )
-
-        super().__setattr__(key, value)
-
-
-class Card(Base):
-    __tablename__ = 'card'
-
-    card_id = Column(Integer, primary_key=True)
-    question = Column(Text, nullable=False)
-    answer = Column(Text, nullable=True, default=None)
-    date = Column(Date, nullable=False)
-    material_id = Column(Integer,
-                         ForeignKey('material.material_id'),
-                         nullable=False)
-    note_id = Column(Integer,
-                     ForeignKey('note.id'),
-                     nullable=False)
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(" \
-               f"card_id={self.card_id}, question={self.question}, " \
-               f"answer={self.answer}, date={self.date}, " \
-               f"material_id={self.material_id}, note_id={self.note_id})"
-
-
-class Recall(Base):
-    __tablename__ = 'recall'
-
-    recall_id = Column(Integer, primary_key=True)
-    card_id = Column(Integer,
-                     ForeignKey('card.card_id'),
-                     nullable=False)
-    last_repeat_date = Column(Date, nullable=False)
-    next_repeat_date = Column(Date, nullable=False)
-    mult = Column(Float, nullable=False, default=1.)
-
-    def __repr__(self) -> str:
-        return f"{self.__class__.__name__}(" \
-               f"recall_id={self.recall_id}, card_id={self.card_id}, " \
-               f"last_repeat_date={self.last_repeat_date}, " \
-               f"next_repeat_date={self.next_repeat_date}, mult={self.mult}"
-
-
-@dataclass
-class CardNoteRecall:
-    card: Card
-    recall: Recall
-    note: Optional[Note] = None
-
-    def __init__(self,
-                 card: Card,
-                 recall: Recall,
-                 note: Optional[Note] = None) -> None:
-        assert card.card_id == recall.card_id
-        assert recall.last_repeat_date <= recall.next_repeat_date, \
-            f"Wrong card, card_id={card.card_id}"
-
-        self.card = card
-        self.recall = recall
-        self.note = note
-
-    @property
-    def old_duration(self) -> int:
-        return (self.recall.next_repeat_date -
-                self.recall.last_repeat_date).days or 2
-
-    @property
-    def bad(self) -> int:
-        return round(
-            self.old_duration * self.recall.mult *
-            RepeatResults['bad'].value
-        )
-
-    @property
-    def good(self) -> int:
-        return round(
-            self.old_duration * self.recall.mult *
-            RepeatResults['good'].value
-        )
-
-    @property
-    def excellent(self) -> int:
-        return round(
-            self.old_duration * self.recall.mult *
-            RepeatResults['excellent'].value
-        )
-
-    @property
-    def tomorrow(self) -> int:
-        return 1
-
-    @property
-    def d10(self) -> int:
-        return 10
-
-    def __getitem__(self,
-                    item: str) -> int:
-        try:
-            return getattr(super(), item)
-        except AttributeError:
-            return getattr(self, item, None)
-
-    def __setattr__(self,
-                    key: str,
-                    value) -> None:
-        if getattr(self, key, None) is not None:
-            raise NotImplementedError(
-                f"You can't change {self.__class__.__name__} values, but "
-                f"{key}={value} found, when {key}={getattr(self, key)}"
-            )
-
-        super().__setattr__(key, value)
-
-
-class RepeatResults(Enum):
-    tomorrow = .75
-    d10 = 2.5
-    bad = 1
-    good = 1.5
-    excellent = 2
-
-
-MATERIAL_STATUS = list[MaterialStatus]
-engine = create_engine(settings.DB_HOST, encoding='utf-8')
-Base.metadata.create_all(engine)
-
-
-def cache(*,
-          update: bool,
-          times: int = 10) -> Callable:
-    def decorator(func: Callable) -> Callable:
-        results = {}
-        call_st = defaultdict(int)
-        fname = func.__name__
-
-        def wrapped(*args, **kwargs):
-            nonlocal results, call_st
-
-            assert not kwargs, "Kwargs not supported here"
-
-            arg_id = hash(args)
-            call_st[arg_id] += 1
-
-            if results.get(arg_id) is None:
-                logger.debug(f"{fname}{args} called first time, "
-                             "calculating the result")
-
-                results[arg_id] = func(*args)
-                return results[arg_id]
-
-            called_numbers = call_st[arg_id]
-            if (update and called_numbers >= times and
-                    not called_numbers % times):
-                logger.debug(
-                    f"{fname}{args} called "
-                    f"{called_numbers} times, updating the value"
-                )
-
-                if (new_res := func(*args)) == results[arg_id]:
-                    logger.debug('New result == to the last one')
-                else:
-                    logger.debug('New result != to the last one')
-
-                results[arg_id] = new_res
-            else:
-                res = str(results[arg_id])
-                shorted_res = res[:5] + '...' + res[-5:]
-                logger.debug(f"{fname}{args}='{shorted_res}' "
-                             "got from cache")
-
-            return results[arg_id]
-        return wrapped
-    return decorator
-
-
-@contextmanager
-def session(**kwargs) -> ContextManager[Session]:
-    new_session = Session(**kwargs, bind=engine, expire_on_commit=False)
+@asynccontextmanager
+async def session(**kwargs) -> AsyncGenerator[AsyncSession, None]:
+    new_session = AsyncSession(**kwargs, bind=engine, expire_on_commit=False)
     try:
-        logger.debug("New session created and yielded")
         yield new_session
-
-        logger.debug("Operations with the session finished, committing")
-        new_session.commit()
+        await new_session.commit()
     except Exception as e:
-        logger.error(f"Error with the session: {e}")
-        logger.debug("Rollback all changes")
+        logger.exception("Error with the session: %s")
 
-        new_session.rollback()
-
-        if isinstance(e, ex.BaseTrackerError):
-            raise e
-        raise ex.DatabaseError(e)
+        await new_session.rollback()
+        raise DatabaseError(e)
     finally:
-        new_session.close()
-        logger.debug("Session closed")
-
-
-@cache(update=False)
-def today() -> datetime.date:
-    return datetime.datetime.now().date()
+        await new_session.close()
 
 
 def get_materials(*,
