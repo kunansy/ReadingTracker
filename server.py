@@ -216,53 +216,6 @@ async def home(request: Request) -> HTTPResponse:
     return response.redirect('/materials/queue')
 
 
-@app.exception(ValidationError)
-def validation_error_handler(request: Request,
-                             exception: ValidationError) -> HTTPResponse:
-    context = ujson.dumps(exception.errors(), indent=4)
-
-    sanic_logger.error(f"Validation error was not handled:\n{context}")
-    return response.json(exception.errors(), status=400, indent=4)
-
-
-@app.exception(exceptions.NotFound,
-               ex.BaseNotFoundError)
-async def not_found(request: Request,
-                    exception: Exception) -> dict[str, Any]:
-    args = '; '.join(
-        str(arg)
-        for arg in exception.args
-    )
-
-    sanic_logger.error(f"Not found error: {args}")
-    return await jinja.render_async(
-        'errors/404.html', request, what=args, status=404)
-
-
-@app.exception(ex.BaseTrackerError)
-@jinja.template('errors/500.html')
-async def error_handler(request: Request,
-                        exception: Exception) -> dict[str, Any]:
-    try:
-        ex_json = exception.json()
-    except:
-        ex_json = ''
-
-    context = {
-        "wrong_request": request.url,
-        "error": {
-            "type": exception.__class__.__name__,
-            "text": str(exception),
-            "args": exception.args,
-            "json": ex_json
-        }
-    }
-
-    sanic_logger.error(ujson.dumps(context, indent=4))
-    return await jinja.render_async(
-        'errors/500.html', request, **context, status=500)
-
-
 if __name__ == "__main__":
     app.run(
         port=8080,
