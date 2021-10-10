@@ -10,7 +10,7 @@ router = APIRouter(
 )
 
 
-@router.get('/reading_log')
+@router.get('/')
 async def get_reading_log(request: Request):
     return {
         'request': request,
@@ -20,8 +20,8 @@ async def get_reading_log(request: Request):
     }
 
 
-@router.get('/reading_log/add')
-async def add_log_record(request: Request):
+@router.get('/add')
+async def add_log_record_view(request: Request):
     titles = tracker.get_material_titles(reading=True)
     reading_material_id = log.reading_material
 
@@ -33,7 +33,7 @@ async def add_log_record(request: Request):
     }
 
 
-@router.post('/reading_log/add')
+@router.post('/add')
 async def add_log_record(request: Request,
                          log_record: schemas.LogRecord):
     form_items = await get_form_items(request)
