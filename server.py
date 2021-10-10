@@ -180,7 +180,7 @@ async def get_notes(request: Request) -> dict[str, Any]:
         return {}
     else:
         jinja.flash(request, f"{len(notes)} notes found", 'success')
-    
+
     titles = tracker.get_material_titles(reading=True, completed=True)
 
     # show only the titles of materials that have notes

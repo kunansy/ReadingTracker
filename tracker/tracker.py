@@ -362,7 +362,7 @@ class Log:
         if last != 0:
             return last
 
-        # means the new material started 
+        # means the new material started
         #  and there's no log records for it
         try:
             reading_materials = db.get_reading_materials()
@@ -1070,8 +1070,8 @@ class Tracker:
             remaining_days=remaining_days,
             would_be_completed=would_be_completed
         )
-    
-    def statistics(self, 
+
+    def statistics(self,
                    materials: list[db.MaterialStatus]
                    ) -> list[MaterialStatistics]:
         return [
