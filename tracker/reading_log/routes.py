@@ -1,59 +1,49 @@
+import datetime
+
 from fastapi import APIRouter, Request
+from fastapi.responses import RedirectResponse
+from fastapi.templating import Jinja2Templates
 
 from tracker.common import settings
-from tracker.reading_log import schemas, db
+from tracker.reading_log import db, schemas
 
 
 router = APIRouter(
-    prefix="/reading-log",
+    prefix="/reading_log",
     tags=["reading log"]
 )
+templates = Jinja2Templates(directory="templates")
 
 
 @router.get('/')
 async def get_reading_log(request: Request):
-    return {
+    reading_log = await db.get_reading_log()
+
+    context = {
         'request': request,
-        'log': log.log,
+        'log': reading_log,
         'DATE_FORMAT': settings.DATE_FORMAT,
         'EXPECTED_COUNT': settings.PAGES_PER_DAY
     }
+    return templates.TemplateResponse("reading_log.html", context)
 
 
 @router.get('/add')
 async def add_log_record_view(request: Request):
-    titles = tracker.get_material_titles(reading=True)
-    reading_material_id = log.reading_material
+    titles = await db.get_material_titles()
+    reading_material_id = await db.get_reading_material()
+    today = datetime.datetime.utcnow()
 
-    return {
+    context = {
         'request': request,
         'material_id': reading_material_id,
         'titles': titles,
-        'date': trc.db.today()
+        'date': today
     }
+    return templates.TemplateResponse("add_reading_log.html", context)
 
 
 @router.post('/add')
-async def add_log_record(request: Request,
-                         log_record: schemas.LogRecord):
-    form_items = await get_form_items(request)
-
-    try:
-        record = validators.LogRecord(**form_items)
-    except ValidationError as e:
-        context = ujson.dumps(e.errors(), indent=4)
-        sanic_logger.warning(f"Validation error:\n{context}")
-
-        for error in e.errors():
-            jinja.flash(request, f"{error['loc'][0]}: {error['msg']}", 'error')
-
-        return response.redirect('/reading_log/add')
-
-    try:
-        log._set_log(**record.dict())
-    except Exception:
-        jinja.flash(request, str(e), 'error')
-    else:
-        jinja.flash(request, 'Record added', 'success')
-    finally:
-        return response.redirect('/reading_log/add')
+async def add_log_record(log_record: schemas.LogRecord):
+    await db.set_log(**log_record.dict())
+    return RedirectResponse('/reading_log/add')
