@@ -2,52 +2,9 @@ import datetime
 from typing import Optional
 
 from pydantic import constr, conint, validator
-from pydantic import BaseModel as PydanticBaseModel
+from pydantic import BaseModel
 
-from src import db_api as db
-
-
-class BaseModel(PydanticBaseModel):
-    class Config:
-        extra = 'forbid'
-        allow_mutation = False
-
-
-def validate_string(string: str,
-                    ends: tuple[str, ...]) -> str:
-    string = ' '.join(string.replace('\n', '<br/>').split())
-
-    return f"{string[0].upper()}{string[1:]}" \
-           f"{'.' * (not string.endswith(ends))}"
-
-
-class Note(BaseModel):
-    material_id: conint(gt=0)
-    content: constr(strip_whitespace=True, min_length=1)
-    chapter: conint(ge=0)
-    page: conint(gt=0)
-
-    @validator('material_id')
-    def validate_material_assigned(cls,
-                                   material_id: int) -> int:
-        if not db.is_material_assigned(material_id):
-            raise ValueError(f"Material {material_id=} is not assigned")
-
-        return material_id
-
-    @validator('page')
-    def validate_page(cls,
-                      page: int) -> int:
-        # TODO: need an access to the material_id
-        return page
-
-    @validator('content')
-    def validate_content(cls,
-                         content: str) -> str:
-        return validate_string(content, ('.',))
-
-    def __str__(self) -> str:
-        return repr(self)
+from tracker.common import database
 
 
 class LogRecord(BaseModel):
