@@ -42,7 +42,7 @@ Material = Table(
     'material',
     metadata,
 
-    Column('material_id', Integer, primary_key=True),
+    PrimaryKey('material_id', Integer),
     Column('title', Unicode(256)),
     Column('authors ', Unicode(256)),
     Column('pages', Integer),
@@ -62,7 +62,7 @@ Status = Table(
     'status',
     metadata,
 
-    Column('status_id', Integer, primary_key=True),
+    PrimaryKey('status_id', Integer),
     Column('material_id', ForeignKey('material.material_id'),
            unique=True, index=True),
     Column('begin', Date),
@@ -73,7 +73,7 @@ Note = Table(
     'note',
     metadata,
 
-    Column('id', Integer, primary_key=True),
+    PrimaryKey('id', Integer),
     Column('content', Unicode(65_536)),
     Column('material_id', ForeignKey('material.material_id'), index=True),
     Column('date', Date),
@@ -85,7 +85,7 @@ Card = Table(
     'card',
     metadata,
 
-    Column('card_id', Integer, primary_key=True),
+    PrimaryKey('card_id', Integer),
     Column('question', Unicode),
     Column('answer', Unicode, nullable=True),
     Column('date', Date),
