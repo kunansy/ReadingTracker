@@ -14,10 +14,10 @@ def format_string(string: str,
 
 
 class Card(BaseModel):
-    material_id: conint(gt=0)
-    note_id: conint(gt=0)
-    question: constr(strip_whitespace=True, min_length=1)
-    answer: Optional[constr(strip_whitespace=True)]
+    material_id: conint(gt=0) # type: ignore
+    note_id: conint(gt=0) # type: ignore
+    question: constr(strip_whitespace=True, min_length=1) # type: ignore
+    answer: Optional[constr(strip_whitespace=True)] # type: ignore
 
     @validator('note_id')
     def validate_note_exists(cls,
@@ -33,7 +33,7 @@ class Card(BaseModel):
         return format_string(question, ('.', '?'))
 
     @validator('answer')
-    def validate_answer(cls,
+    def validate_answer(cls,  # type: ignore
                         answer: Optional[str]) -> Optional[str]:
         if answer:
             return format_string(answer, ('.',))

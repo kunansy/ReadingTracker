@@ -6,9 +6,9 @@ from tracker.common import database
 
 
 class LogRecord(BaseModel):
-    material_id: conint(gt=0)
-    date: datetime.date
-    count: conint(gt=0)
+    material_id: conint(gt=0) # type: ignore
+    date: datetime.date # type: ignore
+    count: conint(gt=0) # type: ignore
 
     @validator('date')
     def validate_date(cls,

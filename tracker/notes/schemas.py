@@ -12,11 +12,11 @@ def format_string(string: str,
 
 
 class Note(BaseModel):
-    material_id: conint(gt=0)
-    content: constr(strip_whitespace=True, min_length=1)
-    chapter: conint(ge=0)
+    material_id: conint(gt=0) # type: ignore
+    content: constr(strip_whitespace=True, min_length=1) # type: ignore
+    chapter: conint(ge=0) # type: ignore
     # TODO: validate that the page is <= than material size
-    page: conint(gt=0)
+    page: conint(gt=0) # type: ignore
 
     @validator('material_id')
     def validate_material_assigned(cls,
