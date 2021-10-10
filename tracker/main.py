@@ -25,6 +25,7 @@ app.include_router(reading_log_router)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
+@app.exception_handler(database.DatabaseError)
 async def database_exception_handler(request: Request,
                                      exc: database.DatabaseError):
     logger.exception("Error with the database, %s", str(exc))
