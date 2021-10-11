@@ -9,7 +9,7 @@ The project is expected to help one read books:
 1. Keep a list of books to read;
 2. Keep a list of reading and completed materials;
 3. Calculate statistics;
-4. Track the read log;
-4. Keep notes to help you remember some important points from the material.
+4. Track the reading log;
+4. Keep notes to help remember some important points from the material.
 
 
