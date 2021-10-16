@@ -2,7 +2,7 @@ import datetime
 import uuid
 
 import sqlalchemy
-from sqlalchemy import Date, Integer, MetaData, Table, Unicode
+from sqlalchemy import Date, DateTime, Integer, MetaData, Table, Unicode
 from sqlalchemy.dialects.postgresql import UUID
 
 
@@ -55,7 +55,8 @@ ReadingLog = Table(
 
     PrimaryKey('log_id'),
     Column('material_id', ForeignKey('material.material_id'), index=True),
-    Column('count', Integer)
+    Column('count', Integer),
+    Column('date', DateTime, default=_utc_now)
 )
 
 Status = Table(
