@@ -3,6 +3,7 @@ from contextlib import asynccontextmanager
 from datetime import timedelta
 from typing import AsyncGenerator, Optional
 
+import sqlalchemy.sql as sa
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from tracker.common import models, settings
@@ -38,6 +39,22 @@ def today() -> datetime.datetime:
 
 def yesterday() -> datetime.datetime:
     return today() - datetime.timedelta(days=1)
+
+
+async def get_completion_dates() -> dict[int, datetime.date]:
+    logger.debug("Getting completion dates")
+
+    stmt = sa.select([models.Material.c.material_id,
+                      models.Status.c.end]) \
+        .join(models.Status,
+              models.Status.c.material_id == models.Material.c.material_id) \
+        .where(models.Status.end != None)
+
+    async with session() as ses:
+        return {
+            row.material_id: row.end
+            async for row in await ses.stream(stmt)
+        }
 
 
 def notes_with_cards(*,

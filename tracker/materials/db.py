@@ -36,22 +36,6 @@ def get_material_titles() -> dict[int, str]:
         }
 
 
-def get_completion_dates() -> dict[int, datetime.date]:
-    logger.debug("Getting completion dates")
-
-    stmt = sa.select([models.Material.c.material_id,
-                      models.Status.c.end])\
-        .join(models.Status,
-              models.Status.c.material_id == models.Material.c.material_id)\
-        .where(models.Status.end != None)
-
-    async with database.session() as ses:
-        return {
-            row.material_id: row.end
-            async for row in await ses.stream(stmt)
-        }
-
-
 async def get_title(*,
                     material_id: int) -> str:
     logger.info(f"Getting title for material_id=%s", material_id)
