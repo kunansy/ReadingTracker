@@ -26,7 +26,7 @@ async def get_materials(*,
 
 async def get_title(*,
                     material_id: int) -> str:
-    logger.info(f"Getting title for material_id=%s", material_id)
+    logger.info("Getting title for material_id=%s", material_id)
     try:
         return (await get_materials(materials_ids=[material_id]))[0].title
     except IndexError:
@@ -175,7 +175,7 @@ async def start_material(*,
                          start_date: Optional[datetime.date] = None) -> None:
     start_date = start_date or database.today()
     logger.debug("Starting material_id=%s at %s",
-                material_id, start_date)
+                 material_id, start_date)
 
     if start_date > database.today():
         raise ValueError("Start date must be less than today")
