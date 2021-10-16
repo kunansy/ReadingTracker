@@ -9,6 +9,10 @@ from tracker.common.log import logger
 from tracker.notes import schemas
 
 
+async def get_material_titles() -> dict[int, str]:
+    return await database.get_material_titles()
+
+
 async def get_notes(*,
                     materials_ids: Optional[list[int]] = None) -> list[RowMapping]:
     how_many = 'all'
