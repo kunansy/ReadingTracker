@@ -1,23 +1,18 @@
 #!/usr/bin/env python3
 import copy
 import datetime
-import logging
 import random
 import statistics
 from dataclasses import dataclass
 from datetime import timedelta
 from pathlib import Path
-from typing import Union, Optional, Iterator, Iterable, Any
+from typing import Iterable, Iterator, Optional, Union
 
-import ujson
-
-import src.db_api as db
-from src import exceptions as ex, settings
+from tracker.common import database, settings
+from tracker.common.log import logger
 
 
 INDENT = 2
-
-logger = logging.getLogger(settings.LOGGER_NAME)
 
 
 @dataclass(frozen=True)
@@ -130,7 +125,7 @@ class LogStatistics:
 
 @dataclass(frozen=True)
 class MaterialStatistics:
-    material: db.Material
+    material: database.Material
     started: datetime.date
     duration: int
     lost_time: int
@@ -206,7 +201,7 @@ class TrackerStatistics:
 
 @dataclass(frozen=True)
 class MaterialEstimate:
-    material: db.Material
+    material: database.Material
     will_be_started: datetime.date
     will_be_completed: datetime.date
     expected_duration: int
@@ -230,12 +225,7 @@ class MaterialEstimate:
                f"Expected duration: {time_span(self.expected_duration)}"
 
 
-@db.cache(update=False)
-def yesterday() -> datetime.date:
-    return db.today() - timedelta(days=1)
-
-
-@db.cache(update=False)
+@database.cache(update=False)
 def to_datetime(date) -> Optional[datetime.date]:
     """
     :param date: str or date or datetime.
@@ -262,7 +252,7 @@ def to_datetime(date) -> Optional[datetime.date]:
         raise TypeError(f"Str or datetime expected, {type(date)} found")
 
 
-@db.cache(update=False)
+@database.cache(update=False)
 def time_span(span: Union[timedelta, int]) -> str:
     if isinstance(span, timedelta):
         days = timedelta.days
@@ -278,20 +268,6 @@ def time_span(span: Union[timedelta, int]) -> str:
         res += f"{days} days"
 
     return res
-
-
-@db.cache(update=False)
-def fmt(date: datetime.date) -> str:
-    return date.strftime(settings.DATE_FORMAT)
-
-
-def safe_list_get(list_: list[Any],
-                  index: int,
-                  default: Any = None) -> Any:
-    try:
-        return list_[index]
-    except IndexError:
-        return default
 
 
 class Log:
@@ -365,157 +341,14 @@ class Log:
         # means the new material started
         #  and there's no log records for it
         try:
-            reading_materials = db.get_reading_materials()
-        except ex.DatabaseError as e:
+            reading_materials = database.get_reading_materials()
+        except database.DatabaseError as e:
             logger.error(str(e))
             return 0
         if (reading_material := safe_list_get(reading_materials, -1, 0)) == 0:
             return 0
 
         return reading_material.material.material_id
-
-    def _get_log(self,
-                 *,
-                 full_info: bool = False) -> dict[datetime.date, LogRecord]:
-        """
-        Get log from JSON file and parse it.
-        Convert keys to datetime.date, values to LogRecord.
-
-        :param full_info: if True get titles to all materials.
-         !!! there will be more queries to the database !!!
-
-        :return: dict with the format.
-
-        :exception DatabaseError:
-        """
-        with self.path.open(encoding='utf-8') as f:
-            log = ujson.load(f)
-
-        log_records = {}
-        material_titles = {}
-
-        if full_info:
-            try:
-                material_titles = db.get_material_titles(
-                    reading=True, completed=True)
-            except ex.DatabaseError as e:
-                logger.error(str(e))
-                raise
-
-        for date, info in log.items():
-            date = to_datetime(date)
-            record = LogRecord(**info)
-
-            if full_info:
-                record.material_title = \
-                    material_titles.get(record.material_id, '')
-
-            log_records[date] = record
-        return log_records
-
-    def _set_log(self,
-                 date: datetime.date,
-                 count: int,
-                 material_id: Optional[int] = None) -> None:
-        """
-        Set reading log for the day.
-        Dump changes to the file.
-
-        :param material_id: id of the learned material,
-         by default id of the last material.
-
-        :exception WrongLogParam: if count <= 0, the date
-         is more than today, the date even exists in
-         log, 'material_id' not given and log is empty.
-        :exception DatabaseError:
-        """
-        logger.debug(f"Setting log for: {date=}, {count=}, {material_id=}")
-
-        if count <= 0:
-            raise ex.WrongLogParam(f"Count must be > 0, but 0 <= {count}")
-        if date <= self.stop:
-            raise ex.WrongLogParam(
-                "The date must be better than the last "
-                f"date, but {date=} < {self.stop=}"
-            )
-        if date in self.__log:
-            raise ex.WrongLogParam(f"The {date=} even exists in the log")
-        if material_id is None and len(self.log) == 0:
-            raise ex.WrongLogParam(f"{material_id=} and log dict is empty")
-
-        try:
-            material_title = db.get_title(material_id)
-        except ex.DatabaseError as e:
-            logger.error(str(e))
-            raise
-
-        record = LogRecord(
-            material_id=material_id or self.reading_material,
-            count=count,
-            material_title=material_title
-        )
-        self.__log[date] = record
-
-        self.__log = dict(sorted(self.log.items(), key=lambda i: i[0]))
-
-        self.dump()
-
-    def set_today_log(self,
-                      count: int,
-                      material_id: Optional[int] = None) -> None:
-        """
-        Set today's reading log.
-
-        :param count: count of pages read today.
-        :param material_id: id of learned material.
-         The last learned material_id by default.
-
-        :exception WrongLogParam: if count <= 0, the date
-         is more than today, the date even exists in
-         log, 'material_id' not given and log is empty.
-        """
-        try:
-            self._set_log(db.today(), count, material_id)
-        except ex.WrongLogParam as e:
-            logger.error(str(e))
-            raise
-
-    def set_yesterday_log(self,
-                          count: int,
-                          material_id: Optional[int] = None) -> None:
-        """
-        Set yesterday's reading log.
-
-        :param count: count of pages read yesterday.
-        :param material_id: id of learned material.
-         The last learned material_id by default.
-
-        :exception WrongLogParam: if count <= 0, the date
-         is more than today, the date even exists in
-         log, 'material_id' not given and log is empty.
-        """
-        try:
-            self._set_log(yesterday(), count, material_id)
-        except ex.WrongLogParam as e:
-            logger.error(str(e))
-            raise
-
-    def dump(self) -> None:
-        """ Dump log to the file. """
-        logger.debug("Dumping log")
-
-        data = {
-            fmt(date): {
-                'material_id': info.material_id,
-                'count': info.count
-            }
-            for date, info in self.log.items()
-        }
-
-        with self.path.open('w', encoding='utf-8') as f:
-            ujson.dump(data, f, indent=INDENT)
-
-        logger.debug("Log dumped")
 
     @property
     def total(self) -> int:
@@ -635,16 +468,16 @@ class Log:
         # stack for materials
         materials = []
         try:
-            completion_dates = db.get_completion_dates()
-        except ex.DatabaseError as e:
+            completion_dates = database.get_completion_dates()
+        except database.DatabaseError as e:
             logger.error(str(e))
             completion_dates = {}
 
-        while iter_ <= db.today():
+        while iter_ <= database.today():
             last_material_id = safe_list_get(materials, -1, 0)
 
-            if ((completion_date := completion_dates.get(last_material_id)) and
-                    completion_date < iter_):
+            if ((completion_date := completion_dates.get(last_material_id))
+                    and completion_date < iter_):
                 materials.pop()
                 last_material_id = safe_list_get(materials, -1, 0)
 
@@ -908,8 +741,8 @@ class Log:
         new_line = '\n'
 
         try:
-            material_titles = db.get_material_titles()
-        except ex.DatabaseError as e:
+            material_titles = database.get_material_titles()
+        except database.DatabaseError as e:
             logger.error(str(e))
             raise
 
@@ -917,9 +750,9 @@ class Log:
             if (material_id := info.material_id) != last_material_id:
                 last_material_id = material_id
                 try:
-                    title = info.material_title or \
-                            f"«{material_titles.get(material_id, '')}»"
-                except ex.DatabaseError as e:
+                    title = (info.material_title or
+                             f"«{material_titles.get(material_id, '')}»")
+                except database.DatabaseError as e:
                     logger.error(str(e))
                     title = 'None'
 
@@ -951,7 +784,7 @@ class Tracker:
         self.__log = log
 
     @property
-    def queue(self) -> list[db.Material]:
+    def queue(self) -> list[database.Material]:
         """
         Get list of uncompleted materials:
         assigned but not completed and not assigned too
@@ -959,74 +792,48 @@ class Tracker:
         :exception DatabaseError:
         """
         try:
-            return db.get_free_materials()
-        except ex.DatabaseError as e:
+            return database.get_free_materials()
+        except database.DatabaseError as e:
             logger.error(str(e))
             raise
 
     @property
-    def processed(self) -> db.MATERIAL_STATUS:
+    def processed(self) -> database.MATERIAL_STATUS:
         """ Get list of completed Materials.
 
         :exception DatabaseError:
         """
         try:
-            return db.get_completed_materials()
-        except ex.DatabaseError as e:
+            return database.get_completed_materials()
+        except database.DatabaseError as e:
             logger.error(str(e))
             raise
 
     @property
-    def reading(self) -> db.MATERIAL_STATUS:
+    def reading(self) -> database.MATERIAL_STATUS:
         """ Get reading materials and their statuses
 
         :exception DatabaseError:
         """
         try:
-            return db.get_reading_materials()
-        except ex.DatabaseError as e:
-            logger.error(str(e))
-            raise
-
-    @property
-    def log(self) -> Log:
-        return self.__log
-
-    @property
-    def notes(self) -> list[db.Note]:
-        """
-        :exception DatabaseError:
-        """
-        try:
-            return db.get_notes()
-        except ex.DatabaseError as e:
+            return database.get_reading_materials()
+        except database.DatabaseError as e:
             logger.error(str(e))
             raise
 
     @staticmethod
     def does_material_exist(material_id: int) -> bool:
         try:
-            return db.does_material_exist(material_id)
-        except ex.DatabaseError as e:
+            return database.does_material_exist(material_id)
+        except database.DatabaseError as e:
             logger.error(f"Error checking {material_id=} exists:\n{e}")
             return False
-
-    @staticmethod
-    def get_material_titles(**kwargs) -> dict[int, str]:
-        """
-        :exception DatabaseError:
-        """
-        try:
-            return db.get_material_titles(**kwargs)
-        except ex.DatabaseError as e:
-            logger.error(str(e))
-            raise
 
     def get_material_statistics(self,
                                 material_id: int,
                                 *,
-                                material: Optional[db.Material] = None,
-                                status: Optional[db.Status] = None
+                                material: Optional[database.Material] = None,
+                                status: Optional[database.Status] = None
                                 ) -> MaterialStatistics:
         """ Calculate statistics for reading or completed material """
         logger.debug(f"Calculating material statistics for {material_id=}")
@@ -1052,7 +859,7 @@ class Tracker:
         if status.end is None:
             remaining_pages = material.pages - total
             remaining_days = round(remaining_pages / avg)
-            would_be_completed = db.today() + timedelta(days=remaining_days)
+            would_be_completed = database.today() + timedelta(days=remaining_days)
         else:
             would_be_completed = remaining_days = remaining_pages = None
 
@@ -1072,7 +879,7 @@ class Tracker:
         )
 
     def statistics(self,
-                   materials: list[db.MaterialStatus]
+                   materials: list[database.MaterialStatus]
                    ) -> list[MaterialStatistics]:
         return [
             self.get_material_statistics(
@@ -1115,155 +922,7 @@ class Tracker:
             for stat in self.statistics(self.reading)
         )
 
-        return db.today() + timedelta(days=remaining_days + 1)
-
-    @staticmethod
-    def start_material(material_id: int,
-                       start_date: Optional[datetime.date] = None) -> None:
-        """ Create item in Status table.
-
-        :param material_id: material to start.
-        :param start_date: date when the material was started.
-         Today by default.
-
-        :exception DatabaseError:
-        :exception MaterialNotFound:
-        """
-        try:
-            db.start_material(
-                material_id=material_id,
-                start_date=start_date
-            )
-        except ex.MaterialNotFound as e:
-            logger.error(str(e))
-            raise
-        except ex.DatabaseError as e:
-            logger.error(str(e))
-            raise
-
-    def complete_material(self,
-                          material_id: Optional[int] = None,
-                          completion_date: Optional[datetime.date] = None
-                          ) -> None:
-        """
-        Complete a material, set 'end' in its status.
-
-        :param material_id: id of completed material,
-         the material reading now by default.
-        :param completion_date: date when the material was completed.
-         Today by default.
-
-        :exception DatabaseError:
-        :exception MaterialNotFound:
-        """
-        material_id = material_id or self.log.reading_material
-
-        try:
-            db.complete_material(
-                material_id=material_id,
-                completion_date=completion_date
-            )
-        except ex.MaterialNotAssigned as e:
-            logger.error(str(e))
-            raise
-        except ex.DatabaseError as e:
-            logger.error(e)
-            raise
-
-    @staticmethod
-    def add_material(title: str,
-                     authors: str,
-                     pages: int,
-                     tags: str) -> None:
-        """
-        :exception DatabaseError:
-        """
-        try:
-            db.add_material(
-                title=title,
-                authors=authors,
-                pages=pages,
-                tags=tags
-            )
-        except ex.DatabaseError as e:
-            logger.error(str(e))
-            raise
-
-    @staticmethod
-    def get_material(material_id: int) -> db.Material:
-        """
-        :exception DatabaseError:
-        """
-        logger.debug(f"Getting material {material_id=}")
-
-        try:
-            return db.get_materials(materials_ids=[material_id])[0]
-        except IndexError:
-            msg = f"Material {material_id=} not found"
-            logger.warning(msg)
-            raise ex.MaterialNotFound(msg)
-        except ex.DatabaseError as e:
-            logger.error(e)
-            raise
-
-    @staticmethod
-    def get_status(material_id: int) -> db.Status:
-        """
-        :exception DatabaseError:
-        """
-        try:
-            return db.get_material_status(material_id=material_id)
-        except ex.DatabaseError as e:
-            logger.error(str(e))
-            raise
-
-    @staticmethod
-    def get_notes(material_id: Optional[int] = None) -> list[db.Note]:
-        """
-        :param material_id: get notes for this material.
-         By default, get all notes.
-
-        :exception DatabaseError:
-        """
-        material_ids = [material_id] * (material_id is not None)
-        try:
-            return db.get_notes(materials_ids=material_ids)
-        except ex.DatabaseError as e:
-            logger.error(str(e))
-            raise
-
-    @staticmethod
-    def add_note(material_id: int,
-                 content: str,
-                 chapter: int,
-                 page: int,
-                 date: Optional[datetime.date] = None) -> None:
-        """
-        Here it is expected that all fields are valid.
-
-        :exception DatabaseError:
-        :exception ValueError: if the given page number is better
-         than page count in the material.
-        """
-        material = Tracker.get_material(material_id)
-
-        if material.pages < page:
-            msg = f"Given page number is better than overall pages count " \
-                  f"in the material, {page=} > {material.pages=}"
-            logger.warning(msg)
-            raise ValueError(msg)
-
-        try:
-            db.add_note(
-                material_id=material_id,
-                content=content,
-                chapter=chapter,
-                page=page,
-                date=date
-            )
-        except ex.DatabaseError as e:
-            logger.error(str(e))
-            raise
+        return database.today() + timedelta(days=remaining_days + 1)
 
 
 class Cards:
@@ -1272,7 +931,7 @@ class Cards:
         self.__current_card = None
 
     @property
-    def card(self) -> Optional[db.CardNoteRecall]:
+    def card(self) -> Optional[database.CardNoteRecall]:
         if self.repeated_today() >= settings._MAX_PER_DAY:
             return
 
@@ -1285,10 +944,10 @@ class Cards:
         return self.__current_card
 
     @staticmethod
-    def _get_cards() -> list[db.CardNoteRecall]:
+    def _get_cards() -> list[database.CardNoteRecall]:
         try:
-            cards = db.get_cards()
-        except ex.DatabaseError as e:
+            cards = database.get_cards()
+        except database.DatabaseError as e:
             logger.error(str(e))
             cards = []
 
@@ -1304,13 +963,13 @@ class Cards:
         :exception DatabaseError:
         """
         try:
-            db.add_card(
+            database.add_card(
                 material_id=material_id,
                 question=question,
                 answer=answer,
                 note_id=note_id
             )
-        except ex.DatabaseError as e:
+        except database.DatabaseError as e:
             logger.error(str(e))
             raise
 
@@ -1326,13 +985,13 @@ class Cards:
         card_id = self.__current_card.card.card_id
 
         try:
-            db.complete_card(
+            database.complete_card(
                 card_id=card_id, result=result
             )
         except ex.CardNotFound as e:
             logger.error(str(e))
             raise
-        except ex.DatabaseError as e:
+        except database.DatabaseError as e:
             logger.error(str(e))
             raise
         else:
@@ -1341,9 +1000,9 @@ class Cards:
     @staticmethod
     def cards_remain() -> int:
         try:
-            repeated_today = db.repeated_today()
-            remains_for_today = db.remains_for_today()
-        except ex.DatabaseError as e:
+            repeated_today = database.repeated_today()
+            remains_for_today = database.remains_for_today()
+        except database.DatabaseError as e:
             logger.error(str(e))
             return 0
 
@@ -1356,16 +1015,16 @@ class Cards:
     @staticmethod
     def remains_for_today() -> int:
         try:
-            return db.remains_for_today()
-        except ex.DatabaseError as e:
+            return database.remains_for_today()
+        except database.DatabaseError as e:
             logger.error(str(e))
             return 0
 
     @staticmethod
     def repeated_today() -> int:
         try:
-            return db.repeated_today()
-        except ex.DatabaseError as e:
+            return database.repeated_today()
+        except database.DatabaseError as e:
             logger.error(str(e))
             return settings._MAX_PER_DAY
 
@@ -1376,23 +1035,23 @@ class Cards:
         """
         material_ids = [material_id] * (material_id is not None)
         try:
-            return db.notes_with_cards(material_ids=material_ids)
-        except ex.DatabaseError as e:
+            return database.notes_with_cards(material_ids=material_ids)
+        except database.DatabaseError as e:
             logger.error(str(e))
             raise
 
     @staticmethod
-    def list(material_id: Optional[int] = None) -> list[db.CardNoteRecall]:
+    def list(material_id: Optional[int] = None) -> list[database.CardNoteRecall]:
         material_ids = [material_id] * (material_id is not None)
         try:
-            return db.all_cards(material_ids=material_ids)
-        except ex.DatabaseError as e:
+            return database.all_cards(material_ids=material_ids)
+        except database.DatabaseError as e:
             logger.error(str(e))
             raise
 
     def __len__(self) -> int:
         try:
-            return db.cards_count()
-        except ex.DatabaseError as e:
+            return database.cards_count()
+        except database.DatabaseError as e:
             logger.error(str(e))
             return 0
