@@ -34,7 +34,7 @@ async def get_log_records() -> dict[datetime.date, RowMapping]:
 
     async with database.session() as ses:
         return {
-            row.date.date(): row
+            row.date: row
             async for row in await ses.stream(stmt)
         }
 
