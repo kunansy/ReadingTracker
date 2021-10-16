@@ -40,57 +40,6 @@ def yesterday() -> datetime.datetime:
     return today() - datetime.timedelta(days=1)
 
 
-def does_note_exist(note_id: int, /) -> bool:
-    logger.info(f"Whether {note_id=} exists")
-
-    with session() as ses:
-        return ses.get(Note, note_id) is not None
-
-
-def get_notes(*,
-              materials_ids: Optional[list[int]] = None) -> list[Note]:
-    """ Get notes by material ids.
-    If it's None, get all notes.
-    """
-    how_many = 'all'
-    if materials_ids:
-        how_many = str(len(materials_ids))
-
-    logger.info(f"Getting notes for {how_many} materials")
-
-    with session() as ses:
-        query = ses.query(Note)
-
-        if materials_ids:
-            query = query\
-                .filter(Note.material_id.in_(materials_ids)).all()
-
-        return query.all()
-
-
-def add_note(*,
-             material_id: int,
-             content: str,
-             chapter: int,
-             page: int,
-             date: Optional[datetime.date] = None) -> None:
-    """ Add note to the database. """
-    date = date or today()
-    logger.info(f"Adding note for {material_id=} at {date=}")
-
-    with session() as ses:
-        note = Note(
-            material_id=material_id,
-            content=content,
-            chapter=chapter,
-            page=page,
-            date=date
-        )
-
-        ses.add(note)
-        logger.info("Note added")
-
-
 def notes_with_cards(*,
                      material_ids: Optional[list[int]] = None) -> set[int]:
     """
