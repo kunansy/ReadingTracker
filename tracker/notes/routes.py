@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Query, Request, Response
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -16,9 +16,8 @@ templates = Jinja2Templates(directory="templates")
 
 
 @router.get('/')
-async def get_notes(request: Request):
-    material_id = request.args.get('material_id')
-
+async def get_notes(request: Request,
+                    material_id: int = Query(None, gt=0)):
     all_notes = await db.get_notes()
     notes = [
         note
@@ -27,12 +26,9 @@ async def get_notes(request: Request):
     ]
 
     if not notes:
-        jinja.flash(request, f'No notes {material_id=} found', 'error')
         return {}
-    else:
-        jinja.flash(request, f"{len(notes)} notes found", 'success')
 
-    titles = await db.get_material_titles(reading=True, completed=True)
+    titles = await db.get_material_titles()
 
     # show only the titles of materials that have notes
     all_ids = {
@@ -67,16 +63,21 @@ async def add_note_view(request: Request):
 
     context = {
         'request': request,
-        'material_id': request.ctx.session.get('material_id', ''),
-        'content': request.ctx.session.get('content', ''),
-        'page': request.ctx.session.get('page', ''),
-        'chapter': request.ctx.session.get('chapter', ''),
+        'material_id': request.cookies.get('material_id', ''),
+        'content': request.cookies.get('content', ''),
+        'page': request.cookies.get('page', ''),
+        'chapter': request.cookies.get('chapter', ''),
         'titles': titles
     }
     return templates.TemplateResponse("add_note.html", context)
 
 
 @router.post('/add')
-async def add_note(note: schemas.Note):
-    await db.add_note(note)
+async def add_note(note: schemas.Note,
+                   response: Response):
+    await db.add_note(note=note)
+
+    for key, value in note.json(exclude={'content'}):
+        response.set_cookie(key=key, value=value)
+
     return RedirectResponse('/notes/add')
