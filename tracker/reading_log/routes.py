@@ -17,7 +17,7 @@ templates = Jinja2Templates(directory="templates")
 
 @router.get('/')
 async def get_reading_log(request: Request):
-    reading_log = await db.get_reading_log()
+    reading_log = await db.get_log_records()
 
     context = {
         'request': request,
@@ -31,7 +31,7 @@ async def get_reading_log(request: Request):
 @router.get('/add')
 async def add_log_record_view(request: Request):
     titles = await db.get_material_titles()
-    reading_material_id = await db.get_reading_material()
+    reading_material_id = await db.get_material_reading_now()
     today = datetime.datetime.utcnow()
 
     context = {
@@ -44,6 +44,6 @@ async def add_log_record_view(request: Request):
 
 
 @router.post('/add')
-async def add_log_record(log_record: schemas.LogRecord):
-    await db.set_log(**log_record.dict())
+async def add_log_record(log: schemas.LogRecord):
+    await db.set_log(log=log)
     return RedirectResponse('/reading_log/add')
