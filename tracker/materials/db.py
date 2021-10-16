@@ -24,18 +24,6 @@ async def get_materials(*,
         return (await ses.execute(stmt)).all()
 
 
-def get_material_titles() -> dict[int, str]:
-    logger.debug("Getting material titles")
-
-    stmt = sa.select([models.Material.c.material_id,
-                      models.Material.c.title])
-    async with database.session() as ses:
-        return {
-            row.material_id: row.title
-            async for row in await ses.stream(stmt)
-        }
-
-
 async def get_title(*,
                     material_id: int) -> str:
     logger.info(f"Getting title for material_id=%s", material_id)

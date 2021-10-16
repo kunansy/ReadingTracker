@@ -57,6 +57,19 @@ async def get_completion_dates() -> dict[int, datetime.date]:
         }
 
 
+async def get_material_titles() -> dict[int, str]:
+    logger.debug("Getting material titles")
+
+    stmt = sa.select([models.Material.c.material_id,
+                      models.Material.c.title])
+
+    async with session() as ses:
+        return {
+            row.material_id: row.title
+            async for row in await ses.stream(stmt)
+        }
+
+
 def notes_with_cards(*,
                      material_ids: Optional[list[int]] = None) -> set[int]:
     """
