@@ -60,15 +60,15 @@ ReadingLog = Table(
     Column('date', Date, default=_utc_now)
 )
 
-Status = Table(
-    'status',
+Statuses = Table(
+    'statuses',
     metadata,
 
-    PrimaryKey('status_id', Integer),
-    Column('material_id', ForeignKey('material.material_id'),
+    PrimaryKey('status_id'),
+    Column('material_id', ForeignKey('materials.material_id'),
            unique=True, index=True),
-    Column('begin', Date),
-    Column('end', Date)
+    Column('started_at', Date),
+    Column('completed_at', Date, nullable=True)
 )
 
 Note = Table(
