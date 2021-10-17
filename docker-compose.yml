@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  database:
+  tracker-db:
     image: postgres:14-alpine
     environment:
       POSTGRES_USER: ${DB_USERNAME}
@@ -27,7 +27,7 @@ services:
     env_file: .env
     restart: always
     depends_on:
-      - database
+      - tracker-db
     ports:
        - "127.0.0.1:${API_PORT}:8000"
     entrypoint: ["uvicorn", "tracker.main:app", "--port", "8000",
@@ -35,7 +35,7 @@ services:
     networks:
       - tracker-net
     healthcheck:
-      test: curl -f http://localhost:8000/ || exit 1
+      test: curl -f http://localhost:8000/notes || exit 1
       interval: 10s
       timeout: 5s
       retries: 3
