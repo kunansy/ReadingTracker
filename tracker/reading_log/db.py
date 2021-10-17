@@ -28,7 +28,7 @@ async def get_log_records() -> dict[datetime.date, RowMapping]:
     logger.debug("Getting all log records")
 
     stmt = sa.select([models.ReadingLog,
-                      models.Materials.c.title.lable('material_title')])\
+                      models.Materials.c.title.label('material_title')])\
         .join(models.Materials,
               models.Materials.c.material_id == models.ReadingLog.c.material_id)
 
