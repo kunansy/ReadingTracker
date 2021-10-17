@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from typing import AsyncGenerator, NamedTuple
 from uuid import UUID
 
+import ujson
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.ddl import DropTable
@@ -184,11 +185,31 @@ async def _migrate_cards(*,
             await ses.execute(stmt)
 
 
+async def _migrate_reading_log(*,
+                               material_ids: MAP) -> None:
+    with open('data/log.json') as f:
+        logs = ujson.load(f)
+
+    async with session() as ses:
+        for date, info in logs.items():
+            values = {
+                "date": datetime.datetime.strptime(date, '%d-%m-%Y').date(),
+                "count": info['count'],
+                "material_id": str(material_ids[info['material_id']])
+            }
+            stmt = models.ReadingLog\
+                .insert().values(values)
+
+            await ses.execute(stmt)
+
+
 async def migrate():
     material_ids = await _migrate_materials()
     await _migrate_statuses(material_ids=material_ids)
     note_ids = await _migrate_notes(material_ids=material_ids)
     await _migrate_cards(note_ids=note_ids, material_ids=material_ids)
+
+    await _migrate_reading_log(material_ids=material_ids)
 
 
 @compiles(DropTable, "postgresql")
