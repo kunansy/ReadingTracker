@@ -2,7 +2,7 @@ import datetime
 import uuid
 
 import sqlalchemy
-from sqlalchemy import Date, Integer, MetaData, Table, Unicode
+from sqlalchemy import Date, DateTime, Integer, MetaData, Table, Unicode
 from sqlalchemy.dialects.postgresql import UUID
 
 
@@ -38,15 +38,16 @@ def _uuid_gen():
 _utc_now = datetime.datetime.utcnow
 metadata = MetaData()
 
-Material = Table(
-    'material',
+Materials = Table(
+    'materials',
     metadata,
 
-    PrimaryKey('material_id', Integer),
+    PrimaryKey('material_id'),
     Column('title', Unicode(256)),
-    Column('authors ', Unicode(256)),
+    Column('authors', Unicode(256)),
     Column('pages', Integer),
-    Column('tags', Unicode(256), nullable=True)
+    Column('tags', Unicode(256), nullable=True),
+    Column('added_at', DateTime, default=_utc_now)
 )
 
 ReadingLog = Table(
