@@ -54,7 +54,7 @@ async def get_notes(request: Request,
         'chapters': chapters,
         'DATE_FORMAT': settings.DATE_FORMAT
     }
-    return templates.TemplateResponse("get_notes.html", context)
+    return templates.TemplateResponse("notes.html", context)
 
 
 @router.get('/add')
