@@ -12,8 +12,8 @@ DSN_TEMPLATE = "postgresql+asyncpg://{username}:{password}" \
 
 with env.prefixed("API_"):
     API_PORT = env.int("PORT")
-    API_DEBUG = env.bool("API_DEBUG", False)
-    API_VERSION = env("API_VERSION")
+    API_DEBUG = env.bool("DEBUG", False)
+    API_VERSION = env("VERSION")
 
 with env.prefixed("DB_"):
     DB_HOST = env("HOST")
