@@ -71,16 +71,16 @@ Statuses = Table(
     Column('completed_at', Date, nullable=True)
 )
 
-Note = Table(
-    'note',
+Notes = Table(
+    'notes',
     metadata,
 
-    PrimaryKey('id', Integer),
+    PrimaryKey('note_id'),
+    Column('material_id', ForeignKey('materials.material_id'), index=True),
     Column('content', Unicode(65_536)),
-    Column('material_id', ForeignKey('material.material_id'), index=True),
-    Column('date', Date),
-    Column('chapter', Integer),
-    Column('page', Integer)
+    Column('added_at', DateTime, default=_utc_now),
+    Column('chapter', Integer, nullable=True),
+    Column('page', Integer, nullable=True)
 )
 
 Card = Table(
