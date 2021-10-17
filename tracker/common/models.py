@@ -83,14 +83,14 @@ Notes = Table(
     Column('page', Integer, nullable=True)
 )
 
-Card = Table(
-    'card',
+Cards = Table(
+    'cards',
     metadata,
 
-    PrimaryKey('card_id', Integer),
+    PrimaryKey('card_id'),
+    Column('material_id', ForeignKey('materials.material_id'), index=True),
+    Column('note_id', ForeignKey('notes.note_id'), index=True),
     Column('question', Unicode),
     Column('answer', Unicode, nullable=True),
-    Column('date', Date),
-    Column('material_id', ForeignKey('material.material_id'), index=True),
-    Column('note_id', ForeignKey('note.id'), index=True)
+    Column('added_at', DateTime, default=_utc_now),
 )
