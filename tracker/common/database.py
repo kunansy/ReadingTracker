@@ -43,11 +43,11 @@ def yesterday() -> datetime.datetime:
 async def get_completion_dates() -> dict[int, datetime.date]:
     logger.debug("Getting completion dates")
 
-    stmt = sa.select([models.Material.c.material_id,
-                      models.Status.c.end]) \
-        .join(models.Status,
-              models.Status.c.material_id == models.Material.c.material_id) \
-        .where(models.Status.end != None)
+    stmt = sa.select([models.Materials.c.material_id,
+                      models.Statuses.c.end]) \
+        .join(models.Statuses,
+              models.Statuses.c.material_id == models.Materials.c.material_id) \
+        .where(models.Statuses.end != None)
 
     async with session() as ses:
         return {
@@ -59,8 +59,8 @@ async def get_completion_dates() -> dict[int, datetime.date]:
 async def get_material_titles() -> dict[int, str]:
     logger.debug("Getting material titles")
 
-    stmt = sa.select([models.Material.c.material_id,
-                      models.Material.c.title])
+    stmt = sa.select([models.Materials.c.material_id,
+                      models.Materials.c.title])
 
     async with session() as ses:
         return {

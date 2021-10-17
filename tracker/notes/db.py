@@ -21,9 +21,9 @@ async def get_notes(*,
 
     logger.debug("Getting notes for %s materials", how_many)
 
-    stmt = sa.select(models.Note)
+    stmt = sa.select(models.Notes)
     if materials_ids:
-        stmt = stmt.where(models.Note.c.material_id.in_(materials_ids))
+        stmt = stmt.where(models.Notes.c.material_id.in_(materials_ids))
 
     async with database.session() as ses:
         return (await ses.execute(stmt)).mappings().all()
@@ -43,9 +43,9 @@ async def add_note(*,
         'page': note.page,
         'date': date
     }
-    stmt = models.Note.\
+    stmt = models.Notes.\
         insert().values(values)\
-        .returning(models.Note.c.id)
+        .returning(models.Notes.c.id)
 
     async with database.session() as ses:
         note_id = await ses.execute(stmt)
