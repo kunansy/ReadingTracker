@@ -17,12 +17,12 @@ templates = Jinja2Templates(directory="templates")
 
 @router.get('/')
 async def get_notes(request: Request,
-                    material_id: int = Query(None, gt=0)):
+                    material_id: str = Query(None)):
     all_notes = await db.get_notes()
     notes = [
         note
         for note in all_notes
-        if material_id is None or note.material_id == int(material_id)
+        if material_id is None or note.material_id == material_id
     ]
 
     if not notes:
