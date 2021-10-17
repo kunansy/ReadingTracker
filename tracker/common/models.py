@@ -55,7 +55,7 @@ ReadingLog = Table(
     metadata,
 
     PrimaryKey('log_id'),
-    Column('material_id', ForeignKey('material.material_id'), index=True),
+    Column('material_id', ForeignKey('materials.material_id'), index=True),
     Column('count', Integer),
     Column('date', Date, default=_utc_now)
 )
