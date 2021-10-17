@@ -14,7 +14,7 @@
 {% if titles %}
     <div class="form">
         <form action="/notes" method="GET">
-            <input type="number" class="input" list="books" name="material_id" placeholder="Choose a material">
+            <input class="input" list="books" name="material_id" placeholder="Choose a material">
             <datalist id="books">
               {% for material_id, title in titles | dictsort %}
                   <option value="{{ material_id }}"> «{{ title }}»
