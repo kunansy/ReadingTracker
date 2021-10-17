@@ -40,7 +40,7 @@ async def add_log_record_view(request: Request):
         'titles': titles,
         'date': today
     }
-    return templates.TemplateResponse("add_reading_log.html", context)
+    return templates.TemplateResponse("add_log_record.html", context)
 
 
 @router.post('/add')
