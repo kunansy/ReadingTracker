@@ -24,7 +24,7 @@ async def session(**kwargs) -> AsyncGenerator[AsyncSession, None]:
         yield new_session
         await new_session.commit()
     except Exception as e:
-        logger.exception("Error with the session: %s")
+        logger.exception("Error with the session")
 
         await new_session.rollback()
         raise DatabaseError(e)

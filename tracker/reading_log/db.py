@@ -10,7 +10,7 @@ from tracker.reading_log import schemas
 
 
 class LogRecord(NamedTuple):
-    count: int
+    count: int # type: ignore
     material_id: int
     material_title: Optional[str] = None
 
@@ -43,7 +43,7 @@ async def get_material_titles() -> dict[int, str]:
     return await database.get_material_titles()
 
 
-async def data() -> AsyncGenerator[tuple[datetime.datetime, LogRecord], None]:
+async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
     """ Get pairs: (date, info) of all days from start to stop.
 
     If the day is empty, material_id is supposed
@@ -55,7 +55,7 @@ async def data() -> AsyncGenerator[tuple[datetime.datetime, LogRecord], None]:
         return
 
     # stack for materials
-    materials = []
+    materials: list[int] = []
     try:
         completion_dates = await database.get_completion_dates()
     except Exception as e:
@@ -94,7 +94,7 @@ async def data() -> AsyncGenerator[tuple[datetime.datetime, LogRecord], None]:
 async def get_material_reading_now() -> Optional[int]:
     if not await get_log_records():
         logger.warning("Reading log is empty, no materials reading")
-        return
+        return # type: ignore
 
     last_material_id = 0
     async for _, info in data():
