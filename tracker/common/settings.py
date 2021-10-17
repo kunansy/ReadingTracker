@@ -31,8 +31,8 @@ DB_URI = DSN_TEMPLATE.format(
 )
 
 with env.prefixed("LOGGER_"):
-    LOGGER_NAME = env("NAME")
-    LOGGER_LEVEL = env.log_level("LEVEL")
+    LOGGER_NAME = env("NAME", "ReadingTracker")
+    LOGGER_LEVEL = env.log_level("LEVEL", 'debug')
 
 with env.prefixed("PER_DAY_"):
     PAGES_PER_DAY = env.int('PER_DAY_PAGES', 50)
