@@ -14,7 +14,6 @@ class DatabaseError(Exception):
 
 
 engine = create_async_engine(settings.DB_URI, encoding='utf-8')
-engine.sync_engine.run(models.metadata.create_all())
 
 
 @asynccontextmanager
