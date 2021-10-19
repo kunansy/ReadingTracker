@@ -1,10 +1,11 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from tracker.common import settings
+from tracker.common.log import logger
 from tracker.materials import db, schemas
 
 
@@ -32,19 +33,28 @@ async def add_material_view(request: Request):
     """ Add a material to the queue """
     context = {
         'request': request,
-        'title': request.ctx.session.get('title', ''),
-        'authors': request.ctx.session.get('authors', ''),
-        'pages': request.ctx.session.get('pages', ''),
-        'tags': request.ctx.session.get('tags', ''),
+        'title': request.cookies.get('title', ''),
+        'authors': request.cookies.get('authors', ''),
+        'pages': request.cookies.get('pages', ''),
+        'tags': request.cookies.get('tags', ''),
     }
     return templates.TemplateResponse("add_material.html", context)
 
 
 @router.post('/add', response_class=HTMLResponse)
-async def add_material(material: schemas.Material):
+async def add_material(material: schemas.Material,
+                       response: Response):
     """ Add a material to the queue """
-    await db.add_material(**material.dict())
-    # jinja.flash(request, "Material added", 'success')
+    try:
+        await db.add_material(material=material)
+    except Exception:
+        logger.exception("Error adding material")
+        for key, value in material.dict().items():
+            response.set_cookie(key=key, value=value)
+    else:
+        logger.debug("Material added")
+        for key in material.dict().keys():
+            response.delete_cookie(key=key)
 
     return RedirectResponse('/materials/add')
 
