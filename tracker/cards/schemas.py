@@ -2,8 +2,6 @@ from typing import Optional
 
 from pydantic import BaseModel, conint, constr, validator
 
-from tracker.common import database
-
 
 def format_string(string: str,
                   ends: tuple[str, ...]) -> str:
@@ -22,8 +20,9 @@ class Card(BaseModel):
     @validator('note_id')
     def validate_note_exists(cls,
                              note_id: int) -> int:
-        if not database.does_note_exist(note_id):
-            raise ValueError(f"Note {note_id=} not found")
+        # TODO
+        # if not database.does_note_exist(note_id):
+        #     raise ValueError(f"Note {note_id=} not found")
 
         return note_id
 

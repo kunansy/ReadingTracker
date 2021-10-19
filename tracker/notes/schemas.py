@@ -1,7 +1,5 @@
 from pydantic import BaseModel, conint, constr, validator
 
-from tracker.common import database
-
 
 def format_string(string: str,
                   ends: tuple[str, ...]) -> str:
@@ -22,8 +20,8 @@ class Note(BaseModel):
     def validate_material_assigned(cls,
                                    material_id: int) -> int:
         # TODO: remove business logic from here
-        if not database.is_material_assigned(material_id):
-            raise ValueError(f"Material {material_id=} is not assigned")
+        # if not database.is_material_assigned(material_id):
+        #     raise ValueError(f"Material {material_id=} is not assigned")
 
         return material_id
 
