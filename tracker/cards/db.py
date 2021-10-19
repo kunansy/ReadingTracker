@@ -46,26 +46,26 @@ async def add_card(*,
 
 
 async def all_cards(*,
-                    material_ids: Optional[list[int]] = None) -> list[CardNoteRecall]:
+                    material_ids: Optional[list[int]] = None) -> list[dict[str, Any]]:
     how_many = 'all materials'
     if material_ids:
         how_many = f"material {material_ids=}"
 
     logger.info(f"Getting all cards for {how_many}")
 
+    stmt = sa.select([models.Cards, models.Notes]) \
+        .join(models.Notes,
+              models.Cards.c.note_id == models.Notes.c.id)
+
+    if material_ids:
+        stmt = stmt \
+            .where(models.Cards.c.material_id.in_(material_ids))
+
     async with database.session() as ses:
-        query = ses.query(Card, Recall, Note) \
-            .join(Recall, Card.card_id == Recall.card_id) \
-            .join(Note, Card.note_id == Note.id)
-
-        if material_ids:
-            query = query \
-                .filter(Card.material_id.in_(material_ids))
-
-    return [
-        CardNoteRecall(card=card, note=note, recall=recall)
-        for card, recall, note in query.all()
-    ]
+        return [
+            {"card": card, "note": note}
+            async for card, note in await ses.stream(stmt)
+        ]
 
 
 async def cards_count(*,
