@@ -107,7 +107,7 @@ async def get_material_reading_now() -> Optional[int]:
     # means the new material started
     #  and there's no log records for it
     try:
-        reading_materials = database.get_reading_materials()
+        reading_materials = await database.get_reading_materials()
     except Exception:
         logger.exception("Error getting reading materials")
         return 0
