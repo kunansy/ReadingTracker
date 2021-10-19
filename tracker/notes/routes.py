@@ -77,7 +77,7 @@ async def add_note(note: schemas.Note,
                    response: Response):
     await db.add_note(note=note)
 
-    for key, value in note.json(exclude={'content'}):
+    for key, value in note.dict(exclude={'content'}):
         response.set_cookie(key=key, value=value)
 
     return RedirectResponse('/notes/add')
