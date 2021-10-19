@@ -6,7 +6,9 @@ from fastapi.staticfiles import StaticFiles
 
 from tracker.common import database, settings
 from tracker.common.log import logger
-from tracker.materials.routes import router as materials_router
+# from tracker.cards.routes import router as cards_router
+# from tracker.materials.routes import router as materials_router
+from tracker.notes.routes import router as notes_router
 from tracker.reading_log.routes import router as reading_log_router
 
 
@@ -21,6 +23,9 @@ app = FastAPI(
 
 app.include_router(materials_router)
 app.include_router(reading_log_router)
+app.include_router(notes_router)
+# app.include_router(materials_router)
+# app.include_router(cards_router)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
