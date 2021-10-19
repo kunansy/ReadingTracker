@@ -7,6 +7,7 @@ from sqlalchemy.engine import RowMapping
 
 from tracker.common import database, models
 from tracker.common.log import logger
+from tracker.materials import schemas
 
 
 async def get_materials(*,
@@ -136,26 +137,21 @@ async def get_material_status(*,
 
 
 async def add_material(*,
-                       title: str,
-                       authors: str,
-                       pages: int,
-                       tags: str) -> None:
+                       material: schemas.Material) -> None:
     logger.debug("Adding material")
 
     values = {
-        "title": title,
-        "authors": authors,
-        "pages": pages,
-        "tags": tags
+        "title": material.title,
+        "authors": material.authors,
+        "pages": material.pages,
+        "tags": material.tags
     }
     stmt = models.Materials\
-        .insert().values(values)\
-        .returning(models.Materials.c.material_id)
+        .insert().values(values)
 
     async with database.session() as ses:
-        material = await ses.execute(stmt)
-
-    logger.debug("Material_id=%s added", material.material_id)
+        await ses.execute(stmt)
+    logger.debug("Material added")
 
 
 async def start_material(*,
