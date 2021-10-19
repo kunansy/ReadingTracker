@@ -5,6 +5,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from tracker.common import settings
+from tracker.common.log import logger
 from tracker.notes import db, schemas
 
 
@@ -75,9 +76,14 @@ async def add_note_view(request: Request):
 @router.post('/add')
 async def add_note(note: schemas.Note,
                    response: Response):
-    await db.add_note(note=note)
-
-    for key, value in note.dict(exclude={'content'}):
-        response.set_cookie(key=key, value=value)
+    try:
+        await db.add_note(note=note)
+    except Exception:
+        logger.exception("Error adding note")
+        for key, value in note.dict(exclude={'content'}).items():
+            response.set_cookie(key=key, value=value)
+    else:
+        for key in note.dict().keys():
+            response.delete_cookie(key=key)
 
     return RedirectResponse('/notes/add')
