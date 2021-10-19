@@ -20,7 +20,7 @@ Jinja2 = "~3.0.1"
 uvloop = "~0.16.0"
 
 [tool.poetry.dev-dependencies]
-flake8 = "~3.9.2"
+flake8 = "~4.0.1"
 mypy = "~0.910"
 
 [build-system]
