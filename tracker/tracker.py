@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
-import copy
 import datetime
-import random
 import statistics
 from dataclasses import dataclass
 from datetime import timedelta
-from pathlib import Path
-from typing import Iterable, Iterator, Optional, Union
+from typing import Any, Iterable, Iterator, Optional, Union
 
 from tracker.common import database, settings
 from tracker.common.log import logger
 
 
 INDENT = 2
+
+
+def fmt(value: Any) -> str:
+    return ''
 
 
 @dataclass(frozen=True)
@@ -225,7 +226,6 @@ class MaterialEstimate:
                f"Expected duration: {time_span(self.expected_duration)}"
 
 
-@database.cache(update=False)
 def to_datetime(date) -> Optional[datetime.date]:
     """
     :param date: str or date or datetime.
@@ -271,29 +271,12 @@ def time_span(span: Union[timedelta, int]) -> str:
 class Log:
     __slots__ = '__log'
 
-    LOG_PATH = settings.DATA_FOLDER / 'log.json'
-
-    def __init__(self,
-                 *,
-                 full_info: bool = False) -> None:
-        """
-        :param full_info: if True get titles to all materials.
-         !!! there will be more queries to the database !!!
-        """
-        try:
-            log = self._get_log(full_info=full_info)
-        except Exception as e:
-            logger.error(f"When load the log: {e}")
-            log = {}
-        self.__log = log
+    def __init__(self) -> None:
+        self.__log = {}
 
     @property
     def log(self) -> dict[datetime.date, LogRecord]:
         return self.__log
-
-    @property
-    def path(self) -> Path:
-        return self.LOG_PATH
 
     @property
     def start(self) -> datetime.date:
@@ -612,21 +595,6 @@ class Log:
         except ZeroDivisionError:
             return 0
 
-    def dates(self) -> list[datetime.date]:
-        return [
-            date
-            for date, _ in self.data()
-        ]
-
-    def counts(self) -> list[int]:
-        return [
-            info.count
-            for _, info in self.data()
-        ]
-
-    def copy(self):
-        return copy.deepcopy(self)
-
     @property
     def statistics(self) -> LogStatistics:
         logger.debug("Calculating statistics of the log")
@@ -699,9 +667,6 @@ class Log:
         new_log.__log = new_log_content
         return new_log
 
-    def __len__(self) -> int:
-        return len(self.log)
-
     def __contains__(self,
                      material_id: int) -> bool:
         logger.debug(f"Whether {material_id=} is in a log record")
@@ -750,13 +715,6 @@ class Log:
             res = f"{res}{item}"
 
         return res
-
-    def __repr__(self) -> str:
-        log_records = ', '.join(
-            f"{date}: {info}"
-            for date, info in self.log.items()
-        )
-        return f"{self.__class__.__name__}({log_records})"
 
 
 class Tracker:
