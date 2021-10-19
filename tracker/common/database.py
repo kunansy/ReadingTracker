@@ -1,6 +1,7 @@
 import datetime
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncGenerator, NamedTuple
+from uuid import UUID
 
 import sqlalchemy.sql as sa
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -11,6 +12,16 @@ from tracker.common.log import logger
 
 class DatabaseError(Exception):
     pass
+
+
+class CompletionDate(NamedTuple):
+    material_id: UUID
+    completed_at: datetime.date
+
+
+class MaterialTitle(NamedTuple):
+    material_id: UUID
+    title: str
 
 
 engine = create_async_engine(settings.DB_URI, encoding='utf-8')
