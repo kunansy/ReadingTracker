@@ -4,6 +4,7 @@ from typing import AsyncGenerator
 from uuid import UUID
 
 import sqlalchemy.sql as sa
+from sqlalchemy.engine import RowMapping
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from tracker.common import models, settings
@@ -67,3 +68,16 @@ async def get_material_titles() -> dict[UUID, str]:
             row.material_id: row.title
             async for row in await ses.stream(stmt)
         }
+
+
+async def get_reading_materials() -> list[RowMapping]:
+    logger.debug("Getting reading materials")
+
+    stmt = sa.select([models.Materials,
+                      models.Statuses]) \
+        .join(models.Statuses,
+              models.Materials.c.material_id == models.Statuses.c.material_id) \
+        .where(models.Statuses.c.completed_at == None)
+
+    async with session() as ses:
+        return (await ses.execute(stmt)).mappings().all()

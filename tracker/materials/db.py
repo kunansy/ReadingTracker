@@ -90,19 +90,6 @@ async def get_free_materials() -> list[models.Materials]:
         return (await ses.execute(stmt)).all()
 
 
-async def get_reading_materials() -> list[RowMapping]:
-    logger.debug("Getting reading materials")
-
-    stmt = sa.select([models.Materials,
-                      models.Statuses]) \
-        .join(models.Statuses,
-              models.Materials.c.material_id == models.Statuses.c.material_id) \
-        .where(models.Statuses.c.end == None)
-
-    async with database.session() as ses:
-        return (await ses.execute(stmt)).mappings().all()
-
-
 async def get_completed_materials() -> list[RowMapping]:
     logger.debug("Getting completed materials")
 
