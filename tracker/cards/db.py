@@ -3,6 +3,7 @@ from uuid import UUID
 
 import sqlalchemy.sql as sa
 
+from tracker.cards import schemas
 from tracker.common import database, models
 from tracker.common.log import logger
 
@@ -30,20 +31,18 @@ async def get_material_titles() -> dict[UUID, str]:
 
 
 async def add_card(*,
-                   material_id: UUID,
-                   note_id: UUID,
-                   question: str,
-                   answer: Optional[str] = None) -> None:
+                   card: schemas.Card) -> None:
     logger.debug("Adding new card")
 
     values = {
-        "material_id": material_id,
-        "note_id": note_id,
-        "question": question,
-        "answer": answer,
+        "material_id": str(card.material_id),
+        "note_id": str(card.note_id),
+        "question": card.question,
+        "answer": card.answer,
     }
     stmt = models.Cards\
         .insert().values(values)
+
     async with database.session() as ses:
         await ses.execute(stmt)
     logger.debug("Card added")
