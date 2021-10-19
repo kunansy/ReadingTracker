@@ -48,8 +48,8 @@ async def add_card(*,
     logger.debug("Card added")
 
 
-async def all_cards(*,
-                    material_ids: Optional[list[int]] = None) -> list[dict[str, Any]]:
+async def get_cards_list(*,
+                         material_ids: Optional[list[UUID]] = None) -> list[dict[str, Any]]:
     how_many = 'all materials'
     if material_ids:
         how_many = f"material {material_ids=}"
@@ -62,7 +62,7 @@ async def all_cards(*,
 
     if material_ids:
         stmt = stmt \
-            .where(models.Cards.c.material_id.in_(material_ids))
+            .where(models.Cards.c.material_id.in_(str(_id) for _id in material_ids))
 
     async with database.session() as ses:
         return [
@@ -71,8 +71,8 @@ async def all_cards(*,
         ]
 
 
-async def cards_count(*,
-                      material_ids: Optional[list[int]] = None) -> int:
+async def get_cards_count(*,
+                          material_ids: Optional[list[UUID]] = None) -> int:
     how_many = 'all materials'
     if material_ids:
         how_many = f"material {material_ids=}"
@@ -82,7 +82,8 @@ async def cards_count(*,
     stmt = sa.select(sa.func.count(1))\
         .select_from(models.Cards)
     if material_ids:
-        stmt = stmt.where(models.Cards.c.material_id.in_(material_ids))
+        stmt = stmt\
+            .where(models.Cards.c.material_id.in_(str(_id) for _id in material_ids))
 
     async with database.session() as ses:
         return await ses.scalar(stmt)
