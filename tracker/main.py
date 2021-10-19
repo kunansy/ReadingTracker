@@ -21,13 +21,13 @@ app = FastAPI(
     debug=settings.API_DEBUG,
 )
 
-app.include_router(materials_router)
+app.mount("/static", StaticFiles(directory="static"), name="static")
+
 app.include_router(reading_log_router)
 app.include_router(notes_router)
 # app.include_router(materials_router)
 # app.include_router(cards_router)
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 @app.exception_handler(database.DatabaseError)
