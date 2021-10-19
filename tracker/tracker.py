@@ -252,12 +252,10 @@ def to_datetime(date) -> Optional[datetime.date]:
         raise TypeError(f"Str or datetime expected, {type(date)} found")
 
 
-@database.cache(update=False)
 def time_span(span: Union[timedelta, int]) -> str:
-    if isinstance(span, timedelta):
-        days = timedelta.days
-    else:
-        days = span
+    days: int = span
+    if isinstance(days, timedelta):
+        days = days.days
 
     res = ''
     if years := days // 365:
@@ -308,7 +306,7 @@ class Log:
         except IndexError:
             msg = "Reading log is empty, no start date"
             logger.warning(msg)
-            raise ex.ReadingLogIsEmpty(msg)
+            raise ValueError
 
     @property
     def stop(self) -> datetime.date:
@@ -321,7 +319,7 @@ class Log:
         except IndexError:
             msg = "Reading log is empty, no stop date"
             logger.warning(msg)
-            raise ex.ReadingLogIsEmpty(msg)
+            raise ValueError
 
     @property
     def reading_material(self) -> Optional[int]:
@@ -395,7 +393,7 @@ class Log:
         logger.debug("Calculating min for log")
 
         if not self.log:
-            raise ex.ReadingLogIsEmpty
+            raise ValueError
 
         date, info = min(
             [(date, info) for date, info in self.log.items()],
@@ -412,12 +410,11 @@ class Log:
         the max number of read pages.
 
         :return: MinMax obj.
-        :exception ReadingLogIsEmpty:
         """
         logger.debug("Calculating max for log")
 
         if not self.log:
-            raise ex.ReadingLogIsEmpty
+            raise ValueError
 
         date, info = max(
             [(date, info) for date, info in self.log.items()],
@@ -468,7 +465,7 @@ class Log:
         # stack for materials
         materials = []
         try:
-            completion_dates = database.get_completion_dates()
+            completion_dates = await database.get_completion_dates()
         except database.DatabaseError as e:
             logger.error(str(e))
             completion_dates = {}
@@ -500,14 +497,11 @@ class Log:
 
     def m_duration(self,
                    material_id: int) -> int:
-        """ Calculate how many days the material was being reading.
-
-        :exception NoMaterialInLog:
-        """
+        """ Calculate how many days the material was being reading. """
         logger.debug(f"Calculating duration for material {material_id=}")
 
         if material_id not in self:
-            raise ex.NoMaterialInLog
+            raise ValueError
 
         return sum(
             1
@@ -517,14 +511,11 @@ class Log:
 
     def m_total(self,
                 material_id: int) -> int:
-        """ Calculate how many pages of the material even read.
-
-        :exception NoMaterialInLog:
-        """
+        """ Calculate how many pages of the material even read. """
         logger.debug(f"Calculating total for material {material_id=}")
 
         if material_id not in self:
-            raise ex.NoMaterialInLog
+            raise ValueError
 
         return sum(
             info.count
@@ -541,7 +532,7 @@ class Log:
         logger.debug(f"Calculating lost time for material {material_id=}")
 
         if material_id not in self:
-            raise ex.NoMaterialInLog
+            raise ValueError
 
         return sum(
             1
@@ -559,7 +550,7 @@ class Log:
         logger.debug(f"Calculating min for material {material_id=}")
 
         if material_id not in self:
-            raise ex.NoMaterialInLog
+            raise ValueError
 
         sample = [
             (date, info)
@@ -586,7 +577,7 @@ class Log:
         logger.debug(f"Calculating max for material {material_id=}")
 
         if material_id not in self:
-            raise ex.NoMaterialInLog
+            raise ValueError
 
         sample = [
             (date, info)
@@ -605,13 +596,10 @@ class Log:
 
     def m_average(self,
                   material_id: int) -> int:
-        """
-        :exception NoMaterialInLog:
-        """
         logger.debug(f"Calculating average for material {material_id=}")
 
         if material_id not in self:
-            raise ex.NoMaterialInLog
+            raise ValueError
 
         total = duration = 0
         for date, info in self.data():
@@ -641,13 +629,10 @@ class Log:
 
     @property
     def statistics(self) -> LogStatistics:
-        """
-        :exception ReadingLogIsEmpty:
-        """
         logger.debug("Calculating statistics of the log")
 
         if not self.log:
-            raise ex.ReadingLogIsEmpty
+            raise ValueError
 
         return LogStatistics(
             start_date=self.start,
@@ -669,13 +654,11 @@ class Log:
         of by slice of dates.
 
         If slice get new Log object with [start; stop).
-
-        :exception ReadingLogIsEmpty:
         """
         logger.debug(f"Getting item {date=} from the log")
 
         if not self.log:
-            raise ex.ReadingLogIsEmpty
+            raise ValueError
 
         if not isinstance(date, (datetime.date, slice, str)):
             raise TypeError(f"Date or slice of dates expected, "
@@ -741,7 +724,7 @@ class Log:
         new_line = '\n'
 
         try:
-            material_titles = database.get_material_titles()
+            material_titles = await database.get_material_titles()
         except database.DatabaseError as e:
             logger.error(str(e))
             raise
@@ -933,11 +916,11 @@ class Cards:
     @property
     def card(self) -> Optional[database.CardNoteRecall]:
         if self.repeated_today() >= settings._MAX_PER_DAY:
-            return
+            return # type: ignore
 
         if self.__current_card is None:
             if not (cards := self._get_cards()):
-                return
+                return # type: ignore
             self.__cards = cards
             self.__current_card = self.__cards.pop()
 
@@ -975,12 +958,8 @@ class Cards:
 
     def complete_card(self,
                       result: str) -> None:
-        """
-        :exception DatabaseError:
-        :exception CardNotFound:
-        """
         if self.__current_card is None:
-            raise ex.CardNotFound
+            raise ValueError
 
         card_id = self.__current_card.card.card_id
 
@@ -988,11 +967,8 @@ class Cards:
             database.complete_card(
                 card_id=card_id, result=result
             )
-        except ex.CardNotFound as e:
-            logger.error(str(e))
-            raise
-        except database.DatabaseError as e:
-            logger.error(str(e))
+        except Exception:
+            logger.exception("Error completing card")
             raise
         else:
             self.__current_card = None
