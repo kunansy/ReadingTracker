@@ -74,14 +74,12 @@ async def cards_count(*,
     if material_ids:
         how_many = f"material {material_ids=}"
 
-    logger.info(f"Getting amount of cards for {how_many}")
+    logger.debug(f"Getting amount of cards for {how_many}")
+
+    stmt = sa.select(sa.func.count(1))\
+        .select_from(models.Cards)
+    if material_ids:
+        stmt = stmt.where(models.Cards.c.material_id.in_(material_ids))
 
     async with database.session() as ses:
-        query = ses.query(sa.func.count()) \
-            .select_from(Card)
-
-        if material_ids:
-            query = query \
-                .filter(Card.material_id.in_(material_ids))
-
-        return query.one()[0]
+        return await ses.scalar(stmt)
