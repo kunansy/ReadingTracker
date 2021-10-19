@@ -1,5 +1,6 @@
-from datetime import datetime
+import datetime
 from typing import Optional
+from uuid import UUID
 
 import sqlalchemy.sql as sa
 from sqlalchemy.engine import RowMapping
@@ -12,7 +13,7 @@ async def get_materials(*,
                         materials_ids: Optional[list[int]] = None) -> list[models.Materials]:
     how_many = 'all'
     if materials_ids:
-        how_many = len(materials_ids)
+        how_many = str(len(materials_ids))
 
     logger.info("Getting %s materials", how_many)
 
@@ -107,7 +108,7 @@ async def get_status(*,
                      status_ids: Optional[list[int]] = None) -> list[models.Statuses]:
     how_many = 'all'
     if status_ids:
-        how_many = len(status_ids)
+        how_many = str(len(status_ids))
 
     logger.debug("Getting %s statuses", how_many)
 
@@ -182,17 +183,18 @@ async def start_material(*,
 
 
 async def complete_material(*,
-                            material_id: int,
+                            material_id: UUID,
                             completion_date: Optional[datetime.date] = None) -> None:
     completion_date = completion_date or database.today()
     logger.debug("Completing material_id=%s at %s",
                  material_id, completion_date)
 
     get_status_stmt = sa.select(models.Statuses)\
-        .where(models.Statuses.c.material_id == material_id)
+        .where(models.Statuses.c.material_id == str(material_id))
+
     update_status_stmt = models.Statuses\
         .update().values(end=completion_date)\
-        .where(models.Statuses.c.material_id == material_id)
+        .where(models.Statuses.c.material_id == str(material_id))
 
     async with database.session() as ses:
         status = (await ses.execute(get_status_stmt)).mappings().first()

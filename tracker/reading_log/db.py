@@ -1,5 +1,6 @@
 import datetime
 from typing import Any, AsyncGenerator, NamedTuple, Optional
+from uuid import UUID
 
 import sqlalchemy.sql as sa
 from sqlalchemy.engine import RowMapping
@@ -39,7 +40,7 @@ async def get_log_records() -> dict[datetime.date, RowMapping]:
         }
 
 
-async def get_material_titles() -> dict[int, str]:
+async def get_material_titles() -> dict[UUID, str]:
     return await database.get_material_titles()
 
 

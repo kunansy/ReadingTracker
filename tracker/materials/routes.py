@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -56,9 +58,8 @@ async def start_material(material_id: int):
 
 
 @router.post('/complete/{material_id}')
-async def complete_material(material_id: int):
-    await db.complete_material(material_id)
-    # jinja.flash(request, f"Material {material_id=} completed", 'success')
+async def complete_material(material_id: UUID):
+    await db.complete_material(material_id=material_id)
 
     return RedirectResponse('/materials/reading')
 

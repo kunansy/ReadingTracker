@@ -1,5 +1,6 @@
-from datetime import datetime
+import datetime
 from typing import Optional
+from uuid import UUID
 
 import sqlalchemy.sql as sa
 from sqlalchemy.engine import RowMapping
@@ -9,7 +10,7 @@ from tracker.common.log import logger
 from tracker.notes import schemas
 
 
-async def get_material_titles() -> dict[int, str]:
+async def get_material_titles() -> dict[UUID, str]:
     return await database.get_material_titles()
 
 
@@ -17,7 +18,7 @@ async def get_notes(*,
                     materials_ids: Optional[list[int]] = None) -> list[RowMapping]:
     how_many = 'all'
     if materials_ids:
-        how_many = len(materials_ids)
+        how_many = str(len(materials_ids))
 
     logger.debug("Getting notes for %s materials", how_many)
 
