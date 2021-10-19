@@ -66,14 +66,14 @@ async def get_completion_dates() -> list[CompletionDate]:
         ]
 
 
-async def get_material_titles() -> dict[int, str]:
+async def get_material_titles() -> list[MaterialTitle]:
     logger.debug("Getting material titles")
 
     stmt = sa.select([models.Materials.c.material_id,
                       models.Materials.c.title])
 
     async with session() as ses:
-        return {
-            row.material_id: row.title
+        return [
+            MaterialTitle(row.material_id, row.title)
             async for row in await ses.stream(stmt)
-        }
+        ]
