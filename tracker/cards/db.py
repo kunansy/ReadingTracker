@@ -25,6 +25,10 @@ async def notes_with_cards(*,
         return (await ses.execute(stmt)).all()
 
 
+async def get_material_titles() -> dict[UUID, str]:
+    return await database.get_material_titles()
+
+
 async def add_card(*,
                    material_id: UUID,
                    note_id: UUID,
