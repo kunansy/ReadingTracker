@@ -50,20 +50,20 @@ def yesterday() -> datetime.datetime:
     return today() - datetime.timedelta(days=1)
 
 
-async def get_completion_dates() -> dict[int, datetime.date]:
+async def get_completion_dates() -> list[CompletionDate]:
     logger.debug("Getting completion dates")
 
     stmt = sa.select([models.Materials.c.material_id,
-                      models.Statuses.c.end]) \
+                      models.Statuses.c.completed_at]) \
         .join(models.Statuses,
               models.Statuses.c.material_id == models.Materials.c.material_id) \
-        .where(models.Statuses.end != None)
+        .where(models.Statuses.completed_at != None)
 
     async with session() as ses:
-        return {
-            row.material_id: row.end
+        return [
+            CompletionDate(row.material_id, row.completed_at)
             async for row in await ses.stream(stmt)
-        }
+        ]
 
 
 async def get_material_titles() -> dict[int, str]:
