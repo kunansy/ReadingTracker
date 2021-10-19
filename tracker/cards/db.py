@@ -1,35 +1,28 @@
-from typing import Optional
+from typing import Any, Optional
+from uuid import UUID
 
 import sqlalchemy.sql as sa
 
-from tracker.common import database
+from tracker.common import database, models
 from tracker.common.log import logger
 
 
 async def notes_with_cards(*,
-                           material_ids: Optional[list[int]] = None) -> set[int]:
-    """
-    Get notes for which there is a card.
-
-    :return: set if ids of there notes.
-    """
+                           material_ids: Optional[list[UUID]] = None) -> set[UUID]:
     how_many = 'all'
     if material_ids:
-        how_many = len(material_ids)
+        how_many = str(len(material_ids))
     logger.info(f"Getting notes with a card for {how_many} materials")
 
+    stmt = sa.select(models.Notes.c.note_id)\
+        .join(models.Cards,
+              models.Cards.c.note_id == models.Cards.c.note_id)
+    if material_ids:
+        stmt = stmt \
+            .where(models.Notes.c.material_id.in_(material_ids))
+
     async with database.session() as ses:
-        query = ses.query(Note.id) \
-            .join(Card, Card.note_id == Note.id)
-
-        if material_ids:
-            query = query \
-                .filter(Note.material_id.in_(material_ids))
-
-        return {
-            item[0]
-            for item in query.all()
-        }
+        return (await ses.execute(stmt)).all()
 
 
 async def add_card(*,
