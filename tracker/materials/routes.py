@@ -60,9 +60,8 @@ async def add_material(material: schemas.Material,
 
 
 @router.post('/start/{material_id}')
-async def start_material(material_id: int):
+async def start_material(material_id: UUID):
     await db.start_material(material_id=material_id)
-    # jinja.flash(request, f"Material {material_id=} started", 'success')
 
     return RedirectResponse('/materials/queue')
 

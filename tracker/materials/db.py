@@ -20,7 +20,7 @@ async def get_materials(*,
 
     stmt = sa.select(models.Materials)
     if materials_ids:
-        materials_ids = (str(id_) for id_ in materials_ids)
+        materials_ids = (str(id_) for id_ in materials_ids) # type: ignore
         stmt = stmt\
             .where(models.Materials.c.material_id.in_(materials_ids))
 
@@ -125,7 +125,7 @@ async def get_status(*,
         return (await ses.execute(stmt)).all()
 
 
-async def get_material_status(*,
+async def get_material_status(*, # type: ignore
                               material_id: UUID) -> Optional[RowMapping]:
     logger.debug("Getting status for material_id=%s",
                  material_id)
