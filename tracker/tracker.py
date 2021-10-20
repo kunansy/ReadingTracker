@@ -191,65 +191,6 @@ def time_span(span: Union[timedelta, int]) -> str:
 
 
 class Log:
-    __slots__ = '__log'
-
-    def __init__(self) -> None:
-        self.__log = {}
-
-    def m_min(self,
-              material_id: int) -> MinMax:
-        """ Get info of the record with
-        the min number of read pages of the material.
-
-        :exception NoMaterialInLog:
-        """
-        logger.debug(f"Calculating min for material {material_id=}")
-
-        if material_id not in self:
-            raise ValueError
-
-        sample = [
-            (date, info)
-            for date, info in self.log.items()
-            if info.material_id == material_id
-        ]
-
-        date, info = min(
-            sample,
-            key=lambda item: item[1].count
-        )
-        return MinMax(
-            date=date,
-            **info.dict()
-        )
-
-    def m_max(self,
-              material_id: int) -> MinMax:
-        """ Get info of the record with
-        the max number of read pages of the material.
-
-        :exception NoMaterialInLog:
-        """
-        logger.debug(f"Calculating max for material {material_id=}")
-
-        if material_id not in self:
-            raise ValueError
-
-        sample = [
-            (date, info)
-            for date, info in self.log.items()
-            if info.material_id == material_id
-        ]
-
-        date, info = max(
-            sample,
-            key=lambda item: item[1].count
-        )
-        return MinMax(
-            date=date,
-            **info.dict()
-        )
-
     def __getitem__(self,
                     date: Union[datetime.date, str, slice]):
         """
