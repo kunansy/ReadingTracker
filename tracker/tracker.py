@@ -313,26 +313,6 @@ class Log:
         except ZeroDivisionError:
             return 0
 
-    @property
-    def statistics(self) -> LogStatistics:
-        logger.debug("Calculating statistics of the log")
-
-        if not self.log:
-            raise ValueError
-
-        return LogStatistics(
-            start_date=self.start,
-            stop_date=self.stop,
-            duration=self.duration,
-            lost_time=self.lost_time,
-            average=self.average,
-            total_pages_read=self.total,
-            would_be_total=self.would_be_total,
-            min=self.min,
-            max=self.max,
-            median=self.median
-        )
-
     def __getitem__(self,
                     date: Union[datetime.date, str, slice]):
         """
@@ -384,17 +364,6 @@ class Log:
             iter_ += step
         new_log.__log = new_log_content
         return new_log
-
-    def __contains__(self,
-                     material_id: int) -> bool:
-        logger.debug(f"Whether {material_id=} is in a log record")
-        if not self.log:
-            return False
-
-        return any(
-            info.material_id == material_id
-            for info in self.log.values()
-        )
 
     def __str__(self) -> str:
         """
