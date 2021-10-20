@@ -11,7 +11,7 @@ from tracker.materials import schemas
 
 
 async def get_materials(*,
-                        materials_ids: Optional[list[int]] = None) -> list[models.Materials]:
+                        materials_ids: Optional[list[UUID]] = None) -> list[RowMapping]:
     how_many = 'all'
     if materials_ids:
         how_many = str(len(materials_ids))
@@ -20,35 +20,39 @@ async def get_materials(*,
 
     stmt = sa.select(models.Materials)
     if materials_ids:
-        stmt = stmt.where(models.Materials.c.material_id.in_(materials_ids))
+        materials_ids = (str(id_) for id_ in materials_ids)
+        stmt = stmt\
+            .where(models.Materials.c.material_id.in_(materials_ids))
 
     async with database.session() as ses:
         return (await ses.execute(stmt)).all()
 
 
 async def get_title(*,
-                    material_id: int) -> str:
+                    material_id: UUID) -> str:
     logger.info("Getting title for material_id=%s", material_id)
+
+    materials = await get_materials(materials_ids=[material_id])
     try:
-        return (await get_materials(materials_ids=[material_id]))[0].title
+        return materials[0].title
     except IndexError:
         logger.warning(f"Material {material_id=} not found")
         return ''
 
 
 async def does_material_exist(*,
-                              material_id: int) -> bool:
+                              material_id: UUID) -> bool:
     logger.debug("Whether material_id=%s exists", material_id)
 
     stmt = sa.select(models.Materials.c.material_id)\
-        .where(models.Materials.c.material_id == material_id)
+        .where(models.Materials.c.material_id == str(material_id))
 
     async with database.session() as ses:
         return await ses.scalar(stmt) is not None
 
 
 async def is_material_reading(*,
-                              material_id: int) -> bool:
+                              material_id: UUID) -> bool:
     logger.debug("Whether material_id=%s is reading",
                  material_id)
 
@@ -57,14 +61,14 @@ async def is_material_reading(*,
               models.Materials.c.material_id == models.Statuses.c.material_id)\
         .where(models.Statuses.c.begin != None)\
         .where(models.Statuses.c.end == None)\
-        .where(models.Materials.c.material_id == material_id)
+        .where(models.Materials.c.material_id == str(material_id))
 
     async with database.session() as ses:
         return await ses.scalar(stmt) is not None
 
 
 async def is_material_assigned(*,
-                               material_id: int) -> bool:
+                               material_id: UUID) -> bool:
     logger.debug("Whether material_id=%s reading or completed",
                  material_id)
 
@@ -72,7 +76,7 @@ async def is_material_assigned(*,
         .join(models.Statuses,
               models.Materials.c.material_id == models.Statuses.c.material_id) \
         .where(models.Statuses.c.begin != None) \
-        .where(models.Materials.c.material_id == material_id)
+        .where(models.Materials.c.material_id == str(material_id))
 
     async with database.session() as ses:
         return await ses.scalar(stmt) is not None
@@ -122,18 +126,16 @@ async def get_status(*,
 
 
 async def get_material_status(*,
-                              material_id: int) -> models.Statuses:
+                              material_id: UUID) -> Optional[RowMapping]:
     logger.debug("Getting status for material_id=%s",
                  material_id)
 
     stmt = sa.select(models.Statuses)\
-        .where(models.Statuses.c.material_id == material_id)
+        .where(models.Statuses.c.material_id == str(material_id))
 
     async with database.session() as ses:
-        if (material := (await ses.execute(stmt)).first()) is None:
-            raise ValueError("Status for material_id=%s not found",
-                             material_id)
-        return material
+        if status := (await ses.execute(stmt)).first():
+            return status
 
 
 async def add_material(*,
@@ -155,9 +157,9 @@ async def add_material(*,
 
 
 async def start_material(*,
-                         material_id: int,
+                         material_id: UUID,
                          start_date: Optional[datetime.date] = None) -> None:
-    start_date = start_date or database.today()
+    start_date = start_date or database.today().date()
     logger.debug("Starting material_id=%s at %s",
                  material_id, start_date)
 
@@ -165,7 +167,7 @@ async def start_material(*,
         raise ValueError("Start date must be less than today")
 
     values = {
-        "material_id": material_id,
+        "material_id": str(material_id),
         "start_date": start_date
     }
     stmt = models.Statuses\
@@ -197,10 +199,10 @@ async def complete_material(*,
         if status is None:
             raise ValueError("Material_id=%s not assigned", material_id)
 
-        if status.end is not None:
+        if status.completed_at is not None:
             raise ValueError("Material_id=%s even completed", material_id)
-        if status.begin > completion_date:
-            raise ValueError("Begin cannot be more than end")
+        if status.started_at > completion_date:
+            raise ValueError
 
         await ses.execute(update_status_stmt)
 
