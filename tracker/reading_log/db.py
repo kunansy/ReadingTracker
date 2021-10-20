@@ -16,6 +16,14 @@ class LogRecord(NamedTuple):
     material_title: Optional[str] = None
 
 
+class MinMax(NamedTuple):
+    log_id: UUID
+    material_id: UUID
+    material_title: str
+    count: int
+    date: datetime.date
+
+
 class MaterialStatistics(NamedTuple):
     material_id: UUID
     # total spent time including empty days
@@ -196,7 +204,14 @@ async def get_min_record() -> Optional[RowMapping]:
         .limit(1)
 
     async with database.session() as ses:
-        return (await ses.execute(stmt)).first()
+        if minmax := (await ses.execute(stmt)).first():
+            return MinMax(
+                material_id=minmax.material_id,
+                log_id=minmax.log_id,
+                count=minmax.count,
+                date=minmax.date,
+                material_title=minmax.material_title
+            )
 
 
 async def get_max_record() -> Optional[RowMapping]:
@@ -208,7 +223,14 @@ async def get_max_record() -> Optional[RowMapping]:
         .limit(1)
 
     async with database.session() as ses:
-        return (await ses.execute(stmt)).first()
+        if minmax := (await ses.execute(stmt)).first():
+            return MinMax(
+                material_id=minmax.material_id,
+                log_id=minmax.log_id,
+                count=minmax.count,
+                date=minmax.date,
+                material_title=minmax.material_title
+            )
 
 
 async def would_be_total() -> int:
