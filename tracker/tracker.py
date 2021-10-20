@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
 import datetime
-import statistics
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import Any, Iterable, Iterator, Optional, Union
+from typing import Any, Iterable, Optional, Union
 
 from tracker.common import database, settings
 from tracker.common.log import logger
@@ -17,44 +16,14 @@ def fmt(value: Any) -> str:
 
 
 @dataclass(frozen=True)
-class MinMax:
-    date: datetime.date
-    count: int
-    material_id: int
-    material_title: Optional[str] = None
-
-    def dict(self,
-             *,
-             exclude: Iterable[str] = None) -> dict:
-        exclude = exclude or ()
-
-        return {
-            field: getattr(self, field, None)
-            for field in self.__annotations__.keys()
-            if field not in exclude
-        }
-
-    def __str__(self) -> str:
-        date = fmt(self.date)
-
-        material = f"Material id: {self.material_id}"
-        if material_title := self.material_title:
-            material = f"Title: «{material_title}»"
-
-        return f"Date: {date}\n" \
-               f"Count: {self.count} pages\n" \
-               f"{material}"
-
-
-@dataclass(frozen=True)
 class MaterialStatistics:
     material: database.Material
     started: datetime.date
     duration: int
     lost_time: int
     total: int
-    min: Optional[MinMax]
-    max: Optional[MinMax]
+    # min: Optional[MinMax]
+    # max: Optional[MinMax]
     average: int
     remaining_pages: Optional[int] = None
     remaining_days: Optional[int] = None
@@ -115,11 +84,6 @@ class MaterialStatistics:
                f"{max_}" \
                f"Average: {self.average} pages per day" \
                f"{would_be_completed}"
-
-
-@dataclass(frozen=True)
-class TrackerStatistics:
-    pass
 
 
 @dataclass(frozen=True)
