@@ -20,7 +20,7 @@ class MinMax(NamedTuple):
     log_id: UUID
     material_id: UUID
     material_title: str
-    count: int
+    count: int # type: ignore
     date: datetime.date
 
 
@@ -116,7 +116,7 @@ async def get_material_statistics(*,
                                   material_id: UUID) -> MaterialStatistics:
     duration = sum(
         1
-        for _, info in await get_log_records()
+        for _, info in (await get_log_records()).items()
         if info.material_id == material_id
     )
     total = lost_time = 0
@@ -202,7 +202,7 @@ async def contains(*,
         return await ses.scalar(stmt)
 
 
-async def get_min_record(*,
+async def get_min_record(*, # type: ignore
                          material_id: Optional[UUID] = None) -> Optional[MinMax]:
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title])\
@@ -226,7 +226,7 @@ async def get_min_record(*,
             )
 
 
-async def get_max_record(*,
+async def get_max_record(*, # type: ignore
                          material_id: Optional[UUID] = None) -> Optional[MinMax]:
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title]) \
@@ -276,7 +276,7 @@ async def get_log_statistics():
     }
 
 
-async def get_material_reading_now() -> Optional[UUID]:
+async def get_material_reading_now() -> Optional[UUID]: # type: ignore
     if not await get_log_records():
         logger.warning("Reading log is empty, no materials reading")
         return # type: ignore
