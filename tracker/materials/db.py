@@ -85,12 +85,12 @@ async def is_material_assigned(*,
 async def get_free_materials() -> list[models.Materials]:
     logger.debug("Getting free materials")
 
-    # TODO: where not exists
-    stmt = sa.select(models.Materials) \
-        .join(models.Statuses,
-              models.Materials.c.material_id == models.Statuses.c.material_id,
-              isouter=True) \
-        .where(models.Statuses.c.material_id == None)
+    assigned_condition = sa.select(1) \
+        .select_from(models.Statuses) \
+        .where(models.Statuses.c.material_id == models.Materials.c.material_id)
+
+    stmt = sa.select(models.Materials)\
+        .where(~sa.exists(assigned_condition)) \
 
     async with database.session() as ses:
         return (await ses.execute(stmt)).all()
