@@ -32,6 +32,8 @@ class MaterialStatistics(NamedTuple):
     # days the material was being reading
     duration: int
     average: int
+    min_record: Optional[MinMax]
+    max_record: Optional[MinMax]
 
 
 def safe_list_get(list_: list[Any],
@@ -124,12 +126,17 @@ async def get_material_statistics(*,
         total += 1
         lost_time += info.count == 0
 
+    min_record = await get_min_record(material_id=material_id)
+    max_record = await get_max_record(material_id=material_id)
+
     return MaterialStatistics(
         material_id=material_id,
         total=total,
         lost_time=lost_time,
         duration=duration,
-        average=round(total / duration)
+        average=round(total / duration),
+        min_record=min_record,
+        max_record=max_record
     )
 
 
