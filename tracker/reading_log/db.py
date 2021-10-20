@@ -12,7 +12,7 @@ from tracker.reading_log import schemas
 
 class LogRecord(NamedTuple):
     count: int # type: ignore
-    material_id: int
+    material_id: UUID
     material_title: Optional[str] = None
 
 
@@ -56,7 +56,7 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
         return
 
     # stack for materials
-    materials: list[int] = []
+    materials: list[UUID] = []
     try:
         completion_dates = await database.get_completion_dates()
     except Exception as e:
@@ -67,12 +67,12 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
     iter_over_dates = min(log_records.keys())
 
     while iter_over_dates <= database.today().date():
-        last_material_id = safe_list_get(materials, -1, 0)
+        last_material_id = safe_list_get(materials, -1, None)
 
         if ((completion_date := completion_dates.get(last_material_id))
                 and completion_date < iter_over_dates):
             materials.pop()
-            last_material_id = safe_list_get(materials, -1, 0)
+            last_material_id = safe_list_get(materials, -1, None)
 
         if not (info := log_records.get(iter_over_dates)):
             info = LogRecord(material_id=last_material_id, count=0)
@@ -204,30 +204,24 @@ async def get_log_statistics():
     }
 
 
-async def get_material_reading_now() -> Optional[int]:
+async def get_material_reading_now() -> Optional[UUID]:
     if not await get_log_records():
         logger.warning("Reading log is empty, no materials reading")
         return # type: ignore
 
-    last_material_id = 0
+    last_material_id = None
     async for _, info in data():
         last_material_id = info.material_id
 
-    if last_material_id != 0:
+    if last_material_id is not None:
         return last_material_id
 
     # means the new material started
     #  and there's no log records for it
-    try:
-        reading_materials = await database.get_reading_materials()
-    except Exception:
-        logger.exception("Error getting reading materials")
-        return 0
+    reading_materials = await database.get_reading_materials()
 
-    if (reading_material := safe_list_get(reading_materials, -1, 0)) == 0:
-        return 0
-
-    return reading_material.material.material_id
+    if reading_material := safe_list_get(reading_materials, -1, None):
+        return reading_material.material_id
 
 
 async def set_log(*,
