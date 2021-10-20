@@ -157,55 +157,8 @@ def time_span(span: Union[timedelta, int]) -> str:
 class Tracker:
     __slots__ = '__log',
 
-    def __init__(self,
-                 log: Log) -> None:
-        self.__log = log
-
-    @property
-    def queue(self) -> list[database.Material]:
-        """
-        Get list of uncompleted materials:
-        assigned but not completed and not assigned too
-
-        :exception DatabaseError:
-        """
-        try:
-            return database.get_free_materials()
-        except database.DatabaseError as e:
-            logger.error(str(e))
-            raise
-
-    @property
-    def processed(self) -> database.MATERIAL_STATUS:
-        """ Get list of completed Materials.
-
-        :exception DatabaseError:
-        """
-        try:
-            return database.get_completed_materials()
-        except database.DatabaseError as e:
-            logger.error(str(e))
-            raise
-
-    @property
-    def reading(self) -> database.MATERIAL_STATUS:
-        """ Get reading materials and their statuses
-
-        :exception DatabaseError:
-        """
-        try:
-            return database.get_reading_materials()
-        except database.DatabaseError as e:
-            logger.error(str(e))
-            raise
-
-    @staticmethod
-    def does_material_exist(material_id: int) -> bool:
-        try:
-            return database.does_material_exist(material_id)
-        except database.DatabaseError as e:
-            logger.error(f"Error checking {material_id=} exists:\n{e}")
-            return False
+    def __init__(self):
+        self.__log = ...
 
     def get_material_statistics(self,
                                 material_id: int,
