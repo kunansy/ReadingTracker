@@ -196,51 +196,6 @@ class Log:
     def __init__(self) -> None:
         self.__log = {}
 
-    def m_duration(self,
-                   material_id: int) -> int:
-        """ Calculate how many days the material was being reading. """
-        logger.debug(f"Calculating duration for material {material_id=}")
-
-        if material_id not in self:
-            raise ValueError
-
-        return sum(
-            1
-            for _, info in self.data()
-            if info.material_id == material_id
-        )
-
-    def m_total(self,
-                material_id: int) -> int:
-        """ Calculate how many pages of the material even read. """
-        logger.debug(f"Calculating total for material {material_id=}")
-
-        if material_id not in self:
-            raise ValueError
-
-        return sum(
-            info.count
-            for info in self.log.values()
-            if info.material_id == material_id
-        )
-
-    def m_lost_time(self,
-                    material_id: int) -> int:
-        """ How many days was lost reading the material.
-
-        :exception NoMaterialInLog:
-        """
-        logger.debug(f"Calculating lost time for material {material_id=}")
-
-        if material_id not in self:
-            raise ValueError
-
-        return sum(
-            1
-            for _, info in self.data()
-            if info.material_id == material_id and info.count == 0
-        )
-
     def m_min(self,
               material_id: int) -> MinMax:
         """ Get info of the record with
@@ -294,24 +249,6 @@ class Log:
             date=date,
             **info.dict()
         )
-
-    def m_average(self,
-                  material_id: int) -> int:
-        logger.debug(f"Calculating average for material {material_id=}")
-
-        if material_id not in self:
-            raise ValueError
-
-        total = duration = 0
-        for date, info in self.data():
-            if info.material_id == material_id:
-                total += info.count
-                duration += 1
-
-        try:
-            return total // duration
-        except ZeroDivisionError:
-            return 0
 
     def __getitem__(self,
                     date: Union[datetime.date, str, slice]):

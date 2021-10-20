@@ -16,6 +16,16 @@ class LogRecord(NamedTuple):
     material_title: Optional[str] = None
 
 
+class MaterialStatistics(NamedTuple):
+    material_id: UUID
+    # total spent time including empty days
+    total: int
+    lost_time: int
+    # days the material was being reading
+    duration: int
+    average: int
+
+
 def safe_list_get(list_: list[Any],
                   index: int,
                   default: Any = None) -> Any:
@@ -90,6 +100,29 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
 
         yield iter_over_dates, info
         iter_over_dates += step
+
+
+async def get_material_statistics(*,
+                                  material_id: UUID) -> MaterialStatistics:
+    duration = sum(
+        1
+        for _, info in await get_log_records()
+        if info.material_id == material_id
+    )
+    total = lost_time = 0
+    async for date, info in data():
+        if material_id != info.material_id:
+            continue
+        total += 1
+        lost_time += info.count == 0
+
+    return MaterialStatistics(
+        material_id=material_id,
+        total=total,
+        lost_time=lost_time,
+        duration=duration,
+        average=round(total / duration)
+    )
 
 
 async def get_start_date() -> datetime.date:
