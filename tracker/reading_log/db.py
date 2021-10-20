@@ -195,13 +195,18 @@ async def contains(*,
         return await ses.scalar(stmt)
 
 
-async def get_min_record() -> Optional[RowMapping]:
+async def get_min_record(*,
+                         material_id: Optional[UUID] = None) -> Optional[MinMax]:
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title])\
         .join(models.Materials,
               models.ReadingLog.c.material_id == models.Materials.c.material_id) \
         .order_by(models.ReadingLog.c.count)\
         .limit(1)
+
+    if material_id:
+        stmt = stmt\
+            .where(models.ReadingLog.c.material_id == str(material_id))
 
     async with database.session() as ses:
         if minmax := (await ses.execute(stmt)).first():
@@ -214,13 +219,18 @@ async def get_min_record() -> Optional[RowMapping]:
             )
 
 
-async def get_max_record() -> Optional[RowMapping]:
+async def get_max_record(*,
+                         material_id: Optional[UUID] = None) -> Optional[MinMax]:
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title]) \
         .join(models.Materials,
               models.ReadingLog.c.material_id == models.Materials.c.material_id) \
         .order_by(models.ReadingLog.c.count.desc()) \
         .limit(1)
+
+    if material_id:
+        stmt = stmt \
+            .where(models.ReadingLog.c.material_id == str(material_id))
 
     async with database.session() as ses:
         if minmax := (await ses.execute(stmt)).first():
