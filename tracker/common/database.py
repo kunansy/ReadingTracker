@@ -1,6 +1,6 @@
 import datetime
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+from typing import AsyncGenerator, NamedTuple, Optional
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -13,6 +13,43 @@ from tracker.common.log import logger
 
 class DatabaseError(Exception):
     pass
+
+
+class MinMax(NamedTuple):
+    log_id: UUID
+    material_id: UUID
+    material_title: str
+    count: int # type: ignore
+    date: datetime.date
+
+
+class MaterialStatistics(NamedTuple):
+    material: RowMapping
+    started_at: datetime.date
+    duration: int
+    lost_time: int
+    total: int
+    min_record: Optional[MinMax]
+    max_record: Optional[MinMax]
+    average: int
+    remaining_pages: Optional[int] = None
+    remaining_days: Optional[int] = None
+    completed_at: Optional[datetime.date] = None
+    # date when the material would be completed
+    # according to average read pages count
+    would_be_completed: Optional[datetime.date] = None
+
+
+class LogStatistics(NamedTuple):
+    material_id: UUID
+    # total spent time including empty days
+    total: int
+    lost_time: int
+    # days the material was being reading
+    duration: int
+    average: int
+    min_record: Optional[MinMax]
+    max_record: Optional[MinMax]
 
 
 engine = create_async_engine(settings.DB_URI, encoding='utf-8')

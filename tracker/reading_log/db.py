@@ -16,26 +16,6 @@ class LogRecord(NamedTuple):
     material_title: Optional[str] = None
 
 
-class MinMax(NamedTuple):
-    log_id: UUID
-    material_id: UUID
-    material_title: str
-    count: int # type: ignore
-    date: datetime.date
-
-
-class MaterialStatistics(NamedTuple):
-    material_id: UUID
-    # total spent time including empty days
-    total: int
-    lost_time: int
-    # days the material was being reading
-    duration: int
-    average: int
-    min_record: Optional[MinMax]
-    max_record: Optional[MinMax]
-
-
 def safe_list_get(list_: list[Any],
                   index: int,
                   default: Any = None) -> Any:
@@ -112,8 +92,9 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
         iter_over_dates += step
 
 
-async def get_material_statistics(*,
-                                  material_id: UUID) -> MaterialStatistics:
+async def get_m_log_statistics(*,
+                               material_id: UUID) -> database.LogStatistics:
+    """ Get material statistics from logs """
     duration = sum(
         1
         for _, info in (await get_log_records()).items()
@@ -129,7 +110,7 @@ async def get_material_statistics(*,
     min_record = await get_min_record(material_id=material_id)
     max_record = await get_max_record(material_id=material_id)
 
-    return MaterialStatistics(
+    return database.LogStatistics(
         material_id=material_id,
         total=total,
         lost_time=lost_time,
