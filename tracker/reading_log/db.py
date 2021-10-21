@@ -40,8 +40,20 @@ async def get_log_records() -> dict[datetime.date, RowMapping]:
         }
 
 
-async def get_material_titles() -> dict[UUID, str]:
-    return await database.get_material_titles()
+async def get_reading_material_titles() -> dict[UUID, str]:
+    logger.debug("Getting material titles")
+
+    stmt = sa.select([models.Materials.c.material_id,
+                      models.Materials.c.title])\
+        .join(models.Statuses,
+              models.Statuses.c.material_id == models.Materials.c.material_id)\
+        .where(models.Statuses.c.completed_at == None)
+
+    async with database.session() as ses:
+        return {
+            row.material_id: row.title
+            async for row in await ses.stream(stmt)
+        }
 
 
 async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:

@@ -30,7 +30,7 @@ async def get_reading_log(request: Request):
 
 @router.get('/add')
 async def add_log_record_view(request: Request):
-    titles = await db.get_material_titles()
+    titles = await db.get_reading_material_titles()
     reading_material_id = await db.get_material_reading_now()
     today = datetime.datetime.utcnow()
 
