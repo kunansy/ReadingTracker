@@ -7,7 +7,6 @@ from sqlalchemy.engine import RowMapping
 
 from tracker.common import database, models
 from tracker.common.log import logger
-from tracker.reading_log import schemas
 
 
 class LogRecord(NamedTuple):

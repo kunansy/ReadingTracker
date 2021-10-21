@@ -5,7 +5,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from tracker.common import settings
-from tracker.reading_log import db, schemas
+from tracker.reading_log import db
 
 
 router = APIRouter(
