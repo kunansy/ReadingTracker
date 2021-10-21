@@ -125,19 +125,6 @@ async def get_status(*,
         return (await ses.execute(stmt)).all()
 
 
-async def get_material_status(*, # type: ignore
-                              material_id: UUID) -> Optional[RowMapping]:
-    logger.debug("Getting status for material_id=%s",
-                 material_id)
-
-    stmt = sa.select(models.Statuses)\
-        .where(models.Statuses.c.material_id == str(material_id))
-
-    async with database.session() as ses:
-        if status := (await ses.execute(stmt)).first():
-            return status
-
-
 async def add_material(*,
                        material: schemas.Material) -> None:
     logger.debug("Adding material")
