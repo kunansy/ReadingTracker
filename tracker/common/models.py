@@ -57,7 +57,7 @@ ReadingLog = Table(
     PrimaryKey('log_id'),
     Column('material_id', ForeignKey('materials.material_id'), index=True),
     Column('count', Integer),
-    Column('date', Date, default=_utc_now)
+    Column('date', Date, default=_utc_now, unique=True)
 )
 
 Statuses = Table(
