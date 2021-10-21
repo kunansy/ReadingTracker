@@ -67,7 +67,7 @@ async def get_material_statistics(*,
         total = duration = lost_time = 0
         max_record = min_record = None
 
-    if status.copleted_at is None:
+    if status.completed_at is None:
         remaining_pages = material.pages - total
         remaining_days = round(remaining_pages / avg)
         would_be_completed = database.today() + datetime.timedelta(days=remaining_days)
@@ -76,8 +76,8 @@ async def get_material_statistics(*,
 
     return database.MaterialStatistics(
         material=material,
-        started_at=status.begin,
-        completed_at=status.end,
+        started_at=status.started_at,
+        completed_at=status.completed_at,
         duration=duration,
         lost_time=lost_time,
         total=total,

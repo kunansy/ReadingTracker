@@ -184,7 +184,7 @@ async def contains(*,
 
 
 async def get_min_record(*, # type: ignore
-                         material_id: Optional[UUID] = None) -> Optional[MinMax]:
+                         material_id: Optional[UUID] = None) -> Optional[database.MinMax]:
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title])\
         .join(models.Materials,
@@ -198,7 +198,7 @@ async def get_min_record(*, # type: ignore
 
     async with database.session() as ses:
         if minmax := (await ses.execute(stmt)).first():
-            return MinMax(
+            return database.MinMax(
                 material_id=minmax.material_id,
                 log_id=minmax.log_id,
                 count=minmax.count,
@@ -208,7 +208,7 @@ async def get_min_record(*, # type: ignore
 
 
 async def get_max_record(*, # type: ignore
-                         material_id: Optional[UUID] = None) -> Optional[MinMax]:
+                         material_id: Optional[UUID] = None) -> Optional[database.MinMax]:
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title]) \
         .join(models.Materials,
@@ -222,7 +222,7 @@ async def get_max_record(*, # type: ignore
 
     async with database.session() as ses:
         if minmax := (await ses.execute(stmt)).first():
-            return MinMax(
+            return database.MinMax(
                 material_id=minmax.material_id,
                 log_id=minmax.log_id,
                 count=minmax.count,
