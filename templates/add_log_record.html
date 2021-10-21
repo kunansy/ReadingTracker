@@ -16,7 +16,7 @@
         <form action="/reading_log/add" method="POST">
             <fieldset class="log-record-fieldset">
             <legend class="log-record-legend"> Add a log record </legend>
-            <input class="input input-datalist" type="number" list="books" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
+            <input class="input input-datalist" list="books" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
             <datalist id="books">
                 {% for material_id, title in titles.items() %}
                 <option value="{{ material_id }}"> «{{ title }}»
