@@ -89,55 +89,6 @@ class Tracker:
     def __init__(self):
         self.__log = ...
 
-    def get_material_statistics(self,
-                                material_id: int,
-                                *,
-                                material: Optional[database.Material] = None,
-                                status: Optional[database.Status] = None
-                                ) -> MaterialStatistics:
-        """ Calculate statistics for reading or completed material """
-        logger.debug(f"Calculating material statistics for {material_id=}")
-
-        material = material or self.get_material(material_id)
-        status = status or self.get_status(material_id)
-
-        assert material.material_id == status.material_id == material_id
-        material_exists = material_id in self.log
-
-        if material_exists:
-            avg = self.log.m_average(material_id)
-            total = self.log.m_total(material_id)
-            duration = self.log.m_duration(material_id)
-            max_ = self.log.m_max(material_id)
-            min_ = self.log.m_min(material_id)
-            lost_time = self.log.m_lost_time(material_id)
-        else:
-            avg = self.log.average
-            total = duration = lost_time = 0
-            max_ = min_ = None
-
-        if status.end is None:
-            remaining_pages = material.pages - total
-            remaining_days = round(remaining_pages / avg)
-            would_be_completed = database.today() + timedelta(days=remaining_days)
-        else:
-            would_be_completed = remaining_days = remaining_pages = None
-
-        return MaterialStatistics(
-            material=material,
-            started=status.begin,
-            completed=status.end,
-            duration=duration,
-            lost_time=lost_time,
-            total=total,
-            min=min_,
-            max=max_,
-            average=avg,
-            remaining_pages=remaining_pages,
-            remaining_days=remaining_days,
-            would_be_completed=would_be_completed
-        )
-
     def statistics(self,
                    materials: list[database.MaterialStatus]
                    ) -> list[MaterialStatistics]:

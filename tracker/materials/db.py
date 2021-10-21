@@ -28,6 +28,61 @@ async def get_materials(*,
         return (await ses.execute(stmt)).all()
 
 
+async def _was_material_being_reading(*,
+                                      material_id: UUID) -> bool:
+    stmt = sa.select(sa.func.count(1) >= 1)\
+        .select_from(models.ReadingLog)\
+        .where(models.ReadingLog.c.material_id == str(material_id))
+
+    async with database.session() as ses:
+        return await ses.scalar(stmt)
+
+
+async def get_material_statistics(*,
+                                  material_id: UUID,
+                                  log_st: database.LogStatistics,
+                                  log_average: Optional[int] = None) -> database.MaterialStatistics:
+    """ Calculate statistics for reading or completed material """
+    logger.debug(f"Calculating material statistics for {material_id=}")
+
+    material = (await get_materials(materials_ids=[material_id]))[0]
+    status = await database.get_material_status(material_id=material_id)
+
+    assert material.material_id == status.material_id == material_id
+
+    if await _was_material_being_reading(material_id=material_id):
+        avg, total = log_st.average, log_st.total
+        duration, lost_time = log_st.duration, log_st.lost_time
+
+        max_record, min_record = log_st.max_record, log_st.min_record
+    else:
+        avg = log_average
+        total = duration = lost_time = 0
+        max_record = min_record = None
+
+    if status.copleted_at is None:
+        remaining_pages = material.pages - total
+        remaining_days = round(remaining_pages / avg)
+        would_be_completed = database.today() + datetime.timedelta(days=remaining_days)
+    else:
+        would_be_completed = remaining_days = remaining_pages = None
+
+    return database.MaterialStatistics(
+        material=material,
+        started_at=status.begin,
+        completed_at=status.end,
+        duration=duration,
+        lost_time=lost_time,
+        total=total,
+        min_record=min_record,
+        max_record=max_record,
+        average=avg,
+        remaining_pages=remaining_pages,
+        remaining_days=remaining_days,
+        would_be_completed=would_be_completed
+    )
+
+
 async def get_title(*,
                     material_id: UUID) -> str:
     logger.info("Getting title for material_id=%s", material_id)
