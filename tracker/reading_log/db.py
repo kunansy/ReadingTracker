@@ -290,16 +290,16 @@ async def get_material_reading_now() -> Optional[UUID]: # type: ignore
 
 
 async def set_log(*,
-                  log: schemas.LogRecord) -> None:
-    logger.debug("Setting log: %s", log)
-
-    if log.date in await get_log_records():
-        raise ValueError("The date even exists")
+                  material_id: UUID,
+                  count: int,
+                  date: datetime.date) -> None:
+    logger.debug("Setting log for material_id=%s, count=%s, date=%s: ",
+                 material_id, count, date)
 
     values = {
-        'material_id': log.material_id,
-        'count': log.count,
-        'date': log.date
+        'material_id': str(material_id),
+        'count': count,
+        'date': date
     }
     stmt = models.ReadingLog\
         .insert().values(values)
