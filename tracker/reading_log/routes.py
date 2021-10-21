@@ -1,8 +1,10 @@
 import datetime
+from uuid import UUID
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
+from pydantic import PositiveInt
 
 from tracker.common import settings
 from tracker.reading_log import db
@@ -44,6 +46,9 @@ async def add_log_record_view(request: Request):
 
 
 @router.post('/add')
-async def add_log_record(log: schemas.LogRecord):
-    await db.set_log(log=log)
+async def add_log_record(material_id: UUID = Form(...),
+                         count: PositiveInt = Form(...),
+                         date: datetime.date = Form(...)):
+    await db.set_log(
+        material_id=material_id, count=count, date=date)
     return RedirectResponse('/reading_log/add')
