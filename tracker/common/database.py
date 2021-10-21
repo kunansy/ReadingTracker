@@ -85,7 +85,7 @@ async def get_completion_dates() -> dict[UUID, datetime.date]:
                       models.Statuses.c.completed_at]) \
         .join(models.Statuses,
               models.Statuses.c.material_id == models.Materials.c.material_id) \
-        .where(models.Statuses.completed_at != None)
+        .where(models.Statuses.c.completed_at != None)
 
     async with session() as ses:
         return {
