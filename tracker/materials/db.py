@@ -1,5 +1,5 @@
 import datetime
-from typing import Optional
+from typing import NamedTuple, Optional
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -8,6 +8,13 @@ from sqlalchemy.engine import RowMapping
 from tracker.common import database, models
 from tracker.common.log import logger
 from tracker.materials import schemas
+
+
+class MaterialEstimate(NamedTuple):
+    material: RowMapping
+    will_be_started: datetime.date
+    will_be_completed: datetime.date
+    expected_duration: int
 
 
 async def get_materials(*,
@@ -250,3 +257,31 @@ async def complete_material(*,
 
     logger.debug("Material_id=%s completed at %s",
                  material_id, completion_date)
+
+
+async def estimate() -> list[MaterialEstimate]:
+    """ Get materials from queue with estimated time to read """
+    step = datetime.timedelta(days=1)
+
+    # start when all reading material will be completed
+    start = ... # TODO: _end_of_reading()
+    avg = 1 # TODO
+
+    last_date = start + step
+    forecasts = []
+
+    for material in await get_free_materials():
+        expected_duration = round(material.pages / avg)
+        expected_end = last_date + datetime.timedelta(days=expected_duration)
+
+        forecast = MaterialEstimate(
+            material=material,
+            will_be_started=last_date,
+            will_be_completed=expected_end,
+            expected_duration=expected_duration
+        )
+        forecasts += [forecast]
+
+        last_date = expected_end + step
+
+    return forecasts
