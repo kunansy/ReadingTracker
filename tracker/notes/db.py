@@ -7,7 +7,6 @@ from sqlalchemy.engine import RowMapping
 
 from tracker.common import database, models
 from tracker.common.log import logger
-from tracker.notes import schemas
 
 
 async def get_material_titles() -> dict[UUID, str]:
@@ -31,24 +30,27 @@ async def get_notes(*,
 
 
 async def add_note(*,
-                   note: schemas.Note,
+                   material_id: UUID,
+                   content: str,
+                   chapter: int,
+                   page: int,
                    date: Optional[datetime.date] = None) -> None:
     date = date or database.today()
     logger.debug("Adding note for material_id=%s at %s",
-                 note.material_id, date)
+                 material_id, date)
 
     values = {
-        'material_id': note.material_id,
-        'content': note.content,
-        'chapter': note.chapter,
-        'page': note.page,
-        'date': date
+        'material_id': str(material_id),
+        'content': content,
+        'chapter': chapter,
+        'page': page,
+        'added_at': date
     }
     stmt = models.Notes.\
         insert().values(values)\
-        .returning(models.Notes.c.id)
+        .returning(models.Notes.c.note_id)
 
     async with database.session() as ses:
-        note_id = await ses.execute(stmt)
+        note_id = (await ses.execute(stmt)).one()[0]
 
     logger.debug("Note_id=%s added", note_id)
