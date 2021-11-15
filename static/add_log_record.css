@@ -9,3 +9,7 @@ fieldset.log-record-fieldset {
 legend.log-record-legend {
     text-align: center;
 }
+
+main {
+    min-height: 60vh;
+}

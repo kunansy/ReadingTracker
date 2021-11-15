@@ -129,5 +129,5 @@ async def get_material_status(*, # type: ignore
         .where(models.Statuses.c.material_id == str(material_id))
 
     async with session() as ses:
-        if status := (await ses.execute(stmt)).first():
+        if status := (await ses.execute(stmt)).one_or_none():
             return status
