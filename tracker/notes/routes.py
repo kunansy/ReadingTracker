@@ -1,17 +1,19 @@
 from collections import defaultdict
+from uuid import UUID
 
-from fastapi import APIRouter, Query, Request, Response
-from fastapi.responses import RedirectResponse
+from fastapi import APIRouter, Form, Query, Request
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from pydantic import PositiveInt
 
 from tracker.common import settings
-from tracker.common.log import logger
-from tracker.notes import db, schemas
+from tracker.notes import db
 
 
 router = APIRouter(
     prefix="/notes",
-    tags=['notes']
+    tags=['notes'],
+    default_response_class=HTMLResponse
 )
 templates = Jinja2Templates(directory="templates")
 
@@ -58,7 +60,7 @@ async def get_notes(request: Request,
     return templates.TemplateResponse("notes.html", context)
 
 
-@router.get('/add')
+@router.get('/add-view')
 async def add_note_view(request: Request):
     titles = await db.get_material_titles()
 
@@ -74,16 +76,11 @@ async def add_note_view(request: Request):
 
 
 @router.post('/add')
-async def add_note(note: schemas.Note,
-                   response: Response):
-    try:
-        await db.add_note(note=note)
-    except Exception:
-        logger.exception("Error adding note")
-        for key, value in note.dict(exclude={'content'}).items():
-            response.set_cookie(key=key, value=value)
-    else:
-        for key in note.dict().keys():
-            response.delete_cookie(key=key)
-
-    return RedirectResponse('/notes/add')
+async def add_note(material_id: UUID = Form(...),
+                   content: str = Form(...),
+                   chapter: PositiveInt = Form(...),
+                   page: PositiveInt = Form(...)):
+    await db.add_note(
+        material_id=material_id,content=content, chapter=chapter, page=page
+    )
+    return RedirectResponse('/notes/add-view', status_code=302)
