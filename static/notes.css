@@ -39,9 +39,11 @@ div.group {
 
 .material_title {
     margin: auto;
+    font-size: 6vh;
 }
 .chapter_number {
     margin: 4vh auto 1vh;
+    font-size: 4.5vh;
 }
 
 .material_divider {
@@ -59,7 +61,7 @@ div.note {
     text-align: center;
 }
 .note-page {
-    font-size: 4vh;
+    font-size: 3.5vh;
     font-weight: 500;
 }
 div.note p {
