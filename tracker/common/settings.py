@@ -17,7 +17,6 @@ with env.prefixed("API_"):
 
 with env.prefixed("DB_"):
     DB_HOST = env("HOST")
-    DB_PORT = env.int("PORT")
     DB_NAME = env("NAME")
     DB_USERNAME = env("USERNAME")
     DB_PASSWORD = env("PASSWORD")
@@ -26,7 +25,7 @@ DB_URI = DSN_TEMPLATE.format(
     username=DB_USERNAME,
     password=DB_PASSWORD,
     host=DB_HOST,
-    port=DB_PORT,
+    port=5432,
     db_name=DB_NAME
 )
 
