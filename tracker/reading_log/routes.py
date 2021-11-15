@@ -30,7 +30,7 @@ async def get_reading_log(request: Request):
     return templates.TemplateResponse("reading_log.html", context)
 
 
-@router.get('/add')
+@router.get('/add-view')
 async def add_log_record_view(request: Request):
     titles = await db.get_reading_material_titles()
     reading_material_id = await db.get_material_reading_now()
@@ -51,4 +51,4 @@ async def add_log_record(material_id: UUID = Form(...),
                          date: datetime.date = Form(...)):
     await db.set_log(
         material_id=material_id, count=count, date=date)
-    return RedirectResponse('/reading_log/add')
+    return RedirectResponse('/reading_log/add-view')
