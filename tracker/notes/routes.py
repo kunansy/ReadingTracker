@@ -81,6 +81,6 @@ async def add_note(material_id: UUID = Form(...),
                    chapter: PositiveInt = Form(...),
                    page: PositiveInt = Form(...)):
     await db.add_note(
-        material_id=material_id,content=content, chapter=chapter, page=page
+        material_id=material_id, content=content, chapter=chapter, page=page
     )
     return RedirectResponse('/notes/add-view', status_code=302)
