@@ -2,7 +2,7 @@ import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import PositiveInt
 
@@ -12,7 +12,8 @@ from tracker.reading_log import db
 
 router = APIRouter(
     prefix="/reading_log",
-    tags=["reading log"]
+    tags=["reading log"],
+    default_response_class=HTMLResponse
 )
 templates = Jinja2Templates(directory="templates")
 
