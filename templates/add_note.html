@@ -6,7 +6,7 @@
 
 {% block header %}
     {% from 'submenu.html' import submenu %}
-    {% call submenu(('Search notes', '/notes'), ('Add note', '/notes/add')) %}
+    {% call submenu(('Search notes', '/notes'), ('Add note', '/notes/add-view')) %}
     {% endcall %}
 {% endblock header %}
 
@@ -16,7 +16,7 @@
         <form action="/notes/add" method="POST">
             <fieldset class="add-note-fieldset">
             <legend class="add-note-legend"> Add note </legend>
-            <input class="input input-datalist" type="number" list="books" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
+            <input class="input input-datalist" list="books" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
             <datalist id="books">
                 {% for material_id, title in titles|dictsort %}
                     <option value="{{ material_id }}"> «{{ title }}»
