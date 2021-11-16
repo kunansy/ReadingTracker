@@ -25,7 +25,7 @@ div.card {
     margin: 0;
 }
 p.question {
-    font-size: 4vh;
+    font-size: 3.7vh;
     text-align: center;
     word-wrap: break-word;
     margin-bottom: 5vh;
@@ -40,13 +40,16 @@ p.note-answer {
     margin-top: 4vh;
 }
 p.material-title {
-    font-size: 5vh;
-    margin-top: 2vh;
+    font-size: 2.5vh;
+    margin-top: 3.5vh;
     word-wrap: break-word;
 }
 p.material-page {
-    font-size: 4.5vh;
+    font-size: 2.5vh;
 }
 p.note-id {
-    font-size: 4.5vh;
+    font-size: 2.5vh;
+}
+p.card-id {
+    font-size: 2.7vh;
 }
