@@ -7,7 +7,7 @@
 
 {% block header %}
     {% from 'submenu.html' import submenu %}
-    {% call submenu(('Repeat', '/recall'), ('Add card', '/recall/add'), ('Cards list', '/recall/list')) %}
+    {% call submenu(('Cards list', '/cards/list'), ('Add card', '/cards/add-view')) %}
     {% endcall %}
 {% endblock header %}
 
@@ -16,7 +16,7 @@
     <div class="notes">
         <h3 class="search-notes-label"> Search notes </h3>
         {% if material_id %}
-            <h3 class="material-title"> «{{ titles[material_id|int] }}» </h3>
+            <h3 class="material-title"> «{{ titles[material_id] }}» </h3>
         {% endif %}
         <ul class="notes">
             {% for note_id, note in notes|dictsort %}
@@ -29,7 +29,7 @@
             <li class="note hover {{ marker }}" id="note-{{ note_id }}" onclick="chooseNote({{ note_id }}, {{ note.material_id }})" title="Click to choose this note">
                 <p class="note-content"> {{ note.content }}</p>
                 <p class="note-page"> Page: {{ note.page }} </p>
-                <p class="note-id"> ID: {{ note.id }} </p>
+                <p class="note-id"> ID: {{ note.note_id }} </p>
             </li>
             {% endfor %}
         </ul>
@@ -41,7 +41,7 @@
 
     <div class="form">
         <form action="/recall/add" method="GET">
-            <input class="input input-datalist" type="number" list="materials" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
+            <input class="input input-datalist" list="materials" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
             <datalist id="materials">
                 {% for material_id, title in titles|dictsort %}
                 <option value="{{ material_id }}"> «{{ title }}»
@@ -51,9 +51,9 @@
             <button type="submit" class="submit-button"> Search </button>
         </form>
 
-        <form action="/recall/add" method="POST">
-            <input class="input input-datalist" id="material_id" list="materials" type="number" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
-            <input class="input input-datalist" id="note_id" type="number" list="notes" placeholder="Choose a note" name="note_id" value="{{ note_id }}">
+        <form action="/cards/add" method="POST">
+            <input class="input input-datalist" id="material_id" list="materials" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
+            <input class="input input-datalist" id="note_id" list="notes" placeholder="Choose a note" name="note_id" value="{{ note_id }}">
             <datalist id="notes">
                 {% for note_id, note in notes|dictsort %}
                     <option value="{{ note_id }}"> {{ note.content }}
