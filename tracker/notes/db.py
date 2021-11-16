@@ -13,17 +13,9 @@ async def get_material_titles() -> dict[UUID, str]:
     return await database.get_material_titles()
 
 
-async def get_notes(*,
-                    materials_ids: Optional[list[int]] = None) -> list[RowMapping]:
-    how_many = 'all'
-    if materials_ids:
-        how_many = str(len(materials_ids))
-
-    logger.debug("Getting notes for %s materials", how_many)
-
+async def get_notes() -> list[RowMapping]:
+    logger.debug("Getting notes")
     stmt = sa.select(models.Notes)
-    if materials_ids:
-        stmt = stmt.where(models.Notes.c.material_id.in_(materials_ids))
 
     async with database.session() as ses:
         return (await ses.execute(stmt)).mappings().all()
