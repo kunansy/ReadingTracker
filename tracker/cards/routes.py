@@ -15,19 +15,14 @@ templates = Jinja2Templates(directory="templates")
 
 @router.get('/list', response_class=HTMLResponse)
 async def list_cards(request: Request):
-    repeated_today = remains_for_today = -1
-
     cards_list = await db.get_cards_list()
     total_cards_count = await db.get_cards_count()
-    titles = await db.get_material_titles()
 
+    # TODO: menu with materials and titles
     context = {
         'request': request,
         'cards': cards_list,
-        'repeated_today': repeated_today,
         'DATE_FORMAT': settings.DATE_FORMAT,
-        'titles': titles,
         'total': total_cards_count,
-        'remains': remains_for_today
     }
-    return templates.TemplateResponse("list_cards.html", context)
+    return templates.TemplateResponse("cards_list.html", context)
