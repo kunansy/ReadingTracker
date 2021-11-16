@@ -3,7 +3,6 @@ from uuid import UUID
 
 import sqlalchemy.sql as sa
 
-from tracker.cards import schemas
 from tracker.common import database, models
 from tracker.common.log import logger
 
