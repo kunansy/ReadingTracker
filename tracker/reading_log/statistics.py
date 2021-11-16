@@ -162,7 +162,7 @@ async def get_max_record(*, # type: ignore
 async def would_be_total() -> int:
     stmt = sa.select(sa.func.sum(models.ReadingLog.c.count) +
                      sa.func.avg(models.ReadingLog.c.count) * (
-                             sa.func.max(models.ReadingLog.c.date) -
+                             sa.func.max(models.ReadingLog.c.date) - # noqa
                              sa.func.min(models.ReadingLog.c.date) -
                              sa.func.count(1)))
 
