@@ -40,18 +40,6 @@ class MaterialStatistics(NamedTuple):
     would_be_completed: Optional[datetime.date] = None
 
 
-class LogStatistics(NamedTuple):
-    material_id: UUID
-    # total spent time including empty days
-    total: int
-    lost_time: int
-    # days the material was being reading
-    duration: int
-    average: int
-    min_record: Optional[MinMax]
-    max_record: Optional[MinMax]
-
-
 engine = create_async_engine(settings.DB_URI, encoding='utf-8')
 
 
