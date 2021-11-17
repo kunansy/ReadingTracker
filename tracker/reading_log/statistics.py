@@ -32,7 +32,7 @@ async def get_m_log_statistics(*,
     async for date, info in db.data():
         if material_id != info.material_id:
             continue
-        total += 1
+        total += info.count
         lost_time += info.count == 0
 
     min_record = await get_min_record(material_id=material_id)
@@ -131,7 +131,7 @@ async def get_min_record(*, # type: ignore
                 log_id=minmax.log_id,
                 count=minmax.count,
                 date=minmax.date,
-                material_title=minmax.material_title
+                material_title=minmax.title
             )
 
 
@@ -155,7 +155,7 @@ async def get_max_record(*, # type: ignore
                 log_id=minmax.log_id,
                 count=minmax.count,
                 date=minmax.date,
-                material_title=minmax.material_title
+                material_title=minmax.title
             )
 
 
