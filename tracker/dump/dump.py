@@ -16,8 +16,8 @@ from tracker.dump import settings
 
 
 logging.basicConfig(
-    format="{levelname:<8} [{asctime},{msecs:3.0f}] [PID:{process}] " \
-           "[{filename}:{funcName}():{lineno}] {message}",
+    format=("{levelname:<8} [{asctime},{msecs:3.0f}] [PID:{process}] "
+            "[{filename}:{funcName}():{lineno}] {message}"),
     datefmt="%d.%m.%Y %H:%M:%S",
     level='DEBUG',
     style='{'
@@ -108,4 +108,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
