@@ -188,14 +188,17 @@ async def get_status(*,
 
 
 async def add_material(*,
-                       material: schemas.Material) -> None:
-    logger.debug("Adding material")
+                       title: str,
+                       authors: str,
+                       pages: int,
+                       tags: str) -> None:
+    logger.debug("Adding material title=%s", title)
 
     values = {
-        "title": material.title,
-        "authors": material.authors,
-        "pages": material.pages,
-        "tags": material.tags
+        "title": title,
+        "authors": authors,
+        "pages": pages,
+        "tags": tags
     }
     stmt = models.Materials\
         .insert().values(values)

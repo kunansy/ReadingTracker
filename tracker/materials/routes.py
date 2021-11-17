@@ -42,21 +42,16 @@ async def add_material_view(request: Request):
 
 
 @router.post('/add', response_class=HTMLResponse)
-async def add_material(material: schemas.Material,
-                       response: Response):
+async def add_material(title: str = Form(...),
+                       authors: str = Form(...),
+                       pages: int = Form(...),
+                       tags: str = Form(...)):
     """ Add a material to the queue """
-    try:
-        await db.add_material(material=material)
-    except Exception:
-        logger.exception("Error adding material")
-        for key, value in material.dict().items():
-            response.set_cookie(key=key, value=value)
-    else:
-        logger.debug("Material added")
-        for key in material.dict().keys():
-            response.delete_cookie(key=key)
+    await db.add_material(
+        title=title, authors=authors, pages=pages, tags=tags
+    )
 
-    return RedirectResponse('/materials/add')
+    return RedirectResponse('/materials/add-view', status_code=302)
 
 
 @router.post('/start/{material_id}')
