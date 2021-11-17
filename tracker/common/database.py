@@ -1,6 +1,6 @@
 import datetime
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, NamedTuple, Optional
+from typing import AsyncGenerator, NamedTuple
 from uuid import UUID
 
 import sqlalchemy.sql as sa

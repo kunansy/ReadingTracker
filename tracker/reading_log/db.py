@@ -85,7 +85,7 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
     # stack for materials
     materials: list[UUID] = []
     try:
-        completion_dates = await database.get_completion_dates()
+        completion_dates = await get_completion_dates()
     except Exception as e:
         logger.exception(e)
         completion_dates = {}

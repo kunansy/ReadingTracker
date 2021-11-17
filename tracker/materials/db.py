@@ -16,6 +16,7 @@ class MaterialEstimate(NamedTuple):
     will_be_completed: datetime.date
     expected_duration: int
 
+
 class MaterialStatistics(NamedTuple):
     material: RowMapping
     started_at: datetime.date
@@ -62,12 +63,15 @@ async def _was_material_being_reading(*,
 
 
 async def get_material_statistics(*,
-                                  material_id: UUID) -> database.MaterialStatistics:
+                                  material_id: UUID) -> MaterialStatistics:
     """ Calculate statistics for reading or completed material """
     logger.debug("Calculating statistics for material_id=%s", material_id)
 
     material = await get_material(material_id=material_id)
-    status = await database.get_material_status(material_id=material_id)
+    status = await get_status(material_id=material_id)
+
+    assert status is not None
+    assert material is not None
 
     if await _was_material_being_reading(material_id=material_id):
         log_st = await statistics.get_m_log_statistics(material_id=material_id)
@@ -85,9 +89,9 @@ async def get_material_statistics(*,
         remaining_days = round(remaining_pages / avg)
         would_be_completed = database.today() + datetime.timedelta(days=remaining_days)
     else:
-        would_be_completed = remaining_days = remaining_pages = None
+        would_be_completed = remaining_days = remaining_pages = None # type: ignore
 
-    return database.MaterialStatistics(
+    return MaterialStatistics(
         material=material,
         started_at=status.started_at,
         completed_at=status.completed_at,
@@ -103,14 +107,14 @@ async def get_material_statistics(*,
     )
 
 
-async def processed_statistics() -> list[database.MaterialStatistics]:
+async def processed_statistics() -> list[MaterialStatistics]:
     return [
         await get_material_statistics(material_id=material.material_id)
         for material in await get_completed_materials()
     ]
 
 
-async def reading_statistics() -> list[database.MaterialStatistics]:
+async def reading_statistics() -> list[MaterialStatistics]:
     return [
         await get_material_statistics(material_id=material.material_id)
         for material in await database.get_reading_materials()
@@ -189,7 +193,7 @@ async def get_completed_materials() -> list[RowMapping]:
                       models.Statuses]) \
         .join(models.Statuses,
               models.Materials.c.material_id == models.Statuses.c.material_id) \
-        .where(models.Statuses.completed_at != None)
+        .where(models.Statuses.c.completed_at != None)
 
     async with database.session() as ses:
         return (await ses.execute(stmt)).mappings().all()
@@ -212,7 +216,7 @@ async def get_status(*,
         .where(models.Statuses.c.material_id == str(material_id))
 
     async with database.session() as ses:
-        return (await ses.execute(stmt)).one_or_none()
+        return (await ses.execute(stmt)).mappings().one_or_none()
 
 
 async def add_material(*,
