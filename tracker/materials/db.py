@@ -87,6 +87,13 @@ async def get_material_statistics(*,
     )
 
 
+async def processed_statistics() -> list[database.MaterialStatistics]:
+    return [
+        await get_material_statistics(material_id=material.material_id)
+        for material in await get_completed_materials()
+    ]
+
+
 async def get_title(*,
                     material_id: UUID) -> str:
     logger.info("Getting title for material_id=%s", material_id)
