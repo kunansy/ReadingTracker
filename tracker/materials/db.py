@@ -7,7 +7,7 @@ from sqlalchemy.engine import RowMapping
 
 from tracker.common import database, models
 from tracker.common.log import logger
-from tracker.materials import schemas
+from tracker.reading_log import statistics
 
 
 class MaterialEstimate(NamedTuple):
@@ -46,24 +46,21 @@ async def _was_material_being_reading(*,
 
 
 async def get_material_statistics(*,
-                                  material_id: UUID,
-                                  log_st: database.LogStatistics,
-                                  log_average: Optional[int] = None) -> database.MaterialStatistics:
+                                  material_id: UUID) -> database.MaterialStatistics:
     """ Calculate statistics for reading or completed material """
-    logger.debug(f"Calculating material statistics for {material_id=}")
+    logger.debug("Calculating statistics for material_id=%s", material_id)
 
-    material = (await get_materials(materials_ids=[material_id]))[0]
+    material = await get_material(material_id=material_id)
     status = await database.get_material_status(material_id=material_id)
 
-    assert material.material_id == status.material_id == material_id
-
     if await _was_material_being_reading(material_id=material_id):
+        log_st = await statistics.get_m_log_statistics(material_id=material_id)
         avg, total = log_st.average, log_st.total
         duration, lost_time = log_st.duration, log_st.lost_time
 
         max_record, min_record = log_st.max_record, log_st.min_record
     else:
-        avg = log_average
+        avg = await statistics.get_avg_read_pages()
         total = duration = lost_time = 0
         max_record = min_record = None
 
