@@ -1,12 +1,11 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Request, Response
+from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from tracker.common import settings
-from tracker.common.log import logger
-from tracker.materials import db, schemas
+from tracker.materials import db
 
 
 router = APIRouter(
