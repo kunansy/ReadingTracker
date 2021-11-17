@@ -12,7 +12,7 @@ services:
       - database-volume:/var/lib/postgresql/data
     container_name: tracker-db
     ports:
-      - "127.0.0.1:${DB_PORT}:5432"
+      - "127.0.0.1:7432:5432"
     networks:
        - tracker-net
     healthcheck:
