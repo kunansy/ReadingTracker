@@ -204,6 +204,17 @@ async def get_statuses() -> list[models.Statuses]:
         return (await ses.execute(stmt)).all()
 
 
+async def get_status(*,
+                     material_id: UUID) -> Optional[RowMapping]:
+    logger.debug("Getting status for material_id=%s", material_id)
+
+    stmt = sa.select(models.Statuses) \
+        .where(models.Statuses.c.material_id == str(material_id))
+
+    async with database.session() as ses:
+        return (await ses.execute(stmt)).one_or_none()
+
+
 async def add_material(*,
                        title: str,
                        authors: str,
