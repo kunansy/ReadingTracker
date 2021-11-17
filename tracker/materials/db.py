@@ -26,6 +26,15 @@ async def get_materials() -> list[RowMapping]:
         return (await ses.execute(stmt)).all()
 
 
+async def get_material(*,
+                       material_id: UUID) -> Optional[RowMapping]:
+    stmt = sa.select(models.Materials)\
+        .where(models.Materials.c.material_id == str(material_id))
+
+    async with database.session() as ses:
+        return (await ses.execute(stmt)).mappings().one_or_none()
+
+
 async def _was_material_being_reading(*,
                                       material_id: UUID) -> bool:
     stmt = sa.select(sa.func.count(1) >= 1)\
