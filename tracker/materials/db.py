@@ -98,12 +98,11 @@ async def get_title(*,
                     material_id: UUID) -> str:
     logger.info("Getting title for material_id=%s", material_id)
 
-    materials = await get_materials(materials_ids=[material_id])
-    try:
-        return materials[0].title
-    except IndexError:
-        logger.warning(f"Material {material_id=} not found")
-        return ''
+    if material := await get_material(material_id=material_id):
+        return material.title
+
+    logger.warning("Material material_id=%s not found", material_id)
+    return ''
 
 
 async def does_material_exist(*,
