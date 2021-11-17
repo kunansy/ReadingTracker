@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+import contextlib
+import datetime
+import logging
+import os
+import time
+from pathlib import Path
+
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+
+from tracker.dump import settings
+
+
+logging.basicConfig(
+    format="{levelname:<8} [{asctime},{msecs:3.0f}] [PID:{process}] " \
+           "[{filename}:{funcName}():{lineno}] {message}",
+    datefmt="%d.%m.%Y %H:%M:%S",
+    level='DEBUG',
+    style='{'
+)
+
+
+def get_now() -> str:
+    now = datetime.datetime.utcnow()
+    return now.strftime('%Y-%m-%d_%H-%M-%S')
+
+
+def dump() -> Path:
+    logging.debug("DB dumping started")
+
+    file_path = Path("data") / f"tracker_{get_now()}.txt"
+
+    dump_db_status = os.WEXITSTATUS(os.system(
+        f"pg_dump -f {file_path} -h {settings.DB_HOST} -p {settings.DB_PORT} "
+        f"-U {settings.DB_USERNAME} {settings.DB_NAME}"
+    ))
+
+    if dump_db_status != 0:
+        exit(f"DB dumping failed, {dump_db_status=}.")
+    logging.debug("DB dumped")
+
+    return file_path
+
+
+@contextlib.contextmanager
+def get_client():
+    scopes = ['https://www.googleapis.com/auth/drive']
+    creds = None
+    if settings.DRIVE_TOKEN_PATH.exists():
+        creds = Credentials.from_authorized_user_file(
+            settings.DRIVE_TOKEN_PATH, scopes)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                settings.DRIVE_CREDS_PATH, scopes)
+            creds = flow.run_local_server(port=0)
+
+        with open(settings.DRIVE_TOKEN_PATH, 'w') as token:
+            token.write(creds.to_json())
+
+    yield build('drive', 'v3', credentials=creds)
+
+
+def get_folder_id() -> str:
+    with get_client() as service:
+        response = service.files().list(
+            q="name = 'tracker'", spaces='drive', fields='files(id)').execute()
+    return response['files'][0]['id']
+
+
+def send_dump(file_path: Path) -> None:
+    logging.debug("Sending file %s", file_path)
+    with get_client() as service:
+        file_metadata = {
+            'name': f"{file_path.name}",
+            'parents': [get_folder_id()]
+        }
+        file = MediaFileUpload(file_path, mimetype='text/plain')
+        service.files().create(
+            body=file_metadata, media_body=file).execute()
+    logging.debug("File sent")
+
+
+def remove_dump(file_path: Path) -> None:
+    logging.debug("Removing dump, %s", file_path)
+    os.remove(file_path)
+    logging.debug("Dump removed")
+
+
+def main() -> None:
+    logging.info("Dumping started")
+    start_time = time.perf_counter()
+
+    dump_file = dump()
+    send_dump(dump_file)
+    remove_dump(dump_file)
+
+    logging.info("Dumping completed, %ss",
+                 round(time.perf_counter() - start_time, 2))
+
+
+if __name__ == "__main__":
+    main()
+
