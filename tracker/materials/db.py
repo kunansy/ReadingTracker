@@ -17,19 +17,10 @@ class MaterialEstimate(NamedTuple):
     expected_duration: int
 
 
-async def get_materials(*,
-                        materials_ids: Optional[list[UUID]] = None) -> list[RowMapping]:
-    how_many = 'all'
-    if materials_ids:
-        how_many = str(len(materials_ids))
-
-    logger.info("Getting %s materials", how_many)
+async def get_materials() -> list[RowMapping]:
+    logger.info("Getting all materials")
 
     stmt = sa.select(models.Materials)
-    if materials_ids:
-        materials_ids = (str(id_) for id_ in materials_ids) # type: ignore
-        stmt = stmt\
-            .where(models.Materials.c.material_id.in_(materials_ids))
 
     async with database.session() as ses:
         return (await ses.execute(stmt)).all()
