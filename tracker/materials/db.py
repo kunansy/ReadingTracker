@@ -172,17 +172,10 @@ async def get_completed_materials() -> list[RowMapping]:
         return (await ses.execute(stmt)).mappings().all()
 
 
-async def get_status(*,
-                     status_ids: Optional[list[int]] = None) -> list[models.Statuses]:
-    how_many = 'all'
-    if status_ids:
-        how_many = str(len(status_ids))
-
-    logger.debug("Getting %s statuses", how_many)
+async def get_statuses() -> list[models.Statuses]:
+    logger.debug("Getting statuses")
 
     stmt = sa.select(models.Statuses)
-    if status_ids:
-        stmt = stmt.where(models.Statuses.c.status_id.in_(status_ids))
 
     async with database.session() as ses:
         return (await ses.execute(stmt)).all()
