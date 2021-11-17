@@ -19,6 +19,9 @@ uvicorn = "~0.15.0"
 Jinja2 = "~3.0.1"
 uvloop = "~0.16.0"
 python-multipart = "^0.0.5"
+google-api-python-client = "~2.31.0"
+google-auth-httplib2 = "~0.1.0"
+google-auth-oauthlib = "~0.4.6"
 
 [tool.poetry.dev-dependencies]
 flake8 = "~4.0.1"
