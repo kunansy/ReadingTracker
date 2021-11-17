@@ -118,14 +118,13 @@ async def does_material_exist(*,
 
 async def is_material_reading(*,
                               material_id: UUID) -> bool:
-    logger.debug("Whether material_id=%s is reading",
-                 material_id)
+    logger.debug("Checking material_id=%s", material_id)
 
     stmt = sa.select(models.Materials.c.material_id)\
         .join(models.Statuses,
               models.Materials.c.material_id == models.Statuses.c.material_id)\
-        .where(models.Statuses.c.begin != None)\
-        .where(models.Statuses.c.end == None)\
+        .where(models.Statuses.c.started_at != None)\
+        .where(models.Statuses.c.completed_at == None)\
         .where(models.Materials.c.material_id == str(material_id))
 
     async with database.session() as ses:
@@ -134,20 +133,19 @@ async def is_material_reading(*,
 
 async def is_material_assigned(*,
                                material_id: UUID) -> bool:
-    logger.debug("Whether material_id=%s reading or completed",
-                 material_id)
+    logger.debug("Checking material_id=%s", material_id)
 
     stmt = sa.select(models.Materials.c.material_id) \
         .join(models.Statuses,
               models.Materials.c.material_id == models.Statuses.c.material_id) \
-        .where(models.Statuses.c.begin != None) \
+        .where(models.Statuses.c.started_at != None) \
         .where(models.Materials.c.material_id == str(material_id))
 
     async with database.session() as ses:
         return await ses.scalar(stmt) is not None
 
 
-async def get_free_materials() -> list[models.Materials]:
+async def get_free_materials() -> list[RowMapping]:
     logger.debug("Getting free materials")
 
     assigned_condition = sa.select(1) \
@@ -168,7 +166,7 @@ async def get_completed_materials() -> list[RowMapping]:
                       models.Statuses]) \
         .join(models.Statuses,
               models.Materials.c.material_id == models.Statuses.c.material_id) \
-        .where(models.Statuses.end != None)
+        .where(models.Statuses.completed_at != None)
 
     async with database.session() as ses:
         return (await ses.execute(stmt)).mappings().all()
@@ -215,8 +213,7 @@ async def start_material(*,
                          material_id: UUID,
                          start_date: Optional[datetime.date] = None) -> None:
     start_date = start_date or database.today().date()
-    logger.debug("Starting material_id=%s at %s",
-                 material_id, start_date)
+    logger.debug("Starting material_id=%s", material_id)
 
     if start_date > database.today():
         raise ValueError("Start date must be less than today")
@@ -231,22 +228,20 @@ async def start_material(*,
     async with database.session() as ses:
         await ses.execute(stmt)
 
-    logger.debug("Material material_id=%s started at %s",
-                 material_id, start_date)
+    logger.debug("Material material_id=%s started", material_id)
 
 
 async def complete_material(*,
                             material_id: UUID,
                             completion_date: Optional[datetime.date] = None) -> None:
     completion_date = completion_date or database.today()
-    logger.debug("Completing material_id=%s at %s",
-                 material_id, completion_date)
+    logger.debug("Completing material_id=%s", material_id)
 
     get_status_stmt = sa.select(models.Statuses)\
         .where(models.Statuses.c.material_id == str(material_id))
 
     update_status_stmt = models.Statuses\
-        .update().values(end=completion_date)\
+        .update().values(completed_at=completion_date)\
         .where(models.Statuses.c.material_id == str(material_id))
 
     async with database.session() as ses:
