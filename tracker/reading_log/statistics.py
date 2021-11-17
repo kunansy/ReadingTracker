@@ -87,7 +87,7 @@ async def get_lost_days() -> int:
         return await ses.scalar(stmt)
 
 
-async def get_average_pages_read_per_day() -> int:
+async def get_avg_read_pages() -> int:
     stmt = sa.select(sa.func.avg(models.ReadingLog.count))
 
     async with database.session() as ses:
@@ -176,7 +176,7 @@ async def get_log_statistics() -> dict[str, Any]:
         "stop_date": await get_stop_date(),
         "duration": await get_log_duration(),
         "lost_time": await get_lost_days(),
-        "average": await get_average_pages_read_per_day(),
+        "average": await get_avg_read_pages(),
         "total_pages_read": await get_total_read_pages(),
         "would_be_total": await would_be_total(),
         "min": await get_min_record(),
