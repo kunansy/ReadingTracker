@@ -23,23 +23,6 @@ class MinMax(NamedTuple):
     date: datetime.date
 
 
-class MaterialStatistics(NamedTuple):
-    material: RowMapping
-    started_at: datetime.date
-    duration: int
-    lost_time: int
-    total: int
-    min_record: Optional[MinMax]
-    max_record: Optional[MinMax]
-    average: int
-    remaining_pages: Optional[int] = None
-    remaining_days: Optional[int] = None
-    completed_at: Optional[datetime.date] = None
-    # date when the material would be completed
-    # according to average read pages count
-    would_be_completed: Optional[datetime.date] = None
-
-
 engine = create_async_engine(settings.DB_URI, encoding='utf-8')
 
 

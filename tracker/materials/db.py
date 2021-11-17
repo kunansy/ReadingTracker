@@ -16,6 +16,22 @@ class MaterialEstimate(NamedTuple):
     will_be_completed: datetime.date
     expected_duration: int
 
+class MaterialStatistics(NamedTuple):
+    material: RowMapping
+    started_at: datetime.date
+    duration: int
+    lost_time: int
+    total: int
+    min_record: Optional[database.MinMax]
+    max_record: Optional[database.MinMax]
+    average: int
+    remaining_pages: Optional[int] = None
+    remaining_days: Optional[int] = None
+    completed_at: Optional[datetime.date] = None
+    # date when the material would be completed
+    # according to average read pages count
+    would_be_completed: Optional[datetime.date] = None
+
 
 async def get_materials() -> list[RowMapping]:
     logger.info("Getting all materials")
