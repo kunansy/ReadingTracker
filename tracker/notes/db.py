@@ -10,7 +10,16 @@ from tracker.common.log import logger
 
 
 async def get_material_titles() -> dict[UUID, str]:
-    return await database.get_material_titles()
+    logger.debug("Getting material titles")
+
+    stmt = sa.select([models.Materials.c.material_id,
+                      models.Materials.c.title])
+
+    async with database.session() as ses:
+        return {
+            row.material_id: row.title
+            async for row in await ses.stream(stmt)
+        }
 
 
 async def get_notes() -> list[RowMapping]:

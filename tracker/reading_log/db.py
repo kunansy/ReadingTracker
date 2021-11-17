@@ -55,6 +55,22 @@ async def get_reading_material_titles() -> dict[UUID, str]:
         }
 
 
+async def get_completion_dates() -> dict[UUID, datetime.date]:
+    logger.debug("Getting completion dates")
+
+    stmt = sa.select([models.Materials.c.material_id,
+                      models.Statuses.c.completed_at]) \
+        .join(models.Statuses,
+              models.Statuses.c.material_id == models.Materials.c.material_id) \
+        .where(models.Statuses.c.completed_at != None)
+
+    async with database.session() as ses:
+        return {
+            row.material_id: row.completed_at
+            async for row in await ses.stream(stmt)
+        }
+
+
 async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
     """ Get pairs: (date, info) of all days from start to stop.
 
