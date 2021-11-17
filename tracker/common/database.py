@@ -60,14 +60,3 @@ async def get_reading_materials() -> list[RowMapping]:
 
     async with session() as ses:
         return (await ses.execute(stmt)).mappings().all()
-
-
-async def get_material_status(*,
-                              material_id: UUID) -> Optional[RowMapping]:
-    logger.debug("Getting status for material_id=%s", material_id)
-
-    stmt = sa.select(models.Statuses) \
-        .where(models.Statuses.c.material_id == str(material_id))
-
-    async with session() as ses:
-        return (await ses.execute(stmt)).one_or_none()
