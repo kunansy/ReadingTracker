@@ -1,19 +1,17 @@
 import uvicorn
 from fastapi import FastAPI, Request
-from fastapi.exceptions import RequestValidationError, HTTPException
+from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from tracker.cards.routes import router as cards_router
 from tracker.common import database, settings
 from tracker.common.log import logger
-# from tracker.materials.routes import router as materials_router
+from tracker.materials.routes import router as materials_router
 from tracker.notes.routes import router as notes_router
 from tracker.reading_log.routes import router as reading_log_router
 
 
-# TODO: make a database backup on
-#  shutdown and send it to Google Drive
 app = FastAPI(
     title="Reading Tracker",
     description="Reading queue, logging the reading, keep some notes",
@@ -26,7 +24,7 @@ templates = Jinja2Templates(directory="templates")
 
 app.include_router(reading_log_router)
 app.include_router(notes_router)
-# app.include_router(materials_router)
+app.include_router(materials_router)
 app.include_router(cards_router)
 
 
