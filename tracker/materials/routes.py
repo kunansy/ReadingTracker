@@ -58,14 +58,14 @@ async def add_material(title: str = Form(...),
 async def start_material(material_id: UUID):
     await db.start_material(material_id=material_id)
 
-    return RedirectResponse('/materials/queue')
+    return RedirectResponse('/materials/queue', status_code=302)
 
 
 @router.post('/complete/{material_id}')
 async def complete_material(material_id: UUID):
     await db.complete_material(material_id=material_id)
 
-    return RedirectResponse('/materials/reading')
+    return RedirectResponse('/materials/reading', status_code=302)
 
 
 @router.get('/reading', response_class=HTMLResponse)
