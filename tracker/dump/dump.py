@@ -2,7 +2,6 @@
 import asyncio
 import contextlib
 import datetime
-import logging
 import os
 import time
 from pathlib import Path
@@ -17,6 +16,7 @@ from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
 from tracker.common import database, models, settings
+from tracker.common.log import logger
 
 
 def get_now() -> str:
@@ -52,7 +52,7 @@ async def get_data() -> dict[str, list[dict[str, str]]]:
 
 
 async def dump() -> Path:
-    logging.debug("DB dumping started")
+    logger.debug("DB dumping started")
 
     file_path = Path("data") / f"tracker_{get_now()}.json"
     data = await get_data()
@@ -60,7 +60,7 @@ async def dump() -> Path:
     with file_path.open('w') as f:
         ujson.dump(data, f, ensure_ascii=False, indent=2)
 
-    logging.debug("DB dumped")
+    logger.debug("DB dumped")
 
     return file_path
 
@@ -95,7 +95,7 @@ def get_folder_id() -> str:
 
 
 def send_dump(file_path: Path) -> None:
-    logging.debug("Sending file %s", file_path)
+    logger.debug("Sending file %s", file_path)
     with get_client() as service:
         file_metadata = {
             'name': f"{file_path.name}",
@@ -104,25 +104,25 @@ def send_dump(file_path: Path) -> None:
         file = MediaFileUpload(file_path, mimetype='text/plain')
         service.files().create(
             body=file_metadata, media_body=file).execute()
-    logging.debug("File sent")
+    logger.debug("File sent")
 
 
 def remove_dump(file_path: Path) -> None:
-    logging.debug("Removing dump, %s", file_path)
+    logger.debug("Removing dump, %s", file_path)
     os.remove(file_path)
-    logging.debug("Dump removed")
+    logger.debug("Dump removed")
 
 
 async def main() -> None:
-    logging.info("Dumping started")
+    logger.info("Dumping started")
     start_time = time.perf_counter()
 
     dump_file = await dump()
     send_dump(dump_file)
     remove_dump(dump_file)
 
-    logging.info("Dumping completed, %ss",
-                 round(time.perf_counter() - start_time, 2))
+    logger.info("Dumping completed, %ss",
+                round(time.perf_counter() - start_time, 2))
 
 
 if __name__ == "__main__":
