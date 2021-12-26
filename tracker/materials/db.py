@@ -299,7 +299,7 @@ async def complete_material(*,
 async def _end_of_reading() -> datetime.date:
     reading_stat = await reading_statistics()
     remaining_days = sum(
-        stat.remaining_days
+        stat.remaining_days or 0
         for stat in reading_stat
     )
     return datetime.date.today() + datetime.timedelta(days=remaining_days)
