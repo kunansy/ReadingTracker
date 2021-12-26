@@ -5,13 +5,18 @@ import logging
 import os
 import time
 from pathlib import Path
+from typing import Any
 
+import sqlalchemy.sql as sa
+import ujson
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
+from tracker.common import database, models
+from tracker.common.settings import DATE_FORMAT
 from tracker.dump import settings
 
 
@@ -23,13 +28,42 @@ logging.basicConfig(
     style='{'
 )
 
+DATETIME_FORMAT = f"{DATE_FORMAT} %H:%M:%S"
+
 
 def get_now() -> str:
     now = datetime.datetime.utcnow()
     return now.strftime('%Y-%m-%d_%H-%M-%S')
 
 
-def dump() -> Path:
+def convert_date(value: Any) -> Any:
+    if isinstance(value, datetime.date):
+        return value.strftime(DATE_FORMAT)
+    if isinstance(value, datetime.datetime):
+        return value.strftime(DATETIME_FORMAT)
+    return value
+
+
+async def get_data() -> dict[str, list[dict[str, str]]]:
+    tables = [
+        models.Materials,
+        models.Statuses,
+        models.ReadingLog,
+        models.Notes,
+        models.Cards,
+    ]
+    data = {}
+    async with database.session() as ses:
+        for table in tables:
+            stmt = sa.select(table)
+            data[table.name] = [
+                {str(key): convert_date(value) for key, value in row.items()}
+                for row in (await ses.execute(stmt)).mappings().all()
+            ]
+    return data
+
+
+async def dump() -> Path:
     logging.debug("DB dumping started")
 
     file_path = Path("data") / f"tracker_{get_now()}.txt"
