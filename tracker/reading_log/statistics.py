@@ -88,14 +88,14 @@ async def get_lost_days() -> int:
 
 
 async def get_avg_read_pages() -> int:
-    stmt = sa.select(sa.func.avg(models.ReadingLog.count))
+    stmt = sa.select(sa.func.avg(models.ReadingLog.c.count))
 
     async with database.session() as ses:
         return await ses.scalar(stmt)
 
 
 async def get_median_pages_read_per_day() -> int:
-    stmt = sa.select(sa.func.median(models.ReadingLog.count))
+    stmt = sa.select(sa.func.median(models.ReadingLog.c.count))
 
     async with database.session() as ses:
         return await ses.scalar(stmt)
