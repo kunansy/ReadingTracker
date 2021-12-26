@@ -305,8 +305,8 @@ async def estimate() -> list[MaterialEstimate]:
     step = datetime.timedelta(days=1)
 
     # start when all reading material will be completed
-    start = ... # TODO: _end_of_reading()
-    avg = 1 # TODO
+    start = await _end_of_reading()
+    avg = await statistics.get_avg_read_pages()
 
     last_date = start + step
     forecasts = []
