@@ -119,7 +119,7 @@ def remove_file(file_path: Path) -> None:
     logger.debug("File removed")
 
 
-async def main() -> None:
+async def backup() -> None:
     logger.info("Dumping started")
     start_time = time.perf_counter()
 
