@@ -7,6 +7,8 @@ env = Env()
 env.read_env()
 
 DATE_FORMAT = '%d-%m-%Y'
+DATETIME_FORMAT = f"{DATE_FORMAT} %H:%M:%S"
+
 DSN_TEMPLATE = "postgresql+asyncpg://{username}:{password}" \
                "@{host}:{port}/{db_name}"
 
@@ -38,5 +40,9 @@ with env.prefixed("PER_DAY_"):
     PAGES_PER_DAY = env.int('PER_DAY_PAGES', 50)
     # max count of cards repeated per day
     _MAX_PER_DAY = env.int('PER_DAY_CARDS', 25)
+
+with env.prefixed("DRIVE_"):
+    DRIVE_TOKEN_PATH = env.path("TOKEN_PATH", "data/token.json")
+    DRIVE_CREDS_PATH = env.path("CREDS_PATH", "data/creds.json")
 
 os.environ.clear()
