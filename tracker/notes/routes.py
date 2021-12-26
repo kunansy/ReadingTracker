@@ -28,9 +28,6 @@ async def get_notes(request: Request,
         if material_id is None or note.material_id == material_id
     ]
 
-    if not notes:
-        return {}
-
     titles = await db.get_material_titles()
 
     # show only the titles of materials that have notes
