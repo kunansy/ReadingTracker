@@ -84,33 +84,37 @@ def get_client():
         with settings.DRIVE_TOKEN_PATH.open('w') as token:
             token.write(creds.to_json())
 
-    yield build('drive', 'v3', credentials=creds)
+    new_client = build('drive', 'v3', credentials=creds)
+    try:
+        yield new_client
+    except Exception:
+        logger.exception("Error with the client")
 
 
 def get_folder_id() -> str:
-    with get_client() as service:
-        response = service.files().list(
+    with get_client() as client:
+        response = client.files().list(
             q="name = 'tracker'", spaces='drive', fields='files(id)').execute()
     return response['files'][0]['id']
 
 
 def send_dump(file_path: Path) -> None:
     logger.debug("Sending file %s", file_path)
-    with get_client() as service:
+    with get_client() as client:
         file_metadata = {
             'name': f"{file_path.name}",
             'parents': [get_folder_id()]
         }
         file = MediaFileUpload(file_path, mimetype='text/plain')
-        service.files().create(
+        client.files().create(
             body=file_metadata, media_body=file).execute()
     logger.debug("File sent")
 
 
-def remove_dump(file_path: Path) -> None:
-    logger.debug("Removing google_drive, %s", file_path)
+def remove_file(file_path: Path) -> None:
+    logger.debug("Removing '%s'", file_path)
     os.remove(file_path)
-    logger.debug("Dump removed")
+    logger.debug("File removed")
 
 
 async def main() -> None:
@@ -119,7 +123,7 @@ async def main() -> None:
 
     dump_file = await dump()
     send_dump(dump_file)
-    remove_dump(dump_file)
+    remove_file(dump_file)
 
     logger.info("Dumping completed, %ss",
                 round(time.perf_counter() - start_time, 2))
