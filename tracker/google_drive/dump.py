@@ -108,7 +108,7 @@ def send_dump(file_path: Path) -> None:
 
 
 def remove_dump(file_path: Path) -> None:
-    logger.debug("Removing dump, %s", file_path)
+    logger.debug("Removing google_drive, %s", file_path)
     os.remove(file_path)
     logger.debug("Dump removed")
 
