@@ -66,15 +66,12 @@ async def get_data() -> dict[str, list[dict[str, str]]]:
 async def dump() -> Path:
     logging.debug("DB dumping started")
 
-    file_path = Path("data") / f"tracker_{get_now()}.txt"
+    file_path = Path("data") / f"tracker_{get_now()}.json"
+    data = await get_data()
 
-    dump_db_status = os.WEXITSTATUS(os.system(
-        f"pg_dump -f {file_path} -h {settings.DB_HOST} -p {settings.DB_PORT} "
-        f"-U {settings.DB_USERNAME} {settings.DB_NAME}"
-    ))
+    with file_path.open('w') as f:
+        ujson.dump(data, f, ensure_ascii=False, indent=2)
 
-    if dump_db_status != 0:
-        exit(f"DB dumping failed, {dump_db_status=}.")
     logging.debug("DB dumped")
 
     return file_path
