@@ -16,20 +16,7 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
-from tracker.common import database, models
-from tracker.common.settings import DATE_FORMAT
-from tracker.dump import settings
-
-
-logging.basicConfig(
-    format=("{levelname:<8} [{asctime},{msecs:3.0f}] [PID:{process}] "
-            "[{filename}:{funcName}():{lineno}] {message}"),
-    datefmt="%d.%m.%Y %H:%M:%S",
-    level='DEBUG',
-    style='{'
-)
-
-DATETIME_FORMAT = f"{DATE_FORMAT} %H:%M:%S"
+from tracker.common import database, models, settings
 
 
 def get_now() -> str:
@@ -39,9 +26,9 @@ def get_now() -> str:
 
 def convert_date(value: Any) -> Any:
     if isinstance(value, datetime.date):
-        return value.strftime(DATE_FORMAT)
+        return value.strftime(settings.DATE_FORMAT)
     if isinstance(value, datetime.datetime):
-        return value.strftime(DATETIME_FORMAT)
+        return value.strftime(settings.DATETIME_FORMAT)
     return value
 
 
@@ -94,7 +81,7 @@ def get_client():
                 settings.DRIVE_CREDS_PATH, scopes)
             creds = flow.run_local_server(port=0)
 
-        with open(settings.DRIVE_TOKEN_PATH, 'w') as token:
+        with settings.DRIVE_TOKEN_PATH.open('w') as token:
             token.write(creds.to_json())
 
     yield build('drive', 'v3', credentials=creds)
