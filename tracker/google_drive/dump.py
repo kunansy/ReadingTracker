@@ -2,6 +2,7 @@
 import asyncio
 import contextlib
 import datetime
+import io
 import os
 import time
 from pathlib import Path
@@ -13,7 +14,9 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.sql.ddl import DropTable
 
 from tracker.common import database, models, settings
 from tracker.common.log import logger
@@ -131,20 +134,102 @@ async def backup() -> None:
                 round(time.perf_counter() - start_time, 2))
 
 
-def get_last_dump() -> Path:
-    pass
+def get_last_dump() -> str:
+    logger.debug("Getting last dump started")
+    folder_id = get_folder_id()
+    query = f"name contains 'tracker_' and mimeType='application/json' and '{folder_id}' in parents"
+
+    with get_client() as client:
+        response = client.files().list(
+            q=query, spaces='drive', fields='files(id,modifiedTime,name)')\
+            .execute()
+    files = response['files']
+    files.sort(key=lambda resp: resp['modifiedTime'], reverse=True)
+
+    logger.debug("%s files found", len(files))
+    return files[0]['id']
+
+
+def download_file(file_id: str) -> Path:
+    logger.debug("Downloading file id='%s'", file_id)
+    path = Path('data') / 'restore.json'
+    
+    with get_client() as client:
+        request = client.files().get_media(fileId=file_id)
+        fh = io.BytesIO()
+        downloader = MediaIoBaseDownload(fh, request)
+        done = False
+        while done is False:
+            status, done = downloader.next_chunk()
+            logger.debug("Download %d%%.", int(status.progress() * 100))
+
+        fh.seek(0)
+        with path.open('wb') as f:
+            f.write(fh.read())
+    return path
+
+
+@compiles(DropTable, "postgresql")
+def _compile_drop_table(element, compiler, **kwargs):
+    return compiler.visit_drop_table(element) + " CASCADE"
+
+
+async def recreate_db() -> None:
+    async with database.engine.begin() as conn:
+        await conn.run_sync(models.metadata.drop_all)
+        await conn.run_sync(models.metadata.create_all)
+
+
+def convert_str_to_date(value: str) -> Any:
+    try:
+        return datetime.datetime.strptime(value, settings.DATETIME_FORMAT)
+    except Exception:
+        pass
+
+    try:
+        return datetime.datetime.strptime(value, settings.DATE_FORMAT).date()
+    except Exception:
+        pass
+
+    return value
 
 
 async def restore_db(dump_path: Path) -> None:
-    pass
+    if not dump_path.exists():
+        raise ValueError("Dump file not found")
+
+    await recreate_db()
+
+    with dump_path.open() as f:
+        data = ujson.load(f)
+
+    async with database.session() as ses:
+        # order of them matters
+        for table in TABLES:
+            values = [
+                {
+                    key: convert_str_to_date(value)
+                    for key, value in record.items()
+                }
+                for record in data[table.name]
+            ]
+            logger.debug("Inserting %s values to %s",
+                         len(values), table.name)
+
+            stmt = table.insert().values(values)
+            await ses.execute(stmt)
+
+            logger.debug("Data into %s inserted", table.name)
 
 
 async def restore() -> None:
     logger.info("Restoring started")
     start_time = time.perf_counter()
 
-    if not (dump_file := get_last_dump()):
+    if not (dump_file_id := get_last_dump()):
         raise ValueError("Dump not found")
+
+    dump_file = download_file(dump_file_id)
     await restore_db(dump_file)
     remove_file(dump_file)
 
