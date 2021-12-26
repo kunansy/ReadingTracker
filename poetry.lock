@@ -630,8 +630,8 @@ test = ["aiohttp", "flake8 (>=3.9.2,<3.10.0)", "psutil", "pycodestyle (>=2.7.0,<
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.9"
-content-hash = "c419f86e063b3b4e182287e8b968d8fb8deb5dadf767a82ec4fce1a66bdd2832"
+python-versions = "^3.10"
+content-hash = "dd0833ff47d4814ab00616c315a6d9f20658da9c0d0302afe3642c14a6cfd4c9"
 
 [metadata.files]
 anyio = [
