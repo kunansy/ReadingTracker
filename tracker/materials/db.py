@@ -291,6 +291,15 @@ async def complete_material(*,
                  material_id, completion_date)
 
 
+async def _end_of_reading() -> datetime.date:
+    reading_stat = await reading_statistics()
+    remaining_days = sum(
+        stat.remaining_days
+        for stat in reading_stat
+    )
+    return datetime.date.today() + datetime.timedelta(days=remaining_days)
+
+
 async def estimate() -> list[MaterialEstimate]:
     """ Get materials from queue with estimated time to read """
     step = datetime.timedelta(days=1)
