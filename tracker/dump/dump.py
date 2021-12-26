@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import asyncio
 import contextlib
 import datetime
 import logging
@@ -125,7 +126,7 @@ def remove_dump(file_path: Path) -> None:
     logging.debug("Dump removed")
 
 
-def main() -> None:
+async def main() -> None:
     logging.info("Dumping started")
     start_time = time.perf_counter()
 
@@ -138,4 +139,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main())
