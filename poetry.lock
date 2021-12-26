@@ -555,14 +555,6 @@ optional = false
 python-versions = ">=3.7"
 
 [[package]]
-name = "types-aiofiles"
-version = "0.7.1"
-description = "Typing stubs for aiofiles"
-category = "main"
-optional = false
-python-versions = "*"
-
-[[package]]
 name = "types-ujson"
 version = "4.2.0"
 description = "Typing stubs for ujson"
@@ -1076,10 +1068,6 @@ starlette = [
 tomli = [
     {file = "tomli-2.0.0-py3-none-any.whl", hash = "sha256:b5bde28da1fed24b9bd1d4d2b8cba62300bfb4ec9a6187a957e8ddb9434c5224"},
     {file = "tomli-2.0.0.tar.gz", hash = "sha256:c292c34f58502a1eb2bbb9f5bbc9a5ebc37bee10ffb8c2d6bbdfa8eb13cc14e1"},
-]
-types-aiofiles = [
-    {file = "types-aiofiles-0.7.1.tar.gz", hash = "sha256:20026fe5d8f8d18c2ee3c3d817fdd70ffe067144b9ec238833cb90a8ac226a21"},
-    {file = "types_aiofiles-0.7.1-py3-none-any.whl", hash = "sha256:991866219aa4b69c3b776091bff51a58b821ca38408c733f892d9276ecee5c19"},
 ]
 types-ujson = [
     {file = "types-ujson-4.2.0.tar.gz", hash = "sha256:b97ab027754c0788e7083eaa4a57d5837fb248d0e59879e80f26fc1ad6e58eea"},
