@@ -16,6 +16,7 @@ from tracker.common import models, settings
 
 engine = create_async_engine(settings.DB_URI, encoding='utf-8')
 sqlite_engine = sqlite3.connect("data/materials.db")
+sqlite_engine.row_factory = sqlite3.Row
 
 
 MAP = dict[int, UUID]
@@ -72,7 +73,7 @@ async def session(**kwargs) -> AsyncGenerator[AsyncSession, None]:
 def _select_materials() -> list[Material]:
     stmt = "select * from material;"
     return [
-        Material(*row)
+        Material(**{k: v for k, v in zip(row.keys(), row)})
         for row in sqlite_engine.execute(stmt).fetchall()
     ]
 
@@ -80,7 +81,7 @@ def _select_materials() -> list[Material]:
 def _select_statuses() -> list[Status]:
     stmt = "select * from status;"
     return [
-        Status(*row)
+        Status(**{k: v for k, v in zip(row.keys(), row)})
         for row in sqlite_engine.execute(stmt).fetchall()
     ]
 
@@ -88,7 +89,7 @@ def _select_statuses() -> list[Status]:
 def _select_notes() -> list[Note]:
     stmt = "select * from note;"
     return [
-        Note(*row)
+        Note(**{k: v for k, v in zip(row.keys(), row)})
         for row in sqlite_engine.execute(stmt).fetchall()
     ]
 
@@ -96,7 +97,7 @@ def _select_notes() -> list[Note]:
 def _select_cards() -> list[Card]:
     stmt = "select * from card;"
     return [
-        Card(*row)
+        Card(**{k: v for k, v in zip(row.keys(), row)})
         for row in sqlite_engine.execute(stmt).fetchall()
     ]
 
