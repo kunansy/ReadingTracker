@@ -73,6 +73,7 @@ async def get_material_statistics(*,
     assert status is not None
     assert material is not None
 
+    avg_total = await statistics.get_avg_read_pages()
     if await _was_material_being_reading(material_id=material_id):
         log_st = await statistics.get_m_log_statistics(material_id=material_id)
         avg, total = log_st.average, log_st.total
@@ -80,13 +81,17 @@ async def get_material_statistics(*,
 
         max_record, min_record = log_st.max_record, log_st.min_record
     else:
-        avg = await statistics.get_avg_read_pages()
+        avg = 1
         total = duration = lost_time = 0
         max_record = min_record = None
 
     if status.completed_at is None:
         remaining_pages = material.pages - total
+
         remaining_days = round(remaining_pages / avg)
+        if not await _was_material_being_reading(material_id=material_id):
+            remaining_days = round(remaining_pages / avg_total)
+
         would_be_completed = database.today() + datetime.timedelta(days=remaining_days)
     else:
         would_be_completed = remaining_days = remaining_pages = None # type: ignore
