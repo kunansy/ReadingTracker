@@ -265,7 +265,7 @@ async def start_material(*,
 async def complete_material(*,
                             material_id: UUID,
                             completion_date: Optional[datetime.date] = None) -> None:
-    completion_date = completion_date or database.today()
+    completion_date = completion_date or database.today().date()
     logger.debug("Completing material_id=%s", material_id)
 
     get_status_stmt = sa.select(models.Statuses)\
