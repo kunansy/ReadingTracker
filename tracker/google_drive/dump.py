@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-import asyncio
 import contextlib
 import datetime
 import io
@@ -22,6 +21,9 @@ from tracker.common import database, models, settings
 from tracker.common.log import logger
 
 
+SNAPSHOT = dict[str, list[dict[str, str]]]
+
+SCOPES = ['https://www.googleapis.com/auth/drive']
 TABLES = [
     models.Materials,
     models.Statuses,
@@ -31,12 +33,12 @@ TABLES = [
 ]
 
 
-def get_now() -> str:
+def _get_now() -> str:
     now = datetime.datetime.utcnow()
-    return now.strftime('%Y-%m-%d_%H-%M-%S')
+    return now.strftime(settings.DATETIME_FORMAT)
 
 
-def convert_date(value: Any) -> Any:
+def _convert_date_to_str(value: Any) -> Any:
     if isinstance(value, datetime.date):
         return value.strftime(settings.DATE_FORMAT)
     if isinstance(value, datetime.datetime):
@@ -44,50 +46,55 @@ def convert_date(value: Any) -> Any:
     return value
 
 
-async def get_data() -> dict[str, list[dict[str, str]]]:
+async def _get_db_snapshot() -> SNAPSHOT:
     data = {}
     async with database.session() as ses:
         for table in TABLES:
             stmt = sa.select(table)
             data[table.name] = [
-                {str(key): convert_date(value) for key, value in row.items()}
+                {str(key): _convert_date_to_str(value) for key, value in row.items()}
                 for row in (await ses.execute(stmt)).mappings().all()
             ]
     return data
 
 
-async def dump() -> Path:
+def _dump_snapshot(db_snapshot: SNAPSHOT) -> Path:
     logger.debug("DB dumping started")
 
-    file_path = Path("data") / f"tracker_{get_now()}.json"
-    data = await get_data()
+    file_path = Path("data") / f"tracker_{_get_now()}.json"
 
     with file_path.open('w') as f:
-        ujson.dump(data, f, ensure_ascii=False, indent=2)
+        ujson.dump(db_snapshot, f, ensure_ascii=False, indent=2)
 
     logger.debug("DB dumped")
 
     return file_path
 
 
-@contextlib.contextmanager
-def get_client():
-    scopes = ['https://www.googleapis.com/auth/drive']
+def _get_drive_creds() -> Credentials:
     creds = None
     if settings.DRIVE_TOKEN_PATH.exists():
         creds = Credentials.from_authorized_user_file(
-            settings.DRIVE_TOKEN_PATH, scopes)
+            settings.DRIVE_TOKEN_PATH, SCOPES)
 
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
             flow = InstalledAppFlow.from_client_secrets_file(
-                settings.DRIVE_CREDS_PATH, scopes)
+                settings.DRIVE_CREDS_PATH, SCOPES)
             creds = flow.run_local_server(port=0)
 
+        # dump token if it was updated
         with settings.DRIVE_TOKEN_PATH.open('w') as token:
             token.write(creds.to_json())
+
+    return creds
+
+
+@contextlib.contextmanager
+def drive_client():
+    creds = _get_drive_creds()
 
     new_client = build('drive', 'v3', credentials=creds)
     try:
@@ -96,27 +103,28 @@ def get_client():
         logger.exception("Error with the client")
 
 
-def get_folder_id() -> str:
-    with get_client() as client:
+def _get_folder_id() -> str:
+    with drive_client() as client:
         response = client.files().list(
             q="name = 'tracker'", spaces='drive', fields='files(id)').execute()
     return response['files'][0]['id']
 
 
-def send_dump(file_path: Path) -> None:
+def _send_dump(file_path: Path) -> None:
     logger.debug("Sending file %s", file_path)
-    with get_client() as client:
+    with drive_client() as client:
         file_metadata = {
             'name': f"{file_path.name}",
-            'parents': [get_folder_id()]
+            'parents': [_get_folder_id()]
         }
-        file = MediaFileUpload(file_path, mimetype='application/json')
+        file = MediaFileUpload(
+            file_path, mimetype='application/json')
         client.files().create(
             body=file_metadata, media_body=file).execute()
     logger.debug("File sent")
 
 
-def remove_file(file_path: Path) -> None:
+def _remove_file(file_path: Path) -> None:
     logger.debug("Removing '%s'", file_path)
     os.remove(file_path)
     logger.debug("File removed")
@@ -126,20 +134,21 @@ async def backup() -> None:
     logger.info("Dumping started")
     start_time = time.perf_counter()
 
-    dump_file = await dump()
-    send_dump(dump_file)
-    remove_file(dump_file)
+    db_snapshot = await _get_db_snapshot()
+    dump_file = _dump_snapshot(db_snapshot)
+    _send_dump(dump_file)
+    _remove_file(dump_file)
 
     logger.info("Dumping completed, %ss",
                 round(time.perf_counter() - start_time, 2))
 
 
-def get_last_dump() -> str:
+def _get_last_dump() -> str:
     logger.debug("Getting last dump started")
-    folder_id = get_folder_id()
+    folder_id = _get_folder_id()
     query = f"name contains 'tracker_' and mimeType='application/json' and '{folder_id}' in parents"
 
-    with get_client() as client:
+    with drive_client() as client:
         response = client.files().list(
             q=query, spaces='drive', fields='files(id,modifiedTime,name)')\
             .execute()
@@ -150,11 +159,11 @@ def get_last_dump() -> str:
     return files[0]['id']
 
 
-def download_file(file_id: str) -> Path:
+def _download_file(file_id: str) -> Path:
     logger.debug("Downloading file id='%s'", file_id)
     path = Path('data') / 'restore.json'
-    
-    with get_client() as client:
+
+    with drive_client() as client:
         request = client.files().get_media(fileId=file_id)
         fh = io.BytesIO()
         downloader = MediaIoBaseDownload(fh, request)
@@ -174,13 +183,13 @@ def _compile_drop_table(element, compiler, **kwargs):
     return compiler.visit_drop_table(element) + " CASCADE"
 
 
-async def recreate_db() -> None:
+async def _recreate_db() -> None:
     async with database.engine.begin() as conn:
         await conn.run_sync(models.metadata.drop_all)
         await conn.run_sync(models.metadata.create_all)
 
 
-def convert_str_to_date(value: str) -> Any:
+def _convert_str_to_date(value: str) -> Any:
     try:
         return datetime.datetime.strptime(value, settings.DATETIME_FORMAT)
     except Exception:
@@ -194,11 +203,9 @@ def convert_str_to_date(value: str) -> Any:
     return value
 
 
-async def restore_db(dump_path: Path) -> None:
+async def _restore_db(dump_path: Path) -> None:
     if not dump_path.exists():
         raise ValueError("Dump file not found")
-
-    await recreate_db()
 
     with dump_path.open() as f:
         data = ujson.load(f)
@@ -208,7 +215,7 @@ async def restore_db(dump_path: Path) -> None:
         for table in TABLES:
             values = [
                 {
-                    key: convert_str_to_date(value)
+                    key: _convert_str_to_date(value)
                     for key, value in record.items()
                 }
                 for record in data[table.name]
@@ -226,16 +233,13 @@ async def restore() -> None:
     logger.info("Restoring started")
     start_time = time.perf_counter()
 
-    if not (dump_file_id := get_last_dump()):
+    if not (dump_file_id := _get_last_dump()):
         raise ValueError("Dump not found")
 
-    dump_file = download_file(dump_file_id)
-    await restore_db(dump_file)
-    remove_file(dump_file)
+    dump_file = _download_file(dump_file_id)
+    await _recreate_db()
+    await _restore_db(dump_file)
+    _remove_file(dump_file)
 
     logger.info("Restoring completed, %ss",
                 round(time.perf_counter() - start_time, 2))
-
-
-if __name__ == "__main__":
-    asyncio.run(main())
