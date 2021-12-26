@@ -129,5 +129,26 @@ async def main() -> None:
                 round(time.perf_counter() - start_time, 2))
 
 
+def get_last_dump() -> Path:
+    pass
+
+
+async def restore_db(dump_path: Path) -> None:
+    pass
+
+
+async def restore() -> None:
+    logger.info("Restoring started")
+    start_time = time.perf_counter()
+
+    if not (dump_file := get_last_dump()):
+        raise ValueError("Dump not found")
+    await restore_db(dump_file)
+    remove_file(dump_file)
+
+    logger.info("Restoring completed, %ss",
+                round(time.perf_counter() - start_time, 2))
+
+
 if __name__ == "__main__":
     asyncio.run(main())
