@@ -19,6 +19,15 @@ from tracker.common import database, models, settings
 from tracker.common.log import logger
 
 
+TABLES = [
+    models.Materials,
+    models.Statuses,
+    models.ReadingLog,
+    models.Notes,
+    models.Cards,
+]
+
+
 def get_now() -> str:
     now = datetime.datetime.utcnow()
     return now.strftime('%Y-%m-%d_%H-%M-%S')
@@ -33,16 +42,9 @@ def convert_date(value: Any) -> Any:
 
 
 async def get_data() -> dict[str, list[dict[str, str]]]:
-    tables = [
-        models.Materials,
-        models.Statuses,
-        models.ReadingLog,
-        models.Notes,
-        models.Cards,
-    ]
     data = {}
     async with database.session() as ses:
-        for table in tables:
+        for table in TABLES:
             stmt = sa.select(table)
             data[table.name] = [
                 {str(key): convert_date(value) for key, value in row.items()}
