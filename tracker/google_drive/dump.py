@@ -107,7 +107,7 @@ def send_dump(file_path: Path) -> None:
             'name': f"{file_path.name}",
             'parents': [get_folder_id()]
         }
-        file = MediaFileUpload(file_path, mimetype='text/plain')
+        file = MediaFileUpload(file_path, mimetype='application/json')
         client.files().create(
             body=file_metadata, media_body=file).execute()
     logger.debug("File sent")
