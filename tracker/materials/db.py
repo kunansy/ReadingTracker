@@ -246,12 +246,12 @@ async def start_material(*,
     start_date = start_date or database.today().date()
     logger.debug("Starting material_id=%s", material_id)
 
-    if start_date > database.today():
+    if start_date > database.today().date():
         raise ValueError("Start date must be less than today")
 
     values = {
         "material_id": str(material_id),
-        "start_date": start_date
+        "started_at": start_date
     }
     stmt = models.Statuses\
         .insert().values(values)
