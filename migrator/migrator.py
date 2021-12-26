@@ -105,65 +105,68 @@ def _select_cards() -> list[Card]:
 async def _migrate_materials() -> MAP:
     ids: dict[int, UUID] = {}
 
+    values = []
     for material in _select_materials():
         material_id = uuid.uuid4()
+        ids[material.material_id] = material_id
 
-        values = {
+        values += [{
             "material_id": str(material_id),
             "title": material.title,
             "authors": material.authors,
             "pages": material.pages,
             "tags": material.tags
-        }
+        }]
 
-        stmt = models.Materials \
-            .insert().values(values)
-        async with session() as ses:
-            await ses.execute(stmt)
-
-        ids[material.material_id] = material_id
+    stmt = models.Materials \
+        .insert().values(values)
+    async with session() as ses:
+        await ses.execute(stmt)
 
     return ids
 
 
 async def _migrate_statuses(*,
                             material_ids: MAP) -> None:
+    values = []
     for status in _select_statuses():
-        values = {
+        value = {
             "material_id": str(material_ids[status.material_id]),
-            "started_at": datetime.datetime.strptime(status.begin, '%Y-%m-%d').date()
+            "started_at": datetime.datetime.strptime(status.begin, '%Y-%m-%d').date(),
+            "completed_at": None
         }
         if status.end:
-            values["completed_at"] = datetime.datetime.strptime(status.end, '%Y-%m-%d').date()
+            value["completed_at"] = datetime.datetime.strptime(status.end, '%Y-%m-%d').date()
+        values += [value]
 
-        stmt = models.Statuses \
-            .insert().values(values)
-        async with session() as ses:
-            await ses.execute(stmt)
+    stmt = models.Statuses \
+        .insert().values(values)
+    async with session() as ses:
+        await ses.execute(stmt)
 
 
 async def _migrate_notes(*,
                          material_ids: MAP) -> MAP:
     ids: dict[int, UUID] = {}
 
+    values = []
     for note in _select_notes():
         note_id = uuid.uuid4()
+        ids[note.id] = note_id
 
-        values = {
+        values += [{
             "note_id": str(note_id),
             "content": note.content,
             "material_id": str(material_ids[note.material_id]),
             "added_at": datetime.datetime.strptime(note.date, '%Y-%m-%d').date(),
             "chapter": note.chapter,
             "page": note.page,
-        }
+        }]
 
-        stmt = models.Notes \
-            .insert().values(values)
-        async with session() as ses:
-            await ses.execute(stmt)
-
-        ids[note.id] = note_id
+    stmt = models.Notes \
+        .insert().values(values)
+    async with session() as ses:
+        await ses.execute(stmt)
 
     return ids
 
@@ -191,17 +194,19 @@ async def _migrate_reading_log(*,
     with open('data/log.json') as f:
         logs = ujson.load(f)
 
-    async with session() as ses:
-        for date, info in logs.items():
-            values = {
-                "date": datetime.datetime.strptime(date, '%d-%m-%Y').date(),
-                "count": info['count'],
-                "material_id": str(material_ids[info['material_id']])
-            }
-            stmt = models.ReadingLog\
-                .insert().values(values)
+    values = [
+        {
+            "date": datetime.datetime.strptime(date, '%d-%m-%Y').date(),
+            "count": info['count'],
+            "material_id": str(material_ids[info['material_id']])
+        }
+        for date, info in logs.items()
+    ]
+    stmt = models.ReadingLog \
+        .insert().values(values)
 
-            await ses.execute(stmt)
+    async with session() as ses:
+        await ses.execute(stmt)
 
 
 async def migrate():
