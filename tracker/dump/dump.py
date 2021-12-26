@@ -130,7 +130,7 @@ async def main() -> None:
     logging.info("Dumping started")
     start_time = time.perf_counter()
 
-    dump_file = dump()
+    dump_file = await dump()
     send_dump(dump_file)
     remove_dump(dump_file)
 
