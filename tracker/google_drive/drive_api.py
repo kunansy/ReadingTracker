@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import asyncio
+import argparse
 import contextlib
 import datetime
 import io
@@ -9,7 +11,6 @@ from typing import Any
 
 import sqlalchemy.sql as sa
 import ujson
-from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -35,7 +36,7 @@ TABLES = [
 
 def _get_now() -> str:
     now = datetime.datetime.utcnow()
-    return now.strftime(settings.DATETIME_FORMAT)
+    return now.strftime(settings.DATETIME_FORMAT).replace(' ', '_')
 
 
 def _convert_date_to_str(value: Any) -> Any:
@@ -78,12 +79,9 @@ def _get_drive_creds() -> Credentials:
             settings.DRIVE_TOKEN_PATH, SCOPES)
 
     if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                settings.DRIVE_CREDS_PATH, SCOPES)
-            creds = flow.run_local_server(port=0)
+        flow = InstalledAppFlow.from_client_secrets_file(
+            settings.DRIVE_CREDS_PATH, SCOPES)
+        creds = flow.run_local_server(port=0)
 
         # dump token if it was updated
         with settings.DRIVE_TOKEN_PATH.open('w') as token:
@@ -243,3 +241,31 @@ async def restore() -> None:
 
     logger.info("Restoring completed, %ss",
                 round(time.perf_counter() - start_time, 2))
+
+
+async def main() -> None:
+    parser = argparse.ArgumentParser(
+        description="Backup/restore the database"
+    )
+    parser.add_argument(
+        '--backup',
+        help="Create and send a backup to the Google Drive",
+        action="store_true",
+        dest="backup"
+    )
+    parser.add_argument(
+        '--restore',
+        help="Downloand the last backup from the Google Drive and restore the datbase",
+        action="store_true",
+        dest="restore"
+    )
+    args = parser.parse_args()
+
+    if args.backup:
+        await backup()
+    elif args.restore:
+        await restore()
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
