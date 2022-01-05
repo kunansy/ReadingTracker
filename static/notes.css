@@ -10,9 +10,12 @@ div.menu {
     margin: auto;
     margin-bottom: 5vh;
 }
+
+details > summary:first-of-type {
+    list-style-type: none;
+}
+
 details.menu {
-    border: .4vh black solid;
-    border-radius: 2vh;
     padding: 2vh;
 }
 div.menu a {

@@ -32,7 +32,7 @@
         <div class="menu-items">
         {% for material_id, chapters in chapters | dictsort %}
             <div class="material-link">
-            <details class="chapters">
+            <details open class="chapters">
                 <summary> <a class="title-link" href="#material-{{ material_id }}"> «{{ titles[material_id] }}» </a> </summary>
                 <div class="chapters">
                     {% for chapter in chapters | sort %}
