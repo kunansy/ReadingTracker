@@ -8,7 +8,7 @@ import os
 import time
 from pathlib import Path
 from typing import Any
-from fynctools import lru_cache
+from functools import lru_cache
 
 import sqlalchemy.sql as sa
 import ujson
