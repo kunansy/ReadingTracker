@@ -8,6 +8,7 @@ import os
 import time
 from pathlib import Path
 from typing import Any
+from fynctools import lru_cache
 
 import sqlalchemy.sql as sa
 import ujson
@@ -72,6 +73,7 @@ def _dump_snapshot(db_snapshot: SNAPSHOT) -> Path:
     return file_path
 
 
+@lru_cache
 def _get_drive_creds() -> Credentials:
     creds = None
     if settings.DRIVE_TOKEN_PATH.exists():
