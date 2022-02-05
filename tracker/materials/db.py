@@ -228,7 +228,7 @@ async def add_material(*,
                        title: str,
                        authors: str,
                        pages: int,
-                       tags: str) -> None:
+                       tags: Optional[str]) -> None:
     logger.debug("Adding material title=%s", title)
 
     values = {

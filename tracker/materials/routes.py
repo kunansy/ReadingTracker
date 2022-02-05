@@ -1,4 +1,5 @@
 from uuid import UUID
+from typing import Optional
 
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -44,7 +45,7 @@ async def add_material_view(request: Request):
 async def add_material(title: str = Form(...),
                        authors: str = Form(...),
                        pages: int = Form(...),
-                       tags: str = Form(...)):
+                       tags: Optional[str] = Form(None)):
     """ Add a material to the queue """
     await db.add_material(
         title=title, authors=authors, pages=pages, tags=tags
