@@ -54,7 +54,10 @@ async def _get_db_snapshot() -> SNAPSHOT:
         for table in TABLES:
             stmt = sa.select(table)
             data[table.name] = [
-                {str(key): _convert_date_to_str(value) for key, value in row.items()}
+                {
+                    str(key): _convert_date_to_str(value) 
+                    for key, value in row.items()
+                }
                 for row in (await ses.execute(stmt)).mappings().all()
             ]
     return data
@@ -101,6 +104,7 @@ def drive_client():
         yield new_client
     except Exception:
         logger.exception("Error with the client")
+        raise
 
 
 def _get_folder_id() -> str:
@@ -112,13 +116,15 @@ def _get_folder_id() -> str:
 
 def _send_dump(file_path: Path) -> None:
     logger.debug("Sending file %s", file_path)
+
+    file_metadata = {
+        'name': f"{file_path.name}",
+        'parents': [_get_folder_id()]
+    }
+    file = MediaFileUpload(
+        file_path, mimetype='application/json')
+
     with drive_client() as client:
-        file_metadata = {
-            'name': f"{file_path.name}",
-            'parents': [_get_folder_id()]
-        }
-        file = MediaFileUpload(
-            file_path, mimetype='application/json')
         client.files().create(
             body=file_metadata, media_body=file).execute()
     logger.debug("File sent")
@@ -131,7 +137,7 @@ def _remove_file(file_path: Path) -> None:
 
 
 async def backup() -> None:
-    logger.info("Dumping started")
+    logger.info("Backuping started")
     start_time = time.perf_counter()
 
     db_snapshot = await _get_db_snapshot()
@@ -139,7 +145,7 @@ async def backup() -> None:
     _send_dump(dump_file)
     _remove_file(dump_file)
 
-    logger.info("Dumping completed, %ss",
+    logger.info("Backuping completed, %ss",
                 round(time.perf_counter() - start_time, 2))
 
 
