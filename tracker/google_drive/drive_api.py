@@ -55,7 +55,7 @@ async def _get_db_snapshot() -> SNAPSHOT:
             stmt = sa.select(table)
             data[table.name] = [
                 {
-                    str(key): _convert_date_to_str(value) 
+                    str(key): _convert_date_to_str(value)
                     for key, value in row.items()
                 }
                 for row in (await ses.execute(stmt)).mappings().all()
