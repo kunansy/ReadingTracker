@@ -33,8 +33,8 @@ async def get_notes() -> list[RowMapping]:
 async def add_note(*,
                    material_id: UUID,
                    content: str,
-                   chapter: Optional[int],
-                   page: Optional[int],
+                   chapter: int,
+                   page: int,
                    date: Optional[datetime.date] = None) -> None:
     date = date or database.today()
     logger.debug("Adding note for material_id=%s at %s",
