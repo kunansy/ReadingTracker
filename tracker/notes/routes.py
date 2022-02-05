@@ -1,5 +1,6 @@
 from collections import defaultdict
 from uuid import UUID
+from typing import Optional
 
 from fastapi import APIRouter, Form, Query, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -75,8 +76,8 @@ async def add_note_view(request: Request):
 @router.post('/add')
 async def add_note(material_id: UUID = Form(...),
                    content: str = Form(...),
-                   chapter: PositiveInt = Form(...),
-                   page: PositiveInt = Form(...)):
+                   chapter: Optional[PositiveInt] = Form(None),
+                   page: Optional[PositiveInt] = Form(None)):
     await db.add_note(
         material_id=material_id, content=content, chapter=chapter, page=page
     )
