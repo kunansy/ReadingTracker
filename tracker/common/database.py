@@ -56,7 +56,8 @@ async def get_reading_materials() -> list[RowMapping]:
                       models.Statuses]) \
         .join(models.Statuses,
               models.Materials.c.material_id == models.Statuses.c.material_id) \
-        .where(models.Statuses.c.completed_at == None)
+        .where(models.Statuses.c.completed_at == None)\
+        .order_by(models.Statuses.c.started_at)
 
     async with session() as ses:
         return (await ses.execute(stmt)).mappings().all()
