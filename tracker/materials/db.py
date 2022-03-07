@@ -185,7 +185,8 @@ async def get_free_materials() -> list[RowMapping]:
         .where(models.Statuses.c.material_id == models.Materials.c.material_id)
 
     stmt = sa.select(models.Materials)\
-        .where(~sa.exists(assigned_condition)) \
+        .where(~sa.exists(assigned_condition))\
+        .order_by(models.Materials.c.added_ad)
 
     async with database.session() as ses:
         return (await ses.execute(stmt)).all()
@@ -198,7 +199,8 @@ async def get_completed_materials() -> list[RowMapping]:
                       models.Statuses]) \
         .join(models.Statuses,
               models.Materials.c.material_id == models.Statuses.c.material_id) \
-        .where(models.Statuses.c.completed_at != None)
+        .where(models.Statuses.c.completed_at != None)\
+        .order_by(models.Materials.c.added_at)
 
     async with database.session() as ses:
         return (await ses.execute(stmt)).mappings().all()
