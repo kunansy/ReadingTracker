@@ -186,7 +186,7 @@ async def get_free_materials() -> list[RowMapping]:
 
     stmt = sa.select(models.Materials)\
         .where(~sa.exists(assigned_condition))\
-        .order_by(models.Materials.c.added_ad)
+        .order_by(models.Materials.c.added_at)
 
     async with database.session() as ses:
         return (await ses.execute(stmt)).all()
