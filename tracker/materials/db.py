@@ -200,7 +200,7 @@ async def get_completed_materials() -> list[RowMapping]:
         .join(models.Statuses,
               models.Materials.c.material_id == models.Statuses.c.material_id) \
         .where(models.Statuses.c.completed_at != None)\
-        .order_by(models.Materials.c.added_at)
+        .order_by(models.Statuses.c.completed_at)
 
     async with database.session() as ses:
         return (await ses.execute(stmt)).mappings().all()
