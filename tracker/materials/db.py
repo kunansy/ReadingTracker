@@ -67,14 +67,13 @@ async def get_material_statistics(*,
     """ Calculate statistics for reading or completed material """
     logger.debug("Calculating statistics for material_id=%s", material_id)
 
-    material = await get_material(material_id=material_id)
-    status = await get_status(material_id=material_id)
-
-    assert status is not None
-    assert material is not None
+    if (material := await get_material(material_id=material_id)) is None:
+        raise ValueError(f"{material_id=} not found")
+    if (status := await get_status(material_id=material_id)) is None:
+        raise ValueError(f"Status for {material_id=} not found")
 
     avg_total = await statistics.get_avg_read_pages()
-    if await _was_material_being_reading(material_id=material_id):
+    if was_reading := await _was_material_being_reading(material_id=material_id):
         log_st = await statistics.get_m_log_statistics(material_id=material_id)
         avg, total = log_st.average, log_st.total
         duration, lost_time = log_st.duration, log_st.lost_time
@@ -89,7 +88,7 @@ async def get_material_statistics(*,
         remaining_pages = material.pages - total
 
         remaining_days = round(remaining_pages / avg)
-        if not await _was_material_being_reading(material_id=material_id):
+        if not was_reading:
             remaining_days = round(remaining_pages / avg_total)
 
         would_be_completed = database.today() + datetime.timedelta(days=remaining_days)
