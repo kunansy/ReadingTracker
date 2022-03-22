@@ -1,13 +1,11 @@
 from collections import defaultdict
-from uuid import UUID
 
-from fastapi import APIRouter, Form, Query, Request
+from fastapi import APIRouter, Query, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from pydantic import conint
 
 from tracker.common import settings
-from tracker.notes import db
+from tracker.notes import db, schemas
 
 
 router = APIRouter(
@@ -73,11 +71,11 @@ async def add_note_view(request: Request):
 
 
 @router.post('/add')
-async def add_note(material_id: UUID = Form(...),
-                   content: str = Form(...),
-                   chapter: conint(ge=0) = Form(0), # type: ignore
-                   page: conint(ge=0) = Form(0)): # type: ignore
+async def add_note(note: schemas.Note = Depends()):
     await db.add_note(
-        material_id=material_id, content=content, chapter=chapter, page=page
+        material_id=note.material_id,
+        content=note.content,
+        chapter=note.chapter,
+        page=note.page
     )
     return RedirectResponse('/notes/add-view', status_code=302)
