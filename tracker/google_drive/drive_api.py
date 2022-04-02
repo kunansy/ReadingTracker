@@ -165,9 +165,11 @@ def _get_last_dump() -> str:
     return files[0]['id']
 
 
-def _download_file(file_id: str) -> Path:
+def _download_file(file_id: str,
+                   *,
+                   filename: str = 'restore.json') -> Path:
     logger.debug("Downloading file id='%s'", file_id)
-    path = Path('data') / 'restore.json'
+    path = Path('data') / filename
 
     with drive_client() as client:
         request = client.files().get_media(fileId=file_id)
@@ -267,12 +269,21 @@ async def main() -> None:
         action="store_true",
         dest="restore"
     )
+    parser.add_argument(
+        '--get-last-dump',
+        help="Download the last backup from the Google Drive",
+        action="store_true",
+        dest="last_dump"
+    )
     args = parser.parse_args()
 
     if args.backup:
         await backup()
     elif args.restore:
         await restore()
+    elif args.last_dump:
+        last_dump_id = _get_last_dump()
+        _download_file(last_dump_id, filename='last_dump.json')
 
 
 if __name__ == "__main__":
