@@ -242,21 +242,28 @@ async def restore(*,
     logger.info("Restoring started")
     start_time = time.perf_counter()
 
-    dump_file_id = _get_last_dump()
-    if not (dump_file_id or dump_path):
+    if dump_path:
+        if 'data/' not in str(dump_path):
+            dump_path = Path('data') / dump_path
+
+        assert dump_path.exists(), f"File {dump_path=} not found"
+
+        await _recreate_db()
+        await _restore_db(dump_path)
+
+        logger.info("Restoring completed, %ss",
+                    round(time.perf_counter() - start_time, 2))
+        return
+
+    if not (dump_file_id := _get_last_dump()):
         raise ValueError("Dump not found")
 
-    if dump_path:
-        dump_file = Path('data') / dump_path
-    else:
-        dump_file = _download_file(dump_file_id)
+    dump_file = _download_file(dump_file_id)
 
     await _recreate_db()
     await _restore_db(dump_file)
 
-    if dump_path is None:
-        # don't remove local file
-        _remove_file(dump_file)
+    _remove_file(dump_file)
 
     logger.info("Restoring completed, %ss",
                 round(time.perf_counter() - start_time, 2))
