@@ -237,17 +237,26 @@ async def _restore_db(dump_path: Path) -> None:
             logger.debug("Data into %s inserted", table.name)
 
 
-async def restore() -> None:
+async def restore(*,
+                  dump_path: Path | None = None) -> None:
     logger.info("Restoring started")
     start_time = time.perf_counter()
 
-    if not (dump_file_id := _get_last_dump()):
+    dump_file_id = _get_last_dump()
+    if not (dump_file_id or dump_path):
         raise ValueError("Dump not found")
 
-    dump_file = _download_file(dump_file_id)
+    if dump_path:
+        dump_file = Path('data') / dump_path
+    else:
+        dump_file = _download_file(dump_file_id)
+
     await _recreate_db()
     await _restore_db(dump_file)
-    _remove_file(dump_file)
+
+    if dump_path is None:
+        # don't remove local file
+        _remove_file(dump_file)
 
     logger.info("Restoring completed, %ss",
                 round(time.perf_counter() - start_time, 2))
@@ -270,6 +279,12 @@ async def main() -> None:
         dest="restore"
     )
     parser.add_argument(
+        '--restore-offline',
+        help="Restore the database from the local file",
+        type=Path,
+        dest="restore_offline",
+    )
+    parser.add_argument(
         '--get-last-dump',
         help="Download the last backup from the Google Drive",
         action="store_true",
@@ -284,6 +299,8 @@ async def main() -> None:
     elif args.last_dump:
         last_dump_id = _get_last_dump()
         _download_file(last_dump_id, filename='last_dump.json')
+    elif dump_path := args.restore_offline:
+        await restore(dump_path=dump_path)
 
 
 if __name__ == "__main__":
