@@ -286,6 +286,12 @@ async def main() -> None:
         dest="restore"
     )
     parser.add_argument(
+        '--backup-offline',
+        help="Dump the database to the local file",
+        action="store_true",
+        dest="backup_offline",
+    )
+    parser.add_argument(
         '--restore-offline',
         help="Restore the database from the local file",
         type=Path,
@@ -308,6 +314,9 @@ async def main() -> None:
         _download_file(last_dump_id, filename='last_dump.json')
     elif dump_path := args.restore_offline:
         await restore(dump_path=dump_path)
+    elif args.backup_offline:
+        snapshot = await _get_db_snapshot()
+        _dump_snapshot(snapshot)
 
 
 if __name__ == "__main__":
