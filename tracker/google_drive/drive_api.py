@@ -274,7 +274,7 @@ async def main() -> None:
     )
     parser.add_argument(
         '--restore',
-        help="Downloand the last backup from the Google Drive and restore the datbase",
+        help="Download the last backup from the Google Drive and restore the database",
         action="store_true",
         dest="restore"
     )
