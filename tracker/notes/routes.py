@@ -70,12 +70,19 @@ async def add_note_view(request: Request):
     return templates.TemplateResponse("add_note.html", context)
 
 
-@router.post('/add')
+@router.post('/add',
+             response_class=RedirectResponse)
 async def add_note(note: schemas.Note = Depends()):
+    response = RedirectResponse('/notes/add-view', status_code=302)
+
+    for key, value in note.dict(exclude={'content'}).items():
+        response.set_cookie(key, value)
+
     await db.add_note(
         material_id=note.material_id,
         content=note.content,
         chapter=note.chapter,
         page=note.page
     )
-    return RedirectResponse('/notes/add-view', status_code=302)
+
+    return response
