@@ -76,7 +76,7 @@ async def add_note(note: schemas.Note = Depends()):
     response = RedirectResponse('/notes/add-view', status_code=302)
 
     for key, value in note.dict(exclude={'content'}).items():
-        response.set_cookie(key, value)
+        response.set_cookie(key, value, expires=3600)
 
     await db.add_note(
         material_id=note.material_id,
