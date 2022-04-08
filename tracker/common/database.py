@@ -61,3 +61,11 @@ async def get_reading_materials() -> list[RowMapping]:
 
     async with session() as ses:
         return (await ses.execute(stmt)).mappings().all()
+
+
+async def is_alive() -> bool:
+    logger.debug("Checking if the database is alive")
+
+    stmt = sa.select(sa.func.count(models.Materials.c.material_id))
+    async with session() as ses:
+        return await ses.scalar(stmt) > 0

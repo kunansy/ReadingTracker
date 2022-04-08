@@ -35,7 +35,7 @@ services:
     networks:
       - tracker-net
     healthcheck:
-      test: curl -f http://localhost:8000/notes || exit 1
+      test: curl -f http://localhost:8000/readiness || exit 1
       interval: 10s
       timeout: 5s
       retries: 3

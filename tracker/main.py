@@ -1,6 +1,7 @@
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException, RequestValidationError
+from fastapi.responses import UJSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -73,6 +74,23 @@ async def http_exception_handler(request: Request,
     }
 
     return templates.TemplateResponse("errors/404.html", context)
+
+
+@app.get('/liveness')
+async def liveness():
+    return {"status": "ok"}
+
+
+@app.get('/readiness')
+async def readiness():
+    status, status_code = "ok", 200
+    if not await database.is_alive():
+        status, status_code = "error", 500
+
+    return UJSONResponse(
+        content={"status": status},
+        status_code=status_code
+    )
 
 
 if __name__ == '__main__':
