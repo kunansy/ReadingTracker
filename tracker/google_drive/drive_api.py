@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-import asyncio
 import argparse
+import asyncio
 import contextlib
 import datetime
 import io
 import os
 import time
+from functools import lru_cache
 from pathlib import Path
 from typing import Any
-from functools import lru_cache
 
 import sqlalchemy.sql as sa
 import ujson
