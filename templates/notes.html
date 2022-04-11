@@ -2,6 +2,7 @@
 
 {%- block style -%}
 <link rel="stylesheet" href="{{ url_for('static', path='notes.css') }}">
+<script src="{{ url_for('static', path='js/notes.js')}}"></script>
 {%- endblock style -%}
 
 {%- block header -%}
@@ -59,7 +60,7 @@
         {% for chapter, note_c in notes_m | groupby('chapter') %}
             <h4 class="chapter_number" id="material-{{material_id}}-chapter-{{chapter}}"> Chapter: {{ chapter }} </h4>
             {% for note in note_c %}
-            <div class="note hover">
+            <div class="note hover" onclick=openNote("{{ note.note_id }}")>
                 <p class="note-content"> {{ note.content }}</p>
                 <p class="note-page"> Page: {{ note.page }} </p>
             </div>
