@@ -1,4 +1,5 @@
 from collections import defaultdict
+from uuid import UUID
 
 from fastapi import APIRouter, Query, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -80,6 +81,37 @@ async def add_note(note: schemas.Note = Depends()):
 
     await db.add_note(
         material_id=note.material_id,
+        content=note.content,
+        chapter=note.chapter,
+        page=note.page
+    )
+
+    return response
+
+
+@router.get('/update-view')
+async def update_note_view(note_id: UUID,
+                           request: Request):
+    note = await db.get_note(note_id=note_id)
+
+    context = {
+        'request': request,
+        'material_id': note['material_id'],
+        'note_id': note['note_id'],
+        'content': note['content'],
+        'chapter': note['chapter'],
+        'page': note['page'],
+    }
+    return templates.TemplateResponse("update_note.html", context)
+
+
+@router.post('/update',
+             response_class=RedirectResponse)
+async def update_note(note: schemas.UpdateNote = Depends()):
+    response = RedirectResponse(f'/notes/update-view?note_id={note.note_id}', status_code=302)
+
+    await db.update_note(
+        note_id=note.note_id,
         content=note.content,
         chapter=note.chapter,
         page=note.page
