@@ -25,7 +25,9 @@ class Note(BaseModel):
         if not content.endswith(('.', '?', '!')):
             content = f"{content}."
 
-        return content.replace('--', "–")
+        return content\
+            .replace('--', "–")\
+            .replace('->', "→")
 
 
 class UpdateNote(Note):
