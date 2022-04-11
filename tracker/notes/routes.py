@@ -92,7 +92,12 @@ async def add_note(note: schemas.Note = Depends()):
 @router.get('/update-view')
 async def update_note_view(note_id: UUID,
                            request: Request):
-    note = await db.get_note(note_id=note_id)
+    if not (note := await db.get_note(note_id=note_id)):
+        context = {
+            'request': request,
+            'what': f"Note id='{note_id}' not found",
+        }
+        return templates.TemplateResponse("errors/404.html", context)
 
     context = {
         'request': request,
