@@ -32,7 +32,7 @@ app.include_router(cards_router)
 @app.exception_handler(database.DatabaseError)
 async def database_exception_handler(request: Request,
                                      exc: database.DatabaseError):
-    logger.exception("Error, %s", str(exc))
+    logger.exception("Error, (%s), %s", request.url, str(exc))
 
     context = {
         "request": request,
@@ -49,7 +49,8 @@ async def database_exception_handler(request: Request,
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request,
                                        exc: RequestValidationError):
-    logger.exception("Validation error occurred, %s", str(exc))
+    logger.exception("Validation error occurred, (%s), %s",
+                     request.url, str(exc))
 
     context = {
         "request": request,
@@ -66,7 +67,8 @@ async def validation_exception_handler(request: Request,
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request,
                                  exc: HTTPException):
-    logger.exception("HTTP exception occurred, %s", str(exc))
+    logger.exception("HTTP exception occurred, (%s), %s",
+                     request.url, str(exc))
 
     context = {
         "request": request,
