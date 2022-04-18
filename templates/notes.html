@@ -55,7 +55,7 @@
     {% endif %}
 
     <div class="group">
-        <h3 class="material_title" id="material-{{material_id}}"> «{{ titles[material_id] }}» </h3>
+        <h3 class="material_title" id="material-{{material_id}}"> «{{ titles[material_id] }}» ({{ notes_m | length }})</h3>
 
         {% for chapter, note_c in notes_m | groupby('chapter') %}
             <h4 class="chapter_number" id="material-{{material_id}}-chapter-{{chapter}}"> Chapter: {{ chapter }} </h4>
