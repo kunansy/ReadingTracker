@@ -26,6 +26,7 @@ class MaterialStatistics(NamedTuple):
     min_record: Optional[database.MinMax]
     max_record: Optional[database.MinMax]
     average: int
+    notes_count: int
     remaining_pages: Optional[int] = None
     remaining_days: Optional[int] = None
     completed_at: Optional[datetime.date] = None
@@ -57,6 +58,16 @@ async def _was_material_being_reading(*,
     stmt = sa.select(sa.func.count(1) >= 1)\
         .select_from(models.ReadingLog)\
         .where(models.ReadingLog.c.material_id == str(material_id))
+
+    async with database.session() as ses:
+        return await ses.scalar(stmt)
+
+
+async def get_notes_count(*,
+                          material_id: UUID) -> int:
+    stmt = sa.select(sa.func.count(1))\
+        .select_from(models.Notes)\
+        .where(models.Notes.c.material_id == str(material_id))
 
     async with database.session() as ses:
         return await ses.scalar(stmt)
@@ -95,6 +106,8 @@ async def get_material_statistics(*,
     else:
         would_be_completed = remaining_days = remaining_pages = None # type: ignore
 
+    notes_count = await get_notes_count(material_id=material_id)
+
     return MaterialStatistics(
         material=material,
         started_at=status.started_at,
@@ -105,9 +118,10 @@ async def get_material_statistics(*,
         min_record=min_record,
         max_record=max_record,
         average=avg,
+        notes_count=notes_count,
         remaining_pages=remaining_pages,
         remaining_days=remaining_days,
-        would_be_completed=would_be_completed
+        would_be_completed=would_be_completed,
     )
 
 
