@@ -11,6 +11,7 @@ from tracker.common.log import logger
 from tracker.materials.routes import router as materials_router
 from tracker.notes.routes import router as notes_router
 from tracker.reading_log.routes import router as reading_log_router
+from tracker.system.routes import router as system_router
 
 
 app = FastAPI(
@@ -27,6 +28,7 @@ app.include_router(reading_log_router)
 app.include_router(notes_router)
 app.include_router(materials_router)
 app.include_router(cards_router)
+app.include_router(system_router)
 
 
 @app.exception_handler(database.DatabaseError)
