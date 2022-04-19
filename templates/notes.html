@@ -61,7 +61,7 @@
             <h4 class="chapter_number" id="material-{{material_id}}-chapter-{{chapter}}"> Chapter: {{ chapter }} </h4>
             {% for note in note_c %}
             <div class="note hover" onclick=openNote("{{ note.note_id }}")>
-                <p class="note-content"> {{ note.content }}</p>
+                <p class="note-content"> {{ note.content | safe }} </p>
                 <p class="note-page"> Page: {{ note.page }} </p>
             </div>
             {% endfor %}
