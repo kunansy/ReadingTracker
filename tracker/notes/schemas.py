@@ -9,6 +9,7 @@ PUNCTUATION_MAPPING = {
     "->": "→",
 }
 BOLD_MARKER = "font-weight-bold"
+ITALIC_MARKER = "font-italic"
 
 
 def _replace_quotes(string: str) -> str:
@@ -41,6 +42,13 @@ def _mark_bold(string: str) -> str:
     return string
 
 
+def _mark_italic(string: str) -> str:
+    while '__' in string:
+        string = string.replace("__", f'<span class="{ITALIC_MARKER}">', 1)
+        string = string.replace("__", f'</span class="{ITALIC_MARKER}">', 1)
+    return string
+
+
 class Note(BaseModel):
     material_id: UUID
     content: constr(strip_whitespace=True)
@@ -63,6 +71,7 @@ class Note(BaseModel):
         content = _replace_quotes(content)
         content = _up_first_letter(content)
         content = _mark_bold(content)
+        content = _mark_italic(content)
 
         return _replace_punctuation(content)
 
