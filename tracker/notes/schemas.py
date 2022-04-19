@@ -49,6 +49,16 @@ def _mark_italic(string: str) -> str:
     return string
 
 
+NOTES_FORMATTERS = (
+    _replace_quotes,
+    _add_dot,
+    _up_first_letter,
+    _replace_punctuation,
+    _mark_bold,
+    _mark_italic,
+)
+
+
 class Note(BaseModel):
     material_id: UUID
     content: constr(strip_whitespace=True)
@@ -67,13 +77,9 @@ class Note(BaseModel):
     @validator('content')
     def format_content(cls,
                        content: str) -> str:
-        content = _add_dot(content)
-        content = _replace_quotes(content)
-        content = _up_first_letter(content)
-        content = _mark_bold(content)
-        content = _mark_italic(content)
-
-        return _replace_punctuation(content)
+        for formatter in NOTES_FORMATTERS:
+            content = formatter(content)
+        return content
 
 
 class UpdateNote(Note):
