@@ -25,6 +25,9 @@ class Note(BaseModel):
         if not content.endswith(('.', '?', '!')):
             content = f"{content}."
 
+        # always use uppercase for first letter
+        content = f"{content[0].upper()}{content[1:]}"
+
         return content\
             .replace('--', "–")\
             .replace('->', "→")
