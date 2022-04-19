@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Query, Request, Depends
@@ -6,6 +7,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from tracker.common import settings
+from tracker.common.log import logger
 from tracker.notes import db, schemas
 
 
@@ -91,21 +93,24 @@ async def add_note(note: schemas.Note = Depends()):
 
 @router.get('/update-view')
 async def update_note_view(note_id: UUID,
-                           request: Request):
+                           request: Request,
+                           success: bool | None = None):
+    context: dict[str, Any] = {
+        'request': request,
+    }
+
     if not (note := await db.get_note(note_id=note_id)):
-        context = {
-            'request': request,
-            'what': f"Note id='{note_id}' not found",
-        }
+        context['what'] = f"Note id='{note_id}' not found"
         return templates.TemplateResponse("errors/404.html", context)
 
     context = {
-        'request': request,
+        **context,
         'material_id': note['material_id'],
         'note_id': note['note_id'],
         'content': schemas.demark_note(note['content']),
         'chapter': note['chapter'],
         'page': note['page'],
+        'success': success
     }
     return templates.TemplateResponse("update_note.html", context)
 
@@ -113,13 +118,18 @@ async def update_note_view(note_id: UUID,
 @router.post('/update',
              response_class=RedirectResponse)
 async def update_note(note: schemas.UpdateNote = Depends()):
-    response = RedirectResponse(f'/notes/update-view?note_id={note.note_id}', status_code=302)
+    success = True
+    try:
+        await db.update_note(
+            note_id=note.note_id,
+            content=note.content,
+            chapter=note.chapter,
+            page=note.page
+        )
+    except Exception as e:
+        logger.error("Error updating note: %s", repr(e))
+        success = False
 
-    await db.update_note(
-        note_id=note.note_id,
-        content=note.content,
-        chapter=note.chapter,
-        page=note.page
-    )
-
+    redirect_url = f'/notes/update-view?note_id={note.note_id}&{success=}'
+    response = RedirectResponse(redirect_url, status_code=302)
     return response

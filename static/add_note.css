@@ -6,6 +6,24 @@
   width: 0;
 }
 
+div.update-success {
+    background-color: rgba(8, 255, 0, 0.7);
+    display: flex;
+    margin: auto;
+    border: black solid 1px;
+    border-radius: 2vh;
+    padding: 5vh;
+}
+
+div.update-failure {
+    background-color: rgba(255, 0, 0, 0.69);
+    display: flex;
+    margin: auto;
+    border: black solid 1px;
+    border-radius: 2vh;
+    padding: 5vh;
+}
+
 fieldset.add-note-fieldset {
     display: flex;
     margin: auto;

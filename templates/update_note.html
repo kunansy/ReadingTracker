@@ -11,6 +11,12 @@
 {% endblock header %}
 
 {% block main %}
+{% if success is true %}
+    <div class="update-success success"> Note '{{ note_id }}' successfully updated. </div>
+{% elif success is false %}
+    <div class="update-failure error"> Note '{{ note_id }}' updating failed. </div>
+{% endif %}
+
 <div class="form">
     <form action="/notes/update" method="POST">
         <fieldset class="add-note-fieldset">
