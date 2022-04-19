@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -22,7 +22,7 @@ async def add_card(*,
                    material_id: UUID,
                    note_id: UUID,
                    question: str,
-                   answer: Optional[str] = None) -> None:
+                   answer: str | None = None) -> None:
     logger.debug("Adding new card")
 
     values = {

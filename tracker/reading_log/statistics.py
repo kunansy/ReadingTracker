@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, NamedTuple, Optional
+from typing import Any, NamedTuple
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -16,8 +16,8 @@ class LogStatistics(NamedTuple):
     # days the material was being reading
     duration: int
     average: int
-    min_record: Optional[database.MinMax]
-    max_record: Optional[database.MinMax]
+    min_record: database.MinMax | None
+    max_record: database.MinMax | None
 
 
 async def get_m_log_statistics(*,
@@ -112,7 +112,7 @@ async def contains(*,
 
 
 async def get_min_record(*, # type: ignore
-                         material_id: Optional[UUID] = None) -> Optional[database.MinMax]:
+                         material_id: UUID | None = None) -> database.MinMax | None:
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title]) \
         .join(models.Materials,
@@ -136,7 +136,7 @@ async def get_min_record(*, # type: ignore
 
 
 async def get_max_record(*, # type: ignore
-                         material_id: Optional[UUID] = None) -> Optional[database.MinMax]:
+                         material_id: UUID | None = None) -> database.MinMax | None:
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title]) \
         .join(models.Materials,

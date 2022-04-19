@@ -1,5 +1,4 @@
 import datetime
-from typing import Optional
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -35,7 +34,7 @@ async def add_note(*,
                    content: str,
                    chapter: int,
                    page: int,
-                   date: Optional[datetime.date] = None) -> None:
+                   date: datetime.date | None = None) -> None:
     date = date or database.today()
     logger.debug("Adding note for material_id=%s at %s",
                  material_id, date)

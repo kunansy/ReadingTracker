@@ -1,5 +1,5 @@
 import datetime
-from typing import NamedTuple, Optional
+from typing import NamedTuple
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -23,16 +23,16 @@ class MaterialStatistics(NamedTuple):
     duration: int
     lost_time: int
     total: int
-    min_record: Optional[database.MinMax]
-    max_record: Optional[database.MinMax]
+    min_record: database.MinMax | None
+    max_record: database.MinMax | None
     average: int
     notes_count: int
-    remaining_pages: Optional[int] = None
-    remaining_days: Optional[int] = None
-    completed_at: Optional[datetime.date] = None
+    remaining_pages: int | None = None
+    remaining_days: int | None = None
+    completed_at: datetime.date | None = None
     # date when the material would be completed
     # according to average read pages count
-    would_be_completed: Optional[datetime.date] = None
+    would_be_completed: datetime.date | None = None
 
 
 async def get_materials() -> list[RowMapping]:
@@ -45,7 +45,7 @@ async def get_materials() -> list[RowMapping]:
 
 
 async def get_material(*,
-                       material_id: UUID) -> Optional[RowMapping]:
+                       material_id: UUID) -> RowMapping | None:
     stmt = sa.select(models.Materials)\
         .where(models.Materials.c.material_id == str(material_id))
 
@@ -229,7 +229,7 @@ async def get_statuses() -> list[models.Statuses]:
 
 
 async def get_status(*,
-                     material_id: UUID) -> Optional[RowMapping]:
+                     material_id: UUID) -> RowMapping | None:
     logger.debug("Getting status for material_id=%s", material_id)
 
     stmt = sa.select(models.Statuses) \
@@ -243,7 +243,7 @@ async def add_material(*,
                        title: str,
                        authors: str,
                        pages: int,
-                       tags: Optional[str]) -> None:
+                       tags: str | None) -> None:
     logger.debug("Adding material title=%s", title)
 
     values = {
@@ -262,7 +262,7 @@ async def add_material(*,
 
 async def start_material(*,
                          material_id: UUID,
-                         start_date: Optional[datetime.date] = None) -> None:
+                         start_date: datetime.date | None = None) -> None:
     start_date = start_date or database.today().date()
     logger.debug("Starting material_id=%s", material_id)
 
@@ -284,7 +284,7 @@ async def start_material(*,
 
 async def complete_material(*,
                             material_id: UUID,
-                            completion_date: Optional[datetime.date] = None) -> None:
+                            completion_date: datetime.date | None = None) -> None:
     completion_date = completion_date or database.today().date()
     logger.debug("Completing material_id=%s", material_id)
 

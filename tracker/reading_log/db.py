@@ -1,5 +1,5 @@
 import datetime
-from typing import Any, AsyncGenerator, NamedTuple, Optional
+from typing import Any, AsyncGenerator, NamedTuple
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -12,7 +12,7 @@ from tracker.common.log import logger
 class LogRecord(NamedTuple):
     count: int # type: ignore
     material_id: UUID
-    material_title: Optional[str] = None
+    material_title: str | None = None
 
 
 def safe_list_get(list_: list[Any],
@@ -119,7 +119,7 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
         iter_over_dates += step
 
 
-async def get_material_reading_now() -> Optional[UUID]: # type: ignore
+async def get_material_reading_now() -> UUID | None: # type: ignore
     if not await get_log_records():
         logger.warning("Reading log is empty, no materials reading")
         return # type: ignore
