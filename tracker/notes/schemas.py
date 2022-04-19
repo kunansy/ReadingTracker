@@ -8,6 +8,7 @@ PUNCTUATION_MAPPING = {
     "--": "—",
     "->": "→",
 }
+BOLD_MARKER = "font-weight-bold"
 
 
 def _replace_quotes(string: str) -> str:
@@ -33,6 +34,13 @@ def _replace_punctuation(string: str) -> str:
     return string
 
 
+def _mark_bold(string: str) -> str:
+    while '**' in string:
+        string = string.replace("**", f'<span class="{BOLD_MARKER}">', 1)
+        string = string.replace("**", f'</span class="{BOLD_MARKER}">', 1)
+    return string
+
+
 class Note(BaseModel):
     material_id: UUID
     content: constr(strip_whitespace=True)
@@ -54,6 +62,7 @@ class Note(BaseModel):
         content = _add_dot(content)
         content = _replace_quotes(content)
         content = _up_first_letter(content)
+        content = _mark_bold(content)
 
         return _replace_punctuation(content)
 
