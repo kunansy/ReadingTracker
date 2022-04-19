@@ -37,15 +37,17 @@ def _replace_punctuation(string: str) -> str:
 
 def _mark_bold(string: str) -> str:
     while '**' in string:
-        string = string.replace("**", f'<span class="{BOLD_MARKER}">', 1)
-        string = string.replace("**", f'</span class="{BOLD_MARKER}">', 1)
+        # don't add quotes around class names, because
+        # quotes will be replaced by the quotes formatter
+        string = string.replace("**", f"<span class={BOLD_MARKER}>", 1)
+        string = string.replace("**", f"</span class={BOLD_MARKER}>", 1)
     return string
 
 
 def _mark_italic(string: str) -> str:
     while '__' in string:
-        string = string.replace("__", f'<span class="{ITALIC_MARKER}">', 1)
-        string = string.replace("__", f'</span class="{ITALIC_MARKER}">', 1)
+        string = string.replace("__", f"<span class={ITALIC_MARKER}>", 1)
+        string = string.replace("__", f"</span class={ITALIC_MARKER}>", 1)
     return string
 
 
