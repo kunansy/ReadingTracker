@@ -35,6 +35,10 @@ def _replace_punctuation(string: str) -> str:
     return string
 
 
+def _replace_new_lines(string: str) -> str:
+    return string.replace("\n", "<br/>")
+
+
 def _mark_bold(string: str) -> str:
     while '**' in string:
         # don't add quotes around class names, because
@@ -58,6 +62,7 @@ NOTES_FORMATTERS = (
     _replace_punctuation,
     _mark_bold,
     _mark_italic,
+    _replace_new_lines,
 )
 
 
