@@ -111,7 +111,7 @@ async def contains(*,
         return await ses.scalar(stmt)
 
 
-async def get_min_record(*, # type: ignore
+async def get_min_record(*,
                          material_id: UUID | None = None) -> database.MinMax | None:
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title]) \
@@ -133,9 +133,10 @@ async def get_min_record(*, # type: ignore
                 date=minmax.date,
                 material_title=minmax.title
             )
+    return None
 
 
-async def get_max_record(*, # type: ignore
+async def get_max_record(*,
                          material_id: UUID | None = None) -> database.MinMax | None:
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title]) \
@@ -157,6 +158,7 @@ async def get_max_record(*, # type: ignore
                 date=minmax.date,
                 material_title=minmax.title
             )
+    return None
 
 
 async def would_be_total() -> int:

@@ -119,10 +119,10 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
         iter_over_dates += step
 
 
-async def get_material_reading_now() -> UUID | None: # type: ignore
+async def get_material_reading_now() -> UUID | None:
     if not await get_log_records():
         logger.warning("Reading log is empty, no materials reading")
-        return # type: ignore
+        return None
 
     last_material_id = None
     async for _, info in data():
@@ -137,6 +137,7 @@ async def get_material_reading_now() -> UUID | None: # type: ignore
 
     if reading_material := safe_list_get(reading_materials, -1, None):
         return reading_material.material_id
+    return None
 
 
 async def set_log(*,
