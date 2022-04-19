@@ -103,7 +103,7 @@ async def update_note_view(note_id: UUID,
         'request': request,
         'material_id': note['material_id'],
         'note_id': note['note_id'],
-        'content': note['content'],
+        'content': schemas.demark_note(note['content']),
         'chapter': note['chapter'],
         'page': note['page'],
     }

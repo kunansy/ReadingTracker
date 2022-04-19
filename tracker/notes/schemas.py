@@ -1,3 +1,4 @@
+import re
 from uuid import UUID
 
 from fastapi import Form
@@ -52,6 +53,34 @@ def _mark_italic(string: str) -> str:
     while '__' in string:
         string = string.replace("__", f"<span class={ITALIC_MARKER}>", 1)
         string = string.replace("__", "</span>", 1)
+    return string
+
+
+def _demark_bold(string: str) -> str:
+    pattern = re.compile(f'<span class="?{BOLD_MARKER}"?>(.*?)</span>')
+
+    while pattern.search(string):
+        string = pattern.sub(r'**\1**', string)
+    return string
+
+
+def _demark_italic(string: str) -> str:
+    pattern = re.compile(f'<span class="?{ITALIC_MARKER}"?>(.*?)</span>')
+
+    while pattern.search(string):
+        string = pattern.sub(r'__\1__', string)
+    return string
+
+
+def _dereplace_new_lines(string: str) -> str:
+    return re.sub(r'<br/?>', '\n', string)
+
+
+def demark_note(string: str) -> str:
+    """ to show the note in update form """
+    string = _demark_bold(string)
+    string = _demark_italic(string)
+    string = _dereplace_new_lines(string)
     return string
 
 
