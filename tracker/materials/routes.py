@@ -32,10 +32,6 @@ async def add_material_view(request: Request):
     """ Add a material to the queue """
     context = {
         'request': request,
-        'title': request.cookies.get('title', ''),
-        'authors': request.cookies.get('authors', ''),
-        'pages': request.cookies.get('pages', ''),
-        'tags': request.cookies.get('tags', ''),
     }
     return templates.TemplateResponse("add_material.html", context)
 
