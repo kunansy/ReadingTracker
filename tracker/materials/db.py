@@ -90,7 +90,7 @@ async def _get_free_materials() -> list[Material]:
         ]
 
 
-async def _get_reading_materials() -> AsyncGenerator[UUID, None]:
+async def get_reading_materials() -> AsyncGenerator[UUID, None]:
     logger.debug("Getting reading materials")
 
     stmt = sa.select(models.Materials.c.material_id) \
@@ -191,7 +191,7 @@ async def processed_statistics() -> list[MaterialStatistics]:
 async def reading_statistics() -> list[MaterialStatistics]:
     return [
         await _get_material_statistics(material_id=material_id)
-        async for material_id in _get_reading_materials()
+        async for material_id in get_reading_materials()
     ]
 
 

@@ -4,7 +4,6 @@ from typing import AsyncGenerator, NamedTuple
 from uuid import UUID
 
 import sqlalchemy.sql as sa
-from sqlalchemy.engine import RowMapping
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from tracker.common import models, settings
@@ -47,20 +46,6 @@ def today() -> datetime.datetime:
 
 def yesterday() -> datetime.datetime:
     return today() - datetime.timedelta(days=1)
-
-
-async def get_reading_materials() -> list[RowMapping]:
-    logger.debug("Getting reading materials")
-
-    stmt = sa.select([models.Materials,
-                      models.Statuses]) \
-        .join(models.Statuses,
-              models.Materials.c.material_id == models.Statuses.c.material_id) \
-        .where(models.Statuses.c.completed_at == None)\
-        .order_by(models.Statuses.c.started_at)
-
-    async with session() as ses:
-        return (await ses.execute(stmt)).mappings().all()
 
 
 async def is_alive() -> bool:

@@ -7,6 +7,7 @@ from sqlalchemy.engine import RowMapping
 
 from tracker.common import database, models
 from tracker.common.log import logger
+from tracker.materials import db as materials_db
 
 
 class LogRecord(NamedTuple):
@@ -133,7 +134,11 @@ async def get_material_reading_now() -> UUID | None:
 
     # means the new material started
     #  and there's no log records for it
-    reading_materials = await database.get_reading_materials()
+    reading_materials = [
+        material_id
+        # materials must be sorted by date
+        async for material_id in materials_db.get_reading_materials()
+    ]
 
     if reading_material := safe_list_get(reading_materials, -1, None):
         return reading_material.material_id
