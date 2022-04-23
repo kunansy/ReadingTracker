@@ -169,8 +169,7 @@ async def _get_free_materials() -> list[Material]:
 async def _get_completed_materials() -> list[RowMapping]:
     logger.debug("Getting completed materials")
 
-    stmt = sa.select([models.Materials,
-                      models.Statuses]) \
+    stmt = sa.select(models.Materials.c.material_id) \
         .join(models.Statuses,
               models.Materials.c.material_id == models.Statuses.c.material_id) \
         .where(models.Statuses.c.completed_at != None)\
@@ -237,37 +236,34 @@ async def start_material(*,
 async def complete_material(*,
                             material_id: UUID,
                             completion_date: datetime.date | None = None) -> None:
-    completion_date = completion_date or database.today().date()
     logger.debug("Completing material_id=%s", material_id)
+    completion_date = completion_date or database.today().date()
 
-    get_status_stmt = sa.select(models.Statuses)\
-        .where(models.Statuses.c.material_id == str(material_id))
+    if (status := await _get_status(material_id=material_id)) is None:
+        raise ValueError("Material is not started")
+    if status.completed_at is not None:
+        raise ValueError("Material is already completed")
+    if status.started_at > completion_date:
+        raise ValueError("Completion date must be greater than start date")
 
-    update_status_stmt = models.Statuses\
-        .update().values(completed_at=completion_date)\
+    values = {
+        "complete_at": completion_date
+    }
+    stmt = models.Statuses\
+        .update().values(values)\
         .where(models.Statuses.c.material_id == str(material_id))
 
     async with database.session() as ses:
-        status = (await ses.execute(get_status_stmt)).mappings().first()
-        if status is None:
-            raise ValueError("Material_id=%s not assigned", material_id)
-
-        if status.completed_at is not None:
-            raise ValueError("Material_id=%s even completed", material_id)
-        if status.started_at > completion_date:
-            raise ValueError
-
-        await ses.execute(update_status_stmt)
+        await ses.execute(stmt)
 
     logger.debug("Material_id=%s completed at %s",
                  material_id, completion_date)
 
 
 async def _end_of_reading() -> datetime.date:
-    reading_stat = await reading_statistics()
     remaining_days = sum(
         stat.remaining_days or 0
-        for stat in reading_stat
+        for stat in await reading_statistics()
     )
     return datetime.date.today() + datetime.timedelta(days=remaining_days)
 
@@ -287,13 +283,12 @@ async def estimate() -> list[MaterialEstimate]:
         expected_duration = round(material.pages / avg)
         expected_end = last_date + datetime.timedelta(days=expected_duration)
 
-        forecast = MaterialEstimate(
+        forecasts += [MaterialEstimate(
             material=material,
             will_be_started=last_date,
             will_be_completed=expected_end,
             expected_duration=expected_duration
-        )
-        forecasts += [forecast]
+        )]
 
         last_date = expected_end + step
 
