@@ -35,8 +35,8 @@ async def get_m_log_statistics(*,
         total += info.count
         lost_time += info.count == 0
 
-    min_record = await get_min_record(material_id=material_id)
-    max_record = await get_max_record(material_id=material_id)
+    min_record = await _get_min_record(material_id=material_id)
+    max_record = await _get_max_record(material_id=material_id)
 
     return LogStatistics(
         material_id=material_id,
@@ -49,21 +49,21 @@ async def get_m_log_statistics(*,
     )
 
 
-async def get_start_date() -> datetime.date:
+async def _get_start_date() -> datetime.date:
     stmt = sa.select(sa.func.min(models.ReadingLog.c.date))
 
     async with database.session() as ses:
         return await ses.scalar(stmt)
 
 
-async def get_stop_date() -> datetime.date:
+async def _get_stop_date() -> datetime.date:
     stmt = sa.select(sa.func.max(models.ReadingLog.c.date))
 
     async with database.session() as ses:
         return await ses.scalar(stmt)
 
 
-async def get_log_duration() -> int:
+async def _get_log_duration() -> int:
     stmt = sa.select(sa.func.max(models.ReadingLog.c.date) -
                      sa.func.min(models.ReadingLog.c.date))
 
@@ -71,14 +71,14 @@ async def get_log_duration() -> int:
         return await ses.scalar(stmt)
 
 
-async def get_total_read_pages() -> int:
+async def _get_total_read_pages() -> int:
     stmt = sa.select(sa.func.sum(models.ReadingLog.count))
 
     async with database.session() as ses:
         return await ses.scalar(stmt)
 
 
-async def get_lost_days() -> int:
+async def _get_lost_days() -> int:
     stmt = sa.select(sa.func.max(models.ReadingLog.c.date) -
                      sa.func.min(models.ReadingLog.c.date) -
                      sa.func.count(1))
@@ -94,7 +94,7 @@ async def get_avg_read_pages() -> int:
         return await ses.scalar(stmt)
 
 
-async def get_median_pages_read_per_day() -> int:
+async def _get_median_pages_read_per_day() -> int:
     stmt = sa.select(sa.func.median(models.ReadingLog.c.count))
 
     async with database.session() as ses:
@@ -111,8 +111,8 @@ async def contains(*,
         return await ses.scalar(stmt)
 
 
-async def get_min_record(*,
-                         material_id: UUID | None = None) -> database.MinMax | None:
+async def _get_min_record(*,
+                          material_id: UUID | None = None) -> database.MinMax | None:
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title]) \
         .join(models.Materials,
@@ -136,8 +136,8 @@ async def get_min_record(*,
     return None
 
 
-async def get_max_record(*,
-                         material_id: UUID | None = None) -> database.MinMax | None:
+async def _get_max_record(*,
+                          material_id: UUID | None = None) -> database.MinMax | None:
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title]) \
         .join(models.Materials,
@@ -161,7 +161,7 @@ async def get_max_record(*,
     return None
 
 
-async def would_be_total() -> int:
+async def _would_be_total() -> int:
     stmt = sa.select(sa.func.sum(models.ReadingLog.c.count) +
                      sa.func.avg(models.ReadingLog.c.count) * (
                              sa.func.max(models.ReadingLog.c.date) - # noqa
@@ -174,14 +174,14 @@ async def would_be_total() -> int:
 
 async def get_log_statistics() -> dict[str, Any]:
     return {
-        "start_date": await get_start_date(),
-        "stop_date": await get_stop_date(),
-        "duration": await get_log_duration(),
-        "lost_time": await get_lost_days(),
+        "start_date": await _get_start_date(),
+        "stop_date": await _get_stop_date(),
+        "duration": await _get_log_duration(),
+        "lost_time": await _get_lost_days(),
         "average": await get_avg_read_pages(),
-        "total_pages_read": await get_total_read_pages(),
-        "would_be_total": await would_be_total(),
-        "min": await get_min_record(),
-        "max": await get_max_record(),
-        "median": await get_median_pages_read_per_day()
+        "total_pages_read": await _get_total_read_pages(),
+        "would_be_total": await _would_be_total(),
+        "min": await _get_min_record(),
+        "max": await _get_max_record(),
+        "median": await _get_median_pages_read_per_day()
     }
