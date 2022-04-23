@@ -127,6 +127,17 @@ async def _get_completed_materials() -> AsyncGenerator[UUID, None]:
             yield row[0]
 
 
+async def _get_status(*,
+                      material_id: UUID) -> Status | None:
+    logger.debug("Getting status for material_id=%s", material_id)
+
+    stmt = sa.select(models.Statuses) \
+        .where(models.Statuses.c.material_id == str(material_id))
+
+    async with database.session() as ses:
+        return (await ses.execute(stmt)).mappings().one_or_none()
+
+
 async def _get_material_statistics(*,
                                    material_id: UUID) -> MaterialStatistics:
     """ Calculate statistics for reading or completed material """
@@ -191,17 +202,6 @@ async def reading_statistics() -> list[MaterialStatistics]:
         await _get_material_statistics(material_id=material_id)
         async for material_id in _get_reading_materials()
     ]
-
-
-async def _get_status(*,
-                      material_id: UUID) -> Status | None:
-    logger.debug("Getting status for material_id=%s", material_id)
-
-    stmt = sa.select(models.Statuses) \
-        .where(models.Statuses.c.material_id == str(material_id))
-
-    async with database.session() as ses:
-        return (await ses.execute(stmt)).mappings().one_or_none()
 
 
 async def add_material(*,
