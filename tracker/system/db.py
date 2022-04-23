@@ -54,7 +54,7 @@ async def create_reading_graphic(*,
                                  material_id: UUID,
                                  last_days: int = 14) -> str:
     if not (material := await materials_db.get_material(material_id=material_id)):
-        raise ValueError(f'Material with id {material_id} not found')
+        raise ValueError(f"'{material_id=}' not found")
 
     data = await _get_graphic_data(
         material_id=material_id,
