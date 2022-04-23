@@ -1,8 +1,7 @@
-from collections import defaultdict
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Query, Request, Depends
+from fastapi import APIRouter, Request, Depends, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -20,39 +19,34 @@ templates = Jinja2Templates(directory="templates")
 
 
 @router.get('/')
-async def get_notes(request: Request,
-                    material_id: str = Query(None)):
-    all_notes = await db.get_notes()
-    notes = [
-        note
-        for note in all_notes
-        if material_id is None or note.material_id == material_id
-    ]
-
-    titles = await db.get_material_titles()
-
-    # show only the titles of materials that have notes
-    all_ids = {
-        note.material_id
-        for note in all_notes
-    }
-    titles = {
-        material_id: material_title
-        for material_id, material_title in titles.items()
-        if material_id in all_ids
-    }
-
-    # chapters of the shown materials,
-    #  it should help to create menu
-    chapters = defaultdict(set)
-    for note in notes:
-        chapters[note.material_id].add(note.chapter)
+async def get_notes(request: Request):
+    notes = await db.get_notes()
+    titles = await db.get_material_with_notes_titles()
+    chapters = db.get_distinct_chapters(notes)
 
     context = {
         'request': request,
         'notes': notes,
         'titles': titles,
         'chapters': chapters,
+        'DATE_FORMAT': settings.DATE_FORMAT
+    }
+    return templates.TemplateResponse("notes.html", context)
+
+
+@router.post('/')
+async def get_material_notes(request: Request,
+                             material_id: UUID = Form(...)):
+    notes = await db.get_material_notes(material_id=material_id)
+    titles = await db.get_material_with_notes_titles()
+    chapters = db.get_distinct_chapters(notes)
+
+    context = {
+        'request': request,
+        'notes': notes,
+        'titles': titles,
+        'chapters': chapters,
+        'material_id': material_id,
         'DATE_FORMAT': settings.DATE_FORMAT
     }
     return templates.TemplateResponse("notes.html", context)
