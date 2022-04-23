@@ -60,11 +60,8 @@ async def graphic(request: Request,
     return templates.TemplateResponse("graphic.html", context)
 
 
-@router.get('/backup',
-            response_class=RedirectResponse)
-async def backup():
-    response = RedirectResponse('/system', status_code=302)
-
+@router.get('/backup')
+async def backup(request: Request):
     status = 'ok'
     try:
         await drive_api.backup()
@@ -72,9 +69,11 @@ async def backup():
         logger.error("Backup error: %s", repr(e))
         status = 'backup-failed'
 
-    response.set_cookie('status', status, expires=5)
-
-    return response
+    context = {
+        'request': request,
+        'status': status
+    }
+    return templates.TemplateResponse("backup.html", context)
 
 
 @router.get('/restore',
