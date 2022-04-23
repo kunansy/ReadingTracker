@@ -1,11 +1,20 @@
 import datetime
+from typing import NamedTuple
 from uuid import UUID
 
 import sqlalchemy.sql as sa
-from sqlalchemy.engine import RowMapping
 
 from tracker.common import database, models
 from tracker.common.log import logger
+
+
+class Note(NamedTuple):
+    note_id: UUID
+    material_id: UUID
+    content: str
+    added_at: datetime.datetime
+    chapter: int
+    page: int
 
 
 async def get_material_titles() -> dict[UUID, str]:
@@ -21,23 +30,28 @@ async def get_material_titles() -> dict[UUID, str]:
         }
 
 
-async def get_notes() -> list[RowMapping]:
+async def get_notes() -> list[Note]:
     logger.debug("Getting notes")
     stmt = sa.select(models.Notes)
 
     async with database.session() as ses:
-        return (await ses.execute(stmt)).mappings().all()
+        return [
+            Note(**row)
+            for row in (await ses.execute(stmt)).mappings().all()
+        ]
 
 
 async def get_note(*,
-                   note_id: UUID) -> RowMapping | None:
+                   note_id: UUID) -> Note | None:
     logger.debug("Getting note_id=%s", note_id)
 
     stmt = sa.select(models.Notes) \
         .where(models.Notes.c.note_id == str(note_id))
 
     async with database.session() as ses:
-        return (await ses.execute(stmt)).mappings().one_or_none()
+        if note := (await ses.execute(stmt)).mappings().one_or_none():
+            return Note(**note)
+        return None
 
 
 async def get_notes_count(*,

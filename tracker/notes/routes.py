@@ -106,11 +106,11 @@ async def update_note_view(note_id: UUID,
 
     context = {
         **context,
-        'material_id': note['material_id'],
-        'note_id': note['note_id'],
-        'content': schemas.demark_note(note['content']),
-        'chapter': note['chapter'],
-        'page': note['page'],
+        'material_id': note.material_id,
+        'note_id': note.note_id,
+        'content': schemas.demark_note(note.content),
+        'chapter': note.chapter,
+        'page': note.page,
         'success': success
     }
     return templates.TemplateResponse("update_note.html", context)
