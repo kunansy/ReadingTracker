@@ -29,8 +29,7 @@ async def system_view():
     return RedirectResponse(redirect_url, status_code=302)
 
 
-@router.get('/graphic',
-            response_class=HTMLResponse)
+@router.get('/graphic')
 async def graphic(request: Request,
                   material_id: UUID | None = None,
                   last_days: int = 7):
