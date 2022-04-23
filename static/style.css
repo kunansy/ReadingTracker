@@ -125,22 +125,24 @@ span.font-weight-bold {
 
 /* styles for flash messages */
 .alert {
+    display: flex;
+    margin: auto;
     text-align: center;
-    width: 30vw;
-    background-color: #373252;
-    color: white;
-    border: none;
-    padding: 0.5vw;
-    border-radius: 0.4vw;
-    margin: 0.5vh auto 1vw;
+    padding: 5vw;
+    border-radius: 1vw;
+    border : 1px solid black;
 }
 
 .error {
-    background-color: #E74C3C;
+    background-color: #f2dede;
+    border-color: #ebccd1;
+    color: #a94442;
 }
 
 .success {
-    background-color: #27AE60;
+    background-color: #dff0d8;
+    border-color: #d6e9c6;
+    color: #3c763d;
 }
 
 footer {
