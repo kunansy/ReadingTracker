@@ -29,6 +29,16 @@ async def get_notes() -> list[RowMapping]:
         return (await ses.execute(stmt)).mappings().all()
 
 
+async def get_notes_count(*,
+                          material_id: UUID) -> int:
+    stmt = sa.select(sa.func.count(1)) \
+        .select_from(models.Notes) \
+        .where(models.Notes.c.material_id == str(material_id))
+
+    async with database.session() as ses:
+        return await ses.scalar(stmt)
+
+
 async def add_note(*,
                    material_id: UUID,
                    content: str,

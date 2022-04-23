@@ -6,6 +6,7 @@ import sqlalchemy.sql as sa
 
 from tracker.common import database, models
 from tracker.common.log import logger
+from tracker.notes import db as notes_db
 from tracker.reading_log import statistics
 
 
@@ -66,16 +67,6 @@ async def _was_material_being_reading(*,
     stmt = sa.select(sa.func.count(1) >= 1)\
         .select_from(models.ReadingLog)\
         .where(models.ReadingLog.c.material_id == str(material_id))
-
-    async with database.session() as ses:
-        return await ses.scalar(stmt)
-
-
-async def _get_notes_count(*,
-                           material_id: UUID) -> int:
-    stmt = sa.select(sa.func.count(1))\
-        .select_from(models.Notes)\
-        .where(models.Notes.c.material_id == str(material_id))
 
     async with database.session() as ses:
         return await ses.scalar(stmt)
@@ -171,7 +162,7 @@ async def _get_material_statistics(*,
     else:
         would_be_completed = remaining_days = remaining_pages = None # type: ignore
 
-    notes_count = await _get_notes_count(material_id=material_id)
+    notes_count = await notes_db.get_notes_count(material_id=material_id)
 
     return MaterialStatistics(
         material=material,
