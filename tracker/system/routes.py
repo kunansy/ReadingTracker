@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Request
@@ -31,16 +32,25 @@ async def system_view():
 @router.get('/graphic',
             response_class=HTMLResponse)
 async def graphic(request: Request,
-                  material_id: UUID,
+                  material_id: UUID | None = None,
                   last_days: int = 7):
+    context: dict[str, Any] = {
+        'request': request,
+    }
+
+    if (material_id := material_id or await reading_log_db.get_material_reading_now()) is None:
+        context['what'] = "No material found to show"
+        return templates.TemplateResponse("errors/404.html", context)
+
     graphic_image = await db.create_reading_graphic(
         material_id=material_id,
         last_days=last_days
     )
+
     titles = await db.get_read_material_titles()
 
     context = {
-        'request': request,
+        **context,
         'material_id': material_id,
         'last_days': last_days,
         'graphic_image': graphic_image,
