@@ -1,0 +1,13 @@
+div.graphic-image {
+    display: flex;
+    margin: auto;
+}
+
+div.status {
+    display: flex;
+    margin: auto;
+}
+
+div.status > p {
+    margin: auto;
+}
