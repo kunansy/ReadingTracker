@@ -35,15 +35,6 @@ class MaterialStatistics(NamedTuple):
     would_be_completed: datetime.date | None = None
 
 
-async def get_materials() -> list[RowMapping]:
-    logger.info("Getting all materials")
-
-    stmt = sa.select(models.Materials)
-
-    async with database.session() as ses:
-        return (await ses.execute(stmt)).all()
-
-
 async def get_material(*,
                        material_id: UUID) -> RowMapping | None:
     stmt = sa.select(models.Materials)\
@@ -139,57 +130,6 @@ async def reading_statistics() -> list[MaterialStatistics]:
     ]
 
 
-async def get_title(*,
-                    material_id: UUID) -> str:
-    logger.info("Getting title for material_id=%s", material_id)
-
-    if material := await get_material(material_id=material_id):
-        return material.title
-
-    logger.warning("Material material_id=%s not found", material_id)
-    return ''
-
-
-async def does_material_exist(*,
-                              material_id: UUID) -> bool:
-    logger.debug("Whether material_id=%s exists", material_id)
-
-    stmt = sa.select(models.Materials.c.material_id)\
-        .where(models.Materials.c.material_id == str(material_id))
-
-    async with database.session() as ses:
-        return await ses.scalar(stmt) is not None
-
-
-async def is_material_reading(*,
-                              material_id: UUID) -> bool:
-    logger.debug("Checking material_id=%s", material_id)
-
-    stmt = sa.select(models.Materials.c.material_id)\
-        .join(models.Statuses,
-              models.Materials.c.material_id == models.Statuses.c.material_id)\
-        .where(models.Statuses.c.started_at != None)\
-        .where(models.Statuses.c.completed_at == None)\
-        .where(models.Materials.c.material_id == str(material_id))
-
-    async with database.session() as ses:
-        return await ses.scalar(stmt) is not None
-
-
-async def is_material_assigned(*,
-                               material_id: UUID) -> bool:
-    logger.debug("Checking material_id=%s", material_id)
-
-    stmt = sa.select(models.Materials.c.material_id) \
-        .join(models.Statuses,
-              models.Materials.c.material_id == models.Statuses.c.material_id) \
-        .where(models.Statuses.c.started_at != None) \
-        .where(models.Materials.c.material_id == str(material_id))
-
-    async with database.session() as ses:
-        return await ses.scalar(stmt) is not None
-
-
 async def get_free_materials() -> list[RowMapping]:
     logger.debug("Getting free materials")
 
@@ -217,15 +157,6 @@ async def get_completed_materials() -> list[RowMapping]:
 
     async with database.session() as ses:
         return (await ses.execute(stmt)).mappings().all()
-
-
-async def get_statuses() -> list[models.Statuses]:
-    logger.debug("Getting statuses")
-
-    stmt = sa.select(models.Statuses)
-
-    async with database.session() as ses:
-        return (await ses.execute(stmt)).all()
 
 
 async def get_status(*,
