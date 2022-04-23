@@ -62,16 +62,6 @@ async def _get_material(*,
     return None
 
 
-async def _was_material_being_reading(*,
-                                      material_id: UUID) -> bool:
-    stmt = sa.select(sa.func.count(1) >= 1)\
-        .select_from(models.ReadingLog)\
-        .where(models.ReadingLog.c.material_id == str(material_id))
-
-    async with database.session() as ses:
-        return await ses.scalar(stmt)
-
-
 async def _get_free_materials() -> list[Material]:
     logger.debug("Getting free materials")
 
@@ -140,7 +130,7 @@ async def _get_material_statistics(*,
         raise ValueError(f"Status for {material_id=} not found")
 
     avg_total = await statistics.get_avg_read_pages()
-    if was_reading := await _was_material_being_reading(material_id=material_id):
+    if was_reading := await statistics.contains(material_id=material_id):
         log_st = await statistics.get_m_log_statistics(material_id=material_id)
         avg, total = log_st.average, log_st.total
         duration, lost_time = log_st.duration, log_st.lost_time
