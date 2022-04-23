@@ -108,7 +108,12 @@ class Note(BaseModel):
                  page: int = Form(0),
                  **kwargs):
         super().__init__(
-            material_id=material_id, content=content, chapter=chapter, page=page, **kwargs)
+            material_id=material_id,
+            content=content,
+            chapter=chapter,
+            page=page,
+            **kwargs
+        )
 
     @validator('content')
     def format_content(cls,
@@ -128,4 +133,9 @@ class UpdateNote(Note):
                  chapter: int = Form(0),
                  page: int = Form(0)):
         super().__init__(
-            material_id=material_id, note_id=note_id, content=content, chapter=chapter, page=page)
+            material_id=material_id,
+            note_id=note_id,
+            content=content,
+            chapter=chapter,
+            page=page
+        )
