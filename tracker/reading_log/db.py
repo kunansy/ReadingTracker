@@ -16,9 +16,9 @@ class LogRecord(NamedTuple):
     material_title: str | None = None
 
 
-def safe_list_get(list_: list[Any],
-                  index: int,
-                  default: Any = None) -> Any:
+def _safe_list_get(list_: list[Any],
+                   index: int,
+                   default: Any = None) -> Any:
     try:
         return list_[index]
     except IndexError:
@@ -56,7 +56,7 @@ async def get_reading_material_titles() -> dict[UUID, str]:
         }
 
 
-async def get_completion_dates() -> dict[UUID, datetime.date]:
+async def _get_completion_dates() -> dict[UUID, datetime.date]:
     logger.debug("Getting completion dates")
 
     stmt = sa.select([models.Materials.c.material_id,
@@ -86,7 +86,7 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
     # stack for materials
     materials: list[UUID] = []
     try:
-        completion_dates = await get_completion_dates()
+        completion_dates = await _get_completion_dates()
     except Exception as e:
         logger.exception(e)
         completion_dates = {}
@@ -95,12 +95,12 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
     iter_over_dates = min(log_records.keys())
 
     while iter_over_dates <= database.today().date():
-        last_material_id = safe_list_get(materials, -1, None)
+        last_material_id = _safe_list_get(materials, -1, None)
 
         if ((completion_date := completion_dates.get(last_material_id))
                 and completion_date < iter_over_dates):
             materials.pop()
-            last_material_id = safe_list_get(materials, -1, None)
+            last_material_id = _safe_list_get(materials, -1, None)
 
         if not (info := log_records.get(iter_over_dates)):
             info = LogRecord(material_id=last_material_id, count=0)
@@ -140,7 +140,7 @@ async def get_material_reading_now() -> UUID | None:
         async for material_id in materials_db.get_reading_materials()
     ]
 
-    if reading_material := safe_list_get(reading_materials, -1, None):
+    if reading_material := _safe_list_get(reading_materials, -1, None):
         return reading_material.material_id
     return None
 
