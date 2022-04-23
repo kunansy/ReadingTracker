@@ -15,9 +15,9 @@
     {% for date, info in log | dictsort(reverse=True) %}
         {% set count = info.count %}
         {% if count >= EXPECTED_COUNT %}
-            <div class="record good">
+            <div class="record success">
         {% else %}
-            <div class="record bad">
+            <div class="record error">
         {% endif %}
 
         <p> Date: {{ date.strftime(DATE_FORMAT) }} </p>

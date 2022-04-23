@@ -8,10 +8,3 @@ div.record {
 div.record p {
     word-wrap: break-word;
 }
-
-div.bad {
-    background-color: #E74C3C;
-}
-div.good {
-    background-color: #27AE60;
-}
