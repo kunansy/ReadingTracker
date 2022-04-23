@@ -1,4 +1,5 @@
 import datetime
+from collections import defaultdict
 from typing import NamedTuple
 from uuid import UUID
 
@@ -15,6 +16,16 @@ class Note(NamedTuple):
     added_at: datetime.datetime
     chapter: int
     page: int
+
+
+def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[int]]:
+    # chapters of the shown materials,
+    #  it should help to create menu
+    chapters = defaultdict(set)
+    for note in notes:
+        chapters[note.material_id].add(note.chapter)
+
+    return chapters
 
 
 async def get_material_titles() -> dict[UUID, str]:
