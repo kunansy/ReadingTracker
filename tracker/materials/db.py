@@ -81,6 +81,52 @@ async def _get_notes_count(*,
         return await ses.scalar(stmt)
 
 
+async def _get_free_materials() -> list[Material]:
+    logger.debug("Getting free materials")
+
+    assigned_condition = sa.select(1) \
+        .select_from(models.Statuses) \
+        .where(models.Statuses.c.material_id == models.Materials.c.material_id)
+
+    stmt = sa.select(models.Materials) \
+        .where(~sa.exists(assigned_condition)) \
+        .order_by(models.Materials.c.added_at)
+
+    async with database.session() as ses:
+        return [
+            Material(**row)
+            for row in (await ses.execute(stmt)).mappings().all()
+        ]
+
+
+async def _get_reading_materials() -> AsyncGenerator[UUID, None]:
+    logger.debug("Getting reading materials")
+
+    stmt = sa.select(models.Materials.c.material_id) \
+        .join(models.Statuses,
+              models.Materials.c.material_id == models.Statuses.c.material_id) \
+        .where(models.Statuses.c.completed_at == None) \
+        .order_by(models.Statuses.c.started_at)
+
+    async with database.session() as ses:
+        for row in (await ses.execute(stmt)).all():
+            yield row[0]
+
+
+async def _get_completed_materials() -> AsyncGenerator[UUID, None]:
+    logger.debug("Getting completed materials")
+
+    stmt = sa.select(models.Materials.c.material_id) \
+        .join(models.Statuses,
+              models.Materials.c.material_id == models.Statuses.c.material_id) \
+        .where(models.Statuses.c.completed_at != None) \
+        .order_by(models.Statuses.c.completed_at)
+
+    async with database.session() as ses:
+        for row in (await ses.execute(stmt)).all():
+            yield row[0]
+
+
 async def _get_material_statistics(*,
                                    material_id: UUID) -> MaterialStatistics:
     """ Calculate statistics for reading or completed material """
@@ -145,52 +191,6 @@ async def reading_statistics() -> list[MaterialStatistics]:
         await _get_material_statistics(material_id=material_id)
         async for material_id in _get_reading_materials()
     ]
-
-
-async def _get_free_materials() -> list[Material]:
-    logger.debug("Getting free materials")
-
-    assigned_condition = sa.select(1) \
-        .select_from(models.Statuses) \
-        .where(models.Statuses.c.material_id == models.Materials.c.material_id)
-
-    stmt = sa.select(models.Materials)\
-        .where(~sa.exists(assigned_condition))\
-        .order_by(models.Materials.c.added_at)
-
-    async with database.session() as ses:
-        return [
-            Material(**row)
-            for row in (await ses.execute(stmt)).mappings().all()
-        ]
-
-
-async def _get_reading_materials() -> AsyncGenerator[UUID, None]:
-    logger.debug("Getting reading materials")
-
-    stmt = sa.select(models.Materials.c.material_id) \
-        .join(models.Statuses,
-              models.Materials.c.material_id == models.Statuses.c.material_id) \
-        .where(models.Statuses.c.completed_at == None) \
-        .order_by(models.Statuses.c.started_at)
-
-    async with database.session() as ses:
-        for row in (await ses.execute(stmt)).all():
-            yield row[0]
-
-
-async def _get_completed_materials() -> AsyncGenerator[UUID, None]:
-    logger.debug("Getting completed materials")
-
-    stmt = sa.select(models.Materials.c.material_id) \
-        .join(models.Statuses,
-              models.Materials.c.material_id == models.Statuses.c.material_id) \
-        .where(models.Statuses.c.completed_at != None)\
-        .order_by(models.Statuses.c.completed_at)
-
-    async with database.session() as ses:
-        for row in (await ses.execute(stmt)).all():
-            yield row[0]
 
 
 async def _get_status(*,
