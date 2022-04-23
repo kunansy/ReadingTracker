@@ -30,6 +30,21 @@ async def get_material_titles() -> dict[UUID, str]:
         }
 
 
+async def get_material_with_notes_titles() -> dict[str, str]:
+    logger.debug("Getting material with note titles")
+
+    stmt = sa.select([sa.text("distinct on (materials.material_id) materials.material_id"),
+                      models.Materials.c.title])\
+        .join(models.Notes,
+              models.Notes.c.material_id == models.Materials.c.material_id)
+
+    async with database.session() as ses:
+        return {
+            str(row.material_id): row.title
+            for row in (await ses.execute(stmt)).mappings().all()
+        }
+
+
 async def get_notes() -> list[Note]:
     logger.debug("Getting notes")
     stmt = sa.select(models.Notes)
