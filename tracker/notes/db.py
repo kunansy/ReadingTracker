@@ -41,6 +41,20 @@ async def get_notes() -> list[Note]:
         ]
 
 
+async def get_material_notes(*,
+                             material_id: UUID) -> list[Note]:
+    logger.debug("Getting material_id=%s notes", material_id)
+
+    stmt = sa.select(models.Notes) \
+        .where(models.Notes.c.material_id == str(material_id))
+
+    async with database.session() as ses:
+        return [
+            Note(**row)
+            for row in (await ses.execute(stmt)).mappings().all()
+        ]
+
+
 async def get_note(*,
                    note_id: UUID) -> Note | None:
     logger.debug("Getting note_id=%s", note_id)
