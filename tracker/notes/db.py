@@ -37,7 +37,7 @@ async def get_material_titles() -> dict[UUID, str]:
     async with database.session() as ses:
         return {
             row.material_id: row.title
-            async for row in await ses.stream(stmt)
+            for row in (await ses.execute(stmt)).mappings().all()
         }
 
 
