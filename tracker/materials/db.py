@@ -1,5 +1,5 @@
 import datetime
-from typing import NamedTuple
+from typing import NamedTuple, AsyncGenerator
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -143,8 +143,8 @@ async def processed_statistics() -> list[MaterialStatistics]:
 
 async def reading_statistics() -> list[MaterialStatistics]:
     return [
-        await _get_material_statistics(material_id=material.material_id)
-        for material in await database.get_reading_materials()
+        await _get_material_statistics(material_id=material_id)
+        async for material_id in _get_reading_materials()
     ]
 
 
@@ -164,6 +164,20 @@ async def _get_free_materials() -> list[Material]:
             Material(**row)
             for row in (await ses.execute(stmt)).mappings().all()
         ]
+
+
+async def _get_reading_materials() -> AsyncGenerator[UUID, None]:
+    logger.debug("Getting reading materials")
+
+    stmt = sa.select(models.Materials.c.material_id) \
+        .join(models.Statuses,
+              models.Materials.c.material_id == models.Statuses.c.material_id) \
+        .where(models.Statuses.c.completed_at == None) \
+        .order_by(models.Statuses.c.started_at)
+
+    async with database.session() as ses:
+        for row in (await ses.execute(stmt)).all():
+            yield row[0]
 
 
 async def _get_completed_materials() -> list[RowMapping]:
