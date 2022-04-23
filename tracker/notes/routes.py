@@ -76,7 +76,8 @@ async def add_note_view(request: Request):
 @router.post('/add',
              response_class=RedirectResponse)
 async def add_note(note: schemas.Note = Depends()):
-    response = RedirectResponse('/notes/add-view', status_code=302)
+    redirect_url = router.url_path_for(add_note_view.__name__)
+    response = RedirectResponse(redirect_url, status_code=302)
 
     for key, value in note.dict(exclude={'content'}).items():
         response.set_cookie(key, value, expires=3600)
@@ -130,6 +131,8 @@ async def update_note(note: schemas.UpdateNote = Depends()):
         logger.error("Error updating note: %s", repr(e))
         success = False
 
-    redirect_url = f'/notes/update-view?note_id={note.note_id}&{success=}'
+    redirect_path = router.url_path_for(update_note_view.__name__)
+    redirect_url = f"{redirect_path}?note_id={note.note_id}&{success=}"
+
     response = RedirectResponse(redirect_url, status_code=302)
     return response

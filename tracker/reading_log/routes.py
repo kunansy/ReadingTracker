@@ -51,4 +51,6 @@ async def add_log_record(material_id: UUID = Form(...),
                          count: PositiveInt = Form(...),
                          date: datetime.date = Form(...)):
     await db.set_log(material_id=material_id, count=count, date=date)
-    return RedirectResponse('/reading_log/add-view', status_code=302)
+
+    redirect_url = router.url_path_for(add_log_record_view.__name__)
+    return RedirectResponse(redirect_url, status_code=302)

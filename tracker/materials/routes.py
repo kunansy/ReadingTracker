@@ -46,21 +46,24 @@ async def add_material(material: schemas.Material = Depends()):
         tags=material.tags,
     )
 
-    return RedirectResponse('/materials/add-view', status_code=302)
+    redirect_url = router.url_path_for(add_material_view.__name__)
+    return RedirectResponse(redirect_url, status_code=302)
 
 
 @router.post('/start/{material_id}')
 async def start_material(material_id: UUID):
     await db.start_material(material_id=material_id)
 
-    return RedirectResponse('/materials/queue', status_code=302)
+    redirect_url = router.url_path_for(get_queue.__name__)
+    return RedirectResponse(redirect_url, status_code=302)
 
 
 @router.post('/complete/{material_id}')
 async def complete_material(material_id: UUID):
     await db.complete_material(material_id=material_id)
 
-    return RedirectResponse('/materials/reading', status_code=302)
+    redirect_url = router.url_path_for(get_reading_materials.__name__)
+    return RedirectResponse(redirect_url, status_code=302)
 
 
 @router.get('/reading', response_class=HTMLResponse)
