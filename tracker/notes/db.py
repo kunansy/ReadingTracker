@@ -29,6 +29,17 @@ async def get_notes() -> list[RowMapping]:
         return (await ses.execute(stmt)).mappings().all()
 
 
+async def get_note(*,
+                   note_id: UUID) -> RowMapping | None:
+    logger.debug("Getting note_id=%s", note_id)
+
+    stmt = sa.select(models.Notes) \
+        .where(models.Notes.c.note_id == str(note_id))
+
+    async with database.session() as ses:
+        return (await ses.execute(stmt)).mappings().one_or_none()
+
+
 async def get_notes_count(*,
                           material_id: UUID) -> int:
     stmt = sa.select(sa.func.count(1)) \
@@ -64,17 +75,6 @@ async def add_note(*,
         note_id = (await ses.execute(stmt)).one()[0]
 
     logger.debug("Note_id=%s added", note_id)
-
-
-async def get_note(*,
-                   note_id: UUID) -> RowMapping | None:
-    logger.debug("Getting note_id=%s", note_id)
-
-    stmt = sa.select(models.Notes) \
-        .where(models.Notes.c.note_id == str(note_id))
-
-    async with database.session() as ses:
-        return (await ses.execute(stmt)).mappings().one_or_none()
 
 
 async def update_note(*,
