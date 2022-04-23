@@ -3,7 +3,6 @@ from typing import NamedTuple, AsyncGenerator
 from uuid import UUID
 
 import sqlalchemy.sql as sa
-from sqlalchemy.engine import RowMapping
 
 from tracker.common import database, models
 from tracker.common.log import logger
@@ -136,8 +135,8 @@ async def _get_material_statistics(*,
 
 async def processed_statistics() -> list[MaterialStatistics]:
     return [
-        await _get_material_statistics(material_id=material.material_id)
-        for material in await _get_completed_materials()
+        await _get_material_statistics(material_id=material_id)
+        async for material_id in _get_completed_materials()
     ]
 
 
@@ -180,7 +179,7 @@ async def _get_reading_materials() -> AsyncGenerator[UUID, None]:
             yield row[0]
 
 
-async def _get_completed_materials() -> list[RowMapping]:
+async def _get_completed_materials() -> AsyncGenerator[UUID, None]:
     logger.debug("Getting completed materials")
 
     stmt = sa.select(models.Materials.c.material_id) \
@@ -190,7 +189,8 @@ async def _get_completed_materials() -> list[RowMapping]:
         .order_by(models.Statuses.c.completed_at)
 
     async with database.session() as ses:
-        return (await ses.execute(stmt)).mappings().all()
+        for row in (await ses.execute(stmt)).all():
+            yield row[0]
 
 
 async def _get_status(*,
