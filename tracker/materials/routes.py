@@ -1,11 +1,11 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Form, Request
+from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from tracker.common import settings
-from tracker.materials import db
+from tracker.materials import db, schemas
 
 
 router = APIRouter(
@@ -41,13 +41,13 @@ async def add_material_view(request: Request):
 
 
 @router.post('/add', response_class=HTMLResponse)
-async def add_material(title: str = Form(...),
-                       authors: str = Form(...),
-                       pages: int = Form(...),
-                       tags: str | None = Form(None)):
+async def add_material(material: schemas.Material = Depends()):
     """ Add a material to the queue """
     await db.add_material(
-        title=title, authors=authors, pages=pages, tags=tags
+        title=material.title,
+        authors=material.authors,
+        pages=material.pages,
+        tags=material.tags,
     )
 
     return RedirectResponse('/materials/add-view', status_code=302)
