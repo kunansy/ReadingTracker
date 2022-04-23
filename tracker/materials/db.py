@@ -51,8 +51,8 @@ class MaterialStatistics(NamedTuple):
     would_be_completed: datetime.date | None = None
 
 
-async def _get_material(*,
-                        material_id: UUID) -> Material | None:
+async def get_material(*,
+                       material_id: UUID) -> Material | None:
     stmt = sa.select(models.Materials)\
         .where(models.Materials.c.material_id == str(material_id))
 
@@ -124,7 +124,7 @@ async def _get_material_statistics(*,
     """ Calculate statistics for reading or completed material """
     logger.debug("Calculating statistics for material_id=%s", material_id)
 
-    if (material := await _get_material(material_id=material_id)) is None:
+    if (material := await get_material(material_id=material_id)) is None:
         raise ValueError(f"{material_id=} not found")
     if (status := await _get_status(material_id=material_id)) is None:
         raise ValueError(f"Status for {material_id=} not found")
