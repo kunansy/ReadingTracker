@@ -76,11 +76,8 @@ async def backup(request: Request):
     return templates.TemplateResponse("backup.html", context)
 
 
-@router.get('/restore',
-            response_class=RedirectResponse)
-async def restore():
-    response = RedirectResponse('/system', status_code=302)
-
+@router.get('/restore')
+async def restore(request: Request):
     status = 'ok'
     try:
         await drive_api.restore()
@@ -88,6 +85,8 @@ async def restore():
         logger.error("Restore error: %s", repr(e))
         status = 'restore-failed'
 
-    response.set_cookie('status', status, expires=5)
-
-    return response
+    context = {
+        'request': request,
+        'status': status
+    }
+    return templates.TemplateResponse("restore.html", context)
