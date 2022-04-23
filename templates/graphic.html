@@ -1,0 +1,32 @@
+{% extends 'index.html' %}
+
+{%- block style -%}
+    <link rel="stylesheet" href="{{ url_for('static', path='graphic.css') }}">
+{%- endblock style -%}
+
+{%- block header -%}
+    {% from 'submenu.html' import submenu %}
+    {% call submenu(('Graphic', '/system/graphic'), ('Backup', '/system/backup'), ('Restore', '/system/restore')) %}
+    {% endcall %}
+{%- endblock header -%}
+
+{% block main %}
+
+    <div class="form">
+        <form action="/system/graphic" method="GET">
+            <input class="input" list="reading_materials" name="material_id" value="{{ material_id }}" placeholder="Choose a material">
+            <datalist id="reading_materials">
+                {% for material_id, title in titles | dictsort(by='value') %}
+                    <option value="{{ material_id }}"> «{{ title }}»
+                {% endfor %}
+            </datalist>
+            <input class="input" type="number" placeholder="Enter a count of pages" name="last_days" value="{{ last_days }}" title="Show last n days">
+            <button type="submit" class="submit-button"> Show </button>
+        </form>
+    </div>
+
+    <div class="graphic-image">
+        <img src="data:image/png;base64,{{ graphic_image }}">
+    </div>
+
+{% endblock main%}
