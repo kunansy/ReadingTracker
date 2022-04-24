@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from pydantic import conint
 
 from tracker.common.log import logger
 from tracker.google_drive import drive_api
@@ -32,7 +33,7 @@ async def system_view():
 @router.get('/graphic')
 async def graphic(request: Request,
                   material_id: UUID | None = None,
-                  last_days: int = 7):
+                  last_days: conint(ge=1) = 7): # type: ignore
     context: dict[str, Any] = {
         'request': request,
     }
