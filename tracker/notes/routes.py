@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Request, Depends, Form
+from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -34,9 +34,9 @@ async def get_notes(request: Request):
     return templates.TemplateResponse("notes.html", context)
 
 
-@router.post('/')
+@router.get('/material')
 async def get_material_notes(request: Request,
-                             material_id: UUID = Form(...)):
+                             material_id: UUID):
     notes = await db.get_material_notes(material_id=material_id)
     titles = await db.get_material_with_notes_titles()
     chapters = db.get_distinct_chapters(notes)
