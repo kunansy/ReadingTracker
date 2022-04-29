@@ -118,6 +118,7 @@ span.sup {
 
 span.font-italic {
     font-style: italic;
+    padding: .05vw;
 }
 span.font-weight-bold {
     font-weight: 500;
@@ -125,9 +126,9 @@ span.font-weight-bold {
 span.font-code {
     background-color: #f6f8fa;
     font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
-    font-size: 12px;
-    border-radius: 6px;
-    padding: 5px;
+    font-size: 1.2vh;
+    border-radius: 3px;
+    padding: .2vw;
 }
 
 /* styles for flash messages */
