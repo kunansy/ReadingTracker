@@ -2,6 +2,7 @@
 
 {% block style %}
 <link rel="stylesheet" href="{{ url_for('static', path='add_note.css') }}">
+<script src="{{ url_for('static', path='js/notes.js')}}"></script>
 {% endblock style %}
 
 {% block header %}
@@ -11,6 +12,10 @@
 {% endblock header %}
 
 {% block main %}
+{% if note_id %}
+    <div class="alert success hover" onclick=openNote("{{ note_id }}")> Note '{{ note_id }}' successfully inserted. </div>
+{% endif %}
+
 {% if titles %}
     <div class="form">
         <form action="/notes/add" method="POST">

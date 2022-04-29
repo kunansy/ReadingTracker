@@ -62,6 +62,7 @@ async def add_note_view(request: Request):
         'content': request.cookies.get('content', ''),
         'page': request.cookies.get('page', ''),
         'chapter': request.cookies.get('chapter', ''),
+        'note_id': request.cookies.get('note_id', ''),
         'titles': titles
     }
     return templates.TemplateResponse("add_note.html", context)
@@ -76,12 +77,13 @@ async def add_note(note: schemas.Note = Depends()):
     for key, value in note.dict(exclude={'content'}).items():
         response.set_cookie(key, value, expires=3600)
 
-    await db.add_note(
+    note_id = await db.add_note(
         material_id=note.material_id,
         content=note.content,
         chapter=note.chapter,
         page=note.page
     )
+    response.set_cookie('note_id', str(note_id), expires=5)
 
     return response
 

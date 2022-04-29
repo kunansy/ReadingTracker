@@ -109,7 +109,7 @@ async def add_note(*,
                    content: str,
                    chapter: int,
                    page: int,
-                   date: datetime.date | None = None) -> None:
+                   date: datetime.date | None = None) -> UUID:
     date = date or database.today()
     logger.debug("Adding note for material_id=%s at %s",
                  material_id, date)
@@ -129,6 +129,7 @@ async def add_note(*,
         note_id = (await ses.execute(stmt)).one()[0]
 
     logger.debug("Note_id=%s added", note_id)
+    return note_id
 
 
 async def update_note(*,
