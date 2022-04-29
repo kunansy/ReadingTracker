@@ -62,6 +62,9 @@ div.note {
     padding: 5vh;
     text-align: center;
 }
+p.note-content {
+    text-align: left;
+}
 .note-page {
     font-size: 3.5vh;
     font-weight: 500;
