@@ -22,7 +22,11 @@ class MinMax(NamedTuple):
     date: datetime.date
 
 
-engine = create_async_engine(settings.DB_URI, encoding='utf-8')
+engine = create_async_engine(
+    settings.DB_URI,
+    encoding='utf-8',
+    isolation_level='REPEATABLE READ'
+)
 
 
 @asynccontextmanager
@@ -38,6 +42,13 @@ async def session(**kwargs) -> AsyncGenerator[AsyncSession, None]:
         raise DatabaseError(e)
     finally:
         await new_session.close()
+
+
+@asynccontextmanager
+async def transaction(**kwargs) -> AsyncGenerator[AsyncSession, None]:
+    async with session(**kwargs) as ses:
+        async with ses.begin():
+            yield ses
 
 
 def today() -> datetime.datetime:
