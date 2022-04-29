@@ -51,7 +51,7 @@ def _convert_date_to_str(value: Any) -> Any:
 
 async def _get_db_snapshot() -> SNAPSHOT:
     data = {}
-    async with database.session() as ses:
+    async with database.transaction() as ses:
         for table in TABLES:
             stmt = sa.select(table)
             data[table.name] = [
