@@ -122,6 +122,13 @@ span.font-italic {
 span.font-weight-bold {
     font-weight: 500;
 }
+span.font-code {
+    background-color: #f6f8fa;
+    font-family: ui-monospace,SFMono-Regular,SF Mono,Menlo,Consolas,Liberation Mono,monospace;
+    font-size: 12px;
+    border-radius: 6px;
+    padding: 5px;
+}
 
 /* styles for flash messages */
 .alert {

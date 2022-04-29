@@ -11,6 +11,7 @@ PUNCTUATION_MAPPING = {
 }
 BOLD_MARKER = "font-weight-bold"
 ITALIC_MARKER = "font-italic"
+CODE_MARKER = "font-code"
 
 
 def _replace_quotes(string: str) -> str:
@@ -56,6 +57,13 @@ def _mark_italic(string: str) -> str:
     return string
 
 
+def _mark_code(string: str) -> str:
+    while '`' in string:
+        string = string.replace("`", f"<span class={CODE_MARKER}>", 1)
+        string = string.replace("`", "</span>", 1)
+    return string
+
+
 def _demark_bold(string: str) -> str:
     pattern = re.compile(f'<span class="?{BOLD_MARKER}"?>(.*?)</span>')
 
@@ -67,8 +75,17 @@ def _demark_bold(string: str) -> str:
 def _demark_italic(string: str) -> str:
     pattern = re.compile(f'<span class="?{ITALIC_MARKER}"?>(.*?)</span>')
 
+    # TODO: replace while with if?
     while pattern.search(string):
         string = pattern.sub(r'__\1__', string)
+    return string
+
+
+def _demark_code(string: str) -> str:
+    pattern = re.compile(f'<span class="?{CODE_MARKER}"?>(.*?)</span>')
+
+    while pattern.search(string):
+        string = pattern.sub(r'`\1`', string)
     return string
 
 
@@ -80,6 +97,7 @@ def demark_note(string: str) -> str:
     """ to show the note in update form """
     string = _demark_bold(string)
     string = _demark_italic(string)
+    string = _demark_code(string)
     string = _dereplace_new_lines(string)
     return string
 
@@ -91,6 +109,7 @@ NOTES_FORMATTERS = (
     _replace_punctuation,
     _mark_bold,
     _mark_italic,
+    _mark_code,
     _replace_new_lines,
 )
 
