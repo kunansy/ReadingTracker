@@ -8,7 +8,7 @@ import os
 import time
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 import sqlalchemy.sql as sa
 import ujson
@@ -17,23 +17,36 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.ddl import DropTable
+from sqlalchemy.sql.schema import Table
 
 from tracker.common import database, models, settings
 from tracker.common.log import logger
 
 
-SNAPSHOT = dict[str, list[dict[str, str]]]
+class TableSnapshot(NamedTuple):
+    table_name: str
+    rows: list[dict[str, str]]
+
+    @property
+    def counter(self) -> int:
+        return len(self.rows)
+
+
+class DBSnapshot(NamedTuple):
+    tables: list[TableSnapshot]
+
 
 SCOPES = ['https://www.googleapis.com/auth/drive']
-TABLES = [
-    models.Materials,
-    models.Statuses,
-    models.ReadingLog,
-    models.Notes,
-    models.Cards,
-]
+TABLES = {
+    models.Materials.name: models.Materials,
+    models.Statuses.name: models.Statuses,
+    models.ReadingLog.name: models.ReadingLog,
+    models.Notes.name: models.Notes,
+    models.Cards.name: models.Cards,
+}
 
 
 def _get_now() -> str:
@@ -49,20 +62,33 @@ def _convert_date_to_str(value: Any) -> Any:
     return value
 
 
-async def _get_db_snapshot() -> SNAPSHOT:
-    data = {}
-    async with database.transaction() as ses:
-        for table in TABLES:
-            stmt = sa.select(table)
-            data[table.name] = [
-                {
-                    str(key): _convert_date_to_str(value)
-                    for key, value in row.items()
-                }
-                for row in (await ses.execute(stmt)).mappings().all()
-            ]
-    return data
+async def _get_table_snapshot(*,
+                              table: Table,
+                              conn: AsyncSession) -> TableSnapshot:
+    stmt = sa.select(table)
+    rows = [
+        {
+            str(key): _convert_date_to_str(value)
+            for key, value in row.items()
+        }
+        for row in (await conn.execute(stmt)).mappings().all()
+    ]
+    return TableSnapshot(
+        table_name=table.name,
+        rows=rows
+    )
 
+
+async def _get_db_snapshot() -> DBSnapshot:
+    table_snapshots = []
+    async with database.transaction() as ses:
+        for table in TABLES.values():
+            table_snapshot = await _get_table_snapshot(table=table, conn=ses)
+            table_snapshots += [table_snapshot]
+
+            logger.debug("%s: %s rows got", table.name, table_snapshot.counter)
+
+    return DBSnapshot(tables=table_snapshots)
 
 def _dump_snapshot(db_snapshot: SNAPSHOT) -> Path:
     logger.debug("DB dumping started")
