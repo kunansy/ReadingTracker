@@ -7,7 +7,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import conint
 
 from tracker.common.log import logger
-from tracker.google_drive import main
+from tracker.google_drive import main as drive_api
 from tracker.reading_log import db as reading_log_db
 from tracker.system import db
 
@@ -42,12 +42,12 @@ async def graphic(request: Request,
         context['what'] = "No material found to show"
         return templates.TemplateResponse("errors/404.html", context)
 
-    graphic_image = await main.create_reading_graphic(
+    graphic_image = await db.create_reading_graphic(
         material_id=material_id,
         last_days=last_days
     )
 
-    titles = await main.get_read_material_titles()
+    titles = await db.get_read_material_titles()
 
     context = {
         **context,
