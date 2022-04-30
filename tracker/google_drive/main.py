@@ -57,8 +57,8 @@ async def restore(*,
         logger.info("Restoring completed, %ss",
                     round(time.perf_counter() - start_time, 2))
 
-        if dump_path:
-            _remove_file(dump_path)
+        if not dump_path:
+            _remove_file(filepath)
     return snapshot
 
 
