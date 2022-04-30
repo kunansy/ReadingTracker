@@ -282,8 +282,7 @@ async def main() -> None:
     elif args.restore:
         await restore()
     elif args.last_dump:
-        last_dump_id = drive_api.get_last_dump()
-        drive_api.download_file(last_dump_id, filename='last_dump.json')
+        drive_api.get_google_dump_file()
     elif dump_path := args.restore_offline:
         await restore(dump_path=dump_path)
     elif args.backup_offline:
