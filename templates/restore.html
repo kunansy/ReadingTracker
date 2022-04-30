@@ -14,7 +14,9 @@
 
 {% if status == 'ok' %}
     <div class="alert success status">
-        <p> Success! Restore was completed successfully. </p>
+        <p> Success! Restore was completed successfully.
+            ({{ materials_count }} materials, {{ logs_count }} logs, {{ statuses_count }} statuses, {{ notes_count }} notes)
+        </p>
     </div>
 {% elif status == 'restore-failed' %}
     <div class="alert error status">

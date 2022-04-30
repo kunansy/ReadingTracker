@@ -85,15 +85,22 @@ async def backup(request: Request):
 
 @router.get('/restore')
 async def restore(request: Request):
-    status = 'ok'
+    status, snapshot_dict = 'ok', None
     try:
-        await drive_api.restore()
+        snapshot = await drive_api.restore()
+        snapshot_dict = snapshot.dict()
     except Exception as e:
         logger.error("Restore error: %s", repr(e))
         status = 'restore-failed'
 
-    context = {
+    context: dict[str, Any] = {
         'request': request,
         'status': status
     }
+    if snapshot_dict:
+        context['materials_count'] = snapshot_dict['materials'].counter
+        context['logs_count'] = snapshot_dict['reading_log'].counter
+        context['statuses_count'] = snapshot_dict['statuses'].counter
+        context['notes_count'] = snapshot_dict['notes'].counter
+
     return templates.TemplateResponse("restore.html", context)
