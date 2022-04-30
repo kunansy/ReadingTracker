@@ -311,6 +311,22 @@ async def _restore_db(*,
     return snapshot
 
 
+def _get_local_dump_file(filepath: Path) -> Path:
+    if 'data/' not in str(filepath):
+        filepath = Path('data') / filepath
+
+    assert filepath.exists(), f"File {filepath=} not found"
+
+    return filepath
+
+
+def _get_google_dump_file() -> Path:
+    if not (dump_file_id := _get_last_dump()):
+        raise ValueError("Dump not found")
+
+    return _download_file(dump_file_id)
+
+
 async def restore(*,
                   dump_path: Path | None = None) -> DBSnapshot:
     logger.info("Restoring started")
@@ -318,30 +334,18 @@ async def restore(*,
 
     async with database.transaction() as ses:
         if dump_path:
-            if 'data/' not in str(dump_path):
-                dump_path = Path('data') / dump_path
-
-            assert dump_path.exists(), f"File {dump_path=} not found"
-
-            await _recreate_db(conn=ses)
-            snapshot = await _restore_db(conn=ses, dump_path=dump_path)
-
-            logger.info("Restoring completed, %ss",
-                        round(time.perf_counter() - start_time, 2))
-            return snapshot
-
-        if not (dump_file_id := _get_last_dump()):
-            raise ValueError("Dump not found")
-
-        dump_file = _download_file(dump_file_id)
+            filepath = _get_local_dump_file(dump_path)
+        else:
+            filepath = _get_google_dump_file()
 
         await _recreate_db(conn=ses)
-        snapshot = await _restore_db(conn=ses, dump_path=dump_file)
-
-        _remove_file(dump_file)
+        snapshot = await _restore_db(conn=ses, dump_path=filepath)
 
         logger.info("Restoring completed, %ss",
                     round(time.perf_counter() - start_time, 2))
+
+        if dump_path:
+            _remove_file(dump_path)
     return snapshot
 
 
