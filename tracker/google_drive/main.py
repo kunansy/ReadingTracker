@@ -62,7 +62,7 @@ async def restore(*,
     return snapshot
 
 
-async def main() -> None:
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Backup/restore the database"
     )
@@ -96,7 +96,11 @@ async def main() -> None:
         action="store_true",
         dest="last_dump"
     )
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+async def main() -> None:
+    args = parse_args()
 
     if args.backup:
         await backup()
