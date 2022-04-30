@@ -39,6 +39,8 @@ class DBSnapshot(NamedTuple):
     tables: list[TableSnapshot]
 
 
+DUMP_DATA = dict[str, list[dict[str, str]]]
+
 SCOPES = ['https://www.googleapis.com/auth/drive']
 TABLES = {
     models.Materials.name: models.Materials,
@@ -255,30 +257,55 @@ def _convert_str_to_date(value: str) -> Any:
     return value
 
 
-async def _restore_db(dump_path: Path) -> None:
+def _read_json_file(filepath: Path) -> dict[str, Any]:
+    assert filepath.exists(), "File not found"
+    assert filepath.suffix == '.json', "File must be json"
+
+    with filepath.open() as f:
+        return ujson.load(f)
+
+
+def _convert_dump_to_snapshot(dump_data: DUMP_DATA) -> DBSnapshot:
+    tables = []
+    for table_name, values in dump_data.items():
+        rows = [
+            {
+                key: _convert_str_to_date(value)
+                for key, value in row.items()
+            }
+            for row in values
+        ]
+        tables += [
+            TableSnapshot(
+                table_name=table_name,
+                rows=rows
+            )
+        ]
+
+    return DBSnapshot(tables=tables)
+
+
+async def _restore_db(*,
+                      dump_path: Path,
+                      conn: AsyncSession) -> None:
     if not dump_path.exists():
         raise ValueError("Dump file not found")
 
-    with dump_path.open() as f:
-        data = ujson.load(f)
+    dump_data = _read_json_file(dump_path)
+    snapshot = _convert_dump_to_snapshot(dump_data)
+    snapshot_dict = {
+        table.table_name: table.rows
+        for table in snapshot.tables
+    }
 
-    async with database.session() as ses:
-        # order of them matters
-        for table in TABLES:
-            values = [
-                {
-                    key: _convert_str_to_date(value)
-                    for key, value in record.items()
-                }
-                for record in data[table.name]
-            ]
-            logger.debug("Inserting %s values to %s",
-                         len(values), table.name)
+    # order of them matters
+    for table_name, table in TABLES.items():
+        values = snapshot_dict[table_name]
+        stmt = table.insert().values(values)
+        await conn.execute(stmt)
 
-            stmt = table.insert().values(values)
-            await ses.execute(stmt)
-
-            logger.debug("Data into %s inserted", table.name)
+        logger.debug("%s: %s rows inserted",
+                     table.name, len(snapshot_dict[table_name]))
 
 
 async def restore(*,
@@ -286,31 +313,32 @@ async def restore(*,
     logger.info("Restoring started")
     start_time = time.perf_counter()
 
-    if dump_path:
-        if 'data/' not in str(dump_path):
-            dump_path = Path('data') / dump_path
+    async with database.transaction() as ses:
+        if dump_path:
+            if 'data/' not in str(dump_path):
+                dump_path = Path('data') / dump_path
 
-        assert dump_path.exists(), f"File {dump_path=} not found"
+            assert dump_path.exists(), f"File {dump_path=} not found"
 
-        await _recreate_db()
-        await _restore_db(dump_path)
+            await _recreate_db(conn=ses)
+            await _restore_db(conn=ses, dump_path=dump_path)
+
+            logger.info("Restoring completed, %ss",
+                        round(time.perf_counter() - start_time, 2))
+            return
+
+        if not (dump_file_id := _get_last_dump()):
+            raise ValueError("Dump not found")
+
+        dump_file = _download_file(dump_file_id)
+
+        await _recreate_db(conn=ses)
+        await _restore_db(conn=ses, dump_path=dump_file)
+
+        _remove_file(dump_file)
 
         logger.info("Restoring completed, %ss",
                     round(time.perf_counter() - start_time, 2))
-        return
-
-    if not (dump_file_id := _get_last_dump()):
-        raise ValueError("Dump not found")
-
-    dump_file = _download_file(dump_file_id)
-
-    await _recreate_db()
-    await _restore_db(dump_file)
-
-    _remove_file(dump_file)
-
-    logger.info("Restoring completed, %ss",
-                round(time.perf_counter() - start_time, 2))
 
 
 async def main() -> None:
