@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import datetime
 from pathlib import Path
 from typing import NamedTuple, Any

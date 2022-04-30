@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import contextlib
 import io
 from functools import lru_cache
