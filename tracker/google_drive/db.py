@@ -62,7 +62,7 @@ async def _get_table_snapshot(*,
     )
 
 
-async def _get_db_snapshot() -> DBSnapshot:
+async def get_db_snapshot() -> DBSnapshot:
     table_snapshots = []
     async with database.transaction() as ses:
         for table in TABLES.values():
@@ -89,7 +89,7 @@ async def _create_tables(conn: AsyncSession) -> None:
         await conn.execute(CreateTable(table))
 
 
-async def _recreate_db(conn: AsyncSession) -> None:
+async def recreate_db(conn: AsyncSession) -> None:
     await _drop_tables(conn)
     await _create_tables(conn)
 
@@ -121,7 +121,7 @@ def _get_now() -> str:
     return now.strftime(settings.DATETIME_FORMAT).replace(' ', '_')
 
 
-def _dump_snapshot(snapshot: DBSnapshot) -> Path:
+def dump_snapshot(snapshot: DBSnapshot) -> Path:
     logger.debug("DB dumping started")
 
     file_path = Path("data") / f"tracker_{_get_now()}.json"
@@ -158,9 +158,9 @@ def _convert_dump_to_snapshot(dump_data: DUMP_DATA) -> DBSnapshot:
     return DBSnapshot(tables=tables)
 
 
-async def _restore_db(*,
-                      dump_path: Path,
-                      conn: AsyncSession) -> DBSnapshot:
+async def restore_db(*,
+                     dump_path: Path,
+                     conn: AsyncSession) -> DBSnapshot:
     if not dump_path.exists():
         raise ValueError("Dump file not found")
 

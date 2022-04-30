@@ -20,8 +20,8 @@ async def backup() -> db.DBSnapshot:
     logger.info("Backuping started")
     start_time = time.perf_counter()
 
-    db_snapshot = await db._get_db_snapshot()
-    dump_file = db._dump_snapshot(db_snapshot)
+    db_snapshot = await db.get_db_snapshot()
+    dump_file = db.dump_snapshot(db_snapshot)
     drive_api.send_dump(dump_file)
     _remove_file(dump_file)
 
@@ -51,8 +51,8 @@ async def restore(*,
         else:
             filepath = drive_api.get_google_dump_file()
 
-        await db._recreate_db(conn=ses)
-        snapshot = await db._restore_db(conn=ses, dump_path=filepath)
+        await db.recreate_db(conn=ses)
+        snapshot = await db.restore_db(conn=ses, dump_path=filepath)
 
         logger.info("Restoring completed, %ss",
                     round(time.perf_counter() - start_time, 2))
@@ -107,8 +107,8 @@ async def main() -> None:
     elif dump_path := args.restore_offline:
         await restore(dump_path=dump_path)
     elif args.backup_offline:
-        snapshot = await db._get_db_snapshot()
-        db._dump_snapshot(snapshot)
+        snapshot = await db.get_db_snapshot()
+        db.dump_snapshot(snapshot)
 
 
 if __name__ == "__main__":
