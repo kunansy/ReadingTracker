@@ -34,7 +34,6 @@ class DBSnapshot(NamedTuple):
 
 DUMP_DATA = dict[str, list[dict[str, str]]]
 
-SCOPES = ['https://www.googleapis.com/auth/drive']
 TABLES = {
     models.Materials.name: models.Materials,
     models.Statuses.name: models.Statuses,
