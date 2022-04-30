@@ -173,7 +173,7 @@ def _remove_file(file_path: Path) -> None:
     logger.debug("File removed")
 
 
-async def backup() -> None:
+async def backup() -> DBSnapshot:
     logger.info("Backuping started")
     start_time = time.perf_counter()
 
@@ -184,6 +184,8 @@ async def backup() -> None:
 
     logger.info("Backuping completed, %ss",
                 round(time.perf_counter() - start_time, 2))
+
+    return db_snapshot
 
 
 def _get_last_dump() -> str:
