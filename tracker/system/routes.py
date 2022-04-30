@@ -62,17 +62,24 @@ async def graphic(request: Request,
 
 @router.get('/backup')
 async def backup(request: Request):
-    status = 'ok'
+    status, snapshot_dict = 'ok', None
     try:
-        await drive_api.backup()
+        snapshot = await drive_api.backup()
+        snapshot_dict = snapshot.dict()
     except Exception as e:
         logger.error("Backup error: %s", repr(e))
         status = 'backup-failed'
 
-    context = {
+    context: dict[str, Any] = {
         'request': request,
         'status': status
     }
+    if snapshot_dict:
+        context['materials_count'] = snapshot_dict['materials'].counter
+        context['logs_count'] = snapshot_dict['reading_log'].counter
+        context['statuses_count'] = snapshot_dict['statuses'].counter
+        context['notes_count'] = snapshot_dict['notes'].counter
+
     return templates.TemplateResponse("backup.html", context)
 
 
