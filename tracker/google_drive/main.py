@@ -219,13 +219,6 @@ def _get_local_dump_file(filepath: Path) -> Path:
     return filepath
 
 
-def _get_google_dump_file() -> Path:
-    if not (dump_file_id := drive_api._get_last_dump()):
-        raise ValueError("Dump not found")
-
-    return drive_api._download_file(dump_file_id)
-
-
 async def restore(*,
                   dump_path: Path | None = None) -> DBSnapshot:
     logger.info("Restoring started")
@@ -235,7 +228,7 @@ async def restore(*,
         if dump_path:
             filepath = _get_local_dump_file(dump_path)
         else:
-            filepath = _get_google_dump_file()
+            filepath = drive_api._get_google_dump_file()
 
         await _recreate_db(conn=ses)
         snapshot = await _restore_db(conn=ses, dump_path=filepath)

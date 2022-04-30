@@ -108,3 +108,10 @@ def _download_file(file_id: str,
         with path.open('wb') as f:
             f.write(fh.read())
     return path
+
+
+def _get_google_dump_file() -> Path:
+    if not (dump_file_id := _get_last_dump()):
+        raise ValueError("Dump not found")
+
+    return _download_file(dump_file_id)
