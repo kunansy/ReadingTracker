@@ -25,6 +25,12 @@ class TableSnapshot(NamedTuple):
 class DBSnapshot(NamedTuple):
     tables: list[TableSnapshot]
 
+    def dict(self) -> dict[str, TableSnapshot]:
+        return {
+            table_snapshot.table_name: table_snapshot
+            for table_snapshot in self.tables
+        }
+
 
 DUMP_DATA = dict[str, list[dict[str, str]]]
 TABLES = {
