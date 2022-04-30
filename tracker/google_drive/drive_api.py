@@ -96,8 +96,12 @@ def _dump_snapshot(snapshot: DBSnapshot) -> Path:
 
     file_path = Path("data") / f"tracker_{_get_now()}.json"
 
+    data = {
+        table_snapshot.table_name: table_snapshot.rows
+        for table_snapshot in snapshot.tables
+    }
     with file_path.open('w') as f:
-        ujson.dump(snapshot.tables, f, ensure_ascii=False, indent=2)
+        ujson.dump(data, f, ensure_ascii=False, indent=2)
 
     logger.debug("DB dumped")
 
