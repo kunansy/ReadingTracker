@@ -289,7 +289,7 @@ def _convert_dump_to_snapshot(dump_data: DUMP_DATA) -> DBSnapshot:
 
 async def _restore_db(*,
                       dump_path: Path,
-                      conn: AsyncSession) -> None:
+                      conn: AsyncSession) -> DBSnapshot:
     if not dump_path.exists():
         raise ValueError("Dump file not found")
 
@@ -308,10 +308,11 @@ async def _restore_db(*,
 
         logger.debug("%s: %s rows inserted",
                      table.name, len(snapshot_dict[table_name]))
+    return snapshot
 
 
 async def restore(*,
-                  dump_path: Path | None = None) -> None:
+                  dump_path: Path | None = None) -> DBSnapshot:
     logger.info("Restoring started")
     start_time = time.perf_counter()
 
@@ -323,11 +324,11 @@ async def restore(*,
             assert dump_path.exists(), f"File {dump_path=} not found"
 
             await _recreate_db(conn=ses)
-            await _restore_db(conn=ses, dump_path=dump_path)
+            snapshot = await _restore_db(conn=ses, dump_path=dump_path)
 
             logger.info("Restoring completed, %ss",
                         round(time.perf_counter() - start_time, 2))
-            return
+            return snapshot
 
         if not (dump_file_id := _get_last_dump()):
             raise ValueError("Dump not found")
@@ -335,12 +336,13 @@ async def restore(*,
         dump_file = _download_file(dump_file_id)
 
         await _recreate_db(conn=ses)
-        await _restore_db(conn=ses, dump_path=dump_file)
+        snapshot = await _restore_db(conn=ses, dump_path=dump_file)
 
         _remove_file(dump_file)
 
         logger.info("Restoring completed, %ss",
                     round(time.perf_counter() - start_time, 2))
+    return snapshot
 
 
 async def main() -> None:
