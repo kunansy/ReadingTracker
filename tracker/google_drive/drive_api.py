@@ -90,13 +90,14 @@ async def _get_db_snapshot() -> DBSnapshot:
 
     return DBSnapshot(tables=table_snapshots)
 
-def _dump_snapshot(db_snapshot: SNAPSHOT) -> Path:
+
+def _dump_snapshot(snapshot: DBSnapshot) -> Path:
     logger.debug("DB dumping started")
 
     file_path = Path("data") / f"tracker_{_get_now()}.json"
 
     with file_path.open('w') as f:
-        ujson.dump(db_snapshot, f, ensure_ascii=False, indent=2)
+        ujson.dump(snapshot.tables, f, ensure_ascii=False, indent=2)
 
     logger.debug("DB dumped")
 
