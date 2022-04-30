@@ -39,7 +39,7 @@ def _get_drive_creds() -> Credentials:
 
 
 @contextlib.contextmanager
-def drive_client():
+def _drive_client():
     creds = _get_drive_creds()
 
     new_client = build('drive', 'v3', credentials=creds)
@@ -51,13 +51,13 @@ def drive_client():
 
 
 def _get_folder_id() -> str:
-    with drive_client() as client:
+    with _drive_client() as client:
         response = client.files().list(
             q="name = 'tracker'", spaces='drive', fields='files(id)').execute()
     return response['files'][0]['id']
 
 
-def _send_dump(file_path: Path) -> None:
+def send_dump(file_path: Path) -> None:
     logger.debug("Sending file %s", file_path)
 
     file_metadata = {
@@ -67,18 +67,18 @@ def _send_dump(file_path: Path) -> None:
     file = MediaFileUpload(
         file_path, mimetype='application/json')
 
-    with drive_client() as client:
+    with _drive_client() as client:
         client.files().create(
             body=file_metadata, media_body=file).execute()
     logger.debug("File sent")
 
 
-def _get_last_dump() -> str:
+def get_last_dump() -> str:
     logger.debug("Getting last dump started")
     folder_id = _get_folder_id()
     query = f"name contains 'tracker_' and mimeType='application/json' and '{folder_id}' in parents"
 
-    with drive_client() as client:
+    with _drive_client() as client:
         response = client.files().list(
             q=query, spaces='drive', fields='files(id,modifiedTime,name)') \
             .execute()
@@ -89,13 +89,13 @@ def _get_last_dump() -> str:
     return files[0]['id']
 
 
-def _download_file(file_id: str,
-                   *,
-                   filename: str = 'restore.json') -> Path:
+def download_file(file_id: str,
+                  *,
+                  filename: str = 'restore.json') -> Path:
     logger.debug("Downloading file id='%s'", file_id)
     path = Path('data') / filename
 
-    with drive_client() as client:
+    with _drive_client() as client:
         request = client.files().get_media(fileId=file_id)
         fh = io.BytesIO()
         downloader = MediaIoBaseDownload(fh, request)
@@ -110,8 +110,8 @@ def _download_file(file_id: str,
     return path
 
 
-def _get_google_dump_file() -> Path:
-    if not (dump_file_id := _get_last_dump()):
+def get_google_dump_file() -> Path:
+    if not (dump_file_id := get_last_dump()):
         raise ValueError("Dump not found")
 
-    return _download_file(dump_file_id)
+    return download_file(dump_file_id)

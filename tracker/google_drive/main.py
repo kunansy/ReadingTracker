@@ -115,7 +115,7 @@ async def backup() -> DBSnapshot:
 
     db_snapshot = await _get_db_snapshot()
     dump_file = _dump_snapshot(db_snapshot)
-    drive_api._send_dump(dump_file)
+    drive_api.send_dump(dump_file)
     _remove_file(dump_file)
 
     logger.info("Backuping completed, %ss",
@@ -228,7 +228,7 @@ async def restore(*,
         if dump_path:
             filepath = _get_local_dump_file(dump_path)
         else:
-            filepath = drive_api._get_google_dump_file()
+            filepath = drive_api.get_google_dump_file()
 
         await _recreate_db(conn=ses)
         snapshot = await _restore_db(conn=ses, dump_path=filepath)
@@ -282,8 +282,8 @@ async def main() -> None:
     elif args.restore:
         await restore()
     elif args.last_dump:
-        last_dump_id = drive_api._get_last_dump()
-        drive_api._download_file(last_dump_id, filename='last_dump.json')
+        last_dump_id = drive_api.get_last_dump()
+        drive_api.download_file(last_dump_id, filename='last_dump.json')
     elif dump_path := args.restore_offline:
         await restore(dump_path=dump_path)
     elif args.backup_offline:
