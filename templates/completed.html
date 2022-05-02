@@ -27,6 +27,10 @@
         {%- endif -%}
     </div>
     {% endfor %}
+
+    {% from 'arrow_up.html' import arrow_up %}
+    {% call arrow_up() %}
+    {% endcall %}
 {%- else -%}
     {% import 'not_found.html' as not_found %}
     {% call not_found.not_found('completed materials') %} {% endcall %}
