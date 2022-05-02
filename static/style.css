@@ -153,6 +153,21 @@ span.font-code {
     color: #3c763d;
 }
 
+div.arrow-up {
+    position: sticky;
+    right: 1vw;
+    background-color: black;
+    bottom: 1rem;
+    align-self: flex-end;
+    padding: 2vh 2vw;
+    border-radius: 50%;
+}
+a.arrow-up {
+    color: white;
+    text-decoration: none;
+    font-size: 3vh;
+}
+
 footer {
     background-color: black;
     height: 50vh;
