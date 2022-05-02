@@ -61,7 +61,6 @@ async def create_reading_graphic(*,
         last_days=last_days
     )
     total = data.counts[-1]
-    remains = material.pages - total
 
     fig, ax = plt.subplots(figsize=(12, 10))
 
@@ -75,17 +74,18 @@ async def create_reading_graphic(*,
     ax.set_ylabel('Pages count')
     ax.set_xlabel('Date')
 
-    last_rect = bar[-1]
-    vline_x = last_rect.get_x() + last_rect.get_width() / 2
+    if (remains := material.pages - total) > 0:
+        last_rect = bar[-1]
+        vline_x = last_rect.get_x() + last_rect.get_width() / 2
 
-    ax.vlines(
-        vline_x,
-        ymin=last_rect.get_height(),
-        ymax=material.pages,
-        color='black',
-        linestyles='solid',
-        label=f"{str(remains)} pages remains"
-    )
+        ax.vlines(
+            vline_x,
+            ymin=last_rect.get_height(),
+            ymax=material.pages,
+            color='black',
+            linestyles='solid',
+            label=f"{str(remains)} pages remains"
+        )
 
     ax.set(ylim=(0, total + total // 2))
     ax.legend()
