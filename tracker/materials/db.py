@@ -242,7 +242,7 @@ async def complete_material(*,
         raise ValueError("Completion date must be greater than start date")
 
     values = {
-        "complete_at": completion_date
+        "completed_at": completion_date
     }
     stmt = models.Statuses\
         .update().values(values)\
