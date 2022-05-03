@@ -80,12 +80,14 @@ async def http_exception_handler(request: Request,
     return templates.TemplateResponse("errors/404.html", context)
 
 
-@app.get('/liveness')
+@app.get('/liveness',
+         include_in_schema=False)
 async def liveness():
     return {"status": "ok"}
 
 
-@app.get('/readiness')
+@app.get('/readiness',
+         include_in_schema=False)
 async def readiness():
     status, status_code = "ok", 200
     if not await database.is_alive():
