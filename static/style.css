@@ -156,11 +156,11 @@ span.font-code {
 div.arrow-up {
     position: sticky;
     right: 1vw;
-    background-color: black;
+    background-color: gray;
     bottom: 1rem;
     align-self: flex-end;
-    padding: 2vh 2vw;
-    border-radius: 50%;
+    padding: .5vh .5vw;
+    border-radius: 3px;
 }
 a.arrow-up {
     color: white;
