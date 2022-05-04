@@ -178,17 +178,14 @@ async def restore_db(*,
 
     dump_data = _read_json_file(dump_path)
     snapshot = _convert_dump_to_snapshot(dump_data)
-    snapshot_dict = {
-        table.table_name: table.rows
-        for table in snapshot.tables
-    }
+    snapshot_dict = snapshot.dict()
 
     # order of them matters
     for table_name, table in TABLES.items():
-        values = snapshot_dict[table_name]
+        values = snapshot_dict[table_name].rows
         stmt = table.insert().values(values)
         await conn.execute(stmt)
 
         logger.info("%s: %s rows inserted",
-                    table.name, len(snapshot_dict[table_name]))
+                    table.name, len(snapshot_dict[table_name].rows))
     return snapshot
