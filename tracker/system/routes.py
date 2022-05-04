@@ -65,7 +65,7 @@ async def backup(request: Request):
     status, snapshot_dict = 'ok', None
     try:
         snapshot = await drive_api.backup()
-        snapshot_dict = snapshot.dict()
+        snapshot_dict = snapshot.to_dict()
     except Exception as e:
         logger.error("Backup error: %s", repr(e))
         status = 'backup-failed'
@@ -88,7 +88,7 @@ async def restore(request: Request):
     status, snapshot_dict = 'ok', None
     try:
         snapshot = await drive_api.restore()
-        snapshot_dict = snapshot.dict()
+        snapshot_dict = snapshot.to_dict()
     except Exception as e:
         logger.error("Restore error: %s", repr(e))
         status = 'restore-failed'

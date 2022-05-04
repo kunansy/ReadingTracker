@@ -30,7 +30,7 @@ class TableSnapshot(NamedTuple):
 class DBSnapshot(NamedTuple):
     tables: list[TableSnapshot]
 
-    def dict(self) -> dict[str, TableSnapshot]:
+    def to_dict(self) -> dict[str, TableSnapshot]:
         return {
             table_snapshot.table_name: table_snapshot
             for table_snapshot in self.tables
@@ -178,7 +178,7 @@ async def restore_db(*,
 
     dump_data = _read_json_file(dump_path)
     snapshot = _convert_dump_to_snapshot(dump_data)
-    snapshot_dict = snapshot.dict()
+    snapshot_dict = snapshot.to_dict()
 
     # order of them matters
     for table_name, table in TABLES.items():
