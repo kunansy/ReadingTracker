@@ -49,10 +49,11 @@ def _drive_client():
         raise
 
 
-def _get_folder_id() -> str:
+def _get_folder_id(*,
+                   folder_name: str = 'tracker') -> str:
     with _drive_client() as client:
         response = client.files().list(
-            q="name = 'tracker'", spaces='drive', fields='files(id)').execute()
+            q=f"name = '{folder_name}'", spaces='drive', fields='files(id)').execute()
     return response['files'][0]['id']
 
 
