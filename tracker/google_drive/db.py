@@ -78,7 +78,7 @@ async def get_db_snapshot() -> DBSnapshot:
             table_snapshot = await _get_table_snapshot(table=table, conn=ses)
             table_snapshots += [table_snapshot]
 
-            logger.debug("%s: %s rows got", table.name, table_snapshot.counter)
+            logger.info("%s: %s rows got", table.name, table_snapshot.counter)
 
     return DBSnapshot(tables=table_snapshots)
 
@@ -189,6 +189,6 @@ async def restore_db(*,
         stmt = table.insert().values(values)
         await conn.execute(stmt)
 
-        logger.debug("%s: %s rows inserted",
-                     table.name, len(snapshot_dict[table_name]))
+        logger.info("%s: %s rows inserted",
+                    table.name, len(snapshot_dict[table_name]))
     return snapshot
