@@ -36,6 +36,12 @@ class DBSnapshot(NamedTuple):
             for table_snapshot in self.tables
         }
 
+    def table_to_rows(self) -> dict[str, list[dict[str, DATE_TYPE | JSON_FIELD_TYPES]]]:
+        return {
+            table_snapshot.table_name: table_snapshot.rows
+            for table_snapshot in self.tables
+        }
+
 
 TABLES = {
     models.Materials.name: models.Materials,
@@ -138,10 +144,7 @@ def dump_snapshot(snapshot: DBSnapshot) -> Path:
 
     file_path = Path("data") / f"tracker_{_get_now()}.json"
 
-    data = {
-        table_snapshot.table_name: table_snapshot.rows
-        for table_snapshot in snapshot.tables
-    }
+    data = snapshot.table_to_rows()
     with file_path.open('w') as f:
         ujson.dump(data, f, ensure_ascii=False, indent=2)
 
