@@ -1,6 +1,6 @@
 import datetime
 from pathlib import Path
-from typing import NamedTuple, Any
+from typing import NamedTuple
 
 import sqlalchemy.sql as sa
 import ujson
@@ -13,9 +13,14 @@ from tracker.common import database, settings, models
 from tracker.common.log import logger
 
 
+JSON_FIELD_TYPES = str | int
+DATE_TYPE = datetime.date | datetime.datetime | str
+DUMP_DATA = dict[str, list[dict[str, JSON_FIELD_TYPES]]]
+
+
 class TableSnapshot(NamedTuple):
     table_name: str
-    rows: list[dict[str, str]]
+    rows: list[dict[str, DATE_TYPE | JSON_FIELD_TYPES]]
 
     @property
     def counter(self) -> int:
@@ -32,7 +37,6 @@ class DBSnapshot(NamedTuple):
         }
 
 
-DUMP_DATA = dict[str, list[dict[str, str]]]
 TABLES = {
     models.Materials.name: models.Materials,
     models.Statuses.name: models.Statuses,
@@ -42,7 +46,7 @@ TABLES = {
 }
 
 
-def _convert_date_to_str(value: Any) -> Any:
+def _convert_date_to_str(value: DATE_TYPE | JSON_FIELD_TYPES) -> DATE_TYPE | JSON_FIELD_TYPES:
     if isinstance(value, datetime.date):
         return value.strftime(settings.DATE_FORMAT)
     if isinstance(value, datetime.datetime):
@@ -99,7 +103,10 @@ async def recreate_db(conn: AsyncSession) -> None:
     await _create_tables(conn)
 
 
-def _convert_str_to_date(value: str) -> Any:
+def _convert_str_to_date(value: JSON_FIELD_TYPES) -> JSON_FIELD_TYPES | DATE_TYPE:
+    if not isinstance(value, str):
+        return value
+
     try:
         return datetime.datetime.strptime(value, settings.DATETIME_FORMAT)
     except Exception:
@@ -110,10 +117,10 @@ def _convert_str_to_date(value: str) -> Any:
     except Exception:
         pass
 
-    return value
+    raise ValueError("Invalid date format")
 
 
-def _read_json_file(filepath: Path) -> dict[str, Any]:
+def _read_json_file(filepath: Path) -> dict[str, list[dict[str, str | int]]]:
     assert filepath.exists(), "File not found"
     assert filepath.suffix == '.json', "File must be json"
 
