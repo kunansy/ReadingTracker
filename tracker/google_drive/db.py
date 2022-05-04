@@ -190,5 +190,5 @@ async def restore_db(*,
         await conn.execute(stmt)
 
         logger.info("%s: %s rows inserted",
-                    table.name, len(snapshot_dict[table_name].rows))
+                    table.name, len(values))
     return snapshot
