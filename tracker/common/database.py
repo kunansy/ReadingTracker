@@ -55,10 +55,6 @@ def today() -> datetime.datetime:
     return datetime.datetime.utcnow()
 
 
-def yesterday() -> datetime.datetime:
-    return today() - datetime.timedelta(days=1)
-
-
 async def is_alive() -> bool:
     logger.debug("Checking if the database is alive")
 
