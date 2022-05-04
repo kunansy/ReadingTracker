@@ -14,13 +14,13 @@ from tracker.common.log import logger
 
 
 JSON_FIELD_TYPES = str | int
-DATE_TYPE = datetime.date | datetime.datetime | str
-DUMP_DATA = dict[str, list[dict[str, JSON_FIELD_TYPES]]]
+DATE_TYPES = datetime.date | datetime.datetime | str
+DUMP_TYPE = dict[str, list[dict[str, JSON_FIELD_TYPES]]]
 
 
 class TableSnapshot(NamedTuple):
     table_name: str
-    rows: list[dict[str, DATE_TYPE | JSON_FIELD_TYPES]]
+    rows: list[dict[str, DATE_TYPES | JSON_FIELD_TYPES]]
 
     @property
     def counter(self) -> int:
@@ -36,7 +36,7 @@ class DBSnapshot(NamedTuple):
             for table_snapshot in self.tables
         }
 
-    def table_to_rows(self) -> dict[str, list[dict[str, DATE_TYPE | JSON_FIELD_TYPES]]]:
+    def table_to_rows(self) -> dict[str, list[dict[str, DATE_TYPES | JSON_FIELD_TYPES]]]:
         return {
             table_snapshot.table_name: table_snapshot.rows
             for table_snapshot in self.tables
@@ -52,7 +52,7 @@ TABLES = {
 }
 
 
-def _convert_date_to_str(value: DATE_TYPE | JSON_FIELD_TYPES) -> DATE_TYPE | JSON_FIELD_TYPES:
+def _convert_date_to_str(value: DATE_TYPES | JSON_FIELD_TYPES) -> DATE_TYPES | JSON_FIELD_TYPES:
     if isinstance(value, datetime.date):
         return value.strftime(settings.DATE_FORMAT)
     if isinstance(value, datetime.datetime):
@@ -109,7 +109,7 @@ async def recreate_db(conn: AsyncSession) -> None:
     await _create_tables(conn)
 
 
-def _convert_str_to_date(value: JSON_FIELD_TYPES) -> JSON_FIELD_TYPES | DATE_TYPE:
+def _convert_str_to_date(value: JSON_FIELD_TYPES) -> JSON_FIELD_TYPES | DATE_TYPES:
     if not isinstance(value, str):
         return value
 
@@ -153,7 +153,7 @@ def dump_snapshot(snapshot: DBSnapshot) -> Path:
     return file_path
 
 
-def _convert_dump_to_snapshot(dump_data: DUMP_DATA) -> DBSnapshot:
+def _convert_dump_to_snapshot(dump_data: DUMP_TYPE) -> DBSnapshot:
     tables = []
     for table_name, values in dump_data.items():
         rows = [
