@@ -15,4 +15,6 @@ COPY poetry.lock pyproject.toml /app/
 RUN poetry config virtualenvs.create false \
     && poetry install --no-dev -n
 
-COPY . /app
+COPY /templates /app/templates
+COPY /static /app/static
+COPY /tracker /app/tracker
