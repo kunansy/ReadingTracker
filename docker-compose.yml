@@ -34,6 +34,8 @@ services:
                  "--host", "0.0.0.0", "--loop", "uvloop"]
     networks:
       - tracker-net
+    volumes:
+      - ./data:/app/data 
     healthcheck:
       test: curl -f http://localhost:8000/readiness || exit 1
       interval: 10s
