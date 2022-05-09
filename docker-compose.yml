@@ -30,8 +30,8 @@ services:
       - tracker-db
     ports:
        - "127.0.0.1:${API_PORT}:8000"
-    entrypoint: ["uvicorn", "tracker.main:app", "--port", "8000",
-                 "--host", "0.0.0.0", "--loop", "uvloop"]
+    entrypoint: ["uvicorn", "tracker.main:app", "--port", "8000", "--host", 
+                 "0.0.0.0", "--loop", "uvloop", "--workers", "${API_ASGI_WORKERS}"]
     networks:
       - tracker-net
     volumes:
