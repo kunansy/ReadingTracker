@@ -2,6 +2,7 @@ html, body {
     padding: 0;
     margin: 0;
     font-family: Roboto, 'Open Sans', sans-serif;
+    font-size: 1.7vh;
     color: black;
 }
 
@@ -66,7 +67,7 @@ form {
 .input {
     border: none;
     outline: none;
-    height: 3vw;
+    height: 5vh;
     width: 40vw;
     padding-left: 0.5vw;
     box-shadow: 0 0 1vw rgba(0,0,0,0.5);
@@ -79,7 +80,7 @@ form {
 
 .submit-button {
     margin: auto;
-    height: 3vw;
+    height: 5vh;
     width: 9vw;
     border: none;
     outline: none !important;
