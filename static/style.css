@@ -162,7 +162,16 @@ div.arrow-up {
     padding: .5vh .5vw;
     border-radius: 3px;
 }
-a.arrow-up {
+div.arrow-down {
+    position: sticky;
+    left: 1vw;
+    background-color: gray;
+    bottom: 1rem;
+    align-self: flex-start;
+    padding: .5vh .5vw;
+    border-radius: 3px;
+}
+a.arrow-up, a.arrow-down {
     color: white;
     text-decoration: none;
     font-size: 3vh;
