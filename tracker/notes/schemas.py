@@ -8,6 +8,8 @@ from pydantic import BaseModel, conint, constr, validator
 PUNCTUATION_MAPPING = {
     "--": "—",
     "->": "→",
+    "<-": "←",
+    "<->": "↔",
 }
 BOLD_MARKER = "font-weight-bold"
 ITALIC_MARKER = "font-italic"
