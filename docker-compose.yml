@@ -12,7 +12,7 @@ services:
       - database-volume:/var/lib/postgresql/data
     container_name: tracker-db
     ports:
-      - "127.0.0.1:7432:5432"
+      - "0.0.0.0:7432:5432"
     networks:
        - tracker-net
     healthcheck:
@@ -29,7 +29,7 @@ services:
     depends_on:
       - tracker-db
     ports:
-       - "127.0.0.1:${API_PORT}:8000"
+       - "0.0.0.0:${API_PORT}:8000"
     entrypoint: ["uvicorn", "tracker.main:app", "--port", "8000", "--host", 
                  "0.0.0.0", "--loop", "uvloop", "--workers", "${API_ASGI_WORKERS}"]
     networks:
