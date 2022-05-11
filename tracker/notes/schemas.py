@@ -95,15 +95,6 @@ def _dereplace_new_lines(string: str) -> str:
     return re.sub(r'<br/?>', '\n', string)
 
 
-def demark_note(string: str) -> str:
-    """ to show the note in update form """
-    string = _demark_bold(string)
-    string = _demark_italic(string)
-    string = _demark_code(string)
-    string = _dereplace_new_lines(string)
-    return string
-
-
 NOTES_FORMATTERS = (
     _replace_quotes,
     _add_dot,
@@ -114,6 +105,20 @@ NOTES_FORMATTERS = (
     _mark_code,
     _replace_new_lines,
 )
+
+NOTES_DEMARKERS = (
+    _demark_bold,
+    _demark_italic,
+    _demark_code,
+    _dereplace_new_lines,
+)
+
+
+def demark_note(string: str) -> str:
+    """ to show the note in update form """
+    for formatter in NOTES_DEMARKERS:
+        string = formatter(string)
+    return string
 
 
 class Note(BaseModel):
