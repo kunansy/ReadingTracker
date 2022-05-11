@@ -17,7 +17,10 @@ CODE_MARKER = "font-code"
 
 
 def _replace_quotes(string: str) -> str:
-    while '"' in string:
+    count = string.count('"')
+    assert count % 2 == 0, "Quotes are not balanced"
+
+    for _ in range(count // 2):
         string = string.replace('"', "«", 1)
         string = string.replace('"', "»", 1)
     return string
@@ -44,7 +47,10 @@ def _replace_new_lines(string: str) -> str:
 
 
 def _mark_bold(string: str) -> str:
-    while '**' in string:
+    count = string.count('**')
+    assert count % 2 == 0, "Bold markers are not balanced"
+
+    for _ in range(count // 2):
         # don't add quotes around class names, because
         # quotes will be replaced by the quotes formatter
         string = string.replace("**", f"<span class={BOLD_MARKER}>", 1)
@@ -53,14 +59,20 @@ def _mark_bold(string: str) -> str:
 
 
 def _mark_italic(string: str) -> str:
-    while '__' in string:
+    count = string.count('__')
+    assert count % 2 == 0, "Italic markers are not balanced"
+
+    for _ in range(count // 2):
         string = string.replace("__", f"<span class={ITALIC_MARKER}>", 1)
         string = string.replace("__", "</span>", 1)
     return string
 
 
 def _mark_code(string: str) -> str:
-    while '`' in string:
+    count = string.count('`')
+    assert count % 2 == 0, "Code markers are not balanced"
+
+    for _ in range(count // 2):
         string = string.replace("`", f"<span class={CODE_MARKER}>", 1)
         string = string.replace("`", "</span>", 1)
     return string
