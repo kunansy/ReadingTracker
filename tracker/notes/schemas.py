@@ -15,6 +15,10 @@ BOLD_MARKER = "font-weight-bold"
 ITALIC_MARKER = "font-italic"
 CODE_MARKER = "font-code"
 
+DEMARK_BOLD_PATTERN = re.compile(f'<span class="?{BOLD_MARKER}"?>(.*?)</span>')
+DEMARK_ITALIC_PATTERN = re.compile(f'<span class="?{ITALIC_MARKER}"?>(.*?)</span>')
+DEMARK_CODE_PATTERN = re.compile(f'<span class="?{CODE_MARKER}"?>(.*?)</span>')
+
 
 def _replace_quotes(string: str) -> str:
     count = string.count('"')
@@ -81,28 +85,15 @@ def _mark_code(string: str) -> str:
 
 
 def _demark_bold(string: str) -> str:
-    pattern = re.compile(f'<span class="?{BOLD_MARKER}"?>(.*?)</span>')
-
-    while pattern.search(string):
-        string = pattern.sub(r'**\1**', string)
-    return string
+    return DEMARK_BOLD_PATTERN.sub(r'**\1**', string)
 
 
 def _demark_italic(string: str) -> str:
-    pattern = re.compile(f'<span class="?{ITALIC_MARKER}"?>(.*?)</span>')
-
-    # TODO: replace while with if?
-    while pattern.search(string):
-        string = pattern.sub(r'__\1__', string)
-    return string
+    return DEMARK_ITALIC_PATTERN.sub(r'__\1__', string)
 
 
 def _demark_code(string: str) -> str:
-    pattern = re.compile(f'<span class="?{CODE_MARKER}"?>(.*?)</span>')
-
-    while pattern.search(string):
-        string = pattern.sub(r'`\1`', string)
-    return string
+    return DEMARK_CODE_PATTERN.sub(r'`\1`', string)
 
 
 def _dereplace_new_lines(string: str) -> str:
