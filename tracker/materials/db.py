@@ -137,8 +137,8 @@ def _convert_duration_to_period(duration: datetime.timedelta) -> str:
 def _get_total_reading_duration(*,
                                 started_at: datetime.datetime,
                                 completed_at: datetime.datetime | None) -> str:
-    completed_at = completed_at or datetime.datetime.utcnow().date()
-    duration = completed_at - started_at + datetime.timedelta(days=1)
+    completion_date = completed_at or datetime.datetime.utcnow().date()
+    duration = completion_date - started_at + datetime.timedelta(days=1)
 
     return _convert_duration_to_period(duration)
 
