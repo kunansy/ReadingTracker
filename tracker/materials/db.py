@@ -46,6 +46,7 @@ class MaterialStatistics(NamedTuple):
     remaining_pages: int | None = None
     remaining_days: int | None = None
     completed_at: datetime.date | None = None
+    total_reading_duration: str | None = None
     # date when the material would be completed
     # according to average read pages count
     would_be_completed: datetime.date | None = None
@@ -119,6 +120,29 @@ async def _get_status(*,
         return (await ses.execute(stmt)).mappings().one_or_none()
 
 
+def _convert_duration_to_period(duration: datetime.timedelta) -> str:
+    total_days = duration.days
+    years_str = months_str = days_str = ''
+
+    if years := total_days // 365:
+        years_str = f"{years} years "
+    if months := total_days % 365 // 30:
+        months_str = f"{months} months "
+    if days := total_days % 30:
+        days_str = f"{days} days"
+
+    return f"{years_str}{months_str}{days_str}".strip()
+
+
+def _get_total_reading_duration(*,
+                                started_at: datetime.datetime,
+                                completed_at: datetime.datetime | None) -> str:
+    completed_at = completed_at or datetime.datetime.utcnow().date()
+    duration = completed_at - started_at + datetime.timedelta(days=1)
+
+    return _convert_duration_to_period(duration)
+
+
 async def _get_material_statistics(*,
                                    material_id: UUID) -> MaterialStatistics:
     """ Calculate statistics for reading or completed material """
@@ -153,11 +177,14 @@ async def _get_material_statistics(*,
         would_be_completed = remaining_days = remaining_pages = None # type: ignore
 
     notes_count = await notes_db.get_notes_count(material_id=material_id)
+    total_reading_duration = _get_total_reading_duration(
+        started_at=status.started_at, completed_at=status.completed_at)
 
     return MaterialStatistics(
         material=material,
         started_at=status.started_at,
         completed_at=status.completed_at,
+        total_reading_duration=total_reading_duration,
         duration=duration,
         lost_time=lost_time,
         total=total,
