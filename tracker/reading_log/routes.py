@@ -24,7 +24,6 @@ async def get_reading_log(request: Request):
         'request': request,
         'log': reading_log,
         'DATE_FORMAT': settings.DATE_FORMAT,
-        'EXPECTED_COUNT': settings.PAGES_PER_DAY
     }
     return templates.TemplateResponse("reading_log.html", context)
 

@@ -14,7 +14,7 @@
 {% if log %}
     {% for date, info in log | dictsort(reverse=True) %}
         {% set count = info.count %}
-        {% if count >= EXPECTED_COUNT %}
+        {% if count >= info.expected_count %}
             <div class="record success">
         {% else %}
             <div class="record error">

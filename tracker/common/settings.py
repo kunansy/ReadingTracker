@@ -36,11 +36,6 @@ with env.prefixed("LOGGER_"):
     LOGGER_NAME = env("NAME", "ReadingTracker")
     LOGGER_LEVEL = env.log_level("LEVEL", 'debug')
 
-with env.prefixed("PER_DAY_"):
-    PAGES_PER_DAY = env.int('PER_DAY_PAGES', 50)
-    # max count of cards repeated per day
-    _MAX_PER_DAY = env.int('PER_DAY_CARDS', 25)
-
 with env.prefixed("DRIVE_"):
     DRIVE_TOKEN_PATH = env.path("TOKEN_PATH", "data/token.json")
     DRIVE_CREDS_PATH = env.path("CREDS_PATH", "data/creds.json")
