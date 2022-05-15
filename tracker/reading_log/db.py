@@ -12,7 +12,6 @@ from tracker.materials import db as materials_db
 class LogRecord(NamedTuple):
     count: int # type: ignore
     material_id: UUID
-    average_count: int | None = None
     material_title: str | None = None
 
 
@@ -25,7 +24,7 @@ def _safe_list_get(list_: list[Any],
         return default
 
 
-async def _get_average_materials_read_pages() -> dict[UUID, float]:
+async def get_average_materials_read_pages() -> dict[UUID, float]:
     logger.debug("Getting average reading read pages count of materials")
 
     stmt = sa.select([models.ReadingLog.c.material_id,
@@ -47,15 +46,12 @@ async def get_log_records() -> dict[datetime.date, LogRecord]:
         .join(models.Materials,
               models.Materials.c.material_id == models.ReadingLog.c.material_id)
 
-    average_materials_read_pages = await _get_average_materials_read_pages()
-
     async with database.session() as ses:
         return {
             row.date: LogRecord(
                 count=row.count,
                 material_id=row.material_id,
                 material_title=row.material_title,
-                average_count=round(average_materials_read_pages[row.material_id])
             )
             async for row in await ses.stream(stmt)
         }

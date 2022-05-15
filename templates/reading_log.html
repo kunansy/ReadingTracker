@@ -14,7 +14,7 @@
 {% if log %}
     {% for date, info in log | dictsort(reverse=True) %}
         {% set count = info.count %}
-        {% if count >= info.average_count %}
+        {% if count >= average_materials_read_pages[info.material_id] %}
             <div class="record success">
         {% else %}
             <div class="record error">

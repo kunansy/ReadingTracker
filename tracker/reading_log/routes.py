@@ -19,10 +19,12 @@ templates = Jinja2Templates(directory="templates")
 @router.get('/')
 async def get_reading_log(request: Request):
     reading_log = await db.get_log_records()
+    average_materials_read_pages = await db.get_average_materials_read_pages()
 
     context = {
         'request': request,
         'log': reading_log,
+        'average_materials_read_pages': average_materials_read_pages,
         'DATE_FORMAT': settings.DATE_FORMAT,
     }
     return templates.TemplateResponse("reading_log.html", context)
