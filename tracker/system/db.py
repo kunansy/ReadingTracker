@@ -85,7 +85,7 @@ async def create_reading_graphic(*,
             ymax=material.pages,
             color='black',
             linestyles='solid',
-            label=f"{str(remains)} pages remains"
+            label=f"{remains} pages remains"
         )
 
     ax.set(ylim=(0, material_pages + material_pages * .1))
