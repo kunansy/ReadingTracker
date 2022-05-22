@@ -154,6 +154,16 @@ span.font-code {
     color: #3c763d;
 }
 
+div.arrow-div {
+    display: flex;
+    margin: auto;
+    position: sticky;
+    background-color: gray;
+    bottom: 1rem;
+    align-self: flex-end;
+    padding: .5vh .5vw;
+    border-radius: 3px;
+}
 div.arrow-up {
     position: sticky;
     right: 1vw;

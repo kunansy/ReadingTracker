@@ -1,0 +1,11 @@
+{%- macro arrows() -%}
+    {{ caller() }}
+    <div class="arrow-div">
+        <div class="arrow-down hover">
+            <a class="arrow-down" href="#footer">&#x2193;</a>
+        </div>
+        <div class="arrow-up hover">
+            <a class="arrow-up" href="#head"> &#x2191; </a>
+        </div>
+    </div>
+{%- endmacro -%}
