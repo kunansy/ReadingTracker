@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 
 from fastapi import APIRouter, Request, Depends
@@ -18,13 +19,19 @@ templates = Jinja2Templates(directory="templates")
 
 @router.get('/')
 async def get_reading_log(request: Request):
-    reading_log = await db.get_log_records()
-    average_materials_read_pages = await db.get_average_materials_read_pages()
+    get_reading_logs = asyncio.create_task(db.get_log_records())
+    get_average_materials_read_pages = asyncio.create_task(
+        db.get_average_materials_read_pages())
+
+    await asyncio.gather(
+        get_reading_logs,
+        get_average_materials_read_pages
+    )
 
     context = {
         'request': request,
-        'log': reading_log,
-        'average_materials_read_pages': average_materials_read_pages,
+        'log': get_reading_logs.result(),
+        'average_materials_read_pages': get_average_materials_read_pages.result(),
         'DATE_FORMAT': settings.DATE_FORMAT,
     }
     return templates.TemplateResponse("reading_log.html", context)
@@ -32,14 +39,19 @@ async def get_reading_log(request: Request):
 
 @router.get('/add-view')
 async def add_log_record_view(request: Request):
-    titles = await db.get_reading_material_titles()
-    reading_material_id = await db.get_material_reading_now()
+    get_titles = asyncio.create_task(db.get_reading_material_titles())
+    get_reading_material_id = asyncio.create_task(db.get_material_reading_now())
     today = datetime.datetime.utcnow()
+
+    await asyncio.gather(
+        get_titles,
+        get_reading_material_id
+    )
 
     context = {
         'request': request,
-        'material_id': reading_material_id,
-        'titles': titles,
+        'material_id': get_reading_material_id.result(),
+        'titles': get_titles.result(),
         'date': today
     }
     return templates.TemplateResponse("add_log_record.html", context)
