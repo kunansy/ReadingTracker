@@ -18,3 +18,4 @@ RUN poetry config virtualenvs.create false \
 COPY /templates /app/templates
 COPY /static /app/static
 COPY /tracker /app/tracker
+COPY VERSION /app/VERSION
