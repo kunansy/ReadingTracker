@@ -1,7 +1,10 @@
 import os
+from pathlib import Path
 
 from environs import Env
 
+
+_VERSION_FILE = Path('VERSION')
 
 env = Env()
 env.read_env()
@@ -12,10 +15,13 @@ DATETIME_FORMAT = f"{DATE_FORMAT} %H:%M:%S"
 DSN_TEMPLATE = "postgresql+asyncpg://{username}:{password}" \
                "@{host}:{port}/{db_name}"
 
+API_VERSION = '0.1.0'
+if _VERSION_FILE.exists():
+    API_VERSION = _VERSION_FILE.read_text().strip()
+
 with env.prefixed("API_"):
     API_PORT = env.int("PORT")
     API_DEBUG = env.bool("DEBUG", False)
-    API_VERSION = env("VERSION")
 
 with env.prefixed("DB_"):
     DB_HOST = env("HOST")
