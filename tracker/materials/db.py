@@ -1,5 +1,6 @@
+import asyncio
 import datetime
-from typing import NamedTuple, AsyncGenerator
+from typing import NamedTuple
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -25,6 +26,11 @@ class Status(NamedTuple):
     material_id: UUID
     started_at: datetime.datetime
     completed_at: datetime.datetime | None
+
+
+class MaterialStatus(NamedTuple):
+    material: Material
+    status: Status
 
 
 class MaterialEstimate(NamedTuple):
@@ -94,32 +100,82 @@ async def _get_free_materials() -> list[Material]:
         ]
 
 
-async def get_reading_materials() -> AsyncGenerator[UUID, None]:
-    logger.debug("Getting reading materials")
-
-    stmt = sa.select(models.Materials.c.material_id) \
+def _get_reading_materials_stmt() -> sa.Select:
+    return sa.select([models.Materials,
+                      models.Statuses]) \
         .join(models.Statuses,
               models.Materials.c.material_id == models.Statuses.c.material_id) \
         .where(models.Statuses.c.completed_at == None) \
         .order_by(models.Statuses.c.started_at)
 
-    async with database.session() as ses:
-        for row in (await ses.execute(stmt)).all():
-            yield row[0]
 
-
-async def _get_completed_materials() -> AsyncGenerator[UUID, None]:
-    logger.debug("Getting completed materials")
-
-    stmt = sa.select(models.Materials.c.material_id) \
+def _get_completed_materials_stmt() -> sa.Select:
+    return sa.select([models.Materials,
+                      models.Statuses]) \
         .join(models.Statuses,
               models.Materials.c.material_id == models.Statuses.c.material_id) \
         .where(models.Statuses.c.completed_at != None) \
         .order_by(models.Statuses.c.completed_at)
 
+
+async def _parse_material_status_response(*,
+                                          stmt: sa.Select) -> list[MaterialStatus]:
     async with database.session() as ses:
-        for row in (await ses.execute(stmt)).all():
-            yield row[0]
+        return [
+            MaterialStatus(
+                material=Material(
+                    material_id=row.material_id,
+                    title=row.title,
+                    authors=row.authors,
+                    pages=row.pages,
+                    tags=row.tags,
+                    added_at=row.added_at,
+                    is_outlined=row.is_outlined
+                ),
+                status=Status(
+                    status_id=row.status_id,
+                    material_id=row.material_id,
+                    started_at=row.started_at,
+                    completed_at=row.completed_at
+                )
+            )
+            for row in (await ses.execute(stmt)).mappings().all()
+        ]
+
+
+async def get_reading_materials() -> list[MaterialStatus]:
+    logger.info("Getting reading materials")
+
+    reading_materials_stmt = _get_reading_materials_stmt()
+    reading_materials = await _parse_material_status_response(
+        stmt=reading_materials_stmt)
+
+    logger.info("%s reading materials found", len(reading_materials))
+
+    return reading_materials
+
+
+async def _get_completed_materials() -> list[MaterialStatus]:
+    logger.info("Getting completed materials")
+
+    completed_materials_stmt = _get_completed_materials_stmt()
+    completed_materials = await _parse_material_status_response(
+        stmt=completed_materials_stmt)
+
+    logger.info("% completed materials found", len(completed_materials))
+
+    return completed_materials
+
+
+async def get_last_material_started() -> UUID | None:
+    stmt = _get_reading_materials_stmt()
+    stmt = stmt.order_by(models.Statuses.c.started_at.desc())\
+        .limit(1)
+
+    async with database.session() as ses:
+        if material := (await ses.execute(stmt)).mappings().first():
+            return material.material_id
+        return None
 
 
 async def _get_status(*,
@@ -157,16 +213,18 @@ def _get_total_reading_duration(*,
 
 
 async def _get_material_statistics(*,
-                                   material_id: UUID) -> MaterialStatistics:
+                                   material_status: MaterialStatus,
+                                   notes_count: int = None,
+                                   avg_total: int = None) -> MaterialStatistics:
     """ Calculate statistics for reading or completed material """
+    material, status = material_status
+    material_id = material.material_id
+
     logger.debug("Calculating statistics for material_id=%s", material_id)
 
-    if (material := await get_material(material_id=material_id)) is None:
-        raise ValueError(f"{material_id=} not found")
-    if (status := await _get_status(material_id=material_id)) is None:
-        raise ValueError(f"Status for {material_id=} not found")
+    notes_count_: int = notes_count or await notes_db.get_notes_count(material_id=material_id)
+    avg_total_: int = avg_total or await statistics.get_avg_read_pages()
 
-    avg_total = await statistics.get_avg_read_pages()
     if was_reading := await statistics.contains(material_id=material_id):
         log_st = await statistics.get_m_log_statistics(material_id=material_id)
         avg, total = log_st.average, log_st.total
@@ -183,13 +241,12 @@ async def _get_material_statistics(*,
 
         remaining_days = round(remaining_pages / avg)
         if not was_reading:
-            remaining_days = round(remaining_pages / avg_total)
+            remaining_days = round(remaining_pages / avg_total_)
 
         would_be_completed = database.today() + datetime.timedelta(days=remaining_days)
     else:
         would_be_completed = remaining_days = remaining_pages = None # type: ignore
 
-    notes_count = await notes_db.get_notes_count(material_id=material_id)
     total_reading_duration = _get_total_reading_duration(
         started_at=status.started_at, completed_at=status.completed_at)
 
@@ -204,7 +261,7 @@ async def _get_material_statistics(*,
         min_record=min_record,
         max_record=max_record,
         average=avg,
-        notes_count=notes_count,
+        notes_count=notes_count_,
         remaining_pages=remaining_pages,
         remaining_days=remaining_days,
         would_be_completed=would_be_completed,
@@ -212,16 +269,52 @@ async def _get_material_statistics(*,
 
 
 async def processed_statistics() -> list[MaterialStatistics]:
+    completed_materials_task = asyncio.create_task(_get_completed_materials())
+    avg_read_pages_task = asyncio.create_task(statistics.get_avg_read_pages())
+    all_notes_count_task = asyncio.create_task(notes_db.get_all_notes_count())
+
+    await asyncio.gather(
+        completed_materials_task,
+        avg_read_pages_task,
+        all_notes_count_task
+    )
+
+    all_notes_count = all_notes_count_task.result()
+    avg_read_pages = avg_read_pages_task.result()
+    completed_materials = completed_materials_task.result()
+
     return [
-        await _get_material_statistics(material_id=material_id)
-        async for material_id in _get_completed_materials()
+        await _get_material_statistics(
+            material_status=material_status,
+            notes_count=all_notes_count.get(material_status.material.material_id, 0),
+            avg_total=avg_read_pages
+        )
+        for material_status in completed_materials
     ]
 
 
 async def reading_statistics() -> list[MaterialStatistics]:
+    reading_materials_task = asyncio.create_task(get_reading_materials())
+    avg_read_pages_task = asyncio.create_task(statistics.get_avg_read_pages())
+    all_notes_count_task = asyncio.create_task(notes_db.get_all_notes_count())
+
+    await asyncio.gather(
+        reading_materials_task,
+        all_notes_count_task,
+        avg_read_pages_task
+    )
+
+    all_notes_count = all_notes_count_task.result()
+    avg_read_pages = avg_read_pages_task.result()
+    reading_materials = reading_materials_task.result()
+
     return [
-        await _get_material_statistics(material_id=material_id)
-        async for material_id in get_reading_materials()
+        await _get_material_statistics(
+            material_status=material_status,
+            notes_count=all_notes_count.get(material_status.material.material_id, 0),
+            avg_total=avg_read_pages
+        )
+        for material_status in reading_materials
     ]
 
 

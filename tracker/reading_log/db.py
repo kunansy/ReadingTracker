@@ -151,15 +151,7 @@ async def get_material_reading_now() -> UUID | None:
 
     # means the new material started
     #  and there's no log records for it
-    reading_materials = [
-        material_id
-        # materials must be sorted by date
-        async for material_id in materials_db.get_reading_materials()
-    ]
-
-    if reading_material := _safe_list_get(reading_materials, -1, None):
-        return reading_material.material_id
-    return None
+    return await materials_db.get_last_material_started()
 
 
 async def set_log(*,
