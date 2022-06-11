@@ -283,6 +283,24 @@ async def complete_material(*,
                  material_id, completion_date)
 
 
+async def outline_material(*,
+                           material_id: UUID) -> None:
+    logger.info("Outlining material=%s", material_id)
+
+    values = {
+        "is_outlined": True
+    }
+
+    stmt = models.Materials\
+        .update().values(values)\
+        .where(models.Materials.c.material_id == str(material_id))
+
+    async with database.session() as ses:
+        await ses.execute(stmt)
+
+    logger.info("Material material_id=%s outlined", material_id)
+
+
 async def _end_of_reading() -> datetime.date:
     remaining_days = sum(
         stat.remaining_days or 0
