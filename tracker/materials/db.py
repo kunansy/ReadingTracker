@@ -421,6 +421,23 @@ async def outline_material(*,
     logger.info("Material='%s' outlined", material_id)
 
 
+async def repeat_material(*,
+                          material_id: UUID) -> None:
+    logger.debug("Inserting material_id='%s' repeat", material_id)
+
+    values = {
+        "material_id": str(material_id),
+        "repeated_at": database.utcnow()
+    }
+    stmt = models.Repeats\
+        .insert().values(values)
+
+    async with database.session() as ses:
+        await ses.execute(stmt)
+
+    logger.debug("Material_id='%s' repeated", material_id)
+
+
 async def _end_of_reading() -> datetime.date:
     remaining_days = sum(
         stat.remaining_days or 0
