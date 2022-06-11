@@ -8,11 +8,16 @@
 {% if statistics %}
     {% for ms in statistics | sort(attribute='completed') %}
     {% set material = ms.material %}
+    {% set is_outlined = 'No' %}
+    {%- if material.is_outlined -%}
+        {% set is_outlined = 'Yes' %}
+    {%- endif -%}
     <div class="material hover" onclick=openNotes("{{ material.material_id }}") title="Click to see notes">
         <p> Title: «{{ material.title }}» </p>
         <p> Author: {{ material.authors }} </p>
         <p> Pages: {{ material.pages }} </p>
         <p> Tags:  {{ material.tags }} </p>
+        <p> Is outlined: {{ is_outlined }} </p>
         <hr title="Analytics">
         <p> Started at: {{ ms.started_at.strftime(DATE_FORMAT) }} </p>
         <p> Completed at: {{ ms.completed_at.strftime(DATE_FORMAT) }} </p>
