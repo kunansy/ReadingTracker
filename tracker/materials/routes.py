@@ -66,6 +66,15 @@ async def complete_material(material_id: UUID):
     return RedirectResponse(redirect_url, status_code=302)
 
 
+@router.post('/outline/{material_id}')
+async def outline_material(material_id: UUID):
+    """ Mark the material as outlined """
+    await db.outline_material(material_id=material_id)
+
+    redirect_url = router.url_path_for(get_reading_materials.__name__)
+    return RedirectResponse(redirect_url, status_code=302)
+
+
 @router.get('/reading', response_class=HTMLResponse)
 async def get_reading_materials(request: Request):
     statistics = await db.reading_statistics()
