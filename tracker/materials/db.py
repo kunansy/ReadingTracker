@@ -228,16 +228,13 @@ def _get_total_reading_duration(*,
 
 async def _get_material_statistics(*,
                                    material_status: MaterialStatus,
-                                   notes_count: int = None,
-                                   avg_total: int = None) -> MaterialStatistics:
+                                   notes_count: int,
+                                   avg_total: int) -> MaterialStatistics:
     """ Calculate statistics for reading or completed material """
     material, status = material_status
     material_id = material.material_id
 
     logger.debug("Calculating statistics for material_id=%s", material_id)
-
-    notes_count_: int = notes_count or await notes_db.get_notes_count(material_id=material_id)
-    avg_total_: int = avg_total or await statistics.get_avg_read_pages()
 
     if was_reading := await statistics.contains(material_id=material_id):
         log_st = await statistics.get_m_log_statistics(material_id=material_id)
@@ -255,7 +252,7 @@ async def _get_material_statistics(*,
 
         remaining_days = round(remaining_pages / avg)
         if not was_reading:
-            remaining_days = round(remaining_pages / avg_total_)
+            remaining_days = round(remaining_pages / avg_total)
 
         would_be_completed = database.today() + datetime.timedelta(days=remaining_days)
     else:
@@ -275,7 +272,7 @@ async def _get_material_statistics(*,
         min_record=min_record,
         max_record=max_record,
         average=avg,
-        notes_count=notes_count_,
+        notes_count=notes_count,
         remaining_pages=remaining_pages,
         remaining_days=remaining_days,
         would_be_completed=would_be_completed,

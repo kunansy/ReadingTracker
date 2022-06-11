@@ -97,16 +97,6 @@ async def get_note(*,
     return None
 
 
-async def get_notes_count(*,
-                          material_id: UUID) -> int:
-    stmt = sa.select(sa.func.count(1)) \
-        .select_from(models.Notes) \
-        .where(models.Notes.c.material_id == str(material_id))
-
-    async with database.session() as ses:
-        return await ses.scalar(stmt)
-
-
 async def get_all_notes_count() -> dict[UUID, int]:
     logger.debug("Getting all notes count")
 
