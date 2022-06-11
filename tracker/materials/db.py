@@ -73,6 +73,7 @@ class RepeatingQueue(NamedTuple):
     material_id: UUID
     title: str
     pages: int
+    is_outlined: bool
     notes_count: int
     repeats_count: int
     completed_at: datetime.datetime | None
@@ -502,6 +503,7 @@ async def get_repeating_queue() -> list[RepeatingQueue]:
             material_id=material_status.material.material_id,
             title=material_status.material.title,
             pages=material_status.material.pages,
+            is_outlined=material_status.material.is_outlined,
             completed_at=material_status.status.completed_at,
             notes_count=notes_count.get(material_status.material.material_id, 0),
             repeats_count=repeat_analytics[material_status.material.material_id].repeats_count,
