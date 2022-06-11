@@ -254,7 +254,7 @@ async def _get_material_statistics(*,
         if not was_reading:
             remaining_days = round(remaining_pages / avg_total)
 
-        would_be_completed = database.today() + datetime.timedelta(days=remaining_days)
+        would_be_completed = database.utcnow() + datetime.timedelta(days=remaining_days)
     else:
         would_be_completed = remaining_days = remaining_pages = None # type: ignore
 
@@ -357,10 +357,10 @@ async def add_material(*,
 async def start_material(*,
                          material_id: UUID,
                          start_date: datetime.date | None = None) -> None:
-    start_date = start_date or database.today().date()
+    start_date = start_date or database.utcnow().date()
     logger.debug("Starting material_id=%s", material_id)
 
-    if start_date > database.today().date():
+    if start_date > database.utcnow().date():
         raise ValueError("Start date must be less than today")
 
     values = {
@@ -380,7 +380,7 @@ async def complete_material(*,
                             material_id: UUID,
                             completion_date: datetime.date | None = None) -> None:
     logger.debug("Completing material_id=%s", material_id)
-    completion_date = completion_date or database.today().date()
+    completion_date = completion_date or database.utcnow().date()
 
     if (status := await _get_status(material_id=material_id)) is None:
         raise ValueError("Material is not started")

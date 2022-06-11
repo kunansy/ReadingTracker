@@ -96,10 +96,6 @@ async def transaction(**kwargs) -> AsyncGenerator[AsyncSession, None]:
             yield ses
 
 
-def today() -> datetime.datetime:
-    return datetime.datetime.utcnow()
-
-
 async def is_alive() -> bool:
     logger.debug("Checking if the database is alive")
 

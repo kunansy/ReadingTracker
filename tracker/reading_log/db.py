@@ -115,7 +115,7 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
     step = datetime.timedelta(days=1)
     iter_over_dates = min(log_records.keys())
 
-    while iter_over_dates <= database.today().date():
+    while iter_over_dates <= database.utcnow().date():
         last_material_id = _safe_list_get(materials, -1, None)
 
         if ((completion_date := completion_dates.get(last_material_id))
