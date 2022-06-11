@@ -53,6 +53,18 @@ class MaterialStatistics(NamedTuple):
     would_be_completed: datetime.date | None = None
 
 
+class RepeatingQueue(NamedTuple):
+    material_id: UUID
+    title: str
+    pages: int
+    notes_count: int
+    repeats_count: int
+    completed_at: datetime.date
+    last_repeated_at: datetime.date
+    # how many days ago the material was last repeated
+    last_repeat: int
+
+
 async def get_material(*,
                        material_id: UUID) -> Material | None:
     stmt = sa.select(models.Materials)\
@@ -334,3 +346,7 @@ async def estimate() -> list[MaterialEstimate]:
         last_date = expected_end + step
 
     return forecasts
+
+
+async def get_repeating_queue() -> list[RepeatingQueue]:
+    pass
