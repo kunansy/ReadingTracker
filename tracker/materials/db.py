@@ -32,6 +32,10 @@ class MaterialStatus(NamedTuple):
     material: Material
     status: Status
 
+    @property
+    def material_id(self) -> UUID:
+        return self.material.material_id
+
 
 class MaterialEstimate(NamedTuple):
     material: Material
@@ -299,7 +303,7 @@ async def completed_statistics() -> list[MaterialStatistics]:
     return [
         await _get_material_statistics(
             material_status=material_status,
-            notes_count=all_notes_count.get(material_status.material.material_id, 0),
+            notes_count=all_notes_count.get(material_status.material_id, 0),
             avg_total=avg_read_pages
         )
         for material_status in completed_materials
@@ -326,7 +330,7 @@ async def reading_statistics() -> list[MaterialStatistics]:
     return [
         await _get_material_statistics(
             material_status=material_status,
-            notes_count=all_notes_count.get(material_status.material.material_id, 0),
+            notes_count=all_notes_count.get(material_status.material_id, 0),
             avg_total=avg_read_pages
         )
         for material_status in reading_materials
@@ -525,19 +529,19 @@ async def get_repeating_queue() -> list[RepeatingQueue]:
 
     queue = [
         RepeatingQueue(
-            material_id=material_status.material.material_id,
+            material_id=material_status.material_id,
             title=material_status.material.title,
             pages=material_status.material.pages,
             is_outlined=material_status.material.is_outlined,
             completed_at=material_status.status.completed_at,
-            notes_count=notes_count.get(material_status.material.material_id, 0),
-            repeats_count=repeat_analytics[material_status.material.material_id].repeats_count,
-            last_repeated_at=repeat_analytics[material_status.material.material_id].last_repeated_at,
-            priority_days=repeat_analytics[material_status.material.material_id].priority_days,
-            priority_months=repeat_analytics[material_status.material.material_id].priority_months
+            notes_count=notes_count.get(material_status.material_id, 0),
+            repeats_count=repeat_analytics[material_status.material_id].repeats_count,
+            last_repeated_at=repeat_analytics[material_status.material_id].last_repeated_at,
+            priority_days=repeat_analytics[material_status.material_id].priority_days,
+            priority_months=repeat_analytics[material_status.material_id].priority_months
         )
         for material_status in completed_materials
-        if repeat_analytics[material_status.material.material_id].priority_months > 0
+        if repeat_analytics[material_status.material_id].priority_months > 0
     ]
     logger.debug("Repeating queue got, %s materials found", len(queue))
 
