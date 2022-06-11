@@ -285,7 +285,7 @@ async def complete_material(*,
 
 async def outline_material(*,
                            material_id: UUID) -> None:
-    logger.info("Outlining material=%s", material_id)
+    logger.info("Outlining material='%s'", material_id)
 
     values = {
         "is_outlined": True
@@ -298,7 +298,7 @@ async def outline_material(*,
     async with database.session() as ses:
         await ses.execute(stmt)
 
-    logger.info("Material material_id=%s outlined", material_id)
+    logger.info("Material='%s' outlined", material_id)
 
 
 async def _end_of_reading() -> datetime.date:
