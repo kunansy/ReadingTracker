@@ -75,10 +75,10 @@ class RepeatingQueue(NamedTuple):
     pages: int
     notes_count: int
     repeats_count: int
-    completed_at: datetime.date
-    last_repeated_at: datetime.date
-    # how many days ago the material was last repeated
+    completed_at: datetime.datetime | None
+    last_repeated_at: datetime.datetime
     last_repeat: int
+    priority: int
 
 
 async def get_material(*,
