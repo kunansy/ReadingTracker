@@ -484,4 +484,30 @@ async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
 
 
 async def get_repeating_queue() -> list[RepeatingQueue]:
-    pass
+    completed_materials_task = asyncio.create_task(_get_completed_materials())
+    notes_count_task = asyncio.create_task(notes_db.get_all_notes_count())
+    repeat_analytics_task = asyncio.create_task(get_repeats_analytics())
+
+    await asyncio.gather(
+        completed_materials_task,
+        notes_count_task,
+        repeat_analytics_task
+    )
+    completed_materials = completed_materials_task.result()
+    notes_count = notes_count_task.result()
+    repeat_analytics = repeat_analytics_task.result()
+
+    return [
+        RepeatingQueue(
+            material_id=material_status.material.material_id,
+            title=material_status.material.title,
+            pages=material_status.material.pages,
+            completed_at=material_status.status.completed_at,
+            notes_count=notes_count.get(material_status.material.material_id, 0),
+            repeats_count=repeat_analytics[material_status.material.material_id].repeats_count,
+            last_repeated_at=repeat_analytics[material_status.material.material_id].last_repeated_at,
+            priority=repeat_analytics[material_status.material.material_id].priority,
+            last_repeat=repeat_analytics[material_status.material.material_id].last_repeat
+        )
+        for material_status in completed_materials
+    ]
