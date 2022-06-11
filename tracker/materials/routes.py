@@ -97,3 +97,15 @@ async def get_completed_materials(request: Request):
         'DATE_FORMAT': settings.DATE_FORMAT
     }
     return templates.TemplateResponse("completed.html", context)
+
+
+@router.get('/repeat', response_class=HTMLResponse)
+async def get_completed_materials(request: Request):
+    materials_queue = await db.get_repeating_queue()
+
+    context = {
+        'request': request,
+        'materials_queue': materials_queue,
+        'DATE_FORMAT': settings.DATE_FORMAT
+    }
+    return templates.TemplateResponse("repeat.html", context)
