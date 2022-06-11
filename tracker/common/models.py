@@ -2,7 +2,7 @@ import datetime
 import uuid
 
 import sqlalchemy
-from sqlalchemy import Date, DateTime, Integer, MetaData, Table, Unicode
+from sqlalchemy import Date, DateTime, Integer, MetaData, Table, Unicode, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 
 
@@ -47,7 +47,8 @@ Materials = Table(
     Column('authors', Unicode(256)),
     Column('pages', Integer),
     Column('tags', Unicode(256), nullable=True),
-    Column('added_at', DateTime, default=_utc_now)
+    Column('added_at', DateTime, default=_utc_now),
+    Column('is_outlined', Boolean, default=False)
 )
 
 ReadingLog = Table(
