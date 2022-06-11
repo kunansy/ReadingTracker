@@ -523,6 +523,7 @@ async def get_repeating_queue() -> list[RepeatingQueue]:
             priority_months=repeat_analytics[material_status.material.material_id].priority_months
         )
         for material_status in completed_materials
+        if repeat_analytics[material_status.material.material_id].priority_months > 0
     ]
     logger.debug("Repeating queue got, %s materials found", len(queue))
 
