@@ -26,6 +26,12 @@
             <p> Max: {{ ms.max_record.count }} pages, {{ ms.max_record.date.strftime(DATE_FORMAT) }} </p>
             <p> Min: {{ ms.min_record.count }} pages, {{ ms.min_record.date.strftime(DATE_FORMAT) }} </p>
         {%- endif -%}
+
+        {%- if not material.is_outlined -%}
+            <form class="outline" action="/materials/outline/{{ material.material_id }}" METHOD="POST" title="Mark the material id={{ material.material_id }} as outlined">
+                <button type="submit" class="submit-button"> Outline </button>
+            </form>
+        {%- endif  -%}
     </div>
     {% endfor %}
 
