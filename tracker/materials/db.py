@@ -181,6 +181,7 @@ async def _get_completed_materials() -> list[MaterialStatus]:
 
 
 async def get_last_material_started() -> UUID | None:
+    # TODO: test it
     logger.info("Getting the last material started")
 
     stmt = _get_reading_materials_stmt()
@@ -479,6 +480,7 @@ async def estimate() -> list[MaterialEstimate]:
 
 def _calculate_priority_months(field: datetime.timedelta | None) -> int:
     if field:
+        # it's expected to repeat materials every month
         return round((field.days - 29) / 30)
     return 0
 
