@@ -173,7 +173,7 @@ async def _get_completed_materials() -> list[MaterialStatus]:
     completed_materials = await _parse_material_status_response(
         stmt=completed_materials_stmt)
 
-    logger.info("% completed materials found", len(completed_materials))
+    logger.info("%s completed materials found", len(completed_materials))
 
     return completed_materials
 
@@ -485,6 +485,8 @@ async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
 
 
 async def get_repeating_queue() -> list[RepeatingQueue]:
+    logger.debug("Getting repeating queue")
+
     completed_materials_task = asyncio.create_task(_get_completed_materials())
     notes_count_task = asyncio.create_task(notes_db.get_all_notes_count())
     repeat_analytics_task = asyncio.create_task(get_repeats_analytics())
@@ -498,7 +500,7 @@ async def get_repeating_queue() -> list[RepeatingQueue]:
     notes_count = notes_count_task.result()
     repeat_analytics = repeat_analytics_task.result()
 
-    return [
+    queue = [
         RepeatingQueue(
             material_id=material_status.material.material_id,
             title=material_status.material.title,
@@ -513,3 +515,6 @@ async def get_repeating_queue() -> list[RepeatingQueue]:
         )
         for material_status in completed_materials
     ]
+    logger.debug("Repeating queue got, %s materials found", len(queue))
+
+    return queue
