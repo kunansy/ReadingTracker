@@ -1,4 +1,5 @@
 import datetime
+import re
 from pathlib import Path
 from typing import NamedTuple
 
@@ -16,6 +17,8 @@ from tracker.common.log import logger
 JSON_FIELD_TYPES = str | int
 DATE_TYPES = datetime.date | datetime.datetime | str
 DUMP_TYPE = dict[str, list[dict[str, JSON_FIELD_TYPES]]]
+
+UID_REGEX = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
 
 
 class TableSnapshot(NamedTuple):
@@ -109,8 +112,19 @@ async def recreate_db(conn: AsyncSession) -> None:
     await _create_tables(conn)
 
 
+def _is_uid(value: str) -> bool:
+    return UID_REGEX.match(value) is not None
+
+
+def _contains_letter(value: str) -> bool:
+    return any(
+        symbol.isalpha()
+        for symbol in value
+    )
+
+
 def _convert_str_to_date(value: JSON_FIELD_TYPES) -> JSON_FIELD_TYPES | DATE_TYPES:
-    if not isinstance(value, str):
+    if not isinstance(value, str) or _is_uid(value) or _contains_letter(value):
         return value
 
     try:
