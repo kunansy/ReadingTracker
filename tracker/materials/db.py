@@ -143,7 +143,7 @@ async def _parse_material_status_response(*,
         ]
 
 
-async def get_reading_materials() -> list[MaterialStatus]:
+async def _get_reading_materials() -> list[MaterialStatus]:
     logger.info("Getting reading materials")
 
     reading_materials_stmt = _get_reading_materials_stmt()
@@ -294,7 +294,7 @@ async def processed_statistics() -> list[MaterialStatistics]:
 
 
 async def reading_statistics() -> list[MaterialStatistics]:
-    reading_materials_task = asyncio.create_task(get_reading_materials())
+    reading_materials_task = asyncio.create_task(_get_reading_materials())
     avg_read_pages_task = asyncio.create_task(statistics.get_avg_read_pages())
     all_notes_count_task = asyncio.create_task(notes_db.get_all_notes_count())
 

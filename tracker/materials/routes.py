@@ -100,7 +100,7 @@ async def get_completed_materials(request: Request):
 
 
 @router.get('/repeat', response_class=HTMLResponse)
-async def get_completed_materials(request: Request):
+async def get_repeating_queue(request: Request):
     materials_queue = await db.get_repeating_queue()
 
     context = {
