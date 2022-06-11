@@ -95,3 +95,12 @@ Cards = Table(
     Column('answer', Unicode, nullable=True),
     Column('added_at', DateTime, default=_utc_now),
 )
+
+Repeats = Table(
+    'repeats',
+    metadata,
+
+    PrimaryKey('repeat_id'),
+    Column('material_id', ForeignKey('materials.material_id'), index=True, unique=True),
+    Column('repeated_at', DateTime, default=_utc_now)
+)
