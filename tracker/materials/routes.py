@@ -109,11 +109,11 @@ async def get_completed_materials(request: Request):
 
 @router.get('/repeat-view', response_class=HTMLResponse)
 async def get_repeating_queue(request: Request):
-    materials_queue = await db.get_repeating_queue()
+    repeating_queue = await db.get_repeating_queue()
 
     context = {
         'request': request,
-        'materials_queue': materials_queue,
+        'repeating_queue': repeating_queue,
         'DATE_FORMAT': settings.DATE_FORMAT
     }
     return templates.TemplateResponse("repeat.html", context)
