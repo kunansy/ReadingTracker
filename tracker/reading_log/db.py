@@ -24,6 +24,7 @@ def _safe_list_get(list_: list[Any],
         return default
 
 
+@database.cache
 async def get_average_materials_read_pages() -> dict[UUID, float]:
     logger.debug("Getting average reading read pages count of materials")
 
@@ -38,6 +39,7 @@ async def get_average_materials_read_pages() -> dict[UUID, float]:
         }
 
 
+@database.cache
 async def get_log_records() -> dict[datetime.date, LogRecord]:
     logger.debug("Getting all log records")
 
@@ -57,6 +59,7 @@ async def get_log_records() -> dict[datetime.date, LogRecord]:
         }
 
 
+@database.cache
 async def get_reading_material_titles() -> dict[UUID, str]:
     logger.debug("Getting material titles")
 
@@ -73,6 +76,7 @@ async def get_reading_material_titles() -> dict[UUID, str]:
         }
 
 
+@database.cache
 async def _get_completion_dates() -> dict[UUID, datetime.date]:
     logger.debug("Getting completion dates")
 
