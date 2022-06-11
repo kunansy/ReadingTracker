@@ -21,19 +21,19 @@ templates = Jinja2Templates(directory="templates")
 
 @router.get('/')
 async def get_notes(request: Request):
-    get_notes_ = asyncio.create_task(db.get_notes())
-    get_titles = asyncio.create_task(db.get_material_with_notes_titles())
+    get_notes_task = asyncio.create_task(db.get_notes())
+    get_titles_task = asyncio.create_task(db.get_material_with_notes_titles())
 
     await asyncio.gather(
-        get_notes_,
-        get_titles
+        get_notes_task,
+        get_titles_task
     )
-    chapters = db.get_distinct_chapters(get_notes_.result())
+    chapters = db.get_distinct_chapters(get_notes_task.result())
 
     context = {
         'request': request,
-        'notes': get_notes_.result(),
-        'titles': get_titles.result(),
+        'notes': get_notes_task.result(),
+        'titles': get_titles_task.result(),
         'chapters': chapters,
         'DATE_FORMAT': settings.DATE_FORMAT
     }
@@ -43,19 +43,19 @@ async def get_notes(request: Request):
 @router.get('/material')
 async def get_material_notes(request: Request,
                              material_id: UUID):
-    get_notes_ = asyncio.create_task(db.get_material_notes(material_id=material_id))
-    get_titles = asyncio.create_task(db.get_material_with_notes_titles())
+    get_notes_task = asyncio.create_task(db.get_material_notes(material_id=material_id))
+    get_titles_task = asyncio.create_task(db.get_material_with_notes_titles())
 
     await asyncio.gather(
-        get_notes_,
-        get_titles
+        get_notes_task,
+        get_titles_task
     )
-    chapters = db.get_distinct_chapters(get_notes_.result())
+    chapters = db.get_distinct_chapters(get_notes_task.result())
 
     context = {
         'request': request,
-        'notes': get_notes_.result(),
-        'titles': get_titles.result(),
+        'notes': get_notes_task.result(),
+        'titles': get_titles_task.result(),
         'chapters': chapters,
         'material_id': material_id,
         'DATE_FORMAT': settings.DATE_FORMAT
