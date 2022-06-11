@@ -28,6 +28,7 @@ def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[int]]:
     return chapters
 
 
+@database.cache
 async def get_material_titles() -> dict[UUID, str]:
     logger.debug("Getting material titles")
 
@@ -41,6 +42,7 @@ async def get_material_titles() -> dict[UUID, str]:
         }
 
 
+@database.cache
 async def get_material_with_notes_titles() -> dict[str, str]:
     logger.debug("Getting material with note titles")
 
