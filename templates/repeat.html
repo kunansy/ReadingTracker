@@ -1,0 +1,43 @@
+{% extends 'index.html' %}
+
+{% block style %}
+<link rel="stylesheet" href="{{ url_for('static', path='repeating_queue.css') }}">
+{% endblock style %}
+
+{% block main %}
+{% if repeating_queue %}
+    {% for repeat in repeating_queue | sort(attribute='priority_months', reverse=True) %}
+        {% set is_outlined = 'No' %}
+        {%- if repeat.is_outlined -%}
+            {% set is_outlined = 'Yes' %}
+        {%- endif -%}
+
+        {% set last_repeated_at = 'No' %}
+        {%- if repeat.last_repeated_at -%}
+            {% set last_repeated_at = repeat.last_repeated_at.strftime(DATE_FORMAT) %}
+        {%- endif -%}
+        <div class="repeat hover" onclick=openNotes("{{ repeat.material_id }}") title="Click to see notes">
+            <p> Title: «{{ repeat.title }}» </p>
+            <p> Pages: {{ repeat.pages }} </p>
+            <p> Is outlined: {{ is_outlined }} </p>
+            <hr title="Analytics">
+            <p> Completed at: {{ repeat.completed_at.strftime(DATE_FORMAT) }} </p>
+            <p> Notes count: {{ repeat.notes_count }} notes </p>
+            <p> Repeats count: {{ repeat.repeats_count }} repeats </p>
+            <p> Last repeated at: {{ last_repeated_at }} </p>
+            <p> Priority: {{ repeat.priority_months }} </p>
+
+            <form class="repeat" action="/materials/repeat/{{ repeat.material_id }}" METHOD="POST" title="Repeat the material id={{ repeat.material_id }}">
+                <button type="submit" class="submit-button"> Repeat </button>
+            </form>
+        </div>
+    {% endfor %}
+
+    {% from 'arrows.html' import arrows %}
+    {% call arrows() %}
+    {% endcall %}
+{%- else -%}
+    {% import 'not_found.html' as not_found %}
+    {% call not_found.not_found('repeating queue') %} {% endcall %}
+{% endif %}
+{% endblock main%}
