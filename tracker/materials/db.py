@@ -17,6 +17,7 @@ class Material(NamedTuple):
     pages: int
     tags: str | None
     added_at: datetime.datetime
+    is_outlined: bool
 
 
 class Status(NamedTuple):
