@@ -99,7 +99,7 @@ async def get_completed_materials(request: Request):
     return templates.TemplateResponse("completed.html", context)
 
 
-@router.get('/repeat', response_class=HTMLResponse)
+@router.get('/repeat-view', response_class=HTMLResponse)
 async def get_repeating_queue(request: Request):
     materials_queue = await db.get_repeating_queue()
 
