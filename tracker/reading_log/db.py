@@ -99,7 +99,7 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
     If the day is empty, material_id is supposed
     as the material_id of the last not empty day.
     """
-    logger.debug("Getting data from log")
+    logger.debug("Getting logging data")
 
     if not (log_records := await get_log_records()):
         return
