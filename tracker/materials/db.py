@@ -168,14 +168,19 @@ async def _get_completed_materials() -> list[MaterialStatus]:
 
 
 async def get_last_material_started() -> UUID | None:
+    logger.info("Getting the last material started")
+
     stmt = _get_reading_materials_stmt()
     stmt = stmt.order_by(models.Statuses.c.started_at.desc())\
         .limit(1)
 
     async with database.session() as ses:
         if material := (await ses.execute(stmt)).mappings().first():
+            logger.debug("The last material started='%s'", material.material_id)
             return material.material_id
-        return None
+
+    logger.debug("The last material started not found")
+    return None
 
 
 async def _get_status(*,
@@ -269,6 +274,8 @@ async def _get_material_statistics(*,
 
 
 async def completed_statistics() -> list[MaterialStatistics]:
+    logger.info("Calculating completed materials statistics")
+
     completed_materials_task = asyncio.create_task(_get_completed_materials())
     avg_read_pages_task = asyncio.create_task(statistics.get_avg_read_pages())
     all_notes_count_task = asyncio.create_task(notes_db.get_all_notes_count())
@@ -294,6 +301,8 @@ async def completed_statistics() -> list[MaterialStatistics]:
 
 
 async def reading_statistics() -> list[MaterialStatistics]:
+    logger.info("Calculating reading materials statistics")
+
     reading_materials_task = asyncio.create_task(_get_reading_materials())
     avg_read_pages_task = asyncio.create_task(statistics.get_avg_read_pages())
     all_notes_count_task = asyncio.create_task(notes_db.get_all_notes_count())
