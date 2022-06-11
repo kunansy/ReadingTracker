@@ -61,12 +61,10 @@ class MaterialStatistics(NamedTuple):
 
 class RepeatAnalytics(NamedTuple):
     repeats_count: int
-    last_repeated_at: datetime.datetime
-    # how many days ago the material was last repeated,
-    #  the clean priority
-    last_repeat: int
-    # priority to show in web, clean priority - 29
-    priority: int
+    last_repeated_at: datetime.datetime | None
+    # total days since last seen
+    priority_days: int
+    priority_months: int
 
 
 class RepeatingQueue(NamedTuple):
@@ -77,9 +75,9 @@ class RepeatingQueue(NamedTuple):
     notes_count: int
     repeats_count: int
     completed_at: datetime.datetime | None
-    last_repeated_at: datetime.datetime
-    last_repeat: int
-    priority: int
+    last_repeated_at: datetime.datetime | None
+    priority_days: int
+    priority_months: int
 
 
 async def get_material(*,
@@ -461,24 +459,35 @@ async def estimate() -> list[MaterialEstimate]:
     return forecasts
 
 
+def _calculate_priority_months(field: datetime.timedelta | None) -> int:
+    if field:
+        return round((field.days - 29) / 30)
+    return 0
+
+
+def _get_priority_days(field: datetime.timedelta | None) -> int:
+    return getattr(field, "days", 0)
+
+
 async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
     last_repeated_at = sa.func.max(models.Repeats.c.repeated_at).label("last_repeated_at")
     repetition_or_completion_date = sa.func.coalesce(last_repeated_at, sa.func.max(models.Statuses.c.completed_at))
-    stmt = sa.select([models.Repeats.c.material_id,
-                      sa.func.count(1).label("count"),
+    stmt = sa.select([models.Statuses.c.material_id,
+                      sa.func.count(models.Repeats.c.repeat_id).label("repeats_count"),
                       last_repeated_at,
-                      (sa.func.now() - repetition_or_completion_date).label('last_repeat')])\
-        .join(models.Statuses,
-              models.Statuses.c.material_id == models.Repeats.c.material_id)\
-        .group_by(models.Repeats.c.material_id)
+                      (sa.func.now() - repetition_or_completion_date).label('priority_days')])\
+        .join(models.Repeats,
+              models.Repeats.c.material_id == models.Statuses.c.material_id,
+              isouter=True)\
+        .group_by(models.Statuses.c.material_id)
 
     async with database.session() as ses:
         return {
             row.material_id: RepeatAnalytics(
-                repeats_count=row.count,
+                repeats_count=row.repeats_count,
                 last_repeated_at=row.last_repeated_at,
-                last_repeat=row.last_repeat,
-                priority=row.last_repeat - 29
+                priority_days=_get_priority_days(row.priority_days),
+                priority_months=_calculate_priority_months(row.priority_days)
             )
             for row in await ses.execute(stmt)
         }
@@ -510,8 +519,8 @@ async def get_repeating_queue() -> list[RepeatingQueue]:
             notes_count=notes_count.get(material_status.material.material_id, 0),
             repeats_count=repeat_analytics[material_status.material.material_id].repeats_count,
             last_repeated_at=repeat_analytics[material_status.material.material_id].last_repeated_at,
-            priority=repeat_analytics[material_status.material.material_id].priority,
-            last_repeat=repeat_analytics[material_status.material.material_id].last_repeat
+            priority_days=repeat_analytics[material_status.material.material_id].priority_days,
+            priority_months=repeat_analytics[material_status.material.material_id].priority_months
         )
         for material_status in completed_materials
     ]
