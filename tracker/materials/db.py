@@ -1,5 +1,6 @@
+import asyncio
 import datetime
-from typing import NamedTuple, AsyncGenerator
+from typing import NamedTuple
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -27,6 +28,15 @@ class Status(NamedTuple):
     completed_at: datetime.datetime | None
 
 
+class MaterialStatus(NamedTuple):
+    material: Material
+    status: Status
+
+    @property
+    def material_id(self) -> UUID:
+        return self.material.material_id
+
+
 class MaterialEstimate(NamedTuple):
     material: Material
     will_be_started: datetime.date
@@ -51,6 +61,27 @@ class MaterialStatistics(NamedTuple):
     # date when the material would be completed
     # according to average read pages count
     would_be_completed: datetime.date | None = None
+
+
+class RepeatAnalytics(NamedTuple):
+    repeats_count: int
+    last_repeated_at: datetime.datetime | None
+    # total days since last seen
+    priority_days: int
+    priority_months: int
+
+
+class RepeatingQueue(NamedTuple):
+    material_id: UUID
+    title: str
+    pages: int
+    is_outlined: bool
+    notes_count: int
+    repeats_count: int
+    completed_at: datetime.datetime | None
+    last_repeated_at: datetime.datetime | None
+    priority_days: int
+    priority_months: int
 
 
 async def get_material(*,
@@ -82,32 +113,88 @@ async def _get_free_materials() -> list[Material]:
         ]
 
 
-async def get_reading_materials() -> AsyncGenerator[UUID, None]:
-    logger.debug("Getting reading materials")
-
-    stmt = sa.select(models.Materials.c.material_id) \
+def _get_reading_materials_stmt() -> sa.Select:
+    return sa.select([models.Materials,
+                      models.Statuses]) \
         .join(models.Statuses,
               models.Materials.c.material_id == models.Statuses.c.material_id) \
         .where(models.Statuses.c.completed_at == None) \
         .order_by(models.Statuses.c.started_at)
 
-    async with database.session() as ses:
-        for row in (await ses.execute(stmt)).all():
-            yield row[0]
 
-
-async def _get_completed_materials() -> AsyncGenerator[UUID, None]:
-    logger.debug("Getting completed materials")
-
-    stmt = sa.select(models.Materials.c.material_id) \
+def _get_completed_materials_stmt() -> sa.Select:
+    return sa.select([models.Materials,
+                      models.Statuses]) \
         .join(models.Statuses,
               models.Materials.c.material_id == models.Statuses.c.material_id) \
         .where(models.Statuses.c.completed_at != None) \
         .order_by(models.Statuses.c.completed_at)
 
+
+async def _parse_material_status_response(*,
+                                          stmt: sa.Select) -> list[MaterialStatus]:
     async with database.session() as ses:
-        for row in (await ses.execute(stmt)).all():
-            yield row[0]
+        return [
+            MaterialStatus(
+                material=Material(
+                    material_id=row.material_id,
+                    title=row.title,
+                    authors=row.authors,
+                    pages=row.pages,
+                    tags=row.tags,
+                    added_at=row.added_at,
+                    is_outlined=row.is_outlined
+                ),
+                status=Status(
+                    status_id=row.status_id,
+                    material_id=row.material_id,
+                    started_at=row.started_at,
+                    completed_at=row.completed_at
+                )
+            )
+            for row in (await ses.execute(stmt)).mappings().all()
+        ]
+
+
+async def _get_reading_materials() -> list[MaterialStatus]:
+    logger.info("Getting reading materials")
+
+    reading_materials_stmt = _get_reading_materials_stmt()
+    reading_materials = await _parse_material_status_response(
+        stmt=reading_materials_stmt)
+
+    logger.info("%s reading materials found", len(reading_materials))
+
+    return reading_materials
+
+
+async def _get_completed_materials() -> list[MaterialStatus]:
+    logger.info("Getting completed materials")
+
+    completed_materials_stmt = _get_completed_materials_stmt()
+    completed_materials = await _parse_material_status_response(
+        stmt=completed_materials_stmt)
+
+    logger.info("%s completed materials found", len(completed_materials))
+
+    return completed_materials
+
+
+async def get_last_material_started() -> UUID | None:
+    # TODO: test it
+    logger.info("Getting the last material started")
+
+    stmt = _get_reading_materials_stmt()
+    stmt = stmt.order_by(models.Statuses.c.started_at.desc())\
+        .limit(1)
+
+    async with database.session() as ses:
+        if material := (await ses.execute(stmt)).mappings().first():
+            logger.debug("The last material started='%s'", material.material_id)
+            return material.material_id
+
+    logger.debug("The last material started not found")
+    return None
 
 
 async def _get_status(*,
@@ -145,16 +232,15 @@ def _get_total_reading_duration(*,
 
 
 async def _get_material_statistics(*,
-                                   material_id: UUID) -> MaterialStatistics:
+                                   material_status: MaterialStatus,
+                                   notes_count: int,
+                                   avg_total: int) -> MaterialStatistics:
     """ Calculate statistics for reading or completed material """
+    material, status = material_status
+    material_id = material.material_id
+
     logger.debug("Calculating statistics for material_id=%s", material_id)
 
-    if (material := await get_material(material_id=material_id)) is None:
-        raise ValueError(f"{material_id=} not found")
-    if (status := await _get_status(material_id=material_id)) is None:
-        raise ValueError(f"Status for {material_id=} not found")
-
-    avg_total = await statistics.get_avg_read_pages()
     if was_reading := await statistics.contains(material_id=material_id):
         log_st = await statistics.get_m_log_statistics(material_id=material_id)
         avg, total = log_st.average, log_st.total
@@ -173,11 +259,10 @@ async def _get_material_statistics(*,
         if not was_reading:
             remaining_days = round(remaining_pages / avg_total)
 
-        would_be_completed = database.today() + datetime.timedelta(days=remaining_days)
+        would_be_completed = database.utcnow() + datetime.timedelta(days=remaining_days)
     else:
         would_be_completed = remaining_days = remaining_pages = None # type: ignore
 
-    notes_count = await notes_db.get_notes_count(material_id=material_id)
     total_reading_duration = _get_total_reading_duration(
         started_at=status.started_at, completed_at=status.completed_at)
 
@@ -199,17 +284,57 @@ async def _get_material_statistics(*,
     )
 
 
-async def processed_statistics() -> list[MaterialStatistics]:
+async def completed_statistics() -> list[MaterialStatistics]:
+    logger.info("Calculating completed materials statistics")
+
+    completed_materials_task = asyncio.create_task(_get_completed_materials())
+    avg_read_pages_task = asyncio.create_task(statistics.get_avg_read_pages())
+    all_notes_count_task = asyncio.create_task(notes_db.get_all_notes_count())
+
+    await asyncio.gather(
+        completed_materials_task,
+        avg_read_pages_task,
+        all_notes_count_task
+    )
+
+    all_notes_count = all_notes_count_task.result()
+    avg_read_pages = avg_read_pages_task.result()
+    completed_materials = completed_materials_task.result()
+
     return [
-        await _get_material_statistics(material_id=material_id)
-        async for material_id in _get_completed_materials()
+        await _get_material_statistics(
+            material_status=material_status,
+            notes_count=all_notes_count.get(material_status.material_id, 0),
+            avg_total=avg_read_pages
+        )
+        for material_status in completed_materials
     ]
 
 
 async def reading_statistics() -> list[MaterialStatistics]:
+    logger.info("Calculating reading materials statistics")
+
+    reading_materials_task = asyncio.create_task(_get_reading_materials())
+    avg_read_pages_task = asyncio.create_task(statistics.get_avg_read_pages())
+    all_notes_count_task = asyncio.create_task(notes_db.get_all_notes_count())
+
+    await asyncio.gather(
+        reading_materials_task,
+        all_notes_count_task,
+        avg_read_pages_task
+    )
+
+    all_notes_count = all_notes_count_task.result()
+    avg_read_pages = avg_read_pages_task.result()
+    reading_materials = reading_materials_task.result()
+
     return [
-        await _get_material_statistics(material_id=material_id)
-        async for material_id in get_reading_materials()
+        await _get_material_statistics(
+            material_status=material_status,
+            notes_count=all_notes_count.get(material_status.material_id, 0),
+            avg_total=avg_read_pages
+        )
+        for material_status in reading_materials
     ]
 
 
@@ -237,10 +362,10 @@ async def add_material(*,
 async def start_material(*,
                          material_id: UUID,
                          start_date: datetime.date | None = None) -> None:
-    start_date = start_date or database.today().date()
+    start_date = start_date or database.utcnow().date()
     logger.debug("Starting material_id=%s", material_id)
 
-    if start_date > database.today().date():
+    if start_date > database.utcnow().date():
         raise ValueError("Start date must be less than today")
 
     values = {
@@ -260,7 +385,7 @@ async def complete_material(*,
                             material_id: UUID,
                             completion_date: datetime.date | None = None) -> None:
     logger.debug("Completing material_id=%s", material_id)
-    completion_date = completion_date or database.today().date()
+    completion_date = completion_date or database.utcnow().date()
 
     if (status := await _get_status(material_id=material_id)) is None:
         raise ValueError("Material is not started")
@@ -301,6 +426,23 @@ async def outline_material(*,
     logger.info("Material='%s' outlined", material_id)
 
 
+async def repeat_material(*,
+                          material_id: UUID) -> None:
+    logger.debug("Inserting material_id='%s' repeat", material_id)
+
+    values = {
+        "material_id": str(material_id),
+        "repeated_at": database.utcnow()
+    }
+    stmt = models.Repeats\
+        .insert().values(values)
+
+    async with database.session() as ses:
+        await ses.execute(stmt)
+
+    logger.debug("Material_id='%s' repeated", material_id)
+
+
 async def _end_of_reading() -> datetime.date:
     remaining_days = sum(
         stat.remaining_days or 0
@@ -334,3 +476,75 @@ async def estimate() -> list[MaterialEstimate]:
         last_date = expected_end + step
 
     return forecasts
+
+
+def _calculate_priority_months(field: datetime.timedelta | None) -> int:
+    if field:
+        # it's expected to repeat materials every month
+        return round((field.days - 29) / 30)
+    return 0
+
+
+def _get_priority_days(field: datetime.timedelta | None) -> int:
+    return getattr(field, "days", 0)
+
+
+async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
+    last_repeated_at = sa.func.max(models.Repeats.c.repeated_at).label("last_repeated_at")
+    repetition_or_completion_date = sa.func.coalesce(last_repeated_at, sa.func.max(models.Statuses.c.completed_at))
+    stmt = sa.select([models.Statuses.c.material_id,
+                      sa.func.count(models.Repeats.c.repeat_id).label("repeats_count"),
+                      last_repeated_at,
+                      (sa.func.now() - repetition_or_completion_date).label('priority_days')])\
+        .join(models.Repeats,
+              models.Repeats.c.material_id == models.Statuses.c.material_id,
+              isouter=True)\
+        .group_by(models.Statuses.c.material_id)
+
+    async with database.session() as ses:
+        return {
+            row.material_id: RepeatAnalytics(
+                repeats_count=row.repeats_count,
+                last_repeated_at=row.last_repeated_at,
+                priority_days=_get_priority_days(row.priority_days),
+                priority_months=_calculate_priority_months(row.priority_days)
+            )
+            for row in await ses.execute(stmt)
+        }
+
+
+async def get_repeating_queue() -> list[RepeatingQueue]:
+    logger.debug("Getting repeating queue")
+
+    completed_materials_task = asyncio.create_task(_get_completed_materials())
+    notes_count_task = asyncio.create_task(notes_db.get_all_notes_count())
+    repeat_analytics_task = asyncio.create_task(get_repeats_analytics())
+
+    await asyncio.gather(
+        completed_materials_task,
+        notes_count_task,
+        repeat_analytics_task
+    )
+    completed_materials = completed_materials_task.result()
+    notes_count = notes_count_task.result()
+    repeat_analytics = repeat_analytics_task.result()
+
+    queue = [
+        RepeatingQueue(
+            material_id=material_status.material_id,
+            title=material_status.material.title,
+            pages=material_status.material.pages,
+            is_outlined=material_status.material.is_outlined,
+            completed_at=material_status.status.completed_at,
+            notes_count=notes_count.get(material_status.material_id, 0),
+            repeats_count=repeat_analytics[material_status.material_id].repeats_count,
+            last_repeated_at=repeat_analytics[material_status.material_id].last_repeated_at,
+            priority_days=repeat_analytics[material_status.material_id].priority_days,
+            priority_months=repeat_analytics[material_status.material_id].priority_months
+        )
+        for material_status in completed_materials
+        if repeat_analytics[material_status.material_id].priority_months > 0
+    ]
+    logger.debug("Repeating queue got, %s materials found", len(queue))
+
+    return queue

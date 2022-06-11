@@ -75,6 +75,14 @@ async def outline_material(material_id: UUID):
     return RedirectResponse(redirect_url, status_code=302)
 
 
+@router.post('/repeat/{material_id}')
+async def repeat_material(material_id: UUID):
+    await db.repeat_material(material_id=material_id)
+
+    redirect_url = router.url_path_for(get_repeating_queue.__name__)
+    return RedirectResponse(redirect_url, status_code=302)
+
+
 @router.get('/reading', response_class=HTMLResponse)
 async def get_reading_materials(request: Request):
     statistics = await db.reading_statistics()
@@ -89,7 +97,7 @@ async def get_reading_materials(request: Request):
 
 @router.get('/completed', response_class=HTMLResponse)
 async def get_completed_materials(request: Request):
-    statistics = await db.processed_statistics()
+    statistics = await db.completed_statistics()
 
     context = {
         'request': request,
@@ -97,3 +105,15 @@ async def get_completed_materials(request: Request):
         'DATE_FORMAT': settings.DATE_FORMAT
     }
     return templates.TemplateResponse("completed.html", context)
+
+
+@router.get('/repeat-view', response_class=HTMLResponse)
+async def get_repeating_queue(request: Request):
+    repeating_queue = await db.get_repeating_queue()
+
+    context = {
+        'request': request,
+        'repeating_queue': repeating_queue,
+        'DATE_FORMAT': settings.DATE_FORMAT
+    }
+    return templates.TemplateResponse("repeat.html", context)

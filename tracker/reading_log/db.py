@@ -24,6 +24,7 @@ def _safe_list_get(list_: list[Any],
         return default
 
 
+@database.cache
 async def get_average_materials_read_pages() -> dict[UUID, float]:
     logger.debug("Getting average reading read pages count of materials")
 
@@ -38,6 +39,7 @@ async def get_average_materials_read_pages() -> dict[UUID, float]:
         }
 
 
+@database.cache
 async def get_log_records() -> dict[datetime.date, LogRecord]:
     logger.debug("Getting all log records")
 
@@ -57,6 +59,7 @@ async def get_log_records() -> dict[datetime.date, LogRecord]:
         }
 
 
+@database.cache
 async def get_reading_material_titles() -> dict[UUID, str]:
     logger.debug("Getting material titles")
 
@@ -73,6 +76,7 @@ async def get_reading_material_titles() -> dict[UUID, str]:
         }
 
 
+@database.cache
 async def _get_completion_dates() -> dict[UUID, datetime.date]:
     logger.debug("Getting completion dates")
 
@@ -95,7 +99,7 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
     If the day is empty, material_id is supposed
     as the material_id of the last not empty day.
     """
-    logger.debug("Getting data from log")
+    logger.debug("Getting logging data")
 
     if not (log_records := await get_log_records()):
         return
@@ -111,7 +115,7 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
     step = datetime.timedelta(days=1)
     iter_over_dates = min(log_records.keys())
 
-    while iter_over_dates <= database.today().date():
+    while iter_over_dates <= database.utcnow().date():
         last_material_id = _safe_list_get(materials, -1, None)
 
         if ((completion_date := completion_dates.get(last_material_id))
@@ -151,15 +155,7 @@ async def get_material_reading_now() -> UUID | None:
 
     # means the new material started
     #  and there's no log records for it
-    reading_materials = [
-        material_id
-        # materials must be sorted by date
-        async for material_id in materials_db.get_reading_materials()
-    ]
-
-    if reading_material := _safe_list_get(reading_materials, -1, None):
-        return reading_material.material_id
-    return None
+    return await materials_db.get_last_material_started()
 
 
 async def set_log(*,
