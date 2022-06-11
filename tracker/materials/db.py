@@ -348,5 +348,17 @@ async def estimate() -> list[MaterialEstimate]:
     return forecasts
 
 
+async def get_repeats_count() -> dict[UUID, int]:
+    stmt = sa.select([models.Repeats.c.material_id,
+                      sa.func.count(1)])\
+        .group_by(models.Repeats.c.material_id)
+
+    async with database.session() as ses:
+        return {
+            material_id: count
+            for material_id, count in await ses.execute(stmt)
+        }
+
+
 async def get_repeating_queue() -> list[RepeatingQueue]:
     pass
