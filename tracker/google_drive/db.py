@@ -200,7 +200,11 @@ async def restore_db(*,
 
     # order of them matters
     for table_name, table in TABLES.items():
-        values = snapshot_dict[table_name].rows
+        if not (table_dict := snapshot_dict.get(table_name)):
+            logger.warning("Table %s not found in snapshot", table_name)
+            continue
+
+        values = table_dict.rows
         stmt = table.insert().values(values)
         await conn.execute(stmt)
 
