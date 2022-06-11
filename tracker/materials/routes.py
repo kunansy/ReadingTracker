@@ -89,7 +89,7 @@ async def get_reading_materials(request: Request):
 
 @router.get('/completed', response_class=HTMLResponse)
 async def get_completed_materials(request: Request):
-    statistics = await db.processed_statistics()
+    statistics = await db.completed_statistics()
 
     context = {
         'request': request,

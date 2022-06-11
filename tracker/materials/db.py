@@ -268,7 +268,7 @@ async def _get_material_statistics(*,
     )
 
 
-async def processed_statistics() -> list[MaterialStatistics]:
+async def completed_statistics() -> list[MaterialStatistics]:
     completed_materials_task = asyncio.create_task(_get_completed_materials())
     avg_read_pages_task = asyncio.create_task(statistics.get_avg_read_pages())
     all_notes_count_task = asyncio.create_task(notes_db.get_all_notes_count())
