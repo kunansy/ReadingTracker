@@ -59,6 +59,16 @@ class MaterialStatistics(NamedTuple):
     would_be_completed: datetime.date | None = None
 
 
+class RepeatAnalytics(NamedTuple):
+    repeats_count: int
+    last_repeated_at: datetime.datetime
+    # how many days ago the material was last repeated,
+    #  the clean priority
+    last_repeat: int
+    # priority to show in web, clean priority - 29
+    priority: int
+
+
 class RepeatingQueue(NamedTuple):
     material_id: UUID
     title: str
@@ -450,15 +460,26 @@ async def estimate() -> list[MaterialEstimate]:
     return forecasts
 
 
-async def get_repeats_count() -> dict[UUID, int]:
+async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
+    last_repeated_at = sa.func.max(models.Repeats.c.repeated_at).label("last_repeated_at")
+    repetition_or_completion_date = sa.func.coalesce(last_repeated_at, sa.func.max(models.Statuses.c.completed_at))
     stmt = sa.select([models.Repeats.c.material_id,
-                      sa.func.count(1)])\
+                      sa.func.count(1).label("count"),
+                      last_repeated_at,
+                      (sa.func.now() - repetition_or_completion_date).label('last_repeat')])\
+        .join(models.Statuses,
+              models.Statuses.c.material_id == models.Repeats.c.material_id)\
         .group_by(models.Repeats.c.material_id)
 
     async with database.session() as ses:
         return {
-            material_id: count
-            for material_id, count in await ses.execute(stmt)
+            row.material_id: RepeatAnalytics(
+                repeats_count=row.count,
+                last_repeated_at=row.last_repeated_at,
+                last_repeat=row.last_repeat,
+                priority=row.last_repeat - 29
+            )
+            for row in await ses.execute(stmt)
         }
 
 
