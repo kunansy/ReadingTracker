@@ -52,6 +52,7 @@ TABLES = {
     models.ReadingLog.name: models.ReadingLog,
     models.Notes.name: models.Notes,
     models.Cards.name: models.Cards,
+    models.Repeats.name: models.Repeats,
 }
 
 
