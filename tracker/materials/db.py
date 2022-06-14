@@ -344,14 +344,16 @@ async def add_material(*,
                        title: str,
                        authors: str,
                        pages: int,
-                       tags: str | None) -> None:
+                       tags: str | None,
+                       link: str | None) -> None:
     logger.debug("Adding material title=%s", title)
 
     values = {
         "title": title,
         "authors": authors,
         "pages": pages,
-        "tags": tags
+        "tags": tags,
+        "link": link
     }
     stmt = models.Materials\
         .insert().values(values)
