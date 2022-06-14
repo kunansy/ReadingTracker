@@ -57,7 +57,7 @@ async def graphic(request: Request,
         'titles': titles
     }
 
-    return templates.TemplateResponse("graphic.html", context)
+    return templates.TemplateResponse("system/graphic.html", context)
 
 
 @router.get('/backup')
@@ -80,7 +80,7 @@ async def backup(request: Request):
         context['statuses_count'] = snapshot_dict['statuses'].counter
         context['notes_count'] = snapshot_dict['notes'].counter
 
-    return templates.TemplateResponse("backup.html", context)
+    return templates.TemplateResponse("system/backup.html", context)
 
 
 @router.get('/restore')
@@ -103,4 +103,4 @@ async def restore(request: Request):
         context['statuses_count'] = snapshot_dict['statuses'].counter
         context['notes_count'] = snapshot_dict['notes'].counter
 
-    return templates.TemplateResponse("restore.html", context)
+    return templates.TemplateResponse("system/restore.html", context)
