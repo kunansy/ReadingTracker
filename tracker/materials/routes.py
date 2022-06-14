@@ -24,7 +24,7 @@ async def get_queue(request: Request):
         'estimates': estimates,
         'DATE_FORMAT': settings.DATE_FORMAT
     }
-    return templates.TemplateResponse("queue.html", context)
+    return templates.TemplateResponse("materials/queue.html", context)
 
 
 @router.get('/add-view', response_class=HTMLResponse)
@@ -33,7 +33,7 @@ async def add_material_view(request: Request):
     context = {
         'request': request,
     }
-    return templates.TemplateResponse("add_material.html", context)
+    return templates.TemplateResponse("materials/add_material.html", context)
 
 
 @router.post('/add', response_class=HTMLResponse)
@@ -93,7 +93,7 @@ async def get_reading_materials(request: Request):
         'statistics': statistics,
         'DATE_FORMAT': settings.DATE_FORMAT
     }
-    return templates.TemplateResponse("reading.html", context)
+    return templates.TemplateResponse("materials/reading.html", context)
 
 
 @router.get('/completed', response_class=HTMLResponse)
@@ -105,7 +105,7 @@ async def get_completed_materials(request: Request):
         'statistics': statistics,
         'DATE_FORMAT': settings.DATE_FORMAT
     }
-    return templates.TemplateResponse("completed.html", context)
+    return templates.TemplateResponse("materials/completed.html", context)
 
 
 @router.get('/repeat-view', response_class=HTMLResponse)
@@ -117,4 +117,4 @@ async def get_repeating_queue(request: Request):
         'repeating_queue': repeating_queue,
         'DATE_FORMAT': settings.DATE_FORMAT
     }
-    return templates.TemplateResponse("repeat.html", context)
+    return templates.TemplateResponse("materials/repeat.html", context)
