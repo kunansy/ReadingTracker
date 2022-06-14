@@ -30,7 +30,7 @@
         </form>
     </div>
 {%- else -%}
-    {% import 'not_found.html' as not_found %}
+    {% import 'errors/not_found.html' as not_found %}
     {% call not_found.not_found('reading materials') %} {% endcall %}
 {% endif %}
 {% endblock main %}
