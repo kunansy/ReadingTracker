@@ -37,7 +37,7 @@ async def get_notes(request: Request):
         'chapters': chapters,
         'DATE_FORMAT': settings.DATE_FORMAT
     }
-    return templates.TemplateResponse("notes.html", context)
+    return templates.TemplateResponse("notes/notes.html", context)
 
 
 @router.get('/material')
@@ -60,7 +60,7 @@ async def get_material_notes(request: Request,
         'material_id': material_id,
         'DATE_FORMAT': settings.DATE_FORMAT
     }
-    return templates.TemplateResponse("notes.html", context)
+    return templates.TemplateResponse("notes/notes.html", context)
 
 
 @router.get('/add-view')
@@ -76,7 +76,7 @@ async def add_note_view(request: Request):
         'note_id': request.cookies.get('note_id', ''),
         'titles': titles
     }
-    return templates.TemplateResponse("add_note.html", context)
+    return templates.TemplateResponse("notes/add_note.html", context)
 
 
 @router.post('/add',
@@ -120,7 +120,7 @@ async def update_note_view(note_id: UUID,
         'page': note.page,
         'success': success
     }
-    return templates.TemplateResponse("update_note.html", context)
+    return templates.TemplateResponse("notes/update_note.html", context)
 
 
 @router.post('/update',
