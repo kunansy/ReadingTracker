@@ -47,6 +47,7 @@ Materials = Table(
     Column('authors', Unicode(256)),
     Column('pages', Integer),
     Column('tags', Unicode(256), nullable=True),
+    Column('link', Unicode(2048), nullable=True),
     Column('added_at', DateTime, default=_utc_now),
     Column('is_outlined', Boolean, default=False)
 )
