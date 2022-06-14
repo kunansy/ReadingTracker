@@ -340,6 +340,23 @@ async def reading_statistics() -> list[MaterialStatistics]:
     ]
 
 
+async def get_material_tags() -> set[str]:
+    logger.info("Getting material tags")
+
+    stmt = sa.select(models.Materials.c.tags)
+
+    async with database.session() as ses:
+        tags_db = (await ses.execute(stmt)).all()
+
+    tags = set()
+    for tag in tags_db:
+        tags |= {
+            tag.strip().lower()
+            for tag in tag[0].split(',')
+        }
+    return tags
+
+
 async def add_material(*,
                        title: str,
                        authors: str,
