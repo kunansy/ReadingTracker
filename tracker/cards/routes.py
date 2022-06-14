@@ -25,4 +25,4 @@ async def list_cards(request: Request):
         'DATE_FORMAT': settings.DATE_FORMAT,
         'total': total_cards_count,
     }
-    return templates.TemplateResponse("cards_list.html", context)
+    return templates.TemplateResponse("cards/cards_list.html", context)
