@@ -32,8 +32,10 @@ async def get_queue(request: Request):
 @router.get('/add-view', response_class=HTMLResponse)
 async def add_material_view(request: Request):
     """ Add a material to the queue """
+    tags = await db.get_material_tags()
     context = {
         'request': request,
+        'tags_list': tags
     }
     return templates.TemplateResponse("materials/add_material.html", context)
 
