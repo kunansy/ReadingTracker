@@ -12,6 +12,8 @@ router = APIRouter(
     prefix="/materials",
     tags=["materials"]
 )
+# could not specify the directory as 'templates/materials',
+# because templates contains references to the root templates folder
 templates = Jinja2Templates(directory="templates")
 
 
