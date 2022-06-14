@@ -150,8 +150,7 @@ def _read_json_file(filepath: Path) -> dict[str, list[dict[str, str | int]]]:
 
 
 def _get_now() -> str:
-    now = datetime.datetime.utcnow()
-    return now.strftime(settings.DATETIME_FORMAT).replace(' ', '_')
+    return database.utcnow().strftime(settings.DATETIME_FORMAT).replace(' ', '_')
 
 
 def dump_snapshot(snapshot: DBSnapshot) -> Path:

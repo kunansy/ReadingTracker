@@ -44,6 +44,7 @@ async def add_material(material: schemas.Material = Depends()):
         authors=material.authors,
         pages=material.pages,
         tags=material.tags,
+        link=material.link
     )
 
     redirect_url = router.url_path_for(add_material_view.__name__)
