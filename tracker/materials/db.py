@@ -17,6 +17,7 @@ class Material(NamedTuple):
     authors: str
     pages: int
     tags: str | None
+    link: str | None
     added_at: datetime.datetime
     is_outlined: bool
 
@@ -142,6 +143,7 @@ async def _parse_material_status_response(*,
                     authors=row.authors,
                     pages=row.pages,
                     tags=row.tags,
+                    link=row.link,
                     added_at=row.added_at,
                     is_outlined=row.is_outlined
                 ),
