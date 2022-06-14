@@ -34,7 +34,7 @@ async def get_reading_log(request: Request):
         'average_materials_read_pages': get_average_materials_read_pages.result(),
         'DATE_FORMAT': settings.DATE_FORMAT,
     }
-    return templates.TemplateResponse("reading_log.html", context)
+    return templates.TemplateResponse("reading_log/reading_log.html", context)
 
 
 @router.get('/add-view')
@@ -54,7 +54,7 @@ async def add_log_record_view(request: Request):
         'titles': get_titles.result(),
         'date': today
     }
-    return templates.TemplateResponse("add_log_record.html", context)
+    return templates.TemplateResponse("reading_log/add_log_record.html", context)
 
 
 @router.post('/add')
