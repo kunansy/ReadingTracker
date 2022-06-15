@@ -10,7 +10,8 @@ from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.ddl import DropTable, CreateTable
 from sqlalchemy.sql.schema import Table
 
-from tracker.common import database, settings, models
+from tracker.common import database, settings
+from tracker.models import models
 from tracker.common.log import logger
 
 

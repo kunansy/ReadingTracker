@@ -5,7 +5,8 @@ from uuid import UUID
 
 import sqlalchemy.sql as sa
 
-from tracker.common import database, models
+from tracker.common import database
+from tracker.models import models
 from tracker.common.log import logger
 from tracker.notes import db as notes_db
 from tracker.reading_log import statistics

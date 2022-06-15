@@ -7,7 +7,8 @@ from uuid import UUID
 import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa
 
-from tracker.common import models, database
+from tracker.common import database
+from tracker.models import models
 from tracker.materials import db as materials_db
 from tracker.reading_log import db as reading_log_db
 
