@@ -6,7 +6,7 @@ from fastapi.templating import Jinja2Templates
 
 from tracker.common import settings
 from tracker.materials import db, schemas
-
+from tracker.models import enums
 
 router = APIRouter(
     prefix="/materials",
@@ -35,7 +35,8 @@ async def add_material_view(request: Request):
     tags = await db.get_material_tags()
     context = {
         'request': request,
-        'tags_list': tags
+        'tags_list': tags,
+        'material_types': enums.MaterialTypesEnum
     }
     return templates.TemplateResponse("materials/add_material.html", context)
 
