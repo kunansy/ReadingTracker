@@ -364,6 +364,7 @@ async def add_material(*,
                        title: str,
                        authors: str,
                        pages: int,
+                       material_type: enums.MaterialTypesEnum,
                        tags: str | None,
                        link: str | None) -> None:
     logger.debug("Adding material title=%s", title)
@@ -373,7 +374,8 @@ async def add_material(*,
         "authors": authors,
         "pages": pages,
         "tags": tags,
-        "link": link
+        "link": link,
+        "material_type": material_type,
     }
     stmt = models.Materials\
         .insert().values(values)

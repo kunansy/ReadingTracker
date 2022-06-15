@@ -47,6 +47,7 @@ async def add_material(material: schemas.Material = Depends()):
         title=material.title,
         authors=material.authors,
         pages=material.pages,
+        material_type=material.material_type,
         tags=material.tags,
         link=material.link
     )
