@@ -51,7 +51,7 @@ async def restore(*,
         else:
             filepath = drive_api.get_google_dump_file()
 
-        await db.recreate_db(conn=ses)
+        await db.recreate_db()
         snapshot = await db.restore_db(conn=ses, dump_path=filepath)
 
         logger.info("Restoring completed, %ss",
