@@ -6,7 +6,7 @@ from uuid import UUID
 import sqlalchemy.sql as sa
 
 from tracker.common import database
-from tracker.models import models
+from tracker.models import models, enums
 from tracker.common.log import logger
 from tracker.notes import db as notes_db
 from tracker.reading_log import statistics
@@ -17,6 +17,7 @@ class Material(NamedTuple):
     title: str
     authors: str
     pages: int
+    material_type: enums.MaterialTypesEnum
     tags: str | None
     link: str | None
     added_at: datetime.datetime
@@ -143,6 +144,7 @@ async def _parse_material_status_response(*,
                     title=row.title,
                     authors=row.authors,
                     pages=row.pages,
+                    material_type=row.material_type,
                     tags=row.tags,
                     link=row.link,
                     added_at=row.added_at,
