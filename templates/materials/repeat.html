@@ -18,7 +18,13 @@
         {%- endif -%}
         <div class="repeat hover" onclick=openNotes("{{ repeat.material_id }}") title="Click to see notes">
             <p> Title: «{{ repeat.title }}» </p>
-            <p> Pages: {{ repeat.pages }} </p>
+            {% set items = 'Pages' %}
+            {% if repeat.material_type == 'lecture' %}
+                {% set items = 'Minutes' %}
+            {% elif repeat.material_type == 'course' %}
+                {% set items = 'Lectures' %}
+            {% endif %}
+            <p> {{ items }}: {{ repeat.pages }} </p>
             <p> Is outlined: {{ is_outlined }} </p>
             <hr title="Analytics">
             <p> Completed at: {{ repeat.completed_at.strftime(DATE_FORMAT) }} </p>
