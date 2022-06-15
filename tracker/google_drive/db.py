@@ -191,7 +191,7 @@ async def restore_db(*,
 
     # order of them matters
     for table_name, table in TABLES.items():
-        if not (table_dict := snapshot_dict.get(table_name)):
+        if not (table_dict := snapshot_dict.get(table_name)) or not table_dict.rows:
             logger.warning("Table %s not found in snapshot", table_name)
             continue
 
