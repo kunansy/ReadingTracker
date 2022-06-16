@@ -1,7 +1,8 @@
 {% extends 'index.html' %}
 
 {%- block style -%}
-<link rel="stylesheet" href="{{ url_for('static', path='materials/queue.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='materials/queue.css') }}">
+    <script src="{{ url_for('static', path='js/materials.js')}}"></script>
 {%- endblock style -%}
 
 {%- block header -%}
@@ -14,7 +15,7 @@
 {% if estimates %}
     {%- for estimate in estimates -%}
     {% set material = estimate.material %}
-    <div class="material hover">
+    <div class="material hover" onclick=openMaterial("{{ material.material_id }}")>
         <p> Title: «{{ material.title }}» </p>
         <p> Author: {{ material.authors }} </p>
         {% set items = 'Pages' %}

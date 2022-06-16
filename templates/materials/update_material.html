@@ -1,0 +1,46 @@
+{% extends 'index.html' %}
+
+{% block style %}
+    <link rel="stylesheet" href="{{ url_for('static', path='materials/add_material.css') }}">
+{% endblock style %}
+
+{% block header %}
+    {% from 'submenu.html' import submenu %}
+    {% call submenu(('Queue', '/materials/queue'), ('Add material', '/materials/add-view')) %}
+    {% endcall %}
+{% endblock header %}
+
+{% block main %}
+{% if success is true %}
+    <div class="alert success"> Material '{{ material_id }}' successfully updated. </div>
+{% elif success is false %}
+    <div class="alert error"> Material '{{ material_id }}' updating failed. </div>
+{% endif %}
+
+<div class="form">
+    <form action="/materials/update" method="POST">
+        <fieldset class="material-fieldset">
+            <legend class="material-legend"> Update a material </legend>
+            <input class="input input-datalist" name="material_id" value="{{ material_id }}" title="ID of the material">
+            <input class="input altch" type="text" placeholder="Enter a title" name="title" value="{{ title }}" title="Title of the material">
+            <input class="input" type="text" placeholder="Enter authors" name="authors" value="{{ authors }}" title="Authors of the material">
+            <input class="input" type="number" placeholder="Enter a count of pages" name="pages" value="{{ pages }}" title="Count of pages in the materials">
+            <input class="input" type="text" list="material_types" placeholder="Enter material type" name="material_type" value="{{ material_type }}" title="Type of the material">
+            <datalist id="material_types">
+                {% for type in material_types %}
+                    <option value="{{ type.name }}"> «{{ type.capitalize() }}»
+                {% endfor %}
+            </datalist>
+            <input class="input" type="text" list="tags" placeholder="Enter tags" name="tags" value="{{ tags }}" title="Tags of the material">
+            <datalist id="tags">
+                {% for tag in tags_list %}
+                    <option value="{{ tag }}"> «{{ tag.capitalize() }}»
+                {% endfor %}
+            </datalist>
+            <input class="input" type="text" placeholder="Enter link" name="link" value="{{ link }}" title="Link to the material">
+            <button type="submit" class="submit-button"> Save </button>
+        </fieldset>
+    </form>
+</div>
+
+{% endblock main %}
