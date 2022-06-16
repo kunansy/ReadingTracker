@@ -25,7 +25,9 @@
         {% endif %}
         <p> {{ items }}: {{ material.pages }} </p>
         <p> Type: {{ material.material_type.name }} </p>
-        <p> Tags: {{ material.tags }} </p>
+        {% if material.tags %}
+            <p> Tags: {{ material.tags }} </p>
+        {% endif %}
         <p> Link: {{ material.link or '-' }} </p>
         <hr/>
         <p> Will be started: {{ estimate.will_be_started.strftime(DATE_FORMAT) }} </p>
