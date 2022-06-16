@@ -67,13 +67,13 @@ async def create_reading_graphic(*,
     fig, ax = plt.subplots(figsize=(12, 10))
 
     line = plt.axhline(y=material.pages, color='r', linestyle='-')
-    line.set_label(f'Overall {material.pages} pages')
+    line.set_label(f'Overall {material.pages} items')
 
     bar = ax.bar(data.dates, data.counts, width=1, edgecolor="white")
     ax.bar_label(bar)
 
-    ax.set_title('Total pages read')
-    ax.set_ylabel('Pages count')
+    ax.set_title('Total items completed')
+    ax.set_ylabel('Items count')
     ax.set_xlabel('Date')
 
     if (remains := material_pages - total_pages_read) > 0:
@@ -86,7 +86,7 @@ async def create_reading_graphic(*,
             ymax=material.pages,
             color='black',
             linestyles='solid',
-            label=f"{remains} pages remains"
+            label=f"{remains} items remains"
         )
 
     ax.set(ylim=(0, material_pages + material_pages * .1))
