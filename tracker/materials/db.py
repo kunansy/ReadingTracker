@@ -387,6 +387,35 @@ async def add_material(*,
     logger.debug("Material added")
 
 
+async def update_material(*,
+                          material_id: UUID,
+                          title: str,
+                          authors: str,
+                          pages: int,
+                          material_type: enums.MaterialTypesEnum,
+                          tags: str | None,
+                          link: str | None) -> None:
+    logger.debug("Update material='%s'", material_id)
+
+    values = {
+        "title": title,
+        "authors": authors,
+        "pages": pages,
+        "material_type": material_type,
+        "tags": tags,
+        "link": link,
+     }
+
+    stmt = models.Materials \
+        .update().values(values)\
+        .where(models.Materials.c.material_id == str(material_id))
+
+    async with database.session() as ses:
+        await ses.execute(stmt)
+
+    logger.debug("Material='%s' updated")
+
+
 async def start_material(*,
                          material_id: UUID,
                          start_date: datetime.date | None = None) -> None:
