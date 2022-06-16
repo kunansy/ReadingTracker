@@ -39,6 +39,18 @@ async def get_material_type(*,
 
 
 @database.cache
+async def get_material_types() -> dict[UUID, str]:
+    stmt = sa.select([models.Materials.c.material_id,
+                      models.Materials.c.material_type])
+
+    async with database.session() as ses:
+        return {
+            material_id: material_type
+            for material_id, material_type in await ses.execute(stmt)
+        }
+
+
+@database.cache
 async def get_material_titles() -> dict[UUID, str]:
     logger.debug("Getting material titles")
 

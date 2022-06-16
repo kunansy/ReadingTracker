@@ -24,17 +24,21 @@ templates = Jinja2Templates(directory="templates")
 async def get_notes(request: Request):
     get_notes_task = asyncio.create_task(db.get_notes())
     get_titles_task = asyncio.create_task(db.get_material_with_notes_titles())
+    get_material_types_task = asyncio.create_task(db.get_material_types())
 
     await asyncio.gather(
         get_notes_task,
-        get_titles_task
+        get_titles_task,
+        get_material_types_task
     )
+
     chapters = db.get_distinct_chapters(get_notes_task.result())
 
     context = {
         'request': request,
         'notes': get_notes_task.result(),
         'titles': get_titles_task.result(),
+        'material_types': get_material_types_task.result(),
         'chapters': chapters,
         'DATE_FORMAT': settings.DATE_FORMAT
     }
@@ -46,10 +50,12 @@ async def get_material_notes(request: Request,
                              material_id: UUID):
     get_notes_task = asyncio.create_task(db.get_material_notes(material_id=material_id))
     get_titles_task = asyncio.create_task(db.get_material_with_notes_titles())
+    get_material_types_task = asyncio.create_task(db.get_material_types())
 
     await asyncio.gather(
         get_notes_task,
-        get_titles_task
+        get_titles_task,
+        get_material_types_task
     )
     chapters = db.get_distinct_chapters(get_notes_task.result())
 
@@ -57,6 +63,7 @@ async def get_material_notes(request: Request,
         'request': request,
         'notes': get_notes_task.result(),
         'titles': get_titles_task.result(),
+        'material_types': get_material_types_task.result(),
         'chapters': chapters,
         'material_id': material_id,
         'DATE_FORMAT': settings.DATE_FORMAT
