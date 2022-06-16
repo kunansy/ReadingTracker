@@ -29,6 +29,15 @@ def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[int]]:
     return chapters
 
 
+async def get_material_type(*,
+                            material_id: UUID) -> str | None:
+    from tracker.materials import db as materials_db
+
+    if material := await materials_db.get_material(material_id=material_id):
+        return material.material_type.name
+    return None
+
+
 @database.cache
 async def get_material_titles() -> dict[UUID, str]:
     logger.debug("Getting material titles")

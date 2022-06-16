@@ -8,6 +8,7 @@ from fastapi.templating import Jinja2Templates
 
 from tracker.common import settings
 from tracker.common.log import logger
+from tracker.models import enums
 from tracker.notes import db, schemas
 
 
@@ -70,6 +71,7 @@ async def add_note_view(request: Request):
     context = {
         'request': request,
         'material_id': request.cookies.get('material_id', ''),
+        'material_type': request.cookies.get('material_type', enums.MaterialTypesEnum.book.name),
         'content': request.cookies.get('content', ''),
         'page': request.cookies.get('page', ''),
         'chapter': request.cookies.get('chapter', ''),
@@ -95,6 +97,8 @@ async def add_note(note: schemas.Note = Depends()):
         page=note.page
     )
     response.set_cookie('note_id', str(note_id), expires=5)
+    if material_type := await db.get_material_type(material_id=note.material_id):
+        response.set_cookie('material_type', material_type, expires=5)
 
     return response
 
