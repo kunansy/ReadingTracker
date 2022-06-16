@@ -17,9 +17,20 @@
     <div class="material hover">
         <p> Title: «{{ material.title }}» </p>
         <p> Author: {{ material.authors }} </p>
-        <p> Pages: {{ material.pages }} </p>
-        <p> Tags: {{ material.tags }} </p>
-        <p> Link: {{ material.link or '-' }} </p>
+        {% set items = 'Pages' %}
+        {% if material.material_type == 'lecture' %}
+            {% set items = 'Minutes' %}
+        {% elif material.material_type == 'course' %}
+            {% set items = 'Lectures' %}
+        {% endif %}
+        <p> {{ items }}: {{ material.pages }} </p>
+        <p> Type: {{ material.material_type.name }} </p>
+        {% if material.tags %}
+            <p> Tags: {{ material.tags }} </p>
+        {% endif %}
+        {% if material.link %}
+            <p> Link: {{ material.link }} </p>
+        {% endif %}
         <hr/>
         <p> Will be started: {{ estimate.will_be_started.strftime(DATE_FORMAT) }} </p>
         <p> Will be completed: {{ estimate.will_be_completed.strftime(DATE_FORMAT) }} </p>

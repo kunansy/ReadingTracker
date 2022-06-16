@@ -7,10 +7,11 @@ import sqlalchemy.sql as sa
 import ujson
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.sql.ddl import DropTable, CreateTable
+from sqlalchemy.sql.ddl import DropTable
 from sqlalchemy.sql.schema import Table
 
-from tracker.common import database, settings, models
+from tracker.common import database, settings
+from tracker.models import models
 from tracker.common.log import logger
 
 
@@ -98,19 +99,10 @@ def _compile_drop_table(element, compiler, **kwargs):
     return compiler.visit_drop_table(element) + " CASCADE"
 
 
-async def _drop_tables(conn: AsyncSession) -> None:
-    for table in TABLES.values():
-        await conn.execute(DropTable(table))
-
-
-async def _create_tables(conn: AsyncSession) -> None:
-    for table in TABLES.values():
-        await conn.execute(CreateTable(table))
-
-
-async def recreate_db(conn: AsyncSession) -> None:
-    await _drop_tables(conn)
-    await _create_tables(conn)
+async def recreate_db() -> None:
+    async with database.engine.begin() as conn:
+        await conn.run_sync(models.metadata.drop_all)
+        await conn.run_sync(models.metadata.create_all)
 
 
 def _is_uid(value: str) -> bool:
@@ -199,7 +191,7 @@ async def restore_db(*,
 
     # order of them matters
     for table_name, table in TABLES.items():
-        if not (table_dict := snapshot_dict.get(table_name)):
+        if not (table_dict := snapshot_dict.get(table_name)) or not table_dict.rows:
             logger.warning("Table %s not found in snapshot", table_name)
             continue
 

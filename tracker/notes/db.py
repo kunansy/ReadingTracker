@@ -5,7 +5,8 @@ from uuid import UUID
 
 import sqlalchemy.sql as sa
 
-from tracker.common import database, models
+from tracker.common import database
+from tracker.models import models
 from tracker.common.log import logger
 
 
@@ -26,6 +27,29 @@ def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[int]]:
         chapters[note.material_id].add(note.chapter)
 
     return chapters
+
+
+async def get_material_type(*,
+                            material_id: UUID) -> str | None:
+    stmt = sa.select(models.Materials.c.material_type)\
+        .where(models.Materials.c.material_id == str(material_id))
+
+    async with database.session() as ses:
+        if material_type := await ses.scalar(stmt):
+            return material_type.name
+    return None
+
+
+@database.cache
+async def get_material_types() -> dict[UUID, str]:
+    stmt = sa.select([models.Materials.c.material_id,
+                      models.Materials.c.material_type])
+
+    async with database.session() as ses:
+        return {
+            material_id: material_type
+            for material_id, material_type in await ses.execute(stmt)
+        }
 
 
 @database.cache

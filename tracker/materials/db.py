@@ -5,7 +5,8 @@ from uuid import UUID
 
 import sqlalchemy.sql as sa
 
-from tracker.common import database, models
+from tracker.common import database
+from tracker.models import models, enums
 from tracker.common.log import logger
 from tracker.notes import db as notes_db
 from tracker.reading_log import statistics
@@ -16,6 +17,7 @@ class Material(NamedTuple):
     title: str
     authors: str
     pages: int
+    material_type: enums.MaterialTypesEnum
     tags: str | None
     link: str | None
     added_at: datetime.datetime
@@ -76,6 +78,7 @@ class RepeatingQueue(NamedTuple):
     material_id: UUID
     title: str
     pages: int
+    material_type: enums.MaterialTypesEnum
     is_outlined: bool
     notes_count: int
     repeats_count: int
@@ -142,6 +145,7 @@ async def _parse_material_status_response(*,
                     title=row.title,
                     authors=row.authors,
                     pages=row.pages,
+                    material_type=row.material_type,
                     tags=row.tags,
                     link=row.link,
                     added_at=row.added_at,
@@ -343,7 +347,8 @@ async def reading_statistics() -> list[MaterialStatistics]:
 async def get_material_tags() -> set[str]:
     logger.info("Getting material tags")
 
-    stmt = sa.select(models.Materials.c.tags)
+    stmt = sa.select(models.Materials.c.tags)\
+        .where(models.Materials.c.tags != None)
 
     async with database.session() as ses:
         tags_db = (await ses.execute(stmt)).all()
@@ -361,6 +366,7 @@ async def add_material(*,
                        title: str,
                        authors: str,
                        pages: int,
+                       material_type: enums.MaterialTypesEnum,
                        tags: str | None,
                        link: str | None) -> None:
     logger.debug("Adding material title=%s", title)
@@ -370,7 +376,8 @@ async def add_material(*,
         "authors": authors,
         "pages": pages,
         "tags": tags,
-        "link": link
+        "link": link,
+        "material_type": material_type,
     }
     stmt = models.Materials\
         .insert().values(values)
@@ -555,6 +562,7 @@ async def get_repeating_queue() -> list[RepeatingQueue]:
             material_id=material_status.material_id,
             title=material_status.material.title,
             pages=material_status.material.pages,
+            material_type=material_status.material.material_type,
             is_outlined=material_status.material.is_outlined,
             completed_at=material_status.status.completed_at,
             notes_count=notes_count.get(material_status.material_id, 0),

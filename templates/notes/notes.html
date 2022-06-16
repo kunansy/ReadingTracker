@@ -32,12 +32,16 @@
         <summary> Menu </summary>
         <div class="menu-items">
         {% for material_id, chapters in chapters | dictsort %}
+            {% set chapter_name = 'Chapter' %}
+            {% if material_types[material_id] == 'course' %}
+                {% set chapter_name = 'Block' %}
+            {% endif %}
             <div class="material-link">
             <details open class="chapters">
                 <summary> <a class="title-link" href="#material-{{ material_id }}"> «{{ titles[material_id] }}» </a> </summary>
                 <div class="chapters">
                     {% for chapter in chapters | sort %}
-                        <a class="chapter-link" href="#material-{{ material_id }}-chapter-{{ chapter }}"> Chapter {{ chapter }} </a>
+                        <a class="chapter-link" href="#material-{{ material_id }}-chapter-{{ chapter }}"> {{ chapter_name }} {{ chapter }} </a>
                     {% endfor %}
                 </div>
             </details>
@@ -54,15 +58,24 @@
         <hr class="material_divider">
     {% endif %}
 
+    {% set page_name = 'Page' %}
+    {% set chapter_name = 'Chapter' %}
+    {% if material_types[material_id] == 'lecture' %}
+        {% set page_name = 'Minute' %}
+    {% elif material_types[material_id] == 'course' %}
+        {% set chapter_name = 'Block' %}
+        {% set page_name = 'Lecture' %}
+    {% endif %}
+
     <div class="group">
         <h3 class="material_title" id="material-{{material_id}}"> «{{ titles[material_id] }}» ({{ notes_m | length }})</h3>
 
         {% for chapter, note_c in notes_m | groupby('chapter') %}
-            <h4 class="chapter_number" id="material-{{material_id}}-chapter-{{chapter}}"> Chapter: {{ chapter }} </h4>
+            <h4 class="chapter_number" id="material-{{material_id}}-chapter-{{chapter}}"> {{ chapter_name }}: {{ chapter }} </h4>
             {% for note in note_c %}
             <div class="note hover" onclick=openNote("{{ note.note_id }}")>
                 <p class="note-content"> {{ note.content | safe }} </p>
-                <p class="note-page"> Page: {{ note.page }} </p>
+                <p class="note-page"> {{ page_name }}: {{ note.page }} </p>
             </div>
             {% endfor %}
         {% endfor %}

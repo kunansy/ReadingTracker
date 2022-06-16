@@ -7,7 +7,8 @@ from uuid import UUID
 import sqlalchemy.sql as sa
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
-from tracker.common import models, settings
+from tracker.common import settings
+from tracker.models import models
 from tracker.common.log import logger
 
 

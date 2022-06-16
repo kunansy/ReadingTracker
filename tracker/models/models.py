@@ -2,8 +2,10 @@ import datetime
 import uuid
 
 import sqlalchemy
-from sqlalchemy import Date, DateTime, Integer, MetaData, Table, Unicode, Boolean
+from sqlalchemy import Date, DateTime, Integer, MetaData, Table, Unicode, Boolean, Enum
 from sqlalchemy.dialects.postgresql import UUID
+
+from tracker.models import enums
 
 
 def Column(*args, **kwargs) -> sqlalchemy.Column:
@@ -46,6 +48,7 @@ Materials = Table(
     Column('title', Unicode(256)),
     Column('authors', Unicode(256)),
     Column('pages', Integer),
+    Column('material_type', Enum(enums.MaterialTypesEnum), default=enums.MaterialTypesEnum.book),
     Column('tags', Unicode(256), nullable=True),
     Column('link', Unicode(2048), nullable=True),
     Column('added_at', DateTime, default=_utc_now),
