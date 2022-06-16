@@ -26,7 +26,9 @@
         {% if material.tags %}
             <p> Tags: {{ material.tags }} </p>
         {% endif %}
-        <p> Link: {{ material.link or '-' }} </p>
+        {% if material.link %}
+            <p> Link: {{ material.link }} </p>
+        {% endif %}
         <p> Is outlined: {{ is_outlined }} </p>
         <hr title="Analytics">
         <p> Started at: {{ ms.started_at.strftime(DATE_FORMAT) }} </p>

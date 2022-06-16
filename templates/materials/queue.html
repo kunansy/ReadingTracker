@@ -28,7 +28,9 @@
         {% if material.tags %}
             <p> Tags: {{ material.tags }} </p>
         {% endif %}
-        <p> Link: {{ material.link or '-' }} </p>
+        {% if material.link %}
+            <p> Link: {{ material.link }} </p>
+        {% endif %}
         <hr/>
         <p> Will be started: {{ estimate.will_be_started.strftime(DATE_FORMAT) }} </p>
         <p> Will be completed: {{ estimate.will_be_completed.strftime(DATE_FORMAT) }} </p>
