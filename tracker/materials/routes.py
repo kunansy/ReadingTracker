@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Request, Depends
@@ -5,6 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from tracker.common import settings
+from tracker.common.log import logger
 from tracker.materials import db, schemas
 from tracker.models import enums
 
@@ -54,6 +56,63 @@ async def add_material(material: schemas.Material = Depends()):
     )
 
     redirect_url = router.url_path_for(add_material_view.__name__)
+    return RedirectResponse(redirect_url, status_code=302)
+
+
+@router.get('/update-view', response_class=HTMLResponse)
+async def update_material_view(request: Request,
+                               material_id: UUID,
+                               success: bool | None = None):
+    context: dict[str, Any] = {
+        'request': request,
+    }
+
+    if not (material := await db.get_material(material_id=material_id)):
+        context['what'] = f"'{material_id=}' not found"
+        return templates.TemplateResponse("errors/404.html", context)
+
+    tags = await db.get_material_tags()
+    context = {
+        **context,
+        'material_id': material_id,
+        'title': material.title,
+        'authors': material.authors,
+        'pages': material.pages,
+        'material_type': material.material_type.name,
+        'success': success,
+        'material_types': enums.MaterialTypesEnum,
+        'tags_list': tags,
+    }
+    if material.link:
+        context['link'] = material.link
+    if material.tags:
+        context['tags'] = material.tags
+
+    return templates.TemplateResponse("materials/update_material.html", context)
+
+
+@router.post('/update',
+             response_class=RedirectResponse)
+async def update_material(material: schemas.UpdateMaterial = Depends()):
+    success = True
+    try:
+        await db.update_material(
+            material_id=material.material_id,
+            title=material.title,
+            authors=material.authors,
+            pages=material.pages,
+            material_type=material.material_type,
+            tags=material.tags,
+            link=material.link
+        )
+    except Exception as e:
+        logger.error("Error updating material_id='%s': %s",
+                     material.material_id, repr(e))
+        success = False
+
+    redirect_path = router.url_path_for(update_material_view.__name__)
+    redirect_url = f"{redirect_path}?material_id={material.material_id}&{success=}"
+
     return RedirectResponse(redirect_url, status_code=302)
 
 
