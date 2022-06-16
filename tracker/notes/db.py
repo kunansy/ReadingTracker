@@ -31,10 +31,12 @@ def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[int]]:
 
 async def get_material_type(*,
                             material_id: UUID) -> str | None:
-    from tracker.materials import db as materials_db
+    stmt = sa.select(models.Materials.c.material_type)\
+        .where(models.Materials.c.material_id == str(material_id))
 
-    if material := await materials_db.get_material(material_id=material_id):
-        return material.material_type.name
+    async with database.session() as ses:
+        if material_type := await ses.scalar(stmt):
+            return material_type.name
     return None
 
 
