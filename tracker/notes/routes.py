@@ -31,7 +31,6 @@ async def get_notes(request: Request):
         get_titles_task,
         get_material_types_task
     )
-
     chapters = db.get_distinct_chapters(get_notes_task.result())
 
     context = {
