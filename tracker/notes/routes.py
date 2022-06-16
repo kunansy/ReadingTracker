@@ -115,9 +115,13 @@ async def update_note_view(note_id: UUID,
         context['what'] = f"Note id='{note_id}' not found"
         return templates.TemplateResponse("errors/404.html", context)
 
+    material_type = await db.get_material_type(material_id=note.material_id) \
+                    or enums.MaterialTypesEnum.book.name # noqa
+
     context = {
         **context,
         'material_id': note.material_id,
+        'material_type': material_type,
         'note_id': note.note_id,
         'content': schemas.demark_note(note.content),
         'chapter': note.chapter,
