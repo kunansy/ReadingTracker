@@ -118,12 +118,19 @@ async def _get_free_materials() -> list[Material]:
 
 
 def _get_reading_materials_stmt() -> sa.Select:
+    reading_logs_cte = sa.select([models.ReadingLog.c.material_id,
+                                  sa.func.max(models.ReadingLog.c.date).label('date')])\
+        .group_by(models.ReadingLog.c.material_id)\
+        .cte('reading_logs')
+
     return sa.select([models.Materials,
                       models.Statuses]) \
         .join(models.Statuses,
               models.Materials.c.material_id == models.Statuses.c.material_id) \
+        .join(reading_logs_cte,
+              reading_logs_cte.c.material_id == models.Materials.c.material_id) \
         .where(models.Statuses.c.completed_at == None) \
-        .order_by(models.Statuses.c.started_at)
+        .order_by(reading_logs_cte.c.date.desc())
 
 
 def _get_completed_materials_stmt() -> sa.Select:
