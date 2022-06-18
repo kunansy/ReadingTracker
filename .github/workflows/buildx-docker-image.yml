@@ -10,10 +10,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       -
-        name: Inspect the action
-        run: |
-          echo "Platforms: ${{ steps.buildx.outputs.platforms }}"
-      -
         name: Checkout
         uses: actions/checkout@v3
       -
