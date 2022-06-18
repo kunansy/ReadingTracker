@@ -31,4 +31,4 @@ jobs:
           context: .
           platforms: linux/amd64,linux/arm64,linux/arm64/v8
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/reading_tracker:2.6.0
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/reading_tracker:2.7.0
