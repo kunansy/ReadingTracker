@@ -17,6 +17,7 @@ class Note(NamedTuple):
     added_at: datetime.datetime
     chapter: int
     page: int
+    is_deleted: bool
 
 
 def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[int]]:
