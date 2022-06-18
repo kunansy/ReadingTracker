@@ -21,7 +21,7 @@
     <form action="/materials/update" method="POST">
         <fieldset class="material-fieldset">
             <legend class="material-legend"> Update a material </legend>
-            <input class="input input-datalist" name="material_id" value="{{ material_id }}" title="ID of the material">
+            <input class="input input-datalist hide" name="material_id" value="{{ material_id }}" title="ID of the material">
             <input class="input altch" type="text" placeholder="Enter a title" name="title" value="{{ title }}" title="Title of the material">
             <input class="input" type="text" placeholder="Enter authors" name="authors" value="{{ authors }}" title="Authors of the material">
             <input class="input" type="number" placeholder="Enter a count of pages" name="pages" value="{{ pages }}" title="Count of pages in the materials">
