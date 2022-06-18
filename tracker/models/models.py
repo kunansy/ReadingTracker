@@ -85,7 +85,8 @@ Notes = Table(
     Column('content', Unicode(65_536)),
     Column('added_at', DateTime, default=_utc_now),
     Column('chapter', Integer),
-    Column('page', Integer)
+    Column('page', Integer),
+    Column('is_deleted', Boolean, default=False)
 )
 
 Cards = Table(

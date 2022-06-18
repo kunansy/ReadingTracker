@@ -21,8 +21,8 @@
     <form action="/notes/update" method="POST">
         <fieldset class="add-note-fieldset">
         <legend class="add-note-legend"> Update note </legend>
-        <input class="input input-datalist" name="material_id" value="{{ material_id }}" title="ID of the material">
-        <input class="input input-datalist" name="note_id" value="{{ note_id }}" title="ID of the note">
+        <input class="input input-datalist hide" name="material_id" value="{{ material_id }}" title="ID of the material">
+        <input class="input input-datalist hide" name="note_id" value="{{ note_id }}" title="ID of the note">
         <textarea class="input altch" id="input-content" placeholder="Enter a content" name="content" title="Text of the note">{{ content }}</textarea>
         {% set page_number = 'page number' %}
         {% set chapter_number = 'chapter number' %}
@@ -36,6 +36,11 @@
         <input class="input" type="number" placeholder="Enter a {{ page_number }}" name="page" value="{{ page }}" title="{{ page_number.capitalize() }} where the not might be found">
         <button type="submit" class="submit-button"> Save </button>
     </fieldset>
+    </form>
+    <form action="/notes/delete" method="POST">
+        <input class="input input-datalist hide" name="material_id" value="{{ material_id }}" title="ID of the material">
+        <input class="input input-datalist hide" name="note_id" value="{{ note_id }}" title="ID of the note">
+        <button type="submit" class="submit-button"> Delete </button>
     </form>
 </div>
 {% endblock main %}

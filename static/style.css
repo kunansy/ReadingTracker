@@ -154,6 +154,10 @@ span.font-code {
     color: #3c763d;
 }
 
+.hide{
+    display: none;
+}
+
 div.arrow-div {
     display: flex;
     margin: auto;
