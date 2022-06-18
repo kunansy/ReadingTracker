@@ -170,3 +170,16 @@ class UpdateNote(Note):
             chapter=chapter,
             page=page
         )
+
+
+class DeleteNote(BaseModel):
+    note_id: UUID
+    material_id: UUID
+
+    def __init__(self,
+                 material_id: UUID = Form(...),
+                 note_id: UUID = Form(...)):
+        super().__init__(
+            material_id=material_id,
+            note_id=note_id
+        )
