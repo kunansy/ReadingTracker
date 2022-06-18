@@ -157,3 +157,16 @@ async def update_note(note: schemas.UpdateNote = Depends()):
 
     response = RedirectResponse(redirect_url, status_code=302)
     return response
+
+
+@router.post('/delete',
+             response_class=RedirectResponse)
+async def delete_note(note: schemas.DeleteNote = Depends()):
+    await db.delete_note(note_id=note.note_id)
+
+    redirect_path = router.url_path_for(get_material_notes.__name__)
+    redirect_url = f"{redirect_path}?material_id={note.material_id}"
+
+    response = RedirectResponse(redirect_url, status_code=302)
+
+    return response
