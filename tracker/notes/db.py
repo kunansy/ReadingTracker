@@ -190,3 +190,16 @@ async def update_note(*,
         await ses.execute(stmt)
 
     logger.debug("Note_id='%s' updated", note_id)
+
+
+async def delete_note(*,
+                      note_id: UUID) -> None:
+    values = {
+        "is_deleted": True
+    }
+    stmt = models.Notes \
+        .update().values(values) \
+        .where(models.Notes.c.note_id == str(note_id))
+
+    async with database.session() as ses:
+        await ses.execute(stmt)
