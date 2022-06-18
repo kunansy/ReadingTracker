@@ -194,6 +194,8 @@ async def update_note(*,
 
 async def delete_note(*,
                       note_id: UUID) -> None:
+    logger.debug("Deleting note_id='%s'", note_id)
+
     values = {
         "is_deleted": True
     }
@@ -203,3 +205,5 @@ async def delete_note(*,
 
     async with database.session() as ses:
         await ses.execute(stmt)
+
+    logger.debug("Note_id='%s' deleted", note_id)
