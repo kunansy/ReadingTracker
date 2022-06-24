@@ -20,7 +20,6 @@ if _VERSION_FILE.exists():
     API_VERSION = _VERSION_FILE.read_text().strip()
 
 with env.prefixed("API_"):
-    API_PORT = env.int("PORT")
     API_DEBUG = env.bool("DEBUG", False)
 
 with env.prefixed("DB_"):
