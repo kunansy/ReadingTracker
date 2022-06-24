@@ -22,7 +22,7 @@ services:
       retries: 3
 
   reading-tracker:
-    image: kunansy/reading_tracker:2.7.0
+    image: kunansy/reading_tracker:2.7.1
     container_name: reading-tracker
     env_file: .env
     restart: always
