@@ -2,14 +2,25 @@ from typing import Any
 from uuid import UUID
 
 import aiohttp
-from sqlalchemy import Table
+import sqlalchemy as sa
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 from tracker.common import settings
 from tracker.common.log import logger
 
+
 DOC = dict[str, Any]
 
-SA_TYPE_MAPPING = {}
+SA_TYPE_MAPPING = {
+    sa.Unicode: "text",
+    sa.Text: "text",
+    PG_UUID: "text",
+    # TODO: ?
+    sa.DateTime: "date",
+    sa.Integer: "integer",
+    # TODO: ?
+    sa.Boolean: "boolean",
+}
 
 
 class ElasticsearchError(Exception):
@@ -18,7 +29,7 @@ class ElasticsearchError(Exception):
 
 class AsyncElasticIndex:
     def __init__(self,
-                 table: Table) -> None:
+                 table: sa.Table) -> None:
         self.__table = table
         self._url = settings.ELASTIC_URL
         self._timeout = aiohttp.ClientTimeout(settings.ELASTIC_TIMEOUT)
