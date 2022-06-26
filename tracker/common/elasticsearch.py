@@ -79,8 +79,18 @@ class AsyncElasticIndex:
 
         return json
 
-    async def delete(self, doc_id: UUID) -> None:
-        pass
+    async def delete(self, doc_id: UUID) -> DOC:
+        url = f"{self._url}/_doc/{doc_id}"
+        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
+            try:
+                resp = await ses.delete(url)
+                resp.raise_for_status()
+                json = await resp.json()
+            except Exception as e:
+                logger.exception("Error deleting document")
+                raise ElasticsearchError(e) from None
+
+        return json
 
     async def mathc(self, query: str) -> list[DOC]:
         pass
