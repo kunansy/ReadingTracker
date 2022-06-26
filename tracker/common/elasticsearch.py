@@ -95,8 +95,26 @@ class AsyncElasticIndex:
 
         return json
 
-    async def mathc(self, query: str) -> list[DOC]:
-        pass
+    async def match(self, query: str, field: str) -> list[DOC]:
+        uel = f"{self._url}/_search"
+        body = {
+            "query": {
+                "match": {
+                    field: query,
+                }
+            }
+        }
+
+        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
+            try:
+                resp = await ses.put(uel, json=body, headers=self._headers)
+                resp.raise_for_status()
+                json = await resp.json()
+            except Exception as e:
+                logger.exception("Error searching")
+                raise ElasticsearchError(e) from None
+
+        return json
 
     async def multi_match(self, query: str) -> list[DOC]:
         uel = f"{self._url}/_search"
