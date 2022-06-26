@@ -6,6 +6,8 @@ from sqlalchemy import Table
 
 DOC = dict[str, Any]
 
+SA_TYPE_MAPPING = {}
+
 
 class ElasticsearchError(Exception):
     pass
@@ -17,6 +19,18 @@ class AsyncElasticIndex:
         self.__table = table
         self._url = settings.ELASTIC_URL
         self._timeout = aiohttp.ClientTimeout(settings.ELASTIC_TIMEOUT)
+
+    def _create_index_query(self) -> DOC:
+        return {
+            "mappings": {
+                "doc": {
+                    "properties": {
+                        field_name: SA_TYPE_MAPPING[field_type]
+                        for field_name, field_type in self.__table.columns.items()
+                    }
+                }
+            }
+        }
 
     async def create_index(self) -> None:
         pass
