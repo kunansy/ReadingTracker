@@ -4,6 +4,17 @@
 ![Stable Version](https://img.shields.io/github/v/tag/kunansy/ReadingTracker)
 ![Latest Release](https://img.shields.io/github/v/release/kunansy/ReadingTracker?color=%233D9970)
 
+## Content
+- [What is that](#what-is-that)
+- [Structure](#structure)
+  - [Queue](#queue)
+  - [Reading](#reading)
+  - [Completed](#completed)
+  - [Repeat](#repeat)
+  - [Reading log](#reading-log)
+  - [Notes](#notes)
+  - [System](#system)
+
 ## What is that?
 The project is expected to help one read books:
 1. Keep a list of books to read;
