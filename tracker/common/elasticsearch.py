@@ -7,6 +7,10 @@ from sqlalchemy import Table
 DOC = dict[str, Any]
 
 
+class ElasticsearchError(Exception):
+    pass
+
+
 class AsyncElasticIndex:
     def __init__(self,
                  table: Table) -> None:
