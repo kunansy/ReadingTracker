@@ -50,7 +50,7 @@ class AsyncElasticIndex:
         return json
 
     async def get(self, doc_id: UUID) -> DOC:
-        url = f"{self._url}/{doc_id}"
+        url = f"{self._url}/_doc/{doc_id}"
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
                 resp = await ses.get(url)
