@@ -14,7 +14,9 @@ class ElasticsearchError(Exception):
 class AsyncElasticIndex:
     def __init__(self,
                  table: Table) -> None:
-        pass
+        self.__table = table
+        self._url = settings.ELASTIC_URL
+        self._timeout = aiohttp.ClientTimeout(settings.ELASTIC_TIMEOUT)
 
     async def create_index(self) -> None:
         pass
