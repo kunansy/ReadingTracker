@@ -65,9 +65,19 @@ class AsyncElasticIndex:
     async def add(self,
                   *,
                   doc: DOC,
-                  doc_id: UUID) -> None:
+                  doc_id: UUID) -> DOC:
         """ Create or update the document """
-        pass
+        url = f"{self._url}/_doc/{doc_id}"
+        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
+            try:
+                resp = await ses.put(url, json=doc)
+                resp.raise_for_status()
+                json = await resp.json()
+            except Exception as e:
+                logger.exception("Error adding document")
+                raise ElasticsearchError(e) from None
+
+        return json
 
     async def delete(self, doc_id: UUID) -> None:
         pass
