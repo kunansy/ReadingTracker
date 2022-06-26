@@ -1,8 +1,11 @@
 from typing import Any
 from uuid import UUID
 
+import aiohttp
 from sqlalchemy import Table
 
+from tracker.common import settings
+from tracker.common.log import logger
 
 DOC = dict[str, Any]
 
@@ -32,8 +35,19 @@ class AsyncElasticIndex:
             }
         }
 
-    async def create_index(self) -> None:
-        pass
+    async def create_index(self) -> DOC:
+        query = self._create_index_query()
+        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
+            try:
+                resp = await ses.put(self._url, json=query)
+                resp.raise_for_status()
+                json = await resp.json()
+            except Exception as e:
+                logger.exception("Error creating index")
+                raise ElasticsearchError(e) from None
+
+        logger.info("Index created: %s", json)
+        return json
 
     async def get(self, doc_id: UUID) -> DOC:
         pass
