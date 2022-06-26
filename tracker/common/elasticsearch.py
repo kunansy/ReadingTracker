@@ -50,7 +50,17 @@ class AsyncElasticIndex:
         return json
 
     async def get(self, doc_id: UUID) -> DOC:
-        pass
+        url = f"{self._url}/{doc_id}"
+        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
+            try:
+                resp = await ses.get(url)
+                resp.raise_for_status()
+                json = await resp.json()
+            except Exception as e:
+                logger.exception("Error getting document")
+                raise ElasticsearchError(e) from None
+
+        return json
 
     async def add(self,
                   *,
