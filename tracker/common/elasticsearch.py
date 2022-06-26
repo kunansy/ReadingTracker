@@ -22,6 +22,9 @@ class AsyncElasticIndex:
         self.__table = table
         self._url = settings.ELASTIC_URL
         self._timeout = aiohttp.ClientTimeout(settings.ELASTIC_TIMEOUT)
+        self._headers = {
+            "Content-Type": "application/json"
+        }
 
     def _create_index_query(self) -> DOC:
         return {
@@ -39,7 +42,7 @@ class AsyncElasticIndex:
         query = self._create_index_query()
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
-                resp = await ses.put(self._url, json=query)
+                resp = await ses.put(self._url, json=query, headers=self._headers)
                 resp.raise_for_status()
                 json = await resp.json()
             except Exception as e:
@@ -53,7 +56,7 @@ class AsyncElasticIndex:
         url = f"{self._url}/_doc/{doc_id}"
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
-                resp = await ses.get(url)
+                resp = await ses.get(url, headers=self._headers)
                 resp.raise_for_status()
                 json = await resp.json()
             except Exception as e:
@@ -70,7 +73,7 @@ class AsyncElasticIndex:
         url = f"{self._url}/_doc/{doc_id}"
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
-                resp = await ses.put(url, json=doc)
+                resp = await ses.put(url, json=doc, headers=self._headers)
                 resp.raise_for_status()
                 json = await resp.json()
             except Exception as e:
@@ -83,7 +86,7 @@ class AsyncElasticIndex:
         url = f"{self._url}/_doc/{doc_id}"
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
-                resp = await ses.delete(url)
+                resp = await ses.delete(url, headers=self._headers)
                 resp.raise_for_status()
                 json = await resp.json()
             except Exception as e:
