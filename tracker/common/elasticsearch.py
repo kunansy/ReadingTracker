@@ -41,6 +41,10 @@ class AsyncElasticIndex:
             "Content-Type": "application/json"
         }
 
+    @property
+    def name(self) -> str:
+        return self.__table.name
+
     def _create_index_query(self) -> DOC:
         return {
             "mappings": {
