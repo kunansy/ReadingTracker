@@ -1,3 +1,4 @@
+import datetime
 from typing import Any
 from uuid import UUID
 
@@ -25,6 +26,19 @@ def _get_es_type(sa_type: object) -> str | None:
     for key, value in SA_TYPE_MAPPING.items():
         if isinstance(sa_type, key):
             return value
+
+
+def _serialize_datetime(field: Any) -> str:
+    if isinstance(field, datetime.datetime):
+        return field.isoformat()
+    return field
+
+
+def _serialize(doc: DOC) -> DOC:
+    return {
+        _serialize_datetime(key): _serialize_datetime(value)
+        for key, value in doc.items()
+    }
 
 
 class ElasticsearchError(Exception):
@@ -91,9 +105,11 @@ class AsyncElasticIndex:
                   doc_id: UUID) -> DOC:
         """ Create or update the document """
         url = f"{self._url}/{self.name}/_doc/{doc_id}"
+        json = _serialize(doc)
+
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
-                resp = await ses.put(url, json=doc, headers=self._headers)
+                resp = await ses.put(url, json=json, headers=self._headers)
                 resp.raise_for_status()
                 json = await resp.json()
             except Exception as e:
