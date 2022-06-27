@@ -48,11 +48,9 @@ class AsyncElasticIndex:
     def _create_index_query(self) -> DOC:
         return {
             "mappings": {
-                "doc": {
-                    "properties": {
-                        field_name: SA_TYPE_MAPPING[field_type]
-                        for field_name, field_type in self.__table.columns.items()
-                    }
+                "properties": {
+                    field.name: {"type": _get_es_type(field.type)}
+                    for field in self.__table.columns.values()
                 }
             }
         }
