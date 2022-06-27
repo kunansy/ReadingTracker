@@ -73,7 +73,7 @@ class AsyncElasticIndex:
         return json
 
     async def get(self, doc_id: UUID) -> DOC:
-        url = f"{self._url}/_doc/{doc_id}"
+        url = f"{self._url}/{self.name}/_doc/{doc_id}"
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
                 resp = await ses.get(url, headers=self._headers)
@@ -90,7 +90,7 @@ class AsyncElasticIndex:
                   doc: DOC,
                   doc_id: UUID) -> DOC:
         """ Create or update the document """
-        url = f"{self._url}/_doc/{doc_id}"
+        url = f"{self._url}/{self.name}/_doc/{doc_id}"
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
                 resp = await ses.put(url, json=doc, headers=self._headers)
@@ -103,7 +103,7 @@ class AsyncElasticIndex:
         return json
 
     async def delete(self, doc_id: UUID) -> DOC:
-        url = f"{self._url}/_doc/{doc_id}"
+        url = f"{self._url}/{self.name}/_doc/{doc_id}"
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
                 resp = await ses.delete(url, headers=self._headers)
@@ -116,7 +116,7 @@ class AsyncElasticIndex:
         return json
 
     async def match(self, query: str, field: str) -> list[DOC]:
-        uel = f"{self._url}/_search"
+        uel = f"{self._url}/{self.name}/_search"
         body = {
             "query": {
                 "match": {
@@ -137,7 +137,7 @@ class AsyncElasticIndex:
         return json
 
     async def multi_match(self, query: str) -> list[DOC]:
-        uel = f"{self._url}/_search"
+        uel = f"{self._url}/{self.name}/_search"
         body = {
             "query": {
                 "multi_match": {
