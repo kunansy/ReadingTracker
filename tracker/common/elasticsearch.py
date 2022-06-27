@@ -27,6 +27,7 @@ def _get_es_type(sa_type: object) -> str | None:
     for key, value in SA_TYPE_MAPPING.items():
         if isinstance(sa_type, key):
             return value
+    return None
 
 
 def _serialize_datetime(field: Any) -> str:
