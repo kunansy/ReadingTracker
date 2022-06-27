@@ -11,6 +11,7 @@ from tracker.common.log import logger
 
 
 DOC = dict[str, Any]
+UID = UUID | str
 
 SA_TYPE_MAPPING = {
     sa.Unicode: "text",
@@ -86,7 +87,7 @@ class AsyncElasticIndex:
         logger.info("Index created (status=%s): %s", status, json)
         return json
 
-    async def get(self, doc_id: UUID) -> DOC:
+    async def get(self, doc_id: UID) -> DOC:
         url = f"{self._url}/{self.name}/_doc/{doc_id}"
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
@@ -102,7 +103,7 @@ class AsyncElasticIndex:
     async def add(self,
                   *,
                   doc: DOC,
-                  doc_id: UUID) -> DOC:
+                  doc_id: UID) -> DOC:
         """ Create or update the document """
         url = f"{self._url}/{self.name}/_doc/{doc_id}"
         json = _serialize(doc)
@@ -118,7 +119,7 @@ class AsyncElasticIndex:
 
         return json
 
-    async def delete(self, doc_id: UUID) -> DOC:
+    async def delete(self, doc_id: UID) -> DOC:
         url = f"{self._url}/{self.name}/_doc/{doc_id}"
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
