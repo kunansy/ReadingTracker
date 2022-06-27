@@ -195,7 +195,7 @@ class AsyncElasticIndex:
 
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
-                resp = await ses.put(uel, json=body, headers=self._headers)
+                resp = await ses.get(uel, json=body, headers=self._headers)
                 resp.raise_for_status()
                 json = await resp.json()
             except Exception as e:
