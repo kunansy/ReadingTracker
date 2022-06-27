@@ -57,16 +57,19 @@ class AsyncElasticIndex:
 
     async def create_index(self) -> DOC:
         query = self._create_index_query()
+        url = f"{self._url}/{self.name}"
+
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
-                resp = await ses.put(self._url, json=query, headers=self._headers)
+                resp = await ses.put(url, json=query, headers=self._headers)
+                json, status = await resp.json(), resp.status
                 resp.raise_for_status()
-                json = await resp.json()
-            except Exception as e:
-                logger.exception("Error creating index")
-                raise ElasticsearchError(e) from None
+            except Exception:
+                msg = f"Error creating index ({status=}): {json=}"
+                logger.exception(msg)
+                raise ElasticsearchError(msg) from None
 
-        logger.info("Index created: %s", json)
+        logger.info("Index created (status=%s): %s", status, json)
         return json
 
     async def get(self, doc_id: UUID) -> DOC:
