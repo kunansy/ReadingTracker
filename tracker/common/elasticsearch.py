@@ -109,7 +109,7 @@ class AsyncElasticIndex:
                 resp = await ses.get(url, headers=self._headers)
                 status, json = resp.status, await resp.json()
                 resp.raise_for_status()
-            except Exception as e:
+            except Exception:
                 msg = f"Error checking health ({status=}): {json=}"
                 logger.exception(msg)
                 raise ElasticsearchError(msg) from None
@@ -121,11 +121,12 @@ class AsyncElasticIndex:
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
                 resp = await ses.get(url, headers=self._headers)
+                status, json = resp.status, await resp.json()
                 resp.raise_for_status()
-                json = await resp.json()
-            except Exception as e:
-                logger.exception("Error getting document")
-                raise ElasticsearchError(e) from None
+            except Exception:
+                msg = f"Error getting document ({status=}): {json=}"
+                logger.exception(msg)
+                raise ElasticsearchError(msg) from None
 
         return json
 
@@ -140,11 +141,12 @@ class AsyncElasticIndex:
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
                 resp = await ses.put(url, json=json, headers=self._headers)
+                status, json = resp.status, await resp.json()
                 resp.raise_for_status()
-                json = await resp.json()
-            except Exception as e:
-                logger.exception("Error adding document")
-                raise ElasticsearchError(e) from None
+            except Exception:
+                msg = f"Error adding document ({status=}): {json=}"
+                logger.exception(msg)
+                raise ElasticsearchError(msg) from None
 
         return json
 
@@ -153,11 +155,12 @@ class AsyncElasticIndex:
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
                 resp = await ses.delete(url, headers=self._headers)
+                status, json = resp.status, await resp.json()
                 resp.raise_for_status()
-                json = await resp.json()
-            except Exception as e:
-                logger.exception("Error deleting document")
-                raise ElasticsearchError(e) from None
+            except Exception:
+                msg = f"Error deleting document ({status=}): {json=}"
+                logger.exception(msg)
+                raise ElasticsearchError(msg) from None
 
         return json
 
@@ -174,11 +177,12 @@ class AsyncElasticIndex:
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
                 resp = await ses.put(uel, json=body, headers=self._headers)
+                status, json = resp.status, await resp.json()
                 resp.raise_for_status()
-                json = await resp.json()
-            except Exception as e:
-                logger.exception("Error searching")
-                raise ElasticsearchError(e) from None
+            except Exception:
+                msg = f"Error matching documents ({status=}): {json=}"
+                logger.exception(msg)
+                raise ElasticsearchError(msg) from None
 
         return json
 
@@ -196,10 +200,11 @@ class AsyncElasticIndex:
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
                 resp = await ses.get(uel, json=body, headers=self._headers)
+                status, json = resp.status, await resp.json()
                 resp.raise_for_status()
-                json = await resp.json()
-            except Exception as e:
-                logger.exception("Error searching")
-                raise ElasticsearchError(e) from None
+            except Exception:
+                msg = f"Error matching documents ({status=}): {json=}"
+                logger.exception(msg)
+                raise ElasticsearchError(msg) from None
 
         return json
