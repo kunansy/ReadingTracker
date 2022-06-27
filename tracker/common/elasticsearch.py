@@ -15,10 +15,8 @@ SA_TYPE_MAPPING = {
     sa.Unicode: "text",
     sa.Text: "text",
     PG_UUID: "text",
-    # TODO: ?
     sa.DateTime: "date",
     sa.Integer: "integer",
-    # TODO: ?
     sa.Boolean: "boolean",
 }
 
