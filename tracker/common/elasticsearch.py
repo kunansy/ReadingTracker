@@ -88,6 +88,20 @@ class AsyncElasticIndex:
         logger.info("Index created (status=%s): %s", status, json)
         return json
 
+    async def drop_index(self) -> None:
+        url = f"{self._url}/{self.name}"
+        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
+            try:
+                resp = await ses.delete(url, headers=self._headers)
+                json, status = await resp.json(), resp.status
+                resp.raise_for_status()
+            except Exception:
+                msg = f"Error deleting index ({status=}): {json=}"
+                logger.exception(msg)
+                raise ElasticsearchError(msg) from None
+
+        logger.info("Index deleted (status=%s): %s", status, json)
+
     async def get(self, doc_id: UID) -> DOC:
         url = f"{self._url}/{self.name}/_doc/{doc_id}"
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
