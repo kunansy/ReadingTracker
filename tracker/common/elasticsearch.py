@@ -102,6 +102,20 @@ class AsyncElasticIndex:
 
         logger.info("Index deleted (status=%s): %s", status, json)
 
+    async def healthcheck(self) -> DOC:
+        url = f"{self._url}/_cluster/health"
+        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
+            try:
+                resp = await ses.get(url, headers=self._headers)
+                status, json = resp.status, await resp.json()
+                resp.raise_for_status()
+            except Exception as e:
+                msg = f"Error checking health ({status=}): {json=}"
+                logger.exception(msg)
+                raise ElasticsearchError(msg) from None
+
+        return json
+
     async def get(self, doc_id: UID) -> DOC:
         url = f"{self._url}/{self.name}/_doc/{doc_id}"
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
