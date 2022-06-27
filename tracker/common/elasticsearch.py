@@ -62,13 +62,49 @@ class AsyncElasticIndex:
         return self.__table.name
 
     def _create_index_query(self) -> DOC:
-        return {
-            "mappings": {
-                "properties": {
-                    field.name: {"type": _get_es_type(field.type)}
-                    for field in self.__table.columns.values()
+        analyzer = {
+            "settings": {
+                "index": {
+                    "analysis": {
+                        "analyzer": {
+                            "ru": {
+                                "tokenizer": "standard",
+                                "filter": [
+                                    "lowercase",
+                                    "ru_RU",
+                                ]
+                            }
+                        },
+                        "filter": {
+                            "ru_RU": {
+                                "type": "hunspell",
+                                "locale": "ru_RU",
+                                "dedup": True
+                            }
+                        }
+                    }
                 }
             }
+        }
+        properties = {}
+        for field in self.__table.columns.values():
+            field_type = _get_es_type(field.type)
+
+            properties[field.name] = {
+                "type": field_type
+            }
+            if field_type == "text":
+                properties[field.name]["analyzer"] = "ru"
+
+        mappings = {
+            "mappings": {
+                "properties": properties
+            }
+        }
+
+        return {
+            **analyzer,
+            **mappings,
         }
 
     async def create_index(self) -> DOC:
