@@ -1,10 +1,9 @@
 import datetime
-from typing import Any
+from types import UnionType
+from typing import Any, Type
 from uuid import UUID
 
 import aiohttp
-import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 
 from tracker.common import settings
 from tracker.common.log import logger
@@ -13,19 +12,22 @@ from tracker.common.log import logger
 DOC = dict[str, Any]
 UID = UUID | str
 
-SA_TYPE_MAPPING = {
-    sa.Unicode: "text",
-    sa.Text: "text",
-    PG_UUID: "text",
-    sa.DateTime: "date",
-    sa.Integer: "integer",
-    sa.Boolean: "boolean",
+ELASTIC_TYPES_MAPPING = {
+    str: "text",
+    UUID: "text",
+    datetime.datetime: "date",
+    datetime.date: "date",
+    int: "integer",
+    bool: "boolean",
 }
 
 
-def _get_es_type(sa_type: object) -> str | None:
-    for key, value in SA_TYPE_MAPPING.items():
-        if isinstance(sa_type, key):
+def _map_elastic_type(type_: object) -> str | None:
+    if isinstance(type_, UnionType):
+        return _map_elastic_type(type_.__args__[0])
+
+    for key, value in ELASTIC_TYPES_MAPPING.items():
+        if type_ is key:
             return value
     return None
 
@@ -49,8 +51,8 @@ class ElasticsearchError(Exception):
 
 class AsyncElasticIndex:
     def __init__(self,
-                 table: sa.Table) -> None:
-        self.__table = table
+                 table: Type) -> None:
+        self.__tuple = table
         self._url = settings.ELASTIC_URL
         self._timeout = aiohttp.ClientTimeout(settings.ELASTIC_TIMEOUT)
         self._headers = {
@@ -59,7 +61,7 @@ class AsyncElasticIndex:
 
     @property
     def name(self) -> str:
-        return self.__table.name
+        return self.__tuple.__class__.__name__.lower()
 
     def _create_index_query(self) -> DOC:
         analyzer = {
@@ -87,14 +89,14 @@ class AsyncElasticIndex:
             }
         }
         properties = {}
-        for field in self.__table.columns.values():
-            field_type = _get_es_type(field.type)
+        for field_name, field_type in self.__tuple.__annotations__.items():
+            field_type = _map_elastic_type(field_type)
 
-            properties[field.name] = {
+            properties[field_name] = {
                 "type": field_type
             }
             if field_type == "text":
-                properties[field.name]["analyzer"] = "ru"
+                properties[field_name]["analyzer"] = "ru"
 
         mappings = {
             "mappings": {
