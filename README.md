@@ -34,7 +34,7 @@ Here there are the materials that are currently being read.
 ![Reading](docs/reading.png)
 
 ## Completed
-Here there are teh materials that have been read.
+Here there are the materials that have been read.
 ![Completed](docs/completed.png)
 
 ## Repeat
