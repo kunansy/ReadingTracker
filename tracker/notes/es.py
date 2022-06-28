@@ -76,10 +76,10 @@ async def migrate_notes() -> None:
     logger.info('Migrating notes completed')
 
 
-async def find_notes(query: str) -> list[str]:
+async def find_notes(query: str) -> set[str]:
     notes = await index.multi_match(query=query)
 
-    return [
+    return {
         hint['_id']
         for hint in notes['hits']['hits']
-    ]
+    }
