@@ -9,6 +9,7 @@ from tracker.cards.routes import router as cards_router
 from tracker.common import database, settings
 from tracker.common.log import logger
 from tracker.materials.routes import router as materials_router
+from tracker.notes.es import index as notes_index
 from tracker.notes.routes import router as notes_router
 from tracker.reading_log.routes import router as reading_log_router
 from tracker.system.routes import router as system_router
@@ -90,7 +91,7 @@ async def liveness():
          include_in_schema=False)
 async def readiness():
     status, status_code = "ok", 200
-    if not await database.is_alive():
+    if not (await database.is_alive() and await notes_index.healthcheck()):
         status, status_code = "error", 500
 
     return UJSONResponse(
