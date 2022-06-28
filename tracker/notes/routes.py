@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any
+from typing import Any, Iterable
 from uuid import UUID
 
 from fastapi import APIRouter, Request, Depends
@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from tracker.common import settings
 from tracker.common.log import logger
 from tracker.models import enums
-from tracker.notes import db, schemas
+from tracker.notes import db, schemas, es
 
 
 router = APIRouter(
@@ -20,8 +20,25 @@ router = APIRouter(
 templates = Jinja2Templates(directory="templates")
 
 
+def _filter_notes(*,
+                  notes: list[db.Note],
+                  ids: Iterable[str]) -> list[db.Note]:
+    notes_ = {
+        str(note.note_id): note
+        for note in notes
+    }
+    # TODO: save order of search results,
+    #  add _score field to Note model (?)
+    return [
+        notes_[note_id]
+        for note_id in ids
+        if note_id in notes_
+    ]
+
+
 @router.get('/')
-async def get_notes(request: Request):
+async def get_notes(request: Request,
+                    query: str | None = None):
     get_notes_task = asyncio.create_task(db.get_notes())
     get_titles_task = asyncio.create_task(db.get_material_with_notes_titles())
     get_material_types_task = asyncio.create_task(db.get_material_types())
@@ -31,14 +48,21 @@ async def get_notes(request: Request):
         get_titles_task,
         get_material_types_task
     )
-    chapters = db.get_distinct_chapters(get_notes_task.result())
+    notes = get_notes_task.result()
+
+    if query:
+        found_note_ids = await es.find_notes(query)
+        notes = _filter_notes(notes=notes, ids=found_note_ids)
+
+    chapters = db.get_distinct_chapters(notes)
 
     context = {
         'request': request,
-        'notes': get_notes_task.result(),
+        'notes': notes,
         'titles': get_titles_task.result(),
         'material_types': get_material_types_task.result(),
         'chapters': chapters,
+        'query': query,
         'DATE_FORMAT': settings.DATE_FORMAT
     }
     return templates.TemplateResponse("notes/notes.html", context)
@@ -46,7 +70,11 @@ async def get_notes(request: Request):
 
 @router.get('/material')
 async def get_material_notes(request: Request,
-                             material_id: UUID):
+                             material_id: UUID | str | None,
+                             query: str | None = None):
+    if not material_id:
+        return RedirectResponse(url=f"/notes?query={query}", )
+
     get_notes_task = asyncio.create_task(db.get_material_notes(material_id=material_id))
     get_titles_task = asyncio.create_task(db.get_material_with_notes_titles())
     get_material_types_task = asyncio.create_task(db.get_material_types())
@@ -56,15 +84,22 @@ async def get_material_notes(request: Request,
         get_titles_task,
         get_material_types_task
     )
-    chapters = db.get_distinct_chapters(get_notes_task.result())
+    notes = get_notes_task.result()
+
+    if query:
+        found_note_ids = await es.find_notes(query)
+        notes = _filter_notes(notes=notes, ids=found_note_ids)
+
+    chapters = db.get_distinct_chapters(notes)
 
     context = {
         'request': request,
-        'notes': get_notes_task.result(),
+        'notes': notes,
         'titles': get_titles_task.result(),
         'material_types': get_material_types_task.result(),
         'chapters': chapters,
         'material_id': material_id,
+        'query': query,
         'DATE_FORMAT': settings.DATE_FORMAT
     }
     return templates.TemplateResponse("notes/notes.html", context)
