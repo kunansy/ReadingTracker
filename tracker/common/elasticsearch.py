@@ -169,9 +169,11 @@ class AsyncElasticIndex:
 
         logger.info("Index deleted (status=%s): %s", status, json)
 
-    async def healthcheck(self) -> DOC:
+    async def healthcheck(self) -> bool:
+        logger.debug("Cheching elasticsearch is alive")
         url = f"{self._url}/_cluster/health"
-        status, json = None, None
+        status = None
+        json: DOC = {}
 
         try:
             status, json = await self.__get(url)
@@ -180,7 +182,7 @@ class AsyncElasticIndex:
             logger.exception(msg)
             raise ElasticsearchError(msg) from None
 
-        return json
+        return json.get('status', '') == 'green'
 
     async def get(self, doc_id: UID) -> DOC:
         url = f"{self._url}/{self.name}/_doc/{doc_id}"
