@@ -218,7 +218,7 @@ class AsyncElasticIndex:
 
         return json
 
-    async def match(self, query: str, field: str) -> list[DOC]:
+    async def match(self, query: str, field: str) -> DOC:
         url = f"{self._url}/{self.name}/_search"
         body = {
             "query": {
