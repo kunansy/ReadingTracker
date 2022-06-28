@@ -45,7 +45,7 @@ Priority is equal to the number of month since the material was read or repeated
 ## Reading log
 Here there are the reading log of the materials. The day is red if 
 there are less than average pages, green if there are more.
-![Reading log](docs/reading-log.png)
+![Reading log](docs/reading_log.png)
 
 ## Notes
 Here there are the notes, the most important info from the materials.
