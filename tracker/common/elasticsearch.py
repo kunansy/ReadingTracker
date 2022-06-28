@@ -127,19 +127,30 @@ class AsyncElasticIndex:
 
         return Response(status=status, json=json)
 
+    async def __put(self,
+                    url: str,
+                    body: DOC | None = None) -> Response:
+        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
+            try:
+                resp = await ses.put(url, json=body, headers=self._headers)
+                status, json = resp.status, await resp.json()
+                resp.raise_for_status()
+            except Exception:
+                raise
+
+        return Response(status=status, json=json)
+
     async def create_index(self) -> DOC:
         query = self._create_index_query()
         url = f"{self._url}/{self.name}"
+        status, json = None, None
 
-        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
-            try:
-                resp = await ses.put(url, json=query, headers=self._headers)
-                json, status = await resp.json(), resp.status
-                resp.raise_for_status()
-            except Exception:
-                msg = f"Error creating index ({status=}): {json=}"
-                logger.exception(msg)
-                raise ElasticsearchError(msg) from None
+        try:
+            status, json = await self.__put(url, query)
+        except Exception:
+            msg = f"Error creating index ({status=}): {json=}"
+            logger.exception(msg)
+            raise ElasticsearchError(msg) from None
 
         logger.info("Index created (status=%s): %s", status, json)
         return json
@@ -190,17 +201,15 @@ class AsyncElasticIndex:
                   doc_id: UID) -> DOC:
         """ Create or update the document """
         url = f"{self._url}/{self.name}/_doc/{doc_id}"
-        json = _serialize(doc)
+        body = _serialize(doc)
+        status, json = None, None
 
-        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
-            try:
-                resp = await ses.put(url, json=json, headers=self._headers)
-                status, json = resp.status, await resp.json()
-                resp.raise_for_status()
-            except Exception:
-                msg = f"Error adding document ({status=}): {json=}"
-                logger.exception(msg)
-                raise ElasticsearchError(msg) from None
+        try:
+            status, json = await self.__put(url, body)
+        except Exception:
+            msg = f"Error adding document ({status=}): {json=}"
+            logger.exception(msg)
+            raise ElasticsearchError(msg) from None
 
         return json
 
@@ -220,6 +229,7 @@ class AsyncElasticIndex:
 
     async def match(self, query: str, field: str) -> DOC:
         url = f"{self._url}/{self.name}/_search"
+        status, json = None, None
         body = {
             "query": {
                 "match": {
@@ -228,15 +238,12 @@ class AsyncElasticIndex:
             }
         }
 
-        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
-            try:
-                resp = await ses.put(url, json=body, headers=self._headers)
-                status, json = resp.status, await resp.json()
-                resp.raise_for_status()
-            except Exception:
-                msg = f"Error matching documents ({status=}): {json=}"
-                logger.exception(msg)
-                raise ElasticsearchError(msg) from None
+        try:
+            status, json = await self.__put(url, body)
+        except Exception:
+            msg = f"Error matching documents ({status=}): {json=}"
+            logger.exception(msg)
+            raise ElasticsearchError(msg) from None
 
         return json
 
