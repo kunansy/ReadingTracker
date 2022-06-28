@@ -224,7 +224,7 @@ class AsyncElasticIndex:
 
         return json
 
-    async def multi_match(self, query: str) -> list[DOC]:
+    async def multi_match(self, query: str) -> DOC:
         uel = f"{self._url}/{self.name}/_search"
         body = {
             "query": {
