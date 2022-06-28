@@ -170,7 +170,7 @@ class AsyncElasticIndex:
         logger.info("Index deleted (status=%s): %s", status, json)
 
     async def healthcheck(self) -> bool:
-        logger.debug("Cheching elasticsearch is alive")
+        logger.debug("Checking elasticsearch is alive")
         url = f"{self._url}/_cluster/health"
         status = None
         json: DOC = {}
