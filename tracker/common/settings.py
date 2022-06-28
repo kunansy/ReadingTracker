@@ -45,4 +45,11 @@ with env.prefixed("DRIVE_"):
     DRIVE_TOKEN_PATH = env.path("TOKEN_PATH", "data/token.json")
     DRIVE_CREDS_PATH = env.path("CREDS_PATH", "data/creds.json")
 
+with env.prefixed('ELASTIC_'):
+    ELASTIC_HOST = env("HOST", "localhost")
+    ELASTIC_PORT = env.int("PORT", 9200)
+    ELASTIC_TIMEOUT = env.int("TIMEOUT", 10)
+
+    ELASTIC_URL = f"http://{ELASTIC_HOST}:{ELASTIC_PORT}"
+
 os.environ.clear()

@@ -21,6 +21,42 @@ services:
       timeout: 5s
       retries: 3
 
+  tracker-elastic:
+    build:
+      context: .
+      dockerfile: elasticsearch/Dockerfile
+    container_name: tracker-elastic
+    command: elasticsearch
+    env_file: .env
+    restart: always
+    environment:
+      - cluster.initial_master_nodes[0]=localhost
+      - xpack.security.enabled=false
+      - ingest.geoip.downloader.enabled=false
+      - cluster.name=tracker-elastic
+      - discovery.type=single-node
+      - http.cors.enabled=true
+      - http.cors.allow-credentials=true
+      - http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
+      - http.cors.allow-origin=/https?:\/\/localhost(:[0-9]+)?/
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "0.0.0.0:9200:9200"
+      - "0.0.0.0:9300:9300"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    networks:
+      - tracker-net
+    healthcheck:
+      test: curl -s https://localhost:9200 >/dev/null; if [[ $$? == 52 ]]; then echo 0; else echo 1; fi
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   reading-tracker:
     image: kunansy/reading_tracker:2.7.1
     container_name: reading-tracker
@@ -28,6 +64,7 @@ services:
     restart: always
     depends_on:
       - tracker-db
+      - tracker-elastic
     ports:
        - "0.0.0.0:${API_PORT}:8000"
     entrypoint: ["uvicorn", "tracker.main:app", "--port", "8000", "--host", 
@@ -44,6 +81,7 @@ services:
 
 volumes:
   database-volume:
+  esdata:
 
 networks:
   tracker-net:
