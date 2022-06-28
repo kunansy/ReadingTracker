@@ -51,8 +51,8 @@ class ElasticsearchError(Exception):
 
 class AsyncElasticIndex:
     def __init__(self,
-                 table: Type) -> None:
-        self.__tuple = table
+                 tuple: Type) -> None:
+        self.__tuple = tuple
         self._url = settings.ELASTIC_URL
         self._timeout = aiohttp.ClientTimeout(settings.ELASTIC_TIMEOUT)
         self._headers = {
@@ -203,7 +203,7 @@ class AsyncElasticIndex:
         return json
 
     async def match(self, query: str, field: str) -> list[DOC]:
-        uel = f"{self._url}/{self.name}/_search"
+        url = f"{self._url}/{self.name}/_search"
         body = {
             "query": {
                 "match": {
@@ -214,7 +214,7 @@ class AsyncElasticIndex:
 
         async with aiohttp.ClientSession(timeout=self._timeout) as ses:
             try:
-                resp = await ses.put(uel, json=body, headers=self._headers)
+                resp = await ses.put(url, json=body, headers=self._headers)
                 status, json = resp.status, await resp.json()
                 resp.raise_for_status()
             except Exception:

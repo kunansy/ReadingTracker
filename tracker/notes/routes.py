@@ -73,7 +73,7 @@ async def get_material_notes(request: Request,
                              material_id: UUID | str | None,
                              query: str | None = None):
     if not material_id:
-        return RedirectResponse(url=f"/notes?query={query}", )
+        return RedirectResponse(url=f"/notes?query={query}")
 
     get_notes_task = asyncio.create_task(db.get_material_notes(material_id=material_id)) # type: ignore
     get_titles_task = asyncio.create_task(db.get_material_with_notes_titles())
