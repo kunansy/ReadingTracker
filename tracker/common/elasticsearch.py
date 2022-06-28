@@ -1,6 +1,6 @@
 import datetime
 from types import UnionType
-from typing import Any, Type
+from typing import Any, Type, NamedTuple
 from uuid import UUID
 
 import aiohttp
@@ -47,6 +47,11 @@ def _serialize(doc: DOC) -> DOC:
 
 class ElasticsearchError(Exception):
     pass
+
+
+class Response(NamedTuple):
+    status: int
+    json: DOC
 
 
 class AsyncElasticIndex:
@@ -109,6 +114,19 @@ class AsyncElasticIndex:
             **mappings,
         }
 
+    async def __get(self,
+                    url: str,
+                    query: DOC | None = None) -> Response:
+        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
+            try:
+                resp = await ses.get(url, json=query, headers=self._headers)
+                status, json = resp.status, await resp.json()
+                resp.raise_for_status()
+            except Exception:
+                raise
+
+        return Response(status=status, json=json)
+
     async def create_index(self) -> DOC:
         query = self._create_index_query()
         url = f"{self._url}/{self.name}"
@@ -142,29 +160,27 @@ class AsyncElasticIndex:
 
     async def healthcheck(self) -> DOC:
         url = f"{self._url}/_cluster/health"
-        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
-            try:
-                resp = await ses.get(url, headers=self._headers)
-                status, json = resp.status, await resp.json()
-                resp.raise_for_status()
-            except Exception:
-                msg = f"Error checking health ({status=}): {json=}"
-                logger.exception(msg)
-                raise ElasticsearchError(msg) from None
+        status, json = None, None
+
+        try:
+            status, json = await self.__get(url)
+        except Exception:
+            msg = f"Error checking health ({status=}): {json=}"
+            logger.exception(msg)
+            raise ElasticsearchError(msg) from None
 
         return json
 
     async def get(self, doc_id: UID) -> DOC:
         url = f"{self._url}/{self.name}/_doc/{doc_id}"
-        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
-            try:
-                resp = await ses.get(url, headers=self._headers)
-                status, json = resp.status, await resp.json()
-                resp.raise_for_status()
-            except Exception:
-                msg = f"Error getting document ({status=}): {json=}"
-                logger.exception(msg)
-                raise ElasticsearchError(msg) from None
+        status, json = None, None
+
+        try:
+            status, json = await self.__get(url)
+        except Exception:
+            msg = f"Error getting document ({status=}): {json=}"
+            logger.exception(msg)
+            raise ElasticsearchError(msg) from None
 
         return json
 
@@ -225,7 +241,8 @@ class AsyncElasticIndex:
         return json
 
     async def multi_match(self, query: str) -> DOC:
-        uel = f"{self._url}/{self.name}/_search"
+        url = f"{self._url}/{self.name}/_search"
+        status, json = None, None
         body = {
             "query": {
                 "multi_match": {
@@ -235,14 +252,11 @@ class AsyncElasticIndex:
             }
         }
 
-        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
-            try:
-                resp = await ses.get(uel, json=body, headers=self._headers)
-                status, json = resp.status, await resp.json()
-                resp.raise_for_status()
-            except Exception:
-                msg = f"Error matching documents ({status=}): {json=}"
-                logger.exception(msg)
-                raise ElasticsearchError(msg) from None
+        try:
+            status, json = await self.__get(url, body)
+        except Exception:
+            msg = f"Error matching documents ({status=}): {json=}"
+            logger.exception(msg)
+            raise ElasticsearchError(msg) from None
 
         return json
