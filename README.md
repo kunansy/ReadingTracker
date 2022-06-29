@@ -54,3 +54,4 @@ Here there are the notes, the most important info from the materials.
 ## System
 Here there are reading graphic, backuping and restoring from the Google Drive.
 ![System](docs/system.png)
+
