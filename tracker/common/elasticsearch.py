@@ -182,7 +182,7 @@ class AsyncElasticIndex:
             logger.exception(msg)
             raise ElasticsearchError(msg) from None
 
-        return json.get('status', '') == 'green'
+        return json.get('status', '') in ('green', 'yellow')
 
     async def get(self, doc_id: UID) -> DOC:
         url = f"{self._url}/{self.name}/_doc/{doc_id}"
