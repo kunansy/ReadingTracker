@@ -128,7 +128,8 @@ def _get_reading_materials_stmt() -> sa.Select:
         .join(models.Statuses,
               models.Materials.c.material_id == models.Statuses.c.material_id) \
         .join(reading_logs_cte,
-              reading_logs_cte.c.material_id == models.Materials.c.material_id) \
+              reading_logs_cte.c.material_id == models.Materials.c.material_id,
+              isouter=True) \
         .where(models.Statuses.c.completed_at == None) \
         .order_by(reading_logs_cte.c.date.desc())
 
