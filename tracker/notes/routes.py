@@ -192,6 +192,8 @@ async def update_note(note: schemas.UpdateNote = Depends()):
     redirect_path = router.url_path_for(update_note_view.__name__)
     redirect_url = f"{redirect_path}?note_id={note.note_id}&{success=}"
 
+    await es.create_note(note_id=note.note_id)
+
     return RedirectResponse(redirect_url, status_code=302)
 
 
