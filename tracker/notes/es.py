@@ -99,3 +99,13 @@ async def find_notes(query: str) -> set[str]:
         hint['_id']
         for hint in notes['hits']['hits']
     }
+
+
+async def create_note(*,
+                      note_id: UUID) -> None:
+    logger.debug("Creating note '%s' in elastic", note_id)
+
+    note = await _get_note(note_id=note_id)
+    await index.add(doc=note._asdict(), doc_id=note.note_id)
+
+    logger.debug("Note '%s' created in elastic", note_id)
