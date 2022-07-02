@@ -1,5 +1,6 @@
 import datetime
 from typing import NamedTuple
+from uuid import UUID
 
 import sqlalchemy.sql as sa
 
@@ -51,6 +52,17 @@ async def _get_notes() -> list[Note]:
             Note(**row)
             for row in await ses.execute(stmt)
         ]
+
+
+async def _get_note(*,
+                    note_id: UUID) -> Note:
+    stmt = _get_note_stmt() \
+        .where(models.Notes.c.note_id == str(note_id))
+
+    async with database.session() as ses:
+        if note := (await ses.execute(stmt)).one():
+            return Note(**note)
+    raise ValueError(f'Note {note_id} not found')
 
 
 async def migrate_notes() -> None:
