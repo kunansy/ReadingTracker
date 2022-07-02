@@ -141,6 +141,8 @@ async def add_note(note: schemas.Note = Depends()):
     if material_type := await db.get_material_type(material_id=note.material_id):
         response.set_cookie('material_type', material_type, expires=5)
 
+    await es.create_note(note_id=note_id)
+
     return response
 
 
