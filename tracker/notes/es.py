@@ -1,5 +1,6 @@
 import datetime
 from typing import NamedTuple
+from uuid import UUID
 
 import sqlalchemy.sql as sa
 
@@ -27,8 +28,8 @@ class Note(NamedTuple):
 index = AsyncElasticIndex(Note)
 
 
-async def _get_notes() -> list[Note]:
-    stmt = sa.select([models.Notes.c.note_id,
+def _get_note_stmt() -> sa.Select:
+    return sa.select([models.Notes.c.note_id,
                       models.Notes.c.material_id,
                       models.Notes.c.content,
                       models.Notes.c.chapter,
@@ -38,15 +39,30 @@ async def _get_notes() -> list[Note]:
                       models.Materials.c.authors.label('material_authors'),
                       models.Materials.c.material_type.label('material_type'),
                       models.Materials.c.tags.label('material_tags'),
-                      models.Materials.c.link.label('material_link')])\
+                      models.Materials.c.link.label('material_link')]) \
         .join(models.Materials,
               models.Materials.c.material_id == models.Notes.c.material_id)
+
+
+async def _get_notes() -> list[Note]:
+    stmt = _get_note_stmt()
 
     async with database.session() as ses:
         return [
             Note(**row)
             for row in await ses.execute(stmt)
         ]
+
+
+async def _get_note(*,
+                    note_id: UUID) -> Note:
+    stmt = _get_note_stmt() \
+        .where(models.Notes.c.note_id == str(note_id))
+
+    async with database.session() as ses:
+        if note := (await ses.execute(stmt)).one():
+            return Note(**note)
+    raise ValueError(f'Note {note_id} not found')
 
 
 async def migrate_notes() -> None:
@@ -83,3 +99,13 @@ async def find_notes(query: str) -> set[str]:
         hint['_id']
         for hint in notes['hits']['hits']
     }
+
+
+async def create_note(*,
+                      note_id: UUID) -> None:
+    logger.debug("Creating note '%s' in elastic", note_id)
+
+    note = await _get_note(note_id=note_id)
+    await index.add(doc=note._asdict(), doc_id=note.note_id)
+
+    logger.debug("Note '%s' created in elastic", note_id)

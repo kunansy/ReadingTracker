@@ -141,6 +141,8 @@ async def add_note(note: schemas.Note = Depends()):
     if material_type := await db.get_material_type(material_id=note.material_id):
         response.set_cookie('material_type', material_type, expires=5)
 
+    await es.create_note(note_id=note_id)
+
     return response
 
 
@@ -190,6 +192,8 @@ async def update_note(note: schemas.UpdateNote = Depends()):
     redirect_path = router.url_path_for(update_note_view.__name__)
     redirect_url = f"{redirect_path}?note_id={note.note_id}&{success=}"
 
+    await es.create_note(note_id=note.note_id)
+
     return RedirectResponse(redirect_url, status_code=302)
 
 
@@ -200,5 +204,7 @@ async def delete_note(note: schemas.DeleteNote = Depends()):
 
     redirect_path = router.url_path_for(get_material_notes.__name__)
     redirect_url = f"{redirect_path}?material_id={note.material_id}"
+
+    await es.index.delete(doc_id=note.note_id)
 
     return RedirectResponse(redirect_url, status_code=302)
