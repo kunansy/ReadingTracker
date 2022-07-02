@@ -27,8 +27,8 @@ class Note(NamedTuple):
 index = AsyncElasticIndex(Note)
 
 
-async def _get_notes() -> list[Note]:
-    stmt = sa.select([models.Notes.c.note_id,
+def _get_note_stmt() -> sa.Select:
+    return sa.select([models.Notes.c.note_id,
                       models.Notes.c.material_id,
                       models.Notes.c.content,
                       models.Notes.c.chapter,
@@ -38,9 +38,13 @@ async def _get_notes() -> list[Note]:
                       models.Materials.c.authors.label('material_authors'),
                       models.Materials.c.material_type.label('material_type'),
                       models.Materials.c.tags.label('material_tags'),
-                      models.Materials.c.link.label('material_link')])\
+                      models.Materials.c.link.label('material_link')]) \
         .join(models.Materials,
               models.Materials.c.material_id == models.Notes.c.material_id)
+
+
+async def _get_notes() -> list[Note]:
+    stmt = _get_note_stmt()
 
     async with database.session() as ses:
         return [
