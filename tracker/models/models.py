@@ -64,7 +64,9 @@ ReadingLog = Table(
     PrimaryKey('log_id'),
     Column('material_id', ForeignKey('materials.material_id'), index=True),
     Column('count', Integer),
-    Column('date', Date, default=_utc_now, unique=True)
+    Column('date', Date, default=_utc_now, unique=True),
+
+    UniqueConstraint('material_id', 'date', name='uix_reading_log')
 )
 
 Statuses = Table(
