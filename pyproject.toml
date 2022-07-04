@@ -7,7 +7,7 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-ujson = "~5.3.0"
+ujson = "~5.4.0"
 SQLAlchemy = "~1.4.25"
 pydantic = "~1.9.0"
 environs = "~9.5.0"

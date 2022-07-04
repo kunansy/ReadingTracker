@@ -6,3 +6,4 @@ class MaterialTypesEnum(str, Enum):
     article = 'article'
     course = 'course'
     lecture = 'lecture'
+    audiobook = 'audiobook'
