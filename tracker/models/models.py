@@ -2,7 +2,7 @@ import datetime
 import uuid
 
 import sqlalchemy
-from sqlalchemy import Date, DateTime, Integer, MetaData, Table, Unicode, Boolean, Enum
+from sqlalchemy import Date, DateTime, Integer, MetaData, Table, Unicode, Boolean, Enum, UniqueConstraint
 from sqlalchemy.dialects.postgresql import UUID
 
 from tracker.models import enums
@@ -52,7 +52,9 @@ Materials = Table(
     Column('tags', Unicode(256), nullable=True),
     Column('link', Unicode(2048), nullable=True),
     Column('added_at', DateTime, default=_utc_now),
-    Column('is_outlined', Boolean, default=False)
+    Column('is_outlined', Boolean, default=False),
+
+    UniqueConstraint('title', 'material_type', name='uix_material')
 )
 
 ReadingLog = Table(
@@ -62,7 +64,9 @@ ReadingLog = Table(
     PrimaryKey('log_id'),
     Column('material_id', ForeignKey('materials.material_id'), index=True),
     Column('count', Integer),
-    Column('date', Date, default=_utc_now, unique=True)
+    Column('date', Date, default=_utc_now, unique=True),
+
+    UniqueConstraint('material_id', 'date', name='uix_reading_log')
 )
 
 Statuses = Table(
