@@ -38,10 +38,13 @@ def _filter_notes(*,
 
 @router.get('/')
 async def get_notes(request: Request,
+                    material_id: UUID | str | None = None,
                     query: str | None = None):
     get_notes_task = asyncio.create_task(db.get_notes())
     get_titles_task = asyncio.create_task(db.get_material_with_notes_titles())
     get_material_types_task = asyncio.create_task(db.get_material_types())
+    if material_id:
+        get_notes_task = asyncio.create_task(db.get_material_notes(material_id=material_id))
 
     await asyncio.gather(
         get_notes_task,
@@ -65,43 +68,9 @@ async def get_notes(request: Request,
         'query': query,
         'DATE_FORMAT': settings.DATE_FORMAT
     }
-    return templates.TemplateResponse("notes/notes.html", context)
+    if material_id:
+        context['material_id'] = material_id
 
-
-@router.get('/material')
-async def get_material_notes(request: Request,
-                             material_id: UUID | str | None,
-                             query: str | None = None):
-    if not material_id:
-        return RedirectResponse(url=f"/notes?query={query}")
-
-    get_notes_task = asyncio.create_task(db.get_material_notes(material_id=material_id)) # type: ignore
-    get_titles_task = asyncio.create_task(db.get_material_with_notes_titles())
-    get_material_types_task = asyncio.create_task(db.get_material_types())
-
-    await asyncio.gather(
-        get_notes_task,
-        get_titles_task,
-        get_material_types_task
-    )
-    notes = get_notes_task.result()
-
-    if query:
-        found_note_ids = await es.find_notes(query)
-        notes = _filter_notes(notes=notes, ids=found_note_ids)
-
-    chapters = db.get_distinct_chapters(notes)
-
-    context = {
-        'request': request,
-        'notes': notes,
-        'titles': get_titles_task.result(),
-        'material_types': get_material_types_task.result(),
-        'chapters': chapters,
-        'material_id': material_id,
-        'query': query,
-        'DATE_FORMAT': settings.DATE_FORMAT
-    }
     return templates.TemplateResponse("notes/notes.html", context)
 
 
@@ -202,7 +171,7 @@ async def update_note(note: schemas.UpdateNote = Depends()):
 async def delete_note(note: schemas.DeleteNote = Depends()):
     await db.delete_note(note_id=note.note_id)
 
-    redirect_path = router.url_path_for(get_material_notes.__name__)
+    redirect_path = router.url_path_for(get_notes.__name__)
     redirect_url = f"{redirect_path}?material_id={note.material_id}"
 
     await es.index.delete(doc_id=note.note_id)
