@@ -97,7 +97,7 @@ async def get_notes() -> list[Note]:
 
 
 async def get_material_notes(*,
-                             material_id: UUID) -> list[Note]:
+                             material_id: UUID | str) -> list[Note]:
     logger.debug("Getting material_id='%s' notes", material_id)
 
     stmt = sa.select(models.Notes) \
