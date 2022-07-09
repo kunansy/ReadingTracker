@@ -171,7 +171,7 @@ async def update_note(note: schemas.UpdateNote = Depends()):
 async def delete_note(note: schemas.DeleteNote = Depends()):
     await db.delete_note(note_id=note.note_id)
 
-    redirect_path = router.url_path_for(get_material_notes.__name__)
+    redirect_path = router.url_path_for(get_notes.__name__)
     redirect_url = f"{redirect_path}?material_id={note.material_id}"
 
     await es.index.delete(doc_id=note.note_id)
