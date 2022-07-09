@@ -14,7 +14,7 @@
 {% block main %}
 {% if titles %}
     <div class="form">
-        <form action="/notes/material" method="GET">
+        <form action="/notes" method="GET">
             <input class="input" list="books" name="material_id" value="{{ material_id or '' }}" placeholder="Choose a material">
             <input class="input" name="query" value="{{ query or '' }}" placeholder="Enter a query">
             <datalist id="books">
