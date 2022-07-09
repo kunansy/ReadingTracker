@@ -38,10 +38,13 @@ def _filter_notes(*,
 
 @router.get('/')
 async def get_notes(request: Request,
+                    material_id: UUID | str | None = None,
                     query: str | None = None):
     get_notes_task = asyncio.create_task(db.get_notes())
     get_titles_task = asyncio.create_task(db.get_material_with_notes_titles())
     get_material_types_task = asyncio.create_task(db.get_material_types())
+    if material_id:
+        get_notes_task = asyncio.create_task(db.get_material_notes(material_id=material_id))
 
     await asyncio.gather(
         get_notes_task,
@@ -65,6 +68,9 @@ async def get_notes(request: Request,
         'query': query,
         'DATE_FORMAT': settings.DATE_FORMAT
     }
+    if material_id:
+        context['material_id'] = material_id
+
     return templates.TemplateResponse("notes/notes.html", context)
 
 
