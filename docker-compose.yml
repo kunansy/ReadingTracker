@@ -22,9 +22,7 @@ services:
       retries: 3
 
   tracker-elastic:
-    build:
-      context: .
-      dockerfile: elasticsearch/Dockerfile
+    image: kunansy/tracker_elastic:8.2.3
     container_name: tracker-elastic
     command: elasticsearch
     env_file: .env
