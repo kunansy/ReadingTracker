@@ -117,7 +117,7 @@ def _contains_letter(value: str) -> bool:
 
 
 def _convert_str_to_date(value: JSON_FIELD_TYPES) -> JSON_FIELD_TYPES | DATE_TYPES:
-    if not isinstance(value, str) or _is_uid(value) or _contains_letter(value):
+    if not isinstance(value, str) or _is_uid(value) or _contains_letter(value) or not value:
         return value
 
     try:
