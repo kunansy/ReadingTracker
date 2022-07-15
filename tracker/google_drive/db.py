@@ -130,7 +130,7 @@ def _convert_str_to_date(value: JSON_FIELD_TYPES) -> JSON_FIELD_TYPES | DATE_TYP
     except Exception:
         pass
 
-    raise ValueError("Invalid date format")
+    raise ValueError(f"Invalid date format: {value!r}")
 
 
 def _read_json_file(filepath: Path) -> dict[str, list[dict[str, str | int]]]:
