@@ -4,6 +4,12 @@
 <link rel="stylesheet" href="{{ url_for('static', path='materials/repeating_queue.css') }}">
 {% endblock style %}
 
+{%- block header -%}
+    {% from 'submenu.html' import submenu %}
+    {% call submenu(('Queue', '/materials/queue'), ('Reading', '/materials/reading'), ('Completed', '/materials/completed'), ('Repeat', '/materials/repeat-view'), ('Add material', '/materials/add-view')) %}
+    {% endcall %}
+{%- endblock header -%}
+
 {% block main %}
 {% if repeating_queue %}
     {% for repeat in repeating_queue | sort(attribute='priority_months', reverse=True) %}

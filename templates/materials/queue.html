@@ -7,7 +7,7 @@
 
 {%- block header -%}
     {% from 'submenu.html' import submenu %}
-    {% call submenu(('Queue', '/materials/queue'), ('Add material', '/materials/add-view')) %}
+    {% call submenu(('Queue', '/materials/queue'), ('Reading', '/materials/reading'), ('Completed', '/materials/completed'), ('Repeat', '/materials/repeat-view'), ('Add material', '/materials/add-view')) %}
     {% endcall %}
 {%- endblock header -%}
 
