@@ -100,8 +100,10 @@ def _calculate_trend(*,
                      current_week_value: Decimal,
                      current_week: WeekBoard,
                      last_week: WeekBoard) -> Trend:
-    trend = (current_week_value - last_week_value) / last_week_value
-    trend_percent: Decimal = round(trend * 100, 2) # type: ignore
+    trend_percent = Decimal(0)
+    if last_week_value:
+        trend = (current_week_value - last_week_value) / last_week_value
+        trend_percent: Decimal = round(trend * 100, 2) # type: ignore
 
     return Trend(
         current_week=current_week,
