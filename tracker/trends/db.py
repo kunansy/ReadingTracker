@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 from dataclasses import dataclass
 from decimal import Decimal
@@ -95,33 +94,6 @@ class WeekBorder:
                f"{self.stop.strftime(settings.DATE_FORMAT)}]"
 
 
-class Trend(NamedTuple):
-    last_week: WeekBorder
-    current_week: WeekBorder
-    last_week_value: Decimal
-    current_week_value: Decimal
-    trend: Decimal
-
-    @property
-    def weeks(self) -> list[str]:
-        return [
-            self.last_week.format(),
-            self.current_week.format()
-        ]
-
-    @property
-    def values(self) -> list[Decimal]:
-        return [
-            self.last_week_value,
-            self.current_week_value
-        ]
-
-    def __str__(self) -> str:
-        return f"{self.last_week}: {self.last_week_value}\n" \
-               f"{self.current_week}: {self.current_week_value}\n" \
-               f"Trend: {self.trend}"
-
-
 def _iterate_over_week(week: WeekBorder) -> Generator[datetime.date, None, None]:
     start = week.start
     for day in range(7):
@@ -195,16 +167,6 @@ async def get_week_notes_statistics() -> WeekStatistics:
     return _get_week_statistics(statistics=statistics, week=week)
 
 
-def _get_last_week_range() -> WeekBorder:
-    now = datetime.date.today()
-    weekday = now.weekday()
-
-    start = now - datetime.timedelta(days=weekday + 7)
-    stop = start + datetime.timedelta(days=weekday)
-
-    return WeekBorder(start=start, stop=stop)
-
-
 def _get_current_week_range() -> WeekBorder:
     now = datetime.date.today()
     weekday = now.weekday()
@@ -212,96 +174,3 @@ def _get_current_week_range() -> WeekBorder:
     start = now - datetime.timedelta(days=weekday)
 
     return WeekBorder(start=start, stop=now)
-
-
-async def _get_week_read_pages(week: WeekBorder) -> Decimal:
-    logger.debug("Getting week='%s' read pages", week)
-    start, stop = week
-
-    stmt = sa.select(sa.func.sum(models.ReadingLog.c.count)) \
-        .where(sa.func.date(models.ReadingLog.c.date) >= start) \
-        .where(sa.func.date(models.ReadingLog.c.date) <= stop)
-
-    async with database.session() as ses:
-        value = await ses.scalar(stmt) or 0
-
-    logger.debug("Week='%s' read pages got", week)
-    return Decimal(value)
-
-
-async def _get_week_inserted_notes(week: WeekBorder) -> Decimal:
-    logger.debug("Getting week='%s' inserted notes count", week)
-    start, stop = week
-
-    stmt = sa.select(sa.func.count(models.Notes.c.note_id)) \
-        .where(sa.func.date(models.Notes.c.added_at) >= start) \
-        .where(sa.func.date(models.Notes.c.added_at) <= stop)
-
-    async with database.session() as ses:
-        value = await ses.scalar(stmt) or 0
-
-    logger.debug("Week='%s' inserted notes count got", week)
-    return Decimal(value)
-
-
-def _calculate_trend(*,
-                     last_week_value: Decimal,
-                     current_week_value: Decimal,
-                     current_week: WeekBorder,
-                     last_week: WeekBorder) -> Trend:
-    trend_percent = Decimal(0)
-    if last_week_value:
-        trend = (current_week_value - last_week_value) / last_week_value
-        trend_percent: Decimal = round(trend * 100, 2) # type: ignore
-
-    return Trend(
-        current_week=current_week,
-        last_week=last_week,
-        last_week_value=last_week_value,
-        current_week_value=current_week_value,
-        trend=trend_percent
-    )
-
-
-async def get_read_pages_trend() -> Trend:
-    logger.info("Getting read pages trend")
-
-    last_week, current_week = _get_last_week_range(), _get_current_week_range()
-
-    last_week_read_pages_task = asyncio.create_task(_get_week_read_pages(last_week))
-    current_week_read_pages_task = asyncio.create_task(_get_week_read_pages(current_week))
-
-    await last_week_read_pages_task
-    await current_week_read_pages_task
-
-    trend = _calculate_trend(
-        last_week_value=last_week_read_pages_task.result(),
-        current_week_value=current_week_read_pages_task.result(),
-        current_week=current_week,
-        last_week=last_week
-    )
-
-    logger.info("Reading pages trend got")
-    return trend
-
-
-async def get_inserted_notes_trend() -> Trend:
-    logger.info("Getting inserted notes trend")
-
-    last_week, current_week = _get_last_week_range(), _get_current_week_range()
-
-    last_week_inserted_notes_task = asyncio.create_task(_get_week_inserted_notes(last_week))
-    current_week_inserted_notes_task = asyncio.create_task(_get_week_inserted_notes(current_week))
-
-    await last_week_inserted_notes_task
-    await current_week_inserted_notes_task
-
-    trend = _calculate_trend(
-        last_week_value=last_week_inserted_notes_task.result(),
-        current_week_value=current_week_inserted_notes_task.result(),
-        current_week=current_week,
-        last_week=last_week
-    )
-
-    logger.info("Inserted notes trend got")
-    return trend
