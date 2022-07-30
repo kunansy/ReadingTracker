@@ -154,23 +154,21 @@ def _get_week_statistics(*,
 
 
 async def get_week_reading_statistics() -> WeekStatistics:
-    week = _get_current_week_range()
+    week = _get_week_range()
     statistics = await _calculate_week_reading_statistics(week=week)
 
     return _get_week_statistics(statistics=statistics, week=week)
 
 
 async def get_week_notes_statistics() -> WeekStatistics:
-    week = _get_current_week_range()
+    week = _get_week_range()
     statistics = await _calculate_week_notes_statistics(week=week)
 
     return _get_week_statistics(statistics=statistics, week=week)
 
 
-def _get_current_week_range() -> WeekBorder:
+def _get_week_range() -> WeekBorder:
     now = datetime.date.today()
-    weekday = now.weekday()
-
-    start = now - datetime.timedelta(days=weekday)
+    start = now - datetime.timedelta(days=7)
 
     return WeekBorder(start=start, stop=now)
