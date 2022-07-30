@@ -74,7 +74,7 @@ async def _get_week_read_pages(week: WeekBoard) -> Decimal:
         .where(sa.func.date(models.ReadingLog.c.date) <= stop)
 
     async with database.session() as ses:
-        value = await ses.scalar(stmt)
+        value = await ses.scalar(stmt) or 0
 
     logger.debug("Week='%s' read pages got", week)
     return Decimal(value)
@@ -89,7 +89,7 @@ async def _get_week_inserted_notes(week: WeekBoard) -> Decimal:
         .where(sa.func.date(models.Notes.c.added_at) <= stop)
 
     async with database.session() as ses:
-        value = await ses.scalar(stmt)
+        value = await ses.scalar(stmt) or 0
 
     logger.debug("Week='%s' inserted notes count got", week)
     return Decimal(value)
