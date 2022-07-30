@@ -54,6 +54,20 @@ class WeekStatistics:
         return self.data[-1].date
 
     @property
+    def days(self) -> list[str]:
+        return [
+            day.format()
+            for day in self.data
+        ]
+
+    @property
+    def values(self) -> list[int]:
+        return [
+            day.amount
+            for day in self.data
+        ]
+
+    @property
     def average(self) -> Decimal:
         return Decimal(self.total) / 7
 
