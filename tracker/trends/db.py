@@ -7,12 +7,16 @@ import sqlalchemy.sql as sa
 
 from tracker.common.log import logger
 from tracker.models import models
-from tracker.common import database
+from tracker.common import database, settings
 
 
 class WeekBoard(NamedTuple):
     start: datetime.date
     stop: datetime.date
+
+    def format(self) -> str:
+        return f"{self.start.strftime(settings.DATE_FORMAT)}_" \
+               f"{self.stop.strftime(settings.DATE_FORMAT)}"
 
 
 class Trend(NamedTuple):
