@@ -217,9 +217,12 @@ def _create_graphic(*,
     bar = ax.barh(statistics.days, statistics.values, edgecolor="white")
     ax.bar_label(bar)
 
+    xlim = -0.5, int(statistics.max.amount * 0.2) or 100
+
     ax.set_title(title)
     ax.set_xlabel('Items count')
     ax.set_ylabel('Date')
+    ax.set_xlim(xlim)
     plt.gca().invert_yaxis()
 
     tmpbuf = BytesIO()
