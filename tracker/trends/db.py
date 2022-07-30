@@ -27,7 +27,7 @@ class DayStatistics(NamedTuple):
 class WeekStatistics:
     data: list[DayStatistics]
 
-    def __init__(self, days: Sequence[Sequence[datetime.date, int]]) -> None:
+    def __init__(self, days: Sequence[tuple[datetime.date, int]]) -> None:
         if len(days) != 7:
             raise TrendException(
                 f"A week should contains exactly 7 days, but {len(days)} found")
