@@ -92,7 +92,8 @@ class WeekBorder:
     def __init__(self,
                  start: datetime.date,
                  stop: datetime.date) -> None:
-        if (stop - start).days != 7:
+        # 6 because the border is included to the rnge
+        if (stop - start).days != 6:
             raise TrendException(f"Wrong week got: [{start}; {stop}]")
 
         self.start = start
@@ -182,6 +183,6 @@ async def get_week_notes_statistics() -> WeekStatistics:
 
 def _get_week_range() -> WeekBorder:
     now = datetime.date.today()
-    start = now - datetime.timedelta(days=7)
+    start = now - datetime.timedelta(days=6)
 
     return WeekBorder(start=start, stop=now)
