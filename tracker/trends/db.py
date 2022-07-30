@@ -108,6 +108,13 @@ class WeekBorder:
                f"{self.stop.strftime(settings.DATE_FORMAT)}]"
 
 
+def _get_week_range() -> WeekBorder:
+    now = datetime.date.today()
+    start = now - datetime.timedelta(days=6)
+
+    return WeekBorder(start=start, stop=now)
+
+
 def _iterate_over_week(week: WeekBorder) -> Generator[datetime.date, None, None]:
     start = week.start
     for day in range(7):
@@ -179,10 +186,3 @@ async def get_week_notes_statistics() -> WeekStatistics:
     statistics = await _calculate_week_notes_statistics(week=week)
 
     return _get_week_statistics(statistics=statistics, week=week)
-
-
-def _get_week_range() -> WeekBorder:
-    now = datetime.date.today()
-    start = now - datetime.timedelta(days=6)
-
-    return WeekBorder(start=start, stop=now)
