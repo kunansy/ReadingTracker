@@ -20,7 +20,8 @@ class WeekBoard(NamedTuple):
 
 
 class Trend(NamedTuple):
-    week: WeekBoard
+    last_week: WeekBoard
+    current_week: WeekBoard
     last_week_value: Decimal
     current_week_value: Decimal
     trend: Decimal
@@ -78,12 +79,14 @@ async def _get_week_inserted_notes(week: WeekBoard) -> Decimal:
 def _calculate_trend(*,
                      last_week_value: Decimal,
                      current_week_value: Decimal,
-                     week: WeekBoard) -> Trend:
+                     current_week: WeekBoard,
+                     last_week: WeekBoard) -> Trend:
     trend = (current_week_value - last_week_value) / last_week_value
     trend_percent: Decimal = round(trend * 100, 2) # type: ignore
 
     return Trend(
-        week=week,
+        current_week=current_week,
+        last_week=last_week,
         last_week_value=last_week_value,
         current_week_value=current_week_value,
         trend=trend_percent
@@ -104,7 +107,8 @@ async def get_read_pages_trend() -> Trend:
     trend = _calculate_trend(
         last_week_value=last_week_read_pages_task.result(),
         current_week_value=current_week_read_pages_task.result(),
-        week=current_week
+        current_week=current_week,
+        last_week=last_week
     )
 
     logger.info("Reading pages trend got")
@@ -125,7 +129,8 @@ async def get_inserted_notes_trend() -> Trend:
     trend = _calculate_trend(
         last_week_value=last_week_inserted_notes_task.result(),
         current_week_value=current_week_inserted_notes_task.result(),
-        week=current_week
+        current_week=current_week,
+        last_week=last_week
     )
 
     logger.info("Inserted notes trend got")
