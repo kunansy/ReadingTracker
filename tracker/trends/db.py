@@ -10,7 +10,7 @@ from tracker.models import models
 from tracker.common import database, settings
 
 
-class WeekBoard(NamedTuple):
+class WeekBorder(NamedTuple):
     start: datetime.date
     stop: datetime.date
 
@@ -24,8 +24,8 @@ class WeekBoard(NamedTuple):
 
 
 class Trend(NamedTuple):
-    last_week: WeekBoard
-    current_week: WeekBoard
+    last_week: WeekBorder
+    current_week: WeekBorder
     last_week_value: Decimal
     current_week_value: Decimal
     trend: Decimal
@@ -50,26 +50,26 @@ class Trend(NamedTuple):
                f"Trend: {self.trend}"
 
 
-def _get_last_week_range() -> WeekBoard:
+def _get_last_week_range() -> WeekBorder:
     now = datetime.date.today()
     weekday = now.weekday()
 
     start = now - datetime.timedelta(days=weekday + 7)
     stop = start + datetime.timedelta(days=weekday)
 
-    return WeekBoard(start=start, stop=stop)
+    return WeekBorder(start=start, stop=stop)
 
 
-def _get_current_week_range() -> WeekBoard:
+def _get_current_week_range() -> WeekBorder:
     now = datetime.date.today()
     weekday = now.weekday()
 
     start = now - datetime.timedelta(days=weekday)
 
-    return WeekBoard(start=start, stop=now)
+    return WeekBorder(start=start, stop=now)
 
 
-async def _get_week_read_pages(week: WeekBoard) -> Decimal:
+async def _get_week_read_pages(week: WeekBorder) -> Decimal:
     logger.debug("Getting week='%s' read pages", week)
     start, stop = week
 
@@ -84,7 +84,7 @@ async def _get_week_read_pages(week: WeekBoard) -> Decimal:
     return Decimal(value)
 
 
-async def _get_week_inserted_notes(week: WeekBoard) -> Decimal:
+async def _get_week_inserted_notes(week: WeekBorder) -> Decimal:
     logger.debug("Getting week='%s' inserted notes count", week)
     start, stop = week
 
@@ -102,8 +102,8 @@ async def _get_week_inserted_notes(week: WeekBoard) -> Decimal:
 def _calculate_trend(*,
                      last_week_value: Decimal,
                      current_week_value: Decimal,
-                     current_week: WeekBoard,
-                     last_week: WeekBoard) -> Trend:
+                     current_week: WeekBorder,
+                     last_week: WeekBorder) -> Trend:
     trend_percent = Decimal(0)
     if last_week_value:
         trend = (current_week_value - last_week_value) / last_week_value
