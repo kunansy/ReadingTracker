@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 from uuid import UUID
 
@@ -9,7 +10,7 @@ from pydantic import conint
 from tracker.common.log import logger
 from tracker.google_drive import main as drive_api
 from tracker.system import db
-
+from tracker.trends import trends
 
 router = APIRouter(
     prefix="/system",
@@ -41,19 +42,35 @@ async def graphic(request: Request,
         context['what'] = "No material found to show"
         return templates.TemplateResponse("errors/404.html", context)
 
-    graphic_image = await db.create_reading_graphic(
+    reading_trend = await trends.get_week_reading_statistics()
+    notes_trend = await trends.get_week_notes_statistics()
+
+    graphic_image_task = asyncio.create_task(db.create_reading_graphic(
         material_id=material_id,
         last_days=last_days
-    )
+    ))
+    reading_trend_graphic_task = asyncio.create_task(
+        trends.create_reading_graphic(reading_trend))
+    notes_trend_graphic_task = asyncio.create_task(
+        trends.create_notes_graphic(notes_trend))
+    titles_task = asyncio.create_task(
+        db.get_read_material_titles())
 
-    titles = await db.get_read_material_titles()
+    await graphic_image_task
+    await reading_trend_graphic_task
+    await notes_trend_graphic_task
+    await titles_task
 
     context = {
         **context,
         'material_id': material_id,
         'last_days': last_days,
-        'graphic_image': graphic_image,
-        'titles': titles
+        'graphic_image': graphic_image_task.result(),
+        'reading_trend': reading_trend,
+        'notes_trend': notes_trend,
+        'reading_trend_image': reading_trend_graphic_task.result(),
+        'notes_trend_image': notes_trend_graphic_task.result(),
+        'titles': titles_task.result()
     }
 
     return templates.TemplateResponse("system/graphic.html", context)
