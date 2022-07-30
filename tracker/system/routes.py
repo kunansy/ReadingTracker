@@ -8,7 +8,6 @@ from pydantic import conint
 
 from tracker.common.log import logger
 from tracker.google_drive import main as drive_api
-from tracker.reading_log import db as reading_log_db
 from tracker.system import db
 
 
@@ -24,7 +23,7 @@ templates = Jinja2Templates(directory="templates")
             response_class=RedirectResponse)
 async def system_view():
     redirect_path = router.url_path_for(graphic.__name__)
-    material_id = await reading_log_db.get_material_reading_now()
+    material_id = await db.get_material_reading_now()
 
     redirect_url = f"{redirect_path}?material_id={material_id}"
     return RedirectResponse(redirect_url, status_code=302)
@@ -38,7 +37,7 @@ async def graphic(request: Request,
         'request': request,
     }
 
-    if (material_id := material_id or await reading_log_db.get_material_reading_now()) is None:
+    if (material_id := material_id or await db.get_material_reading_now()) is None:
         context['what'] = "No material found to show"
         return templates.TemplateResponse("errors/404.html", context)
 

@@ -51,6 +51,10 @@ async def get_read_material_titles() -> dict[UUID, str]:
         }
 
 
+async def get_material_reading_now() -> UUID | None:
+    return await reading_log_db.get_material_reading_now()
+
+
 async def create_reading_graphic(*,
                                  material_id: UUID,
                                  last_days: int = 14) -> str:
