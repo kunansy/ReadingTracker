@@ -18,6 +18,9 @@ class DayStatistics(NamedTuple):
     date: datetime.date
     amount: int
 
+    def format(self) -> str:
+        return self.date.strftime(settings.DATE_FORMAT)
+
     def __str__(self) -> str:
         return f"{self.date.strftime(settings.DATE_FORMAT)}: {self.amount}"
 
