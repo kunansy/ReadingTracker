@@ -52,23 +52,33 @@ class WeekStatistics:
 
     @property
     def average(self) -> Decimal:
-        pass
+        return Decimal(self.total) / 7
 
     @property
     def median(self) -> int:
-        pass
+        sorted_days = sorted(self.data, key=lambda day: day.amount)
+        return sorted_days[3].amount
 
     @property
     def total(self) -> int:
-        pass
+        return sum(
+            day.amount
+            for day in self.data
+        )
 
     @property
     def max(self) -> DayStatistics:
-        pass
+        return max(
+            self.data,
+            key=lambda day: day.amount
+        )
 
     @property
     def min(self) -> DayStatistics:
-        pass
+        return min(
+            self.data,
+            key=lambda day: day.amount
+        )
 
 
 @dataclass
