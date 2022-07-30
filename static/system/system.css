@@ -1,7 +1,8 @@
 div.graphic-image {
     display: flex;
-    margin: auto;
+    margin: auto auto 1vh;
     flex-direction: column;
+    padding: 0;
 }
 
 div.statistics {
@@ -16,5 +17,10 @@ div.status {
 }
 
 div.status > p {
+    margin: auto;
+}
+
+h3.header {
+    display: flex;
     margin: auto;
 }
