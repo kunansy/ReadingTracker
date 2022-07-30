@@ -1,13 +1,54 @@
 import asyncio
 import datetime
 from decimal import Decimal
-from typing import NamedTuple
+from typing import NamedTuple, Sequence, Generator
 
 import sqlalchemy.sql as sa
 
 from tracker.common.log import logger
 from tracker.models import models
 from tracker.common import database, settings
+
+
+class TrendException(database.DatabaseError):
+    pass
+
+
+class DayStatistics(NamedTuple):
+    date: datetime.date
+    amount: int
+
+    def __str__(self) -> str:
+        return f"{self.date.strftime(settings.DATE_FORMAT)}: {self.amount}"
+
+
+@dataclass
+class WeekStatistics:
+    data: list[DayStatistics]
+
+    def __init__(self, days: Sequence[Sequence[datetime.date, int]]) -> None:
+        if len(days) != 7:
+            raise TrendException(
+                f"A week should contains exactly 7 days, but {len(days)} found")
+
+        self.data = [
+            DayStatistics(date=date, amount=amount)
+            for date, amount in days
+        ]
+
+    @property
+    def start(self) -> datetime.date:
+        if not self.data:
+            raise TrendException("Week statistics is empty")
+
+        return self.data[0].date
+
+    @property
+    def stop(self) -> datetime.date:
+        if not self.data:
+            raise TrendException("Week statistics is empty")
+
+        return self.data[-1].date
 
 
 class WeekBorder(NamedTuple):
