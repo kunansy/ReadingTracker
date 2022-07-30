@@ -231,20 +231,20 @@ def _create_graphic(*,
     return image
 
 
-async def create_reading_graphic() -> str:
+async def create_reading_graphic(statistics: WeekStatistics | None = None) -> str:
     logger.info("Creating reading graphic")
 
-    statistics = await get_week_reading_statistics()
+    statistics = statistics or await get_week_reading_statistics()
     return _create_graphic(
         statistics=statistics,
         title='Total pages read'
     )
 
 
-async def create_notes_graphic() -> str:
+async def create_notes_graphic(statistics: WeekStatistics | None = None) -> str:
     logger.info("Creating notes graphic")
 
-    statistics = await get_week_notes_statistics()
+    statistics = statistics or await get_week_notes_statistics()
     return _create_graphic(
         statistics=statistics,
         title='Total notes inserted'
