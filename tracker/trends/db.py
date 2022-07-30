@@ -122,6 +122,79 @@ class Trend(NamedTuple):
                f"Trend: {self.trend}"
 
 
+def _iterate_over_week(week: WeekBorder) -> Generator[datetime.date, None, None]:
+    start = week.start
+    for day in range(7):
+        yield start + datetime.timedelta(days=day)
+
+
+async def _calculate_week_reading_statistics(week: WeekBorder) -> dict[datetime.date, int]:
+    logger.debug("Calculating week reading statistics")
+
+    stmt = sa.select([models.ReadingLog.c.date,
+                      models.ReadingLog.c.count])\
+        .where(models.ReadingLog.c.date >= week.start)\
+        .where(models.ReadingLog.c.date <= week.stop)
+
+    async with database.session() as ses:
+        rows = (await ses.execute(stmt)).all()
+
+    logger.debug("Week reading statistics calculated")
+
+    return {
+        row.date: row.count
+        for row in rows
+    }
+
+
+async def _calculate_week_notes_statistics(week: WeekBorder) -> dict[datetime.date, int]:
+    logger.debug("Calculating week notes statistics")
+
+    stmt = sa.select([models.Notes.c.added_at,
+                      sa.func.count(models.Notes.c.note_id)]) \
+        .group_by(models.Notes.c.added_at) \
+        .where(models.Notes.c.added_at >= week.start) \
+        .where(models.Notes.c.added_at <= week.stop)
+
+    async with database.session() as ses:
+        rows = (await ses.execute(stmt)).all()
+
+    logger.debug("Week notes statistics calculated")
+
+    return {
+        row.date: row.count
+        for row in rows
+    }
+
+
+def _get_week_statistics(*,
+                         statistics: dict[datetime.date, int],
+                         week: WeekBorder) -> WeekStatistics:
+    logger.debug("Getting week statistics")
+
+    days = [
+        DayStatistics(date=date, amount=statistics.get(date, 0))
+        for date in _iterate_over_week(week)
+    ]
+
+    logger.debug("Week statistics got")
+    return WeekStatistics(days=days)
+
+
+async def get_week_reading_statistics() -> WeekStatistics:
+    week = _get_current_week_range()
+    statistics = await _calculate_week_reading_statistics(week=week)
+
+    return _get_week_statistics(statistics=statistics, week=week)
+
+
+async def get_week_notes_statistics() -> WeekStatistics:
+    week = _get_current_week_range()
+    statistics = await _calculate_week_notes_statistics(week=week)
+
+    return _get_week_statistics(statistics=statistics, week=week)
+
+
 def _get_last_week_range() -> WeekBorder:
     now = datetime.date.today()
     weekday = now.weekday()
