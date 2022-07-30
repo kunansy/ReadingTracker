@@ -18,6 +18,10 @@ class WeekBoard(NamedTuple):
         return f"{self.start.strftime(settings.DATE_FORMAT)}_" \
                f"{self.stop.strftime(settings.DATE_FORMAT)}"
 
+    def __str__(self) -> str:
+        return f"[{self.start.strftime(settings.DATE_FORMAT)}; " \
+               f"{self.stop.strftime(settings.DATE_FORMAT)}]"
+
 
 class Trend(NamedTuple):
     last_week: WeekBoard
