@@ -51,6 +51,26 @@ class WeekStatistics:
 
         return self.data[-1].date
 
+    @property
+    def average(self) -> Decimal:
+        pass
+
+    @property
+    def median(self) -> int:
+        pass
+
+    @property
+    def total(self) -> int:
+        pass
+
+    @property
+    def max(self) -> DayStatistics:
+        pass
+
+    @property
+    def min(self) -> DayStatistics:
+        pass
+
 
 @dataclass
 class WeekBorder:
