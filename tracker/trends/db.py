@@ -40,6 +40,11 @@ class Trend(NamedTuple):
             self.current_week_value
         ]
 
+    def __str__(self) -> str:
+        return f"{self.last_week}: {self.last_week_value}\n" \
+               f"{self.current_week}: {self.current_week_value}\n" \
+               f"Trend: {self.trend}"
+
 
 def _get_last_week_range() -> WeekBoard:
     now = datetime.date.today()
