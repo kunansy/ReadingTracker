@@ -1,6 +1,13 @@
 div.graphic-image {
     display: flex;
     margin: auto;
+    flex-direction: column;
+}
+
+div.statistics {
+    display: flex;
+    margin: auto;
+    flex-direction: column;
 }
 
 div.status {
