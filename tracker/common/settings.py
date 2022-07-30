@@ -29,7 +29,7 @@ with env.prefixed("DB_"):
     DB_USERNAME = env("USERNAME")
     DB_PASSWORD = env("PASSWORD")
 
-    DB_TIMEOUT = env.int('DB_TIMEOUT', 5)
+    DB_TIMEOUT = env.int('TIMEOUT', 5)
     DB_ISOLATION_LEVEL = env('ISOLATION_LEVEL', 'REPEATABLE READ')
 
 DB_URI = DSN_TEMPLATE.format(
