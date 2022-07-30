@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+from dataclasses import dataclass
 from decimal import Decimal
 from typing import NamedTuple, Sequence, Generator
 
@@ -51,7 +52,8 @@ class WeekStatistics:
         return self.data[-1].date
 
 
-class WeekBorder(NamedTuple):
+@dataclass
+class WeekBorder:
     start: datetime.date
     stop: datetime.date
 
