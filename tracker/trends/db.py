@@ -5,9 +5,9 @@ from typing import NamedTuple, Sequence, Generator
 
 import sqlalchemy.sql as sa
 
+from tracker.common import database, settings
 from tracker.common.log import logger
 from tracker.models import models
-from tracker.common import database, settings
 
 
 class TrendException(database.DatabaseError):
