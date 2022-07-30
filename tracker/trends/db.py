@@ -80,6 +80,9 @@ class WeekStatistics:
             key=lambda day: day.amount
         )
 
+    def __str__(self) -> str:
+        return '\n'.join(str(day) for day in self.data)
+
 
 @dataclass
 class WeekBorder:
