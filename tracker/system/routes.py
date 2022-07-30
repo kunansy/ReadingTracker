@@ -9,8 +9,7 @@ from pydantic import conint
 
 from tracker.common.log import logger
 from tracker.google_drive import main as drive_api
-from tracker.system import db
-from tracker.trends import trends
+from tracker.system import db, trends
 
 router = APIRouter(
     prefix="/system",
