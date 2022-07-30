@@ -1,8 +1,11 @@
+import base64
 import datetime
 from dataclasses import dataclass
 from decimal import Decimal
+from io import BytesIO
 from typing import NamedTuple, Sequence, Generator
 
+import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa
 
 from tracker.common import database, settings
@@ -203,3 +206,46 @@ async def get_week_notes_statistics() -> WeekStatistics:
     statistics = await _calculate_week_notes_statistics(week=week)
 
     return _get_week_statistics(statistics=statistics, week=week)
+
+
+def _create_graphic(*,
+                    statistics: WeekStatistics,
+                    title: str = 'Total items completed') -> str:
+    logger.debug("Creating graphic started")
+
+    fig, ax = plt.subplots(figsize=(12, 10))
+    bar = ax.barh(statistics.days, statistics.values, edgecolor="white")
+    ax.bar_label(bar)
+
+    ax.set_title(title)
+    ax.set_xlabel('Items count')
+    ax.set_ylabel('Date')
+    plt.gca().invert_yaxis()
+
+    tmpbuf = BytesIO()
+    fig.savefig(tmpbuf, format='png')
+
+    image = base64.b64encode(tmpbuf.getvalue()).decode('utf-8')
+
+    logger.debug("Creating graphic completed")
+    return image
+
+
+async def create_reading_graphic() -> str:
+    logger.info("Creating reading graphic")
+
+    statistics = await get_week_reading_statistics()
+    return _create_graphic(
+        statistics=statistics,
+        title='Total pages read'
+    )
+
+
+async def create_notes_graphic() -> str:
+    logger.info("Creating notes graphic")
+
+    statistics = await get_week_notes_statistics()
+    return _create_graphic(
+        statistics=statistics,
+        title='Total notes inserted'
+    )
