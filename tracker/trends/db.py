@@ -26,6 +26,20 @@ class Trend(NamedTuple):
     current_week_value: Decimal
     trend: Decimal
 
+    @property
+    def weeks(self) -> list[str]:
+        return [
+            self.last_week.format(),
+            self.current_week.format()
+        ]
+
+    @property
+    def values(self) -> list[Decimal]:
+        return [
+            self.last_week_value,
+            self.current_week_value
+        ]
+
 
 def _get_last_week_range() -> WeekBoard:
     now = datetime.date.today()
