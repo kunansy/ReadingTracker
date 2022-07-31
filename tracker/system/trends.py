@@ -71,7 +71,7 @@ class WeekStatistics:
         ]
 
     @property
-    def average(self) -> Decimal:
+    def mean(self) -> Decimal:
         return Decimal(self.total) / 7
 
     @property
