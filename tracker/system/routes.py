@@ -41,8 +41,14 @@ async def graphic(request: Request,
         context['what'] = "No material found to show"
         return templates.TemplateResponse("errors/404.html", context)
 
-    reading_trend = await trends.get_week_reading_statistics()
-    notes_trend = await trends.get_week_notes_statistics()
+    reading_trend_task = asyncio.create_task(trends.get_week_reading_statistics())
+    notes_trend_task = asyncio.create_task(trends.get_week_notes_statistics())
+
+    await reading_trend_task
+    await notes_trend_task
+
+    reading_trend = reading_trend_task.result()
+    notes_trend = notes_trend_task.result()
 
     graphic_image_task = asyncio.create_task(db.create_reading_graphic(
         material_id=material_id,
