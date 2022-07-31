@@ -1,6 +1,14 @@
 div.graphic-image {
     display: flex;
+    margin: auto auto 1vh;
+    flex-direction: column;
+    padding: 0;
+}
+
+div.statistics {
+    display: flex;
     margin: auto;
+    flex-direction: column;
 }
 
 div.status {
@@ -9,5 +17,10 @@ div.status {
 }
 
 div.status > p {
+    margin: auto;
+}
+
+h3.header {
+    display: flex;
     margin: auto;
 }

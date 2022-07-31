@@ -1,3 +1,4 @@
+import asyncio
 from typing import Any
 from uuid import UUID
 
@@ -8,9 +9,7 @@ from pydantic import conint
 
 from tracker.common.log import logger
 from tracker.google_drive import main as drive_api
-from tracker.reading_log import db as reading_log_db
-from tracker.system import db
-
+from tracker.system import db, trends
 
 router = APIRouter(
     prefix="/system",
@@ -24,13 +23,13 @@ templates = Jinja2Templates(directory="templates")
             response_class=RedirectResponse)
 async def system_view():
     redirect_path = router.url_path_for(graphic.__name__)
-    material_id = await reading_log_db.get_material_reading_now()
+    material_id = await db.get_material_reading_now()
 
     redirect_url = f"{redirect_path}?material_id={material_id}"
     return RedirectResponse(redirect_url, status_code=302)
 
 
-@router.get('/graphic')
+@router.get('/graphics')
 async def graphic(request: Request,
                   material_id: UUID | None = None,
                   last_days: conint(ge=1) = 7): # type: ignore
@@ -38,23 +37,45 @@ async def graphic(request: Request,
         'request': request,
     }
 
-    if (material_id := material_id or await reading_log_db.get_material_reading_now()) is None:
+    if (material_id := material_id or await db.get_material_reading_now()) is None:
         context['what'] = "No material found to show"
         return templates.TemplateResponse("errors/404.html", context)
 
-    graphic_image = await db.create_reading_graphic(
+    reading_trend_task = asyncio.create_task(trends.get_week_reading_statistics())
+    notes_trend_task = asyncio.create_task(trends.get_week_notes_statistics())
+
+    await reading_trend_task
+    await notes_trend_task
+
+    reading_trend = reading_trend_task.result()
+    notes_trend = notes_trend_task.result()
+
+    graphic_image_task = asyncio.create_task(db.create_reading_graphic(
         material_id=material_id,
         last_days=last_days
-    )
+    ))
+    reading_trend_graphic_task = asyncio.create_task(
+        trends.create_reading_graphic(reading_trend))
+    notes_trend_graphic_task = asyncio.create_task(
+        trends.create_notes_graphic(notes_trend))
+    titles_task = asyncio.create_task(
+        db.get_read_material_titles())
 
-    titles = await db.get_read_material_titles()
+    await graphic_image_task
+    await reading_trend_graphic_task
+    await notes_trend_graphic_task
+    await titles_task
 
     context = {
         **context,
         'material_id': material_id,
         'last_days': last_days,
-        'graphic_image': graphic_image,
-        'titles': titles
+        'graphic_image': graphic_image_task.result(),
+        'reading_trend': reading_trend,
+        'notes_trend': notes_trend,
+        'reading_trend_image': reading_trend_graphic_task.result(),
+        'notes_trend_image': notes_trend_graphic_task.result(),
+        'titles': titles_task.result()
     }
 
     return templates.TemplateResponse("system/graphic.html", context)

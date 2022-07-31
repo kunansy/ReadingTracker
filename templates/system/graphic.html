@@ -6,7 +6,7 @@
 
 {%- block header -%}
     {% from 'submenu.html' import submenu %}
-    {% call submenu(('Graphic', '/system/graphic'), ('Backup', '/system/backup'), ('Restore', '/system/restore')) %}
+    {% call submenu(('Graphics', '/system/graphics'), ('Backup', '/system/backup'), ('Restore', '/system/restore')) %}
     {% endcall %}
 {%- endblock header -%}
 
@@ -25,8 +25,36 @@
         </form>
     </div>
 
-    <div class="graphic-image">
+    <div class="graphic-image reading-graphic">
         <img src="data:image/png;base64,{{ graphic_image }}">
+    </div>
+
+    <div class="graphic-image trend reading-trend">
+        <h3 class="header"> Read pages </h3>
+        <img src="data:image/png;base64,{{ reading_trend_image }}">
+
+        <div class="statistics">
+            <p> Total: {{ reading_trend.total }} </p>
+            <p> Zero count: {{ reading_trend.zero_count }} </p>
+            <p> Mean: {{ reading_trend.mean }} </p>
+            <p> Median: {{ reading_trend.median }} </p>
+            <p> Max: {{ reading_trend.max }} </p>
+            <p> Min: {{ reading_trend.min }} </p>
+        </div>
+    </div>
+
+    <div class="graphic-image trend notes-trend">
+        <h3 class="header"> Inserted notes </h3>
+        <img src="data:image/png;base64,{{ notes_trend_image }}">
+
+        <div class="statistics">
+            <p> Total: {{ notes_trend.total }} </p>
+            <p> Zero count: {{ notes_trend.zero_count }} </p>
+            <p> Mean: {{ notes_trend.mean }} </p>
+            <p> Median: {{ notes_trend.median }} </p>
+            <p> Max: {{ notes_trend.max }} </p>
+            <p> Min: {{ notes_trend.min }} </p>
+        </div>
     </div>
 
 {% endblock main%}
