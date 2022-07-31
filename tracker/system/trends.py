@@ -100,6 +100,14 @@ class WeekStatistics:
             key=lambda day: day.amount
         )
 
+    @property
+    def zero_count(self) -> int:
+        return sum(
+            1
+            for day in self.data
+            if day.amount == 0
+        )
+
     def __str__(self) -> str:
         return '\n'.join(str(day) for day in self.data)
 
