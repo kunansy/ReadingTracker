@@ -120,7 +120,7 @@ class WeekBorder:
     def __init__(self,
                  start: datetime.date,
                  stop: datetime.date) -> None:
-        # 6 because the border is included to the rnge
+        # 6 because the border is included to the range
         if (stop - start).days != 6:
             raise TrendException(f"Wrong week got: [{start}; {stop}]")
 
