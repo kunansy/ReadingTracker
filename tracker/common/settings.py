@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 from environs import Env
+from marshmallow.validate import OneOf
 
 
 _VERSION_FILE = Path('VERSION')
@@ -30,7 +31,13 @@ with env.prefixed("DB_"):
     DB_PASSWORD = env("PASSWORD")
 
     DB_TIMEOUT = env.int('TIMEOUT', 5)
-    DB_ISOLATION_LEVEL = env('ISOLATION_LEVEL', 'REPEATABLE READ')
+    DB_ISOLATION_LEVEL = env(
+        'ISOLATION_LEVEL', 'REPEATABLE READ',
+        validate=OneOf(
+            ["READ UNCOMMITTED", "READ COMMITTED", "REPEATABLE READ", "SERIALIZABLE"],
+            error="invalid isolation level"
+        )
+    )
 
 DB_URI = DSN_TEMPLATE.format(
     username=DB_USERNAME,
