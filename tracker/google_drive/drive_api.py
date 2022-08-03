@@ -24,7 +24,7 @@ def _get_drive_creds() -> Credentials:
     if not creds or not creds.valid:
         flow = InstalledAppFlow.from_client_secrets_file(
             settings.DRIVE_CREDS_PATH, SCOPES)
-        creds = flow.run_local_server(host="tracker.localhost", port=0)
+        creds = flow.run_local_server(port=0)
 
         # dump token if it was updated
         with settings.DRIVE_TOKEN_PATH.open('w') as token:
