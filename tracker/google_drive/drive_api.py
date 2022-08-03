@@ -3,7 +3,6 @@ import io
 from functools import lru_cache
 from pathlib import Path
 
-from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
@@ -23,12 +22,9 @@ def _get_drive_creds() -> Credentials:
             settings.DRIVE_TOKEN_PATH, SCOPES)
 
     if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            flow = InstalledAppFlow.from_client_secrets_file(
-                settings.DRIVE_CREDS_PATH, SCOPES)
-            creds = flow.run_local_server(port=0)
+        flow = InstalledAppFlow.from_client_secrets_file(
+            settings.DRIVE_CREDS_PATH, SCOPES)
+        creds = flow.run_local_server(host="tracker.localhost", port=0)
 
         # dump token if it was updated
         with settings.DRIVE_TOKEN_PATH.open('w') as token:
