@@ -23,6 +23,7 @@
             {% set last_repeated_at = repeat.last_repeated_at.strftime(DATE_FORMAT) %}
         {%- endif -%}
         <div class="repeat hover" onclick=openNotes("{{ repeat.material_id }}") title="Click to see notes">
+            <p class="counter"> {{ loop.index }} / {{ loop.length }}</p>
             <p> Title: «{{ repeat.title }}» </p>
             {% set items = 'Pages' %}
             {% if repeat.material_type == 'lecture' %}
