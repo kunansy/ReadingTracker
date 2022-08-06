@@ -72,7 +72,8 @@ class WeekStatistics:
 
     @property
     def mean(self) -> Decimal:
-        return Decimal(self.total) / 7
+        value = Decimal(self.total) / 7
+        return round(value, 2)
 
     @property
     def median(self) -> int:
