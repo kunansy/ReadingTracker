@@ -12,8 +12,6 @@
 
 {% block main %}
 {% if log %}
-    {% set index = namespace(value=1) %}
-
     {% for date, info in log | dictsort(reverse=True) %}
         {% set count = info.count %}
         {% if count >= average_materials_read_pages[info.material_id] %}
@@ -22,12 +20,10 @@
             <div class="record error">
         {% endif %}
 
-        <p class="counter"> {{ index.value }} / {{ loop.length }}</p>
+        <p class="counter"> {{ loop.index }} / {{ loop.length }}</p>
         <p> Date: {{ date.strftime(DATE_FORMAT) }} </p>
         <p> Title: «{{ info.material_title }}» </p>
         <p> Count: {{ info.count }}</p>
-
-        {% set index.value = index.value + 1 %}
     </div>
     {% endfor %}
 
