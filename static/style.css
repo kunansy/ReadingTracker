@@ -192,6 +192,11 @@ a.arrow-up, a.arrow-down {
     font-size: 3vh;
 }
 
+p.counter {
+    text-align: center;
+    font-size: 1.75vh;
+}
+
 footer {
     background-color: black;
     height: 50vh;
