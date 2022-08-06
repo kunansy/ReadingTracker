@@ -54,6 +54,9 @@
 {% endif %}
 
 {% if notes %}
+    {% set length = notes | length %}
+    {% set index = namespace(value=1) %}
+
     {% for material_id, notes_m in notes | sort(attribute='page') | groupby('material_id') %}
     {% if not loop.first %}
         <hr class="material_divider">
@@ -75,9 +78,12 @@
             <h4 class="chapter_number" id="material-{{material_id}}-chapter-{{chapter}}"> {{ chapter_name }}: {{ chapter }} </h4>
             {% for note in note_c %}
             <div class="note hover" onclick=openNote("{{ note.note_id }}")>
+                <p class="counter"> {{ index.value }} / {{ length }}</p>
                 <p class="note-content"> {{ note.content | safe }} </p>
                 <p class="note-page"> {{ page_name }}: {{ note.page }} </p>
             </div>
+
+            {% set index.value = index.value + 1 %}
             {% endfor %}
         {% endfor %}
     </div>
