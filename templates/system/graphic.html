@@ -13,7 +13,7 @@
 {% block main %}
 
     <div class="form">
-        <form action="/system/graphic" method="GET">
+        <form action="/system/graphics" method="GET">
             <input class="input" list="reading_materials" name="material_id" value="{{ material_id }}" placeholder="Choose a material">
             <datalist id="reading_materials">
                 {% for material_id, title in titles | dictsort(by='value') %}
