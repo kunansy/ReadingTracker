@@ -19,6 +19,7 @@
         {% set is_outlined = 'Yes' %}
     {%- endif -%}
     <div class="material hover" onclick=openNotes("{{ material.material_id }}") title="Click to see notes">
+        <p class="counter"> {{ loop.index }} / {{ loop.length }}</p>
         <p> Title: «{{ material.title }}» </p>
         <p> Author: {{ material.authors }} </p>
         {% set items = 'Pages' %}
