@@ -13,9 +13,13 @@
 
 {% block main %}
 {% if estimates %}
+    {% set length = estimates | length %}
+    {% set index = namespace(value=1) %}
+
     {%- for estimate in estimates -%}
     {% set material = estimate.material %}
     <div class="material hover" onclick=openMaterial("{{ material.material_id }}")>
+        <p class="counter"> {{ index.value }} / {{ length }}</p>
         <p> Title: «{{ material.title }}» </p>
         <p> Author: {{ material.authors }} </p>
         {% set items = 'Pages' %}
@@ -36,6 +40,8 @@
         <p> Will be started: {{ estimate.will_be_started.strftime(DATE_FORMAT) }} </p>
         <p> Will be completed: {{ estimate.will_be_completed.strftime(DATE_FORMAT) }} </p>
         <p> Expected duration: {{ estimate.expected_duration }} days </p>
+
+        {% set index.value = index.value + 1 %}
 
         <form class="form start" action="/materials/start/{{ material.material_id }}" METHOD="POST" title="Start the material id={{ material.material_id }}">
             <button type="submit" class="submit-button"> Start </button>
