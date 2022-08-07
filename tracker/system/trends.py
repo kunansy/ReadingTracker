@@ -172,11 +172,11 @@ async def _calculate_week_reading_statistics(week: WeekBorder) -> dict[datetime.
 async def _calculate_week_notes_statistics(week: WeekBorder) -> dict[datetime.date, int]:
     logger.debug("Calculating week notes statistics")
 
-    stmt = sa.select([models.Notes.c.added_at,
+    stmt = sa.select([sa.func.date(models.Notes.c.added_at).label('date'),
                       sa.func.count(models.Notes.c.note_id)]) \
-        .group_by(models.Notes.c.added_at) \
-        .where(models.Notes.c.added_at >= week.start) \
-        .where(models.Notes.c.added_at <= week.stop)
+        .group_by(sa.func.date(models.Notes.c.added_at)) \
+        .where(sa.func.date(models.Notes.c.added_at) >= week.start) \
+        .where(sa.func.date(models.Notes.c.added_at) <= week.stop)
 
     async with database.session() as ses:
         rows = (await ses.execute(stmt)).all()
