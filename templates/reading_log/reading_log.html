@@ -12,7 +12,7 @@
 
 {% block main %}
 {% if log %}
-    {% for date, info in log | dictsort(reverse=True) %}
+    {% for info in log | sort(attribute="date", reverse=True) %}
         {% set count = info.count %}
         {% if count >= average_materials_read_pages[info.material_id] %}
             <div class="record success">
@@ -21,7 +21,7 @@
         {% endif %}
 
         <p class="counter"> {{ loop.index }} / {{ loop.length }}</p>
-        <p> Date: {{ date.strftime(DATE_FORMAT) }} </p>
+        <p> Date: {{ info.date.strftime(DATE_FORMAT) }} </p>
         <p> Title: «{{ info.material_title }}» </p>
         <p> Count: {{ info.count }}</p>
     </div>
