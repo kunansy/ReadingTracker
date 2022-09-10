@@ -1,5 +1,6 @@
 import datetime
-from typing import Any, AsyncGenerator, NamedTuple
+from collections import defaultdict
+from typing import Any, AsyncGenerator, NamedTuple, DefaultDict
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -11,6 +12,7 @@ from tracker.materials import db as materials_db
 
 
 class LogRecord(NamedTuple):
+    date: datetime.date
     count: int # type: ignore
     material_id: UUID
     material_title: str | None = None
@@ -39,7 +41,7 @@ async def get_average_materials_read_pages() -> dict[UUID, float]:
         }
 
 
-async def get_log_records() -> dict[datetime.date, LogRecord]:
+async def get_log_records() -> list[LogRecord]:
     logger.debug("Getting all log records")
 
     stmt = sa.select([models.ReadingLog,
@@ -48,14 +50,15 @@ async def get_log_records() -> dict[datetime.date, LogRecord]:
               models.Materials.c.material_id == models.ReadingLog.c.material_id)
 
     async with database.session() as ses:
-        return {
-            row.date: LogRecord(
+        return [
+            LogRecord(
+                date=row.date,
                 count=row.count,
                 material_id=row.material_id,
                 material_title=row.material_title,
             )
-            async for row in await ses.stream(stmt)
-        }
+            for row in (await ses.execute(stmt)).all()
+        ]
 
 
 async def get_reading_material_titles() -> dict[UUID, str]:
@@ -101,6 +104,10 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
     if not (log_records := await get_log_records()):
         return
 
+    log_records_dict: DefaultDict[datetime.date, list[LogRecord]] = defaultdict(list)
+    for log_record in log_records:
+        log_records_dict[log_record.date] += [log_record]
+
     # stack for materials
     materials: list[UUID] = []
     try:
@@ -110,7 +117,7 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
         completion_dates = {}
 
     step = datetime.timedelta(days=1)
-    iter_over_dates = min(log_records.keys())
+    iter_over_dates = min(log_records_dict.keys())
 
     while iter_over_dates <= database.utcnow().date():
         last_material_id = _safe_list_get(materials, -1, None)
@@ -120,22 +127,26 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
             materials.pop()
             last_material_id = _safe_list_get(materials, -1, None)
 
-        if not (info := log_records.get(iter_over_dates)):
-            info = LogRecord(material_id=last_material_id, count=0)
+        if not (log_records_ := log_records_dict.get(iter_over_dates)):
+            log_record = LogRecord(material_id=last_material_id, count=0, date=iter_over_dates)
+
+            yield iter_over_dates, log_record
+            iter_over_dates += step
         else:
-            material_id = info.material_id
+            for log_record in log_records_:
+                material_id = log_record.material_id
 
-            if not (materials and material_id in materials):
-                # new material started, the last one completed
-                materials += [material_id]
-            elif material_id != last_material_id:
-                # in this case several materials
-                # are being reading one by one
-                materials.remove(material_id)
-                materials += [material_id]
+                if not (materials and material_id in materials):
+                    # new material started, the last one completed
+                    materials += [material_id]
+                elif material_id != last_material_id:
+                    # in this case several materials
+                    # are being reading one by one
+                    materials.remove(material_id)
+                    materials += [material_id]
 
-        yield iter_over_dates, info
-        iter_over_dates += step
+                yield iter_over_dates, log_record
+                iter_over_dates += step
 
 
 async def get_material_reading_now() -> UUID | None:

@@ -26,8 +26,8 @@ async def get_m_log_statistics(*,
     """ Get material statistics from logs """
     duration = sum(
         1
-        for _, info in (await db.get_log_records()).items()
-        if info.material_id == material_id
+        for log_record in await db.get_log_records()
+        if log_record.material_id == material_id
     )
     total = lost_time = 0
     async for date, info in db.data():
