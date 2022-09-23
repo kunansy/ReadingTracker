@@ -110,6 +110,6 @@ Repeats = Table(
     metadata,
 
     PrimaryKey('repeat_id'),
-    Column('material_id', ForeignKey('materials.material_id'), index=True, unique=True),
+    Column('material_id', ForeignKey('materials.material_id'), index=True),
     Column('repeated_at', DateTime, default=_utc_now)
 )
