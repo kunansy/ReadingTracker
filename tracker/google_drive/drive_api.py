@@ -3,8 +3,7 @@ import io
 from functools import lru_cache
 from pathlib import Path
 
-from google.oauth2.credentials import Credentials
-from google_auth_oauthlib.flow import InstalledAppFlow
+from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
 
@@ -16,19 +15,11 @@ SCOPES = ['https://www.googleapis.com/auth/drive']
 
 @lru_cache
 def _get_drive_creds() -> Credentials:
-    creds = None
-    if settings.DRIVE_TOKEN_PATH.exists():
-        creds = Credentials.from_authorized_user_file(
-            settings.DRIVE_TOKEN_PATH, SCOPES)
+    if not (creds_file := settings.DRIVE_CREDS_PATH).exists():
+        raise ValueError("Creds file not found")
 
-    if not creds or not creds.valid:
-        flow = InstalledAppFlow.from_client_secrets_file(
-            settings.DRIVE_CREDS_PATH, SCOPES)
-        creds = flow.run_local_server(port=0)
-
-        # dump token if it was updated
-        with settings.DRIVE_TOKEN_PATH.open('w') as token:
-            token.write(creds.to_json())
+    creds = Credentials.from_service_account_file(
+        creds_file, scopes=SCOPES)
 
     return creds
 
