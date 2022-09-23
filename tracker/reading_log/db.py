@@ -146,7 +146,7 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
                     materials += [material_id]
 
                 yield iter_over_dates, log_record
-                iter_over_dates += step
+            iter_over_dates += step
 
 
 async def get_material_reading_now() -> UUID | None:
