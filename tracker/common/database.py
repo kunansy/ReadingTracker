@@ -8,7 +8,6 @@ import sqlalchemy.sql as sa
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from tracker.common import settings
-from tracker.models import models
 from tracker.common.log import logger
 
 
@@ -103,4 +102,4 @@ async def is_alive() -> bool:
 
     stmt = sa.select(sa.text("SELECT 1 + 1 = 2"))
     async with session() as ses:
-        return await ses.scalar(stmt) > 0
+        return await ses.scalar(stmt)
