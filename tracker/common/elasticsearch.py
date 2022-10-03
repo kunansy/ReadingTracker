@@ -7,6 +7,7 @@ import aiohttp
 
 from tracker.common import settings
 from tracker.common.log import logger
+from tracker.common.schemas import orjson_dumps
 
 
 DOC = dict[str, Any]
@@ -117,7 +118,7 @@ class AsyncElasticIndex:
     async def __get(self,
                     url: str,
                     query: DOC | None = None) -> Response:
-        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
+        async with aiohttp.ClientSession(timeout=self._timeout, json_serialize=orjson_dumps) as ses:
             try:
                 resp = await ses.get(url, json=query, headers=self._headers)
                 status, json = resp.status, await resp.json()
@@ -130,7 +131,7 @@ class AsyncElasticIndex:
     async def __put(self,
                     url: str,
                     body: DOC | None = None) -> Response:
-        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
+        async with aiohttp.ClientSession(timeout=self._timeout, json_serialize=orjson_dumps) as ses:
             try:
                 resp = await ses.put(url, json=body, headers=self._headers)
                 status, json = resp.status, await resp.json()
@@ -157,7 +158,7 @@ class AsyncElasticIndex:
 
     async def drop_index(self) -> None:
         url = f"{self._url}/{self.name}"
-        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
+        async with aiohttp.ClientSession(timeout=self._timeout, json_serialize=orjson_dumps) as ses:
             try:
                 resp = await ses.delete(url, headers=self._headers)
                 json, status = await resp.json(), resp.status
@@ -217,7 +218,7 @@ class AsyncElasticIndex:
 
     async def delete(self, doc_id: UID) -> DOC:
         url = f"{self._url}/{self.name}/_doc/{doc_id}"
-        async with aiohttp.ClientSession(timeout=self._timeout) as ses:
+        async with aiohttp.ClientSession(timeout=self._timeout, json_serialize=orjson_dumps) as ses:
             try:
                 resp = await ses.delete(url, headers=self._headers)
                 status, json = resp.status, await resp.json()
