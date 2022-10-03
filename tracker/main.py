@@ -22,6 +22,7 @@ app = FastAPI(
     description="Reading queue, logging the reading, keep some notes",
     version=settings.API_VERSION,
     debug=settings.API_DEBUG,
+    default_response_class=ORJSONResponse
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -86,7 +87,9 @@ async def http_exception_handler(request: Request,
 @app.get('/liveness',
          include_in_schema=False)
 async def liveness():
-    return {"status": "ok"}
+    return ORJSONResponse(
+        content={"status": "ok"}
+    )
 
 
 @app.get('/readiness',
