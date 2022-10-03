@@ -32,7 +32,7 @@ async def backup() -> db.DBSnapshot:
 
 
 def _get_local_dump_file(filepath: Path) -> Path:
-    if 'data/' not in str(filepath):
+    if 'data' not in filepath.parts:
         filepath = Path('data') / filepath
 
     assert filepath.exists(), f"File {filepath=} not found"
@@ -49,7 +49,7 @@ async def restore(*,
         if dump_path:
             filepath = _get_local_dump_file(dump_path)
         else:
-            filepath = drive_api.get_google_dump_file()
+            filepath = drive_api.get_dump_file()
 
         await db.recreate_db()
         snapshot = await db.restore_db(conn=ses, dump_path=filepath)
@@ -107,7 +107,7 @@ async def main() -> None:
     elif args.restore:
         await restore()
     elif args.last_dump:
-        drive_api.get_google_dump_file()
+        drive_api.get_dump_file()
     elif dump_path := args.restore_offline:
         await restore(dump_path=dump_path)
     elif args.backup_offline:

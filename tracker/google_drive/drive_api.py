@@ -61,7 +61,7 @@ def send_dump(file_path: Path) -> None:
     logger.debug("File sent")
 
 
-def get_last_dump() -> str:
+def _get_last_dump_id() -> str:
     logger.debug("Getting last dump started")
     folder_id = _get_folder_id()
     query = f"name contains 'tracker_' and mimeType='application/json' and '{folder_id}' in parents"
@@ -77,9 +77,9 @@ def get_last_dump() -> str:
     return files[0]['id']
 
 
-def download_file(file_id: str,
-                  *,
-                  filename: str = 'restore.json') -> Path:
+def _download_file(file_id: str,
+                   *,
+                   filename: str = 'restore.json') -> Path:
     logger.debug("Downloading file id='%s'", file_id)
     path = Path('data') / filename
 
@@ -98,8 +98,8 @@ def download_file(file_id: str,
     return path
 
 
-def get_google_dump_file() -> Path:
-    if not (dump_file_id := get_last_dump()):
+def get_dump_file() -> Path:
+    if not (dump_file_id := _get_last_dump_id()):
         raise ValueError("Dump not found")
 
-    return download_file(dump_file_id)
+    return _download_file(dump_file_id)
