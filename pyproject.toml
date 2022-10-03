@@ -25,9 +25,9 @@ greenlet = "~1.1.2"
 matplotlib = "~3.6.0"
 aiohttp = "~3.8.1"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
+mypy = "~0.981"
 flake8 = "~5.0.4"
-mypy = "~0.971"
 bumpversion = "~0.6.0"
 
 [build-system]
