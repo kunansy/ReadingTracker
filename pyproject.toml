@@ -24,6 +24,8 @@ google-auth-oauthlib = "~0.4.6"
 greenlet = "~1.1.2"
 matplotlib = "~3.6.0"
 aiohttp = "~3.8.1"
+orjson = "^3.8.0"
+types-orjson = "~3.6.2"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "~0.981"

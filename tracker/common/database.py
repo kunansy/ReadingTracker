@@ -101,6 +101,6 @@ async def transaction(**kwargs) -> AsyncGenerator[AsyncSession, None]:
 async def is_alive() -> bool:
     logger.debug("Checking if the database is alive")
 
-    stmt = sa.select(sa.func.count(models.Materials.c.material_id))
+    stmt = sa.select(sa.text("SELECT 1 + 1 = 2"))
     async with session() as ses:
         return await ses.scalar(stmt) > 0
