@@ -1,7 +1,9 @@
+import asyncio
+
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException, RequestValidationError
-from fastapi.responses import UJSONResponse
+from fastapi.responses import ORJSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -90,12 +92,19 @@ async def liveness():
 @app.get('/readiness',
          include_in_schema=False)
 async def readiness():
-    status, status_code = "ok", 200
-    if not (await database.is_alive() and await notes_index.healthcheck()):
-        status, status_code = "error", 500
+    status_code = 500
 
-    return UJSONResponse(
-        content={"status": status},
+    is_db_alive_task = asyncio.create_task(database.is_alive())
+    is_es_alive_task = asyncio.create_task(notes_index.healthcheck())
+
+    await is_es_alive_task
+    await is_db_alive_task
+
+    if is_es_alive_task.result() is is_db_alive_task.result() is True:
+        status_code = 200
+
+    return ORJSONResponse(
+        content={},
         status_code=status_code
     )
 
