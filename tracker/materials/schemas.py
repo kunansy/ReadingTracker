@@ -1,12 +1,13 @@
 from uuid import UUID
 
 from fastapi import Form
-from pydantic import BaseModel, conint, HttpUrl
+from pydantic import conint, HttpUrl
 
+from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums
 
 
-class Material(BaseModel):
+class Material(CustomBaseModel):
     title: str
     authors: str
     pages: conint(ge=1)

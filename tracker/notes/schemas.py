@@ -2,8 +2,9 @@ import re
 from uuid import UUID
 
 from fastapi import Form
-from pydantic import BaseModel, conint, constr, validator
+from pydantic import conint, constr, validator
 
+from tracker.common.schemas import CustomBaseModel
 
 PUNCTUATION_MAPPING = {
     "--": "—",
@@ -126,7 +127,7 @@ def demark_note(string: str) -> str:
     return string
 
 
-class Note(BaseModel):
+class Note(CustomBaseModel):
     material_id: UUID
     content: constr(strip_whitespace=True)
     chapter: conint(ge=0) = 0
@@ -172,7 +173,7 @@ class UpdateNote(Note):
         )
 
 
-class DeleteNote(BaseModel):
+class DeleteNote(CustomBaseModel):
     note_id: UUID
     material_id: UUID
 

@@ -2,10 +2,12 @@ import datetime
 from uuid import UUID
 
 from fastapi import Form
-from pydantic import BaseModel, conint
+from pydantic import conint
+
+from tracker.common.schemas import CustomBaseModel
 
 
-class LogRecord(BaseModel):
+class LogRecord(CustomBaseModel):
     material_id: UUID
     count: conint(ge=1)
     date: datetime.date
