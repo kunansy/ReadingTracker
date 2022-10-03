@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "readingtracker"
-version = "2.12.3"
+version = "2.12.4"
 description = "Reading queue, logging the reading, keep some notes"
 authors = ["kunansy <kolobov.kirill@list.ru>"]
 license = "MIT"
