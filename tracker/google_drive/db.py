@@ -4,7 +4,6 @@ from typing import NamedTuple, Any
 from uuid import UUID
 
 import sqlalchemy.sql as sa
-import ujson
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.ddl import DropTable
