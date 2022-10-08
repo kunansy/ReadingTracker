@@ -5,7 +5,7 @@ from uuid import UUID
 import sqlalchemy.sql as sa
 
 from tracker.common import database
-from tracker.common.elasticsearch import AsyncElasticIndex
+from tracker.common.elasticsearch import AsyncElasticIndex, ElasticsearchException
 from tracker.common.log import logger
 from tracker.models import models
 
@@ -71,7 +71,7 @@ async def migrate_notes() -> None:
     logger.debug('Dropping index...')
     try:
         await index.drop_index()
-    except Exception:
+    except ElasticsearchException:
         logger.debug('Index does not exist')
     else:
         logger.debug('Index dropped')
