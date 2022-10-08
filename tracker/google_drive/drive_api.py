@@ -14,6 +14,10 @@ from tracker.common.log import logger
 SCOPES = ['https://www.googleapis.com/auth/drive']
 
 
+class GoogleDriveException(Exception):
+    pass
+
+
 @lru_cache
 def _get_drive_creds() -> Credentials:
     if not (creds_file := settings.DRIVE_CREDS_PATH).exists():
@@ -32,9 +36,9 @@ def _drive_client():
     new_client = build('drive', 'v3', credentials=creds)
     try:
         yield new_client
-    except Exception:
-        logger.exception("Error with the client")
-        raise
+    except Exception as e:
+        logger.exception("Error with the client, %s", repr(e))
+        raise GoogleDriveException(e) from e
 
 
 def _get_folder_id(*,
