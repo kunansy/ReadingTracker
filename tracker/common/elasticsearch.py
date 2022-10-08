@@ -123,8 +123,10 @@ class AsyncElasticIndex:
                 resp = await ses.get(url, json=query, headers=self._headers)
                 status, json = resp.status, await resp.json()
                 resp.raise_for_status()
-            except Exception:
-                raise
+            except Exception as e:
+                msg = f"GET '{url=}', '{query=}': {repr(e)}"
+                logger.exception(msg)
+                raise ElasticsearchException(msg)
 
         return Response(status=status, json=json)
 
@@ -136,22 +138,18 @@ class AsyncElasticIndex:
                 resp = await ses.put(url, json=body, headers=self._headers)
                 status, json = resp.status, await resp.json()
                 resp.raise_for_status()
-            except Exception:
-                raise
+            except Exception as e:
+                msg = f"PUT '{url=}', '{body=}': {repr(e)}"
+                logger.exception(msg)
+                raise ElasticsearchException(msg)
 
         return Response(status=status, json=json)
 
     async def create_index(self) -> DOC:
         query = self._create_index_query()
         url = f"{self._url}/{self.name}"
-        status, json = None, None
 
-        try:
-            status, json = await self.__put(url, query)
-        except Exception:
-            msg = f"Error creating index ({status=}): {json=}"
-            logger.exception(msg)
-            raise ElasticsearchException(msg) from None
+        status, json = await self.__put(url, query)
 
         logger.info("Index created (status=%s): %s", status, json)
         return json
@@ -173,30 +171,15 @@ class AsyncElasticIndex:
     async def healthcheck(self) -> bool:
         logger.debug("Checking elasticsearch is alive")
         url = f"{self._url}/_cluster/health"
-        status = None
-        json: DOC = {}
 
-        try:
-            status, json = await self.__get(url)
-        except Exception:
-            msg = f"Error checking health ({status=}): {json=}"
-            logger.exception(msg)
-            raise ElasticsearchException(msg) from None
+        status, json = await self.__get(url)
 
         return json.get('status', '') in ('green', 'yellow')
 
     async def get(self, doc_id: UID) -> DOC:
         url = f"{self._url}/{self.name}/_doc/{doc_id}"
-        status, json = None, None
 
-        try:
-            status, json = await self.__get(url)
-        except Exception:
-            msg = f"Error getting document ({status=}): {json=}"
-            logger.exception(msg)
-            raise ElasticsearchException(msg) from None
-
-        return json
+        return (await self.__get(url)).json
 
     async def add(self,
                   *,
@@ -205,16 +188,8 @@ class AsyncElasticIndex:
         """ Create or update the document """
         url = f"{self._url}/{self.name}/_doc/{doc_id}"
         body = _serialize(doc)
-        status, json = None, None
 
-        try:
-            status, json = await self.__put(url, body)
-        except Exception:
-            msg = f"Error adding document ({status=}): {json=}"
-            logger.exception(msg)
-            raise ElasticsearchException(msg) from None
-
-        return json
+        return (await self.__put(url, body)).json
 
     async def delete(self, doc_id: UID) -> DOC:
         url = f"{self._url}/{self.name}/_doc/{doc_id}"
@@ -232,7 +207,6 @@ class AsyncElasticIndex:
 
     async def match(self, query: str, field: str) -> DOC:
         url = f"{self._url}/{self.name}/_search"
-        status, json = None, None
         body = {
             "query": {
                 "match": {
@@ -241,18 +215,10 @@ class AsyncElasticIndex:
             }
         }
 
-        try:
-            status, json = await self.__put(url, body)
-        except Exception:
-            msg = f"Error matching documents ({status=}): {json=}"
-            logger.exception(msg)
-            raise ElasticsearchException(msg) from None
-
-        return json
+        return (await self.__put(url, body)).json
 
     async def multi_match(self, query: str) -> DOC:
         url = f"{self._url}/{self.name}/_search"
-        status, json = None, None
         body = {
             "query": {
                 "multi_match": {
@@ -262,11 +228,4 @@ class AsyncElasticIndex:
             }
         }
 
-        try:
-            status, json = await self.__get(url, body)
-        except Exception:
-            msg = f"Error matching documents ({status=}): {json=}"
-            logger.exception(msg)
-            raise ElasticsearchException(msg) from None
-
-        return json
+        return (await self.__get(url, body)).json
