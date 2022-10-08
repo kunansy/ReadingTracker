@@ -4,10 +4,14 @@ import asyncio
 import os
 import time
 from pathlib import Path
+from typing import Any
+
+import orjson
 
 from tracker.common import database
 from tracker.common.log import logger
 from tracker.google_drive import drive_api, db
+from tracker.google_drive.drive_api import GoogleDriveException
 
 
 def _remove_file(file_path: Path) -> None:
@@ -38,6 +42,14 @@ def _get_local_dump_file(filepath: Path) -> Path:
     assert filepath.exists(), f"File {filepath=} not found"
 
     return filepath
+
+
+def _get_local_dump(filepath: Path) -> dict[str, Any]:
+    if not filepath.exists():
+        raise GoogleDriveException("%s file not found", filepath)
+
+    with filepath.open() as f:
+        return orjson.loads(f.read())
 
 
 async def restore(*,
