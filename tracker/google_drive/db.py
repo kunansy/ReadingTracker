@@ -135,14 +135,6 @@ def _convert_str_to_date(value: JSON_FIELD_TYPES) -> JSON_FIELD_TYPES | DATE_TYP
     raise ValueError(f"Invalid date format: {value!r}")
 
 
-def _read_json_file(filepath: Path) -> dict[str, list[dict[str, str | int]]]:
-    assert filepath.exists(), "File not found"
-    assert filepath.suffix == '.json', "File must be json"
-
-    with filepath.open() as f:
-        return ujson.load(f)
-
-
 def _get_now() -> str:
     return database.utcnow().strftime(settings.DATETIME_FORMAT).replace(' ', '_')
 
