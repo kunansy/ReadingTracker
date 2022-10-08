@@ -2,7 +2,9 @@ import contextlib
 import io
 from functools import lru_cache
 from pathlib import Path
+from typing import Any
 
+import orjson
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
@@ -81,11 +83,8 @@ def _get_last_dump_id() -> str:
     return files[0]['id']
 
 
-def _download_file(file_id: str,
-                   *,
-                   filename: str = 'restore.json') -> Path:
-    logger.debug("Downloading file id='%s'", file_id)
-    path = Path('data') / filename
+def _get_file_content(file_id: str) -> dict[str, Any]:
+    logger.debug("Getting file id='%s'", file_id)
 
     with _drive_client() as client:
         request = client.files().get_media(fileId=file_id)
@@ -94,13 +93,11 @@ def _download_file(file_id: str,
         done = False
         while done is False:
             status, done = downloader.next_chunk()
-            logger.debug("Download %d%%.", int(status.progress() * 100))
+            logger.debug("Getting %d%%.", int(status.progress() * 100))
 
         fh.seek(0)
-        with path.open('wb') as f:
-            f.write(fh.read())
-    return path
 
+    return orjson.loads(fh.read().decode())
 
 def get_dump_file() -> Path:
     if not (dump_file_id := _get_last_dump_id()):
