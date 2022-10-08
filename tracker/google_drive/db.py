@@ -145,20 +145,6 @@ def get_dump_filename(*,
     return settings.DATA_DIR / filename
 
 
-def dump_snapshot(snapshot: DBSnapshot) -> Path:
-    logger.debug("DB dumping started")
-
-    file_path = Path("data") / f"tracker_{_get_now()}.json"
-
-    data = snapshot.table_to_rows()
-    with file_path.open('w') as f:
-        ujson.dump(data, f, ensure_ascii=False, indent=2)
-
-    logger.debug("DB dumped")
-
-    return file_path
-
-
 def _convert_dump_to_snapshot(dump_data: DUMP_TYPE) -> DBSnapshot:
     tables = []
     for table_name, values in dump_data.items():
