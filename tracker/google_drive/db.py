@@ -1,7 +1,7 @@
 import datetime
-import re
 from pathlib import Path
 from typing import NamedTuple, Any
+from uuid import UUID
 
 import sqlalchemy.sql as sa
 import ujson
@@ -18,8 +18,6 @@ from tracker.models import models
 JSON_FIELD_TYPES = str | int
 DATE_TYPES = datetime.date | datetime.datetime | str
 DUMP_TYPE = dict[str, list[dict[str, JSON_FIELD_TYPES]]]
-
-UID_REGEX = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
 
 
 class TableSnapshot(NamedTuple):
@@ -105,8 +103,12 @@ async def recreate_db() -> None:
         await conn.run_sync(models.metadata.create_all)
 
 
-def _is_uid(value: str) -> bool:
-    return UID_REGEX.match(value) is not None
+def _is_uuid(value: str) -> bool:
+    try:
+        UUID(value)
+        return True
+    except ValueError:
+        return False
 
 
 def _contains_letter(value: str) -> bool:
@@ -117,7 +119,7 @@ def _contains_letter(value: str) -> bool:
 
 
 def _convert_str_to_date(value: JSON_FIELD_TYPES) -> JSON_FIELD_TYPES | DATE_TYPES:
-    if not isinstance(value, str) or _is_uid(value) or _contains_letter(value) or not value:
+    if not value or not isinstance(value, str) or _is_uuid(value) or _contains_letter(value):
         return value
 
     try:
