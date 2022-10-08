@@ -35,15 +35,6 @@ async def backup() -> db.DBSnapshot:
     return db_snapshot
 
 
-def _get_local_dump_file(filepath: Path) -> Path:
-    if 'data' not in filepath.parts:
-        filepath = Path('data') / filepath
-
-    assert filepath.exists(), f"File {filepath=} not found"
-
-    return filepath
-
-
 def _get_local_dump(filepath: Path) -> dict[str, Any]:
     if not filepath.exists():
         raise GoogleDriveException("%s file not found", filepath)
