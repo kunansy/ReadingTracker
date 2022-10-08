@@ -120,7 +120,8 @@ async def main() -> None:
         await restore()
     elif args.get_last_dump:
         dump = drive_api.get_dump()
-        _dump_json(dump, filename='last_dump.json')
+        filename = db.get_dump_filename(prefix='last_dump')
+        _dump_json(dump, filename=filename)
     elif dump_path := args.restore_offline:
         await restore(dump_path=dump_path)
     elif args.backup_offline:
