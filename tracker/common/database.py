@@ -11,7 +11,7 @@ from tracker.common import settings
 from tracker.common.log import logger
 
 
-class DatabaseError(Exception):
+class DatabaseException(Exception):
     pass
 
 
@@ -85,7 +85,7 @@ async def session(**kwargs) -> AsyncGenerator[AsyncSession, None]:
         logger.exception("Error with the session")
 
         await new_session.rollback()
-        raise DatabaseError(e)
+        raise DatabaseException(e)
     finally:
         await new_session.close()
 

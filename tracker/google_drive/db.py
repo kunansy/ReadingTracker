@@ -1,25 +1,23 @@
+import asyncio
 import datetime
-import re
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, Any
+from uuid import UUID
 
 import sqlalchemy.sql as sa
-import ujson
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.ddl import DropTable
 from sqlalchemy.sql.schema import Table
 
 from tracker.common import database, settings
-from tracker.models import models
 from tracker.common.log import logger
+from tracker.models import models
 
 
 JSON_FIELD_TYPES = str | int
 DATE_TYPES = datetime.date | datetime.datetime | str
 DUMP_TYPE = dict[str, list[dict[str, JSON_FIELD_TYPES]]]
-
-UID_REGEX = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
 
 
 class TableSnapshot(NamedTuple):
@@ -36,13 +34,13 @@ class DBSnapshot(NamedTuple):
 
     def to_dict(self) -> dict[str, TableSnapshot]:
         return {
-            table_snapshot.table_name: table_snapshot
+            str(table_snapshot.table_name): table_snapshot
             for table_snapshot in self.tables
         }
 
     def table_to_rows(self) -> dict[str, list[dict[str, DATE_TYPES | JSON_FIELD_TYPES]]]:
         return {
-            table_snapshot.table_name: table_snapshot.rows
+            str(table_snapshot.table_name): table_snapshot.rows
             for table_snapshot in self.tables
         }
 
@@ -66,16 +64,20 @@ def _convert_date_to_str(value: DATE_TYPES | JSON_FIELD_TYPES) -> DATE_TYPES | J
 
 
 async def _get_table_snapshot(*,
-                              table: Table,
-                              conn: AsyncSession) -> TableSnapshot:
+                              table: Table) -> TableSnapshot:
+    logger.debug("Getting '%s' snapshot", table.name)
     stmt = sa.select(table)
-    rows = [
-        {
-            str(key): _convert_date_to_str(value)
-            for key, value in row.items()
-        }
-        for row in (await conn.execute(stmt)).mappings().all()
-    ]
+
+    async with database.session() as ses:
+        rows = [
+            {
+                str(key): _convert_date_to_str(value)
+                for key, value in row.items()
+            }
+            for row in (await ses.execute(stmt)).mappings().all()
+        ]
+
+    logger.info("'%s' snapshot got, %s rows", table.name, len(rows))
     return TableSnapshot(
         table_name=table.name,
         rows=rows
@@ -83,14 +85,13 @@ async def _get_table_snapshot(*,
 
 
 async def get_db_snapshot() -> DBSnapshot:
-    table_snapshots = []
-    async with database.transaction() as ses:
-        for table in TABLES.values():
-            table_snapshot = await _get_table_snapshot(table=table, conn=ses)
-            table_snapshots += [table_snapshot]
+    tasks = [
+        asyncio.create_task(_get_table_snapshot(table=table))
+        for table_name, table in TABLES.items()
+    ]
+    await asyncio.gather(*tasks)
 
-            logger.info("%s: %s rows got", table.name, table_snapshot.counter)
-
+    table_snapshots = [task.result() for task in tasks]
     return DBSnapshot(tables=table_snapshots)
 
 
@@ -105,8 +106,12 @@ async def recreate_db() -> None:
         await conn.run_sync(models.metadata.create_all)
 
 
-def _is_uid(value: str) -> bool:
-    return UID_REGEX.match(value) is not None
+def _is_uuid(value: str) -> bool:
+    try:
+        UUID(value)
+        return True
+    except ValueError:
+        return False
 
 
 def _contains_letter(value: str) -> bool:
@@ -117,7 +122,7 @@ def _contains_letter(value: str) -> bool:
 
 
 def _convert_str_to_date(value: JSON_FIELD_TYPES) -> JSON_FIELD_TYPES | DATE_TYPES:
-    if not isinstance(value, str) or _is_uid(value) or _contains_letter(value) or not value:
+    if not value or not isinstance(value, str) or _is_uuid(value) or _contains_letter(value):
         return value
 
     try:
@@ -133,30 +138,14 @@ def _convert_str_to_date(value: JSON_FIELD_TYPES) -> JSON_FIELD_TYPES | DATE_TYP
     raise ValueError(f"Invalid date format: {value!r}")
 
 
-def _read_json_file(filepath: Path) -> dict[str, list[dict[str, str | int]]]:
-    assert filepath.exists(), "File not found"
-    assert filepath.suffix == '.json', "File must be json"
-
-    with filepath.open() as f:
-        return ujson.load(f)
-
-
 def _get_now() -> str:
     return database.utcnow().strftime(settings.DATETIME_FORMAT).replace(' ', '_')
 
 
-def dump_snapshot(snapshot: DBSnapshot) -> Path:
-    logger.debug("DB dumping started")
-
-    file_path = Path("data") / f"tracker_{_get_now()}.json"
-
-    data = snapshot.table_to_rows()
-    with file_path.open('w') as f:
-        ujson.dump(data, f, ensure_ascii=False, indent=2)
-
-    logger.debug("DB dumped")
-
-    return file_path
+def get_dump_filename(*,
+                      prefix: str = 'tracker') -> Path:
+    filename = f"{prefix}_{_get_now()}.json"
+    return settings.DATA_DIR / filename
 
 
 def _convert_dump_to_snapshot(dump_data: DUMP_TYPE) -> DBSnapshot:
@@ -180,18 +169,18 @@ def _convert_dump_to_snapshot(dump_data: DUMP_TYPE) -> DBSnapshot:
 
 
 async def restore_db(*,
-                     dump_path: Path,
+                     dump: dict[str, Any],
                      conn: AsyncSession) -> DBSnapshot:
-    if not dump_path.exists():
-        raise ValueError("Dump file not found")
+    if not dump:
+        raise ValueError("Dump is empty")
 
-    dump_data = _read_json_file(dump_path)
-    snapshot = _convert_dump_to_snapshot(dump_data)
+    snapshot = _convert_dump_to_snapshot(dump)
     snapshot_dict = snapshot.to_dict()
 
-    # order of them matters
+    # order of tables matters
     for table_name, table in TABLES.items():
         if not (table_dict := snapshot_dict.get(table_name)) or not table_dict.rows:
+            # the table was empty for example
             logger.warning("Table %s not found in snapshot", table_name)
             continue
 

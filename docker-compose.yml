@@ -56,7 +56,7 @@ services:
       retries: 5
 
   reading-tracker:
-    image: kunansy/reading_tracker:2.12.4
+    image: kunansy/reading_tracker:2.13.0
     container_name: reading-tracker
     env_file: .env
     restart: always
@@ -65,8 +65,9 @@ services:
       - tracker-elastic
     ports:
        - "0.0.0.0:${API_PORT}:8000"
-    entrypoint: ["uvicorn", "tracker.main:app", "--port", "8000", "--host", 
-                 "0.0.0.0", "--loop", "uvloop", "--workers", "${API_ASGI_WORKERS}"]
+    entrypoint: ["gunicorn", "tracker.main:app", "--bind", "0.0.0.0:8000", "--workers",
+                 "${API_ASGI_WORKERS}", "--worker-class", "uvicorn.workers.UvicornWorker",
+                 "--access-logfile", "-", "--error-logfile", "-", "--log-level", "${LOGGER_LEVEL}"]
     networks:
       - tracker-net
     volumes:

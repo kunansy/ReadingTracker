@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 import argparse
 import asyncio
-import os
 import time
 from pathlib import Path
+from typing import Any
+
+import orjson
 
 from tracker.common import database
 from tracker.common.log import logger
 from tracker.google_drive import drive_api, db
-
-
-def _remove_file(file_path: Path) -> None:
-    logger.debug("Removing '%s'", file_path)
-    os.remove(file_path)
-    logger.debug("File removed")
 
 
 async def backup() -> db.DBSnapshot:
@@ -21,9 +17,12 @@ async def backup() -> db.DBSnapshot:
     start_time = time.perf_counter()
 
     db_snapshot = await db.get_db_snapshot()
-    dump_file = db.dump_snapshot(db_snapshot)
-    drive_api.send_dump(dump_file)
-    _remove_file(dump_file)
+    filename = db.get_dump_filename()
+
+    drive_api.send_dump(
+        dump=db_snapshot.table_to_rows(),
+        filename=filename
+    )
 
     logger.info("Backuping completed, %ss",
                 round(time.perf_counter() - start_time, 2))
@@ -31,13 +30,20 @@ async def backup() -> db.DBSnapshot:
     return db_snapshot
 
 
-def _get_local_dump_file(filepath: Path) -> Path:
-    if 'data' not in filepath.parts:
-        filepath = Path('data') / filepath
+def _read_local_dump(filepath: Path) -> dict[str, Any]:
+    if not filepath.exists():
+        raise drive_api.GoogleDriveException("%s file not found", filepath)
 
-    assert filepath.exists(), f"File {filepath=} not found"
+    with filepath.open() as f:
+        return orjson.loads(f.read())
 
-    return filepath
+
+def _dump_json(data: dict[str, Any],
+               *,
+               filepath: Path) -> None:
+    dump_data = orjson.dumps(data)
+    with filepath.open('wb') as f:
+        f.write(dump_data)
 
 
 async def restore(*,
@@ -47,18 +53,16 @@ async def restore(*,
 
     async with database.transaction() as ses:
         if dump_path:
-            filepath = _get_local_dump_file(dump_path)
+            dump = _read_local_dump(dump_path)
         else:
-            filepath = drive_api.get_dump_file()
+            dump = drive_api.get_dump()
 
         await db.recreate_db()
-        snapshot = await db.restore_db(conn=ses, dump_path=filepath)
+        snapshot = await db.restore_db(conn=ses, dump=dump)
 
         logger.info("Restoring completed, %ss",
                     round(time.perf_counter() - start_time, 2))
 
-        if not dump_path:
-            _remove_file(filepath)
     return snapshot
 
 
@@ -94,7 +98,7 @@ def parse_args() -> argparse.Namespace:
         '--get-last-dump',
         help="Download the last backup from the Google Drive",
         action="store_true",
-        dest="last_dump"
+        dest="get_last_dump"
     )
     return parser.parse_args()
 
@@ -106,13 +110,16 @@ async def main() -> None:
         await backup()
     elif args.restore:
         await restore()
-    elif args.last_dump:
-        drive_api.get_dump_file()
+    elif args.get_last_dump:
+        dump = drive_api.get_dump()
+        filepath = db.get_dump_filename(prefix='last_dump')
+        _dump_json(dump, filepath=filepath)
     elif dump_path := args.restore_offline:
         await restore(dump_path=dump_path)
     elif args.backup_offline:
         snapshot = await db.get_db_snapshot()
-        db.dump_snapshot(snapshot)
+        filepath = db.get_dump_filename(prefix='offline_backup')
+        _dump_json(snapshot.table_to_rows(), filepath=filepath)
 
 
 if __name__ == "__main__":
