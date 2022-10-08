@@ -46,7 +46,7 @@ def _serialize(doc: DOC) -> DOC:
     }
 
 
-class ElasticsearchError(Exception):
+class ElasticsearchException(Exception):
     pass
 
 
@@ -151,7 +151,7 @@ class AsyncElasticIndex:
         except Exception:
             msg = f"Error creating index ({status=}): {json=}"
             logger.exception(msg)
-            raise ElasticsearchError(msg) from None
+            raise ElasticsearchException(msg) from None
 
         logger.info("Index created (status=%s): %s", status, json)
         return json
@@ -166,7 +166,7 @@ class AsyncElasticIndex:
             except Exception:
                 msg = f"Error deleting index ({status=}): {json=}"
                 logger.exception(msg)
-                raise ElasticsearchError(msg) from None
+                raise ElasticsearchException(msg) from None
 
         logger.info("Index deleted (status=%s): %s", status, json)
 
@@ -181,7 +181,7 @@ class AsyncElasticIndex:
         except Exception:
             msg = f"Error checking health ({status=}): {json=}"
             logger.exception(msg)
-            raise ElasticsearchError(msg) from None
+            raise ElasticsearchException(msg) from None
 
         return json.get('status', '') in ('green', 'yellow')
 
@@ -194,7 +194,7 @@ class AsyncElasticIndex:
         except Exception:
             msg = f"Error getting document ({status=}): {json=}"
             logger.exception(msg)
-            raise ElasticsearchError(msg) from None
+            raise ElasticsearchException(msg) from None
 
         return json
 
@@ -212,7 +212,7 @@ class AsyncElasticIndex:
         except Exception:
             msg = f"Error adding document ({status=}): {json=}"
             logger.exception(msg)
-            raise ElasticsearchError(msg) from None
+            raise ElasticsearchException(msg) from None
 
         return json
 
@@ -226,7 +226,7 @@ class AsyncElasticIndex:
             except Exception:
                 msg = f"Error deleting document ({status=}): {json=}"
                 logger.exception(msg)
-                raise ElasticsearchError(msg) from None
+                raise ElasticsearchException(msg) from None
 
         return json
 
@@ -246,7 +246,7 @@ class AsyncElasticIndex:
         except Exception:
             msg = f"Error matching documents ({status=}): {json=}"
             logger.exception(msg)
-            raise ElasticsearchError(msg) from None
+            raise ElasticsearchException(msg) from None
 
         return json
 
@@ -267,6 +267,6 @@ class AsyncElasticIndex:
         except Exception:
             msg = f"Error matching documents ({status=}): {json=}"
             logger.exception(msg)
-            raise ElasticsearchError(msg) from None
+            raise ElasticsearchException(msg) from None
 
         return json
