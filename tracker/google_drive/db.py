@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from pathlib import Path
 from typing import NamedTuple, Any
@@ -63,16 +64,20 @@ def _convert_date_to_str(value: DATE_TYPES | JSON_FIELD_TYPES) -> DATE_TYPES | J
 
 
 async def _get_table_snapshot(*,
-                              table: Table,
-                              conn: AsyncSession) -> TableSnapshot:
+                              table: Table) -> TableSnapshot:
+    logger.debug("Getting '%s' snapshot", table.name)
     stmt = sa.select(table)
-    rows = [
-        {
-            str(key): _convert_date_to_str(value)
-            for key, value in row.items()
-        }
-        for row in (await conn.execute(stmt)).mappings().all()
-    ]
+
+    async with database.session() as ses:
+        rows = [
+            {
+                str(key): _convert_date_to_str(value)
+                for key, value in row.items()
+            }
+            for row in (await ses.execute(stmt)).mappings().all()
+        ]
+
+    logger.info("'%s' snapshot got, %s rows", table.name, len(rows))
     return TableSnapshot(
         table_name=table.name,
         rows=rows
@@ -80,14 +85,13 @@ async def _get_table_snapshot(*,
 
 
 async def get_db_snapshot() -> DBSnapshot:
-    table_snapshots = []
-    async with database.transaction() as ses:
-        for table in TABLES.values():
-            table_snapshot = await _get_table_snapshot(table=table, conn=ses)
-            table_snapshots += [table_snapshot]
+    tasks = [
+        asyncio.create_task(_get_table_snapshot(table=table))
+        for table_name, table in TABLES.items()
+    ]
+    await asyncio.gather(*tasks)
 
-            logger.info("%s: %s rows got", table.name, table_snapshot.counter)
-
+    table_snapshots = [task.result() for task in tasks]
     return DBSnapshot(tables=table_snapshots)
 
 
