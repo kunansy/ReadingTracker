@@ -7,7 +7,7 @@ from typing import Any
 import orjson
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 
 from tracker.common import settings
 from tracker.common.log import logger
@@ -51,15 +51,22 @@ def _get_folder_id(*,
     return response['files'][0]['id']
 
 
-def send_dump(file_path: Path) -> None:
-    logger.debug("Sending file %s", file_path)
+def _dict_to_io(value: dict[str, Any]) -> io.BytesIO:
+    return io.BytesIO(orjson.dumps(value))
+
+
+def send_dump(*,
+              dump: dict[str, Any],
+              filename: Path) -> None:
+    logger.debug("Sending file %s", filename)
 
     file_metadata = {
-        'name': f"{file_path.name}",
+        'name': f"{filename.name}",
         'parents': [_get_folder_id()]
     }
-    file = MediaFileUpload(
-        file_path, mimetype='application/json')
+    dump_io = _dict_to_io(dump)
+    file = MediaIoBaseUpload(
+        dump_io, mimetype='application/json')
 
     with _drive_client() as client:
         client.files().create(
