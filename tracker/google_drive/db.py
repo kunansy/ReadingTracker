@@ -174,10 +174,10 @@ async def restore_db(*,
     snapshot = _convert_dump_to_snapshot(dump)
     snapshot_dict = snapshot.to_dict()
 
-    # order of them matters
+    # order of tables matters
     for table_name, table in TABLES.items():
         if not (table_dict := snapshot_dict.get(table_name)) or not table_dict.rows:
-            # its was empty for example
+            # the table was empty for example
             logger.warning("Table %s not found in snapshot", table_name)
             continue
 
