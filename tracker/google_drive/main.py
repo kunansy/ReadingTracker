@@ -50,18 +50,16 @@ async def restore(*,
 
     async with database.transaction() as ses:
         if dump_path:
-            filepath = _get_local_dump_file(dump_path)
+            dump = _get_local_dump(dump_path)
         else:
-            filepath = drive_api.get_dump_file()
+            dump = drive_api.get_dump()
 
         await db.recreate_db()
-        snapshot = await db.restore_db(conn=ses, dump_path=filepath)
+        snapshot = await db.restore_db(conn=ses, dump=dump)
 
         logger.info("Restoring completed, %ss",
                     round(time.perf_counter() - start_time, 2))
 
-        if not dump_path:
-            _remove_file(filepath)
     return snapshot
 
 
