@@ -34,13 +34,13 @@ class DBSnapshot(NamedTuple):
 
     def to_dict(self) -> dict[str, TableSnapshot]:
         return {
-            table_snapshot.table_name: table_snapshot
+            str(table_snapshot.table_name): table_snapshot
             for table_snapshot in self.tables
         }
 
     def table_to_rows(self) -> dict[str, list[dict[str, DATE_TYPES | JSON_FIELD_TYPES]]]:
         return {
-            table_snapshot.table_name: table_snapshot.rows
+            str(table_snapshot.table_name): table_snapshot.rows
             for table_snapshot in self.tables
         }
 
