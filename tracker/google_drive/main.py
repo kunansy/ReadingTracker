@@ -10,7 +10,6 @@ import orjson
 from tracker.common import database
 from tracker.common.log import logger
 from tracker.google_drive import drive_api, db
-from tracker.google_drive.drive_api import GoogleDriveException
 
 
 async def backup() -> db.DBSnapshot:
@@ -33,7 +32,7 @@ async def backup() -> db.DBSnapshot:
 
 def _read_local_dump(filepath: Path) -> dict[str, Any]:
     if not filepath.exists():
-        raise GoogleDriveException("%s file not found", filepath)
+        raise drive_api.GoogleDriveException("%s file not found", filepath)
 
     with filepath.open() as f:
         return orjson.loads(f.read())
