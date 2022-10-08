@@ -139,6 +139,12 @@ def _get_now() -> str:
     return database.utcnow().strftime(settings.DATETIME_FORMAT).replace(' ', '_')
 
 
+def get_dump_filename(*,
+                      prefix: str = 'tracker') -> str:
+    filename = f"{prefix}_{_get_now()}.json"
+    return settings.DATA_DIR / filename
+
+
 def dump_snapshot(snapshot: DBSnapshot) -> Path:
     logger.debug("DB dumping started")
 
