@@ -13,7 +13,7 @@ from tracker.common.log import logger
 from tracker.models import models
 
 
-class TrendException(database.DatabaseError):
+class TrendException(database.DatabaseException):
     pass
 
 

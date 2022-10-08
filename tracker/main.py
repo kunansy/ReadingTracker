@@ -35,17 +35,17 @@ app.include_router(cards_router)
 app.include_router(system_router)
 
 
-@app.exception_handler(database.DatabaseError)
+@app.exception_handler(database.DatabaseException)
 async def database_exception_handler(request: Request,
-                                     exc: database.DatabaseError):
-    logger.exception("Error, (%s), %s", request.url, str(exc))
+                                     exc: database.DatabaseException):
+    logger.exception("Database exception occurred, (%s), %s", request.url, str(exc))
 
     context = {
         "request": request,
         "error": {
             "type": exc.__class__.__name__,
             "args": exc.args,
-            "json": f"Database error: {exc}"
+            "json": f"Database exception: {exc}"
         }
     }
 
