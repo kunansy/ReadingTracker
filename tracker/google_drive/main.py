@@ -125,7 +125,8 @@ async def main() -> None:
         await restore(dump_path=dump_path)
     elif args.backup_offline:
         snapshot = await db.get_db_snapshot()
-        db.dump_snapshot(snapshot)
+        filename = db.get_dump_filename(prefix='offline_backup')
+        _dump_json(snapshot.table_to_rows(), filename=filename)
 
 
 if __name__ == "__main__":
