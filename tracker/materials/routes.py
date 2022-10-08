@@ -10,6 +10,7 @@ from tracker.common.log import logger
 from tracker.materials import db, schemas
 from tracker.models import enums
 
+
 router = APIRouter(
     prefix="/materials",
     tags=["materials"]
@@ -17,6 +18,12 @@ router = APIRouter(
 # could not specify the directory as 'templates/materials',
 # because templates contains references to the root templates folder
 templates = Jinja2Templates(directory="templates")
+
+
+@router.get('/', response_class=RedirectResponse)
+async def root():
+    redirect_url = router.url_path_for(get_reading_materials.__name__)
+    return RedirectResponse(redirect_url, status_code=302)
 
 
 @router.get('/queue', response_class=HTMLResponse)
