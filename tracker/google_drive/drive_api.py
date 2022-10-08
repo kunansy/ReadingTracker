@@ -99,8 +99,9 @@ def _get_file_content(file_id: str) -> dict[str, Any]:
 
     return orjson.loads(fh.read().decode())
 
-def get_dump_file() -> Path:
+
+def get_dump() -> dict[str, Any]:
     if not (dump_file_id := _get_last_dump_id()):
         raise ValueError("Dump not found")
 
-    return _download_file(dump_file_id)
+    return _get_file_content(dump_file_id)
