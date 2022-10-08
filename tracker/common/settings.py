@@ -5,8 +5,6 @@ from environs import Env
 from marshmallow.validate import OneOf
 
 
-_VERSION_FILE = Path('VERSION')
-
 env = Env()
 env.read_env()
 
@@ -17,8 +15,8 @@ DSN_TEMPLATE = "postgresql+asyncpg://{username}:{password}" \
                "@{host}:{port}/{db_name}"
 
 API_VERSION = '0.1.0'
-if _VERSION_FILE.exists():
-    API_VERSION = _VERSION_FILE.read_text().strip()
+if (version_file := Path('VERSION')).exists():
+    API_VERSION = version_file.read_text().strip()
 
 with env.prefixed("API_"):
     API_DEBUG = env.bool("DEBUG", False)
