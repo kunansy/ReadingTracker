@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 import argparse
 import asyncio
-import os
 import time
 from pathlib import Path
 from typing import Any
@@ -12,12 +11,6 @@ from tracker.common import database
 from tracker.common.log import logger
 from tracker.google_drive import drive_api, db
 from tracker.google_drive.drive_api import GoogleDriveException
-
-
-def _remove_file(file_path: Path) -> None:
-    logger.debug("Removing '%s'", file_path)
-    os.remove(file_path)
-    logger.debug("File removed")
 
 
 async def backup() -> db.DBSnapshot:
