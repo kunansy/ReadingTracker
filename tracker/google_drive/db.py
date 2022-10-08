@@ -1,7 +1,7 @@
 import datetime
 import re
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, Any
 
 import sqlalchemy.sql as sa
 import ujson
@@ -11,8 +11,8 @@ from sqlalchemy.sql.ddl import DropTable
 from sqlalchemy.sql.schema import Table
 
 from tracker.common import database, settings
-from tracker.models import models
 from tracker.common.log import logger
+from tracker.models import models
 
 
 JSON_FIELD_TYPES = str | int
@@ -180,13 +180,12 @@ def _convert_dump_to_snapshot(dump_data: DUMP_TYPE) -> DBSnapshot:
 
 
 async def restore_db(*,
-                     dump_path: Path,
+                     dump: dict[str, Any],
                      conn: AsyncSession) -> DBSnapshot:
-    if not dump_path.exists():
-        raise ValueError("Dump file not found")
+    if not dump:
+        raise ValueError("Dump is empty")
 
-    dump_data = _read_json_file(dump_path)
-    snapshot = _convert_dump_to_snapshot(dump_data)
+    snapshot = _convert_dump_to_snapshot(dump)
     snapshot_dict = snapshot.to_dict()
 
     # order of them matters
