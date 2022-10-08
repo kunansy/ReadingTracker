@@ -106,7 +106,7 @@ def parse_args() -> argparse.Namespace:
         '--get-last-dump',
         help="Download the last backup from the Google Drive",
         action="store_true",
-        dest="last_dump"
+        dest="get_last_dump"
     )
     return parser.parse_args()
 
@@ -118,8 +118,9 @@ async def main() -> None:
         await backup()
     elif args.restore:
         await restore()
-    elif args.last_dump:
-        drive_api.get_dump_file()
+    elif args.get_last_dump:
+        dump = drive_api.get_dump()
+        _dump_json(dump, filename='last_dump.json')
     elif dump_path := args.restore_offline:
         await restore(dump_path=dump_path)
     elif args.backup_offline:
