@@ -8,7 +8,7 @@ from typing import Any
 
 import orjson
 
-from tracker.common import database
+from tracker.common import database, settings
 from tracker.common.log import logger
 from tracker.google_drive import drive_api, db
 from tracker.google_drive.drive_api import GoogleDriveException
@@ -41,6 +41,17 @@ def _get_local_dump(filepath: Path) -> dict[str, Any]:
 
     with filepath.open() as f:
         return orjson.loads(f.read())
+
+
+def _dump_json(data: dict[str, Any],
+               *,
+               filename: str = 'dump.json') -> None:
+    if not (filepath := Path(filename)).is_relative_to(settings.DATA_DIR):
+        filepath = settings.DATA_DIR / filename
+
+    dump_data = orjson.dumps(data)
+    with filepath.open('wb') as f:
+        f.write(dump_data)
 
 
 async def restore(*,
