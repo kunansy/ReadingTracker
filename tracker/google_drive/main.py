@@ -25,9 +25,12 @@ async def backup() -> db.DBSnapshot:
     start_time = time.perf_counter()
 
     db_snapshot = await db.get_db_snapshot()
-    dump_file = db.dump_snapshot(db_snapshot)
-    drive_api.send_dump(dump_file)
-    _remove_file(dump_file)
+    filename = db.get_dump_filename()
+
+    drive_api.send_dump(
+        dump=db_snapshot.table_to_rows(),
+        filename=filename
+    )
 
     logger.info("Backuping completed, %ss",
                 round(time.perf_counter() - start_time, 2))
