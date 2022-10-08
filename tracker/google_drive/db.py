@@ -140,7 +140,7 @@ def _get_now() -> str:
 
 
 def get_dump_filename(*,
-                      prefix: str = 'tracker') -> str:
+                      prefix: str = 'tracker') -> Path:
     filename = f"{prefix}_{_get_now()}.json"
     return settings.DATA_DIR / filename
 

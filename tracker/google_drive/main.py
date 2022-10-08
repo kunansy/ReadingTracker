@@ -8,7 +8,7 @@ from typing import Any
 
 import orjson
 
-from tracker.common import database, settings
+from tracker.common import database
 from tracker.common.log import logger
 from tracker.google_drive import drive_api, db
 from tracker.google_drive.drive_api import GoogleDriveException
@@ -45,10 +45,7 @@ def _get_local_dump(filepath: Path) -> dict[str, Any]:
 
 def _dump_json(data: dict[str, Any],
                *,
-               filename: str = 'dump.json') -> None:
-    if not (filepath := Path(filename)).is_relative_to(settings.DATA_DIR):
-        filepath = settings.DATA_DIR / filename
-
+               filepath: Path) -> None:
     dump_data = orjson.dumps(data)
     with filepath.open('wb') as f:
         f.write(dump_data)
@@ -120,14 +117,14 @@ async def main() -> None:
         await restore()
     elif args.get_last_dump:
         dump = drive_api.get_dump()
-        filename = db.get_dump_filename(prefix='last_dump')
-        _dump_json(dump, filename=filename)
+        filepath = db.get_dump_filename(prefix='last_dump')
+        _dump_json(dump, filepath=filepath)
     elif dump_path := args.restore_offline:
         await restore(dump_path=dump_path)
     elif args.backup_offline:
         snapshot = await db.get_db_snapshot()
-        filename = db.get_dump_filename(prefix='offline_backup')
-        _dump_json(snapshot.table_to_rows(), filename=filename)
+        filepath = db.get_dump_filename(prefix='offline_backup')
+        _dump_json(snapshot.table_to_rows(), filepath=filepath)
 
 
 if __name__ == "__main__":
