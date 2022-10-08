@@ -31,7 +31,7 @@ async def backup() -> db.DBSnapshot:
     return db_snapshot
 
 
-def _get_local_dump(filepath: Path) -> dict[str, Any]:
+def _read_local_dump(filepath: Path) -> dict[str, Any]:
     if not filepath.exists():
         raise GoogleDriveException("%s file not found", filepath)
 
@@ -54,7 +54,7 @@ async def restore(*,
 
     async with database.transaction() as ses:
         if dump_path:
-            dump = _get_local_dump(dump_path)
+            dump = _read_local_dump(dump_path)
         else:
             dump = drive_api.get_dump()
 
