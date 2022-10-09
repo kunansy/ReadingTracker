@@ -186,6 +186,7 @@ class AsyncElasticIndex:
                   doc: DOC,
                   doc_id: UID) -> DOC:
         """ Create or update the document """
+        # TODO: bulk add
         url = f"{self._url}/{self.name}/_doc/{doc_id}"
         body = _serialize(doc)
 
