@@ -172,7 +172,10 @@ class AsyncElasticIndex:
         logger.debug("Checking elasticsearch is alive")
         url = f"{self._url}/_cluster/health"
 
-        status, json = await self.__get(url)
+        try:
+            status, json = await self.__get(url)
+        except ElasticsearchException:
+            return False
 
         return json.get('status', '') in ('green', 'yellow')
 
