@@ -2,7 +2,7 @@ import datetime
 import uuid
 
 import sqlalchemy
-from sqlalchemy import Date, DateTime, Integer, MetaData, Table, Unicode, Boolean, Enum, UniqueConstraint
+from sqlalchemy import Date, DateTime, Integer, MetaData, Table, Unicode, Boolean, Enum, UniqueConstraint, BigInteger
 from sqlalchemy.dialects.postgresql import UUID
 
 from tracker.models import enums
@@ -111,5 +111,15 @@ Repeats = Table(
 
     PrimaryKey('repeat_id'),
     Column('material_id', ForeignKey('materials.material_id'), index=True),
+    Column('repeated_at', DateTime, default=_utc_now)
+)
+
+NoteRepeatsHistory = Table(
+    'note_repeats_history',
+    metadata,
+
+    PrimaryKey('repeat_id'),
+    Column('note_id', ForeignKey('notes.note_id'), index=True),
+    Column('user_id', BigInteger, index=True, comment='Telegram user id'),
     Column('repeated_at', DateTime, default=_utc_now)
 )
