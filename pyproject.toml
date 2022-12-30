@@ -6,7 +6,7 @@ authors = ["kunansy <kolobov.kirill@list.ru>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.10"
+python = "^3.11"
 SQLAlchemy = "~1.4.25"
 pydantic = "~1.10.1"
 environs = "~9.5.0"
