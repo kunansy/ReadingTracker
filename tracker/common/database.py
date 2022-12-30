@@ -1,7 +1,7 @@
 import datetime
 import functools
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, NamedTuple, Any
+from typing import AsyncGenerator, NamedTuple, Any, Callable
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -45,7 +45,7 @@ class TTLCache:
         return (utcnow() - self.added_at).seconds <= self.TTL
 
 
-def cache(func):
+def cache(func: Callable):
     storage: dict[int, TTLCache] = {}
     name = func.__name__
 
