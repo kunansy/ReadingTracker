@@ -1,4 +1,4 @@
-FROM python:3.10-slim-buster as reading-tracker
+FROM python:3.11-slim-buster as reading-tracker
 
 LABEL maintainer="<kolobov.kirill@list.ru>"
 ENV PYTHONUNBUFFERED 1
