@@ -19,7 +19,7 @@ async def backup() -> db.DBSnapshot:
     db_snapshot = await db.get_db_snapshot()
     filename = db.get_dump_filename()
 
-    drive_api.send_dump(
+    await drive_api.send_dump(
         dump=db_snapshot.table_to_rows(),
         filename=filename
     )
@@ -55,7 +55,7 @@ async def restore(*,
         if dump_path:
             dump = _read_local_dump(dump_path)
         else:
-            dump = drive_api.get_dump()
+            dump = await drive_api.get_dump()
 
         await db.recreate_db()
         snapshot = await db.restore_db(conn=ses, dump=dump)
@@ -111,7 +111,7 @@ async def main() -> None:
     elif args.restore:
         await restore()
     elif args.get_last_dump:
-        dump = drive_api.get_dump()
+        dump = await drive_api.get_dump()
         filepath = db.get_dump_filename(prefix='last_dump')
         _dump_json(dump, filepath=filepath)
     elif dump_path := args.restore_offline:

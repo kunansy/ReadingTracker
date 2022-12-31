@@ -98,7 +98,7 @@ async def transaction(**kwargs) -> AsyncGenerator[AsyncSession, None]:
 
 
 async def readiness() -> bool:
-    logger.debug("Checking if the database is alive")
+    logger.log(5, "Checking the database is alive")
 
     stmt = sa.text("SELECT 1 + 1 = 2")
     async with session() as ses:
