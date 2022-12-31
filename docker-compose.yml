@@ -54,7 +54,6 @@ services:
     depends_on:
       - tracker-db
       - tracker-search
-      - tracker-elastic
     ports:
        - "0.0.0.0:${API_PORT}:8000"
     entrypoint: ["gunicorn", "tracker.main:app", "--bind", "0.0.0.0:8000", "--workers",
