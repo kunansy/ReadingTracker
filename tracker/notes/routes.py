@@ -22,9 +22,9 @@ templates = Jinja2Templates(directory="templates")
 
 def _filter_notes(*,
                   notes: list[db.Note],
-                  ids: Iterable[str]) -> list[db.Note]:
+                  ids: Iterable[UUID]) -> list[db.Note]:
     notes_ = {
-        str(note.note_id): note
+        note.note_id: note
         for note in notes
     }
     # TODO: save order of search results,
@@ -54,7 +54,7 @@ async def get_notes(request: Request,
     notes = get_notes_task.result()
 
     if query:
-        found_note_ids = await es.find_notes(query)
+        found_note_ids = await manticoresearch.search(query)
         notes = _filter_notes(notes=notes, ids=found_note_ids)
 
     chapters = db.get_distinct_chapters(notes)
