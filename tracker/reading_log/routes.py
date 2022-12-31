@@ -35,14 +35,10 @@ async def get_reading_log(request: Request):
 
 @router.get('/add-view')
 async def add_log_record_view(request: Request):
-    get_titles = asyncio.create_task(db.get_reading_material_titles())
-    get_reading_material_id = asyncio.create_task(db.get_material_reading_now())
+    async with asyncio.TaskGroup() as tg:
+        get_titles = tg.create_task(db.get_reading_material_titles())
+        get_reading_material_id = tg.create_task(db.get_material_reading_now())
     today = datetime.datetime.utcnow()
-
-    await asyncio.gather(
-        get_titles,
-        get_reading_material_id
-    )
 
     context = {
         'request': request,
