@@ -21,11 +21,11 @@ The project is expected to help one read books:
 2. Keep a list of reading and completed materials;
 3. Calculate statistics;
 4. Track the reading log;
-4. Keep notes to help remember some important points from the material.
+5. Keep notes to help remember some important points from the material.
 
 ## Structure
 ### Queue
-Here there are the books, articles, courses etc to read with some analytics, 
+Here there are the books, articles, courses etc. to read with some analytics, 
 expected reading duration according to the average read pages.
 ![Queue](docs/queue.png)
 
@@ -48,7 +48,7 @@ there are less than average pages, green if there are more.
 ![Reading log](docs/reading_log.png)
 
 ## Notes
-Here there are the notes, the most important info from the materials. 
+Here there are notes, the most important info from the materials. 
 The user can search a note with Manticoresearch.
 ![Notes](docs/notes.png)
 
