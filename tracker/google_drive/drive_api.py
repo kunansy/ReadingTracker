@@ -85,15 +85,16 @@ async def send_dump(*,
     logger.debug("File sent")
 
 
-def _get_last_dump_id() -> str:
+async def _get_last_dump_id() -> str:
     logger.debug("Getting last dump started")
-    folder_id = _get_folder_id()
+    folder_id = await _get_folder_id()
     query = f"name contains 'tracker_' and mimeType='application/json' and '{folder_id}' in parents"
 
-    with _drive_client() as client:
-        response = client.files().list(
-            q=query, spaces='drive', fields='files(id,modifiedTime,name)') \
-            .execute()
+    async with _drive_client() as (client, drive):
+        response = await client.as_service_account(
+            drive.files.list(
+                q=query, spaces='drive', fields='files(id,modifiedTime,name)')
+        )
     files = response['files']
     files.sort(key=lambda resp: resp['modifiedTime'], reverse=True)
 
