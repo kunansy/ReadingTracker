@@ -76,7 +76,7 @@ async def _get_notes() -> list[Note]:
     async with database.session() as ses:
         return [
             Note(**row)
-            for row in await (ses.execute(stmt)).mappings().all()
+            for row in (await ses.execute(stmt)).mappings().all()
         ]
 
 
