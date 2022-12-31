@@ -34,7 +34,8 @@ class Note(CustomBaseModel):
 
 INSERT_QUERY = "INSERT INTO notes (note_id, material_id, content, chapter, page, added_at, " \
                "material_title, material_authors, material_type, material_tags, material_link) "\
-                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+               "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+
 
 @asynccontextmanager
 async def _cursor() -> AsyncGenerator[MysqlCursor, None]:
@@ -105,10 +106,10 @@ async def _create_table() -> None:
     query = """CREATE TABLE IF NOT EXISTS notes (
         note_id string,
         material_id string,
-        content text, 
+        content text,
         chapter int,
         page int,
-        added_at timestamp, 
+        added_at timestamp,
         material_title text,
         material_authors text,
         material_type text,
