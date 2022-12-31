@@ -161,3 +161,8 @@ async def delete(note_id: UUID) -> None:
 
     async with _cursor() as cur:
         await cur.execute(query, note_id)
+
+
+async def update(note_id: UUID) -> None:
+    await delete(note_id)
+    await insert(note_id)
