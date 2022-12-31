@@ -301,15 +301,10 @@ async def _get_material_statistics(*,
 async def completed_statistics() -> list[MaterialStatistics]:
     logger.info("Calculating completed materials statistics")
 
-    completed_materials_task = asyncio.create_task(_get_completed_materials())
-    avg_read_pages_task = asyncio.create_task(statistics.get_avg_read_pages())
-    all_notes_count_task = asyncio.create_task(notes_db.get_all_notes_count())
-
-    await asyncio.gather(
-        completed_materials_task,
-        avg_read_pages_task,
-        all_notes_count_task
-    )
+    async with asyncio.TaskGroup() as tg:
+        completed_materials_task = tg.create_task(_get_completed_materials())
+        avg_read_pages_task = tg.create_task(statistics.get_avg_read_pages())
+        all_notes_count_task = tg.create_task(notes_db.get_all_notes_count())
 
     all_notes_count = all_notes_count_task.result()
     avg_read_pages = avg_read_pages_task.result()
