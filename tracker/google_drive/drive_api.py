@@ -2,7 +2,7 @@ import contextlib
 import io
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, AsyncGenerator
 
 import aiogoogle
 import orjson
@@ -36,16 +36,17 @@ def _get_drive_creds() -> ServiceAccountCreds:
     return creds
 
 
-@contextlib.contextmanager
-def _drive_client():
+@contextlib.asynccontextmanager
+async def _drive_client() -> AsyncGenerator[tuple[aiogoogle.Aiogoogle, aiogoogle.GoogleAPI], None]:
     creds = _get_drive_creds()
 
-    new_client = build('drive', 'v3', credentials=creds)
-    try:
-        yield new_client
-    except Exception as e:
-        logger.exception("Error with the client, %s", repr(e))
-        raise GoogleDriveException(e) from e
+    async with aiogoogle.Aiogoogle(service_account_creds=creds) as client:
+        drive_v3 = await client.discover('drive', 'v3')
+        try:
+            yield client, drive_v3
+        except Exception as e:
+            logger.exception("Error with the client, %s", repr(e))
+            raise GoogleDriveException(e) from e
 
 
 def _get_folder_id(*,
