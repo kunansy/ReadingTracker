@@ -13,6 +13,10 @@ from tracker.common.log import logger
 from tracker.models import models
 
 
+class ManticoreException(Exception):
+    pass
+
+
 class Note(NamedTuple):
     note_id: str
     material_id: str
