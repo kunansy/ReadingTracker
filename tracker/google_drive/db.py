@@ -57,10 +57,10 @@ TABLES = {
 
 
 def _convert_date_to_str(value: DATE_TYPES | JSON_FIELD_TYPES) -> DATE_TYPES | JSON_FIELD_TYPES:
-    if isinstance(value, datetime.date):
-        return value.strftime(settings.DATE_FORMAT)
     if isinstance(value, datetime.datetime):
         return value.strftime(settings.DATETIME_FORMAT)
+    if isinstance(value, datetime.date):
+        return value.strftime(settings.DATE_FORMAT)
     return value
 
 
