@@ -308,7 +308,6 @@ async def completed_statistics() -> list[MaterialStatistics]:
 
     all_notes_count = all_notes_count_task.result()
     avg_read_pages = avg_read_pages_task.result()
-    completed_materials = completed_materials_task.result()
 
     return [
         await _get_material_statistics(
@@ -316,7 +315,7 @@ async def completed_statistics() -> list[MaterialStatistics]:
             notes_count=all_notes_count.get(material_status.material_id, 0),
             avg_total=avg_read_pages
         )
-        for material_status in completed_materials
+        for material_status in completed_materials_task.result()
     ]
 
 
@@ -330,7 +329,6 @@ async def reading_statistics() -> list[MaterialStatistics]:
 
     all_notes_count = all_notes_count_task.result()
     avg_read_pages = avg_read_pages_task.result()
-    reading_materials = reading_materials_task.result()
 
     return [
         await _get_material_statistics(
@@ -338,7 +336,7 @@ async def reading_statistics() -> list[MaterialStatistics]:
             notes_count=all_notes_count.get(material_status.material_id, 0),
             avg_total=avg_read_pages
         )
-        for material_status in reading_materials
+        for material_status in reading_materials_task.result()
     ]
 
 
@@ -576,7 +574,6 @@ async def get_repeating_queue() -> list[RepeatingQueue]:
         notes_count_task = tg.create_task(notes_db.get_all_notes_count())
         repeat_analytics_task = tg.create_task(get_repeats_analytics())
 
-    completed_materials = completed_materials_task.result()
     notes_count = notes_count_task.result()
     repeat_analytics = repeat_analytics_task.result()
 
@@ -594,7 +591,7 @@ async def get_repeating_queue() -> list[RepeatingQueue]:
             priority_days=repeat_analytics[material_status.material_id].priority_days,
             priority_months=repeat_analytics[material_status.material_id].priority_months
         )
-        for material_status in completed_materials
+        for material_status in completed_materials_task.result()
         if repeat_analytics[material_status.material_id].priority_months > 0
     ]
     logger.debug("Repeating queue got, %s materials found", len(queue))
