@@ -91,7 +91,10 @@ async def _get_note(*,
 
 
 async def _drop_table() -> None:
-    pass
+    query = "DROP TABLE IF EXISTS notes"
+
+    async with _cursor() as cur:
+        await cur.execute(query)
 
 
 async def _create_table() -> None:
