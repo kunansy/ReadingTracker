@@ -117,8 +117,9 @@ async def _get_file_content(file_id: str) -> dict[str, Any]:
     os.remove(tmp_file.name)
     return file
 
-def get_dump() -> dict[str, Any]:
-    if not (dump_file_id := _get_last_dump_id()):
+
+async def get_dump() -> dict[str, Any]:
+    if not (dump_file_id := await _get_last_dump_id()):
         raise ValueError("Dump not found")
 
-    return _get_file_content(dump_file_id)
+    return await _get_file_content(dump_file_id)
