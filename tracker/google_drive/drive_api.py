@@ -49,11 +49,14 @@ async def _drive_client() -> AsyncGenerator[tuple[aiogoogle.Aiogoogle, aiogoogle
             raise GoogleDriveException(e) from e
 
 
-def _get_folder_id(*,
-                   folder_name: str = 'tracker') -> str:
-    with _drive_client() as client:
-        response = client.files().list(
-            q=f"name = '{folder_name}'", spaces='drive', fields='files(id)').execute()
+async def _get_folder_id(*,
+                         folder_name: str = 'tracker') -> str:
+    async with _drive_client() as (client, drive):
+        response = await client.as_service_account(
+            drive.files.list(
+                q=f"name = '{folder_name}'", spaces='drive', fields='files(id)')
+        )
+
     return response['files'][0]['id']
 
 
