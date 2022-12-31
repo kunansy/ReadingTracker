@@ -10,6 +10,7 @@ from aiomysql.cursors import Cursor as MysqlCursor
 
 from tracker.common import database, settings
 from tracker.common.log import logger
+from tracker.common.schemas import CustomBaseModel
 from tracker.models import models
 
 
@@ -17,7 +18,7 @@ class ManticoreException(Exception):
     pass
 
 
-class Note(NamedTuple):
+class Note(CustomBaseModel):
     note_id: str
     material_id: str
     content: str
