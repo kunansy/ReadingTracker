@@ -33,6 +33,10 @@ class Note(CustomBaseModel):
     material_link: str
 
 
+INSERT_QUERY = "INSERT INTO notes (note_id, material_id, content, chapter, page, added_at, " \
+               "material_title, material_authors, material_type, material_tags, material_link) "\
+                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+
 @asynccontextmanager
 async def _cursor() -> AsyncGenerator[MysqlCursor, None]:
     new_session = await aiomysql.connect(
@@ -120,9 +124,9 @@ async def _create_table() -> None:
 async def _fill_table(notes: list[Note]) -> None:
     async with _cursor() as cur:
         await cur.executemany(
-            "INSERT INTO notes (note_id, material_id, content, chapter, page, added_at, "
-            "material_title, material_authors, material_type, material_tags, material_link) "
-            "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)", (list(note.dict().values()) for note in notes))
+            INSERT_QUERY,
+            (list(note.dict().values()) for note in notes)
+        )
 
 
 async def init() -> None:
