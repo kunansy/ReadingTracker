@@ -1,7 +1,6 @@
-import asyncio
 import datetime
 from contextlib import asynccontextmanager
-from typing import NamedTuple, AsyncGenerator
+from typing import AsyncGenerator
 from uuid import UUID
 
 import aiomysql
