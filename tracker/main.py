@@ -1,5 +1,3 @@
-import asyncio
-
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException, RequestValidationError
@@ -8,10 +6,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from tracker.cards.routes import router as cards_router
-from tracker.common import database, settings, elasticsearch, manticoresearch
+from tracker.common import database, settings, manticoresearch
 from tracker.common.log import logger
 from tracker.materials.routes import router as materials_router
-from tracker.notes.es import index as notes_index
 from tracker.notes.routes import router as notes_router
 from tracker.reading_log.routes import router as reading_log_router
 from tracker.system.routes import router as system_router
