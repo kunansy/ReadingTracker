@@ -171,14 +171,14 @@ async def update(note_id: UUID) -> None:
     await insert(note_id)
 
 
-async def search(query: str) -> list[UUID]:
+async def search(query: str) -> set[UUID]:
     if not query:
-        return []
+        return set()
 
     db_query = "SELECT note_id FROM notes where match(%s) ORDER BY weight() DESC"
     async with _cursor() as cur:
         await cur.execute(db_query, query)
-        return [
+        return set(
             UUID(row[0])
             for row in await cur.fetchall()
-        ]
+        )
