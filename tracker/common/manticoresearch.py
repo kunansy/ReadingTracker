@@ -98,20 +98,22 @@ async def _drop_table() -> None:
 
 
 async def _create_table() -> None:
-    query = """
-        CREATE TABLE notes (
-            note_id string,
-            material_id string,
-            content string, 
-            chapter int,
-            page int,
-            added_at timestamp, 
-            material_title string,
-            material_authors string,
-            material_type string,
-            material_tags string,
-            material_link string) morphology='lemmatize_ru_all, lemmatize_en_all';
+    query = """CREATE TABLE IF NOT EXISTS notes (
+        note_id string,
+        material_id string,
+        content string, 
+        chapter int,
+        page int,
+        added_at timestamp, 
+        material_title string,
+        material_authors string,
+        material_type string,
+        material_tags string,
+        material_link string) morphology='lemmatize_ru_all, lemmatize_en_all'
     """
+
+    async with _cursor() as cur:
+        await cur.execute(query)
 
 
 async def _fill_table(notes: list[Note]) -> None:
