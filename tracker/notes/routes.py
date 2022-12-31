@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from tracker.common import settings, manticoresearch
 from tracker.common.log import logger
 from tracker.models import enums
-from tracker.notes import db, schemas, es
+from tracker.notes import db, schemas
 
 
 router = APIRouter(
