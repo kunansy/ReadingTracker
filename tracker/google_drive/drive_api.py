@@ -7,9 +7,6 @@ from typing import Any, AsyncGenerator
 
 import aiogoogle
 import orjson
-from google.oauth2.service_account import Credentials
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
 from aiogoogle.auth.creds import ServiceAccountCreds
 
 from tracker.common import settings
