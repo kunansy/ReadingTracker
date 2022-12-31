@@ -86,11 +86,11 @@ async def _get_table_snapshot(*,
 
 
 async def get_db_snapshot() -> DBSnapshot:
-    tasks = [
-        asyncio.create_task(_get_table_snapshot(table=table))
-        for table_name, table in TABLES.items()
-    ]
-    await asyncio.gather(*tasks)
+    async with asyncio.TaskGroup() as tg:
+        tasks = [
+            tg.create_task(_get_table_snapshot(table=table))
+            for table_name, table in TABLES.items()
+        ]
 
     table_snapshots = [task.result() for task in tasks]
     return DBSnapshot(tables=table_snapshots)
