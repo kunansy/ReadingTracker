@@ -4,10 +4,12 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Any
 
+import aiogoogle
 import orjson
 from google.oauth2.service_account import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload, MediaIoBaseUpload
+from aiogoogle.auth.creds import ServiceAccountCreds
 
 from tracker.common import settings
 from tracker.common.log import logger
@@ -21,12 +23,15 @@ class GoogleDriveException(Exception):
 
 
 @lru_cache
-def _get_drive_creds() -> Credentials:
+def _get_drive_creds() -> ServiceAccountCreds:
     if not (creds_file := settings.DRIVE_CREDS_PATH).exists():
         raise ValueError("Creds file not found")
 
-    creds = Credentials.from_service_account_file(
-        creds_file, scopes=SCOPES)
+    creds_json = orjson.loads(creds_file.read_text())
+    creds = ServiceAccountCreds(
+        scopes=SCOPES,
+        **creds_json
+    )
 
     return creds
 
