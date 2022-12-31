@@ -62,4 +62,9 @@ with env.prefixed('ELASTIC_'):
 
     ELASTIC_URL = f"http://{ELASTIC_HOST}:{ELASTIC_PORT}"
 
+with env.prefixed('MANTICORE_MYSQL_'):
+    MANTICORE_MYSQL_HOST = env('HOST')
+    MANTICORE_MYSQL_PORT = env.int('PORT', 9306)
+    MANTICORE_MYSQL_DB_NAME = env('DB_NAME', 'Manticore')
+
 os.environ.clear()
