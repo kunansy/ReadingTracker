@@ -122,6 +122,9 @@ async def _create_table() -> None:
 
 
 async def insert_all(notes: list[Note]) -> None:
+    if not notes:
+        return None
+
     async with _cursor() as cur:
         await cur.executemany(
             INSERT_QUERY,
