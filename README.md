@@ -48,7 +48,8 @@ there are less than average pages, green if there are more.
 ![Reading log](docs/reading_log.png)
 
 ## Notes
-Here there are the notes, the most important info from the materials.
+Here there are the notes, the most important info from the materials. 
+The user can search a note with Manticoresearch.
 ![Notes](docs/notes.png)
 
 ## System
