@@ -62,10 +62,6 @@ async def _get_folder_id(*,
     return response['files'][0]['id']
 
 
-def _dict_to_io(value: dict[str, Any]) -> io.BytesIO:
-    return io.BytesIO(orjson.dumps(value))
-
-
 async def send_dump(*,
                     dump: dict[str, Any],
                     filename: Path) -> None:
