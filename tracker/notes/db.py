@@ -1,6 +1,5 @@
 import datetime
 from collections import defaultdict
-from typing import NamedTuple
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -8,11 +7,12 @@ import sqlalchemy.sql as sa
 from tracker.common import database
 from tracker.models import models
 from tracker.common.log import logger
+from tracker.common.schemas import CustomBaseModel
 
 
-class Note(NamedTuple):
-    note_id: UUID
-    material_id: UUID
+class Note(CustomBaseModel):
+    note_id: str
+    material_id: str
     content: str
     added_at: datetime.datetime
     chapter: int
