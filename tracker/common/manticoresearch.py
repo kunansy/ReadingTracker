@@ -64,8 +64,8 @@ def _get_note_stmt() -> sa.Select:
                       models.Materials.c.title.label('material_title'),
                       models.Materials.c.authors.label('material_authors'),
                       models.Materials.c.material_type.label('material_type'),
-                      models.Materials.c.tags.label('material_tags'),
-                      models.Materials.c.link.label('material_link')]) \
+                      sa.func.coalesce(models.Materials.c.tags, '').label('material_tags'),
+                      sa.func.coalesce(models.Materials.c.link, '').label('material_link')]) \
         .join(models.Materials,
               models.Materials.c.material_id == models.Notes.c.material_id)
 
