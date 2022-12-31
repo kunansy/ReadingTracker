@@ -1,5 +1,7 @@
 import contextlib
 import io
+import os
+import tempfile
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, AsyncGenerator
@@ -64,22 +66,26 @@ def _dict_to_io(value: dict[str, Any]) -> io.BytesIO:
     return io.BytesIO(orjson.dumps(value))
 
 
-def send_dump(*,
-              dump: dict[str, Any],
-              filename: Path) -> None:
+async def send_dump(*,
+                    dump: dict[str, Any],
+                    filename: Path) -> None:
     logger.debug("Sending file %s", filename)
 
     file_metadata = {
         'name': f"{filename.name}",
-        'parents': [_get_folder_id()]
+        'parents': [await _get_folder_id()]
     }
-    dump_io = _dict_to_io(dump)
-    file = MediaIoBaseUpload(
-        dump_io, mimetype='application/json')
 
-    with _drive_client() as client:
-        client.files().create(
-            body=file_metadata, media_body=file).execute()
+    tmp_file = tempfile.NamedTemporaryFile(mode="wb", delete=False)
+    tmp_file.write(orjson.dumps(dump))
+    tmp_file.close()
+
+    async with _drive_client() as (client, drive):
+        await client.as_service_account(
+            drive.files.create(
+                upload_file=tmp_file.name, json=file_metadata))
+
+    os.remove(tmp_file.name)
     logger.debug("File sent")
 
 
