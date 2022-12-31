@@ -71,7 +71,8 @@ def _get_note_stmt() -> sa.Select:
                       sa.func.coalesce(models.Materials.c.tags, '').label('material_tags'),
                       sa.func.coalesce(models.Materials.c.link, '').label('material_link')]) \
         .join(models.Materials,
-              models.Materials.c.material_id == models.Notes.c.material_id)
+              models.Materials.c.material_id == models.Notes.c.material_id)\
+        .where(~models.Notes.c.is_deleted)
 
 
 async def _get_notes() -> list[Note]:
