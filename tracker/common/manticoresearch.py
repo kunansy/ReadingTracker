@@ -144,3 +144,13 @@ async def init() -> None:
     logger.debug("Notes inserted")
 
     logger.info("Manticore search init completed")
+
+
+async def insert(note_id: UUID) -> None:
+    note = await _get_note(note_id=note_id)
+
+    async with _cursor() as cur:
+        await cur.execute(
+            INSERT_QUERY,
+            list(note.dict().values())
+        )
