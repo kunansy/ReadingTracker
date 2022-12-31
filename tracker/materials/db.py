@@ -323,15 +323,10 @@ async def completed_statistics() -> list[MaterialStatistics]:
 async def reading_statistics() -> list[MaterialStatistics]:
     logger.info("Calculating reading materials statistics")
 
-    reading_materials_task = asyncio.create_task(_get_reading_materials())
-    avg_read_pages_task = asyncio.create_task(statistics.get_avg_read_pages())
-    all_notes_count_task = asyncio.create_task(notes_db.get_all_notes_count())
-
-    await asyncio.gather(
-        reading_materials_task,
-        all_notes_count_task,
-        avg_read_pages_task
-    )
+    async with asyncio.TaskGroup() as tg:
+        reading_materials_task = tg.create_task(_get_reading_materials())
+        avg_read_pages_task = tg.create_task(statistics.get_avg_read_pages())
+        all_notes_count_task = tg.create_task(notes_db.get_all_notes_count())
 
     all_notes_count = all_notes_count_task.result()
     avg_read_pages = avg_read_pages_task.result()
