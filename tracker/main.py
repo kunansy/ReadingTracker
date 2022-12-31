@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from tracker.cards.routes import router as cards_router
-from tracker.common import database, settings, elasticsearch
+from tracker.common import database, settings, elasticsearch, manticoresearch
 from tracker.common.log import logger
 from tracker.materials.routes import router as materials_router
 from tracker.notes.es import index as notes_index
@@ -52,17 +52,17 @@ async def database_exception_handler(request: Request,
     return templates.TemplateResponse("errors/500.html", context)
 
 
-@app.exception_handler(elasticsearch.ElasticsearchException)
-async def es_exception_handler(request: Request,
-                               exc: elasticsearch.ElasticsearchException):
-    logger.exception("Elasticsearch exception occurred, (%s), %s", request.url, str(exc))
+@app.exception_handler(manticoresearch.ManticoreException)
+async def manticore_exception_handler(request: Request,
+                                      exc: manticoresearch.ManticoreException):
+    logger.exception("Manticoresearch exception occurred, (%s), %s", request.url, str(exc))
 
     context = {
         "request": request,
         "error": {
             "type": exc.__class__.__name__,
             "args": exc.args,
-            "json": f"Elasticsearch exception: {exc}"
+            "json": f"Manticoresearch exception: {exc}"
         }
     }
 
