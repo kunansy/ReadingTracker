@@ -55,6 +55,29 @@ services:
       timeout: 10s
       retries: 5
 
+  tracker-search:
+    image: manticoresearch/manticore:5.0.2
+    container_name: tracker-search
+    restart: always
+    ports:
+      - "127.0.0.1:9306:9306"
+      - "127.0.0.1:9308:9308"
+      - "127.0.0.1:9312:9312"
+    volumes:
+      - manticore-data:/var/lib/manticore/
+    networks:
+      - tracker-net
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+      memlock:
+        soft: -1
+        hard: -1
+    environment:
+      - MCL=1
+
   reading-tracker:
     image: kunansy/reading_tracker:2.14.0
     container_name: reading-tracker
@@ -80,6 +103,7 @@ services:
 
 volumes:
   database-volume:
+  manticore-data:
   esdata:
 
 networks:
