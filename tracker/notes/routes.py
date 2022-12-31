@@ -6,10 +6,10 @@ from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from tracker.common import settings
+from tracker.common import settings, manticoresearch
 from tracker.common.log import logger
 from tracker.models import enums
-from tracker.notes import db, schemas, es
+from tracker.notes import db, schemas
 
 
 router = APIRouter(
@@ -22,9 +22,9 @@ templates = Jinja2Templates(directory="templates")
 
 def _filter_notes(*,
                   notes: list[db.Note],
-                  ids: Iterable[str]) -> list[db.Note]:
+                  ids: Iterable[UUID]) -> list[db.Note]:
     notes_ = {
-        str(note.note_id): note
+        note.note_id: note
         for note in notes
     }
     # TODO: save order of search results,
@@ -54,7 +54,7 @@ async def get_notes(request: Request,
     notes = get_notes_task.result()
 
     if query:
-        found_note_ids = await es.find_notes(query)
+        found_note_ids = await manticoresearch.search(query)
         notes = _filter_notes(notes=notes, ids=found_note_ids)
 
     chapters = db.get_distinct_chapters(notes)
@@ -110,7 +110,7 @@ async def add_note(note: schemas.Note = Depends()):
     if material_type := await db.get_material_type(material_id=note.material_id):
         response.set_cookie('material_type', material_type, expires=5)
 
-    await es.create_note(note_id=note_id)
+    await manticoresearch.insert(note_id=note_id)
 
     return response
 
@@ -161,7 +161,7 @@ async def update_note(note: schemas.UpdateNote = Depends()):
     redirect_path = router.url_path_for(update_note_view.__name__)
     redirect_url = f"{redirect_path}?note_id={note.note_id}&{success=}"
 
-    await es.create_note(note_id=note.note_id)
+    await manticoresearch.update(note_id=note.note_id)
 
     return RedirectResponse(redirect_url, status_code=302)
 
@@ -174,6 +174,6 @@ async def delete_note(note: schemas.DeleteNote = Depends()):
     redirect_path = router.url_path_for(get_notes.__name__)
     redirect_url = f"{redirect_path}?material_id={note.material_id}"
 
-    await es.index.delete(doc_id=note.note_id)
+    await manticoresearch.delete(note_id=note.note_id)
 
     return RedirectResponse(redirect_url, status_code=302)

@@ -21,48 +21,39 @@ services:
       timeout: 5s
       retries: 3
 
-  tracker-elastic:
-    image: kunansy/tracker_elastic:8.2.3
-    container_name: tracker-elastic
-    command: elasticsearch
-    env_file: .env
+  tracker-search:
+    build:
+      dockerfile: manticore/Dockerfile
+      context: .
+    container_name: tracker-search
     restart: always
-    environment:
-      - cluster.initial_master_nodes[0]=localhost
-      - xpack.security.enabled=false
-      - ingest.geoip.downloader.enabled=false
-      - cluster.name=tracker-elastic
-      - discovery.type=single-node
-      - http.cors.enabled=true
-      - http.cors.allow-credentials=true
-      - http.cors.allow-headers=X-Requested-With,X-Auth-Token,Content-Type,Content-Length,Authorization
-      - http.cors.allow-origin=/https?:\/\/localhost(:[0-9]+)?/
-      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "127.0.0.1:9306:9306"
+      - "127.0.0.1:9308:9308"
+      - "127.0.0.1:9312:9312"
+    volumes:
+      - manticore-data:/var/lib/manticore/
+    networks:
+      - tracker-net
     ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
       memlock:
         soft: -1
         hard: -1
-    ports:
-      - "0.0.0.0:9200:9200"
-      - "0.0.0.0:9300:9300"
-    volumes:
-      - esdata:/usr/share/elasticsearch/data
-    networks:
-      - tracker-net
-    healthcheck:
-      test: curl -s https://localhost:9200 >/dev/null; if [[ $$? == 52 ]]; then echo 0; else echo 1; fi
-      interval: 30s
-      timeout: 10s
-      retries: 5
+    environment:
+      - MCL=1
 
   reading-tracker:
-    image: kunansy/reading_tracker:2.14.0
+    image: kunansy/reading_tracker:2.15.0
     container_name: reading-tracker
     env_file: .env
     restart: always
     depends_on:
       - tracker-db
-      - tracker-elastic
+      - tracker-search
     ports:
        - "0.0.0.0:${API_PORT}:8000"
     entrypoint: ["gunicorn", "tracker.main:app", "--bind", "0.0.0.0:8000", "--workers",
@@ -80,7 +71,7 @@ services:
 
 volumes:
   database-volume:
-  esdata:
+  manticore-data:
 
 networks:
   tracker-net:

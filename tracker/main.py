@@ -1,5 +1,3 @@
-import asyncio
-
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException, RequestValidationError
@@ -8,10 +6,9 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from tracker.cards.routes import router as cards_router
-from tracker.common import database, settings, elasticsearch
+from tracker.common import database, settings, manticoresearch
 from tracker.common.log import logger
 from tracker.materials.routes import router as materials_router
-from tracker.notes.es import index as notes_index
 from tracker.notes.routes import router as notes_router
 from tracker.reading_log.routes import router as reading_log_router
 from tracker.system.routes import router as system_router
@@ -52,17 +49,17 @@ async def database_exception_handler(request: Request,
     return templates.TemplateResponse("errors/500.html", context)
 
 
-@app.exception_handler(elasticsearch.ElasticsearchException)
-async def es_exception_handler(request: Request,
-                               exc: elasticsearch.ElasticsearchException):
-    logger.exception("Elasticsearch exception occurred, (%s), %s", request.url, str(exc))
+@app.exception_handler(manticoresearch.ManticoreException)
+async def manticore_exception_handler(request: Request,
+                                      exc: manticoresearch.ManticoreException):
+    logger.exception("Manticoresearch exception occurred, (%s), %s", request.url, str(exc))
 
     context = {
         "request": request,
         "error": {
             "type": exc.__class__.__name__,
             "args": exc.args,
-            "json": f"Elasticsearch exception: {exc}"
+            "json": f"Manticoresearch exception: {exc}"
         }
     }
 
@@ -114,13 +111,7 @@ async def liveness():
 async def readiness():
     status_code = 500
 
-    is_db_alive_task = asyncio.create_task(database.is_alive())
-    is_es_alive_task = asyncio.create_task(notes_index.healthcheck())
-
-    await is_es_alive_task
-    await is_db_alive_task
-
-    if is_es_alive_task.result() is is_db_alive_task.result() is True:
+    if await database.readiness():
         status_code = 200
 
     return ORJSONResponse(
