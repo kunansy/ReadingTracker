@@ -106,15 +106,15 @@ async def _create_table() -> None:
     query = """CREATE TABLE IF NOT EXISTS notes (
         note_id string,
         material_id string,
-        content string, 
+        content text, 
         chapter int,
         page int,
         added_at timestamp, 
-        material_title string,
-        material_authors string,
-        material_type string,
-        material_tags string,
-        material_link string) morphology='lemmatize_ru_all, lemmatize_en_all'
+        material_title text,
+        material_authors text,
+        material_type text,
+        material_tags text,
+        material_link text) morphology='lemmatize_ru_all, lemmatize_en_all'
     """
 
     async with _cursor() as cur:
