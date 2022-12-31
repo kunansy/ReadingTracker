@@ -1,5 +1,4 @@
 import contextlib
-import io
 import os
 import tempfile
 from functools import lru_cache
@@ -102,22 +101,21 @@ async def _get_last_dump_id() -> str:
     return files[0]['id']
 
 
-def _get_file_content(file_id: str) -> dict[str, Any]:
+async def _get_file_content(file_id: str) -> dict[str, Any]:
     logger.debug("Getting file id='%s'", file_id)
 
-    with _drive_client() as client:
-        request = client.files().get_media(fileId=file_id)
-        fh = io.BytesIO()
-        downloader = MediaIoBaseDownload(fh, request)
-        done = False
-        while done is False:
-            status, done = downloader.next_chunk()
-            logger.debug("Getting %d%%.", int(status.progress() * 100))
+    tmp_file = tempfile.NamedTemporaryFile(delete=False)
 
-        fh.seek(0)
+    async with _drive_client() as (client, drive):
+        await client.as_service_account(
+            drive.files.get(fileId=file_id, download_file=tmp_file.name, alt='media'),
+        )
 
-    return orjson.loads(fh.read().decode())
+    file = orjson.loads(tmp_file.read())
 
+    tmp_file.close()
+    os.remove(tmp_file.name)
+    return file
 
 def get_dump() -> dict[str, Any]:
     if not (dump_file_id := _get_last_dump_id()):
