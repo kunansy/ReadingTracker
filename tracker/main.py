@@ -114,7 +114,7 @@ async def liveness():
 async def readiness():
     status_code = 500
 
-    is_db_alive_task = asyncio.create_task(database.is_alive())
+    is_db_alive_task = asyncio.create_task(database.readiness())
     is_es_alive_task = asyncio.create_task(notes_index.healthcheck())
 
     await is_es_alive_task
