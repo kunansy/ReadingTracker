@@ -1,10 +1,14 @@
+import asyncio
 import datetime
-from typing import NamedTuple
+from contextlib import asynccontextmanager
+from typing import NamedTuple, AsyncGenerator
 from uuid import UUID
 
+import aiomysql
 import sqlalchemy.sql as sa
+from aiomysql.cursors import Cursor as MysqlCursor
 
-from tracker.common import database
+from tracker.common import database, settings
 from tracker.common.log import logger
 from tracker.models import models
 
@@ -22,6 +26,27 @@ class Note(NamedTuple):
     material_type: str
     material_tags: str | None
     material_link: str | None
+
+
+@asynccontextmanager
+async def _cursor() -> AsyncGenerator[MysqlCursor, None]:
+    new_session = await aiomysql.connect(
+        host=settings.MANTICORE_MYSQL_HOST,
+        port=settings.MANTICORE_MYSQL_PORT,
+        db=settings.MANTICORE_MYSQL_DB_NAME
+    )
+
+    try:
+        async with new_session.cursor() as cur:
+            yield cur
+        await new_session.commit()
+    except Exception as e:
+        logger.exception("Manticore mysql error")
+
+        await new_session.rollback()
+        raise ManticoreException(e) from e
+    finally:
+        new_session.close()
 
 
 def _get_note_stmt() -> sa.Select:
