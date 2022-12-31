@@ -571,15 +571,11 @@ async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
 async def get_repeating_queue() -> list[RepeatingQueue]:
     logger.debug("Getting repeating queue")
 
-    completed_materials_task = asyncio.create_task(_get_completed_materials())
-    notes_count_task = asyncio.create_task(notes_db.get_all_notes_count())
-    repeat_analytics_task = asyncio.create_task(get_repeats_analytics())
+    async with asyncio.TaskGroup() as tg:
+        completed_materials_task = tg.create_task(_get_completed_materials())
+        notes_count_task = tg.create_task(notes_db.get_all_notes_count())
+        repeat_analytics_task = tg.create_task(get_repeats_analytics())
 
-    await asyncio.gather(
-        completed_materials_task,
-        notes_count_task,
-        repeat_analytics_task
-    )
     completed_materials = completed_materials_task.result()
     notes_count = notes_count_task.result()
     repeat_analytics = repeat_analytics_task.result()
