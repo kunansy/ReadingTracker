@@ -29,8 +29,8 @@ class Note(CustomBaseModel):
     material_title: str
     material_authors: str
     material_type: str
-    material_tags: str | None
-    material_link: str | None
+    material_tags: str
+    material_link: str
 
 
 @asynccontextmanager
