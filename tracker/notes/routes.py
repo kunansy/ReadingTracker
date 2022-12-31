@@ -174,6 +174,6 @@ async def delete_note(note: schemas.DeleteNote = Depends()):
     redirect_path = router.url_path_for(get_notes.__name__)
     redirect_url = f"{redirect_path}?material_id={note.material_id}"
 
-    await es.index.delete(doc_id=note.note_id)
+    await manticoresearch.delete(note_id=note.note_id)
 
     return RedirectResponse(redirect_url, status_code=302)
