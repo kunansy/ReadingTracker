@@ -22,7 +22,7 @@ templates = Jinja2Templates(directory="templates")
 
 def _filter_notes(*,
                   notes: list[db.Note],
-                  ids: Iterable[UUID]) -> list[db.Note]:
+                  ids: Iterable[str]) -> list[db.Note]:
     notes_ = {
         note.note_id: note
         for note in notes

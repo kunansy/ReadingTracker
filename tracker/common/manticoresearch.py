@@ -171,7 +171,7 @@ async def update(note_id: UUID) -> None:
     await insert(note_id)
 
 
-async def search(query: str) -> set[UUID]:
+async def search(query: str) -> set[str]:
     if not query:
         return set()
 
@@ -179,6 +179,6 @@ async def search(query: str) -> set[UUID]:
     async with _cursor() as cur:
         await cur.execute(db_query, query)
         return set(
-            UUID(row[0])
+            row[0]
             for row in await cur.fetchall()
         )

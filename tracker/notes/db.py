@@ -5,9 +5,9 @@ from uuid import UUID
 import sqlalchemy.sql as sa
 
 from tracker.common import database
-from tracker.models import models
 from tracker.common.log import logger
 from tracker.common.schemas import CustomBaseModel
+from tracker.models import models, enums
 
 
 class Note(CustomBaseModel):
@@ -20,7 +20,7 @@ class Note(CustomBaseModel):
     is_deleted: bool
 
 
-def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[int]]:
+def get_distinct_chapters(notes: list[Note]) -> defaultdict[str, set[int]]:
     # chapters of the shown materials,
     #  it should help to create menu
     chapters = defaultdict(set)
@@ -31,7 +31,7 @@ def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[int]]:
 
 
 async def get_material_type(*,
-                            material_id: UUID) -> str | None:
+                            material_id: UUID | str) -> str | None:
     stmt = sa.select(models.Materials.c.material_type)\
         .where(models.Materials.c.material_id == str(material_id))
 
@@ -42,7 +42,7 @@ async def get_material_type(*,
 
 
 @database.cache
-async def get_material_types() -> dict[UUID, str]:
+async def get_material_types() -> dict[str, enums.MaterialTypesEnum]:
     stmt = sa.select([models.Materials.c.material_id,
                       models.Materials.c.material_type])
 
@@ -54,7 +54,7 @@ async def get_material_types() -> dict[UUID, str]:
 
 
 @database.cache
-async def get_material_titles() -> dict[UUID, str]:
+async def get_material_titles() -> dict[str, str]:
     logger.debug("Getting material titles")
 
     stmt = sa.select([models.Materials.c.material_id,
