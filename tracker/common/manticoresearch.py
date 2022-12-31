@@ -121,7 +121,7 @@ async def _create_table() -> None:
         await cur.execute(query)
 
 
-async def _fill_table(notes: list[Note]) -> None:
+async def insert_all(notes: list[Note]) -> None:
     async with _cursor() as cur:
         await cur.executemany(
             INSERT_QUERY,
@@ -140,7 +140,7 @@ async def init() -> None:
     logger.debug("Getting notes")
     notes = await _get_notes()
     logger.debug("%s notes got, inserting", len(notes))
-    await _fill_table(notes)
+    await insert_all(notes)
     logger.debug("Notes inserted")
 
     logger.info("Manticore search init completed")
