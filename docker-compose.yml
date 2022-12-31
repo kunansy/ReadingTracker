@@ -85,6 +85,7 @@ services:
     restart: always
     depends_on:
       - tracker-db
+      - tracker-search
       - tracker-elastic
     ports:
        - "0.0.0.0:${API_PORT}:8000"
