@@ -161,7 +161,7 @@ async def insert(note_id: UUID) -> None:
 
 
 async def delete(note_id: UUID) -> None:
-    query = "DELETE FROM note WHERE note_id='%s'"
+    query = "DELETE FROM notes WHERE note_id=%s"
 
     async with _cursor() as cur:
         await cur.execute(query, note_id)
