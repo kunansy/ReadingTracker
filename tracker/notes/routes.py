@@ -101,7 +101,8 @@ async def add_note(note: schemas.Note = Depends()):
         material_id=note.material_id,
         content=note.content,
         chapter=note.chapter,
-        page=note.page
+        page=note.page,
+        links=note.links
     )
     response.set_cookie('note_id', str(note_id), expires=5)
     if material_type := await db.get_material_type(material_id=note.material_id):
@@ -149,7 +150,8 @@ async def update_note(note: schemas.UpdateNote = Depends()):
             note_id=note.note_id,
             content=note.content,
             chapter=note.chapter,
-            page=note.page
+            page=note.page,
+            links=note.links,
         )
     except Exception as e:
         logger.error("Error updating note: %s", repr(e))
