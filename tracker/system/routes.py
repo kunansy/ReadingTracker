@@ -41,11 +41,9 @@ async def graphic(request: Request,
         context['what'] = "No material found to show"
         return templates.TemplateResponse("errors/404.html", context)
 
-    reading_trend_task = asyncio.create_task(trends.get_week_reading_statistics())
-    notes_trend_task = asyncio.create_task(trends.get_week_notes_statistics())
-
-    await reading_trend_task
-    await notes_trend_task
+    async with asyncio.TaskGroup() as tg:
+        reading_trend_task = tg.create_task(trends.get_week_reading_statistics())
+        notes_trend_task = tg.create_task(trends.get_week_notes_statistics())
 
     reading_trend = reading_trend_task.result()
     notes_trend = notes_trend_task.result()
