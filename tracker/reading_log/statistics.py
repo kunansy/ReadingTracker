@@ -23,7 +23,7 @@ class LogStatistics(CustomBaseModel):
 
 
 async def get_m_log_statistics(*,
-                               material_id: UUID) -> LogStatistics:
+                               material_id: str) -> LogStatistics:
     """ Get material statistics from logs """
     duration = sum(
         1
@@ -104,17 +104,17 @@ async def _get_median_pages_read_per_day() -> int:
 
 
 async def contains(*,
-                   material_id: UUID) -> bool:
+                   material_id: str) -> bool:
     stmt = sa.select(sa.func.count(1) >= 1) \
         .select_from(models.ReadingLog) \
-        .where(models.ReadingLog.c.material_id == str(material_id))
+        .where(models.ReadingLog.c.material_id == material_id)
 
     async with database.session() as ses:
         return await ses.scalar(stmt)
 
 
 async def _get_min_record(*,
-                          material_id: UUID | None = None) -> database.MinMax | None:
+                          material_id: str | None = None) -> database.MinMax | None:
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title]) \
         .join(models.Materials,
@@ -124,7 +124,7 @@ async def _get_min_record(*,
 
     if material_id:
         stmt = stmt \
-            .where(models.ReadingLog.c.material_id == str(material_id))
+            .where(models.ReadingLog.c.material_id == material_id)
 
     async with database.session() as ses:
         if minmax := (await ses.execute(stmt)).first():
@@ -139,7 +139,7 @@ async def _get_min_record(*,
 
 
 async def _get_max_record(*,
-                          material_id: UUID | None = None) -> database.MinMax | None:
+                          material_id: str | None = None) -> database.MinMax | None:
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title]) \
         .join(models.Materials,
@@ -149,7 +149,7 @@ async def _get_max_record(*,
 
     if material_id:
         stmt = stmt \
-            .where(models.ReadingLog.c.material_id == str(material_id))
+            .where(models.ReadingLog.c.material_id == material_id)
 
     async with database.session() as ses:
         if minmax := (await ses.execute(stmt)).first():

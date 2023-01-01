@@ -110,7 +110,7 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
         log_records_dict[log_record.date] += [log_record]
 
     # stack for materials
-    materials: list[UUID] = []
+    materials: list[str] = []
     try:
         completion_dates = await _get_completion_dates()
     except Exception as e:
@@ -150,7 +150,7 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
             iter_over_dates += step
 
 
-async def get_material_reading_now() -> UUID | None:
+async def get_material_reading_now() -> str | None:
     if not await get_log_records():
         logger.warning("Reading log is empty, no materials reading")
         return None
