@@ -85,6 +85,7 @@ Notes = Table(
     metadata,
 
     PrimaryKey('note_id'),
+    Column('note_number', Integer, autoincrement=True, unique=True),
     Column('material_id', ForeignKey('materials.material_id'), index=True),
     Column('content', Unicode(65_536)),
     Column('added_at', DateTime, default=_utc_now),
