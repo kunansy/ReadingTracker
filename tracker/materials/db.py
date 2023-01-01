@@ -36,7 +36,7 @@ class MaterialStatus(CustomBaseModel):
     status: Status
 
     @property
-    def material_id(self) -> UUID:
+    def material_id(self) -> str:
         return self.material.material_id
 
 
@@ -89,9 +89,9 @@ class RepeatingQueue(CustomBaseModel):
 
 
 async def get_material(*,
-                       material_id: UUID) -> Material | None:
+                       material_id: str) -> Material | None:
     stmt = sa.select(models.Materials)\
-        .where(models.Materials.c.material_id == str(material_id))
+        .where(models.Materials.c.material_id == material_id)
 
     async with database.session() as ses:
         if material := (await ses.execute(stmt)).mappings().one_or_none():
@@ -194,7 +194,7 @@ async def _get_completed_materials() -> list[MaterialStatus]:
     return completed_materials
 
 
-async def get_last_material_started() -> UUID | None:
+async def get_last_material_started() -> str | None:
     # TODO: test it
     logger.info("Getting the last material started")
 
@@ -250,7 +250,7 @@ async def _get_material_statistics(*,
                                    notes_count: int,
                                    avg_total: int) -> MaterialStatistics:
     """ Calculate statistics for reading or completed material """
-    material, status = material_status
+    material, status = material_status.material, material_status.status
     material_id = material.material_id
 
     logger.debug("Calculating statistics for material_id=%s", material_id)
@@ -542,7 +542,7 @@ def _get_priority_days(field: datetime.timedelta | None) -> int:
     return getattr(field, "days", 0)
 
 
-async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
+async def get_repeats_analytics() -> dict[str, RepeatAnalytics]:
     last_repeated_at = sa.func.max(models.Repeats.c.repeated_at).label("last_repeated_at")
     repetition_or_completion_date = sa.func.coalesce(last_repeated_at, sa.func.max(models.Statuses.c.completed_at))
     stmt = sa.select([models.Statuses.c.material_id,
