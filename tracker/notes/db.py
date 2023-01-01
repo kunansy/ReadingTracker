@@ -49,7 +49,7 @@ async def get_material_types() -> dict[str, enums.MaterialTypesEnum]:
 
     async with database.session() as ses:
         return {
-            material_id: material_type
+            str(material_id): material_type
             for material_id, material_type in await ses.execute(stmt)
         }
 
@@ -63,7 +63,7 @@ async def get_material_titles() -> dict[str, str]:
 
     async with database.session() as ses:
         return {
-            row.material_id: row.title
+            str(row.material_id): row.title
             for row in (await ses.execute(stmt)).mappings().all()
         }
 
@@ -79,7 +79,7 @@ async def get_material_with_notes_titles() -> dict[str, str]:
 
     async with database.session() as ses:
         return {
-            row.material_id: row.title
+            str(row.material_id): row.title
             for row in (await ses.execute(stmt)).mappings().all()
         }
 
@@ -141,7 +141,7 @@ async def get_all_notes_count() -> dict[str, int]:
 
     async with database.session() as ses:
         return {
-            material_id: count
+            str(material_id): count
             for material_id, count in (await ses.execute(stmt)).all()
         }
 

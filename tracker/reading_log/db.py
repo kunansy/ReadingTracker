@@ -78,7 +78,7 @@ async def get_reading_material_titles() -> dict[UUID, str]:
         }
 
 
-async def _get_completion_dates() -> dict[UUID, datetime.date]:
+async def _get_completion_dates() -> dict[str, datetime.datetime]:
     logger.debug("Getting completion dates")
 
     stmt = sa.select([models.Materials.c.material_id,
@@ -89,7 +89,7 @@ async def _get_completion_dates() -> dict[UUID, datetime.date]:
 
     async with database.session() as ses:
         return {
-            row.material_id: row.completed_at
+            str(row.material_id): row.completed_at
             async for row in await ses.stream(stmt)
         }
 

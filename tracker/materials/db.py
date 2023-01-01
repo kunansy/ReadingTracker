@@ -556,7 +556,7 @@ async def get_repeats_analytics() -> dict[str, RepeatAnalytics]:
 
     async with database.session() as ses:
         return {
-            row.material_id: RepeatAnalytics(
+            str(row.material_id): RepeatAnalytics(
                 repeats_count=row.repeats_count,
                 last_repeated_at=row.last_repeated_at,
                 priority_days=_get_priority_days(row.priority_days),
