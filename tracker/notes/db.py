@@ -131,7 +131,7 @@ async def get_note(*,
     return None
 
 
-async def get_all_notes_count() -> dict[UUID, int]:
+async def get_all_notes_count() -> dict[str, int]:
     logger.debug("Getting all notes count")
 
     stmt = sa.select([models.Notes.c.material_id.label('material_id'),
