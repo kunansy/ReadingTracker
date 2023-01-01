@@ -1,19 +1,19 @@
 import asyncio
 import datetime
-from typing import NamedTuple
 from uuid import UUID
 
 import sqlalchemy.sql as sa
 
 from tracker.common import database
-from tracker.models import models, enums
 from tracker.common.log import logger
+from tracker.common.schemas import CustomBaseModel
+from tracker.models import models, enums
 from tracker.notes import db as notes_db
 from tracker.reading_log import statistics
 
 
-class Material(NamedTuple):
-    material_id: UUID
+class Material(CustomBaseModel):
+    material_id: str
     title: str
     authors: str
     pages: int
@@ -24,14 +24,14 @@ class Material(NamedTuple):
     is_outlined: bool
 
 
-class Status(NamedTuple):
-    status_id: UUID
-    material_id: UUID
+class Status(CustomBaseModel):
+    status_id: str
+    material_id: str
     started_at: datetime.datetime
     completed_at: datetime.datetime | None
 
 
-class MaterialStatus(NamedTuple):
+class MaterialStatus(CustomBaseModel):
     material: Material
     status: Status
 
@@ -40,14 +40,14 @@ class MaterialStatus(NamedTuple):
         return self.material.material_id
 
 
-class MaterialEstimate(NamedTuple):
+class MaterialEstimate(CustomBaseModel):
     material: Material
     will_be_started: datetime.date
     will_be_completed: datetime.date
     expected_duration: int
 
 
-class MaterialStatistics(NamedTuple):
+class MaterialStatistics(CustomBaseModel):
     material: Material
     started_at: datetime.date
     duration: int
@@ -66,7 +66,7 @@ class MaterialStatistics(NamedTuple):
     would_be_completed: datetime.date | None = None
 
 
-class RepeatAnalytics(NamedTuple):
+class RepeatAnalytics(CustomBaseModel):
     repeats_count: int
     last_repeated_at: datetime.datetime | None
     # total days since last seen
@@ -74,8 +74,8 @@ class RepeatAnalytics(NamedTuple):
     priority_months: int
 
 
-class RepeatingQueue(NamedTuple):
-    material_id: UUID
+class RepeatingQueue(CustomBaseModel):
+    material_id: str
     title: str
     pages: int
     material_type: enums.MaterialTypesEnum

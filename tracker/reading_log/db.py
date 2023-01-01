@@ -1,6 +1,6 @@
 import datetime
 from collections import defaultdict
-from typing import Any, AsyncGenerator, NamedTuple, DefaultDict
+from typing import Any, AsyncGenerator, DefaultDict
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -8,13 +8,14 @@ import sqlalchemy.sql as sa
 from tracker.common import database
 from tracker.models import models
 from tracker.common.log import logger
+from tracker.common.schemas import CustomBaseModel
 from tracker.materials import db as materials_db
 
 
-class LogRecord(NamedTuple):
+class LogRecord(CustomBaseModel):
     date: datetime.date
     count: int # type: ignore
-    material_id: UUID
+    material_id: str
     material_title: str | None = None
 
 

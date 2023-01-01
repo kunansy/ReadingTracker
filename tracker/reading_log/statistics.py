@@ -1,16 +1,17 @@
 import datetime
-from typing import Any, NamedTuple
+from typing import Any
 from uuid import UUID
 
 import sqlalchemy.sql as sa
 
 from tracker.common import database
+from tracker.common.schemas import CustomBaseModel
 from tracker.models import models
 from tracker.reading_log import db
 
 
-class LogStatistics(NamedTuple):
-    material_id: UUID
+class LogStatistics(CustomBaseModel):
+    material_id: str
     # total spent time including empty days
     total: int
     lost_time: int
