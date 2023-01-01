@@ -19,13 +19,12 @@ class ReadingData(NamedTuple):
 
 
 async def _get_graphic_data(*,
-                            material_id: UUID,
+                            material_id: str,
                             last_days: int) -> ReadingData:
     dates, counts, total = [], [], 0
-    _material_id = str(material_id)
 
     async for date, info in reading_log_db.data():
-        if info.material_id != _material_id:
+        if info.material_id != material_id:
             continue
         total += info.count
 
@@ -51,12 +50,12 @@ async def get_read_material_titles() -> dict[UUID, str]:
         }
 
 
-async def get_material_reading_now() -> UUID | None:
+async def get_material_reading_now() -> str | None:
     return await reading_log_db.get_material_reading_now()
 
 
 async def create_reading_graphic(*,
-                                 material_id: UUID,
+                                 material_id: str,
                                  last_days: int = 14) -> str:
     if not (material := await materials_db.get_material(material_id=material_id)):
         raise ValueError(f"'{material_id=}' not found")
