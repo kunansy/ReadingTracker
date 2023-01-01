@@ -36,8 +36,12 @@ async def graphic(request: Request,
     context: dict[str, Any] = {
         'request': request,
     }
+    if material_id:
+        material_id_: str | None = str(material_id)
+    else:
+        material_id_ = await db.get_material_reading_now()
 
-    if (material_id := material_id or await db.get_material_reading_now()) is None:
+    if material_id_ is None:
         context['what'] = "No material found to show"
         return templates.TemplateResponse("errors/404.html", context)
 
@@ -49,7 +53,7 @@ async def graphic(request: Request,
     notes_trend = notes_trend_task.result()
 
     graphic_image_task = asyncio.create_task(db.create_reading_graphic(
-        material_id=material_id,
+        material_id=material_id_,
         last_days=last_days
     ))
     reading_trend_graphic_task = asyncio.create_task(

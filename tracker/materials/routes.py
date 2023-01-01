@@ -74,7 +74,7 @@ async def update_material_view(request: Request,
         'request': request,
     }
 
-    if not (material := await db.get_material(material_id=material_id)):
+    if not (material := await db.get_material(material_id=str(material_id))):
         context['what'] = f"'{material_id=}' not found"
         return templates.TemplateResponse("errors/404.html", context)
 
