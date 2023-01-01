@@ -3,7 +3,7 @@ import uuid
 
 import sqlalchemy
 from sqlalchemy import DateTime, Integer, MetaData, Table, Unicode, Boolean, Enum, UniqueConstraint, BigInteger
-from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 from tracker.models import enums
 
@@ -91,6 +91,7 @@ Notes = Table(
     Column('added_at', DateTime, default=_utc_now),
     Column('chapter', Integer),
     Column('page', Integer),
+    Column('links', JSONB, nullable=True, comment='By Zettelkasten method'),
     Column('is_deleted', Boolean, default=False)
 )
 
