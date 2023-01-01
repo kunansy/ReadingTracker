@@ -88,7 +88,8 @@ async def get_notes() -> list[Note]:
     logger.debug("Getting all notes")
 
     stmt = sa.select(models.Notes)\
-        .where(~models.Notes.c.is_deleted)
+        .where(~models.Notes.c.is_deleted)\
+        .order_by(models.Notes.c.note_number)
 
     async with database.session() as ses:
         return [
@@ -103,7 +104,8 @@ async def get_material_notes(*,
 
     stmt = sa.select(models.Notes) \
         .where(models.Notes.c.material_id == str(material_id))\
-        .where(~models.Notes.c.is_deleted)
+        .where(~models.Notes.c.is_deleted) \
+        .order_by(models.Notes.c.note_number)
 
     async with database.session() as ses:
         return [
