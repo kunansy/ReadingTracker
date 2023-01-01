@@ -52,21 +52,17 @@ async def graphic(request: Request,
     reading_trend = reading_trend_task.result()
     notes_trend = notes_trend_task.result()
 
-    graphic_image_task = asyncio.create_task(db.create_reading_graphic(
-        material_id=material_id_,
-        last_days=last_days
-    ))
-    reading_trend_graphic_task = asyncio.create_task(
-        trends.create_reading_graphic(reading_trend))
-    notes_trend_graphic_task = asyncio.create_task(
-        trends.create_notes_graphic(notes_trend))
-    titles_task = asyncio.create_task(
-        db.get_read_material_titles())
-
-    await graphic_image_task
-    await reading_trend_graphic_task
-    await notes_trend_graphic_task
-    await titles_task
+    async with asyncio.TaskGroup() as tg:
+        graphic_image_task = tg.create_task(db.create_reading_graphic(
+            material_id=material_id_,
+            last_days=last_days
+        ))
+        reading_trend_graphic_task = tg.create_task(
+            trends.create_reading_graphic(reading_trend))
+        notes_trend_graphic_task = tg.create_task(
+            trends.create_notes_graphic(notes_trend))
+        titles_task = tg.create_task(
+            db.get_read_material_titles())
 
     context = {
         **context,
