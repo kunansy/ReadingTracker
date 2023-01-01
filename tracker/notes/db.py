@@ -17,6 +17,7 @@ class Note(CustomBaseModel):
     added_at: datetime.datetime
     chapter: int
     page: int
+    links: list[str]
     is_deleted: bool
     note_number: int
 
