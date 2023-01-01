@@ -1,6 +1,5 @@
 import datetime
 from typing import Any
-from uuid import UUID
 
 import sqlalchemy.sql as sa
 
