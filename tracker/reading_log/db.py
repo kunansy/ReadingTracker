@@ -124,7 +124,7 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
         last_material_id = _safe_list_get(materials, -1, None)
 
         if ((completion_date := completion_dates.get(last_material_id))
-                and completion_date < iter_over_dates):
+                and completion_date.date() < iter_over_dates):
             materials.pop()
             last_material_id = _safe_list_get(materials, -1, None)
 
