@@ -18,6 +18,7 @@ class Note(CustomBaseModel):
     chapter: int
     page: int
     is_deleted: bool
+    note_number: int
 
 
 def get_distinct_chapters(notes: list[Note]) -> defaultdict[str, set[int]]:
