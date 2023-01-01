@@ -79,7 +79,7 @@ async def get_material_with_notes_titles() -> dict[str, str]:
 
     async with database.session() as ses:
         return {
-            str(row.material_id): row.title
+            row.material_id: row.title
             for row in (await ses.execute(stmt)).mappings().all()
         }
 
@@ -142,7 +142,7 @@ async def get_all_notes_count() -> dict[UUID, int]:
     async with database.session() as ses:
         return {
             material_id: count
-            for material_id, count in await ses.execute(stmt)
+            for material_id, count in (await ses.execute(stmt)).all()
         }
 
 
