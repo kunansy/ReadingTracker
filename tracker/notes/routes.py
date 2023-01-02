@@ -132,8 +132,7 @@ async def update_note_view(note_id: UUID,
                     or enums.MaterialTypesEnum.book.name # noqa
     links = await db.get_links()
 
-    context = {
-        **context,
+    context |= {
         'material_id': note.material_id,
         'material_type': material_type,
         'note_id': note.note_id,
