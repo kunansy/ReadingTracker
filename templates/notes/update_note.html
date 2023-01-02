@@ -2,6 +2,7 @@
 
 {% block style %}
 <link rel="stylesheet" href="{{ url_for('static', path='notes/add_note.css') }}">
+<script src="{{ url_for('static', path='js/notes.js')}}"></script>
 {% endblock style %}
 
 {% block header %}
@@ -43,4 +44,10 @@
         <button type="submit" class="submit-button"> Delete </button>
     </form>
 </div>
+
+<ul class="links-list" title="Note links">
+    {% for link in links | sort %}
+        <li onclick="addLink('[[{{ link }}]]')" value="[[{{ link }}]]"> «{{ link | capitalize }}» </li>
+    {% endfor %}
+</ul>
 {% endblock main %}

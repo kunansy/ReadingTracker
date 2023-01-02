@@ -73,7 +73,9 @@ async def get_notes(request: Request,
 
 @router.get('/add-view')
 async def add_note_view(request: Request):
-    titles = await db.get_material_titles()
+    async with asyncio.TaskGroup() as tg:
+        get_titles_task = tg.create_task(db.get_material_titles())
+        get_links_task = tg.create_task(db.get_links())
 
     context = {
         'request': request,
@@ -83,7 +85,8 @@ async def add_note_view(request: Request):
         'page': request.cookies.get('page', ''),
         'chapter': request.cookies.get('chapter', ''),
         'note_id': request.cookies.get('note_id', ''),
-        'titles': titles
+        'titles': get_titles_task.result(),
+        'links': get_links_task.result()
     }
     return templates.TemplateResponse("notes/add_note.html", context)
 
@@ -127,16 +130,17 @@ async def update_note_view(note_id: UUID,
 
     material_type = await db.get_material_type(material_id=note.material_id) \
                     or enums.MaterialTypesEnum.book.name # noqa
+    links = await db.get_links()
 
-    context = {
-        **context,
+    context |= {
         'material_id': note.material_id,
         'material_type': material_type,
         'note_id': note.note_id,
         'content': schemas.demark_note(note.content),
         'chapter': note.chapter,
         'page': note.page,
-        'success': success
+        'success': success,
+        'links': links
     }
     return templates.TemplateResponse("notes/update_note.html", context)
 
