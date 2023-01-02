@@ -43,4 +43,10 @@
         <button type="submit" class="submit-button"> Delete </button>
     </form>
 </div>
+
+<ul class="links-list" title="Note links">
+    {% for link in links | sort %}
+        <li onclick="addLink('[[{{ link }}]]')" value="[[{{ link }}]]"> «{{ link | capitalize }}» </li>
+    {% endfor %}
+</ul>
 {% endblock main %}
