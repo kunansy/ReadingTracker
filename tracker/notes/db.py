@@ -215,3 +215,16 @@ async def delete_note(*,
         await ses.execute(stmt)
 
     logger.debug("Note_id='%s' deleted", note_id)
+
+
+async def get_links() -> set[str]:
+    stmt = sa.select(models.Notes.c.links)\
+        .where(models.Notes.c.links != [])
+
+    async with database.session() as ses:
+        links: list[str] = sum([
+            row[0]
+            for row in (await ses.execute(stmt)).all()
+        ], [])
+
+    return set(links)
