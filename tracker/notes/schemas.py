@@ -154,6 +154,13 @@ class Note(CustomBaseModel):
         )
 
     @validator('content')
+    def validate_double_brackets_count(cls,
+                                       content: str) -> str:
+        assert content.count('[[') == content.count(']]')
+
+        return content
+
+    @validator('content')
     def format_content(cls,
                        content: str) -> str:
         for formatter in NOTES_FORMATTERS:
