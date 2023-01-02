@@ -130,6 +130,7 @@ async def update_note_view(note_id: UUID,
 
     material_type = await db.get_material_type(material_id=note.material_id) \
                     or enums.MaterialTypesEnum.book.name # noqa
+    links = await db.get_links()
 
     context = {
         **context,
@@ -139,7 +140,8 @@ async def update_note_view(note_id: UUID,
         'content': schemas.demark_note(note.content),
         'chapter': note.chapter,
         'page': note.page,
-        'success': success
+        'success': success,
+        'links': links
     }
     return templates.TemplateResponse("notes/update_note.html", context)
 
