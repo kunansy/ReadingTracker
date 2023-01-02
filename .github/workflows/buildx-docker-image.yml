@@ -29,6 +29,6 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/reading_tracker:2.16.3
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/reading_tracker:2.16.4

@@ -17,6 +17,7 @@ class Note(CustomBaseModel):
     added_at: datetime.datetime
     chapter: int
     page: int
+    links: list[str]
     is_deleted: bool
     note_number: int
 
@@ -151,6 +152,7 @@ async def add_note(*,
                    content: str,
                    chapter: int,
                    page: int,
+                   links: list[str],
                    date: datetime.date | None = None) -> UUID:
     date = date or database.utcnow()
     logger.debug("Adding note for material_id='%s'", material_id)
@@ -160,7 +162,8 @@ async def add_note(*,
         'content': content,
         'chapter': chapter,
         'page': page,
-        'added_at': date
+        'added_at': date,
+        'links': links
     }
     stmt = models.Notes.\
         insert().values(values)\
@@ -177,13 +180,15 @@ async def update_note(*,
                       note_id: UUID,
                       content: str,
                       page: int,
-                      chapter: int) -> None:
+                      chapter: int,
+                      links: list[str]) -> None:
     logger.debug("Updating note_id='%s'", note_id)
 
     values = {
         'content': content,
         'page': page,
-        'chapter': chapter
+        'chapter': chapter,
+        'links': links
     }
     stmt = models.Notes. \
         update().values(values) \

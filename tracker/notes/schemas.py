@@ -1,4 +1,5 @@
 import re
+from typing import Any
 from uuid import UUID
 
 from fastapi import Form
@@ -19,6 +20,8 @@ CODE_MARKER = "font-code"
 DEMARK_BOLD_PATTERN = re.compile(f'<span class="?{BOLD_MARKER}"?>(.*?)</span>')
 DEMARK_ITALIC_PATTERN = re.compile(f'<span class="?{ITALIC_MARKER}"?>(.*?)</span>')
 DEMARK_CODE_PATTERN = re.compile(f'<span class="?{CODE_MARKER}"?>(.*?)</span>')
+
+LINKS_PATTERN = re.compile(r'\[\[([a-zA-Z0-9а-яА-ЯёЁ_ -]+)\]\]')
 
 
 def _replace_quotes(string: str) -> str:
@@ -132,8 +135,10 @@ class Note(CustomBaseModel):
     content: constr(strip_whitespace=True)
     chapter: conint(ge=0) = 0
     page: conint(ge=0) = 0
+    links: list[str]
 
     def __init__(self,
+                 links: list[str],
                  material_id: UUID = Form(...),
                  content: str = Form(...),
                  chapter: int = Form(0),
@@ -144,8 +149,16 @@ class Note(CustomBaseModel):
             content=content,
             chapter=chapter,
             page=page,
+            links=links,
             **kwargs
         )
+
+    @validator('content')
+    def validate_double_brackets_count(cls,
+                                       content: str) -> str:
+        assert content.count('[[') == content.count(']]')
+
+        return content
 
     @validator('content')
     def format_content(cls,
@@ -154,11 +167,22 @@ class Note(CustomBaseModel):
             content = formatter(content)
         return content
 
+    @validator('links', pre=False)
+    def get_link(cls,
+                 links: list[str],
+                 values: dict[str, Any]) -> list[str]:
+        content = values['content']
+        if links := LINKS_PATTERN.findall(content):
+            return [link.strip().lower() for link in links]
+
+        return []
+
 
 class UpdateNote(Note):
     note_id: UUID
 
     def __init__(self,
+                 links: list[str],
                  material_id: UUID = Form(...),
                  note_id: UUID = Form(...),
                  content: str = Form(...),
@@ -169,7 +193,8 @@ class UpdateNote(Note):
             note_id=note_id,
             content=content,
             chapter=chapter,
-            page=page
+            page=page,
+            links=links
         )
 
 
