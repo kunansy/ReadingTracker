@@ -42,6 +42,12 @@
         </fieldset>
         </form>
     </div>
+
+    <ul class="links-list" title="Note links">
+        {% for link in links | sort %}
+            <li onclick="addLink('[[{{ link }}]]')" value="[[{{ link }}]]"> «{{ link | capitalize }}» </li>
+        {% endfor %}
+    </ul>
 {%- else -%}
     {% import 'errors/not_found.html' as not_found %}
     {% call not_found.not_found('materials') %} {% endcall %}
