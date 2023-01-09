@@ -444,7 +444,7 @@ async def complete_material(*,
         raise ValueError("Material is not started")
     if status.completed_at is not None:
         raise ValueError("Material is already completed")
-    if status.started_at > completion_date:
+    if status.started_at.date() > completion_date:
         raise ValueError("Completion date must be greater than start date")
 
     values = {
