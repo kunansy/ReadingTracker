@@ -87,11 +87,11 @@ Notes = Table(
     PrimaryKey('note_id'),
     Column('note_number', Integer, autoincrement=True, unique=True),
     Column('material_id', ForeignKey('materials.material_id'), index=True),
+    Column('link_id', ForeignKey('notes.note_id'), nullable=True, comment='By Zettelkasten method'),
     Column('content', Unicode(65_536)),
     Column('added_at', DateTime, default=_utc_now),
     Column('chapter', Integer),
     Column('page', Integer),
-    Column('links', JSONB, nullable=True, comment='By Zettelkasten method'),
     Column('tags', JSONB, nullable=True),
     Column('is_deleted', Boolean, default=False)
 )
