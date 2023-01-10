@@ -22,7 +22,7 @@ DEMARK_ITALIC_PATTERN = re.compile(f'<span class="?{ITALIC_MARKER}"?>(.*?)</span
 DEMARK_CODE_PATTERN = re.compile(f'<span class="?{CODE_MARKER}"?>(.*?)</span>')
 
 TAGS_PATTERN = re.compile(r'#([\w-]+)\b')
-LINKS_PATTERN = re.compile(r'\[\[([a-zA-Z0-9а-яА-ЯёЁ_ -]+)\]\]')
+LINK_PATTERN = re.compile(r'\[\[([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})\]\]')
 
 
 def _replace_quotes(string: str) -> str:
@@ -133,15 +133,15 @@ def demark_note(string: str) -> str:
 
 class Note(CustomBaseModel):
     material_id: UUID
+    link_id: UUID
     content: constr(strip_whitespace=True)
     chapter: conint(ge=0) = 0
     page: conint(ge=0) = 0
     tags: list[str]
-    links: list[str]
 
     def __init__(self,
+                 link_id: UUID,
                  tags: list[str],
-                 links: list[str],
                  material_id: UUID = Form(...),
                  content: str = Form(...),
                  chapter: int = Form(0),
@@ -149,10 +149,10 @@ class Note(CustomBaseModel):
                  **kwargs):
         super().__init__(
             material_id=material_id,
+            link_id=link_id,
             content=content,
             chapter=chapter,
             page=page,
-            links=links,
             tags=tags,
             **kwargs
         )
@@ -171,15 +171,15 @@ class Note(CustomBaseModel):
             content = formatter(content)
         return content
 
-    @validator('links', pre=False)
+    @validator('link_id', pre=False)
     def get_link(cls,
-                 links: list[str],
-                 values: dict[str, Any]) -> list[str]:
+                 link_id: UUID,
+                 values: dict[str, Any]) -> UUID | None:
         content = values['content']
-        if links := LINKS_PATTERN.findall(content):
-            return [link.strip().lower() for link in links]
+        if link := LINK_PATTERN.search(content):
+            return UUID(link)
 
-        return []
+        return None
 
     @validator('tags', pre=False)
     def get_tags(cls,
@@ -196,8 +196,8 @@ class UpdateNote(Note):
     note_id: UUID
 
     def __init__(self,
+                 link_id: UUID,
                  tags: list[str],
-                 links: list[str],
                  material_id: UUID = Form(...),
                  note_id: UUID = Form(...),
                  content: str = Form(...),
@@ -205,12 +205,12 @@ class UpdateNote(Note):
                  page: int = Form(0)):
         super().__init__(
             material_id=material_id,
+            link_id=link_id,
             note_id=note_id,
             content=content,
             chapter=chapter,
             page=page,
             tags=tags,
-            links=links
         )
 
 
