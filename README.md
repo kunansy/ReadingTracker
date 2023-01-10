@@ -52,6 +52,12 @@ Here there are notes, the most important info from the materials.
 The user can search a note with Manticoresearch.
 ![Notes](docs/notes.png)
 
+One should:
+* Create little notes with one idea per note.
+* Add _tags_ that helps to link some ideas into theme groups: `#health`, `#history`, `#linguistics` etc.
+* Add _links_ that help to link notes together using [Zettelkasten method](https://writingcooperative.com/zettelkasten-how-one-german-scholar-was-so-freakishly-productive-997e4e0ca125).
+* Every note should be linked with another one directly having a link to it: `[[c2ed0ac7-fe4f-4a23-a00c-8f61d16398ea]]`
+
 ## System
 Here there are reading graphic, backuping and restoring from the Google Drive.
 ![System](docs/system.png)
