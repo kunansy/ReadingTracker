@@ -21,6 +21,7 @@ DEMARK_BOLD_PATTERN = re.compile(f'<span class="?{BOLD_MARKER}"?>(.*?)</span>')
 DEMARK_ITALIC_PATTERN = re.compile(f'<span class="?{ITALIC_MARKER}"?>(.*?)</span>')
 DEMARK_CODE_PATTERN = re.compile(f'<span class="?{CODE_MARKER}"?>(.*?)</span>')
 
+TAGS_PATTERN = re.compile(r'#([\w-]+)\b')
 LINKS_PATTERN = re.compile(r'\[\[([a-zA-Z0-9а-яА-ЯёЁ_ -]+)\]\]')
 
 
@@ -135,9 +136,11 @@ class Note(CustomBaseModel):
     content: constr(strip_whitespace=True)
     chapter: conint(ge=0) = 0
     page: conint(ge=0) = 0
+    tags: list[str]
     links: list[str]
 
     def __init__(self,
+                 tags: list[str],
                  links: list[str],
                  material_id: UUID = Form(...),
                  content: str = Form(...),
@@ -150,6 +153,7 @@ class Note(CustomBaseModel):
             chapter=chapter,
             page=page,
             links=links,
+            tags=tags,
             **kwargs
         )
 
@@ -177,11 +181,22 @@ class Note(CustomBaseModel):
 
         return []
 
+    @validator('tags', pre=False)
+    def get_tags(cls,
+                 tags: list[str],
+                 values: dict[str, Any]) -> list[str]:
+        content = values['content']
+        if tags := TAGS_PATTERN.findall(content):
+            return [tag.strip().lower() for tag in tags]
+
+        return []
+
 
 class UpdateNote(Note):
     note_id: UUID
 
     def __init__(self,
+                 tags: list[str],
                  links: list[str],
                  material_id: UUID = Form(...),
                  note_id: UUID = Form(...),
@@ -194,6 +209,7 @@ class UpdateNote(Note):
             content=content,
             chapter=chapter,
             page=page,
+            tags=tags,
             links=links
         )
 
