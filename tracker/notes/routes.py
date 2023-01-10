@@ -105,6 +105,7 @@ async def add_note(note: schemas.Note = Depends()):
         content=note.content,
         chapter=note.chapter,
         page=note.page,
+        tags=note.tags,
         links=note.links
     )
     response.set_cookie('note_id', str(note_id), expires=5)
@@ -155,6 +156,7 @@ async def update_note(note: schemas.UpdateNote = Depends()):
             content=note.content,
             chapter=note.chapter,
             page=note.page,
+            tags=note.tags,
             links=note.links,
         )
     except Exception as e:

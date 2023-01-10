@@ -152,6 +152,7 @@ async def add_note(*,
                    content: str,
                    chapter: int,
                    page: int,
+                   tags: list[str],
                    links: list[str],
                    date: datetime.date | None = None) -> UUID:
     date = date or database.utcnow()
@@ -163,6 +164,7 @@ async def add_note(*,
         'chapter': chapter,
         'page': page,
         'added_at': date,
+        'tags': tags,
         'links': links
     }
     stmt = models.Notes.\
@@ -181,6 +183,7 @@ async def update_note(*,
                       content: str,
                       page: int,
                       chapter: int,
+                      tags: list[str],
                       links: list[str]) -> None:
     logger.debug("Updating note_id='%s'", note_id)
 
@@ -188,6 +191,7 @@ async def update_note(*,
         'content': content,
         'page': page,
         'chapter': chapter,
+        'tags': tags,
         'links': links
     }
     stmt = models.Notes. \
