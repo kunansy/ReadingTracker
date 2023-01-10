@@ -12,12 +12,12 @@ from tracker.models import models, enums
 
 class Note(CustomBaseModel):
     note_id: str
+    link_id: list[str]
     material_id: str
     content: str
     added_at: datetime.datetime
     chapter: int
     page: int
-    links: list[str]
     tags: list[str]
     is_deleted: bool
     note_number: int
@@ -150,23 +150,23 @@ async def get_all_notes_count() -> dict[str, int]:
 
 async def add_note(*,
                    material_id: UUID,
+                   link_id: UUID,
                    content: str,
                    chapter: int,
                    page: int,
                    tags: list[str],
-                   links: list[str],
                    date: datetime.date | None = None) -> UUID:
     date = date or database.utcnow()
     logger.debug("Adding note for material_id='%s'", material_id)
 
     values = {
         'material_id': str(material_id),
+        'link_id': str(link_id),
         'content': content,
         'chapter': chapter,
         'page': page,
         'added_at': date,
         'tags': tags,
-        'links': links
     }
     stmt = models.Notes.\
         insert().values(values)\
@@ -181,19 +181,19 @@ async def add_note(*,
 
 async def update_note(*,
                       note_id: UUID,
+                      link_id: UUID,
                       content: str,
                       page: int,
                       chapter: int,
-                      tags: list[str],
-                      links: list[str]) -> None:
+                      tags: list[str]) -> None:
     logger.debug("Updating note_id='%s'", note_id)
 
     values = {
+        'link_id': str(link_id),
         'content': content,
         'page': page,
         'chapter': chapter,
         'tags': tags,
-        'links': links
     }
     stmt = models.Notes. \
         update().values(values) \
