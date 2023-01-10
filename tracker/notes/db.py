@@ -18,6 +18,7 @@ class Note(CustomBaseModel):
     chapter: int
     page: int
     links: list[str]
+    tags: list[str]
     is_deleted: bool
     note_number: int
 
