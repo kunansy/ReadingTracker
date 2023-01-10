@@ -92,6 +92,7 @@ Notes = Table(
     Column('chapter', Integer),
     Column('page', Integer),
     Column('links', JSONB, nullable=True, comment='By Zettelkasten method'),
+    Column('tags', JSONB, nullable=True),
     Column('is_deleted', Boolean, default=False)
 )
 
