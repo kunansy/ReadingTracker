@@ -159,14 +159,14 @@ async def update_note(note: schemas.UpdateNote = Depends()):
             page=note.page,
             tags=note.tags,
         )
+
+        await manticoresearch.update(note_id=note.note_id)
     except Exception as e:
         logger.error("Error updating note: %s", repr(e))
         success = False
 
     redirect_path = router.url_path_for(update_note_view.__name__)
     redirect_url = f"{redirect_path}?note_id={note.note_id}&{success=}"
-
-    await manticoresearch.update(note_id=note.note_id)
 
     return RedirectResponse(redirect_url, status_code=302)
 
@@ -175,10 +175,9 @@ async def update_note(note: schemas.UpdateNote = Depends()):
              response_class=RedirectResponse)
 async def delete_note(note: schemas.DeleteNote = Depends()):
     await db.delete_note(note_id=note.note_id)
+    await manticoresearch.delete(note_id=note.note_id)
 
     redirect_path = router.url_path_for(get_notes.__name__)
     redirect_url = f"{redirect_path}?material_id={note.material_id}"
-
-    await manticoresearch.delete(note_id=note.note_id)
 
     return RedirectResponse(redirect_url, status_code=302)
