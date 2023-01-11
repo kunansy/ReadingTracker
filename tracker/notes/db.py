@@ -1,7 +1,9 @@
 import datetime
 from collections import defaultdict
+from typing import Any
 from uuid import UUID
 
+import networkx as nx
 import sqlalchemy.sql as sa
 
 from tracker.common import database
@@ -270,3 +272,55 @@ async def get_links(note: Note) -> list[Note]:
     links.sort(key=lambda link: len(link.tags & note.tags), reverse=True)
 
     return links
+
+
+def _get_note_links(*,
+                    note_id: str,
+                    notes: dict[str, Note]) -> list[str]:
+    """ Get all notes linked with the given one """
+
+    return [
+        note_id_
+        for note_id_, note in notes.items()
+        if note.link_id == note_id
+    ]
+
+
+def _get_note_link(note: Note, **attrs) -> tuple[str, dict[str, Any]]:
+    return (note.note_id, {
+        **attrs,
+        "material_id": note.material_id,
+        "note_number": note.note_number,
+        "label": note.content_md[:50],
+    })
+
+
+def link_notes(*,
+               note_id: str,
+               notes: dict[str, Note]) -> nx.Graph:
+    nodes, edges = [], []
+    nodes += [_get_note_link(notes[note_id], color="black")]
+
+    note = notes[note_id]
+    while True:
+        if link_id := note.link_id:
+            nodes += [_get_note_link(notes[link_id])]
+            edges += [(note.note_id, link_id)]
+        else:
+            break
+
+        note = notes[link_id]
+
+    # TODO
+    if links := _get_note_links(note_id=note_id, notes=notes):
+        nodes += [
+            _get_note_link(notes[link_id])
+            for link_id in links
+        ]
+        edges += [(note_id, link) for link in links]
+
+    graph = nx.Graph()
+    graph.add_nodes_from(nodes)
+    graph.add_edges_from(edges)
+
+    return graph
