@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from pyvis.network import Network
 
 from tracker.common import settings, manticoresearch
 from tracker.common.log import logger
@@ -75,7 +76,7 @@ async def get_notes(request: Request,
 async def add_note_view(request: Request):
     async with asyncio.TaskGroup() as tg:
         get_titles_task = tg.create_task(db.get_material_titles())
-        get_links_task = tg.create_task(db.get_links())
+        get_tags_task = tg.create_task(db.get_tags())
 
     context = {
         'request': request,
@@ -86,7 +87,7 @@ async def add_note_view(request: Request):
         'chapter': request.cookies.get('chapter', ''),
         'note_id': request.cookies.get('note_id', ''),
         'titles': get_titles_task.result(),
-        'links': get_links_task.result()
+        'tags': get_tags_task.result()
     }
     return templates.TemplateResponse("notes/add_note.html", context)
 
@@ -102,10 +103,11 @@ async def add_note(note: schemas.Note = Depends()):
 
     note_id = await db.add_note(
         material_id=note.material_id,
+        link_id=note.link_id,
         content=note.content,
         chapter=note.chapter,
         page=note.page,
-        links=note.links
+        tags=note.tags,
     )
     response.set_cookie('note_id', str(note_id), expires=5)
     if material_type := await db.get_material_type(material_id=note.material_id):
@@ -128,20 +130,25 @@ async def update_note_view(note_id: UUID,
         context['what'] = f"Note id='{note_id}' not found"
         return templates.TemplateResponse("errors/404.html", context)
 
-    material_type = await db.get_material_type(material_id=note.material_id) \
-                    or enums.MaterialTypesEnum.book.name # noqa
-    links = await db.get_links()
+    async with asyncio.TaskGroup() as tg:
+        material_type = tg.create_task(db.get_material_type(material_id=note.material_id))
+        get_tags_task = tg.create_task(db.get_tags())
+        get_possible_links_task = tg.create_task(db.get_links(note=note))
 
     context |= {
         'material_id': note.material_id,
-        'material_type': material_type,
+        'material_type': material_type.result() or enums.MaterialTypesEnum.book.name,
         'note_id': note.note_id,
         'content': schemas.demark_note(note.content),
         'chapter': note.chapter,
         'page': note.page,
         'success': success,
-        'links': links
+        'tags': get_tags_task.result(),
+        'show_links_graph': note.link_id is not None
     }
+    if not note.link_id:
+        context['links'] = get_possible_links_task.result()
+
     return templates.TemplateResponse("notes/update_note.html", context)
 
 
@@ -152,19 +159,20 @@ async def update_note(note: schemas.UpdateNote = Depends()):
     try:
         await db.update_note(
             note_id=note.note_id,
+            link_id=note.link_id,
             content=note.content,
             chapter=note.chapter,
             page=note.page,
-            links=note.links,
+            tags=note.tags,
         )
+
+        await manticoresearch.update(note_id=note.note_id)
     except Exception as e:
         logger.error("Error updating note: %s", repr(e))
         success = False
 
     redirect_path = router.url_path_for(update_note_view.__name__)
     redirect_url = f"{redirect_path}?note_id={note.note_id}&{success=}"
-
-    await manticoresearch.update(note_id=note.note_id)
 
     return RedirectResponse(redirect_url, status_code=302)
 
@@ -173,10 +181,30 @@ async def update_note(note: schemas.UpdateNote = Depends()):
              response_class=RedirectResponse)
 async def delete_note(note: schemas.DeleteNote = Depends()):
     await db.delete_note(note_id=note.note_id)
+    await manticoresearch.delete(note_id=note.note_id)
 
     redirect_path = router.url_path_for(get_notes.__name__)
     redirect_url = f"{redirect_path}?material_id={note.material_id}"
 
-    await manticoresearch.delete(note_id=note.note_id)
-
     return RedirectResponse(redirect_url, status_code=302)
+
+
+@router.get('/links',
+            response_class=HTMLResponse)
+async def get_note_links(note_id: UUID):
+    notes = {
+        note.note_id: note
+        for note in await db.get_notes()
+    }
+    graph = db.link_notes(note_id=str(note_id), notes=notes)
+
+    net = Network(
+        cdn_resources="remote",
+        neighborhood_highlight=True)
+    net.from_nx(graph)
+
+    net.show("tmp.html")
+    with open('tmp.html') as f:
+        resp = f.read()
+
+    return resp

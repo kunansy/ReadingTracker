@@ -47,7 +47,7 @@ services:
       - MCL=1
 
   reading-tracker:
-    image: kunansy/reading_tracker:2.16.6
+    image: kunansy/reading_tracker:2.16.7
     container_name: reading-tracker
     env_file: .env
     restart: always

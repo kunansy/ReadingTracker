@@ -6,7 +6,7 @@
   width: 0;
 }
 
-.links-list {
+.tags-list {
     display: flex;
     flex-direction: row;
     overflow: scroll;
@@ -14,13 +14,36 @@
     max-width: 60%;
 }
 
-.links-list li {
+.tags-list li {
     border: black .25vh solid;
     border-radius: 1vh;
     padding: 3vh;
     text-align: center;
     margin: auto 1vw auto auto;
     display: inline;
+}
+
+.links-list {
+    display: flex;
+    flex-direction: row;
+    overflow: scroll;
+    margin: auto;
+    max-width: 80%;
+}
+
+.links-list li {
+    border: black .25vh solid;
+    border-radius: 1vh;
+    padding: 2vh;
+    text-align: center;
+    margin: auto 1vw auto auto;
+    display: inline;
+    max-width: 35vw;
+    height: 20vh;
+}
+
+.iframe {
+    height: 60vh;
 }
 
 fieldset.add-note-fieldset {

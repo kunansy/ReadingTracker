@@ -1,25 +1,43 @@
 import datetime
 from collections import defaultdict
+from typing import Any
 from uuid import UUID
 
+import networkx as nx
 import sqlalchemy.sql as sa
 
 from tracker.common import database
 from tracker.common.log import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import models, enums
+from tracker.notes import schemas
 
 
 class Note(CustomBaseModel):
     note_id: str
+    link_id: str | None
     material_id: str
     content: str
     added_at: datetime.datetime
     chapter: int
     page: int
-    links: list[str]
+    tags: set[str]
     is_deleted: bool
     note_number: int
+
+    @property
+    def content_md(self) -> str:
+        return str(self)
+
+    @property
+    def info(self) -> str:
+        return f"ID: {self.note_id}\n" \
+               f"Number: {self.note_number}\n" \
+               f"Material ID: {self.material_id}\n\n" \
+               f"{self}"
+
+    def __str__(self) -> str:
+        return schemas.demark_note(self.content)
 
 
 def get_distinct_chapters(notes: list[Note]) -> defaultdict[str, set[int]]:
@@ -149,10 +167,11 @@ async def get_all_notes_count() -> dict[str, int]:
 
 async def add_note(*,
                    material_id: UUID,
+                   link_id: UUID | None,
                    content: str,
                    chapter: int,
                    page: int,
-                   links: list[str],
+                   tags: list[str],
                    date: datetime.date | None = None) -> UUID:
     date = date or database.utcnow()
     logger.debug("Adding note for material_id='%s'", material_id)
@@ -163,8 +182,11 @@ async def add_note(*,
         'chapter': chapter,
         'page': page,
         'added_at': date,
-        'links': links
+        'tags': tags,
     }
+    if link_id:
+        values['link_id'] = str(link_id)
+
     stmt = models.Notes.\
         insert().values(values)\
         .returning(models.Notes.c.note_id)
@@ -178,18 +200,22 @@ async def add_note(*,
 
 async def update_note(*,
                       note_id: UUID,
+                      link_id: UUID | None,
                       content: str,
                       page: int,
                       chapter: int,
-                      links: list[str]) -> None:
+                      tags: list[str]) -> None:
     logger.debug("Updating note_id='%s'", note_id)
 
     values = {
         'content': content,
         'page': page,
         'chapter': chapter,
-        'links': links
+        'tags': tags,
     }
+    if link_id:
+        values['link_id'] = str(link_id)
+
     stmt = models.Notes. \
         update().values(values) \
         .where(models.Notes.c.note_id == str(note_id))
@@ -217,14 +243,84 @@ async def delete_note(*,
     logger.debug("Note_id='%s' deleted", note_id)
 
 
-async def get_links() -> set[str]:
-    stmt = sa.select(models.Notes.c.links)\
-        .where(models.Notes.c.links != [])
+async def get_tags() -> set[str]:
+    stmt = sa.select(models.Notes.c.tags)\
+        .where(models.Notes.c.tags != [])
 
     async with database.session() as ses:
-        links: list[str] = sum([
+        tags: list[str] = sum([
             row[0]
             for row in (await ses.execute(stmt)).all()
         ], [])
 
-    return set(links)
+    return set(tags)
+
+
+async def get_links(note: Note) -> list[Note]:
+    stmt = sa.select(models.Notes) \
+        .where(~models.Notes.c.is_deleted) \
+        .where(models.Notes.c.note_id != note.note_id) \
+        .where(sa.text(f"tags ?| array(SELECT jsonb_array_elements_text(tags) FROM notes WHERE note_id = '{note.note_id}')"))
+
+    async with database.session() as ses:
+        links = [
+            Note(**link)
+            for link in (await ses.execute(stmt)).mappings().all()
+        ]
+
+    # most possible first
+    links.sort(key=lambda link: len(link.tags & note.tags), reverse=True)
+
+    return links
+
+
+def _get_note_links(*,
+                    note_id: str,
+                    notes: dict[str, Note]) -> list[str]:
+    """ Get all notes linked with the given one """
+
+    return [
+        note_id_
+        for note_id_, note in notes.items()
+        if note.link_id == note_id
+    ]
+
+
+def _get_note_link(note: Note, **attrs) -> tuple[str, dict[str, Any]]:
+    return (note.note_id, {
+        **attrs,
+        "material_id": note.material_id,
+        "note_number": note.note_number,
+        "label": note.content_md[:50],
+    })
+
+
+def link_notes(*,
+               note_id: str,
+               notes: dict[str, Note]) -> nx.Graph:
+    nodes, edges = [], []
+    nodes += [_get_note_link(notes[note_id], color="black")]
+
+    note = notes[note_id]
+    while True:
+        if link_id := note.link_id:
+            nodes += [_get_note_link(notes[link_id])]
+            edges += [(note.note_id, link_id)]
+        else:
+            break
+
+        note = notes[link_id]
+
+    # TODO
+    if links := _get_note_links(note_id=note_id, notes=notes):
+        nodes += [
+            _get_note_link(notes[link_id])
+            for link_id in links
+        ]
+        edges += [(note_id, link) for link in links]
+
+    graph = nx.Graph()
+    graph.add_nodes_from(nodes)
+    graph.add_edges_from(edges)
+
+    return graph

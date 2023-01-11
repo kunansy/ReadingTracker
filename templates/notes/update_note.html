@@ -23,7 +23,7 @@
         <fieldset class="add-note-fieldset">
         <legend class="add-note-legend"> Update note </legend>
         <input class="input input-datalist hide" name="material_id" value="{{ material_id }}" title="ID of the material">
-        <input class="input input-datalist hide" name="note_id" value="{{ note_id }}" title="ID of the note">
+        <input class="input input-datalist" name="note_id" value="{{ note_id }}" title="ID of the note">
         <textarea class="input altch" id="input-content" placeholder="Enter a content" name="content" title="Text of the note">{{ content }}</textarea>
         {% set page_number = 'page number' %}
         {% set chapter_number = 'chapter number' %}
@@ -45,9 +45,24 @@
     </form>
 </div>
 
-<ul class="links-list" title="Note links">
-    {% for link in links | sort %}
-        <li onclick="addLink('[[{{ link }}]]')" value="[[{{ link }}]]"> «{{ link | capitalize }}» </li>
+{% if show_links_graph %}
+    <iframe src="/notes/links?note_id={{ note_id }}" class="iframe"></iframe>
+{% endif %}
+
+{% if links %}
+    <ul class="links-list" title="Note links">
+        {% for link in links %}
+            <li title="{{ link.info }}" onclick="addTag('[[{{ link.note_id  }}]]')" value="'[[{{ link.note_id  }}]]'"> {{ link.content_md[:50] }} </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
+{% if tags %}
+<ul class="tags-list" title="Note tags">
+    {% for tag in tags | sort %}
+        <li onclick="addTag('#{{ tag }}')" value="#{{ tag }}"> #{{ tag }} </li>
     {% endfor %}
 </ul>
+{% endif %}
+
 {% endblock main %}
