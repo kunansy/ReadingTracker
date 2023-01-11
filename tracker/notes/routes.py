@@ -144,8 +144,10 @@ async def update_note_view(note_id: UUID,
         'page': note.page,
         'success': success,
         'tags': get_tags_task.result(),
-        'links': get_possible_links_task.result()
     }
+    if not note.link_id:
+        context['links'] = get_possible_links_task.result()
+
     return templates.TemplateResponse("notes/update_note.html", context)
 
 
