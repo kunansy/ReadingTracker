@@ -129,21 +129,21 @@ async def update_note_view(note_id: UUID,
         context['what'] = f"Note id='{note_id}' not found"
         return templates.TemplateResponse("errors/404.html", context)
 
-    material_type = await db.get_material_type(material_id=note.material_id) \
-                    or enums.MaterialTypesEnum.book.name # noqa
-    tags = await db.get_tags()
-    possible_links = await db.get_links(note=note)
+    async with asyncio.TaskGroup() as tg:
+        material_type = tg.create_task(db.get_material_type(material_id=note.material_id))
+        get_tags_task = tg.create_task(db.get_tags())
+        get_possible_links_task = tg.create_task(db.get_links(note=note))
 
     context |= {
         'material_id': note.material_id,
-        'material_type': material_type,
+        'material_type': material_type.result() or enums.MaterialTypesEnum.book.name,
         'note_id': note.note_id,
         'content': schemas.demark_note(note.content),
         'chapter': note.chapter,
         'page': note.page,
         'success': success,
-        'tags': tags,
-        'links': possible_links
+        'tags': get_tags_task.result(),
+        'links': get_possible_links_task.result()
     }
     return templates.TemplateResponse("notes/update_note.html", context)
 
