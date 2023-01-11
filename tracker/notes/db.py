@@ -8,6 +8,7 @@ from tracker.common import database
 from tracker.common.log import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import models, enums
+from tracker.notes import schemas
 
 
 class Note(CustomBaseModel):
@@ -21,6 +22,20 @@ class Note(CustomBaseModel):
     tags: set[str]
     is_deleted: bool
     note_number: int
+
+    @property
+    def content_md(self) -> str:
+        return str(self)
+
+    @property
+    def info(self) -> str:
+        return f"ID: {self.note_id}\n" \
+               f"Number: {self.note_number}\n" \
+               f"Material ID: {self.material_id}\n\n" \
+               f"{self}"
+
+    def __str__(self) -> str:
+        return schemas.demark_note(self.content)
 
 
 def get_distinct_chapters(notes: list[Note]) -> defaultdict[str, set[int]]:
