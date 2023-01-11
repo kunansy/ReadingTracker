@@ -43,11 +43,13 @@
         </form>
     </div>
 
+    {% if tags %}
     <ul class="tags-list" title="Note tags">
         {% for tag in tags | sort %}
             <li onclick="addTag('#{{ tag }}')" value="{{ tag }}"> #{{ tag }} </li>
         {% endfor %}
     </ul>
+    {% endif %}
 {%- else -%}
     {% import 'errors/not_found.html' as not_found %}
     {% call not_found.not_found('materials') %} {% endcall %}

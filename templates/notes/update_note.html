@@ -57,9 +57,12 @@
     </ul>
 {% endif %}
 
+{% if tags %}
 <ul class="tags-list" title="Note tags">
     {% for tag in tags | sort %}
         <li onclick="addTag('#{{ tag }}')" value="#{{ tag }}"> #{{ tag }} </li>
     {% endfor %}
 </ul>
+{% endif %}
+
 {% endblock main %}
