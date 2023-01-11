@@ -132,6 +132,7 @@ async def update_note_view(note_id: UUID,
     material_type = await db.get_material_type(material_id=note.material_id) \
                     or enums.MaterialTypesEnum.book.name # noqa
     tags = await db.get_tags()
+    possible_links = await db.get_links(note=note)
 
     context |= {
         'material_id': note.material_id,
@@ -141,7 +142,8 @@ async def update_note_view(note_id: UUID,
         'chapter': note.chapter,
         'page': note.page,
         'success': success,
-        'tags': tags
+        'tags': tags,
+        'links': possible_links
     }
     return templates.TemplateResponse("notes/update_note.html", context)
 
