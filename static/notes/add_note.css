@@ -6,7 +6,7 @@
   width: 0;
 }
 
-.links-list {
+.tags-list {
     display: flex;
     flex-direction: row;
     overflow: scroll;
@@ -14,7 +14,7 @@
     max-width: 60%;
 }
 
-.links-list li {
+.tags-list li {
     border: black .25vh solid;
     border-radius: 1vh;
     padding: 3vh;

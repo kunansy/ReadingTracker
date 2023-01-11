@@ -43,9 +43,9 @@
         </form>
     </div>
 
-    <ul class="links-list" title="Note links">
-        {% for link in links | sort %}
-            <li onclick="addLink('[[{{ link }}]]')" value="[[{{ link }}]]"> «{{ link | capitalize }}» </li>
+    <ul class="tags-list" title="Note tags">
+        {% for tag in tags | sort %}
+            <li onclick="addTag('#{{ tag }}')" value="{{ tag }}"> #{{ tag }} </li>
         {% endfor %}
     </ul>
 {%- else -%}
