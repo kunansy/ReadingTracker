@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from pyvis.network import Network
 
 from tracker.common import settings, manticoresearch
 from tracker.common.log import logger
@@ -183,3 +184,24 @@ async def delete_note(note: schemas.DeleteNote = Depends()):
     redirect_url = f"{redirect_path}?material_id={note.material_id}"
 
     return RedirectResponse(redirect_url, status_code=302)
+
+
+@router.get('/links',
+            response_class=HTMLResponse)
+async def get_note_links(note_id: UUID):
+    notes = {
+        note.note_id: note
+        for note in await db.get_notes()
+    }
+    graph = db.link_notes(note_id=str(note_id), notes=notes)
+
+    net = Network(
+        cdn_resources="remote",
+        neighborhood_highlight=True)
+    net.from_nx(graph)
+
+    net.show("tmp.html")
+    with open('tmp.html') as f:
+        resp = f.read()
+
+    return resp
