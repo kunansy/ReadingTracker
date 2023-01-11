@@ -164,7 +164,7 @@ async def _calculate_week_reading_statistics(week: WeekBorder) -> dict[datetime.
     logger.debug("Week reading statistics calculated")
 
     return {
-        row.date: row.count
+        row.date.date(): row.count
         for row in rows
     }
 
