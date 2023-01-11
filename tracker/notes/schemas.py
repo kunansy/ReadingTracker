@@ -177,7 +177,7 @@ class Note(CustomBaseModel):
                  values: dict[str, Any]) -> UUID | None:
         content = values['content']
         if link := LINK_PATTERN.search(content):
-            return UUID(link)
+            return UUID(link.group(1))
 
         return None
 
