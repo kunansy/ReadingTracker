@@ -150,7 +150,7 @@ async def get_all_notes_count() -> dict[str, int]:
 
 async def add_note(*,
                    material_id: UUID,
-                   link_id: UUID,
+                   link_id: UUID | None,
                    content: str,
                    chapter: int,
                    page: int,
@@ -161,13 +161,15 @@ async def add_note(*,
 
     values = {
         'material_id': str(material_id),
-        'link_id': str(link_id),
         'content': content,
         'chapter': chapter,
         'page': page,
         'added_at': date,
         'tags': tags,
     }
+    if link_id:
+        values['link_id'] = str(link_id)
+
     stmt = models.Notes.\
         insert().values(values)\
         .returning(models.Notes.c.note_id)
@@ -181,7 +183,7 @@ async def add_note(*,
 
 async def update_note(*,
                       note_id: UUID,
-                      link_id: UUID,
+                      link_id: UUID | None,
                       content: str,
                       page: int,
                       chapter: int,
@@ -189,12 +191,14 @@ async def update_note(*,
     logger.debug("Updating note_id='%s'", note_id)
 
     values = {
-        'link_id': str(link_id),
         'content': content,
         'page': page,
         'chapter': chapter,
         'tags': tags,
     }
+    if link_id:
+        values['link_id'] = str(link_id)
+
     stmt = models.Notes. \
         update().values(values) \
         .where(models.Notes.c.note_id == str(note_id))
