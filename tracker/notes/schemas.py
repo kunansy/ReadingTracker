@@ -133,14 +133,14 @@ def demark_note(string: str) -> str:
 
 class Note(CustomBaseModel):
     material_id: UUID
-    link_id: UUID
+    link_id: UUID | None
     content: constr(strip_whitespace=True)
     chapter: conint(ge=0) = 0
     page: conint(ge=0) = 0
     tags: list[str]
 
     def __init__(self,
-                 link_id: UUID,
+                 link_id: UUID | None,
                  tags: list[str],
                  material_id: UUID = Form(...),
                  content: str = Form(...),
@@ -173,7 +173,7 @@ class Note(CustomBaseModel):
 
     @validator('link_id', pre=False)
     def get_link(cls,
-                 link_id: UUID,
+                 link_id: UUID | None,
                  values: dict[str, Any]) -> UUID | None:
         content = values['content']
         if link := LINK_PATTERN.search(content):
@@ -196,7 +196,7 @@ class UpdateNote(Note):
     note_id: UUID
 
     def __init__(self,
-                 link_id: UUID,
+                 link_id: UUID | None,
                  tags: list[str],
                  material_id: UUID = Form(...),
                  note_id: UUID = Form(...),
