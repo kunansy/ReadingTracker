@@ -144,6 +144,7 @@ async def update_note_view(note_id: UUID,
         'page': note.page,
         'success': success,
         'tags': get_tags_task.result(),
+        'show_links_graph': note.link_id is not None
     }
     if not note.link_id:
         context['links'] = get_possible_links_task.result()

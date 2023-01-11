@@ -42,6 +42,10 @@
     height: 20vh;
 }
 
+.iframe {
+    height: 60vh;
+}
+
 fieldset.add-note-fieldset {
     display: flex;
     margin: auto;
