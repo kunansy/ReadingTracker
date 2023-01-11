@@ -252,3 +252,21 @@ async def get_tags() -> set[str]:
         ], [])
 
     return set(tags)
+
+
+async def get_links(note: Note) -> list[Note]:
+    stmt = sa.select(models.Notes) \
+        .where(~models.Notes.c.is_deleted) \
+        .where(models.Notes.c.note_id != note.note_id) \
+        .where(sa.text(f"tags ?| array(SELECT jsonb_array_elements_text(tags) FROM notes WHERE note_id = '{note.note_id}')"))
+
+    async with database.session() as ses:
+        links = [
+            Note(**link)
+            for link in (await ses.execute(stmt)).mappings().all()
+        ]
+
+    # most possible first
+    links.sort(key=lambda link: len(link.tags & note.tags), reverse=True)
+
+    return links
