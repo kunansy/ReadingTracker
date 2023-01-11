@@ -200,6 +200,7 @@ async def get_note_links(note_id: UUID):
 
     net = Network(
         cdn_resources="remote",
+        directed=True,
         neighborhood_highlight=True)
     net.from_nx(graph)
 
