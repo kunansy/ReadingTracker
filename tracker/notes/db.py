@@ -12,7 +12,7 @@ from tracker.models import models, enums
 
 class Note(CustomBaseModel):
     note_id: str
-    link_id: list[str]
+    link_id: str | None
     material_id: str
     content: str
     added_at: datetime.datetime
