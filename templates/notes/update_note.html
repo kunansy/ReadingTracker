@@ -45,6 +45,14 @@
     </form>
 </div>
 
+{% if links %}
+    <ul class="links-list" title="Note links">
+        {% for link in links %}
+            <li title="{{ link.info }}" onclick="addTag('[[{{ link.note_id  }}]]')" value="'[[{{ link.note_id  }}]]'"> {{ link.content_md[:50] }} </li>
+        {% endfor %}
+    </ul>
+{% endif %}
+
 <ul class="tags-list" title="Note tags">
     {% for tag in tags | sort %}
         <li onclick="addTag('#{{ tag }}')" value="#{{ tag }}"> #{{ tag }} </li>
