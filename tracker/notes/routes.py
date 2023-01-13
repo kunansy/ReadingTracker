@@ -5,7 +5,6 @@ from uuid import UUID
 from fastapi import APIRouter, Request, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from pyvis.network import Network
 
 from tracker.common import settings, manticoresearch
 from tracker.common.log import logger
