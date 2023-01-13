@@ -244,9 +244,13 @@ async def delete_note(*,
     logger.debug("Note_id='%s' deleted", note_id)
 
 
-async def get_tags() -> set[str]:
+async def get_tags(*,
+                   material_id: str | UUID | None = None) -> set[str]:
     stmt = sa.select(models.Notes.c.tags)\
         .where(models.Notes.c.tags != [])
+
+    if material_id:
+        stmt = stmt.where(models.Notes.c.material_id == str(material_id))
 
     async with database.session() as ses:
         tags: list[str] = sum([
