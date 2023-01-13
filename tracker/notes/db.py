@@ -106,8 +106,9 @@ async def get_material_with_notes_titles() -> dict[str, str]:
         }
 
 
-async def get_notes() -> list[Note]:
-    logger.debug("Getting all notes")
+async def get_notes(*,
+                    material_id: UUID | str | None = None) -> list[Note]:
+    logger.debug("Getting notes material_id=%s", material_id)
 
     links_count_query = "(select count(1) as links_count from notes where link_id = n.note_id)"
 
@@ -115,6 +116,9 @@ async def get_notes() -> list[Note]:
     stmt = sa.select([notes_model, sa.text(links_count_query)])\
         .where(~notes_model.c.is_deleted)\
         .order_by(notes_model.c.note_number)
+
+    if material_id:
+        stmt = stmt.where(notes_model.c.material_id == str(material_id))
 
     async with database.session() as ses:
         return [
