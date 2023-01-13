@@ -366,7 +366,7 @@ def create_graphic(graph: nx.Graph, **kwargs) -> str:
 
 
 async def get_sorted_tags(*,
-                          material_id: str | UUID | None = None) -> list[str]:
+                          material_id: str | UUID | None) -> list[str]:
     if not material_id:
         tags = await get_tags()
         return list(sorted(tags))
