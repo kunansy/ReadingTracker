@@ -26,6 +26,7 @@ class Note(CustomBaseModel):
     tags: set[str]
     is_deleted: bool
     note_number: int
+    links_count: int
 
     @property
     def content_md(self) -> str:
@@ -108,9 +109,12 @@ async def get_material_with_notes_titles() -> dict[str, str]:
 async def get_notes() -> list[Note]:
     logger.debug("Getting all notes")
 
-    stmt = sa.select(models.Notes)\
-        .where(~models.Notes.c.is_deleted)\
-        .order_by(models.Notes.c.note_number)
+    links_count_query = "(select count(1) as links_count from notes where link_id = n.note_id)"
+
+    notes_model = models.Notes.alias('n')
+    stmt = sa.select([notes_model, sa.text(links_count_query)])\
+        .where(~notes_model.c.is_deleted)\
+        .order_by(notes_model.c.note_number)
 
     async with database.session() as ses:
         return [
