@@ -73,13 +73,15 @@ async def get_notes(request: Request,
 
 @router.get('/add-view')
 async def add_note_view(request: Request):
+    material_id = request.cookies.get('material_id', '')
+
     async with asyncio.TaskGroup() as tg:
         get_titles_task = tg.create_task(db.get_material_titles())
-        get_tags_task = tg.create_task(db.get_tags())
+        get_tags_task = tg.create_task(db.get_sorted_tags(material_id=material_id))
 
     context = {
         'request': request,
-        'material_id': request.cookies.get('material_id', ''),
+        'material_id': material_id,
         'material_type': request.cookies.get('material_type', enums.MaterialTypesEnum.book.name),
         'content': request.cookies.get('content', ''),
         'page': request.cookies.get('page', ''),
