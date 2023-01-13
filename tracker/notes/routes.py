@@ -132,7 +132,7 @@ async def update_note_view(note_id: UUID,
     async with asyncio.TaskGroup() as tg:
         material_type = tg.create_task(db.get_material_type(material_id=note.material_id))
         get_tags_task = tg.create_task(db.get_tags())
-        get_possible_links_task = tg.create_task(db.get_links(note=note))
+        get_possible_links_task = tg.create_task(db.get_possible_links(note=note))
 
     context |= {
         'material_id': note.material_id,

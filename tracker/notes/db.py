@@ -257,7 +257,7 @@ async def get_tags() -> set[str]:
     return set(tags)
 
 
-async def get_links(note: Note) -> list[Note]:
+async def get_possible_links(note: Note) -> list[Note]:
     stmt = sa.select(models.Notes) \
         .where(~models.Notes.c.is_deleted) \
         .where(models.Notes.c.note_id != note.note_id) \
