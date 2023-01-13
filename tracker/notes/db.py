@@ -127,22 +127,6 @@ async def get_notes(*,
         ]
 
 
-async def get_material_notes(*,
-                             material_id: UUID | str) -> list[Note]:
-    logger.debug("Getting material_id='%s' notes", material_id)
-
-    stmt = sa.select(models.Notes) \
-        .where(models.Notes.c.material_id == str(material_id))\
-        .where(~models.Notes.c.is_deleted) \
-        .order_by(models.Notes.c.note_number)
-
-    async with database.session() as ses:
-        return [
-            Note(**row)
-            for row in (await ses.execute(stmt)).mappings().all()
-        ]
-
-
 async def get_note(*,
                    note_id: UUID) -> Note | None:
     logger.debug("Getting note_id='%s'", note_id)
