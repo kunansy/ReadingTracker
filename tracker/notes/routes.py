@@ -41,10 +41,7 @@ async def get_notes(request: Request,
                     material_id: UUID | str | None = None,
                     query: str | None = None):
     async with asyncio.TaskGroup() as tg:
-        if material_id:
-            get_notes_task = tg.create_task(db.get_material_notes(material_id=material_id))
-        else:
-            get_notes_task = tg.create_task(db.get_notes())
+        get_notes_task = tg.create_task(db.get_notes(material_id=material_id))
         get_titles_task = tg.create_task(db.get_material_with_notes_titles())
         get_material_types_task = tg.create_task(db.get_material_types())
 
