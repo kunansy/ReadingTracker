@@ -324,3 +324,18 @@ def link_notes(*,
     graph.add_edges_from(edges)
 
     return graph
+
+
+def link_all_notes(notes: list[Note]) -> nx.Graph:
+    nodes, edges = [], []
+
+    for note in notes:
+        nodes += [_get_note_link(note)]
+        if note.link_id:
+            edges += [(note.note_id, note.link_id)]
+
+    graph = nx.Graph()
+    graph.add_nodes_from(nodes)
+    graph.add_edges_from(edges)
+
+    return graph
