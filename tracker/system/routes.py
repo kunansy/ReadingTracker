@@ -37,6 +37,7 @@ async def graphic(request: Request,
                   last_days: conint(ge=1) = 7): # type: ignore
     context: dict[str, Any] = {
         'request': request,
+        'show_links_graph': True
     }
     if material_id:
         material_id_: str | None = str(material_id)
