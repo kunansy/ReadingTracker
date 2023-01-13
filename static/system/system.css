@@ -24,3 +24,7 @@ h3.header {
     display: flex;
     margin: auto;
 }
+
+.iframe {
+    height: 80vh;
+}
