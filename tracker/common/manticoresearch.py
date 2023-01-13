@@ -183,3 +183,13 @@ async def search(query: str) -> set[str]:
             row[0]
             for row in await cur.fetchall()
         )
+
+
+async def readiness() -> bool:
+    query = "SHOW STATUS like 'uptime'"
+
+    async with _cursor() as cur:
+        await cur.execute(query)
+        _, uptime = await cur.fetchone()
+
+    return uptime.isdigit() and int(uptime) >= 5
