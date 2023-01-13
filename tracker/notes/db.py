@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from collections import defaultdict
 from typing import Any
@@ -360,3 +361,24 @@ def create_graphic(graph: nx.Graph, **kwargs) -> str:
         resp = f.read()
 
     return resp
+
+
+async def get_sorted_tags(*,
+                          material_id: str | UUID | None = None) -> list[str]:
+    if not material_id:
+        tags = await get_tags()
+        return list(sorted(tags))
+
+    async with asyncio.TaskGroup() as tg:
+        get_tags_task = tg.create_task(get_tags())
+        get_materials_tags = tg.create_task(get_tags(material_id=material_id))
+
+    tags, materials_tags = get_tags_task.result(), get_materials_tags.result()
+    tags_list = list(sorted(tags))
+    materials_tags_list = list(sorted(materials_tags))
+
+    for index, material_tag in enumerate(materials_tags_list):
+        tags_list.remove(material_tag)
+        tags_list.insert(index, material_tag)
+
+    return tags_list
