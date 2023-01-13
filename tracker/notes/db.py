@@ -263,6 +263,8 @@ async def get_tags(*,
 
 
 async def get_possible_links(note: Note) -> list[Note]:
+    """ Get notes with that the given one might be linked.
+     So possibility coeff = size of tags set intersection. """
     stmt = sa.select(models.Notes) \
         .where(~models.Notes.c.is_deleted) \
         .where(models.Notes.c.note_id != note.note_id) \
