@@ -5,6 +5,7 @@ from uuid import UUID
 
 import networkx as nx
 import sqlalchemy.sql as sa
+from pyvis.network import Network
 
 from tracker.common import database
 from tracker.common.log import logger
@@ -339,3 +340,19 @@ def link_all_notes(notes: list[Note]) -> nx.Graph:
     graph.add_edges_from(edges)
 
     return graph
+
+
+def create_graphic(graph: nx.Graph, **kwargs) -> str:
+    net = Network(
+        cdn_resources="remote",
+        directed=True,
+        neighborhood_highlight=True,
+        **kwargs
+    )
+    net.from_nx(graph)
+
+    net.show("tmp.html")
+    with open('tmp.html') as f:
+        resp = f.read()
+
+    return resp
