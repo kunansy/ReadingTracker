@@ -197,15 +197,4 @@ async def get_note_links(note_id: UUID):
         for note in await db.get_notes()
     }
     graph = db.link_notes(note_id=str(note_id), notes=notes)
-
-    net = Network(
-        cdn_resources="remote",
-        directed=True,
-        neighborhood_highlight=True)
-    net.from_nx(graph)
-
-    net.show("tmp.html")
-    with open('tmp.html') as f:
-        resp = f.read()
-
-    return resp
+    return db.create_graphic(graph)
