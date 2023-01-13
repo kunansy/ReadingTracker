@@ -1,3 +1,5 @@
+import asyncio
+
 import uvicorn
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException, RequestValidationError
@@ -111,7 +113,11 @@ async def liveness():
 async def readiness():
     status_code = 500
 
-    if await database.readiness():
+    async with asyncio.TaskGroup() as tg:
+        db_readiness = tg.create_task(database.readiness())
+        manticore_readiness = tg.create_task(manticoresearch.readiness())
+
+    if db_readiness.result() is manticore_readiness.result() is True:
         status_code = 200
 
     return ORJSONResponse(
