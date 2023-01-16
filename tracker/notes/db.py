@@ -106,19 +106,29 @@ async def get_material_with_notes_titles() -> dict[str, str]:
         }
 
 
+def _get_note_stmt(*,
+                   note_id: UUID | str | None = None,
+                   material_id: UUID | str | None = None) -> sa.Select:
+    links_count_query = "(select count(1) as links_count from notes where link_id = n.note_id)"
+
+    notes_model = models.Notes.alias('n')
+    stmt = sa.select([notes_model, sa.text(links_count_query)]) \
+        .where(~notes_model.c.is_deleted) \
+        .order_by(notes_model.c.note_number)
+
+    if note_id:
+        stmt = stmt.where(notes_model.c.note_id == str(note_id))
+    if material_id:
+        stmt = stmt.where(notes_model.c.material_id == str(material_id))
+
+    return stmt
+
+
 async def get_notes(*,
                     material_id: UUID | str | None = None) -> list[Note]:
     logger.debug("Getting notes material_id=%s", material_id)
 
-    links_count_query = "(select count(1) as links_count from notes where link_id = n.note_id)"
-
-    notes_model = models.Notes.alias('n')
-    stmt = sa.select([notes_model, sa.text(links_count_query)])\
-        .where(~notes_model.c.is_deleted)\
-        .order_by(notes_model.c.note_number)
-
-    if material_id:
-        stmt = stmt.where(notes_model.c.material_id == str(material_id))
+    stmt = _get_note_stmt(material_id=material_id)
 
     async with database.session() as ses:
         return [
@@ -131,9 +141,7 @@ async def get_note(*,
                    note_id: UUID) -> Note | None:
     logger.debug("Getting note_id='%s'", note_id)
 
-    stmt = sa.select(models.Notes) \
-        .where(models.Notes.c.note_id == str(note_id)) \
-        .where(~models.Notes.c.is_deleted)
+    stmt = _get_note_stmt(note_id=note_id)
 
     async with database.session() as ses:
         if note := (await ses.execute(stmt)).mappings().one_or_none():
