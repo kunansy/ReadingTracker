@@ -26,7 +26,7 @@ class Note(CustomBaseModel):
     tags: set[str]
     is_deleted: bool
     note_number: int
-    links_count: int
+    links_count: int | None
 
     @property
     def content_md(self) -> str:
