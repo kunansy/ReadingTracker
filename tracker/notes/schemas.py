@@ -141,7 +141,7 @@ class Note(CustomBaseModel):
 
     def __init__(self,
                  tags: list[str],
-                 link_id: UUID | None,
+                 link_id: UUID | None = None,
                  material_id: UUID = Form(...),
                  content: str = Form(...),
                  chapter: int = Form(0),
