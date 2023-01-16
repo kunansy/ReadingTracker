@@ -214,9 +214,8 @@ async def update_note(*,
         'page': page,
         'chapter': chapter,
         'tags': tags,
+        'link_id': str(link_id) if link_id else None
     }
-    if link_id:
-        values['link_id'] = str(link_id)
 
     stmt = models.Notes. \
         update().values(values) \
