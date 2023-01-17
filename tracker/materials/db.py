@@ -9,7 +9,7 @@ from tracker.common.log import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import models, enums
 from tracker.notes import db as notes_db
-from tracker.reading_log import statistics
+from tracker.reading_log import statistics, db as log_db
 
 
 class Material(CustomBaseModel):
@@ -258,7 +258,9 @@ def _get_total_reading_duration(*,
 async def _get_material_statistics(*,
                                    material_status: MaterialStatus,
                                    notes_count: int,
-                                   mean_total: int) -> MaterialStatistics:
+                                   mean_total: int,
+                                   logs: list[log_db.LogRecord] | None = None,
+                                   completion_dates: dict[str, datetime.datetime] | None = None) -> MaterialStatistics:
     """ Calculate statistics for reading or completed material """
     material, status = material_status.material, material_status.status
     material_id = material.material_id
@@ -266,7 +268,8 @@ async def _get_material_statistics(*,
     logger.debug("Calculating statistics material_id=%s", material_id)
 
     if was_reading := await statistics.contains(material_id=material_id):
-        log_st = await statistics.get_m_log_statistics(material_id=material_id)
+        log_st = await statistics.get_m_log_statistics(
+            material_id=material_id, logs=logs, completion_dates=completion_dates)
         mean, total = log_st.mean, log_st.total
         duration, lost_time = log_st.duration, log_st.lost_time
 
