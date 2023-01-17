@@ -106,7 +106,8 @@ async def get_completion_dates() -> dict[str, datetime.datetime]:
 
 
 async def data(*,
-               log_records: list[LogRecord] | None = None) -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
+               log_records: list[LogRecord] | None = None,
+               completion_dates: dict[str, datetime.datetime] | None = None) -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
     """ Get pairs: (date, info) of all days from start to stop.
 
     If the day is empty, material_id is supposed
@@ -124,7 +125,7 @@ async def data(*,
     # stack for materials
     materials: list[str] = []
     try:
-        completion_dates = await _get_completion_dates()
+        completion_dates = completion_dates or await get_completion_dates()
     except Exception as e:
         logger.exception(e)
         completion_dates = {}
