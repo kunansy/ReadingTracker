@@ -37,7 +37,7 @@ async def get_m_log_statistics(*,
         if log_record.material_id == material_id
     )
     total = lost_time = 0
-    async for date, info in db.data():
+    async for date, info in db.data(log_records=log_records):
         if material_id != info.material_id:
             continue
         total += info.count
