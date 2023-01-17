@@ -333,14 +333,17 @@ async def reading_statistics() -> list[MaterialStatistics]:
     all_notes_count = all_notes_count_task.result()
     mean_read_pages = mean_read_pages_task.result()
 
-    return [
-        await _get_material_statistics(
-            material_status=material_status,
-            notes_count=all_notes_count.get(material_status.material_id, 0),
-            mean_total=mean_read_pages
-        )
-        for material_status in reading_materials_task.result()
-    ]
+    async with asyncio.TaskGroup() as tg:
+        tasks = [
+            tg.create_task(_get_material_statistics(
+                material_status=material_status,
+                notes_count=all_notes_count.get(material_status.material_id, 0),
+                mean_total=mean_read_pages
+            ))
+            for material_status in reading_materials_task.result()
+        ]
+
+    return [task.result() for task in tasks]
 
 
 async def get_material_tags() -> set[str]:
