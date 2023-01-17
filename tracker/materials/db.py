@@ -198,8 +198,8 @@ async def get_last_material_started() -> str | None:
     # TODO: test it
     logger.info("Getting the last material started")
 
-    stmt = _get_reading_materials_stmt()
-    stmt = stmt.order_by(models.Statuses.c.started_at.desc())\
+    stmt = _get_reading_materials_stmt()\
+        .order_by(models.Statuses.c.started_at.desc())\
         .limit(1)
 
     async with database.session() as ses:
