@@ -220,11 +220,11 @@ async def add_note(*,
         note_id = await ses.scalar(stmt)
 
     logger.debug("Note_id='%s' added", note_id)
-    return note_id
+    return str(note_id)
 
 
 async def update_note(*,
-                      note_id: UUID,
+                      note_id: str,
                       link_id: UUID | None,
                       content: str,
                       page: int,
@@ -242,7 +242,7 @@ async def update_note(*,
 
     stmt = models.Notes. \
         update().values(values) \
-        .where(models.Notes.c.note_id == str(note_id))
+        .where(models.Notes.c.note_id == note_id)
 
     async with database.session() as ses:
         await ses.execute(stmt)
@@ -251,7 +251,7 @@ async def update_note(*,
 
 
 async def delete_note(*,
-                      note_id: UUID) -> None:
+                      note_id: str) -> None:
     logger.debug("Deleting note_id='%s'", note_id)
 
     values = {
@@ -259,7 +259,7 @@ async def delete_note(*,
     }
     stmt = models.Notes \
         .update().values(values) \
-        .where(models.Notes.c.note_id == str(note_id))
+        .where(models.Notes.c.note_id == note_id)
 
     async with database.session() as ses:
         await ses.execute(stmt)

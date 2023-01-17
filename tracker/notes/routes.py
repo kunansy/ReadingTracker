@@ -107,7 +107,7 @@ async def add_note(note: schemas.Note = Depends()):
         page=note.page,
         tags=note.tags,
     )
-    response.set_cookie('note_id', str(note_id), expires=5)
+    response.set_cookie('note_id', note_id, expires=5)
     if material_type := await db.get_material_type(material_id=note.material_id):
         response.set_cookie('material_type', material_type, expires=5)
 
@@ -154,9 +154,11 @@ async def update_note_view(note_id: UUID,
              response_class=RedirectResponse)
 async def update_note(note: schemas.UpdateNote = Depends()):
     success = True
+    note_id = str(note.note_id)
+
     try:
         await db.update_note(
-            note_id=note.note_id,
+            note_id=note_id,
             link_id=note.link_id,
             content=note.content,
             chapter=note.chapter,
@@ -164,7 +166,7 @@ async def update_note(note: schemas.UpdateNote = Depends()):
             tags=note.tags,
         )
 
-        await manticoresearch.update(note_id=note.note_id)
+        await manticoresearch.update(note_id=note_id)
     except Exception as e:
         logger.error("Error updating note: %s", repr(e))
         success = False
@@ -178,8 +180,10 @@ async def update_note(note: schemas.UpdateNote = Depends()):
 @router.post('/delete',
              response_class=RedirectResponse)
 async def delete_note(note: schemas.DeleteNote = Depends()):
-    await db.delete_note(note_id=note.note_id)
-    await manticoresearch.delete(note_id=note.note_id)
+    note_id = str(note.note_id)
+
+    await db.delete_note(note_id=note_id)
+    await manticoresearch.delete(note_id=note_id)
 
     redirect_path = router.url_path_for(get_notes.__name__)
     redirect_url = f"{redirect_path}?material_id={note.material_id}"

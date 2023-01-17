@@ -1,7 +1,6 @@
 import datetime
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
-from uuid import UUID
 
 import aiomysql
 import sqlalchemy.sql as sa
@@ -86,9 +85,9 @@ async def _get_notes() -> list[Note]:
 
 
 async def _get_note(*,
-                    note_id: UUID) -> Note:
+                    note_id: str) -> Note:
     stmt = _get_note_stmt() \
-        .where(models.Notes.c.note_id == str(note_id))
+        .where(models.Notes.c.note_id == note_id)
 
     async with database.session() as ses:
         if note := (await ses.execute(stmt)).one_or_none():
@@ -150,7 +149,7 @@ async def init() -> None:
     logger.info("Manticore search init completed")
 
 
-async def insert(note_id: UUID) -> None:
+async def insert(note_id: str) -> None:
     note = await _get_note(note_id=note_id)
 
     async with _cursor() as cur:
@@ -160,14 +159,14 @@ async def insert(note_id: UUID) -> None:
         )
 
 
-async def delete(note_id: UUID) -> None:
+async def delete(note_id: str) -> None:
     query = "DELETE FROM notes WHERE note_id=%s"
 
     async with _cursor() as cur:
         await cur.execute(query, note_id)
 
 
-async def update(note_id: UUID) -> None:
+async def update(note_id: str) -> None:
     await delete(note_id)
     await insert(note_id)
 
