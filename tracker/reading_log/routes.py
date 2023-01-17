@@ -21,13 +21,13 @@ templates = Jinja2Templates(directory="templates")
 async def get_reading_log(request: Request):
     async with asyncio.TaskGroup() as tg:
         get_reading_logs = tg.create_task(db.get_log_records())
-        get_average_materials_read_pages = tg.create_task(
-            db.get_average_materials_read_pages())
+        get_mean_materials_read_pages = tg.create_task(
+            db.get_mean_materials_read_pages())
 
     context = {
         'request': request,
         'log': get_reading_logs.result(),
-        'average_materials_read_pages': get_average_materials_read_pages.result(),
+        'mean_materials_read_pages': get_mean_materials_read_pages.result(),
         'DATE_FORMAT': settings.DATE_FORMAT,
     }
     return templates.TemplateResponse("reading_log/reading_log.html", context)

@@ -27,16 +27,16 @@ def _safe_list_get(list_: list[Any],
         return default
 
 
-async def get_average_materials_read_pages() -> dict[str, float]:
+async def get_mean_materials_read_pages() -> dict[str, float]:
     logger.debug("Getting mean reading read pages count of materials")
 
     stmt = sa.select([models.ReadingLog.c.material_id,
-                      sa.func.avg(models.ReadingLog.c.count)]) \
+                      sa.func.avg(models.ReadingLog.c.count).label('mean')]) \
         .group_by(models.ReadingLog.c.material_id)
 
     async with database.session() as ses:
         mean = {
-            str(row.material_id): row.avg
+            str(row.material_id): row.mean
             async for row in await ses.stream(stmt)
         }
 

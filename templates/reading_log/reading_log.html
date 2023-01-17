@@ -14,7 +14,7 @@
 {% if log %}
     {% for info in log | sort(attribute="date", reverse=True) %}
         {% set count = info.count %}
-        {% if count >= average_materials_read_pages[info.material_id] %}
+        {% if count >= mean_materials_read_pages[info.material_id] %}
             <div class="record success">
         {% else %}
             <div class="record error">
