@@ -163,7 +163,7 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
 
 async def is_log_empty() -> bool:
     logger.debug("Checking the log is empty")
-    stmt = sa.select(sa.func.count(1) >= 1)\
+    stmt = sa.select(sa.func.count(1) == 0)\
         .select_from(models.ReadingLog)
 
     async with database.session() as ses:
