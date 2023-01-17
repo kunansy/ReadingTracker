@@ -44,36 +44,49 @@ class Note(CustomBaseModel):
 
 
 def get_distinct_chapters(notes: list[Note]) -> defaultdict[str, set[int]]:
+    logger.debug("Getting distinct chapters")
+
     # chapters of the shown materials,
     #  it should help to create menu
     chapters = defaultdict(set)
     for note in notes:
         chapters[note.material_id].add(note.chapter)
 
+    logger.debug("Distinct chapters got")
     return chapters
 
 
 async def get_material_type(*,
                             material_id: UUID | str) -> str | None:
+    logger.debug("Getting material_id=%s type", material_id)
+
     stmt = sa.select(models.Materials.c.material_type)\
         .where(models.Materials.c.material_id == str(material_id))
 
     async with database.session() as ses:
         if material_type := await ses.scalar(stmt):
+            logger.debug("Material type got: %s", material_type)
             return material_type.name
+
+    logger.debug("Material=%s has no type", material_id)
     return None
 
 
 @database.cache
 async def get_material_types() -> dict[str, enums.MaterialTypesEnum]:
+    logger.debug("Getting material types")
+
     stmt = sa.select([models.Materials.c.material_id,
                       models.Materials.c.material_type])
 
     async with database.session() as ses:
-        return {
+        types = {
             str(material_id): material_type
             for material_id, material_type in await ses.execute(stmt)
         }
+
+    logger.debug("Material types got")
+    return types
 
 
 @database.cache
@@ -84,10 +97,13 @@ async def get_material_titles() -> dict[str, str]:
                       models.Materials.c.title])
 
     async with database.session() as ses:
-        return {
+        titles = {
             str(row.material_id): row.title
             for row in (await ses.execute(stmt)).mappings().all()
         }
+
+    logger.debug("Titles got")
+    return titles
 
 
 @database.cache
@@ -100,10 +116,13 @@ async def get_material_with_notes_titles() -> dict[str, str]:
               models.Notes.c.material_id == models.Materials.c.material_id)
 
     async with database.session() as ses:
-        return {
+        titles = {
             str(row.material_id): row.title
             for row in (await ses.execute(stmt)).mappings().all()
         }
+
+    logger.debug("Material with note titles got")
+    return titles
 
 
 def _get_note_stmt(*,
@@ -131,10 +150,12 @@ async def get_notes(*,
     stmt = _get_note_stmt(material_id=material_id)
 
     async with database.session() as ses:
-        return [
+        notes = [
             Note(**row)
             for row in (await ses.execute(stmt)).mappings().all()
         ]
+    logger.debug("%s notes got", len(notes))
+    return notes
 
 
 async def get_note(*,
@@ -145,7 +166,7 @@ async def get_note(*,
 
     async with database.session() as ses:
         if note := (await ses.execute(stmt)).mappings().one_or_none():
-            logger.debug("Note_id='%s' got", note_id)
+            logger.debug("Note got")
             return Note(**note)
 
     logger.debug("Note_id='%s' not found", note_id)
@@ -153,7 +174,9 @@ async def get_note(*,
 
 
 async def get_all_notes_count() -> dict[str, int]:
-    logger.debug("Getting all notes count")
+    """ Get notes count for the materials. """
+
+    logger.debug("Getting notes count for all materials")
 
     stmt = sa.select([models.Notes.c.material_id.label('material_id'),
                       sa.func.count(1).label('count')]) \
@@ -224,7 +247,7 @@ async def update_note(*,
     async with database.session() as ses:
         await ses.execute(stmt)
 
-    logger.debug("Note_id='%s' updated", note_id)
+    logger.debug("Note updated")
 
 
 async def delete_note(*,
@@ -241,11 +264,13 @@ async def delete_note(*,
     async with database.session() as ses:
         await ses.execute(stmt)
 
-    logger.debug("Note_id='%s' deleted", note_id)
+    logger.debug("Note deleted")
 
 
 async def get_tags(*,
                    material_id: str | UUID | None = None) -> set[str]:
+    logger.debug("Getting tags for material_id=%s", material_id)
+
     stmt = sa.select(models.Notes.c.tags)\
         .where(models.Notes.c.tags != [])
 
@@ -258,12 +283,19 @@ async def get_tags(*,
             for row in (await ses.execute(stmt)).all()
         ], [])
 
-    return set(tags)
+    tags_set = set(tags)
+    logger.debug("Total %s unique tags got", len(tags_set))
+
+    return tags_set
 
 
 async def get_possible_links(note: Note) -> list[Note]:
     """ Get notes with which the given one might be linked.
      So possibility coeff = size of tags set intersection. """
+
+    logger.debug("Getting possible links for note=%s, tags=%s",
+                 note.note_id, note.tags)
+
     stmt = sa.select(models.Notes) \
         .where(~models.Notes.c.is_deleted) \
         .where(models.Notes.c.note_id != note.note_id) \
@@ -278,6 +310,7 @@ async def get_possible_links(note: Note) -> list[Note]:
     # most possible first
     links.sort(key=lambda link: len(link.tags & note.tags), reverse=True)
 
+    logger.debug("%s possible links got")
     return links
 
 
@@ -305,6 +338,8 @@ def _get_note_link(note: Note, **attrs) -> tuple[str, dict[str, Any]]:
 def link_notes(*,
                note_id: str,
                notes: dict[str, Note]) -> nx.Graph:
+    logger.debug("Linking %s notes from the %s", len(notes), note_id)
+
     nodes, edges = [], []
     nodes += [_get_note_link(notes[note_id], color="black")]
 
@@ -330,6 +365,9 @@ def link_notes(*,
     graph.add_nodes_from(nodes)
     graph.add_edges_from(edges)
 
+    logger.debug("Notes linked, %s nodes, %s edges",
+                 len(graph.nodes), len(graph.edges))
+
     return graph
 
 
@@ -345,10 +383,14 @@ def link_all_notes(notes: list[Note]) -> nx.Graph:
     graph.add_nodes_from(nodes)
     graph.add_edges_from(edges)
 
+    logger.debug("%s notes linked", len(notes))
     return graph
 
 
 def create_graphic(graph: nx.Graph, **kwargs) -> str:
+    logger.debug("Creating graphic for graph with %s nodes, %s edges",
+                 len(graph.nodes), len(graph.edges))
+
     net = Network(
         cdn_resources="remote",
         directed=True,
@@ -361,11 +403,16 @@ def create_graphic(graph: nx.Graph, **kwargs) -> str:
     with open('tmp.html') as f:
         resp = f.read()
 
+    logger.debug("Graphic created")
     return resp
 
 
 async def get_sorted_tags(*,
                           material_id: str | UUID | None) -> list[str]:
+    """ Get tags especially for the material, means there should be tags
+    from the notes for the material in the beginning of the result list. """
+    logger.debug("Getting sorted tags for material_id=%s", material_id)
+
     if not material_id:
         tags = await get_tags()
         return list(sorted(tags))
@@ -377,4 +424,7 @@ async def get_sorted_tags(*,
     tags, materials_tags = get_tags_task.result(), get_materials_tags.result()
     tags -= materials_tags
 
-    return sorted(materials_tags) + sorted(tags)
+    result = sorted(materials_tags) + sorted(tags)
+    logger.debug("%s sorted tags got", len(result))
+
+    return result
