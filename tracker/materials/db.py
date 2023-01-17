@@ -90,12 +90,16 @@ class RepeatingQueue(CustomBaseModel):
 
 async def get_material(*,
                        material_id: str) -> Material | None:
+    logger.debug("Getting material=%s", material_id)
     stmt = sa.select(models.Materials)\
         .where(models.Materials.c.material_id == material_id)
 
     async with database.session() as ses:
         if material := (await ses.execute(stmt)).mappings().one_or_none():
+            logger.debug("Material got")
             return Material(**material)
+
+    logger.warning("Material id=%s not found", material_id)
     return None
 
 
@@ -111,10 +115,13 @@ async def _get_free_materials() -> list[Material]:
         .order_by(models.Materials.c.added_at)
 
     async with database.session() as ses:
-        return [
+        materials = [
             Material(**row)
             for row in (await ses.execute(stmt)).mappings().all()
         ]
+
+    logger.debug("%s free materials got")
+    return materials
 
 
 def _get_reading_materials_stmt() -> sa.Select:
@@ -178,7 +185,6 @@ async def _get_reading_materials() -> list[MaterialStatus]:
         stmt=reading_materials_stmt)
 
     logger.info("%s reading materials found", len(reading_materials))
-
     return reading_materials
 
 
@@ -190,7 +196,6 @@ async def _get_completed_materials() -> list[MaterialStatus]:
         stmt=completed_materials_stmt)
 
     logger.info("%s completed materials found", len(completed_materials))
-
     return completed_materials
 
 
@@ -258,7 +263,7 @@ async def _get_material_statistics(*,
     material, status = material_status.material, material_status.status
     material_id = material.material_id
 
-    logger.debug("Calculating statistics for material_id=%s", material_id)
+    logger.debug("Calculating statistics material_id=%s", material_id)
 
     if was_reading := await statistics.contains(material_id=material_id):
         log_st = await statistics.get_m_log_statistics(material_id=material_id)
@@ -285,6 +290,7 @@ async def _get_material_statistics(*,
     total_reading_duration = _get_total_reading_duration(
         started_at=status.started_at, completed_at=status.completed_at)
 
+    logger.debug("Material statistics calculated")
     return MaterialStatistics(
         material=material,
         started_at=status.started_at,
@@ -324,6 +330,7 @@ async def completed_statistics() -> list[MaterialStatistics]:
             for material_status in completed_materials_task.result()
         ]
 
+    logger.info("%s materials statistics calculated", len(tasks))
     return [task.result() for task in tasks]
 
 
@@ -348,6 +355,7 @@ async def reading_statistics() -> list[MaterialStatistics]:
             for material_status in reading_materials_task.result()
         ]
 
+    logger.info("%s materials statistics calculated", len(tasks))
     return [task.result() for task in tasks]
 
 
@@ -366,6 +374,8 @@ async def get_material_tags() -> set[str]:
             tag.strip().lower()
             for tag in tag[0].split(',')
         }
+
+    logger.debug("%s tags got", len(tags))
     return tags
 
 
@@ -391,7 +401,8 @@ async def insert_material(*,
 
     async with database.session() as ses:
         await ses.execute(stmt)
-    logger.debug("Material added")
+
+    logger.debug("Material inserted")
 
 
 async def update_material(*,
@@ -402,7 +413,7 @@ async def update_material(*,
                           material_type: enums.MaterialTypesEnum,
                           tags: str | None,
                           link: str | None) -> None:
-    logger.debug("Update material='%s'", material_id)
+    logger.debug("Updating material='%s'", material_id)
 
     values = {
         "title": title,
@@ -420,7 +431,7 @@ async def update_material(*,
     async with database.session() as ses:
         await ses.execute(stmt)
 
-    logger.debug("Material='%s' updated")
+    logger.debug("Material updated")
 
 
 async def start_material(*,
@@ -442,7 +453,7 @@ async def start_material(*,
     async with database.session() as ses:
         await ses.execute(stmt)
 
-    logger.debug("Material material_id=%s started", material_id)
+    logger.debug("Material started")
 
 
 async def complete_material(*,
@@ -468,8 +479,7 @@ async def complete_material(*,
     async with database.session() as ses:
         await ses.execute(stmt)
 
-    logger.debug("Material_id=%s completed at %s",
-                 material_id, completion_date)
+    logger.debug("Material completed at %s", completion_date)
 
 
 async def outline_material(*,
@@ -487,12 +497,12 @@ async def outline_material(*,
     async with database.session() as ses:
         await ses.execute(stmt)
 
-    logger.info("Material='%s' outlined", material_id)
+    logger.info("Material outlined")
 
 
 async def repeat_material(*,
                           material_id: UUID) -> None:
-    logger.debug("Inserting material_id='%s' repeat", material_id)
+    logger.debug("Repeating material_id='%s'", material_id)
 
     values = {
         "material_id": str(material_id),
@@ -504,7 +514,7 @@ async def repeat_material(*,
     async with database.session() as ses:
         await ses.execute(stmt)
 
-    logger.debug("Material_id='%s' repeated", material_id)
+    logger.debug("Material repeated")
 
 
 async def _end_of_reading() -> datetime.date:
@@ -517,6 +527,7 @@ async def _end_of_reading() -> datetime.date:
 
 async def estimate() -> list[MaterialEstimate]:
     """ Get materials from queue with estimated time to read """
+    logger.debug("Estimating materials started")
     step = datetime.timedelta(days=1)
 
     async with asyncio.TaskGroup() as tg:
@@ -542,6 +553,7 @@ async def estimate() -> list[MaterialEstimate]:
 
         last_date = expected_end + step
 
+    logger.debug("%s materials estimated", len(forecasts))
     return forecasts
 
 
@@ -557,6 +569,8 @@ def _get_priority_days(field: datetime.timedelta | None) -> int:
 
 
 async def get_repeats_analytics() -> dict[str, RepeatAnalytics]:
+    logger.debug("Getting repeat analytics")
+
     last_repeated_at = sa.func.max(models.Repeats.c.repeated_at).label("last_repeated_at")
     repetition_or_completion_date = sa.func.coalesce(last_repeated_at, sa.func.max(models.Statuses.c.completed_at))
     stmt = sa.select([models.Statuses.c.material_id,
@@ -569,7 +583,7 @@ async def get_repeats_analytics() -> dict[str, RepeatAnalytics]:
         .group_by(models.Statuses.c.material_id)
 
     async with database.session() as ses:
-        return {
+        analytics = {
             str(row.material_id): RepeatAnalytics(
                 repeats_count=row.repeats_count,
                 last_repeated_at=row.last_repeated_at,
@@ -578,6 +592,9 @@ async def get_repeats_analytics() -> dict[str, RepeatAnalytics]:
             )
             for row in await ses.execute(stmt)
         }
+
+    logger.debug("%s materials to repeat got", len(analytics))
+    return analytics
 
 
 async def get_repeating_queue() -> list[RepeatingQueue]:
@@ -608,6 +625,6 @@ async def get_repeating_queue() -> list[RepeatingQueue]:
         for material_status in completed_materials_task.result()
         if repeat_analytics[material_status.material_id].priority_months > 0
     ]
-    logger.debug("Repeating queue got, %s materials found", len(queue))
 
+    logger.debug("Repeating queue got, %s materials found", len(queue))
     return queue
