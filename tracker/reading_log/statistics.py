@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from typing import Any
 
@@ -24,9 +25,15 @@ class LogStatistics(CustomBaseModel):
 async def get_m_log_statistics(*,
                                material_id: str) -> LogStatistics:
     """ Get material statistics from logs """
+    async with asyncio.TaskGroup() as tg:
+        get_log_records_task = tg.create_task(db.get_log_records())
+        get_min_record_task = tg.create_task(_get_min_record(material_id=material_id))
+        get_max_record_task = tg.create_task(_get_max_record(material_id=material_id))
+
+    log_records = get_log_records_task.result()
     duration = sum(
         1
-        for log_record in await db.get_log_records()
+        for log_record in log_records
         if log_record.material_id == material_id
     )
     total = lost_time = 0
@@ -36,17 +43,14 @@ async def get_m_log_statistics(*,
         total += info.count
         lost_time += info.count == 0
 
-    min_record = await _get_min_record(material_id=material_id)
-    max_record = await _get_max_record(material_id=material_id)
-
     return LogStatistics(
         material_id=material_id,
         total=total,
         lost_time=lost_time,
         duration=duration,
         mean=round(total / duration),
-        min_record=min_record,
-        max_record=max_record
+        min_record=get_min_record_task.result(),
+        max_record=get_max_record_task.result()
     )
 
 
