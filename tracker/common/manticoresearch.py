@@ -75,23 +75,32 @@ def _get_note_stmt() -> sa.Select:
 
 
 async def _get_notes() -> list[Note]:
+    logger.debug("Getting all notes")
     stmt = _get_note_stmt()
 
     async with database.session() as ses:
-        return [
+        notes = [
             Note(**row)
             for row in (await ses.execute(stmt)).mappings().all()
         ]
 
+    logger.debug("%s notes got", len(notes))
+    return notes
+
 
 async def _get_note(*,
                     note_id: str) -> Note:
+    logger.debug("Getting note=%s", note_id)
+
     stmt = _get_note_stmt() \
         .where(models.Notes.c.note_id == note_id)
 
     async with database.session() as ses:
         if note := (await ses.execute(stmt)).one_or_none():
+            logger.debug("Note got")
             return Note(**note)
+
+    logger.exception("Note=%s not found", note_id)
     raise ValueError(f'Note {note_id} not found')
 
 
@@ -122,6 +131,7 @@ async def _create_table() -> None:
 
 
 async def insert_all(notes: list[Note]) -> None:
+    logger.debug("Inserting all %s notes", notes)
     if not notes:
         return None
 
@@ -130,6 +140,8 @@ async def insert_all(notes: list[Note]) -> None:
             INSERT_QUERY,
             (list(note.dict().values()) for note in notes)
         )
+
+    logger.debug("Notes inserted")
 
 
 async def init() -> None:
@@ -150,6 +162,7 @@ async def init() -> None:
 
 
 async def insert(note_id: str) -> None:
+    logger.debug("Inserting note=%s", note_id)
     note = await _get_note(note_id=note_id)
 
     async with _cursor() as cur:
@@ -158,30 +171,44 @@ async def insert(note_id: str) -> None:
             list(note.dict().values())
         )
 
+    logger.debug("Note inserted")
+
 
 async def delete(note_id: str) -> None:
+    logger.debug("Deleting note=%s", note_id)
+
     query = "DELETE FROM notes WHERE note_id=%s"
 
     async with _cursor() as cur:
         await cur.execute(query, note_id)
 
+    logger.debug("Note deleted")
+
 
 async def update(note_id: str) -> None:
+    logger.debug("Updating note=%s", note_id)
+
     await delete(note_id)
     await insert(note_id)
 
+    logger.debug("Note updated")
+
 
 async def search(query: str) -> set[str]:
+    logger.debug("Searching notes like: '%s'", query)
     if not query:
         return set()
 
     db_query = "SELECT note_id FROM notes where match(%s) ORDER BY weight() DESC"
     async with _cursor() as cur:
         await cur.execute(db_query, query)
-        return set(
+        note_ids = set(
             row[0]
             for row in await cur.fetchall()
         )
+
+    logger.debug("%s match notes found")
+    return note_ids
 
 
 async def readiness() -> bool:
