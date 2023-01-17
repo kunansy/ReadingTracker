@@ -219,7 +219,12 @@ async def _get_status(*,
         .where(models.Statuses.c.material_id == str(material_id))
 
     async with database.session() as ses:
-        return (await ses.execute(stmt)).mappings().one_or_none()
+        if status := (await ses.execute(stmt)).mappings().one_or_none():
+            logger.debug("Status got")
+            return Status(**status)
+
+    logger.debug("Status not found")
+    return None
 
 
 def _convert_duration_to_period(duration: datetime.timedelta) -> str:
