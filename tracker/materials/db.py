@@ -120,7 +120,7 @@ async def _get_free_materials() -> list[Material]:
             for row in (await ses.execute(stmt)).mappings().all()
         ]
 
-    logger.debug("%s free materials got")
+    logger.debug("%s free materials got", len(materials))
     return materials
 
 
@@ -527,7 +527,7 @@ async def _end_of_reading() -> datetime.date:
 
 async def estimate() -> list[MaterialEstimate]:
     """ Get materials from queue with estimated time to read """
-    logger.debug("Estimating materials started")
+    logger.info("Estimating materials started")
     step = datetime.timedelta(days=1)
 
     async with asyncio.TaskGroup() as tg:
@@ -553,7 +553,7 @@ async def estimate() -> list[MaterialEstimate]:
 
         last_date = expected_end + step
 
-    logger.debug("%s materials estimated", len(forecasts))
+    logger.info("%s materials estimated", len(forecasts))
     return forecasts
 
 
