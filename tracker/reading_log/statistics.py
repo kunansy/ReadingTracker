@@ -24,7 +24,8 @@ class LogStatistics(CustomBaseModel):
 
 async def get_m_log_statistics(*,
                                material_id: str,
-                               logs: list[db.LogRecord] | None = None) -> LogStatistics:
+                               logs: list[db.LogRecord] | None = None,
+                               completion_dates: dict[str, datetime.datetime] | None = None) -> LogStatistics:
     """ Get material statistics from logs """
     async with asyncio.TaskGroup() as tg:
         if not logs:
@@ -41,7 +42,7 @@ async def get_m_log_statistics(*,
         if log_record.material_id == material_id
     )
     total = lost_time = 0
-    async for date, info in db.data(log_records=log_records):
+    async for date, info in db.data(log_records=log_records, completion_dates=completion_dates):
         if material_id != info.material_id:
             continue
         total += info.count
