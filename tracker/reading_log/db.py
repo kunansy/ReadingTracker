@@ -150,8 +150,16 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
             iter_over_dates += step
 
 
+async def is_log_empty() -> bool:
+    stmt = sa.select(sa.func.count(1) >= 1)\
+        .select_from(models.ReadingLog)
+
+    async with database.session() as ses:
+        return await ses.scalar(stmt)
+
+
 async def get_material_reading_now() -> str | None:
-    if not await get_log_records():
+    if await is_log_empty():
         logger.warning("Reading log is empty, no materials reading")
         return None
 
