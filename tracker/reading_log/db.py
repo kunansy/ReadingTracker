@@ -28,17 +28,20 @@ def _safe_list_get(list_: list[Any],
 
 
 async def get_average_materials_read_pages() -> dict[str, float]:
-    logger.debug("Getting average reading read pages count of materials")
+    logger.debug("Getting mean reading read pages count of materials")
 
     stmt = sa.select([models.ReadingLog.c.material_id,
                       sa.func.avg(models.ReadingLog.c.count)]) \
         .group_by(models.ReadingLog.c.material_id)
 
     async with database.session() as ses:
-        return {
+        mean = {
             str(row.material_id): row.avg
             async for row in await ses.stream(stmt)
         }
+
+    logger.debug("Mean material reading got")
+    return mean
 
 
 async def get_log_records() -> list[LogRecord]:
@@ -50,7 +53,7 @@ async def get_log_records() -> list[LogRecord]:
               models.Materials.c.material_id == models.ReadingLog.c.material_id)
 
     async with database.session() as ses:
-        return [
+        records = [
             LogRecord(
                 date=row.date,
                 count=row.count,
@@ -60,9 +63,12 @@ async def get_log_records() -> list[LogRecord]:
             for row in (await ses.execute(stmt)).all()
         ]
 
+    logger.debug("%s log records got", len(records))
+    return records
+
 
 async def get_reading_material_titles() -> dict[str, str]:
-    logger.debug("Getting material titles")
+    logger.debug("Getting reading material titles")
 
     stmt = sa.select([models.Materials.c.material_id,
                       models.Materials.c.title])\
@@ -71,10 +77,13 @@ async def get_reading_material_titles() -> dict[str, str]:
         .where(models.Statuses.c.completed_at == None)
 
     async with database.session() as ses:
-        return {
+        titles = {
             str(row.material_id): row.title
             async for row in await ses.stream(stmt)
         }
+
+    logger.debug("%s reading materials titles got", len(titles))
+    return titles
 
 
 async def _get_completion_dates() -> dict[str, datetime.datetime]:
@@ -87,10 +96,13 @@ async def _get_completion_dates() -> dict[str, datetime.datetime]:
         .where(models.Statuses.c.completed_at != None)
 
     async with database.session() as ses:
-        return {
+        dates = {
             str(row.material_id): row.completed_at
             async for row in await ses.stream(stmt)
         }
+
+    logger.debug("%s completion dates got", len(dates))
+    return dates
 
 
 async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
@@ -150,14 +162,20 @@ async def data() -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
 
 
 async def is_log_empty() -> bool:
+    logger.debug("Checking the log is empty")
     stmt = sa.select(sa.func.count(1) >= 1)\
         .select_from(models.ReadingLog)
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        is_empty = await ses.scalar(stmt)
+
+    logger.debug("Log empty: %s", is_empty)
+    return is_empty
 
 
 async def get_material_reading_now() -> str | None:
+    logger.debug("Getting material reading now")
+
     if await is_log_empty():
         logger.warning("Reading log is empty, no materials reading")
         return None
@@ -167,19 +185,24 @@ async def get_material_reading_now() -> str | None:
         last_material_id = info.material_id
 
     if last_material_id is not None:
+        logger.debug("Now %s is reading", last_material_id)
         return last_material_id
 
+    logger.debug("Reading material not found")
     # means the new material started
     #  and there's no log records for it
-    return await materials_db.get_last_material_started()
 
+    material_id = await materials_db.get_last_material_started()
+    logger.debug("So, assume the last inserted material is reading: %s", material_id)
+
+    return material_id
 
 
 async def insert_log_record(*,
                             material_id: str,
                             count: int,
                             date: datetime.date) -> None:
-    logger.debug("Setting log for material_id=%s, count=%s, date=%s: ",
+    logger.debug("Inserting log material_id=%s, count=%s, date=%s",
                  material_id, count, date)
 
     values = {
@@ -193,4 +216,4 @@ async def insert_log_record(*,
     async with database.session() as ses:
         await ses.execute(stmt)
 
-    logger.debug("Log record added")
+    logger.debug("Log record inserted")
