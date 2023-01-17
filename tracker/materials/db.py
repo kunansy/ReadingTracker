@@ -508,14 +508,17 @@ async def estimate() -> list[MaterialEstimate]:
     """ Get materials from queue with estimated time to read """
     step = datetime.timedelta(days=1)
 
-    # start when all reading material will be completed
-    start = await _end_of_reading()
-    mean = await statistics.get_mean_read_pages()
+    async with asyncio.TaskGroup() as tg:
+        # start when all reading material will be completed
+        get_start_task = tg.create_task(_end_of_reading())
+        get_mean_task = tg.create_task(statistics.get_mean_read_pages())
+        get_free_materials_task = tg.create_task(_get_free_materials())
 
-    last_date = start + step
+    last_date = get_start_task.result() + step
+    mean = get_mean_task.result()
     forecasts = []
 
-    for material in await _get_free_materials():
+    for material in get_free_materials_task.result():
         expected_duration = round(material.pages / mean)
         expected_end = last_date + datetime.timedelta(days=expected_duration)
 
