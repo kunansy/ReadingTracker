@@ -369,14 +369,14 @@ async def get_material_tags() -> set[str]:
     return tags
 
 
-async def add_material(*,
-                       title: str,
-                       authors: str,
-                       pages: int,
-                       material_type: enums.MaterialTypesEnum,
-                       tags: str | None,
-                       link: str | None) -> None:
-    logger.debug("Adding material title=%s", title)
+async def insert_material(*,
+                          title: str,
+                          authors: str,
+                          pages: int,
+                          material_type: enums.MaterialTypesEnum,
+                          tags: str | None,
+                          link: str | None) -> None:
+    logger.debug("Inserting material title=%s", title)
 
     values = {
         "title": title,

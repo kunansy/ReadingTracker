@@ -39,8 +39,8 @@ async def get_queue(request: Request):
 
 
 @router.get('/add-view', response_class=HTMLResponse)
-async def add_material_view(request: Request):
-    """ Add a material to the queue """
+async def insert_material_view(request: Request):
+    """ Insert a material to the queue """
     tags = await db.get_material_tags()
     context = {
         'request': request,
@@ -51,9 +51,9 @@ async def add_material_view(request: Request):
 
 
 @router.post('/add', response_class=HTMLResponse)
-async def add_material(material: schemas.Material = Depends()):
-    """ Add a material to the queue """
-    await db.add_material(
+async def insert_material(material: schemas.Material = Depends()):
+    """ Insert a material to the queue """
+    await db.insert_material(
         title=material.title,
         authors=material.authors,
         pages=material.pages,
@@ -62,7 +62,7 @@ async def add_material(material: schemas.Material = Depends()):
         link=material.link
     )
 
-    redirect_url = router.url_path_for(add_material_view.__name__)
+    redirect_url = router.url_path_for(insert_material_view.__name__)
     return RedirectResponse(redirect_url, status_code=302)
 
 
