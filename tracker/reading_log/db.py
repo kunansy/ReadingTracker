@@ -13,16 +13,16 @@ from tracker.models import models
 
 class LogRecord(CustomBaseModel):
     date: datetime.date
-    count: int # type: ignore
+    count: int
     material_id: str
     material_title: str | None = None
 
 
-def _safe_list_get(list_: list[Any],
+def _safe_list_get(lst: list[Any],
                    index: int,
                    default: Any = None) -> Any:
     try:
-        return list_[index]
+        return lst[index]
     except IndexError:
         return default
 
@@ -206,7 +206,7 @@ async def insert_log_record(*,
                  material_id, count, date)
 
     values = {
-        'material_id': str(material_id),
+        'material_id': material_id,
         'count': count,
         'date': date
     }
