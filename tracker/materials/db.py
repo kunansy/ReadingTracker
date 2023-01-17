@@ -55,14 +55,14 @@ class MaterialStatistics(CustomBaseModel):
     total: int
     min_record: database.MinMax | None
     max_record: database.MinMax | None
-    average: int
+    mean: int
     notes_count: int
     remaining_pages: int | None = None
     remaining_days: int | None = None
     completed_at: datetime.date | None = None
     total_reading_duration: str | None = None
     # date when the material would be completed
-    # according to average read pages count
+    # according to mean read pages count
     would_be_completed: datetime.date | None = None
 
 
@@ -248,7 +248,7 @@ def _get_total_reading_duration(*,
 async def _get_material_statistics(*,
                                    material_status: MaterialStatus,
                                    notes_count: int,
-                                   avg_total: int) -> MaterialStatistics:
+                                   mean_total: int) -> MaterialStatistics:
     """ Calculate statistics for reading or completed material """
     material, status = material_status.material, material_status.status
     material_id = material.material_id
@@ -257,21 +257,21 @@ async def _get_material_statistics(*,
 
     if was_reading := await statistics.contains(material_id=material_id):
         log_st = await statistics.get_m_log_statistics(material_id=material_id)
-        avg, total = log_st.average, log_st.total
+        mean, total = log_st.mean, log_st.total
         duration, lost_time = log_st.duration, log_st.lost_time
 
         max_record, min_record = log_st.max_record, log_st.min_record
     else:
-        avg = 1
+        mean = 1
         total = duration = lost_time = 0
         max_record = min_record = None
 
     if status.completed_at is None:
         remaining_pages = material.pages - total
 
-        remaining_days = round(remaining_pages / avg)
+        remaining_days = round(remaining_pages / mean)
         if not was_reading:
-            remaining_days = round(remaining_pages / avg_total)
+            remaining_days = round(remaining_pages / mean_total)
 
         would_be_completed = database.utcnow() + datetime.timedelta(days=remaining_days)
     else:
@@ -290,7 +290,7 @@ async def _get_material_statistics(*,
         total=total,
         min_record=min_record,
         max_record=max_record,
-        average=avg,
+        mean=mean,
         notes_count=notes_count,
         remaining_pages=remaining_pages,
         remaining_days=remaining_days,
@@ -303,17 +303,17 @@ async def completed_statistics() -> list[MaterialStatistics]:
 
     async with asyncio.TaskGroup() as tg:
         completed_materials_task = tg.create_task(_get_completed_materials())
-        avg_read_pages_task = tg.create_task(statistics.get_avg_read_pages())
+        mean_read_pages_task = tg.create_task(statistics.get_mean_read_pages())
         all_notes_count_task = tg.create_task(notes_db.get_all_notes_count())
 
     all_notes_count = all_notes_count_task.result()
-    avg_read_pages = avg_read_pages_task.result()
+    mean_read_pages = mean_read_pages_task.result()
 
     return [
         await _get_material_statistics(
             material_status=material_status,
             notes_count=all_notes_count.get(material_status.material_id, 0),
-            avg_total=avg_read_pages
+            mean_total=mean_read_pages
         )
         for material_status in completed_materials_task.result()
     ]
@@ -324,17 +324,17 @@ async def reading_statistics() -> list[MaterialStatistics]:
 
     async with asyncio.TaskGroup() as tg:
         reading_materials_task = tg.create_task(_get_reading_materials())
-        avg_read_pages_task = tg.create_task(statistics.get_avg_read_pages())
+        mean_read_pages_task = tg.create_task(statistics.get_mean_read_pages())
         all_notes_count_task = tg.create_task(notes_db.get_all_notes_count())
 
     all_notes_count = all_notes_count_task.result()
-    avg_read_pages = avg_read_pages_task.result()
+    mean_read_pages = mean_read_pages_task.result()
 
     return [
         await _get_material_statistics(
             material_status=material_status,
             notes_count=all_notes_count.get(material_status.material_id, 0),
-            avg_total=avg_read_pages
+            mean_total=mean_read_pages
         )
         for material_status in reading_materials_task.result()
     ]
@@ -510,13 +510,13 @@ async def estimate() -> list[MaterialEstimate]:
 
     # start when all reading material will be completed
     start = await _end_of_reading()
-    avg = await statistics.get_avg_read_pages()
+    mean = await statistics.get_mean_read_pages()
 
     last_date = start + step
     forecasts = []
 
     for material in await _get_free_materials():
-        expected_duration = round(material.pages / avg)
+        expected_duration = round(material.pages / mean)
         expected_end = last_date + datetime.timedelta(days=expected_duration)
 
         forecasts += [MaterialEstimate(

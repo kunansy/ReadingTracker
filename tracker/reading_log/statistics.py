@@ -16,7 +16,7 @@ class LogStatistics(CustomBaseModel):
     lost_time: int
     # days the material was being reading
     duration: int
-    average: int
+    mean: int
     min_record: database.MinMax | None
     max_record: database.MinMax | None
 
@@ -44,7 +44,7 @@ async def get_m_log_statistics(*,
         total=total,
         lost_time=lost_time,
         duration=duration,
-        average=round(total / duration),
+        mean=round(total / duration),
         min_record=min_record,
         max_record=max_record
     )
@@ -88,7 +88,7 @@ async def _get_lost_days() -> int:
         return await ses.scalar(stmt)
 
 
-async def get_avg_read_pages() -> int:
+async def get_mean_read_pages() -> int:
     stmt = sa.select(sa.func.avg(models.ReadingLog.c.count))
 
     async with database.session() as ses:
@@ -179,7 +179,7 @@ async def get_log_statistics() -> dict[str, Any]:
         "stop_date": await _get_stop_date(),
         "duration": await _get_log_duration(),
         "lost_time": await _get_lost_days(),
-        "average": await get_avg_read_pages(),
+        "average": await get_mean_read_pages(),
         "total_pages_read": await _get_total_read_pages(),
         "would_be_total": await _would_be_total(),
         "min": await _get_min_record(),
