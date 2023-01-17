@@ -86,7 +86,7 @@ async def get_reading_material_titles() -> dict[str, str]:
     return titles
 
 
-async def _get_completion_dates() -> dict[str, datetime.datetime]:
+async def get_completion_dates() -> dict[str, datetime.datetime]:
     logger.debug("Getting completion dates")
 
     stmt = sa.select([models.Materials.c.material_id,
