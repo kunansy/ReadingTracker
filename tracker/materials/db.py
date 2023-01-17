@@ -319,6 +319,8 @@ async def completed_statistics() -> list[MaterialStatistics]:
         completed_materials_task = tg.create_task(_get_completed_materials())
         mean_read_pages_task = tg.create_task(statistics.get_mean_read_pages())
         all_notes_count_task = tg.create_task(notes_db.get_all_notes_count())
+        logs_task = tg.create_task(log_db.get_log_records())
+        completion_dates_task = tg.create_task(log_db.get_completion_dates())
 
     all_notes_count = all_notes_count_task.result()
     mean_read_pages = mean_read_pages_task.result()
@@ -328,7 +330,9 @@ async def completed_statistics() -> list[MaterialStatistics]:
             tg.create_task(_get_material_statistics(
                 material_status=material_status,
                 notes_count=all_notes_count.get(material_status.material_id, 0),
-                mean_total=mean_read_pages
+                mean_total=mean_read_pages,
+                logs=logs_task.result(),
+                completion_dates=completion_dates_task.result()
             ))
             for material_status in completed_materials_task.result()
         ]
