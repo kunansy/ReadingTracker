@@ -1,7 +1,6 @@
 import datetime
 from collections import defaultdict
 from typing import Any, AsyncGenerator, DefaultDict
-from uuid import UUID
 
 import sqlalchemy.sql as sa
 
@@ -28,7 +27,7 @@ def _safe_list_get(list_: list[Any],
         return default
 
 
-async def get_average_materials_read_pages() -> dict[UUID, float]:
+async def get_average_materials_read_pages() -> dict[str, float]:
     logger.debug("Getting average reading read pages count of materials")
 
     stmt = sa.select([models.ReadingLog.c.material_id,
@@ -37,7 +36,7 @@ async def get_average_materials_read_pages() -> dict[UUID, float]:
 
     async with database.session() as ses:
         return {
-            row.material_id: row.avg
+            str(row.material_id): row.avg
             async for row in await ses.stream(stmt)
         }
 
@@ -62,7 +61,7 @@ async def get_log_records() -> list[LogRecord]:
         ]
 
 
-async def get_reading_material_titles() -> dict[UUID, str]:
+async def get_reading_material_titles() -> dict[str, str]:
     logger.debug("Getting material titles")
 
     stmt = sa.select([models.Materials.c.material_id,
@@ -73,7 +72,7 @@ async def get_reading_material_titles() -> dict[UUID, str]:
 
     async with database.session() as ses:
         return {
-            row.material_id: row.title
+            str(row.material_id): row.title
             async for row in await ses.stream(stmt)
         }
 
@@ -175,10 +174,11 @@ async def get_material_reading_now() -> str | None:
     return await materials_db.get_last_material_started()
 
 
-async def set_log(*,
-                  material_id: UUID,
-                  count: int,
-                  date: datetime.date) -> None:
+
+async def insert_log_record(*,
+                            material_id: str,
+                            count: int,
+                            date: datetime.date) -> None:
     logger.debug("Setting log for material_id=%s, count=%s, date=%s: ",
                  material_id, count, date)
 

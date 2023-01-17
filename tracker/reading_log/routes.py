@@ -51,8 +51,8 @@ async def add_log_record_view(request: Request):
 
 @router.post('/add')
 async def add_log_record(record: schemas.LogRecord = Depends()):
-    await db.set_log(
-        material_id=record.material_id,
+    await db.insert_log_record(
+        material_id=str(record.material_id),
         count=record.count,
         date=record.date
     )
