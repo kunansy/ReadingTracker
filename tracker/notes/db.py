@@ -209,16 +209,15 @@ async def add_note(*,
         'page': page,
         'added_at': date,
         'tags': tags,
+        'link_id': str(link_id) if link_id else None
     }
-    if link_id:
-        values['link_id'] = str(link_id)
 
     stmt = models.Notes.\
         insert().values(values)\
         .returning(models.Notes.c.note_id)
 
     async with database.session() as ses:
-        note_id = (await ses.execute(stmt)).one()[0]
+        note_id = await ses.scalar(stmt)
 
     logger.debug("Note_id='%s' added", note_id)
     return note_id
@@ -373,6 +372,11 @@ def link_notes(*,
 
 
 def link_all_notes(notes: list[Note]) -> nx.Graph:
+    if not notes:
+        return nx.Graph()
+
+    logger.debug("Linking all %s notes started", len(notes))
+
     nodes, edges = [], []
 
     for note in notes:
