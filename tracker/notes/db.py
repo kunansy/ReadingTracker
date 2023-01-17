@@ -198,7 +198,7 @@ async def add_note(*,
                    chapter: int,
                    page: int,
                    tags: list[str],
-                   date: datetime.date | None = None) -> UUID:
+                   date: datetime.datetime | None = None) -> str:
     date = date or database.utcnow()
     logger.debug("Adding note for material_id='%s'", material_id)
 
