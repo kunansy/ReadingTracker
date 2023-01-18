@@ -267,17 +267,7 @@ async def _del_or_restore(*,
 async def delete_note(*,
                       note_id: str) -> None:
     logger.debug("Deleting note_id='%s'", note_id)
-
-    values = {
-        "is_deleted": True
-    }
-    stmt = models.Notes \
-        .update().values(values) \
-        .where(models.Notes.c.note_id == note_id)
-
-    async with database.session() as ses:
-        await ses.execute(stmt)
-
+    await _del_or_restore(note_id=note_id, is_deleted=True)
     logger.debug("Note deleted")
 
 
