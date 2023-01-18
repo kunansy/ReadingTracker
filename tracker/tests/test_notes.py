@@ -33,7 +33,8 @@ async def test_get_material_titles():
 async def test_get_material_with_notes_titles():
     stmt = sa.select(models.Materials.c.material_id)\
         .join(models.Notes,
-              models.Notes.c.material_id == models.Materials.c.material_id)
+              models.Notes.c.material_id == models.Materials.c.material_id)\
+        .where(~models.Notes.c.is_deleted)
 
     async with database.session() as ses:
         expected = {

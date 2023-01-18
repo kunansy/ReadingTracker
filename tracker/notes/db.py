@@ -114,7 +114,8 @@ async def get_material_with_notes_titles() -> dict[str, str]:
     stmt = sa.select([sa.text("distinct on (materials.material_id) materials.material_id"),
                       models.Materials.c.title])\
         .join(models.Notes,
-              models.Notes.c.material_id == models.Materials.c.material_id)
+              models.Notes.c.material_id == models.Materials.c.material_id)\
+        .where(~models.Notes.c.is_deleted)
 
     async with database.session() as ses:
         titles = {
