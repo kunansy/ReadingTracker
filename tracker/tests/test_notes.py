@@ -37,8 +37,9 @@ async def test_get_notes(material_id: str | None):
 @pytest.mark.asyncio
 async def test_get_material_types():
     types = await db.get_material_types()
+    type_values = set(types.values())
 
-    assert all(enums.MaterialTypesEnum(type_) for type_ in types.values())
+    assert all(enums.MaterialTypesEnum(type_) for type_ in type_values)
 
 
 @pytest.mark.asyncio
