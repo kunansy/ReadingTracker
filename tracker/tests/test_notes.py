@@ -43,6 +43,19 @@ async def test_get_material_types():
 
 
 @pytest.mark.asyncio
+async def test_get_material_titles():
+    material_titles = await db.get_material_titles()
+
+    stmt = sa.select(sa.func.count(1)) \
+        .select_from(models.Materials)
+
+    async with database.session() as ses:
+        materials_count = await ses.scalar(stmt)
+
+    assert len(material_titles) == materials_count
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "material_id", (
         None, # empty list
