@@ -35,6 +35,28 @@ async def test_get_notes(material_id: str | None):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "material_id", (
+        None, # empty list
+        "", # all notes
+        "539ef05c-1705-4ddb-9c4a-7e2f85ecc39f", # notes for the material
+        "62d6ab19-6431-4eb4-a526-07774a4bc2e4", # notes for the material without links
+    )
+)
+async def test_link_all_notes(material_id: str | None):
+    if material_id is None:
+        notes = []
+    else:
+        notes = await db.get_notes(material_id=material_id)
+
+    graph = db.link_all_notes(notes)
+
+    assert len(graph.nodes) == len(notes), "Nodes count is wrong"
+    assert len(graph.edges) == sum(1 for note in notes if note.link_id), \
+        "Edges count is wrong"
+
+
+@pytest.mark.asyncio
 async def test_get_sorted_tags():
     material_id = "38e13f37-9d28-4c68-80b2-2bfdf6567372"
     material_tags = await db.get_tags(material_id=material_id)
