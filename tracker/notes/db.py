@@ -160,7 +160,7 @@ async def get_notes(*,
 
 
 async def get_note(*,
-                   note_id: UUID) -> Note | None:
+                   note_id: UUID | str) -> Note | None:
     logger.debug("Getting note_id='%s'", note_id)
 
     stmt = _get_note_stmt(note_id=note_id)
