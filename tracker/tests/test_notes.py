@@ -57,6 +57,17 @@ async def test_link_all_notes(material_id: str | None):
 
 
 @pytest.mark.asyncio
+async def test_create_graphic():
+    notes = await db.get_notes()
+
+    graph = db.link_all_notes(notes)
+    graphic_html = db.create_graphic(graph)
+
+    assert graphic_html, "Empty html"
+    assert graphic_html.startswith("<html>")
+
+
+@pytest.mark.asyncio
 async def test_get_sorted_tags():
     material_id = "38e13f37-9d28-4c68-80b2-2bfdf6567372"
     material_tags = await db.get_tags(material_id=material_id)
