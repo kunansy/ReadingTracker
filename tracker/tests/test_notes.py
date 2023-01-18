@@ -89,6 +89,7 @@ async def test_get_all_notes_count():
     test_result = await db.get_all_notes_count()
 
     assert notes_count == test_result
+    assert len(notes) == sum(test_result.values())
 
 
 @pytest.mark.asyncio
