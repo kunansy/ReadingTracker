@@ -182,6 +182,7 @@ async def get_all_notes_count() -> dict[str, int]:
     stmt = sa.select([models.Notes.c.material_id.label('material_id'),
                       sa.func.count(1).label('count')]) \
         .select_from(models.Notes) \
+        .where(~models.Notes.c.is_deleted) \
         .group_by(models.Notes.c.material_id)
 
     async with database.session() as ses:
