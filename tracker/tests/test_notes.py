@@ -1,3 +1,5 @@
+from itertools import groupby
+
 import pytest
 import sqlalchemy.sql as sa
 
@@ -32,6 +34,21 @@ async def test_get_notes(material_id: str | None):
         notes_count = await ses.scalar(stmt)
 
     assert len(notes) == notes_count, f"Some notes missed, {len(notes)} != {len(notes_count)}"
+
+
+@pytest.mark.asyncio
+async def test_get_all_notes_count():
+    notes = await db.get_notes()
+    notes.sort(key=lambda note: note.material_id)
+
+    notes_count = {
+        material_id: len(list(group))
+        for material_id, group in groupby(notes, key=lambda note: note.material_id)
+    }
+
+    test_result = await db.get_all_notes_count()
+
+    assert notes_count == test_result
 
 
 @pytest.mark.asyncio
