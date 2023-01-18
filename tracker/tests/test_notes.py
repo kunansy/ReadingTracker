@@ -32,3 +32,17 @@ async def test_get_notes(material_id: str | None):
         notes_count = await ses.scalar(stmt)
 
     assert len(notes) == notes_count, f"Some notes missed, {len(notes)} != {len(notes_count)}"
+
+
+@pytest.mark.asyncio
+async def test_get_sorted_tags():
+    material_id = "38e13f37-9d28-4c68-80b2-2bfdf6567372"
+    material_tags = await db.get_tags(material_id=material_id)
+    tags = await db.get_tags()
+
+    test_result = await db.get_sorted_tags(material_id=material_id)
+
+    assert len(tags) >= len(material_tags)
+    assert len(tags) == len(test_result)
+
+    assert sorted(test_result[:len(material_tags)]) == sorted(material_tags)
