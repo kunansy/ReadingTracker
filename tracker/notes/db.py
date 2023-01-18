@@ -271,6 +271,13 @@ async def delete_note(*,
     logger.debug("Note deleted")
 
 
+async def restore_note(*,
+                       note_id: str) -> None:
+    logger.debug("Restoring note_id='%s'", note_id)
+    await _del_or_restore(note_id=note_id, is_deleted=False)
+    logger.debug("Note restored")
+
+
 async def get_tags(*,
                    material_id: str | UUID | None = None) -> set[str]:
     logger.debug("Getting tags for material_id=%s", material_id)
