@@ -2,7 +2,7 @@ import pytest
 import sqlalchemy.sql as sa
 
 from tracker.common import database
-from tracker.models import models
+from tracker.models import models, enums
 from tracker.notes import db
 
 
@@ -32,6 +32,13 @@ async def test_get_notes(material_id: str | None):
         notes_count = await ses.scalar(stmt)
 
     assert len(notes) == notes_count, f"Some notes missed, {len(notes)} != {len(notes_count)}"
+
+
+@pytest.mark.asyncio
+async def test_get_material_types():
+    types = await db.get_material_types()
+
+    assert all(enums.MaterialTypesEnum(type_) for type_ in types.values())
 
 
 @pytest.mark.asyncio
