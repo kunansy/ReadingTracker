@@ -93,6 +93,18 @@ async def test_get_all_notes_count():
 
 
 @pytest.mark.asyncio
+async def test_delete_restore_note():
+    note_id = "40824c08-3e86-4fff-8ced-ee90ffee1e6c"
+    assert await db.get_note(note_id=note_id) is not None
+
+    await db.delete_note(note_id=note_id)
+    assert await db.get_note(note_id=note_id) is None
+
+    await db.restore_note(note_id=note_id)
+    assert await db.get_note(note_id=note_id) is not None
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "material_id", (
         None, # empty list
@@ -137,15 +149,3 @@ async def test_get_sorted_tags():
     assert len(tags) == len(test_result)
 
     assert sorted(test_result[:len(material_tags)]) == sorted(material_tags)
-
-
-@pytest.mark.asyncio
-async def test_delete_restore_note():
-    note_id = "40824c08-3e86-4fff-8ced-ee90ffee1e6c"
-    assert await db.get_note(note_id=note_id) is not None
-
-    await db.delete_note(note_id=note_id)
-    assert await db.get_note(note_id=note_id) is None
-
-    await db.restore_note(note_id=note_id)
-    assert await db.get_note(note_id=note_id) is not None
