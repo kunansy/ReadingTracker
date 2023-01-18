@@ -56,6 +56,24 @@ async def test_get_material_titles():
 
 
 @pytest.mark.asyncio
+async def test_get_material_with_notes_titles():
+    stmt = sa.select(models.Materials.c.material_id)\
+        .join(models.Notes,
+              models.Notes.c.material_id == models.Materials.c.material_id)
+
+    async with database.session() as ses:
+        expected = {
+            row[0]
+            for row in (await ses.execute(stmt)).all()
+        }
+
+    titles = await db.get_material_with_notes_titles()
+
+    assert len(titles) == len(expected)
+    assert set(titles.keys()) == expected
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "material_id", (
         None, # empty list
