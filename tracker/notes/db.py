@@ -326,7 +326,7 @@ async def get_possible_links(note: Note) -> list[Note]:
     # most possible first
     links.sort(key=lambda link: len(link.tags & note.tags), reverse=True)
 
-    logger.debug("%s possible links got")
+    logger.debug("%s possible links got", len(links))
     return links
 
 
