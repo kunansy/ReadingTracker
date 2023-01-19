@@ -129,7 +129,8 @@ async def get_material_with_notes_titles() -> dict[str, str]:
 
 def _get_note_stmt(*,
                    note_id: UUID | str | None = None,
-                   material_id: UUID | str | None = None) -> sa.Select:
+                   material_id: UUID | str | None = None,
+                   link_id: UUID | str | None = None) -> sa.Select:
     links_count_query = "(select count(1) as links_count from notes where link_id = n.note_id)"
 
     notes_model = models.Notes.alias('n')
@@ -141,6 +142,8 @@ def _get_note_stmt(*,
         stmt = stmt.where(notes_model.c.note_id == str(note_id))
     if material_id:
         stmt = stmt.where(notes_model.c.material_id == str(material_id))
+    if link_id:
+        stmt = stmt.where(notes_model.c.link_id == str(link_id))
 
     return stmt
 
