@@ -58,3 +58,29 @@ fieldset.add-note-fieldset {
 legend.add-note-legend {
     text-align: center;
 }
+
+.delete-btn {
+    flex-direction: column;
+    font-size: 2.5vh;
+}
+
+.form {
+    display: flex;
+    margin: auto;
+    flex-direction: row;
+}
+
+.from-links {
+    flex-direction: column;
+    align-self: center;
+    margin-left: 1em;
+}
+
+.to-link {
+    display: flex;
+    align-items: center;
+    margin-right: 1em;
+}
+.note-link {
+    content: url('../left-arrow.png');
+}
