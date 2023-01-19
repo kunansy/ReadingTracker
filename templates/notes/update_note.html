@@ -19,6 +19,12 @@
 {% endif %}
 
 <div class="form">
+    <div class="to-link">
+    {% if note_links.to %}
+        <div class="note-link" onclick=openNote("{{ note_links.to.note_id }}","_self") title="{{ note_links.to.info }}"></div>
+    {% endif %}
+    </div>
+
     <form action="/notes/update" method="POST">
         <fieldset class="add-note-fieldset">
         <legend class="add-note-legend"> Update note </legend>
@@ -38,11 +44,11 @@
         <button type="submit" class="submit-button"> Save </button>
     </fieldset>
     </form>
-    <form action="/notes/delete" method="POST">
-        <input class="input input-datalist hide" name="material_id" value="{{ material_id }}" title="ID of the material">
-        <input class="input input-datalist hide" name="note_id" value="{{ note_id }}" title="ID of the note">
-        <button type="submit" class="submit-button"> Delete </button>
-    </form>
+    <div class="from-links">
+    {% for link in note_links.from %}
+        <div class="note-link" onclick=openNote("{{ link.note_id }}","_self") title="{{ link.info }}"> From </div>
+    {% endfor %}
+    </div>
 </div>
 <div class="delete-btn">
 <form action="/notes/delete" method="POST">
