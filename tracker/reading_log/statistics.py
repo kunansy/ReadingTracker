@@ -22,6 +22,21 @@ class LogStatistics(CustomBaseModel):
     max_record: database.MinMax | None
 
 
+class TrackerStatistics(CustomBaseModel):
+    # total tracker statistics
+    started_at: datetime.datetime
+    finished_at: datetime.datetime
+    duration: int
+    lost_time: int
+    mean: float
+    median: int
+    total_pages_read: int
+    total_materials_completed: int
+    would_be_total: int
+    min_log_record: database.MinMax | None
+    max_log_record: database.MinMax | None
+
+
 async def get_m_log_statistics(*,
                                material_id: str,
                                logs: list[db.LogRecord] | None = None,
