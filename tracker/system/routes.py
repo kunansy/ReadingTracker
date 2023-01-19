@@ -51,6 +51,7 @@ async def graphic(request: Request,
     async with asyncio.TaskGroup() as tg:
         reading_trend_task = tg.create_task(trends.get_week_reading_statistics())
         notes_trend_task = tg.create_task(trends.get_week_notes_statistics())
+        tracker_statistics_task = tg.create_task(db.get_tracker_statistics())
 
     reading_trend = reading_trend_task.result()
     notes_trend = notes_trend_task.result()
@@ -76,6 +77,7 @@ async def graphic(request: Request,
         'notes_trend': notes_trend,
         'reading_trend_image': reading_trend_graphic_task.result(),
         'notes_trend_image': notes_trend_graphic_task.result(),
+        'tracker_statistics': tracker_statistics_task.result(),
         'titles': titles_task.result()
     }
 
