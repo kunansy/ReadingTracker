@@ -105,9 +105,9 @@ async def _get_total_read_pages() -> int:
 
 
 async def _get_lost_days() -> int:
-    stmt = sa.select(sa.func.max(models.ReadingLog.c.date) -
-                     sa.func.min(models.ReadingLog.c.date) -
-                     sa.func.count(1))
+    query = "EXTRACT('days' from max(date) - min(date)) - count(1)"
+    stmt = sa.select(sa.text(query))\
+        .select_from(models.ReadingLog)
 
     async with database.session() as ses:
         return await ses.scalar(stmt)
