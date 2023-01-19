@@ -188,11 +188,10 @@ async def _get_max_record(*,
 
 
 async def _would_be_total() -> int:
-    stmt = sa.select(sa.func.sum(models.ReadingLog.c.count) +
-                     sa.func.avg(models.ReadingLog.c.count) * (
-                             sa.func.max(models.ReadingLog.c.date) - # noqa
-                             sa.func.min(models.ReadingLog.c.date) -
-                             sa.func.count(1)))
+    query = "sum(count) + avg(count) * " \
+            "(EXTRACT('days' from max(date) - min(date)) - count(1))"
+    stmt = sa.select(sa.text(query))\
+        .select_from(models.ReadingLog)
 
     async with database.session() as ses:
         return await ses.scalar(stmt)
