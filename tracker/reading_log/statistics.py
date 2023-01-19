@@ -50,6 +50,10 @@ class TrackerStatistics(CustomBaseModel):
 
         return _convert_duration_to_period(self.lost_time)
 
+    @property
+    def lost_time_percent(self) -> float:
+        return round(self.lost_time / self.duration, 2) * 100
+
 
 async def get_m_log_statistics(*,
                                material_id: str,
