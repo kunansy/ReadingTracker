@@ -10,7 +10,7 @@ import sqlalchemy.sql as sa
 from tracker.common import database
 from tracker.models import models
 from tracker.materials import db as materials_db
-from tracker.reading_log import db as reading_log_db
+from tracker.reading_log import db as reading_log_db, statistics
 
 
 class ReadingData(NamedTuple):
@@ -98,3 +98,7 @@ async def create_reading_graphic(*,
     tmpbuf = BytesIO()
     fig.savefig(tmpbuf, format='png')
     return base64.b64encode(tmpbuf.getvalue()).decode('utf-8')
+
+
+async def get_tracker_statistics() -> statistics.TrackerStatistics:
+    return await statistics.get_tracker_statistics()
