@@ -89,8 +89,9 @@ async def _get_last_date() -> datetime.date:
 
 
 async def _get_log_duration() -> int:
-    stmt = sa.select(sa.func.max(models.ReadingLog.c.date) -
-                     sa.func.min(models.ReadingLog.c.date))
+    query = "EXTRACT('days' from max(date) - min(date))"
+    stmt = sa.select(sa.text(query))\
+        .select_from(models.ReadingLog)
 
     async with database.session() as ses:
         return await ses.scalar(stmt)
