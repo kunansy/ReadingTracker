@@ -182,6 +182,13 @@ async def _would_be_total() -> int:
         return await ses.scalar(stmt)
 
 
+async def _get_total_materials_completed() -> int:
+    stmt = sa.select(sa.func.count(1))\
+        .where(models.Statuses.c.completed_at != None)
+
+    async with database.session() as ses:
+        return await ses.scalar(stmt)
+
 async def get_log_statistics() -> dict[str, Any]:
     return {
         "start_date": await _get_start_date(),
