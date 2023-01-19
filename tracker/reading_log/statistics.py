@@ -66,7 +66,7 @@ async def _get_start_date() -> datetime.date:
         return await ses.scalar(stmt)
 
 
-async def _get_stop_date() -> datetime.date:
+async def _get_last_date() -> datetime.date:
     stmt = sa.select(sa.func.max(models.ReadingLog.c.date))
 
     async with database.session() as ses:
