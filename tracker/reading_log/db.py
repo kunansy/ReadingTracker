@@ -7,7 +7,6 @@ import sqlalchemy.sql as sa
 from tracker.common import database
 from tracker.common.log import logger
 from tracker.common.schemas import CustomBaseModel
-from tracker.materials import db as materials_db
 from tracker.models import models
 
 
@@ -193,6 +192,9 @@ async def get_material_reading_now() -> str | None:
     logger.debug("Reading material not found")
     # means the new material started
     #  and there's no log records for it
+
+    # to resolve circular import
+    from tracker.materials import db as materials_db
 
     material_id = await materials_db.get_last_material_started()
     logger.debug("So, assume the last inserted material is reading: %s", material_id)
