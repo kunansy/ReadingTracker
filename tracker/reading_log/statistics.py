@@ -1,6 +1,5 @@
 import asyncio
 import datetime
-from typing import Any
 
 import sqlalchemy.sql as sa
 
@@ -224,16 +223,31 @@ async def _get_total_materials_completed() -> int:
     async with database.session() as ses:
         return await ses.scalar(stmt)
 
-async def get_log_statistics() -> dict[str, Any]:
-    return {
-        "start_date": await _get_start_date(),
-        "stop_date": await _get_stop_date(),
-        "duration": await _get_log_duration(),
-        "lost_time": await _get_lost_days(),
-        "average": await get_mean_read_pages(),
-        "total_pages_read": await _get_total_read_pages(),
-        "would_be_total": await _would_be_total(),
-        "min": await _get_min_record(),
-        "max": await _get_max_record(),
-        "median": await _get_median_pages_read_per_day()
-    }
+
+async def get_tracker_statistics() -> TrackerStatistics:
+    async with asyncio.TaskGroup() as tg:
+        started_at_task = tg.create_task(_get_start_date())
+        finished_at_task = tg.create_task(_get_last_date())
+        duration_task = tg.create_task(_get_log_duration())
+        lost_time_task = tg.create_task(_get_lost_days())
+        mean_task = tg.create_task(get_mean_read_pages())
+        median_task = tg.create_task(_get_median_pages_read_per_day())
+        total_pages_task = tg.create_task(_get_total_read_pages())
+        total_materials_task = tg.create_task(_get_total_materials_completed())
+        would_be_total_task = tg.create_task(_would_be_total())
+        min_log_record_task = tg.create_task(_get_min_record())
+        max_log_record_task = tg.create_task(_get_max_record())
+
+    return TrackerStatistics(
+        started_at=started_at_task.result(),
+        finished_at=finished_at_task.result(),
+        duration=duration_task.result(),
+        lost_time=lost_time_task.result(),
+        mean=round(mean_task.result(), 2),
+        median=median_task.result(),
+        total_pages_read=total_pages_task.result(),
+        total_materials_completed=total_materials_task.result(),
+        would_be_total=would_be_total_task.result(),
+        min_log_record=min_log_record_task.result(),
+        max_log_record=max_log_record_task.result()
+    )
