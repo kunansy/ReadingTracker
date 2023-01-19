@@ -232,8 +232,12 @@ async def _get_status(*,
     return None
 
 
-def _convert_duration_to_period(duration: datetime.timedelta) -> str:
-    total_days = duration.days
+def _convert_duration_to_period(duration: datetime.timedelta | int) -> str:
+    if isinstance(duration, datetime.timedelta):
+        total_days = duration.days
+    else:
+        total_days = duration
+
     years_str = months_str = days_str = ''
 
     if years := total_days // 365:
