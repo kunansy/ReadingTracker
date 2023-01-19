@@ -54,6 +54,12 @@ class TrackerStatistics(CustomBaseModel):
     def lost_time_percent(self) -> float:
         return round(self.lost_time / self.duration, 2) * 100
 
+    @property
+    def would_be_total_percent(self) -> float:
+        """ How much would be total more than the
+        current total pages count in percent """
+        return round(self.would_be_total / self.total_pages_read, 2) * 100
+
 
 async def get_m_log_statistics(*,
                                material_id: str,
