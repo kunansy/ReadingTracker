@@ -98,7 +98,7 @@ async def _get_log_duration() -> int:
 
 
 async def _get_total_read_pages() -> int:
-    stmt = sa.select(sa.func.sum(models.ReadingLog.count))
+    stmt = sa.select(sa.func.sum(models.ReadingLog.c.count))
 
     async with database.session() as ses:
         return await ses.scalar(stmt)
