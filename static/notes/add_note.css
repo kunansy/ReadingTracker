@@ -44,6 +44,9 @@
 
 .iframe {
     height: 60vh;
+    width: 65%;
+    margin: auto;
+    display: flex;
 }
 
 fieldset.add-note-fieldset {
