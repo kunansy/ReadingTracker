@@ -449,3 +449,15 @@ async def get_sorted_tags(*,
     logger.debug("%s sorted tags got", len(result))
 
     return result
+
+
+async def get_links_from(*,
+                         note_id: UUID | str) -> list[Note]:
+    """ Get notes which linked to the given one """
+    stmt = _get_note_stmt(link_id=note_id)
+
+    async with database.session() as ses:
+        return [
+            Note(**row)
+            for row in (await ses.execute(stmt)).mappings().all()
+        ]
