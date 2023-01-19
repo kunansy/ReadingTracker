@@ -8,6 +8,7 @@ from tracker.common import database
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import models
 from tracker.reading_log import db
+from tracker.materials.db import _convert_duration_to_period
 
 
 class LogStatistics(CustomBaseModel):
@@ -38,16 +39,10 @@ class TrackerStatistics(CustomBaseModel):
 
     @property
     def duration_period(self) -> str:
-        # to resolve circular import
-        from tracker.materials.db import _convert_duration_to_period
-
         return _convert_duration_to_period(self.duration)
 
     @property
     def lost_time_period(self) -> str:
-        # to resolve circular import
-        from tracker.materials.db import _convert_duration_to_period
-
         return _convert_duration_to_period(self.lost_time)
 
     @property
