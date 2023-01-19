@@ -132,6 +132,16 @@ async def update_note_view(note_id: UUID,
         material_type = tg.create_task(db.get_material_type(material_id=note.material_id))
         get_tags_task = tg.create_task(db.get_sorted_tags(material_id=note.material_id))
         get_possible_links_task = tg.create_task(db.get_possible_links(note=note))
+        get_links_from_task = tg.create_task(db.get_links_from(note_id=note_id))
+        if note.link_id:
+            get_link_to_task = tg.create_task(db.get_note(note_id=note.link_id))
+        else:
+            get_link_to_task = tg.create_task(asyncio.sleep(1 / 1000, result=None))
+
+    note_links = {
+        "from": get_links_from_task.result(),
+        "to": get_link_to_task.result()
+    }
 
     context |= {
         'material_id': note.material_id,
@@ -142,7 +152,8 @@ async def update_note_view(note_id: UUID,
         'page': note.page,
         'success': success,
         'tags': get_tags_task.result(),
-        'show_links_graph': note.link_id is not None
+        'show_links_graph': note.link_id is not None,
+        'note_links': note_links,
     }
     if not note.link_id:
         context['links'] = get_possible_links_task.result()
