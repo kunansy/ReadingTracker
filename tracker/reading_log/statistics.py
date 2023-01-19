@@ -36,6 +36,13 @@ class TrackerStatistics(CustomBaseModel):
     min_log_record: database.MinMax | None
     max_log_record: database.MinMax | None
 
+    @property
+    def duration_period(self) -> str:
+        # to resolve circular import
+        from tracker.materials.db import _convert_duration_to_period
+
+        return _convert_duration_to_period(self.duration)
+
 
 async def get_m_log_statistics(*,
                                material_id: str,
