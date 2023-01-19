@@ -24,8 +24,8 @@ class LogStatistics(CustomBaseModel):
 
 class TrackerStatistics(CustomBaseModel):
     # total tracker statistics
-    started_at: datetime.datetime
-    finished_at: datetime.datetime
+    started_at: datetime.date
+    finished_at: datetime.date
     duration: int
     lost_time: int
     mean: float
