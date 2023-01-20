@@ -1,5 +1,6 @@
 import datetime
 from collections import defaultdict
+from decimal import Decimal
 from typing import Any, AsyncGenerator, DefaultDict
 
 import sqlalchemy.sql as sa
@@ -26,7 +27,7 @@ def _safe_list_get(lst: list[Any],
         return default
 
 
-async def get_mean_materials_read_pages() -> dict[str, float]:
+async def get_mean_materials_read_pages() -> dict[str, Decimal]:
     logger.debug("Getting mean reading read pages count of materials")
 
     stmt = sa.select([models.ReadingLog.c.material_id,
