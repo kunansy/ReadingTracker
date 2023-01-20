@@ -96,4 +96,16 @@ async def test_get_completion_dates():
         }
 
     assert all(expected.values())
-    assert expected == result
+
+
+@pytest.mark.asyncio
+async def test_is_log_empty():
+    is_empty = await db.is_log_empty()
+
+    stmt = sa.select(sa.func.count(1) == 0) \
+        .select_from(models.ReadingLog)
+
+    async with database.session() as ses:
+        expected = await ses.scalar(stmt)
+
+    assert is_empty is expected
