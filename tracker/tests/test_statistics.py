@@ -41,3 +41,14 @@ async def test_get_total_read_pages():
     records = await db.get_log_records()
 
     assert total == sum(record.count for record in records)
+
+
+@pytest.mark.asyncio
+async def test_get_lost_days():
+    lost_days = await st._get_lost_days()
+    records = await db.get_log_records()
+
+    expected_duration = (max(records, key=lambda record: record.date).date -
+                         min(records, key=lambda record: record.date).date).days + 1
+
+    assert lost_days == expected_duration - len(records)
