@@ -36,8 +36,8 @@ async def get_mean_materials_read_pages() -> dict[str, Decimal]:
 
     async with database.session() as ses:
         mean = {
-            str(row.material_id): row.mean
-            async for row in await ses.stream(stmt)
+            str(material_id): round(mean, 2)
+            for material_id, mean in (await ses.execute(stmt)).all()
         }
 
     logger.debug("Mean material reading got")
