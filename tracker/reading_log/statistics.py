@@ -170,8 +170,7 @@ async def _get_min_record(*,
         .limit(1)
 
     if material_id:
-        stmt = stmt \
-            .where(models.ReadingLog.c.material_id == material_id)
+        stmt = stmt.where(models.ReadingLog.c.material_id == material_id)
 
     async with database.session() as ses:
         if minmax := (await ses.execute(stmt)).first():
@@ -195,8 +194,7 @@ async def _get_max_record(*,
         .limit(1)
 
     if material_id:
-        stmt = stmt \
-            .where(models.ReadingLog.c.material_id == material_id)
+        stmt = stmt.where(models.ReadingLog.c.material_id == material_id)
 
     async with database.session() as ses:
         if minmax := (await ses.execute(stmt)).first():
