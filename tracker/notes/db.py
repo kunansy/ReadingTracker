@@ -367,31 +367,32 @@ def _add_links_to(graph: nx.DiGraph,
     _add_links_to(graph, notes, link_id, even_added_notes)
 
 
-def f(graph: nx.DiGraph,
-      notes: dict[str, Note],
-      note_id: str,
-      *,
-      skip: set[str]) -> None:
-    if note_id in skip:
+def _link_all_notes_from(graph: nx.DiGraph,
+                         notes: dict[str, Note],
+                         note_id: str,
+                         *,
+                         visited: set[str]) -> None:
+    """ Iter over graph and find all note links """
+
+    if note_id in visited:
         return None
 
-    if link_id := notes[note_id].link_id:
+    link_id = notes[note_id].link_id
+    links_from = _get_links_from(note_id=note_id, notes=notes.values())
+
+    if link_id:
         graph.add_nodes_from([_get_note_link(notes[link_id])])
         graph.add_edge(note_id, link_id)
 
-        f(graph, notes, link_id, skip=skip)
+        _link_all_notes_from(graph, notes, link_id, visited=visited)
 
-        skip.add(link_id)
+    visited.add(note_id)
 
-    if links_from := _get_notes_link_to(note_id=note_id, notes=notes.values(), skip=set()):
-        for link in links_from:
-            # TODO: trouble that we skip this note
-            skip.add(link.note_id)
+    for link in links_from:
+        graph.add_nodes_from([_get_note_link(notes[link.note_id])])
+        graph.add_edge(link.note_id, note_id)
 
-            graph.add_nodes_from([_get_note_link(notes[link.note_id])])
-            graph.add_edge(link.note_id, note_id)
-
-            f(graph, notes, link.note_id, skip=skip)
+        _link_all_notes_from(graph, notes, link.note_id, visited=visited)
 
 
 def link_notes(*,
