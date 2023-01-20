@@ -64,3 +64,13 @@ async def test_get_mean_read_pages():
 
     expected_mean = statistics.mean(Decimal(record.count) for record in records)
     assert mean == round(expected_mean, 2)
+
+
+@pytest.mark.asyncio
+async def test_get_median_pages_read_per_day():
+    median = await st._get_median_pages_read_per_day()
+    records = await db.get_log_records()
+
+    expected_median = statistics.median(record.count for record in records)
+
+    assert median == expected_median
