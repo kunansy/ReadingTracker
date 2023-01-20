@@ -33,6 +33,10 @@ class Note(CustomBaseModel):
         return str(self)
 
     @property
+    def short_content(self) -> str:
+        return f"{self.content_md[:50]}..."
+
+    @property
     def info(self) -> str:
         return f"ID: {self.note_id}\n" \
                f"Number: {self.note_number}\n" \
@@ -347,7 +351,7 @@ def _get_note_link(note: Note, **attrs) -> tuple[str, dict[str, Any]]:
         **attrs,
         "material_id": note.material_id,
         "note_number": note.note_number,
-        "label": note.content_md[:50],
+        "label": note.short_content,
     })
 
 
