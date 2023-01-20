@@ -55,3 +55,25 @@ async def test_get_log_records():
         expected_res_count = await ses.scalar(stmt)
 
     assert len(res) == expected_res_count
+
+
+@pytest.mark.asyncio
+async def test_get_reading_material_titles():
+    stmt = sa.select([models.Materials.c.material_id,
+                      models.Materials.c.title]) \
+        .join(models.Statuses,
+              models.Statuses.c.material_id == models.Materials.c.material_id) \
+        .where(models.Statuses.c.completed_at == None)
+
+    async with database.session() as ses:
+        expected = {
+            str(material_id): title
+            for material_id, title in (await ses.execute(stmt)).all()
+        }
+
+    titles = await db.get_reading_material_titles()
+
+    # not null
+    assert all(titles.keys())
+    assert all(titles.values())
+    assert expected == titles
