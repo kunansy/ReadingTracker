@@ -101,3 +101,14 @@ async def test_get_min_record():
     assert min_record.count == expected.count
     assert min_record.date == expected.date
 
+
+@pytest.mark.asyncio
+async def test_get_max_record():
+    max_record = await st._get_max_record()
+    records = await db.get_log_records()
+
+    expected = max(records, key=lambda record: record.count)
+
+    assert max_record.material_id == expected.material_id
+    assert max_record.count == expected.count
+    assert max_record.date == expected.date
