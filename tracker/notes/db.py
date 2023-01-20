@@ -372,18 +372,10 @@ def link_notes(*,
                notes: dict[str, Note]) -> nx.Graph:
     logger.debug("Linking %s notes from the %s", len(notes), note_id)
 
-    nodes, edges = [], []
-    nodes += [_get_note_link(notes[note_id], color="black")]
+    graph = nx.DiGraph()
+    graph.add_nodes_from([_get_note_link(notes[note_id])], color='black')
 
-    note = notes[note_id]
-    while True:
-        if link_id := note.link_id:
-            nodes += [_get_note_link(notes[link_id])]
-            edges += [(note.note_id, link_id)]
-        else:
-            break
-
-        note = notes[link_id]
+    _add_links_to(graph, notes, note_id, set())
 
     # TODO
     if links := _get_note_links(note_id=note_id, notes=notes):
