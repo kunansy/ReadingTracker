@@ -123,7 +123,7 @@ async def _get_total_read_pages() -> int:
 
 
 async def _get_lost_days() -> int:
-    query = "EXTRACT('days' from max(date) - min(date)) - count(1)"
+    query = "EXTRACT('days' from max(date) - min(date)) - count(1) + 1"
     stmt = sa.select(sa.text(query))\
         .select_from(models.ReadingLog)
 
