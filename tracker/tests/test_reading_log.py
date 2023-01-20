@@ -77,3 +77,23 @@ async def test_get_reading_material_titles():
     assert all(titles.keys())
     assert all(titles.values())
     assert expected == titles
+
+
+@pytest.mark.asyncio
+async def test_get_completion_dates():
+    result = await db.get_completion_dates()
+
+    stmt = sa.select([models.Materials.c.material_id,
+                      models.Statuses.c.completed_at]) \
+        .join(models.Statuses,
+              models.Statuses.c.material_id == models.Materials.c.material_id) \
+        .where(models.Statuses.c.completed_at != None)
+
+    async with database.session() as ses:
+        expected = {
+            str(material_id): completed_at
+            for material_id, completed_at in (await ses.execute(stmt)).all()
+        }
+
+    assert all(expected.values())
+    assert expected == result
