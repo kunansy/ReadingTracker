@@ -138,8 +138,10 @@ async def update_note_view(note_id: UUID,
         else:
             get_link_to_task = tg.create_task(asyncio.sleep(1 / 1000, result=None))
 
+    links_from = get_links_from_task.result()
+
     note_links = {
-        "from": get_links_from_task.result(),
+        "from": links_from,
         "to": get_link_to_task.result()
     }
 
@@ -152,7 +154,7 @@ async def update_note_view(note_id: UUID,
         'page': note.page,
         'success': success,
         'tags': get_tags_task.result(),
-        'show_links_graph': note.link_id is not None,
+        'show_links_graph': note.link_id or links_from,
         'note_links': note_links,
     }
     if not note.link_id:
