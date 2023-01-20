@@ -112,3 +112,18 @@ async def test_get_max_record():
     assert max_record.material_id == expected.material_id
     assert max_record.count == expected.count
     assert max_record.date == expected.date
+
+
+@pytest.mark.asyncio
+async def test_would_be_total():
+    would_be_total = await st._would_be_total()
+    records = await db.get_log_records()
+
+    counts = [record.count for record in records]
+    duration = (max(records, key=lambda record: record.date).date -
+                min(records, key=lambda record: record.date).date).days + 1
+
+    expected = sum(counts)
+    expected += statistics.mean(counts) * (duration - len(records))
+
+    assert would_be_total == round(expected)
