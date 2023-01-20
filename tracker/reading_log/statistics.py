@@ -212,12 +212,14 @@ async def _get_max_record(*,
 
 async def _would_be_total() -> int:
     query = "sum(count) + avg(count) * " \
-            "(EXTRACT('days' from max(date) - min(date)) - count(1))"
+            "(EXTRACT('days' from max(date) - min(date)) - count(1) + 1)"
     stmt = sa.select(sa.text(query))\
         .select_from(models.ReadingLog)
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        value = await ses.scalar(stmt)
+
+    return round(value)
 
 
 async def _get_total_materials_completed() -> int:
