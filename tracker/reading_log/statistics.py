@@ -140,12 +140,14 @@ async def get_mean_read_pages() -> Decimal:
     return round(mean, 2)
 
 
-async def _get_median_pages_read_per_day() -> int:
+async def _get_median_pages_read_per_day() -> float:
     stmt = sa.select(sa.text("PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY count) AS median"))\
         .select_from(models.ReadingLog)
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        median = await ses.scalar(stmt)
+
+    return round(float(median), 2)
 
 
 async def contains(*,
