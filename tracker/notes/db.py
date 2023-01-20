@@ -371,7 +371,7 @@ def _add_links_to(graph: nx.DiGraph,
     _add_links_to(graph, notes, link_id, even_added_notes)
 
 
-def _link_all_notes_from(graph: nx.DiGraph,
+def _link_cohesive_notes(graph: nx.DiGraph,
                          notes: dict[str, Note],
                          note_id: str,
                          *,
@@ -388,15 +388,16 @@ def _link_all_notes_from(graph: nx.DiGraph,
         graph.add_nodes_from([_get_note_link(notes[link_id])])
         graph.add_edge(note_id, link_id)
 
-        _link_all_notes_from(graph, notes, link_id, visited=visited)
+        _link_cohesive_notes(graph, notes, link_id, visited=visited)
 
+    # mark note as visited in reverse recursion road
     visited.add(note_id)
 
     for link in links_from:
         graph.add_nodes_from([_get_note_link(notes[link.note_id])])
         graph.add_edge(link.note_id, note_id)
 
-        _link_all_notes_from(graph, notes, link.note_id, visited=visited)
+        _link_cohesive_notes(graph, notes, link.note_id, visited=visited)
 
 
 def link_notes(*,
@@ -407,7 +408,8 @@ def link_notes(*,
     graph = nx.DiGraph()
     graph.add_nodes_from([_get_note_link(notes[note_id])], color='black')
 
-    _link_all_notes_from(graph, notes, note_id, visited=set())
+    # link together all cohesive notes, which bounds with the given one
+    _link_cohesive_notes(graph, notes, note_id, visited=set())
 
     logger.debug("Notes linked, %s nodes, %s edges",
                  len(graph.nodes), len(graph.edges))
