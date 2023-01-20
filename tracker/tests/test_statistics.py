@@ -12,8 +12,45 @@ from tracker.reading_log import statistics as st, db
 
 
 @pytest.mark.asyncio
-async def test_get_m_log_statistics():
-    pass
+@pytest.mark.parametrize(
+    'material_id,logs,completion_dates', (
+        ("5c66e1ca-eb52-47e5-af50-c48b345c7e6c", True, True), # clear reading, Foer
+        ("5c66e1ca-eb52-47e5-af50-c48b345c7e6c", True, False),
+        ("5c66e1ca-eb52-47e5-af50-c48b345c7e6c", False, True),
+        ("5c66e1ca-eb52-47e5-af50-c48b345c7e6c", False, False),
+
+        # 451, Bradbury, some material inside completed, some read
+        ("a4fec52b-ed43-48e8-a888-d393606ac010", False, False),
+        # Lermontov
+        ("dd89c273-3bbe-49f8-8049-239379a7fc65", False, False),
+        # Bulgakov
+        ("fd569d08-240e-4f60-b39d-e37265fbfe24", False, False),
+    )
+)
+async def test_get_m_log_statistics(material_id, logs, completion_dates):
+    records = await db.get_log_records()
+    dates = await db.get_completion_dates()
+
+    stat = await st.get_m_log_statistics(
+        material_id=material_id,
+        logs=records if logs else None,
+        completion_dates=dates if completion_dates else None)
+
+    material_records = [
+        record for record in records
+        if record.material_id == material_id
+    ]
+    records_count = [record.count for record in material_records]
+
+    assert stat
+    assert stat.material_id == material_id
+    assert stat.total == sum(r.count for r in material_records)
+    # TODO: the field is more complex to test
+    # assert stat.lost_time == duration_time - len(material_records)
+    assert stat.duration == len(material_records)
+    assert stat.mean == round(statistics.mean(records_count))
+    assert stat.min_record.count == min(records_count)
+    assert stat.max_record.count == max(records_count)
 
 
 @pytest.mark.asyncio
