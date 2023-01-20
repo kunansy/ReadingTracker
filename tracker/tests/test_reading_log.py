@@ -42,3 +42,16 @@ async def test_get_mean_materials_read_pages():
     }
 
     assert expected_result == stat
+
+
+@pytest.mark.asyncio
+async def test_get_log_records():
+    stmt = sa.select(sa.func.count(1))\
+        .select_from(models.ReadingLog)
+
+    res = await db.get_log_records()
+
+    async with database.session() as ses:
+        expected_res_count = await ses.scalar(stmt)
+
+    assert len(res) == expected_res_count
