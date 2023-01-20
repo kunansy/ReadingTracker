@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 from collections import defaultdict
-from typing import Any
+from typing import Any, Iterable
 from uuid import UUID
 
 import networkx as nx
@@ -330,14 +330,14 @@ async def get_possible_links(note: Note) -> list[Note]:
     return links
 
 
-def _get_note_links(*,
+def _get_links_from(*,
                     note_id: str,
-                    notes: dict[str, Note]) -> list[str]:
+                    notes: Iterable[Note]) -> list[Note]:
     """ Get all notes linked with the given one """
 
     return [
-        note_id_
-        for note_id_, note in notes.items()
+        note
+        for note in notes
         if note.link_id == note_id
     ]
 
