@@ -117,9 +117,20 @@ async def test_get_min_record(material_id):
 
 
 @pytest.mark.asyncio
-async def test_get_max_record():
-    max_record = await st._get_max_record()
+@pytest.mark.parametrize(
+    'material_id', (
+        "5c66e1ca-eb52-47e5-af50-c48b345c7e6c",
+        None,
+    )
+)
+async def test_get_max_record(material_id):
+    max_record = await st._get_max_record(material_id=material_id)
     records = await db.get_log_records()
+    if material_id:
+        records = [
+            record for record in records
+            if record.material_id == material_id
+        ]
 
     expected = max(records, key=lambda record: record.count)
 
