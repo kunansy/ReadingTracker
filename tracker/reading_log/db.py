@@ -78,8 +78,8 @@ async def get_reading_material_titles() -> dict[str, str]:
 
     async with database.session() as ses:
         titles = {
-            str(row.material_id): row.title
-            async for row in await ses.stream(stmt)
+            str(material_id): title
+            for material_id, title in (await ses.execute(stmt)).all()
         }
 
     logger.debug("%s reading materials titles got", len(titles))
@@ -97,8 +97,8 @@ async def get_completion_dates() -> dict[str, datetime.datetime]:
 
     async with database.session() as ses:
         dates = {
-            str(row.material_id): row.completed_at
-            async for row in await ses.stream(stmt)
+            str(material_id): completed_at
+            for material_id, completed_at in (await ses.execute(stmt)).all()
         }
 
     logger.debug("%s completion dates got", len(dates))
