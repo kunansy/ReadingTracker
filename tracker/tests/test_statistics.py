@@ -88,3 +88,16 @@ async def test_contains():
     ])
 
     assert not await st.contains(material_id=str(uuid.uuid4()))
+
+
+@pytest.mark.asyncio
+async def test_get_min_record():
+    min_record = await st._get_min_record()
+    records = await db.get_log_records()
+
+    expected = min(records, key=lambda record: record.count)
+
+    assert min_record.material_id == expected.material_id
+    assert min_record.count == expected.count
+    assert min_record.date == expected.date
+
