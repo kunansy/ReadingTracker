@@ -4,7 +4,10 @@ import uuid
 from decimal import Decimal
 
 import pytest
+import sqlalchemy.sql as sa
 
+from tracker.common import database
+from tracker.models import models
 from tracker.reading_log import statistics as st, db
 
 
@@ -127,3 +130,16 @@ async def test_would_be_total():
     expected += statistics.mean(counts) * (duration - len(records))
 
     assert would_be_total == round(expected)
+
+
+@pytest.mark.asyncio
+async def test_get_total_materials_completed():
+    materials = await st._get_total_materials_completed()
+
+    stmt = sa.select(sa.func.count(1))\
+        .where(models.Statuses.c.completed_at != None)
+
+    async with database.session() as ses:
+        expected = await ses.scalar(stmt)
+
+    assert materials == expected
