@@ -1,25 +1,25 @@
 import datetime
 import functools
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, NamedTuple, Any, Callable
-from uuid import UUID
+from typing import AsyncGenerator, Any, Callable
 
 import sqlalchemy.sql as sa
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 
 from tracker.common import settings
 from tracker.common.log import logger
+from tracker.common.schemas import CustomBaseModel
 
 
 class DatabaseException(Exception):
     pass
 
 
-class MinMax(NamedTuple):
-    log_id: UUID
-    material_id: UUID
+class MinMax(CustomBaseModel):
+    log_id: str
+    material_id: str
     material_title: str
-    count: int # type: ignore
+    count: int
     date: datetime.date
 
 
