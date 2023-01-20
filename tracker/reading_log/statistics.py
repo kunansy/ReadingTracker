@@ -30,7 +30,7 @@ class TrackerStatistics(CustomBaseModel):
     duration: int
     lost_time: int
     mean: float
-    median: int
+    median: float
     total_pages_read: int
     total_materials_completed: int
     would_be_total: int
