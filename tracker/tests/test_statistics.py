@@ -140,6 +140,18 @@ async def test_get_max_record(material_id):
 
 
 @pytest.mark.asyncio
+async def test_get_min_record_nof_found():
+    result = await st._get_min_record(material_id=str(uuid.uuid4()))
+    assert result is None
+
+
+@pytest.mark.asyncio
+async def test_get_max_record_nof_found():
+    result = await st._get_max_record(material_id=str(uuid.uuid4()))
+    assert result is None
+
+
+@pytest.mark.asyncio
 async def test_would_be_total():
     would_be_total = await st._would_be_total()
     records = await db.get_log_records()
