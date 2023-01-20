@@ -1,4 +1,6 @@
+import random
 import statistics
+import uuid
 from decimal import Decimal
 
 import pytest
@@ -74,3 +76,15 @@ async def test_get_median_pages_read_per_day():
     expected_median = statistics.median(record.count for record in records)
 
     assert median == expected_median
+
+
+@pytest.mark.asyncio
+async def test_contains():
+    records = await db.get_log_records()
+
+    assert all([
+        await st.contains(material_id=record.material_id)
+        for record in random.sample(records, 10)
+    ])
+
+    assert not await st.contains(material_id=str(uuid.uuid4()))
