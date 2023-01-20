@@ -1,3 +1,6 @@
+import statistics
+from decimal import Decimal
+
 import pytest
 
 from tracker.reading_log import statistics as st, db
@@ -52,3 +55,12 @@ async def test_get_lost_days():
                          min(records, key=lambda record: record.date).date).days + 1
 
     assert lost_days == expected_duration - len(records)
+
+
+@pytest.mark.asyncio
+async def test_get_mean_read_pages():
+    mean = await st.get_mean_read_pages()
+    records = await db.get_log_records()
+
+    expected_mean = statistics.mean(Decimal(record.count) for record in records)
+    assert mean == round(expected_mean, 2)
