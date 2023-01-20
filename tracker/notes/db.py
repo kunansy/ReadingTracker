@@ -369,7 +369,7 @@ def _add_links_to(graph: nx.DiGraph,
 
 def link_notes(*,
                note_id: str,
-               notes: dict[str, Note]) -> nx.Graph:
+               notes: dict[str, Note]) -> nx.DiGraph:
     logger.debug("Linking %s notes from the %s", len(notes), note_id)
 
     graph = nx.DiGraph()
@@ -395,9 +395,9 @@ def link_notes(*,
     return graph
 
 
-def link_all_notes(notes: list[Note]) -> nx.Graph:
+def link_all_notes(notes: list[Note]) -> nx.DiGraph:
     if not notes:
-        return nx.Graph()
+        return nx.DiGraph()
 
     logger.debug("Linking all %s notes started", len(notes))
 
@@ -416,7 +416,7 @@ def link_all_notes(notes: list[Note]) -> nx.Graph:
     return graph
 
 
-def create_graphic(graph: nx.Graph, **kwargs) -> str:
+def create_graphic(graph: nx.DiGraph, **kwargs) -> str:
     logger.debug("Creating graphic for graph with %s nodes, %s edges",
                  len(graph.nodes), len(graph.edges))
 
