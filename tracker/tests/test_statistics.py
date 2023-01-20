@@ -22,3 +22,14 @@ async def test_get_last_date():
     last_date = await st._get_last_date()
 
     assert max(records, key=lambda record: record.date).date == last_date
+
+
+@pytest.mark.asyncio
+async def test_get_log_duration():
+    duration = await st._get_log_duration()
+    records = await db.get_log_records()
+
+    expected_duration = (max(records, key=lambda record: record.date).date -
+                         min(records, key=lambda record: record.date).date).days + 1
+
+    assert duration == expected_duration
