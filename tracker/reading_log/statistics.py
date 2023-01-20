@@ -107,7 +107,7 @@ async def _get_last_date() -> datetime.date:
 
 
 async def _get_log_duration() -> int:
-    query = "EXTRACT('days' from max(date) - min(date))"
+    query = "EXTRACT('days' from max(date) - min(date)) + 1"
     stmt = sa.select(sa.text(query))\
         .select_from(models.ReadingLog)
 
