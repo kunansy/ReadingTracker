@@ -351,6 +351,22 @@ def _get_note_link(note: Note, **attrs) -> tuple[str, dict[str, Any]]:
     })
 
 
+def _add_links_to(graph: nx.DiGraph,
+                  notes: dict[str, Note],
+                  note_id: str,
+                  even_added_notes: set[str]) -> None:
+    if not (link_id := notes[note_id].link_id) or link_id in even_added_notes:
+        return None
+
+    # to resolve circular recursion
+    even_added_notes.add(link_id)
+
+    graph.add_nodes_from([_get_note_link(notes[link_id])])
+    graph.add_edge(note_id, link_id)
+
+    _add_links_to(graph, notes, link_id, even_added_notes)
+
+
 def link_notes(*,
                note_id: str,
                notes: dict[str, Note]) -> nx.Graph:
