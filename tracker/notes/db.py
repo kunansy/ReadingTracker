@@ -448,6 +448,7 @@ def create_graphic(graph: nx.DiGraph, **kwargs) -> str:
         neighborhood_highlight=True,
         **kwargs
     )
+    net.options = {"interaction": {"hover": True}}
     net.from_nx(graph)
 
     net.show("tmp.html")
