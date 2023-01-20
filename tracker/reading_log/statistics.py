@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+from decimal import Decimal
 
 import sqlalchemy.sql as sa
 
@@ -131,11 +132,12 @@ async def _get_lost_days() -> int:
         return await ses.scalar(stmt)
 
 
-async def get_mean_read_pages() -> int:
+async def get_mean_read_pages() -> Decimal:
     stmt = sa.select(sa.func.avg(models.ReadingLog.c.count))
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        mean = await ses.scalar(stmt)
+    return round(mean, 2)
 
 
 async def _get_median_pages_read_per_day() -> int:
