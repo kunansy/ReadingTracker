@@ -41,6 +41,8 @@ async def test_get_mean_materials_read_pages():
         for material_id, counts in expected_stat.items()
     }
 
+    # not zeros
+    assert all(stat.values())
     assert expected_result == stat
 
 
@@ -49,12 +51,12 @@ async def test_get_log_records():
     stmt = sa.select(sa.func.count(1))\
         .select_from(models.ReadingLog)
 
-    res = await db.get_log_records()
+    log_records = await db.get_log_records()
 
     async with database.session() as ses:
         expected_res_count = await ses.scalar(stmt)
 
-    assert len(res) == expected_res_count
+    assert len(log_records) == expected_res_count
 
 
 @pytest.mark.asyncio
@@ -81,7 +83,7 @@ async def test_get_reading_material_titles():
 
 @pytest.mark.asyncio
 async def test_get_completion_dates():
-    result = await db.get_completion_dates()
+    dates = await db.get_completion_dates()
 
     stmt = sa.select([models.Materials.c.material_id,
                       models.Statuses.c.completed_at]) \
@@ -95,6 +97,7 @@ async def test_get_completion_dates():
             for material_id, completed_at in (await ses.execute(stmt)).all()
         }
 
+    assert expected == dates
     assert all(expected.values())
 
 
