@@ -403,19 +403,7 @@ def link_notes(*,
     graph = nx.DiGraph()
     graph.add_nodes_from([_get_note_link(notes[note_id])], color='black')
 
-    _add_links_to(graph, notes, note_id, set())
-
-    # TODO
-    if links := _get_note_links(note_id=note_id, notes=notes):
-        nodes += [
-            _get_note_link(notes[link_id])
-            for link_id in links
-        ]
-        edges += [(note_id, link) for link in links]
-
-    graph = nx.Graph()
-    graph.add_nodes_from(nodes)
-    graph.add_edges_from(edges)
+    _link_all_notes_from(graph, notes, note_id, visited=set())
 
     logger.debug("Notes linked, %s nodes, %s edges",
                  len(graph.nodes), len(graph.edges))
