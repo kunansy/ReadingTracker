@@ -5,9 +5,9 @@ import sqlalchemy.sql as sa
 
 from tracker.common import database
 from tracker.common.schemas import CustomBaseModel
+from tracker.materials.db import _convert_duration_to_period
 from tracker.models import models
 from tracker.reading_log import db
-from tracker.materials.db import _convert_duration_to_period
 
 
 class LogStatistics(CustomBaseModel):
