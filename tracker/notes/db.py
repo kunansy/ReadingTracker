@@ -398,7 +398,7 @@ def link_all_notes(notes: list[Note]) -> nx.Graph:
     for note in notes:
         nodes += [_get_note_link(note)]
         if note.link_id:
-            edges += [(note.link_id, note.note_id)]
+            edges += [(note.note_id, note.link_id)]
 
     graph = nx.DiGraph()
     graph.add_nodes_from(nodes)
