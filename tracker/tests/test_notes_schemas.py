@@ -12,7 +12,7 @@ from tracker.notes import schemas
         # quotes inside quotes not processed
         ('"Hg "ff" dd"', "«Hg »ff« dd»"),
         ('""', "«»"),
-        ('', ""),
+        ('', ''),
     )
 )
 def test_replace_quotes(string, expected):
@@ -36,13 +36,13 @@ def test_replace_quotes_error(string):
 
 @pytest.mark.parametrize(
     "string,expected", (
-        ('Hg', "Hg."),
-        ('Hg!', "Hg!"),
-        ('Hg?', "Hg?"),
-        ('Hg:', "Hg:."),
-        ('(Hg)', "(Hg)."),
-        ('Hg...', "Hg..."),
-        ('', ""),
+        ('Hg', 'Hg.'),
+        ('Hg!', 'Hg!'),
+        ('Hg?', 'Hg?'),
+        ('Hg:', 'Hg:.'),
+        ('(Hg)', '(Hg).'),
+        ('Hg...', 'Hg...'),
+        ('', ''),
     )
 )
 def test_add_dot(string, expected):
