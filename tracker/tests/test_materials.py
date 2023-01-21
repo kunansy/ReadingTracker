@@ -78,3 +78,9 @@ async def test_get_free_materials():
         material.material_id in expected_free_materials
         for material in free_materials
     )
+
+
+def test_get_reading_materials_stmt():
+    stmt = db._get_reading_materials_stmt()
+
+    assert isinstance(stmt, sa.Select)
