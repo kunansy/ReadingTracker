@@ -1,4 +1,6 @@
+import random
 import uuid
+from typing import Literal
 
 import pytest
 import sqlalchemy.sql as sa
@@ -193,3 +195,39 @@ async def test_get_last_material_started():
         expected = await ses.scalar(stmt)
 
     assert expected == material_id
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "material_status", (
+        "completed", "started", "not started"
+    )
+)
+async def test_get_status(material_status: Literal["completed", "started", "not started"]):
+    materials = {
+        material.material_id: material
+        for material in await get_materials()
+    }
+    statuses = {
+        status.material_id: status
+        for status in await get_statuses()
+    }
+
+    if material_status == "not started":
+        material_id = random.choice([
+            material_id for material_id in materials
+            if material_id not in statuses
+        ])
+    elif material_status == "completed":
+        material_id = random.choice([
+            material_id for material_id in materials
+            if material_id in statuses and statuses[material_id].completed_at
+        ])
+    elif material_status == "started":
+        material_id = random.choice([
+            material_id for material_id in materials
+            if material_id in statuses and not statuses[material_id].completed_at
+        ])
+
+    status = await db._get_status(material_id=material_id)
+    assert status == statuses.get(material_id)
