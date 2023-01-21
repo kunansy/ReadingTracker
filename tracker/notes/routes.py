@@ -53,7 +53,7 @@ async def get_notes(request: Request,
 
     chapters = db.get_distinct_chapters(notes)
 
-    context = {
+    context: dict[str, Any] = {
         'request': request,
         'notes': notes,
         'titles': get_titles_task.result(),
