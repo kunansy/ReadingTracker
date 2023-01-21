@@ -353,3 +353,28 @@ async def test_complete_material_invalid_materials(material_status: Literal["com
         await db.complete_material(material_id=material_id)
 
     assert exc == str(e.value)
+
+
+@pytest.mark.asyncio
+async def test_complete_material_invalid_date():
+
+    materials = {
+        material.material_id: material
+        for material in await get_materials()
+    }
+    statuses = {
+        status.material_id: status
+        for status in await get_statuses()
+    }
+
+    material_id = random.choice([
+        material_id for material_id in materials
+        if material_id in statuses and not statuses[material_id].completed_at
+    ])
+
+    date = (statuses[material_id].started_at - datetime.timedelta(days=1)).date()
+
+    with pytest.raises(ValueError) as e:
+        await db.complete_material(material_id=material_id, completion_date=date)
+
+    assert str(e.value) == "Completion date must be greater than start date"
