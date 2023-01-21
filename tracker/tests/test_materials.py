@@ -282,4 +282,29 @@ async def test_reading_statistics():
 
 @pytest.mark.asyncio
 async def test_get_material_tags():
-    pass
+    tags = await db.get_material_tags()
+    materials = await get_materials()
+
+    assert all(tag.islower() for tag in tags)
+    assert not any(tag.startswith(' ') or tag.endswith(' ') for tag in tags)
+
+    stmt = sa.select(models.Materials.c.tags) \
+        .where(models.Materials.c.tags != None)
+
+    async with database.session() as ses:
+        tags_db = await ses.scalars(stmt)
+
+    expected = set()
+    for tag in tags_db:
+        expected |= {
+            tag.strip().lower()
+            for tag in tag.split(',')
+        }
+
+    assert expected == tags
+
+    assert all(
+        all(tag.strip().lower() in tags for tag in material.tags.split(','))
+        for material in materials
+        if material.tags
+    )
