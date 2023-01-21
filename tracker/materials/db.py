@@ -223,7 +223,7 @@ async def get_last_material_started() -> str | None:
 
 
 async def _get_status(*,
-                      material_id: UUID) -> Status | None:
+                      material_id: UUID | str) -> Status | None:
     logger.debug("Getting status for material_id=%s", material_id)
 
     stmt = sa.select(models.Statuses) \
