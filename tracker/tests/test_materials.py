@@ -250,3 +250,27 @@ async def test_get_status(material_status: Literal["completed", "started", "not 
 )
 def test_convert_duration_to_period(duration, expected):
     assert db._convert_duration_to_period(duration) == expected
+
+
+def test_get_total_reading_duration():
+    pass
+
+
+@pytest.mark.asyncio
+async def test_get_material_statistics():
+    pass
+
+
+@pytest.mark.asyncio
+async def test_completed_statistics():
+    pass
+
+
+@pytest.mark.asyncio
+async def test_reading_statistics():
+    pass
+
+
+@pytest.mark.asyncio
+async def test_get_material_tags():
+    pass
