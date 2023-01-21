@@ -42,9 +42,9 @@ def _add_dot(string: str) -> str:
 
 
 def _up_first_letter(string: str) -> str:
-    if not string[0].isupper():
-        return f"{string[0].upper()}{string[1:]}"
-    return string
+    if not string or string[0].isupper():
+        return string
+    return f"{string[0].upper()}{string[1:]}"
 
 
 def _replace_punctuation(string: str) -> str:
