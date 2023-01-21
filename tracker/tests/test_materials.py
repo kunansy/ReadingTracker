@@ -8,6 +8,26 @@ from tracker.materials import db
 from tracker.models import models
 
 
+async def get_materials() -> list[db.Material]:
+    stmt = sa.select(models.Materials)
+
+    async with database.session() as ses:
+        return [
+            db.Material(**row)
+            for row in (await ses.execute(stmt)).mappings().all()
+        ]
+
+
+async def get_statuses() -> list[db.Status]:
+    stmt = sa.select(models.Statuses)
+
+    async with database.session() as ses:
+        return [
+            db.Status(**row)
+            for row in (await ses.execute(stmt)).mappings().all()
+        ]
+
+
 @pytest.mark.asyncio
 async def test_get_mean_read_pages():
     from tracker.reading_log.statistics import get_mean_read_pages
@@ -37,3 +57,24 @@ async def test_get_material(material_id):
     expected = db.Material(**row)
 
     assert expected == material
+
+
+@pytest.mark.asyncio
+async def test_get_free_materials():
+    free_materials = await db._get_free_materials()
+
+    materials = await get_materials()
+    statuses = await get_statuses()
+    status_ids = {status.material_id for status in statuses}
+
+    expected_free_materials = {
+        material.material_id
+        for material in materials
+        if material.material_id not in status_ids
+    }
+
+    assert len(free_materials) == len(expected_free_materials)
+    assert all(
+        material.material_id in expected_free_materials
+        for material in free_materials
+    )
