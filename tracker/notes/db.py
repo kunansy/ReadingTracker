@@ -76,7 +76,6 @@ async def get_material_type(*,
     return None
 
 
-@database.cache
 async def get_material_types() -> dict[str, enums.MaterialTypesEnum]:
     logger.debug("Getting material types")
 
@@ -93,7 +92,6 @@ async def get_material_types() -> dict[str, enums.MaterialTypesEnum]:
     return types
 
 
-@database.cache
 async def get_material_titles() -> dict[str, str]:
     logger.debug("Getting material titles")
 
@@ -110,7 +108,6 @@ async def get_material_titles() -> dict[str, str]:
     return titles
 
 
-@database.cache
 async def get_material_with_notes_titles() -> dict[str, str]:
     """ Get materials that have a note. """
     logger.debug("Getting material with note titles")

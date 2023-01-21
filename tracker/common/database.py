@@ -1,7 +1,6 @@
 import datetime
-import functools
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, Any, Callable
+from typing import AsyncGenerator
 
 import sqlalchemy.sql as sa
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -31,48 +30,6 @@ engine = create_async_engine(
 )
 
 utcnow = datetime.datetime.utcnow
-
-
-class TTLCache:
-    # TTL is 20s
-    TTL = 20
-
-    def __init__(self, result: list[dict[str, Any]]):
-        self.added_at = utcnow()
-        self.result = result
-
-    def is_alive(self) -> bool:
-        return (utcnow() - self.added_at).seconds <= self.TTL
-
-
-def cache(func: Callable):
-    storage: dict[int, TTLCache] = {}
-    name = func.__name__
-
-    @functools.wraps(func)
-    async def wrapped(*args, **kwargs):
-        nonlocal storage
-
-        hashable_kwargs = {
-            k: tuple(v) if isinstance(v, (list, set, dict)) else v
-            for k, v in kwargs.items()
-        }
-        arg = hash((*args, *hashable_kwargs.items()))
-        if not (ttl := storage.get(arg)):
-            logger.log(5, "%s: got from func", name)
-
-            result = await func(*args, **kwargs)
-            storage[arg] = TTLCache(result)
-        elif not ttl.is_alive():
-            logger.log(5, "%s: cache expired, get the new one", name)
-
-            result = await func(*args, **kwargs)
-            storage[arg] = TTLCache(result)
-        else:
-            logger.log(5, "%s: got from cache", name)
-
-        return storage[arg].result
-    return wrapped
 
 
 @asynccontextmanager
