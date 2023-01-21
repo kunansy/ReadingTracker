@@ -308,3 +308,14 @@ async def test_get_material_tags():
         for material in materials
         if material.tags
     )
+
+
+@pytest.mark.asyncio
+async def test_start_material():
+    material_id = uuid.UUID("44582686-ff27-4e4b-8d32-8bfdccc085b7")
+    date = (database.utcnow() + datetime.timedelta(days=1)).date()
+
+    with pytest.raises(ValueError) as e:
+        await db.start_material(material_id=material_id, start_date=date)
+
+        assert "Start date must be less than today" == str(e.value)
