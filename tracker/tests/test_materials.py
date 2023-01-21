@@ -106,3 +106,38 @@ async def test_parse_material_status_response(is_completed):
 
     result = await db._parse_material_status_response(stmt=stmt)
     assert result
+
+
+@pytest.mark.asyncio
+async def test_get_reading_materials():
+    reading_materials = await db._get_reading_materials()
+
+    materials = {
+        material.material_id: material
+        for material in await get_materials()
+    }
+    statuses = {
+        status.material_id: status
+        for status in await get_statuses()
+    }
+
+    expected = {
+        material_id
+        for material_id in materials
+        if material_id in statuses and not statuses[material_id].completed_at
+    }
+
+    assert len(reading_materials) == len(expected)
+    assert all(
+        material.material_id in expected
+        for material in reading_materials
+    )
+
+    assert all(
+        material.material == materials[material.material_id]
+        for material in reading_materials
+    )
+    assert all(
+        material.status == statuses[material.material_id]
+        for material in reading_materials
+    )
