@@ -176,3 +176,20 @@ async def test_get_completed_materials():
         material.status == statuses[material.material_id]
         for material in completed_materials
     )
+
+
+@pytest.mark.asyncio
+async def test_get_last_material_started():
+    material_id = await db.get_last_material_started()
+
+    stmt = sa.select(models.Materials.c.material_id)\
+        .join(models.Statuses,
+              models.Statuses.c.material_id == models.Materials.c.material_id)\
+        .where(models.Statuses.c.completed_at == None)\
+        .order_by(models.Statuses.c.started_at.desc())\
+        .limit(1)
+
+    async with database.session() as ses:
+        expected = await ses.scalar(stmt)
+
+    assert expected == material_id
