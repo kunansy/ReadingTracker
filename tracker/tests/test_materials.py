@@ -252,8 +252,17 @@ def test_convert_duration_to_period(duration, expected):
     assert db._convert_duration_to_period(duration) == expected
 
 
-def test_get_total_reading_duration():
-    pass
+@pytest.mark.parametrize(
+    "start,finish,expected", (
+        (database.utcnow(), database.utcnow(), "1 days"),
+        (database.utcnow() - datetime.timedelta(days=6), database.utcnow(), "7 days"),
+        (database.utcnow() - datetime.timedelta(days=6), None, "7 days"),
+        (database.utcnow() - datetime.timedelta(days=30), None, "1 months 1 days"),
+        (database.utcnow() - datetime.timedelta(days=30), database.utcnow(), "1 months 1 days"),
+    )
+)
+def test_get_total_reading_duration(start, finish, expected):
+    assert db._get_total_reading_duration(started_at=start, completed_at=finish) == expected
 
 
 @pytest.mark.asyncio
