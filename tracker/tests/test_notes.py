@@ -56,7 +56,6 @@ async def test_get_material_with_notes_titles():
     )
 )
 async def test_get_notes(material_id: str | None):
-    print(material_id)
     notes = await db.get_notes(material_id=material_id)
 
     assert all(not note.is_deleted for note in notes), "Deleted note found"
