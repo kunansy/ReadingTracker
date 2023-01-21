@@ -206,7 +206,7 @@ async def _get_completed_materials() -> list[MaterialStatus]:
 
 
 async def get_last_material_started() -> str | None:
-    # TODO: test it
+    """ Get last started and not completed material """
     logger.info("Getting the last material started")
 
     stmt = _get_reading_materials_stmt()\
