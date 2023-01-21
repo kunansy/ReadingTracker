@@ -191,12 +191,12 @@ async def get_material_reading_now() -> str | None:
         return last_material_id
 
     logger.debug("Reading material not found")
-    # means the new material started
-    #  and there's no log records for it
 
     # to resolve circular import
     from tracker.materials import db as materials_db
 
+    # means the new material started
+    #  and there's no log records for it
     material_id = await materials_db.get_last_material_started()
     logger.debug("So, assume the last inserted material is reading: %s", material_id)
 
