@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 from uuid import UUID
+from decimal import Decimal
 
 import sqlalchemy.sql as sa
 
@@ -88,7 +89,7 @@ class RepeatingQueue(CustomBaseModel):
     priority_months: int
 
 
-async def _get_mean_read_pages():
+async def _get_mean_read_pages() -> Decimal:
     from tracker.reading_log.statistics import get_mean_read_pages
 
     return await get_mean_read_pages()
@@ -268,7 +269,7 @@ def _get_total_reading_duration(*,
 async def _get_material_statistics(*,
                                    material_status: MaterialStatus,
                                    notes_count: int,
-                                   mean_total: int,
+                                   mean_total: Decimal,
                                    logs: list[log_db.LogRecord] | None = None,
                                    completion_dates: dict[str, datetime.datetime] | None = None) -> MaterialStatistics:
     """ Calculate statistics for reading or completed material """
