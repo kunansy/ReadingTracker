@@ -224,9 +224,9 @@ async def test_get_tracker_statistics():
     assert stat.lost_time_percent == round(stat.lost_time / stat.duration, 2) * 100
     assert stat.would_be_total_percent == round(stat.would_be_total / stat.total_pages_read, 2) * 100
 
-    stat.duration = 701
+    stat.duration = 706
     assert stat.duration_period == "1 years 11 months 11 days"
-    stat.lost_time = 701
+    stat.lost_time = 706
     assert stat.lost_time_period == "1 years 11 months 11 days"
 
     stat.lost_time = 23
