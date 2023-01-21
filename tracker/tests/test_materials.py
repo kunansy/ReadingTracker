@@ -90,3 +90,19 @@ def test_get_completed_materials_stmt():
     stmt = db._get_completed_materials_stmt()
 
     assert isinstance(stmt, sa.Select)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "is_completed", (
+        True, False
+    )
+)
+async def test_parse_material_status_response(is_completed):
+    if is_completed:
+        stmt = db._get_completed_materials_stmt()
+    else:
+        stmt = db._get_reading_materials_stmt()
+
+    result = await db._parse_material_status_response(stmt=stmt)
+    assert result
