@@ -32,3 +32,18 @@ def test_replace_quotes(string, expected):
 def test_replace_quotes_error(string):
     with pytest.raises(AssertionError):
         assert schemas._replace_quotes(string)
+
+
+@pytest.mark.parametrize(
+    "string,expected", (
+        ('Hg', "Hg."),
+        ('Hg!', "Hg!"),
+        ('Hg?', "Hg?"),
+        ('Hg:', "Hg:."),
+        ('(Hg)', "(Hg)."),
+        ('Hg...', "Hg..."),
+        ('', ""),
+    )
+)
+def test_add_dot(string, expected):
+    assert schemas._add_dot(string) == expected
