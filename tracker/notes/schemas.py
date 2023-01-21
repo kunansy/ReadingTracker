@@ -36,9 +36,9 @@ def _replace_quotes(string: str) -> str:
 
 
 def _add_dot(string: str) -> str:
-    if not string.endswith(('.', '?', '!')):
-        return f"{string}."
-    return string
+    if not string or string.endswith(('.', '?', '!')):
+        return string
+    return f"{string}."
 
 
 def _up_first_letter(string: str) -> str:
