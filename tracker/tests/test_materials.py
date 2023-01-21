@@ -84,3 +84,9 @@ def test_get_reading_materials_stmt():
     stmt = db._get_reading_materials_stmt()
 
     assert isinstance(stmt, sa.Select)
+
+
+def test_get_completed_materials_stmt():
+    stmt = db._get_completed_materials_stmt()
+
+    assert isinstance(stmt, sa.Select)
