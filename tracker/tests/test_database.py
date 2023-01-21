@@ -50,3 +50,8 @@ async def test_transaction():
         new_materials = (await trans.scalars(select_stmt)).all()
 
         assert new_materials == materials
+
+
+@pytest.mark.asyncio
+async def test_readiness():
+    assert await database.readiness()
