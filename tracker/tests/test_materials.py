@@ -1,3 +1,4 @@
+import datetime
 import random
 import uuid
 from typing import Literal
@@ -231,3 +232,21 @@ async def test_get_status(material_status: Literal["completed", "started", "not 
 
     status = await db._get_status(material_id=material_id)
     assert status == statuses.get(material_id)
+
+
+@pytest.mark.parametrize(
+    "duration,expected", (
+        (365, "1 years"),
+        (1, "1 days"),
+        (30, "1 months"),
+        (31, "1 months 1 days"),
+        (65, "2 months 5 days"),
+        (395, "1 years 1 months"),
+        (790, "2 years 2 months"),
+        (380, "1 years 15 days"),
+        (792, "2 years 2 months 2 days"),
+        (datetime.timedelta(days=792), "2 years 2 months 2 days"),
+    )
+)
+def test_convert_duration_to_period(duration, expected):
+    assert db._convert_duration_to_period(duration) == expected
