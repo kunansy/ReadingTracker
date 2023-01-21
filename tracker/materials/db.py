@@ -481,7 +481,7 @@ async def start_material(*,
 
 
 async def complete_material(*,
-                            material_id: UUID,
+                            material_id: UUID | str,
                             completion_date: datetime.date | None = None) -> None:
     logger.debug("Completing material_id=%s", material_id)
     completion_date = completion_date or database.utcnow().date()
