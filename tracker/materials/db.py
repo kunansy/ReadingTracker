@@ -251,7 +251,7 @@ def _convert_duration_to_period(duration: datetime.timedelta | int) -> str:
         years_str = f"{years} years "
     if months := total_days % 365 // 30:
         months_str = f"{months} months "
-    if days := total_days % 30:
+    if days := total_days % 365 % 30:
         days_str = f"{days} days"
 
     return f"{years_str}{months_str}{days_str}".strip()
