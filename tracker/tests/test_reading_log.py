@@ -1,3 +1,5 @@
+import datetime
+import random
 import statistics
 from decimal import Decimal
 
@@ -112,3 +114,37 @@ async def test_is_log_empty():
         expected = await ses.scalar(stmt)
 
     assert is_empty is expected
+
+
+@pytest.mark.asyncio
+async def test_insert_log_record():
+    reading_materials = list((await db.get_reading_material_titles()).keys())
+
+    material_id = random.choice(reading_materials)
+    count = random.randint(1485, 1490)
+    date = (database.utcnow() + datetime.timedelta(days=random.randint(10, 100))).date()
+
+    await db.insert_log_record(
+        material_id=material_id, count=count, date=date
+    )
+
+    stmt = sa.select(models.ReadingLog)\
+        .where(models.ReadingLog.c.count == count)\
+        .where(models.ReadingLog.c.date == date)\
+        .where(models.ReadingLog.c.material_id == material_id)
+
+    async with database.session() as ses:
+        log = (await ses.execute(stmt)).mappings().one_or_none()
+
+    assert log
+    assert log.count == count
+    assert log.date.date() == date
+    assert log.material_id == material_id
+
+    del_stmt = models.ReadingLog.delete()\
+        .where(models.ReadingLog.c.log_id == log.log_id)
+
+    async with database.session() as ses:
+        await ses.execute(del_stmt)
+
+        assert not (await ses.execute(stmt)).one_or_none()
