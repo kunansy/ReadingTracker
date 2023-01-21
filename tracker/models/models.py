@@ -33,7 +33,7 @@ def PrimaryKey(*args, **kwargs) -> sqlalchemy.Column:
     return Column(*args, **kwargs)
 
 
-def _uuid_gen():
+def _uuid_gen() -> str:
     return str(uuid.uuid4())
 
 
