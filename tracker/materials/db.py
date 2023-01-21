@@ -390,13 +390,13 @@ async def get_material_tags() -> set[str]:
         .where(models.Materials.c.tags != None)
 
     async with database.session() as ses:
-        tags_db = (await ses.execute(stmt)).all()
+        tags_db = await ses.scalars(stmt)
 
     tags = set()
     for tag in tags_db:
         tags |= {
             tag.strip().lower()
-            for tag in tag[0].split(',')
+            for tag in tag.split(',')
         }
 
     logger.debug("%s tags got", len(tags))
