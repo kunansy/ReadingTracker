@@ -47,3 +47,16 @@ def test_replace_quotes_error(string):
 )
 def test_add_dot(string, expected):
     assert schemas._add_dot(string) == expected
+
+
+@pytest.mark.parametrize(
+    "string,expected", (
+        ('Hg', 'Hg'),
+        ('hg!', 'Hg!'),
+        ('a', 'A'),
+        ('A', 'A'),
+        ('', ''),
+    )
+)
+def test_up_first_letter(string, expected):
+    assert schemas._up_first_letter(string) == expected
