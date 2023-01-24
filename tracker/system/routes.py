@@ -49,8 +49,8 @@ async def graphic(request: Request,
         return templates.TemplateResponse("errors/404.html", context)
 
     async with asyncio.TaskGroup() as tg:
-        reading_trend_task = tg.create_task(trends.get_week_reading_statistics())
-        notes_trend_task = tg.create_task(trends.get_week_notes_statistics())
+        reading_trend_task = tg.create_task(trends.get_span_reading_statistics(span_size=last_days))
+        notes_trend_task = tg.create_task(trends.get_span_notes_statistics(span_size=last_days))
         tracker_statistics_task = tg.create_task(db.get_tracker_statistics())
 
     reading_trend = reading_trend_task.result()

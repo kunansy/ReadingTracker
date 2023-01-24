@@ -1,5 +1,6 @@
 import base64
 import datetime
+import statistics
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
@@ -29,30 +30,34 @@ class DayStatistics(NamedTuple):
 
 
 @dataclass
-class WeekStatistics:
+class SpanStatistics:
     data: list[DayStatistics]
 
-    def __init__(self, days: Sequence[tuple[datetime.date, int]]) -> None:
-        if len(days) != 7:
+    def __init__(self,
+                 days: Sequence[tuple[datetime.date, int]],
+                 *,
+                 span_size: int) -> None:
+        if len(days) != span_size:
             raise TrendException(
-                f"A week should contains exactly 7 days, but {len(days)} found")
+                f"A span should contains exactly {span_size} days, but {len(days)} found")
 
         self.data = [
             DayStatistics(date=date, amount=amount)
             for date, amount in days
         ]
+        self.span_size = span_size
 
     @property
     def start(self) -> datetime.date:
         if not self.data:
-            raise TrendException("Week statistics is empty")
+            raise TrendException("Span statistics is empty")
 
         return self.data[0].date
 
     @property
     def stop(self) -> datetime.date:
         if not self.data:
-            raise TrendException("Week statistics is empty")
+            raise TrendException("Span statistics is empty")
 
         return self.data[-1].date
 
@@ -72,13 +77,12 @@ class WeekStatistics:
 
     @property
     def mean(self) -> Decimal:
-        value = Decimal(self.total) / 7
+        value = Decimal(self.total) / self.span_size
         return round(value, 2)
 
     @property
-    def median(self) -> int:
-        sorted_days = sorted(self.data, key=lambda day: day.amount)
-        return sorted_days[3].amount
+    def median(self) -> float:
+        return round(statistics.mean(self.values), 2)
 
     @property
     def total(self) -> int:
@@ -114,16 +118,17 @@ class WeekStatistics:
 
 
 @dataclass
-class WeekBorder:
+class TimeSpan:
     start: datetime.date
     stop: datetime.date
 
     def __init__(self,
                  start: datetime.date,
-                 stop: datetime.date) -> None:
-        # 6 because the border is included to the range
-        if (stop - start).days != 6:
-            raise TrendException(f"Wrong week got: [{start}; {stop}]")
+                 stop: datetime.date,
+                 span_size: int) -> None:
+        # - 1 because the border is included to the range
+        if (stop - start).days != span_size - 1:
+            raise TrendException(f"Wrong span got: [{start}; {stop}]")
 
         self.start = start
         self.stop = stop
@@ -137,31 +142,33 @@ class WeekBorder:
                f"{self.stop.strftime(settings.DATE_FORMAT)}]"
 
 
-def _get_week_range() -> WeekBorder:
+def _get_span(size: int) -> TimeSpan:
     now = datetime.date.today()
-    start = now - datetime.timedelta(days=6)
+    start = now - datetime.timedelta(days=size - 1)
 
-    return WeekBorder(start=start, stop=now)
+    return TimeSpan(start=start, stop=now, span_size=size)
 
 
-def _iterate_over_week(week: WeekBorder) -> Generator[datetime.date, None, None]:
-    start = week.start
-    for day in range(7):
+def _iterate_over_span(span: TimeSpan,
+                       *,
+                       size: int) -> Generator[datetime.date, None, None]:
+    start = span.start
+    for day in range(size):
         yield start + datetime.timedelta(days=day)
 
 
-async def _calculate_week_reading_statistics(week: WeekBorder) -> dict[datetime.date, int]:
-    logger.debug("Calculating week reading statistics")
+async def _calculate_span_reading_statistics(span: TimeSpan) -> dict[datetime.date, int]:
+    logger.debug("Calculating span reading statistics")
 
     stmt = sa.select([models.ReadingLog.c.date,
                       models.ReadingLog.c.count])\
-        .where(models.ReadingLog.c.date >= week.start)\
-        .where(models.ReadingLog.c.date <= week.stop)
+        .where(models.ReadingLog.c.date >= span.start)\
+        .where(models.ReadingLog.c.date <= span.stop)
 
     async with database.session() as ses:
         rows = (await ses.execute(stmt)).all()
 
-    logger.debug("Week reading statistics calculated")
+    logger.debug("Span reading statistics calculated")
 
     return {
         row.date.date(): row.count
@@ -169,19 +176,19 @@ async def _calculate_week_reading_statistics(week: WeekBorder) -> dict[datetime.
     }
 
 
-async def _calculate_week_notes_statistics(week: WeekBorder) -> dict[datetime.date, int]:
-    logger.debug("Calculating week notes statistics")
+async def _calculate_span_notes_statistics(span: TimeSpan) -> dict[datetime.date, int]:
+    logger.debug("Calculating span notes statistics")
 
     stmt = sa.select([sa.func.date(models.Notes.c.added_at).label('date'),
                       sa.func.count(models.Notes.c.note_id)]) \
         .group_by(sa.func.date(models.Notes.c.added_at)) \
-        .where(sa.func.date(models.Notes.c.added_at) >= week.start) \
-        .where(sa.func.date(models.Notes.c.added_at) <= week.stop)
+        .where(sa.func.date(models.Notes.c.added_at) >= span.start) \
+        .where(sa.func.date(models.Notes.c.added_at) <= span.stop)
 
     async with database.session() as ses:
         rows = (await ses.execute(stmt)).all()
 
-    logger.debug("Week notes statistics calculated")
+    logger.debug("Span notes statistics calculated")
 
     return {
         row.date: row.count
@@ -189,44 +196,49 @@ async def _calculate_week_notes_statistics(week: WeekBorder) -> dict[datetime.da
     }
 
 
-def _get_week_statistics(*,
-                         statistics: dict[datetime.date, int],
-                         week: WeekBorder) -> WeekStatistics:
-    logger.debug("Getting week statistics")
+def _get_span_statistics(*,
+                         stat: dict[datetime.date, int],
+                         span: TimeSpan,
+                         span_size: int) -> SpanStatistics:
+    logger.debug("Getting span statistics of size = %s", span_size)
 
     days = [
-        DayStatistics(date=date, amount=statistics.get(date, 0))
-        for date in _iterate_over_week(week)
+        DayStatistics(date=date, amount=stat.get(date, 0))
+        for date in _iterate_over_span(span, size=span_size)
     ]
 
-    logger.debug("Week statistics got")
-    return WeekStatistics(days=days)
+    logger.debug("Span statistics got")
+    return SpanStatistics(days=days, span_size=span_size)
 
 
-async def get_week_reading_statistics() -> WeekStatistics:
-    week = _get_week_range()
-    statistics = await _calculate_week_reading_statistics(week=week)
+async def get_span_reading_statistics(*,
+                                      span_size: int) -> SpanStatistics:
+    span = _get_span(span_size)
+    stat = await _calculate_span_reading_statistics(span=span)
 
-    return _get_week_statistics(statistics=statistics, week=week)
+    return _get_span_statistics(
+        stat=stat, span=span, span_size=span_size)
 
 
-async def get_week_notes_statistics() -> WeekStatistics:
-    week = _get_week_range()
-    statistics = await _calculate_week_notes_statistics(week=week)
+async def get_span_notes_statistics(*,
+                                    span_size: int) -> SpanStatistics:
+    span = _get_span(span_size)
+    stat = await _calculate_span_notes_statistics(span=span)
 
-    return _get_week_statistics(statistics=statistics, week=week)
+    return _get_span_statistics(
+        stat=stat, span=span, span_size=span_size)
 
 
 def _create_graphic(*,
-                    statistics: WeekStatistics,
+                    stat: SpanStatistics,
                     title: str = 'Total items completed') -> str:
     logger.debug("Creating graphic started")
 
     fig, ax = plt.subplots(figsize=(12, 10))
-    bar = ax.barh(statistics.days, statistics.values, edgecolor="white")
+    bar = ax.barh(stat.days, stat.values, edgecolor="white")
     ax.bar_label(bar)
 
-    xlim = -0.5, int(statistics.max.amount * 1.2) or 100
+    xlim = -0.5, int(stat.max.amount * 1.2) or 100
 
     ax.set_title(title)
     ax.set_xlabel('Items count')
@@ -243,21 +255,25 @@ def _create_graphic(*,
     return image
 
 
-async def create_reading_graphic(statistics: WeekStatistics | None = None) -> str:
+async def create_reading_graphic(stat: SpanStatistics | None = None,
+                                 *,
+                                 span_size: int = 7) -> str:
     logger.info("Creating reading graphic")
 
-    statistics = statistics or await get_week_reading_statistics()
+    stat = stat or await get_span_reading_statistics(span_size=span_size)
     return _create_graphic(
-        statistics=statistics,
+        stat=stat,
         title='Total pages read'
     )
 
 
-async def create_notes_graphic(statistics: WeekStatistics | None = None) -> str:
+async def create_notes_graphic(stat: SpanStatistics | None = None,
+                               *,
+                               span_size: int = 7) -> str:
     logger.info("Creating notes graphic")
 
-    statistics = statistics or await get_week_notes_statistics()
+    stat = stat or await get_span_notes_statistics(span_size=span_size)
     return _create_graphic(
-        statistics=statistics,
+        stat=stat,
         title='Total notes inserted'
     )
