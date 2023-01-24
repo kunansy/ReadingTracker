@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, HTTPException
 from fastapi.responses import RedirectResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 
@@ -51,6 +51,9 @@ async def add_log_record_view(request: Request):
 
 @router.post('/add')
 async def add_log_record(record: schemas.LogRecord = Depends()):
+    if not await db.is_material_reading(material_id=str(record.material_id)):
+        raise HTTPException(status_code=400, detail="Material not reading")
+
     await db.insert_log_record(
         material_id=str(record.material_id),
         count=record.count,
