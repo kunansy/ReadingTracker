@@ -62,9 +62,9 @@ async def graphic(request: Request,
             last_days=last_days
         ))
         reading_trend_graphic_task = tg.create_task(
-            trends.create_reading_graphic(reading_trend))
+            trends.create_reading_graphic(reading_trend, span_size=last_days))
         notes_trend_graphic_task = tg.create_task(
-            trends.create_notes_graphic(notes_trend))
+            trends.create_notes_graphic(notes_trend, span_size=last_days))
         titles_task = tg.create_task(
             db.get_read_material_titles())
 
