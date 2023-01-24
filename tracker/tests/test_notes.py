@@ -37,10 +37,7 @@ async def test_get_material_with_notes_titles():
         .where(~models.Notes.c.is_deleted)
 
     async with database.session() as ses:
-        expected = {
-            row[0]
-            for row in (await ses.execute(stmt)).all()
-        }
+        expected = set((await ses.scalars(stmt)).all())
 
     titles = await db.get_material_with_notes_titles()
 

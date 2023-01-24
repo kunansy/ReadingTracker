@@ -296,10 +296,7 @@ async def get_tags(*,
         stmt = stmt.where(models.Notes.c.material_id == str(material_id))
 
     async with database.session() as ses:
-        tags: list[str] = sum([
-            row[0]
-            for row in (await ses.execute(stmt)).all()
-        ], [])
+        tags: list[str] = sum((await ses.scalars(stmt)).all(), [])
 
     tags_set = set(tags)
     logger.debug("Total %s unique tags got", len(tags_set))
