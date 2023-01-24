@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import os
 from collections import defaultdict
 from typing import Any, Iterable
 from uuid import UUID
@@ -451,6 +452,7 @@ def create_graphic(graph: nx.DiGraph, **kwargs) -> str:
     net.show("tmp.html")
     with open('tmp.html') as f:
         resp = f.read()
+    os.remove("tmp.html")
 
     logger.debug("Graphic created")
     return resp
