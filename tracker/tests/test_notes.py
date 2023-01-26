@@ -133,6 +133,39 @@ async def test_delete_restore_note():
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
+    "note_id", (
+        "2febbe11-4513-40f4-b2a7-a3ca51f30a3d",
+        "10bfed52-d5bb-4818-a315-c123e45b63c2",
+        "27a05123-d89f-4383-973a-f1b3caf476f0",
+        "c94e12cc-e773-4993-bf3d-7a1a1400ad3a",
+        "7e065063-9e46-498f-90a7-6be47e7833bc",
+        "85b8ff0a-c671-454e-8c95-2375bdcdfed0",
+        "12782f80-1d5d-4e97-889d-b78bedb33169"
+    )
+)
+async def test_link_notes(note_id):
+    notes = {
+        note.note_id: note
+        for note in await db.get_notes()
+    }
+
+    result = db.link_notes(note_id=note_id, notes=notes)
+
+    assert len(result.nodes) == 7
+    assert len(result.edges) == 6
+
+    assert set(result.edges) == {
+        ('85b8ff0a-c671-454e-8c95-2375bdcdfed0', '27a05123-d89f-4383-973a-f1b3caf476f0'),
+        ('27a05123-d89f-4383-973a-f1b3caf476f0', '2febbe11-4513-40f4-b2a7-a3ca51f30a3d'),
+        ('10bfed52-d5bb-4818-a315-c123e45b63c2', '2febbe11-4513-40f4-b2a7-a3ca51f30a3d'),
+        ('c94e12cc-e773-4993-bf3d-7a1a1400ad3a', '27a05123-d89f-4383-973a-f1b3caf476f0'),
+        ('7e065063-9e46-498f-90a7-6be47e7833bc', 'c94e12cc-e773-4993-bf3d-7a1a1400ad3a'),
+        ('12782f80-1d5d-4e97-889d-b78bedb33169', '2febbe11-4513-40f4-b2a7-a3ca51f30a3d')
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
     "material_id", (
         None, # empty list
         "", # all notes
