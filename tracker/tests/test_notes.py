@@ -9,6 +9,19 @@ from tracker.notes import db
 
 
 @pytest.mark.asyncio
+async def test_get_distinct_chapters():
+    notes = await db.get_notes()
+
+    result = db.get_distinct_chapters(notes)
+
+    expected = {}
+    for note in notes:
+        expected[note.material_id] = expected.get(note.material_id, set()) | {note.chapter}
+
+    assert result == expected
+
+
+@pytest.mark.asyncio
 async def test_get_material_types():
     types = await db.get_material_types()
     type_values = set(types.values())
