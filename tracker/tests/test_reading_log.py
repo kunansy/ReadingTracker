@@ -148,3 +148,21 @@ async def test_insert_log_record():
         await ses.execute(del_stmt)
 
         assert not (await ses.execute(stmt)).one_or_none()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "material_id,expected", (
+        ("a7f4e1dc-9274-46e7-a656-514bf1f312b5", True),
+        # even completed
+        ("b06298ed-6f22-4c36-99eb-8a0d329e002d", False),
+        # not started
+        ("7e4209c9-60a4-4478-bfd2-47b1956ed496", False),
+        # not exists
+        ("ec1e1ead-da6e-4b03-9425-4b8953c85cb4", False),
+    )
+)
+async def test_is_material_reading(material_id, expected):
+    result = await db.is_material_reading(material_id=material_id)
+
+    assert result is expected
