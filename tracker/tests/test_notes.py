@@ -21,6 +21,10 @@ async def test_get_distinct_chapters():
     assert result == expected
 
 
+def test_get_distinct_chapters_empty():
+    assert db.get_distinct_chapters([]) == {}
+
+
 @pytest.mark.asyncio
 async def test_get_material_types():
     types = await db.get_material_types()
