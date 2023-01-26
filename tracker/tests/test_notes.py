@@ -26,6 +26,13 @@ def test_get_distinct_chapters_empty():
 
 
 @pytest.mark.asyncio
+async def test_get_material_type():
+    result = await db.get_material_type(material_id="ab4d33f3-7602-4fde-afe8-d3fe5876867b")
+
+    assert result == enums.MaterialTypesEnum.audiobook.name
+
+
+@pytest.mark.asyncio
 async def test_get_material_types():
     types = await db.get_material_types()
     type_values = set(types.values())
