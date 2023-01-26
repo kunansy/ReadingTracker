@@ -94,9 +94,9 @@ async def create_reading_graphic(*,
     ax.set(ylim=(0, material_pages + material_pages * .1))
     ax.legend()
 
-    tmpbuf = BytesIO()
-    fig.savefig(tmpbuf, format='png')
-    return base64.b64encode(tmpbuf.getvalue()).decode('utf-8')
+    buff = BytesIO()
+    fig.savefig(buff, format='png')
+    return base64.b64encode(buff.getvalue()).decode('utf-8')
 
 
 async def get_tracker_statistics() -> statistics.TrackerStatistics:
