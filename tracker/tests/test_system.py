@@ -3,7 +3,7 @@ import base64
 import pytest
 
 from tracker.materials import db as materials_db
-from tracker.reading_log import db as logs_db
+from tracker.reading_log import db as logs_db, statistics
 from tracker.system import db
 
 
@@ -95,3 +95,8 @@ async def test_create_reading_graphic_material_not_found():
             material_id=material_id, last_days=last_days)
 
     assert str(e.value) == "'material_id='d012fba9-efe0-4171-b3e7-730c3c3b2666'' not found"
+
+
+@pytest.mark.asyncio
+async def test_get_tracker_statistics():
+    assert await db.get_tracker_statistics() == await statistics.get_tracker_statistics()
