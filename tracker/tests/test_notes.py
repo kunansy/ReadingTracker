@@ -231,6 +231,15 @@ async def test_get_sorted_tags():
 
 
 @pytest.mark.asyncio
+async def test_get_sorted_tags_without_material():
+    tags = await db.get_tags()
+
+    result = await db.get_sorted_tags(material_id=None)
+
+    assert result == sorted(tags)
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "note_id,expected", (
         ("3ad7a635-2057-4050-a874-471e001f86aa", ["058f4c4d-c4af-4e73-a142-177e77afd51e",
