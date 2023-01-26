@@ -64,3 +64,8 @@ async def test_get_read_material_titles():
         material.material_id: material.material.title
         for material in materials
     }
+
+
+@pytest.mark.asyncio
+async def test_get_material_reading_now():
+    assert await db.get_material_reading_now() == await logs_db.get_material_reading_now()
