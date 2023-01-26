@@ -10,7 +10,7 @@ import sqlalchemy.sql as sa
 from tracker.common import database
 from tracker.models import models
 from tracker.materials import db as materials_db
-from tracker.reading_log import db as reading_log_db, statistics
+from tracker.reading_log import db as logs_db, statistics
 
 
 class ReadingData(NamedTuple):
@@ -23,7 +23,7 @@ async def _get_graphic_data(*,
                             last_days: int) -> ReadingData:
     dates, counts, total = [], [], 0
 
-    async for date, info in reading_log_db.data():
+    async for date, info in logs_db.data():
         if info.material_id != material_id:
             continue
         total += info.count
@@ -51,7 +51,7 @@ async def get_read_material_titles() -> dict[UUID, str]:
 
 
 async def get_material_reading_now() -> str | None:
-    return await reading_log_db.get_material_reading_now()
+    return await logs_db.get_material_reading_now()
 
 
 async def create_reading_graphic(*,
