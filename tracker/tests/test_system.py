@@ -1,3 +1,5 @@
+import base64
+
 import pytest
 
 from tracker.materials import db as materials_db
@@ -69,3 +71,27 @@ async def test_get_read_material_titles():
 @pytest.mark.asyncio
 async def test_get_material_reading_now():
     assert await db.get_material_reading_now() == await logs_db.get_material_reading_now()
+
+
+@pytest.mark.asyncio
+async def test_create_reading_graphic():
+    material_id = "a8297f04-6ded-459c-ae79-98c6a20e18c5"
+    last_days = 14
+
+    result = await db.create_reading_graphic(
+        material_id=material_id, last_days=last_days)
+
+    assert result
+    assert base64.b64decode(result, validate=True)
+
+
+@pytest.mark.asyncio
+async def test_create_reading_graphic_material_not_found():
+    material_id = "d012fba9-efe0-4171-b3e7-730c3c3b2666"
+    last_days = 14
+
+    with pytest.raises(ValueError) as e:
+        await db.create_reading_graphic(
+            material_id=material_id, last_days=last_days)
+
+    assert str(e.value) == "'material_id='d012fba9-efe0-4171-b3e7-730c3c3b2666'' not found"
