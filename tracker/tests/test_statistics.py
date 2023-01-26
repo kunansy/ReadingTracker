@@ -1,7 +1,7 @@
 import random
-import statistics
 import uuid
 from decimal import Decimal
+from typing import Sequence
 
 import pytest
 import sqlalchemy.sql as sa
@@ -9,6 +9,10 @@ import sqlalchemy.sql as sa
 from tracker.common import database
 from tracker.models import models
 from tracker.reading_log import statistics as st, db
+
+
+def mean(coll: Sequence[int | float | Decimal]) -> int | float | Decimal:
+    return sum(coll) / len(coll)
 
 
 @pytest.mark.asyncio
@@ -48,7 +52,7 @@ async def test_get_m_log_statistics(material_id, logs, completion_dates):
     # TODO: the field is more complex to test
     # assert stat.lost_time == duration_time - len(material_records)
     assert stat.duration == len(material_records)
-    assert stat.mean == round(statistics.mean(records_count))
+    assert stat.mean == round(mean(records_count))
     assert stat.min_record.count == min(records_count)
     assert stat.max_record.count == max(records_count)
 
@@ -101,11 +105,12 @@ async def test_get_lost_days():
 
 @pytest.mark.asyncio
 async def test_get_mean_read_pages():
-    mean = await st.get_mean_read_pages()
+    mean_pages = await st.get_mean_read_pages()
     records = await db.get_log_records()
+    record_counts = [Decimal(record.count) for record in records]
 
-    expected_mean = statistics.mean(Decimal(record.count) for record in records)
-    assert mean == round(expected_mean, 2)
+    assert records
+    assert mean_pages == round(mean(record_counts), 2)
 
 
 @pytest.mark.asyncio
@@ -113,7 +118,11 @@ async def test_get_median_pages_read_per_day():
     median = await st._get_median_pages_read_per_day()
     records = await db.get_log_records()
 
-    expected_median = statistics.median(record.count for record in records)
+    counts = sorted(record.count for record in records)
+    if (length := len(counts)) % 2:
+        expected_median = counts[length // 2]
+    else:
+        expected_median = (counts[length // 2 - 1] + counts[length // 2 + 1]) / 2
 
     assert median == expected_median
 
@@ -198,7 +207,7 @@ async def test_would_be_total():
                 min(records, key=lambda record: record.date).date).days + 1
 
     expected = sum(counts)
-    expected += statistics.mean(counts) * (duration - len(records))
+    expected += mean(counts) * (duration - len(records))
 
     assert would_be_total == round(expected)
 
