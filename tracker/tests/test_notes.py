@@ -33,6 +33,13 @@ async def test_get_material_type():
 
 
 @pytest.mark.asyncio
+async def test_get_material_type_not_found():
+    result = await db.get_material_type(material_id="4c753160-3363-47f5-b888-3574809592b0")
+
+    assert result is None
+
+
+@pytest.mark.asyncio
 async def test_get_material_types():
     types = await db.get_material_types()
     type_values = set(types.values())
