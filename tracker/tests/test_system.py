@@ -1,5 +1,6 @@
 import pytest
 
+from tracker.materials import db as materials_db
 from tracker.reading_log import db as logs_db
 from tracker.system import db
 
@@ -50,3 +51,16 @@ async def test_get_graphic_data_unclear_reading(material_id, last_days):
     assert len(result.dates) > len(material_logs)
 
     assert set(result.counts) == {sum(logs_count[:elem]) for elem in range(1, len(logs_count) + 1)}
+
+
+@pytest.mark.asyncio
+async def test_get_read_material_titles():
+    result = await db.get_read_material_titles()
+    materials = await materials_db._get_reading_materials() + await materials_db._get_completed_materials()
+
+    assert len(result) == len(materials)
+
+    assert result == {
+        material.material_id: material.material.title
+        for material in materials
+    }
