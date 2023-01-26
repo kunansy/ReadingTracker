@@ -166,6 +166,25 @@ async def test_link_notes(note_id):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
+    "note_id", (
+        "1ca65e74-d435-4de7-ad23-95cefba35bd1",
+        "d6d27e4f-7748-41c9-90db-dd35f0189d36"
+    )
+)
+async def test_link_notes_without_links(note_id):
+    notes = {
+        note.note_id: note
+        for note in await db.get_notes()
+    }
+
+    result = db.link_notes(note_id=note_id, notes=notes)
+
+    assert len(result.nodes) == 1
+    assert len(result.edges) == 0
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
     "material_id", (
         None, # empty list
         "", # all notes
