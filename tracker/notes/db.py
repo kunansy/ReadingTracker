@@ -463,7 +463,7 @@ async def get_sorted_tags(*,
 
     if not material_id:
         tags = await get_tags()
-        return list(sorted(tags))
+        return sorted(tags)
 
     async with asyncio.TaskGroup() as tg:
         get_tags_task = tg.create_task(get_tags())
