@@ -2,7 +2,6 @@ import base64
 import datetime
 from io import BytesIO
 from typing import NamedTuple
-from uuid import UUID
 
 import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa
@@ -37,7 +36,7 @@ async def _get_graphic_data(*,
     )
 
 
-async def get_read_material_titles() -> dict[UUID, str]:
+async def get_read_material_titles() -> dict[str, str]:
     stmt = sa.select([models.Materials.c.material_id,
                       models.Materials.c.title])\
         .join(models.Statuses,
@@ -45,7 +44,7 @@ async def get_read_material_titles() -> dict[UUID, str]:
 
     async with database.session() as ses:
         return {
-            material_id: title
+            str(material_id): title
             for material_id, title in (await ses.execute(stmt)).all()
         }
 
