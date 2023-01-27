@@ -65,7 +65,7 @@
 {% if links %}
     <ul class="links-list" title="Note links">
         {% for link in links %}
-            <li title="{{ link.info }}" onclick="addTag('[[{{ link.note_id  }}]]')" value="'[[{{ link.note_id  }}]]'"> {{ link.content_md[:50] }} </li>
+            <li title="{{ link.info }}" onclick="addTag('[[{{ link.note_id  }}]]')" value="'[[{{ link.note_id  }}]]'"> {{ link.short_content }} </li>
         {% endfor %}
     </ul>
 {% endif %}
