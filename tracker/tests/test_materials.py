@@ -8,6 +8,7 @@ import sqlalchemy.sql as sa
 
 from tracker.common import database
 from tracker.materials import db
+from tracker.reading_log import statistics
 from tracker.models import models
 
 
@@ -272,7 +273,31 @@ async def test_get_material_statistics():
 
 @pytest.mark.asyncio
 async def test_completed_statistics():
-    pass
+    materials = [
+        material
+        for material in await db._get_completed_materials()
+    ]
+    m_log_st = {
+        material.material_id: await statistics.get_m_log_statistics(material_id=material.material_id)
+        for material in materials
+    }
+
+    result = await db.completed_statistics()
+    assert len(result) == len(materials)
+    for st in result:
+        assert st.remaining_pages is None
+        assert st.remaining_days is None
+        assert st.completed_at
+        assert st.would_be_completed is None
+
+        material_id = st.material.material_id
+        assert st.total_reading_duration
+        assert st.duration == m_log_st[material_id].duration
+        assert st.lost_time == m_log_st[material_id].lost_time
+        assert st.mean == m_log_st[material_id].mean
+        assert st.total == m_log_st[material_id].total
+        assert st.min_record == m_log_st[material_id].min_record
+        assert st.max_record == m_log_st[material_id].max_record
 
 
 @pytest.mark.asyncio
