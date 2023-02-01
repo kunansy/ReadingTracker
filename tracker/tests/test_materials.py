@@ -9,8 +9,8 @@ import sqlalchemy.sql as sa
 
 from tracker.common import database
 from tracker.materials import db
-from tracker.reading_log import statistics
 from tracker.models import models
+from tracker.reading_log import statistics
 
 
 async def get_materials() -> list[db.Material]:
