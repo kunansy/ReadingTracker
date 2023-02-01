@@ -1,6 +1,7 @@
 import datetime
 import random
 import uuid
+from decimal import Decimal
 from typing import Literal
 
 import pytest
@@ -269,6 +270,40 @@ def test_get_total_reading_duration(start, finish, expected):
 @pytest.mark.asyncio
 async def test_get_material_statistics():
     pass
+
+
+@pytest.mark.asyncio
+async def test_get_material_statistics_unread():
+    materials = await db._get_free_materials()
+    assert materials
+
+    material = random.choice(materials)
+    material_status = db.MaterialStatus(
+        material=material,
+        status=db.Status(
+            status_id=1,
+            material_id=material.material_id,
+            started_at=datetime.datetime.utcnow()
+        )
+    )
+    mean_total = Decimal(50)
+
+    result = await db._get_material_statistics(
+        material_status=material_status,
+        notes_count=10,
+        mean_total=mean_total
+    )
+
+    assert result.completed_at is None
+    assert result.total_reading_duration == '1 days'
+    assert result.duration == 0
+    assert result.total == 0
+    assert result.lost_time == 0
+    assert result.min_record is None
+    assert result.max_record is None
+    assert result.remaining_pages == material.pages
+    assert result.remaining_days == round(material.pages / mean_total)
+    assert result.would_be_completed == (datetime.date.today() + datetime.timedelta(days=result.remaining_days))
 
 
 @pytest.mark.asyncio
