@@ -290,14 +290,14 @@ async def test_completed_statistics():
         assert st.completed_at
         assert st.would_be_completed is None
 
-        material_id = st.material.material_id
+        log_st = m_log_st[st.material.material_id]
         assert st.total_reading_duration
-        assert st.duration == m_log_st[material_id].duration
-        assert st.lost_time == m_log_st[material_id].lost_time
-        assert st.mean == m_log_st[material_id].mean
-        assert st.total == m_log_st[material_id].total
-        assert st.min_record == m_log_st[material_id].min_record
-        assert st.max_record == m_log_st[material_id].max_record
+        assert st.duration == log_st.duration
+        assert st.lost_time == log_st.lost_time
+        assert st.mean == log_st.mean
+        assert st.total == log_st.total
+        assert st.min_record == log_st.min_record
+        assert st.max_record == log_st.max_record
 
 
 @pytest.mark.asyncio
