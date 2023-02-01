@@ -302,7 +302,33 @@ async def test_completed_statistics():
 
 @pytest.mark.asyncio
 async def test_reading_statistics():
-    pass
+    materials = [
+        material
+        for material in await db._get_reading_materials()
+    ]
+    m_log_st = {
+        material.material_id: await statistics.get_m_log_statistics(material_id=material.material_id)
+        for material in materials
+    }
+
+    result = await db.reading_statistics()
+    assert len(result) == len(materials)
+
+    for st in result:
+        log_st = m_log_st[st.material.material_id]
+
+        assert st.remaining_pages == st.material.pages - log_st.total
+        assert st.remaining_days == round((st.material.pages - st.total) / st.mean)
+        assert st.completed_at is None
+        assert st.would_be_completed is not None
+
+        assert st.total_reading_duration
+        assert st.duration == log_st.duration
+        assert st.lost_time == log_st.lost_time
+        assert st.mean == log_st.mean
+        assert st.total == log_st.total
+        assert st.min_record == log_st.min_record
+        assert st.max_record == log_st.max_record
 
 
 @pytest.mark.asyncio
