@@ -504,3 +504,17 @@ async def test_end_of_reading():
 @pytest.mark.asyncio
 async def test_estimate():
     pass
+
+
+@pytest.mark.parametrize(
+    "field,expected", (
+        (None, 0),
+        (datetime.timedelta(days=29), 0),
+        (datetime.timedelta(days=59), 1),
+        (datetime.timedelta(days=92), 2),
+        (datetime.timedelta(days=2), 0),
+        (datetime.timedelta(days=0), 0),
+    )
+)
+def test_calculate_priority_months(field, expected):
+    assert db._calculate_priority_months(field) == expected
