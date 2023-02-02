@@ -518,3 +518,15 @@ async def test_estimate():
 )
 def test_calculate_priority_months(field, expected):
     assert db._calculate_priority_months(field) == expected
+
+
+@pytest.mark.parametrize(
+    "field,expected", (
+        (None, 0),
+        (datetime.timedelta(days=29), 29),
+        (datetime.timedelta(days=0), 0),
+        (datetime.timedelta(days=92), 92),
+    )
+)
+def test_get_priority_days(field, expected):
+    assert db._get_priority_days(field) == expected
