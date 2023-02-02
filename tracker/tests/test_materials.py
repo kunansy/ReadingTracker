@@ -558,3 +558,8 @@ async def test_get_repeats_analytics_only_repeated():
         assert repeat.last_repeated_at == valid_repeat.last_repeated_at
 
         assert repeat.priority_days == (datetime.datetime.utcnow() - valid_repeat.last_repeated_at).days
+
+
+@pytest.mark.asyncio
+async def test_get_repeats_analytics_only_not_repeated():
+    pass
