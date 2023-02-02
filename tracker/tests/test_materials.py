@@ -397,6 +397,21 @@ async def test_get_material_tags():
 
 
 @pytest.mark.asyncio
+async def test_insert_material():
+    pass
+
+
+@pytest.mark.asyncio
+async def test_update_material():
+    pass
+
+
+@pytest.mark.asyncio
+async def test_start_material():
+    pass
+
+
+@pytest.mark.asyncio
 async def test_start_material_invalid_date():
     material_id = uuid.UUID("44582686-ff27-4e4b-8d32-8bfdccc085b7")
     date = (database.utcnow() + datetime.timedelta(days=1)).date()
@@ -405,6 +420,11 @@ async def test_start_material_invalid_date():
         await db.start_material(material_id=material_id, start_date=date)
 
     assert "Start date must be less than today" == str(e.value)
+
+
+@pytest.mark.asyncio
+async def test_complete_material():
+    pass
 
 
 @pytest.mark.asyncio
@@ -464,3 +484,23 @@ async def test_complete_material_invalid_date():
         await db.complete_material(material_id=material_id, completion_date=date)
 
     assert str(e.value) == "Completion date must be greater than start date"
+
+
+@pytest.mark.asyncio
+async def test_outline_material():
+    pass
+
+
+@pytest.mark.asyncio
+async def test_repeat_material():
+    pass
+
+
+@pytest.mark.asyncio
+async def test_end_of_reading():
+    pass
+
+
+@pytest.mark.asyncio
+async def test_estimate():
+    pass
