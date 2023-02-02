@@ -533,5 +533,28 @@ def test_get_priority_days(field, expected):
 
 
 @pytest.mark.asyncio
-async def test_get_repeats_analytics():
-    pass
+async def test_get_repeats_analytics_only_repeated():
+    stmt = sa.select([models.Repeats.c.material_id,
+                      sa.func.max(models.Repeats.c.repeated_at).label('last_repeated_at'),
+                      sa.func.count(1).label('repeats_count')])\
+        .group_by(models.Repeats.c.material_id)
+
+    async with database.session() as ses:
+        repeats = {
+            str(row.material_id): row
+            for row in await ses.execute(stmt)
+        }
+
+    result = {
+        material_id: r
+        for material_id, r in (await db.get_repeats_analytics()).items()
+        if r.last_repeated_at
+    }
+    assert len(result) == len(repeats)
+
+    for material_id, repeat in result.items():
+        valid_repeat = repeats[material_id]
+        assert repeat.repeats_count == valid_repeat.repeats_count
+        assert repeat.last_repeated_at == valid_repeat.last_repeated_at
+
+        assert repeat.priority_days == (datetime.datetime.utcnow() - valid_repeat.last_repeated_at).days
