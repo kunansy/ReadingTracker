@@ -530,3 +530,8 @@ def test_calculate_priority_months(field, expected):
 )
 def test_get_priority_days(field, expected):
     assert db._get_priority_days(field) == expected
+
+
+@pytest.mark.asyncio
+async def test_get_repeats_analytics():
+    pass
