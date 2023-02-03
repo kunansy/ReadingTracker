@@ -24,7 +24,6 @@ class MinMax(CustomBaseModel):
 
 engine = create_async_engine(
     settings.DB_URI,
-    encoding='utf-8',
     isolation_level=settings.DB_ISOLATION_LEVEL,
     connect_args={'timeout': settings.DB_TIMEOUT}
 )
