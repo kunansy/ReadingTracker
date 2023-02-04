@@ -16,21 +16,21 @@
   - [System](#system)
 
 ## What is that?
-The project is expected to help one read books:
-1. Keep a list of books to read;
+The project is expected to help you to read books:
+1. Keep a list of books you want to read;
 2. Keep a list of reading and completed materials;
 3. Calculate statistics;
 4. Track the reading log;
-5. Keep notes to help remember some important points from the material.
+5. Take notes to help you remember some important points from the material.
 
 ## Structure
 ### Queue
 Here there are the books, articles, courses etc. to read with some analytics, 
-expected reading duration according to the average read pages.
+the expected reading time according to the mean pages read.
 ![Queue](docs/queue.png)
 
 ## Reading
-Here there are the materials that are currently being read.
+Here there are the materials you are currently reading.
 ![Reading](docs/reading.png)
 
 ## Completed
@@ -38,12 +38,12 @@ Here there are the materials that have been read.
 ![Completed](docs/completed.png)
 
 ## Repeat
-Here there are the materials that have been read and need to be read again, repeat them after a month or more.
-Priority is equal to the number of month since the material was read or repeated the last time.
+Here there are the materials that have been read and need to be read again, repeated after a month or more.
+The priority is equal to the number of months since the material was last read or repeated.
 ![Repeat](docs/repeat.png)
 
 ## Reading log
-Here there are the reading log of the materials. The day is red if 
+Here there is the reading log of the materials. The day is red if 
 there are less than average pages, green if there are more.
 ![Reading log](docs/reading_log.png)
 
@@ -52,11 +52,11 @@ Here there are notes, the most important info from the materials.
 The user can search a note with Manticoresearch.
 ![Notes](docs/notes.png)
 
-One should:
-* Create little notes with one idea per note.
-* Add _tags_ that helps to link some ideas into theme groups: `#health`, `#history`, `#linguistics` etc.
-* Add _links_ that help to link notes together using [Zettelkasten method](https://writingcooperative.com/zettelkasten-how-one-german-scholar-was-so-freakishly-productive-997e4e0ca125).
-* Every note should be linked with another one directly having a link to it: `[[c2ed0ac7-fe4f-4a23-a00c-8f61d16398ea]]`
+You should:
+* Create small notes with one idea in each note.
+* Add _tags_ that helps to link some ideas into topic groups: `#health`, `#history`, `#linguistics` etc.
+* Add _links_ to help connect notes together using [Zettelkasten method](https://writingcooperative.com/zettelkasten-how-one-german-scholar-was-so-freakishly-productive-997e4e0ca125).
+* Each note should be linked to note that has a direct link to it: `[[c2ed0ac7-fe4f-4a23-a00c-8f61d16398ea]]`
 
 ## System
 Here there are reading graphic, backuping and restoring from the Google Drive.
