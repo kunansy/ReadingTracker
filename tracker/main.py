@@ -123,3 +123,7 @@ async def readiness():
         content={},
         status_code=status_code
     )
+
+
+if __name__ == '__main__':
+    asyncio.run(database.create_db())
