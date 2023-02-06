@@ -6,6 +6,7 @@
 
 ## Content
 - [What is that](#what-is-that)
+- [Installation](#installation)
 - [Structure](#structure)
   - [Queue](#queue)
   - [Reading](#reading)
@@ -22,6 +23,12 @@ The project is expected to help you to read books:
 3. Calculate statistics;
 4. Track the reading log;
 5. Take notes to help you remember some important points from the material.
+
+## Installation
+1. Clone the repo (or just `docker-compose.yml`): `git clone https://github.com/kunansy/ReadingTracker`.
+2. Create env file and fill it: `cp env.template .env`.
+3. Run docker container: `docker compose up -d --build --force-recreate`
+4. Migrate the database: `python3 main.py`
 
 ## Structure
 ### Queue
