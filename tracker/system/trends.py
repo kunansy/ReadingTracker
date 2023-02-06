@@ -231,7 +231,8 @@ async def get_span_notes_statistics(*,
 
 def _create_graphic(*,
                     stat: SpanStatistics,
-                    title: str = 'Total items completed') -> str:
+                    title: str = 'Total items completed',
+                    show_mean_line: bool = True) -> str:
     logger.debug("Creating graphic started")
 
     fig, ax = plt.subplots(figsize=(12, 10))
@@ -239,12 +240,18 @@ def _create_graphic(*,
     bar = ax.barh(stat.days, stat.values, edgecolor="white")
     ax.bar_label(bar)
 
+    if show_mean_line:
+        line = plt.axvline(x=stat.mean, color='black', linestyle='-')
+        line.set_label(f'Mean {stat.mean} items')
+
     xlim = -0.5, int(stat.max.amount * 1.2) or 100
 
     ax.set_title(title)
     ax.set_xlabel('Items count')
     ax.set_ylabel('Date')
     ax.set_xlim(xlim)
+    if show_mean_line:
+        ax.legend()
     plt.gca().invert_yaxis()
 
     tmpbuf = BytesIO()
