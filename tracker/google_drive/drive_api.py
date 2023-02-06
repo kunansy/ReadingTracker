@@ -68,16 +68,15 @@ async def send_dump(*,
         'parents': [await _get_folder_id()]
     }
 
-    tmp_file = tempfile.NamedTemporaryFile(mode="wb", delete=False)
-    tmp_file.write(orjson.dumps(dump))
-    tmp_file.close()
+    # don't remove it, store in the data dir
+    with filename.open('wb') as f:
+        f.write(orjson.dumps(dump))
 
     async with _drive_client() as (client, drive):
         await client.as_service_account(
             drive.files.create(
-                upload_file=tmp_file.name, json=file_metadata))
+                upload_file=filename.name, json=file_metadata))
 
-    os.remove(tmp_file.name)
     logger.debug("File sent")
 
 
