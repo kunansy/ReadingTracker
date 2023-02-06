@@ -51,7 +51,7 @@
         {%- endif -%}
 
         <form class="complete" action="/materials/complete/{{ material.material_id }}" METHOD="POST" title="Complete the material id={{ material.material_id }}">
-            <button type="submit" class="submit-button"> Complete </button>
+            <button type="submit" class="submit-button celebrate-btn" > Complete </button>
         </form>
     </div>
     {% endfor %}
@@ -59,6 +59,8 @@
     {% from 'arrows.html' import arrows %}
     {% call arrows() %}
     {% endcall %}
+
+    <script src="{{ url_for('static', path='js/celebrate.js')}}"></script>
 {%- else -%}
     {% import 'errors/not_found.html' as not_found %}
     {% call not_found.not_found('reading materials') %} {% endcall %}
