@@ -62,5 +62,5 @@ function removeParticle (e) {
     e.target.effect.target.remove();
 }
 
-const el = document.getElementById("celebrate-btn");
-el.addEventListener('mouseover', pop);
+const btns = document.querySelectorAll(".celebrate-btn");
+btns.forEach(btn => btn.addEventListener('mouseover', pop));
