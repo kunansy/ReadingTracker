@@ -4,10 +4,13 @@ from typing import AsyncGenerator
 
 import sqlalchemy.sql as sa
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.sql.ddl import DropTable
 
 from tracker.common import settings
 from tracker.common.log import logger
 from tracker.common.schemas import CustomBaseModel
+from tracker.models import models
 
 
 class DatabaseException(Exception):
@@ -59,3 +62,19 @@ async def readiness() -> bool:
     stmt = sa.text("SELECT 1 + 1 = 2")
     async with session() as ses:
         return await ses.scalar(stmt)
+
+
+@compiles(DropTable, "postgresql")
+def _compile_drop_table(element, compiler, **kwargs):
+    return compiler.visit_drop_table(element) + " CASCADE"
+
+
+async def recreate_db() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(models.metadata.drop_all)
+        await conn.run_sync(models.metadata.create_all)
+
+
+async def create_db() -> None:
+    async with engine.begin() as conn:
+        await conn.run_sync(models.metadata.create_all)
