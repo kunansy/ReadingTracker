@@ -82,7 +82,7 @@ class SpanStatistics:
 
     @property
     def median(self) -> float:
-        return round(statistics.mean(self.values), 2)
+        return round(statistics.median(self.values), 2)
 
     @property
     def total(self) -> int:
