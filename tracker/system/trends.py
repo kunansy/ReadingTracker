@@ -171,7 +171,7 @@ async def _calculate_span_reading_statistics(span: TimeSpan) -> dict[datetime.da
     logger.debug("Span reading statistics calculated")
 
     return {
-        row.date.date(): row.count
+        row.date: row.count
         for row in rows
     }
 
