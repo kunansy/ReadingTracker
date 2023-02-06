@@ -6,8 +6,6 @@ from uuid import UUID
 
 import sqlalchemy.sql as sa
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.ext.compiler import compiles
-from sqlalchemy.sql.ddl import DropTable
 from sqlalchemy.sql.schema import Table
 
 from tracker.common import database, settings
@@ -94,17 +92,6 @@ async def get_db_snapshot() -> DBSnapshot:
 
     table_snapshots = [task.result() for task in tasks]
     return DBSnapshot(tables=table_snapshots)
-
-
-@compiles(DropTable, "postgresql")
-def _compile_drop_table(element, compiler, **kwargs):
-    return compiler.visit_drop_table(element) + " CASCADE"
-
-
-async def recreate_db() -> None:
-    async with database.engine.begin() as conn:
-        await conn.run_sync(models.metadata.drop_all)
-        await conn.run_sync(models.metadata.create_all)
 
 
 def _is_uuid(value: str) -> bool:

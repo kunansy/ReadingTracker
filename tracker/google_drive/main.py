@@ -57,7 +57,7 @@ async def restore(*,
         else:
             dump = await drive_api.get_dump()
 
-        await db.recreate_db()
+        await database.recreate_db()
         snapshot = await db.restore_db(conn=ses, dump=dump)
 
         logger.info("Restoring completed, %ss",
