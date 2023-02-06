@@ -122,7 +122,7 @@ async def test_get_median_pages_read_per_day():
     if (length := len(counts)) % 2:
         expected_median = counts[length // 2]
     else:
-        expected_median = (counts[length // 2 - 1] + counts[length // 2 + 1]) / 2
+        expected_median = (counts[length // 2 - 1] + counts[length // 2]) / 2
 
     assert median == expected_median
 
