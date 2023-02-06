@@ -138,7 +138,7 @@ async def test_insert_log_record():
 
     assert log
     assert log.count == count
-    assert log.date.date() == date
+    assert log.date == date
     assert log.material_id == material_id
 
     del_stmt = models.ReadingLog.delete()\

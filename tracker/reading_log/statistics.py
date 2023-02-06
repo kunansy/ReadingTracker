@@ -97,18 +97,18 @@ async def _get_start_date() -> datetime.date:
     stmt = sa.select(sa.func.min(models.ReadingLog.c.date))
 
     async with database.session() as ses:
-        return (await ses.scalar(stmt)).date()
+        return await ses.scalar(stmt)
 
 
 async def _get_last_date() -> datetime.date:
     stmt = sa.select(sa.func.max(models.ReadingLog.c.date))
 
     async with database.session() as ses:
-        return (await ses.scalar(stmt)).date()
+        return await ses.scalar(stmt)
 
 
 async def _get_log_duration() -> int:
-    query = "EXTRACT('days' from max(date) - min(date)) + 1"
+    query = "max(date) - min(date) + 1"
     stmt = sa.select(sa.text(query))\
         .select_from(models.ReadingLog)
 
@@ -124,7 +124,7 @@ async def _get_total_read_pages() -> int:
 
 
 async def _get_lost_days() -> int:
-    query = "EXTRACT('days' from max(date) - min(date)) - count(1) + 1"
+    query = "max(date) - min(date) - count(1) + 1"
     stmt = sa.select(sa.text(query))\
         .select_from(models.ReadingLog)
 
@@ -210,7 +210,7 @@ async def _get_max_record(*,
 
 async def _would_be_total() -> int:
     query = "sum(count) + avg(count) * " \
-            "(EXTRACT('days' from max(date) - min(date)) - count(1) + 1)"
+            "(max(date) - min(date) - count(1) + 1)"
     stmt = sa.select(sa.text(query))\
         .select_from(models.ReadingLog)
 

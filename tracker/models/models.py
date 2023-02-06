@@ -2,7 +2,18 @@ import datetime
 import uuid
 
 import sqlalchemy
-from sqlalchemy import DateTime, Integer, MetaData, Table, Unicode, Boolean, Enum, UniqueConstraint, BigInteger
+from sqlalchemy import (
+    DateTime,
+    Integer,
+    MetaData,
+    Table,
+    Unicode,
+    Boolean,
+    Enum,
+    UniqueConstraint,
+    BigInteger,
+    Date
+)
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 
 from tracker.models import enums
@@ -64,7 +75,7 @@ ReadingLog = Table(
     PrimaryKey('log_id'),
     Column('material_id', ForeignKey('materials.material_id'), index=True),
     Column('count', Integer),
-    Column('date', DateTime, default=_utc_now),
+    Column('date', Date, default=_utc_now),
 
     UniqueConstraint('material_id', 'date', name='uix_reading_log')
 )
