@@ -189,8 +189,12 @@ async def test_get_last_material_started():
 
     stmt = sa.select(models.Materials.c.material_id)\
         .join(models.Statuses,
-              models.Statuses.c.material_id == models.Materials.c.material_id)\
-        .where(models.Statuses.c.completed_at == None)\
+              models.Statuses.c.material_id == models.Materials.c.material_id) \
+        .join(models.ReadingLog,
+              models.ReadingLog.c.material_id == models.Materials.c.material_id,
+              isouter=True)\
+        .where(models.Statuses.c.completed_at == None) \
+        .order_by(models.ReadingLog.c.date.desc())\
         .order_by(models.Statuses.c.started_at.desc())\
         .limit(1)
 
