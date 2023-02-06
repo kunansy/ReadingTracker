@@ -125,5 +125,10 @@ async def readiness():
     )
 
 
+async def init() -> None:
+    await database.create_db()
+    await manticoresearch.init()
+
+
 if __name__ == '__main__':
-    asyncio.run(database.create_db())
+    asyncio.run(init())
