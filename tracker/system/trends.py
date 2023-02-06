@@ -235,6 +235,7 @@ def _create_graphic(*,
     logger.debug("Creating graphic started")
 
     fig, ax = plt.subplots(figsize=(12, 10))
+    # TODO: use plot here
     bar = ax.barh(stat.days, stat.values, edgecolor="white")
     ax.bar_label(bar)
 
