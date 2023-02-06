@@ -25,7 +25,7 @@ The project is expected to help you to read books:
 5. Take notes to help you remember some important points from the material.
 
 ## Installation
-1. Clone the repo (or just `docker-compose.yml`): `git clone https://github.com/kunansy/ReadingTracker`.
+1. Clone the repo: `git clone https://github.com/kunansy/ReadingTracker`.
 2. Create env file and fill it: `cp env.template .env`.
 3. Run docker container: `docker compose up -d --build --force-recreate`
 4. Migrate the database: `python3 main.py`
