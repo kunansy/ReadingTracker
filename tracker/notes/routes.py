@@ -62,8 +62,8 @@ async def get_notes(request: Request,
         notes = _filter_notes(notes=notes, ids=found_note_ids)
     if query := search.query:
         # TODO: filter by material_id too
-        found_note_ids = await manticoresearch.search(query)
-        notes = _filter_notes(notes=notes, ids=found_note_ids)
+        search_results = await manticoresearch.search(query)
+        notes = _filter_notes(notes=notes, ids=search_results.keys())
 
     chapters = db.get_distinct_chapters(notes)
 
