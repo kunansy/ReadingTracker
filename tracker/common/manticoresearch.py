@@ -19,17 +19,8 @@ class ManticoreException(Exception):
 
 class Note(CustomBaseModel):
     note_id: str
-    material_id: str
     content: str
     added_at: datetime.datetime
-    chapter: int
-    page: int
-
-    material_title: str
-    material_authors: str
-    material_type: str
-    material_tags: str
-    material_link: str
 
     @validator('content')
     def remove_tags_from_content(cls, content: str) -> str:
@@ -45,9 +36,7 @@ class SearchResult(CustomBaseModel):
     snippet: str
 
 
-INSERT_QUERY = "INSERT INTO notes (note_id, material_id, content, chapter, page, added_at, " \
-               "material_title, material_authors, material_type, material_tags, material_link) "\
-               "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+INSERT_QUERY = "INSERT INTO notes (note_id, content, added_at) VALUES (%s,%s,%s)"
 
 
 @asynccontextmanager
@@ -73,18 +62,8 @@ async def _cursor() -> AsyncGenerator[MysqlCursor, None]:
 
 def _get_note_stmt() -> sa.Select:
     return sa.select([models.Notes.c.note_id,
-                      models.Notes.c.material_id,
                       models.Notes.c.content,
-                      models.Notes.c.chapter,
-                      models.Notes.c.page,
-                      models.Notes.c.added_at,
-                      models.Materials.c.title.label('material_title'),
-                      models.Materials.c.authors.label('material_authors'),
-                      models.Materials.c.material_type.label('material_type'),
-                      sa.func.coalesce(models.Materials.c.tags, '').label('material_tags'),
-                      sa.func.coalesce(models.Materials.c.link, '').label('material_link')]) \
-        .join(models.Materials,
-              models.Materials.c.material_id == models.Notes.c.material_id)\
+                      models.Notes.c.added_at]) \
         .where(~models.Notes.c.is_deleted)
 
 
@@ -129,16 +108,8 @@ async def _create_table() -> None:
     # search works only with `text` fields
     query = """CREATE TABLE IF NOT EXISTS notes (
         note_id string,
-        material_id string,
         content text,
-        chapter int,
-        page int,
-        added_at timestamp,
-        material_title string,
-        material_authors string,
-        material_type string,
-        material_tags string,
-        material_link string) morphology='lemmatize_ru_all, lemmatize_en_all'
+        added_at timestamp) morphology='lemmatize_ru_all, lemmatize_en_all'
     """
 
     async with _cursor() as cur:
