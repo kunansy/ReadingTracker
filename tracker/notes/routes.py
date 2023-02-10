@@ -57,11 +57,11 @@ async def get_notes(request: Request,
 
     notes = get_notes_task.result()
 
-    if query := search.query:
-        found_note_ids = await manticoresearch.search(query)
-        notes = _filter_notes(notes=notes, ids=found_note_ids)
     if requested_tags := search.requested_tags():
         found_note_ids = _find_tags_intersection(notes, requested_tags)
+        notes = _filter_notes(notes=notes, ids=found_note_ids)
+    if query := search.query:
+        found_note_ids = await manticoresearch.search(query)
         notes = _filter_notes(notes=notes, ids=found_note_ids)
 
     chapters = db.get_distinct_chapters(notes)
