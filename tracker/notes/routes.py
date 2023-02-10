@@ -45,6 +45,13 @@ def _find_tags_intersection(notes: list[db.Note], tags: set[str]) -> set[str]:
     }
 
 
+def _highlight_snippets(notes: list[db.Note],
+                        search_results: dict[str, manticoresearch.SearchResult]) -> None:
+    for note in notes:
+        result = search_results[note.note_id]
+        note.highlight(result.replace_substring, result.snippet)
+
+
 @router.get('/')
 async def get_notes(request: Request,
                     search: schemas.SearchParams = Depends()):
@@ -64,6 +71,7 @@ async def get_notes(request: Request,
         # TODO: filter by material_id too
         search_results = await manticoresearch.search(query)
         notes = _filter_notes(notes=notes, ids=search_results.keys())
+        _highlight_snippets(notes, search_results)
 
     chapters = db.get_distinct_chapters(notes)
 
