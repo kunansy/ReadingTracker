@@ -40,6 +40,11 @@ class Note(CustomBaseModel):
         return content[:index].strip()
 
 
+class SearchResult(CustomBaseModel):
+    replace_substring: str
+    snippet: str
+
+
 INSERT_QUERY = "INSERT INTO notes (note_id, material_id, content, chapter, page, added_at, " \
                "material_title, material_authors, material_type, material_tags, material_link) "\
                "VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)"
