@@ -254,3 +254,10 @@ def test_time_span_negative_size():
         trends.TimeSpan(datetime.date.today(), datetime.date.today(), -1)
 
     assert str(e.value) == "Negative span size passed: -1"
+
+
+def test_time_span_start_better_stop():
+    with pytest.raises(trends.TrendException) as e:
+        trends.TimeSpan(datetime.date(1970, 1, 2), datetime.date(1970, 1, 1), 2)
+
+    assert str(e.value).startswith("Start is better than stop")
