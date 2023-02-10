@@ -39,7 +39,8 @@ def _filter_notes(*,
 @router.get('/')
 async def get_notes(request: Request,
                     material_id: UUID | str | None = None,
-                    query: str | None = None):
+                    query: str | None = None,
+                    tags_query: str | None = None):
     async with asyncio.TaskGroup() as tg:
         get_notes_task = tg.create_task(db.get_notes(material_id=material_id))
         get_titles_task = tg.create_task(db.get_material_with_notes_titles())
@@ -50,6 +51,19 @@ async def get_notes(request: Request,
 
     if query:
         found_note_ids = await manticoresearch.search(query)
+        notes = _filter_notes(notes=notes, ids=found_note_ids)
+    if tags_query:
+        requested_tags = set(
+            tag
+            for tag in tags_query.replace('#', '').split(' ')
+            if tag
+        )
+        found_note_ids = {
+            note.note_id
+            for note in notes
+            # requested tags should be a subset of note tags
+            if note.tags and note.tags >= requested_tags
+        }
         notes = _filter_notes(notes=notes, ids=found_note_ids)
 
     chapters = db.get_distinct_chapters(notes)
@@ -63,6 +77,7 @@ async def get_notes(request: Request,
         'query': query,
         'DATE_FORMAT': settings.DATE_FORMAT,
         'tags': get_tags_task.result(),
+        'tags_query': tags_query,
     }
     if material_id:
         context['material_id'] = material_id
