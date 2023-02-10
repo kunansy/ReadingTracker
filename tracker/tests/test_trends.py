@@ -57,6 +57,7 @@ def test_iterate_over_span(start, size):
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     'start,stop,size', (
+        (datetime.date(2023, 1, 7), datetime.date(2023, 1, 7), 1),
         (datetime.date(2023, 1, 7), datetime.date(2023, 1, 10), 4),
         (datetime.date(2023, 1, 7), datetime.date(2023, 2, 7), 32),
         (datetime.date(2022, 8, 1), datetime.date(2022, 11, 1), 93),
@@ -84,6 +85,7 @@ async def test_calculate_span_reading_statistics(start, stop, size):
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     'start,stop,size', (
+        (datetime.date(2023, 1, 7), datetime.date(2023, 1, 7), 1),
         (datetime.date(2023, 1, 7), datetime.date(2023, 1, 10), 4),
         (datetime.date(2023, 1, 7), datetime.date(2023, 2, 7), 32),
         (datetime.date(2022, 8, 1), datetime.date(2022, 11, 1), 93),
