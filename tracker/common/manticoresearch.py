@@ -112,6 +112,7 @@ async def _drop_table() -> None:
 
 
 async def _create_table() -> None:
+    # search works only with `text` fields
     query = """CREATE TABLE IF NOT EXISTS notes (
         note_id string,
         material_id string,
@@ -119,11 +120,11 @@ async def _create_table() -> None:
         chapter int,
         page int,
         added_at timestamp,
-        material_title text,
-        material_authors text,
-        material_type text,
-        material_tags text,
-        material_link text) morphology='lemmatize_ru_all, lemmatize_en_all'
+        material_title string,
+        material_authors string,
+        material_type string,
+        material_tags string,
+        material_link string) morphology='lemmatize_ru_all, lemmatize_en_all'
     """
 
     async with _cursor() as cur:
