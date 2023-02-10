@@ -133,6 +133,7 @@ async def test_get_span_statistics(start, stop, size):
 
     assert result.start == start
     assert result.stop == stop
+    assert result.span_size == size
     assert result.days == [day.strftime(settings.DATE_FORMAT) for day in trends._iterate_over_span(span, size=size)]
     assert sum(result.values) == sum(values)
     # TODO: here data() should be used for tests
