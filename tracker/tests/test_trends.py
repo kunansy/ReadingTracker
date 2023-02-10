@@ -79,3 +79,30 @@ async def test_calculate_span_reading_statistics(start, stop, size):
         }
 
     assert result == expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'start,stop,size', (
+        (datetime.date(2023, 1, 7), datetime.date(2023, 1, 10), 4),
+        (datetime.date(2023, 1, 7), datetime.date(2023, 2, 7), 32),
+        (datetime.date(2022, 8, 1), datetime.date(2022, 11, 1), 93),
+    )
+)
+async def test_calculate_span_notes_statistics(start, stop, size):
+    span = trends.TimeSpan(start=start, stop=stop, span_size=size)
+    result = await trends._calculate_span_notes_statistics(span=span)
+
+    stmt = sa.select([sa.func.date(models.Notes.c.added_at).label('date'),
+                      sa.func.count(models.Notes.c.note_id)]) \
+        .group_by(sa.func.date(models.Notes.c.added_at)) \
+        .where(sa.func.date(models.Notes.c.added_at) >= span.start) \
+        .where(sa.func.date(models.Notes.c.added_at) <= span.stop)
+
+    async with database.session() as ses:
+        expected = {
+            date: count
+            for date, count in (await ses.execute(stmt)).all()
+        }
+
+    assert result == expected
