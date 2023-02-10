@@ -5,6 +5,7 @@ from typing import AsyncGenerator
 import aiomysql
 import sqlalchemy.sql as sa
 from aiomysql.cursors import Cursor as MysqlCursor
+from pydantic import validator
 
 from tracker.common import database, settings
 from tracker.common.log import logger
@@ -29,6 +30,14 @@ class Note(CustomBaseModel):
     material_type: str
     material_tags: str
     material_link: str
+
+    @validator('content')
+    def remove_tags_from_content(cls, content: str) -> str:
+        """ Remove tags from note content to don't search on it """
+        if (index := content.find('#')) == -1:
+            return content
+
+        return content[:index].strip()
 
 
 INSERT_QUERY = "INSERT INTO notes (note_id, material_id, content, chapter, page, added_at, " \
