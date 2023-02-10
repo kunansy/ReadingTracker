@@ -69,7 +69,7 @@ async def test_calculate_span_reading_statistics(start, stop, size):
     result = await trends._calculate_span_reading_statistics(span=span)
 
     stmt = sa.select([models.ReadingLog.c.date,
-                      sa.func.count(models.ReadingLog.c.count)]) \
+                      sa.func.sum(models.ReadingLog.c.count)]) \
         .where(models.ReadingLog.c.date >= span.start) \
         .where(models.ReadingLog.c.date <= span.stop) \
         .group_by(models.ReadingLog.c.date)

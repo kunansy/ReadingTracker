@@ -166,7 +166,7 @@ async def _calculate_span_reading_statistics(span: TimeSpan) -> dict[datetime.da
     logger.debug("Calculating span reading statistics")
 
     stmt = sa.select([models.ReadingLog.c.date,
-                      sa.func.count(models.ReadingLog.c.count)])\
+                      sa.func.sum(models.ReadingLog.c.count).label('count')])\
         .where(models.ReadingLog.c.date >= span.start)\
         .where(models.ReadingLog.c.date <= span.stop)\
         .group_by(models.ReadingLog.c.date)
