@@ -130,6 +130,7 @@ async def test_get_span_statistics(start, stop, size):
     for index, date in enumerate(trends._iterate_over_span(span, size=size)):
         assert result.data[index].date == date
         assert result.data[index].amount == stat.get(date, 0)
+        assert result.data[index].format() == date.strftime(settings.DATE_FORMAT)
 
     assert result.start == start
     assert result.stop == stop
