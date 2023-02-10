@@ -131,8 +131,8 @@ class TimeSpan:
         if start > stop:
             raise TrendException(f"Start is better than stop: {start} > {stop}")
 
-        # - 1 because the border is included to the range
-        if (stop - start).days != span_size - 1:
+        # + 1 because the border is included to the range
+        if (stop - start).days + 1 != span_size:
             raise TrendException(f"Wrong span got: [{start}; {stop}]")
 
         self.start = start
