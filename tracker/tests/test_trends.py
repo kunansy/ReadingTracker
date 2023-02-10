@@ -193,3 +193,15 @@ async def test_get_span_notes_statistics(size):
         stat=stat, span=span, span_size=size)
 
     assert result == expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'size', (
+        1, 7, 14, 62, 180
+    )
+)
+async def test_create_reading_graphic(size):
+    result = await trends.create_reading_graphic(span_size=size)
+
+    assert result
