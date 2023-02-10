@@ -239,3 +239,11 @@ def test_span_statistics_empty_start():
         stat.start
 
     assert str(e.value) == "Span statistics is empty"
+
+
+def test_span_statistics_empty_stop():
+    stat = trends.SpanStatistics([], span_size=0)
+    with pytest.raises(trends.TrendException) as e:
+        stat.stop
+
+    assert str(e.value) == "Span statistics is empty"
