@@ -106,3 +106,40 @@ async def test_calculate_span_notes_statistics(start, stop, size):
         }
 
     assert result == expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'start,stop,size', (
+        (datetime.date(2023, 1, 7), datetime.date(2023, 1, 7), 1),
+        (datetime.date(2023, 1, 7), datetime.date(2023, 1, 10), 4),
+        (datetime.date(2023, 1, 7), datetime.date(2023, 2, 7), 32),
+        (datetime.date(2022, 8, 1), datetime.date(2022, 11, 1), 93),
+    )
+)
+async def test_get_span_statistics(start, stop, size):
+    span = trends.TimeSpan(start=start, stop=stop, span_size=size)
+    stat = await trends._calculate_span_reading_statistics(span=span)
+
+    result = trends._get_span_statistics(stat=stat, span=span, span_size=size)
+    values = list(stat.values())
+
+    assert len(result.data) == size
+    for index, date in enumerate(trends._iterate_over_span(span, size=size)):
+        assert result.data[index].date == date
+        assert result.data[index].amount == stat.get(date, 0)
+
+    assert result.start == start
+    assert result.stop == stop
+    assert result.days == [day.strftime(settings.DATE_FORMAT) for day in trends._iterate_over_span(span, size=size)]
+    assert sum(result.values) == sum(values)
+    # TODO: here data() should be used for tests
+    # assert result.mean == round(sum(values) / len(values), 2)
+    # assert result.median == expected_median
+    assert result.total == sum(values)
+
+    assert result.max.amount == max(values)
+    if result.min.amount != 0:
+        assert result.min.amount == min(values)
+
+    assert result.zero_count == (span.stop - span.start).days + 1 - len(stat)
