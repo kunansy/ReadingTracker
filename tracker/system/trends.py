@@ -126,6 +126,11 @@ class TimeSpan:
                  start: datetime.date,
                  stop: datetime.date,
                  span_size: int) -> None:
+        if span_size < 0:
+            raise TrendException(f"Negative span size passed: {span_size}")
+        if start > stop:
+            raise TrendException(f"Start is better than stop: {start} > {stop}")
+
         # - 1 because the border is included to the range
         if (stop - start).days != span_size - 1:
             raise TrendException(f"Wrong span got: [{start}; {stop}]")
