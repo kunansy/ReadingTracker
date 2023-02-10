@@ -225,3 +225,19 @@ class DeleteNote(CustomBaseModel):
             material_id=material_id,
             note_id=note_id
         )
+
+
+class SearchParams(CustomBaseModel):
+    material_id: UUID | str | None = None
+    query: constr(strip_whitespace=True) | None = None
+    tags_query: constr(strip_whitespace=True) | None = None
+
+    def requested_tags(self) -> set[str]:
+        if not (tags_query := self.tags_query):
+            return set()
+
+        return set(
+            tag.strip()
+            for tag in tags_query.split()
+            if tag.strip()
+        )
