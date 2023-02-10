@@ -204,12 +204,30 @@ async def update(note_id: str) -> None:
     logger.debug("Note updated")
 
 
+def _get_search_query() -> str:
+    from tracker.notes.schemas import BOLD_MARKER
+
+    # the first highlight is the string which will
+    # be replaced by the found highlighted snippet;
+    # snippet_separator is a symbol around match
+    return f"""
+    SELECT 
+        note_id, 
+        HIGHLIGHT({{snippet_separator='',before_match='',after_match=''}}),
+        HIGHLIGHT({{snippet_separator='',before_match='<span class={BOLD_MARKER}>',after_match='</span>'}}) 
+    FROM notes 
+    WHERE match(%s) 
+    ORDER BY weight() DESC
+    """
+
+
 async def search(query: str) -> set[str]:
     logger.debug("Searching notes like: '%s'", query)
     if not query:
         return set()
 
-    db_query = "SELECT note_id FROM notes where match(%s) ORDER BY weight() DESC"
+    db_query = _get_search_query()
+
     async with _cursor() as cur:
         await cur.execute(db_query, query)
         note_ids = set(
