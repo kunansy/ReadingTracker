@@ -61,6 +61,7 @@ async def get_notes(request: Request,
         found_note_ids = _find_tags_intersection(notes, requested_tags)
         notes = _filter_notes(notes=notes, ids=found_note_ids)
     if query := search.query:
+        # TODO: filter by material_id too
         found_note_ids = await manticoresearch.search(query)
         notes = _filter_notes(notes=notes, ids=found_note_ids)
 
