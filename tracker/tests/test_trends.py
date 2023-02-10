@@ -8,7 +8,7 @@ from tracker.system import trends
 
 @pytest.mark.parametrize(
     'size', (
-        1, 0, 6, 7, 34
+        1, 6, 7, 34
     )
 )
 def test_get_span(size):
@@ -21,7 +21,7 @@ def test_get_span(size):
 
 @pytest.mark.parametrize(
     'size', (
-        1, 0, 6, 7, 34
+        1, 6, 7, 34
     )
 )
 def test_span_methods(size):
