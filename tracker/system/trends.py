@@ -166,9 +166,10 @@ async def _calculate_span_reading_statistics(span: TimeSpan) -> dict[datetime.da
     logger.debug("Calculating span reading statistics")
 
     stmt = sa.select([models.ReadingLog.c.date,
-                      models.ReadingLog.c.count])\
+                      sa.func.count(models.ReadingLog.c.count)])\
         .where(models.ReadingLog.c.date >= span.start)\
-        .where(models.ReadingLog.c.date <= span.stop)
+        .where(models.ReadingLog.c.date <= span.stop)\
+        .group_by(models.ReadingLog.c.date)
 
     async with database.session() as ses:
         rows = (await ses.execute(stmt)).all()
