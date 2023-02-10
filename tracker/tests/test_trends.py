@@ -247,3 +247,10 @@ def test_span_statistics_empty_stop():
         stat.stop
 
     assert str(e.value) == "Span statistics is empty"
+
+
+def test_time_span_negative_size():
+    with pytest.raises(trends.TrendException) as e:
+        trends.TimeSpan(datetime.date.today(), datetime.date.today(), -1)
+
+    assert str(e.value) == "Negative span size passed: -1"
