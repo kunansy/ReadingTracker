@@ -231,3 +231,11 @@ def test_span_statistics_init_exception(size):
         trends.SpanStatistics([], span_size=size)
 
     assert str(e.value) == f"A span should contains exactly {size} days, but {0} found"
+
+
+def test_span_statistics_empty_start():
+    stat = trends.SpanStatistics([], span_size=0)
+    with pytest.raises(trends.TrendException) as e:
+        stat.start
+
+    assert str(e.value) == "Span statistics is empty"
