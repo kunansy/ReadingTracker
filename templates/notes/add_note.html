@@ -38,10 +38,12 @@
             <textarea class="input altch" id="input-content" placeholder="Enter a content" name="content" title="Text of the note">{{ content }}</textarea>
             <input class="input" type="number" placeholder="Enter a {{ chapter_number }}" name="chapter" value="{{ chapter }}" title="{{ chapter_number.capitalize() }} where the note might be found">
             <input class="input" type="number" placeholder="Enter a {{ page_number }}" name="page" value="{{ page }}" title="{{ page_number.capitalize() }} where the note might be found">
-            <button type="submit" class="submit-button"> Add </button>
+            <button type="submit" class="submit-button celebrate-btn"> Add </button>
         </fieldset>
         </form>
     </div>
+
+    <script src="{{ url_for('static', path='js/celebrate.js')}}"></script>
 
     {% if tags %}
     <ul class="tags-list" title="Note tags">
