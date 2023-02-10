@@ -219,3 +219,15 @@ async def test_create_notes_graphic(size):
     result = await trends.create_notes_graphic(span_size=size)
 
     assert result
+
+
+@pytest.mark.parametrize(
+    'size', (
+        1, 5, 7
+    )
+)
+def test_span_statistics_init_exception(size):
+    with pytest.raises(trends.TrendException) as e:
+        trends.SpanStatistics([], span_size=size)
+
+    assert str(e.value) == f"A span should contains exactly {size} days, but {0} found"
