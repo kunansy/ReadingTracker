@@ -226,22 +226,25 @@ def _get_search_query() -> str:
     """
 
 
-async def search(query: str) -> set[str]:
+async def search(query: str) -> dict[str, SearchResult]:
     logger.debug("Searching notes like: '%s'", query)
     if not query:
-        return set()
+        return {}
 
     db_query = _get_search_query()
 
     async with _cursor() as cur:
         await cur.execute(db_query, query)
-        note_ids = set(
-            row[0]
+        results = {
+            row[0]: SearchResult(
+                replace_substring=row[1],
+                snippet=row[2]
+            )
             for row in await cur.fetchall()
-        )
+        }
 
-    logger.debug("%s match notes found", len(note_ids))
-    return note_ids
+    logger.debug("%s match notes found", len(results))
+    return results
 
 
 async def readiness() -> bool:
