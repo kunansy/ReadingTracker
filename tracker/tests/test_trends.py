@@ -135,6 +135,7 @@ async def test_get_span_statistics(start, stop, size):
         assert result.data[index].format() == date.strftime(settings.DATE_FORMAT)
         assert str(result.data[index]) == f"{date.strftime(settings.DATE_FORMAT)}: {stat.get(date, 0)}"
         total_values += [stat.get(date, 0)]
+    total_values.sort()
 
     assert result.start == start
     assert result.stop == stop
