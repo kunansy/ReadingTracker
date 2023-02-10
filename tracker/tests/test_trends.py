@@ -1,8 +1,10 @@
 import datetime
 
 import pytest
+import sqlalchemy.sql as sa
 
-from tracker.common import settings
+from tracker.common import settings, database
+from tracker.models import models
 from tracker.system import trends
 
 
@@ -50,3 +52,30 @@ def test_iterate_over_span(start, size):
     assert len(result) == size
     for index, day in enumerate(range(size)):
         assert result[index] == start + datetime.timedelta(days=day)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    'start,stop,size', (
+        (datetime.date(2023, 1, 7), datetime.date(2023, 1, 10), 4),
+        (datetime.date(2023, 1, 7), datetime.date(2023, 2, 7), 32),
+        (datetime.date(2022, 8, 1), datetime.date(2022, 11, 1), 93),
+    )
+)
+async def test_calculate_span_reading_statistics(start, stop, size):
+    span = trends.TimeSpan(start=start, stop=stop, span_size=size)
+    result = await trends._calculate_span_reading_statistics(span=span)
+
+    stmt = sa.select([models.ReadingLog.c.date,
+                      sa.func.count(models.ReadingLog.c.count)]) \
+        .where(models.ReadingLog.c.date >= span.start) \
+        .where(models.ReadingLog.c.date <= span.stop) \
+        .group_by(models.ReadingLog.c.date)
+
+    async with database.session() as ses:
+        expected = {
+            date: count
+            for date, count in (await ses.execute(stmt)).all()
+        }
+
+    assert result == expected
