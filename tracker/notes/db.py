@@ -44,6 +44,9 @@ class Note(CustomBaseModel):
                f"Material ID: {self.material_id}\n\n" \
                f"{self}"
 
+    def highlight(self, from_: str, to: str) -> None:
+        self.content = self.content.replace(from_, to)
+
     def __str__(self) -> str:
         return schemas.demark_note(self.content)
 
