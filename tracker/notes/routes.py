@@ -44,6 +44,7 @@ async def get_notes(request: Request,
         get_notes_task = tg.create_task(db.get_notes(material_id=material_id))
         get_titles_task = tg.create_task(db.get_material_with_notes_titles())
         get_material_types_task = tg.create_task(db.get_material_types())
+        get_tags_task = tg.create_task(db.get_sorted_tags(material_id=material_id))
 
     notes = get_notes_task.result()
 
@@ -60,7 +61,8 @@ async def get_notes(request: Request,
         'material_types': get_material_types_task.result(),
         'chapters': chapters,
         'query': query,
-        'DATE_FORMAT': settings.DATE_FORMAT
+        'DATE_FORMAT': settings.DATE_FORMAT,
+        'tags': get_tags_task.result(),
     }
     if material_id:
         context['material_id'] = material_id
