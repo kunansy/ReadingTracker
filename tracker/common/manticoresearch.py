@@ -207,7 +207,7 @@ async def search(query: str) -> set[str]:
             for row in await cur.fetchall()
         )
 
-    logger.debug("%s match notes found")
+    logger.debug("%s match notes found", len(note_ids))
     return note_ids
 
 
