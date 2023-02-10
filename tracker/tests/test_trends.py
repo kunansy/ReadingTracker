@@ -261,3 +261,11 @@ def test_time_span_start_better_stop():
         trends.TimeSpan(datetime.date(1970, 1, 2), datetime.date(1970, 1, 1), 2)
 
     assert str(e.value).startswith("Start is better than stop")
+
+
+def test_time_span_wrong_span_size():
+    today = datetime.date.today()
+    with pytest.raises(trends.TrendException) as e:
+        trends.TimeSpan(today - datetime.timedelta(days=1), today, 1)
+
+    assert str(e.value).startswith("Wrong span got")
