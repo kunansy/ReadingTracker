@@ -128,20 +128,26 @@ async def test_get_span_statistics(start, stop, size):
     values = list(stat.values())
 
     assert len(result.data) == size
-    total_count = Decimal(0)
+    total_values = []
     for index, date in enumerate(trends._iterate_over_span(span, size=size)):
         assert result.data[index].date == date
         assert result.data[index].amount == stat.get(date, 0)
         assert result.data[index].format() == date.strftime(settings.DATE_FORMAT)
-        total_count += 1
+        total_values += [stat.get(date, 0)]
 
     assert result.start == start
     assert result.stop == stop
     assert result.span_size == size
     assert result.days == [day.strftime(settings.DATE_FORMAT) for day in trends._iterate_over_span(span, size=size)]
     assert sum(result.values) == sum(values)
-    assert result.mean == round(sum(values) / total_count, 2)
-    # assert result.median == expected_median
+    assert result.mean == round(sum(values) / Decimal(len(total_values)), 2)
+
+    if (length := len(total_values)) % 2:
+        expected_median = total_values[length // 2]
+    else:
+        expected_median = (total_values[length // 2 - 1] + total_values[length // 2]) / 2
+
+    assert result.median == expected_median
     assert result.total == sum(values)
 
     assert result.max.amount == max(values)
