@@ -75,7 +75,7 @@ async def send_dump(*,
     async with _drive_client() as (client, drive):
         await client.as_service_account(
             drive.files.create(
-                upload_file=filename.name, json=file_metadata))
+                upload_file=filename, json=file_metadata))
 
     logger.debug("File sent")
 
