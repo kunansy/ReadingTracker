@@ -1,7 +1,7 @@
 import asyncio
 import datetime
-from uuid import UUID
 from decimal import Decimal
+from uuid import UUID
 
 import sqlalchemy.sql as sa
 
@@ -273,32 +273,28 @@ async def _get_material_statistics(*,
                                    logs: list[log_db.LogRecord] | None = None,
                                    completion_dates: dict[str, datetime.datetime] | None = None) -> MaterialStatistics:
     """ Calculate statistics for reading or completed material """
-    from tracker.reading_log.statistics import contains, get_m_log_statistics
+    from tracker.reading_log.statistics import get_m_log_statistics
 
     material, status = material_status.material, material_status.status
     material_id = material.material_id
 
     logger.debug("Calculating statistics material_id=%s", material_id)
 
-    if was_reading := await contains(material_id=material_id):
-        log_st = await get_m_log_statistics(
-            material_id=material_id, logs=logs, completion_dates=completion_dates)
+    log_st = await get_m_log_statistics(
+        material_id=material_id, logs=logs, completion_dates=completion_dates)
+    if log_st:
         mean, total = log_st.mean, log_st.total
         duration, lost_time = log_st.duration, log_st.lost_time
 
         max_record, min_record = log_st.max_record, log_st.min_record
     else:
-        mean = 1
+        mean = round(mean_total)
         total = duration = lost_time = 0
         max_record = min_record = None
 
     if status.completed_at is None:
         remaining_pages = material.pages - total
-
         remaining_days = round(remaining_pages / mean)
-        if not was_reading:
-            remaining_days = round(remaining_pages / mean_total)
-
         would_be_completed = database.utcnow() + datetime.timedelta(days=remaining_days)
     else:
         would_be_completed = remaining_days = remaining_pages = None # type: ignore
