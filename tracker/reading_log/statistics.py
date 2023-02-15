@@ -59,8 +59,11 @@ class TrackerStatistics(CustomBaseModel):
 async def get_m_log_statistics(*,
                                material_id: str,
                                logs: list[db.LogRecord] | None = None,
-                               completion_dates: dict[str, datetime.datetime] | None = None) -> LogStatistics:
+                               completion_dates: dict[str, datetime.datetime] | None = None) -> LogStatistics | None:
     """ Get material statistics from logs """
+    if not await contains(material_id=material_id):
+        return None
+
     async with asyncio.TaskGroup() as tg:
         if not logs:
             get_log_records_task = tg.create_task(db.get_log_records())
