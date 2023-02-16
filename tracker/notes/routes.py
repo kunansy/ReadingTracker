@@ -218,8 +218,9 @@ async def update_note(note: schemas.UpdateNote = Depends()):
 async def delete_note(note_id: UUID = Body(embed=True)):
     note_id = str(note_id)
 
-    await db.delete_note(note_id=note_id)
-    await manticoresearch.delete(note_id=note_id)
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(db.delete_note(note_id=note_id))
+        tg.create_task(manticoresearch.delete(note_id=note_id))
 
 
 @router.get('/links',
