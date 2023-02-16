@@ -133,4 +133,46 @@ const addMaterialContextMenuItems = (material) => {
     contextMenu.appendChild(openMaterialNotesBtn(material.id));
 }
 
+
+const editNoteBtn = (note_id) => {
+    const node = document.createElement("div");
+    node.className = "item";
+    node.onclick = () => {window.open('/notes/update-view?note_id=' + note_id)};
+    node.textContent = "Edit note";
+
+    return node;
+}
+
+const deleteNote = async (note_id) => {
+    await fetch("/notes/delete", {
+        method: 'DELETE',
+        headers: {
+            'Content-type': 'application/json'
+        },
+        body: JSON.stringify({'note_id': note_id})
+    });
+
+    await window.location.reload();
+}
+
+const deleteNoteBth = (note_id) => {
+    const node = document.createElement("div");
+    node.className = "item";
+    node.onclick = async () => await deleteNote(note_id);
+    node.textContent = "Delete note";
+
+    return node;
+}
+
+const addNoteContextMenuItems = (note) => {
+    // ? on duplicate click don't add items again;
+    if (contextMenu.children.length > 0) {
+        return;
+    }
+
+    contextMenu.appendChild(editNoteBtn(note.id));
+    contextMenu.appendChild(deleteNoteBth(note.id));
+}
+
 addContextMenu('.material', addMaterialContextMenuItems);
+addContextMenu('.note', addNoteContextMenuItems);
