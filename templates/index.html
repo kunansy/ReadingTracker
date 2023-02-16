@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', path='/style.css') }}">
     <link rel="shortcut icon" href="#">
-    <script src="{{ url_for('static', path='js/common.js')}}"></script>
     {% block style %} {% endblock style %}
 </head>
 <body>
@@ -28,6 +27,7 @@
     {%- block main -%} {%- endblock main -%}
 </main>
 
+<script src="{{ url_for('static', path='js/common.js')}}"></script>
 <footer id="footer"> {% block footer %} {% endblock footer %} </footer>
 </body>
 </html>
