@@ -214,19 +214,6 @@ class UpdateNote(Note):
         )
 
 
-class DeleteNote(CustomBaseModel):
-    note_id: UUID
-    material_id: UUID
-
-    def __init__(self,
-                 material_id: UUID = Form(...),
-                 note_id: UUID = Form(...)):
-        super().__init__(
-            material_id=material_id,
-            note_id=note_id
-        )
-
-
 class SearchParams(CustomBaseModel):
     material_id: UUID | str | None = None
     query: constr(strip_whitespace=True) | None = None
