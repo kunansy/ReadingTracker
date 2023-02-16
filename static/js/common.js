@@ -107,6 +107,11 @@ scope.addEventListener("click", (e) => {
     }
 });
 
+window.onscroll = () => {
+    contextMenu.classList.remove("visible");
+    contextMenu.innerHTML = '';
+};
+
 const createContextMenuItem = (name, onclickFn) => {
     const node = document.createElement("div");
     node.className = "item";
