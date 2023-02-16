@@ -83,7 +83,7 @@
         {% for chapter, note_c in notes_m | groupby('chapter') %}
             <h4 class="chapter_number" id="material-{{material_id}}-chapter-{{chapter}}"> {{ chapter_name }}: {{ chapter }} </h4>
             {% for note in note_c %}
-            <div class="note hover" onclick=openNote("{{ note.note_id }}")>
+            <div class="note hover" id="{{ note.note_id }}">
                 <p class="counter"> {{ index.value }} / {{ length }}</p>
                 <p class="note-content"> {{ note.content | safe }} </p>
                 <p class="note-page"> {{ page_name }}: {{ note.page }} </p>
