@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", () => {
             input.value += '<span class="sup"></span>';
         }
     }
-    for (textInput of textInputs) {
+    for (let textInput of textInputs) {
         textInput.addEventListener('keyup', onClick, true);
     }
 })
