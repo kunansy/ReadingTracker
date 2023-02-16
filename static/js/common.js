@@ -76,24 +76,25 @@ const normalizePosition = (mouseX, mouseY) => {
 const addContextMenu = (selector, addContextMenuItemsFn) => {
     scope.querySelectorAll(selector).forEach((item) => {
         item.addEventListener("contextmenu", (event) => {
-            if (item.contains(event.target)) {
-                addContextMenuItemsFn(item);
-
-                event.preventDefault();
-
-                const { clientX: mouseX, clientY: mouseY } = event;
-
-                const { normalizedX, normalizedY } = normalizePosition(mouseX, mouseY);
-
-                contextMenu.classList.remove("visible");
-
-                contextMenu.style.top = `${normalizedY}px`;
-                contextMenu.style.left = `${normalizedX}px`;
-
-                setTimeout(() => {
-                    contextMenu.classList.add("visible");
-                });
+            if (!item.contains(event.target)) {
+                return;
             }
+            addContextMenuItemsFn(item);
+
+            event.preventDefault();
+
+            const { clientX: mouseX, clientY: mouseY } = event;
+
+            const { normalizedX, normalizedY } = normalizePosition(mouseX, mouseY);
+
+            contextMenu.classList.remove("visible");
+
+            contextMenu.style.top = `${normalizedY}px`;
+            contextMenu.style.left = `${normalizedX}px`;
+
+            setTimeout(() => {
+                contextMenu.classList.add("visible");
+            });
         });
     });
 }
