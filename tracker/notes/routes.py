@@ -2,7 +2,7 @@ import asyncio
 from typing import Any, Iterable
 from uuid import UUID
 
-from fastapi import APIRouter, Request, Depends
+from fastapi import APIRouter, Request, Depends, Body
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -214,18 +214,12 @@ async def update_note(note: schemas.UpdateNote = Depends()):
     return RedirectResponse(redirect_url, status_code=302)
 
 
-@router.post('/delete',
-             response_class=RedirectResponse)
-async def delete_note(note: schemas.DeleteNote = Depends()):
-    note_id = str(note.note_id)
+@router.delete('/delete', status_code=201)
+async def delete_note(note_id: UUID = Body(embed=True)):
+    note_id = str(note_id)
 
     await db.delete_note(note_id=note_id)
     await manticoresearch.delete(note_id=note_id)
-
-    redirect_path = router.url_path_for(get_notes.__name__)
-    redirect_url = f"{redirect_path}?material_id={note.material_id}"
-
-    return RedirectResponse(redirect_url, status_code=302)
 
 
 @router.get('/links',
