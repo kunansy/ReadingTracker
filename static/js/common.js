@@ -106,22 +106,27 @@ scope.addEventListener("click", (e) => {
     }
 });
 
-const editMaterialBtn = (material_id) => {
+const createContextMenuItem = (name, onclickFn) => {
     const node = document.createElement("div");
     node.className = "item";
-    node.onclick = () => {window.open('/materials/update-view/?material_id=' + material_id)};
-    node.textContent = "Edit";
+    node.onclick = onclickFn;
+    node.textContent = name;
 
     return node;
 }
 
-const openMaterialNotesBtn = (material_id) => {
-    const node = document.createElement("div");
-    node.className = "item";
-    node.onclick = () => {window.open('/notes?material_id=' + material_id)};
-    node.textContent = "Open notes";
+const editMaterialBtn = (material_id) => {
+    return createContextMenuItem(
+        "Edit",
+        () => {window.open('/materials/update-view/?material_id=' + material_id)}
+    );
+}
 
-    return node;
+const openMaterialNotesBtn = (material_id) => {
+    return createContextMenuItem(
+        "Open notes",
+        () => {window.open('/notes?material_id=' + material_id)}
+    );
 }
 
 const addMaterialContextMenuItems = (material) => {
@@ -135,12 +140,10 @@ const addMaterialContextMenuItems = (material) => {
 
 
 const editNoteBtn = (note_id) => {
-    const node = document.createElement("div");
-    node.className = "item";
-    node.onclick = () => {window.open('/notes/update-view?note_id=' + note_id)};
-    node.textContent = "Edit note";
-
-    return node;
+    return createContextMenuItem(
+        "Edit",
+        () => {window.open('/notes/update-view?note_id=' + note_id)}
+    );
 }
 
 const deleteNote = async (note_id) => {
@@ -156,12 +159,10 @@ const deleteNote = async (note_id) => {
 }
 
 const deleteNoteBth = (note_id) => {
-    const node = document.createElement("div");
-    node.className = "item";
-    node.onclick = async () => await deleteNote(note_id);
-    node.textContent = "Delete note";
-
-    return node;
+    return createContextMenuItem(
+        "Delete",
+        async () => {await deleteNote(note_id)}
+    );
 }
 
 const addNoteContextMenuItems = (note) => {
