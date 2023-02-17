@@ -1,7 +1,9 @@
+from pathlib import Path
 from typing import TypedDict
 
+import pydub
 import speech_recognition
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Body
 
 from tracker.common.log import logger
 
@@ -19,14 +21,25 @@ class RecognitionResult(TypedDict):
     confidence: float
 
 
-@router.post("/listen")
-async def listen_text():
-    # TODO: yes, it's a crutch. Waiting for normal front
-    global text
-    text = ''
+@router.post("/transcript")
+async def listen_text(data: bytes = Body()):
+
+    content = [
+        row
+        for row in data.split(b'\r\n')[4:]
+        if row != b'' and not row.startswith(b'--')
+    ]
+    file = b'\r\n'.join(content)
+    path = Path('tmp.wav')
+
+    with path.open('wb') as f:
+        f.write(file)
+
+    sound = pydub.AudioSegment.from_file(path)
+    sound.export(path, format="wav")
 
     logger.info("Start listening")
-    audio = listen()
+    audio = read_file(path)
 
     logger.info("Audio recorded, start recognition")
     result = recognizer.recognize_google(audio, language="ru", show_all=True)
