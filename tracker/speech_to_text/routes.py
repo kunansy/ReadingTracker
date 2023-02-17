@@ -54,6 +54,11 @@ def listen() -> speech_recognition.AudioData:
     return audio
 
 
+def read_file(path: Path) -> speech_recognition.AudioData:
+    with speech_recognition.AudioFile(str(path)) as source:
+        return recognizer.record(source)
+
+
 def get_best_result(results: dict) -> RecognitionResult:
     if not (texts := results.get('alternative')):
         raise ValueError("No results found")
