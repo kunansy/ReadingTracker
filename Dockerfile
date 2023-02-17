@@ -5,7 +5,7 @@ ENV PYTHONUNBUFFERED 1
 
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get -y install curl gcc \
+    && apt-get -y install curl gcc portaudio19-dev flac \
     && pip install -U pip --no-cache-dir \
     && pip install poetry --no-cache-dir \
     && rm -rf /var/lib/apt/lists/*
