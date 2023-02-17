@@ -30,6 +30,8 @@ aiomysql = "^0.1.1"
 aiogoogle = "~5.1.0"
 networkx = "~3.0"
 pyvis = "^0.3.1"
+speechrecognition = "~3.9.0"
+pyaudio = "~0.2.13"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "~1.0.0"
