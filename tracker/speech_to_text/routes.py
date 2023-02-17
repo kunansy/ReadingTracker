@@ -6,6 +6,7 @@ import speech_recognition
 from fastapi import APIRouter, HTTPException, Body
 
 from tracker.common.log import logger
+from tracker.speech_to_text import schemas
 
 
 router = APIRouter(
@@ -21,7 +22,8 @@ class RecognitionResult(TypedDict):
     confidence: float
 
 
-@router.post("/transcript")
+@router.post("/transcript",
+             response_model=schemas.TranscriptTextResponse)
 async def listen_text(data: bytes = Body()):
 
     content = [
@@ -46,9 +48,10 @@ async def listen_text(data: bytes = Body()):
 
     logger.debug("Result got: %s", result)
     best = get_best_result(result)
-    text = best['transcript']
 
     logger.info("Transcript got: %s", best)
+
+    return best
 
 
 @router.get("/result")
