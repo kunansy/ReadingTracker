@@ -184,48 +184,6 @@ const addNoteContextMenuItems = (note) => {
 addContextMenu('.material', addMaterialContextMenuItems);
 addContextMenu('.note', addNoteContextMenuItems);
 
-const recordAudio = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mediaRecorder = new MediaRecorder(stream);
-    const audioChunks = [];
-
-    mediaRecorder.addEventListener("dataavailable", event => {
-      audioChunks.push(event.data);
-    });
-
-    document.getElementById("start").addEventListener("click", () => {
-        mediaRecorder.start();
-    });
-    document.getElementById("stop").addEventListener("click", async () => {
-        const audio = await stop();
-        let fd = new FormData();
-        fd.append("data", audio.audioBlob, "f.wav");
-
-        const resp = await fetch(
-            '/speech-to-text/transcript',
-            {
-                method: 'POST',
-                body: fd,
-                headers: {'Content-Type': 'multipart/form-data'}
-            }
-        );
-
-        let json = await resp.json();
-        document.getElementById('text-area').innerText = json['transcript'];
-    })
-
-    const stop = () =>
-      new Promise(resolve => {
-        mediaRecorder.addEventListener("stop", () => {
-          const audioBlob = new Blob(audioChunks, { type: "audio/mpeg" });
-          resolve({ audioBlob });
-        });
-
-        mediaRecorder.stop();
-      });
-};
-
 document.addEventListener("DOMContentLoaded", async () => {
-    await recordAudio();
     addHotkeys();
 });
