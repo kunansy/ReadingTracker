@@ -2,7 +2,6 @@
 
 {% block style %}
 <link rel="stylesheet" href="{{ url_for('static', path='notes/add_note.css') }}">
-<script src="{{ url_for('static', path='js/notes.js')}}"></script>
 {% endblock style %}
 
 {% block header %}
@@ -71,4 +70,5 @@
 </ul>
 {% endif %}
 
+<script src="{{ url_for('static', path='js/notes.js')}}"></script>
 {% endblock main %}
