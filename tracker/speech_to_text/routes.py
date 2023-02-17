@@ -40,10 +40,10 @@ async def listen_text(data: bytes = Body()):
     sound = pydub.AudioSegment.from_file(path)
     sound.export(path, format="wav")
 
-    logger.info("Start listening")
+    logger.info("Start reading file")
     audio = read_file(path)
 
-    logger.info("Audio recorded, start recognition")
+    logger.info("File read, start recognition")
     result = recognizer.recognize_google(audio, language="ru", show_all=True)
 
     logger.debug("Result got: %s", result)
