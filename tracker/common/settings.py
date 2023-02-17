@@ -60,4 +60,7 @@ with env.prefixed('MANTICORE_MYSQL_'):
     MANTICORE_MYSQL_PORT = env.int('PORT', 9306)
     MANTICORE_MYSQL_DB_NAME = env('DB_NAME', 'Manticore')
 
+path = os.environ.get('PATH')
 os.environ.clear()
+
+os.environ['PATH'] = path
