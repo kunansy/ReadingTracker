@@ -64,13 +64,6 @@ async def get_transcript():
     }
 
 
-def listen() -> speech_recognition.AudioData:
-    with speech_recognition.Microphone() as source:
-        audio = recognizer.listen(source)
-
-    return audio
-
-
 def read_file(path: Path) -> speech_recognition.AudioData:
     with speech_recognition.AudioFile(str(path)) as source:
         return recognizer.record(source)
