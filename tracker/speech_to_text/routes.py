@@ -5,6 +5,7 @@ import pydub
 import speech_recognition
 from fastapi import APIRouter, Body
 
+from tracker.common import settings
 from tracker.common.log import logger
 from tracker.speech_to_text import schemas
 
@@ -51,7 +52,7 @@ def get_file_content(data: bytes) -> bytes:
 
 
 def dump(content: bytes) -> Path:
-    path = Path('tmp.wav')
+    path = settings.DATA_DIR / 'tmp.wav'
     with path.open('wb') as f:
         f.write(content)
 
