@@ -25,7 +25,7 @@ const recordAudio = async () => {
     document.getElementById("stop").addEventListener("click", async () => {
         const audio = await stop();
         let fd = new FormData();
-        fd.append("data", audio.audioBlob, "f.wav");
+        fd.append("data", audio.audioBlob, "tmp.wav");
 
         const resp = await fetch(
             '/speech-to-text/transcript',
