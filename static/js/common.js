@@ -2,7 +2,7 @@ async function openNotes(material_id) {
     await window.open('/notes?material_id=' + material_id);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
+const addHotkeys = () => {
     let textInputs = document.querySelectorAll('.altch');
 
     let onClick = (e) => {
@@ -36,7 +36,7 @@ document.addEventListener("DOMContentLoaded", () => {
     for (let textInput of textInputs) {
         textInput.addEventListener('keyup', onClick, true);
     }
-})
+};
 
 const contextMenu = document.getElementById("context-menu");
 const scope = document.querySelector("body");
@@ -227,4 +227,5 @@ const recordAudio = async () => {
 
 document.addEventListener("DOMContentLoaded", async () => {
     await recordAudio();
+    addHotkeys();
 });
