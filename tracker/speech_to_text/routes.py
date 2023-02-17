@@ -24,7 +24,7 @@ class RecognitionResult(TypedDict):
 
 @router.post("/transcript",
              response_model=schemas.TranscriptTextResponse)
-async def listen_text(data: bytes = Body()):
+async def transcript_speech(data: bytes = Body()):
 
     content = [
         row
