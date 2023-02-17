@@ -63,4 +63,5 @@ with env.prefixed('MANTICORE_MYSQL_'):
 path = os.environ.get('PATH')
 os.environ.clear()
 
-os.environ['PATH'] = path
+if path:
+    os.environ['PATH'] = path
