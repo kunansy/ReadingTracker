@@ -3,7 +3,7 @@ from typing import TypedDict
 
 import pydub
 import speech_recognition
-from fastapi import APIRouter, HTTPException, Body
+from fastapi import APIRouter, Body
 
 from tracker.common.log import logger
 from tracker.speech_to_text import schemas
@@ -13,7 +13,6 @@ router = APIRouter(
     prefix="/speech-to-text",
     tags=['Speech Recognition'],
 )
-text: str = ''
 recognizer = speech_recognition.Recognizer()
 
 
@@ -41,16 +40,6 @@ async def transcript_speech(data: bytes = Body()):
     logger.info("Transcript got: %s", best)
 
     return best
-
-
-@router.get("/result")
-async def get_transcript():
-    if not text:
-        raise HTTPException(status_code=404, detail="Text not found")
-
-    return {
-        'transcript': text
-    }
 
 
 def get_file_content(data: bytes) -> bytes:
