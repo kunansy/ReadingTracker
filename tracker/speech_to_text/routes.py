@@ -31,6 +31,7 @@ async def listen_text():
     logger.info("Audio recorded, start recognition")
     result = recognizer.recognize_google(audio, language="ru", show_all=True)
 
+    logger.debug("Result got: %s", result)
     best = get_best_result(result)
     text = best['transcript']
 
