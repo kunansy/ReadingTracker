@@ -22,16 +22,18 @@ class RecognitionResult(TypedDict):
     confidence: float
 
 
-@router.post("/transcript",
-             response_model=schemas.TranscriptTextResponse)
-async def transcript_speech(data: bytes = Body()):
-
-    content = [
+def get_file_content(data: bytes) -> bytes:
+    return b'\r\n'.join(
         row
         for row in data.split(b'\r\n')[4:]
         if row != b'' and not row.startswith(b'--')
-    ]
-    file = b'\r\n'.join(content)
+    )
+
+
+@router.post("/transcript",
+             response_model=schemas.TranscriptTextResponse)
+async def transcript_speech(data: bytes = Body()):
+    file = get_file_content(data)
     path = Path('tmp.wav')
 
     with path.open('wb') as f:
