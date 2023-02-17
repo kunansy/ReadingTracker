@@ -37,7 +37,10 @@ const recordAudio = async () => {
         );
 
         let json = await resp.json();
-        document.getElementById('text-area').innerText = json['transcript'];
+        let noteContent = document.getElementById('input-content');
+
+        noteContent.textContent = noteContent.value + ' ' + json['transcript'];
+        noteContent.value = noteContent.textContent;
     })
 
     const stop = () =>
