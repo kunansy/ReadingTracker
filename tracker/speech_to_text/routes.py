@@ -38,14 +38,17 @@ def dump(content: bytes) -> Path:
     return path
 
 
+def fix_file_format(path: Path) -> None:
+    sound = pydub.AudioSegment.from_file(path)
+    sound.export(path, format="wav")
+
+
 @router.post("/transcript",
              response_model=schemas.TranscriptTextResponse)
 async def transcript_speech(data: bytes = Body()):
     file = get_file_content(data)
     path = dump(file)
-
-    sound = pydub.AudioSegment.from_file(path)
-    sound.export(path, format="wav")
+    fix_file_format(path)
 
     logger.info("Start reading file")
     audio = read_file(path)
