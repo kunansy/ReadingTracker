@@ -3,7 +3,7 @@ from typing import TypedDict
 
 import pydub
 import speech_recognition
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, HTTPException
 
 from tracker.common import settings
 from tracker.common.log import logger
@@ -34,6 +34,8 @@ async def transcript_speech(data: bytes = Body()):
 
     logger.info("File read, start recognition")
     result = recognizer.recognize_google(audio, language="ru", show_all=True)
+    if not result:
+        raise HTTPException(status_code=400, detail="Could not recognize speech")
 
     logger.debug("Result got: %s", result)
     best = get_best_result(result)
