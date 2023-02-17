@@ -22,27 +22,6 @@ class RecognitionResult(TypedDict):
     confidence: float
 
 
-def get_file_content(data: bytes) -> bytes:
-    return b'\r\n'.join(
-        row
-        for row in data.split(b'\r\n')[4:]
-        if row != b'' and not row.startswith(b'--')
-    )
-
-
-def dump(content: bytes) -> Path:
-    path = Path('tmp.wav')
-    with path.open('wb') as f:
-        f.write(content)
-
-    return path
-
-
-def fix_file_format(path: Path) -> None:
-    sound = pydub.AudioSegment.from_file(path)
-    sound.export(path, format="wav")
-
-
 @router.post("/transcript",
              response_model=schemas.TranscriptTextResponse)
 async def transcript_speech(data: bytes = Body()):
@@ -72,6 +51,27 @@ async def get_transcript():
     return {
         'transcript': text
     }
+
+
+def get_file_content(data: bytes) -> bytes:
+    return b'\r\n'.join(
+        row
+        for row in data.split(b'\r\n')[4:]
+        if row != b'' and not row.startswith(b'--')
+    )
+
+
+def dump(content: bytes) -> Path:
+    path = Path('tmp.wav')
+    with path.open('wb') as f:
+        f.write(content)
+
+    return path
+
+
+def fix_file_format(path: Path) -> None:
+    sound = pydub.AudioSegment.from_file(path)
+    sound.export(path, format="wav")
 
 
 def read_file(path: Path) -> speech_recognition.AudioData:
