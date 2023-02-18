@@ -11,7 +11,7 @@ RUN apt-get update \
     && tar xvf ffmpeg_5.1.1.orig.tar.xz \
     && cd ffmpeg-5.1.1 \
     && ./configure \
-    && make install
+    && make install -j $(nproc)
 
 FROM python:3.11-slim-buster as reading-tracker
 
