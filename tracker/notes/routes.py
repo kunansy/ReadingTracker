@@ -2,14 +2,14 @@ import asyncio
 from typing import Any, Iterable
 from uuid import UUID
 
-from fastapi import APIRouter, Request, Depends, Body
+from fastapi import APIRouter, Request, Depends, Body, HTTPException
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from tracker.common import settings, manticoresearch
 from tracker.common.log import logger
 from tracker.models import enums
-from tracker.notes import db, schemas
+from tracker.notes import db, schemas, speech_recognizer as recognizer
 
 
 router = APIRouter(
@@ -232,3 +232,25 @@ async def get_note_links(note_id: UUID):
     }
     graph = db.link_notes(note_id=str(note_id), notes=notes)
     return db.create_graphic(graph)
+
+
+@router.post("/transcript",
+             response_model=schemas.TranscriptTextResponse)
+async def transcript_speech(data: bytes = Body()):
+    file = recognizer.get_file_content(data)
+    path = recognizer.dump(file)
+    recognizer.fix_file_format(path)
+
+    logger.info("Start reading file")
+    audio = recognizer.read_file(path)
+
+    logger.info("File read, start recognition")
+    if not (result := recognizer.recognize(audio)):
+        raise HTTPException(status_code=400, detail="Could not recognize speech")
+
+    logger.debug("Result got: %s", result)
+    best = recognizer.get_best_result(result)
+
+    logger.info("Transcript got: %s", best)
+
+    return best

@@ -1,5 +1,5 @@
 import re
-from typing import Any
+from typing import Any, TypedDict
 from uuid import UUID
 
 from fastapi import Form
@@ -228,3 +228,17 @@ class SearchParams(CustomBaseModel):
             for tag in tags_query.split()
             if tag.strip()
         )
+
+
+class RecognitionResult(TypedDict):
+    transcript: str
+    confidence: float
+
+
+class TranscriptTextResponse(CustomBaseModel):
+    transcript: str
+    confidence: float
+
+    @validator('confidence')
+    def convert_to_percent(cls, value: float) -> float:
+        return round(value * 100, 2)
