@@ -13,13 +13,14 @@ async function addTag(tag) {
 const recordAudio = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const mediaRecorder = new MediaRecorder(stream);
-    const audioChunks = [];
+    let audioChunks = [];
 
     mediaRecorder.addEventListener("dataavailable", event => {
         audioChunks.push(event.data);
     });
 
     document.getElementById("start").addEventListener("click", () => {
+        audioChunks = [];
         mediaRecorder.start();
     });
     document.getElementById("stop").addEventListener("click", async () => {
