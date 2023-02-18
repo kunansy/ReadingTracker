@@ -15,7 +15,6 @@ from tracker.notes import db, schemas, speech_recognizer as recognizer
 router = APIRouter(
     prefix="/notes",
     tags=['notes'],
-    default_response_class=HTMLResponse
 )
 templates = Jinja2Templates(directory="templates")
 
@@ -52,7 +51,7 @@ def _highlight_snippets(notes: list[db.Note],
         note.highlight(result.replace_substring, result.snippet)
 
 
-@router.get('/')
+@router.get('/', response_class=HTMLResponse)
 async def get_notes(request: Request,
                     search: schemas.SearchParams = Depends()):
     material_id = search.material_id
@@ -92,7 +91,7 @@ async def get_notes(request: Request,
     return templates.TemplateResponse("notes/notes.html", context)
 
 
-@router.get('/add-view')
+@router.get('/add-view', response_class=HTMLResponse)
 async def add_note_view(request: Request):
     material_id = request.cookies.get('material_id', '')
 
@@ -140,7 +139,7 @@ async def add_note(note: schemas.Note = Depends()):
     return response
 
 
-@router.get('/update-view')
+@router.get('/update-view', response_class=HTMLResponse)
 async def update_note_view(note_id: UUID,
                            request: Request,
                            success: bool | None = None):
