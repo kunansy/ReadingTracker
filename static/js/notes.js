@@ -31,20 +31,24 @@ const recordAudio = async () => {
         let fd = new FormData();
         fd.append("data", audio.audioBlob, "tmp.wav");
 
-        const resp = await fetch(
+        fetch(
             '/speech-to-text/transcript',
             {
                 method: 'POST',
                 body: fd,
                 headers: {'Content-Type': 'multipart/form-data'}
             }
-        );
+        ).then(async (resp) => {
+            let json = await resp.json();
+            let noteContent = document.getElementById('input-content');
 
-        let json = await resp.json();
-        let noteContent = document.getElementById('input-content');
-
-        noteContent.textContent = noteContent.value + ' ' + json['transcript'];
-        noteContent.value = noteContent.textContent;
+            noteContent.textContent = noteContent.value + ' ' + json['transcript'];
+            noteContent.value = noteContent.textContent;
+        }).catch((error) => {
+            console.log(`Server error: ${error}`);
+        }).finally(() => {
+            audioChunks = [];
+        });
     })
 
     const stop = () =>
