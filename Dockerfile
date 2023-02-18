@@ -5,9 +5,12 @@ ENV PYTHONUNBUFFERED 1
 
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get -y install curl gcc portaudio19-dev flac ffmpeg libasound-dev \
+    && apt-get -y install curl gcc portaudio19-dev flac libasound-dev wget make \
+    && wget https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/ffmpeg/7:5.1.1-1ubuntu1/ffmpeg_5.1.1.orig.tar.xz \
+    && tar xvf ffmpeg_5.1.1.orig.tar.xz && cd ffmpeg-5.1.1 && ./configure && make install \
     && pip install -U pip --no-cache-dir \
     && pip install poetry --no-cache-dir \
+    && apt-get remove -y wget make \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
