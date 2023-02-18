@@ -6,7 +6,7 @@ ENV TZ Etc/UTC
 
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get -y install gcc wget make xz-utils \
+    && apt-get -y install gcc wget make xz-utils yasm \
     && wget https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/ffmpeg/7:5.1.1-1ubuntu1/ffmpeg_5.1.1.orig.tar.xz \
     && tar xvf ffmpeg_5.1.1.orig.tar.xz \
     && cd ffmpeg-5.1.1 \
