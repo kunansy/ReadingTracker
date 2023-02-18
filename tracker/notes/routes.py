@@ -113,8 +113,7 @@ async def add_note_view(request: Request):
     return templates.TemplateResponse("notes/add_note.html", context)
 
 
-@router.post('/add',
-             response_class=RedirectResponse)
+@router.post('/add', response_class=RedirectResponse)
 async def add_note(note: schemas.Note = Depends()):
     redirect_url = router.url_path_for(add_note_view.__name__)
     response = RedirectResponse(redirect_url, status_code=302)
@@ -186,8 +185,7 @@ async def update_note_view(note_id: UUID,
     return templates.TemplateResponse("notes/update_note.html", context)
 
 
-@router.post('/update',
-             response_class=RedirectResponse)
+@router.post('/update', response_class=RedirectResponse)
 async def update_note(note: schemas.UpdateNote = Depends()):
     success = True
     note_id = str(note.note_id)
@@ -222,8 +220,7 @@ async def delete_note(note_id: UUID = Body(embed=True)):
         tg.create_task(manticoresearch.delete(note_id=note_id_str))
 
 
-@router.get('/links',
-            response_class=HTMLResponse)
+@router.get('/links', response_class=HTMLResponse)
 async def get_note_links(note_id: UUID):
     notes = {
         note.note_id: note
