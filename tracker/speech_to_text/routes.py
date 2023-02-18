@@ -54,16 +54,23 @@ def get_file_content(data: bytes) -> bytes:
 
 
 def dump(content: bytes) -> Path:
+    logger.debug("Dumping to file")
     path = settings.DATA_DIR / 'tmp.wav'
     with path.open('wb') as f:
         f.write(content)
 
+    logger.debug("File dumped: %s", path)
     return path
 
 
 def fix_file_format(path: Path) -> None:
+    logger.debug("Fix file format, size=%s", path.stat().st_size)
+
     sound = pydub.AudioSegment.from_file(path)
     sound.export(path, format="wav")
+
+    logger.debug("File format fixed, new size=%s, duration=%ss",
+                 path.stat().st_size, round(sound.duration_seconds, 2))
 
 
 def read_file(path: Path) -> speech_recognition.AudioData:
