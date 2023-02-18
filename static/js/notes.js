@@ -60,8 +60,16 @@ const recordAudio = async () => {
 
             mediaRecorder.stop();
         });
+    return mediaRecorder;
 };
 
-document.addEventListener("DOMContentLoaded", async () => {
-    await recordAudio();
+let isStarted = false;
+
+document.getElementById('start').addEventListener("click", async () => {
+    if (!isStarted) {
+        isStarted = true;
+        const recorder = await recordAudio();
+        console.log("Listening started");
+        recorder.start();
+    }
 });
