@@ -20,11 +20,14 @@ const recordAudio = async () => {
     });
 
     document.getElementById("start").addEventListener("click", () => {
+        console.log("Listening started");
         audioChunks = [];
         mediaRecorder.start();
     });
     document.getElementById("stop").addEventListener("click", async () => {
+        console.log("Listening stopped");
         const audio = await stop();
+        console.log("Result audio ", audio.audioBlob.size);
         let fd = new FormData();
         fd.append("data", audio.audioBlob, "tmp.wav");
 
