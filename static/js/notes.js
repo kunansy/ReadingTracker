@@ -32,7 +32,7 @@ const recordAudio = async () => {
         fd.append("data", audio.audioBlob, "tmp.wav");
 
         fetch(
-            '/speech-to-text/transcript',
+            '/notes/transcript',
             {
                 method: 'POST',
                 body: fd,
