@@ -133,4 +133,5 @@ dmypy.json
 *.db
 
 *.sh
+*.wav
 tmp.html
