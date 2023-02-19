@@ -1,31 +1,23 @@
-FROM ubuntu:20.04 as builder
-
-# to disable tzdata question
-ENV DEBIAN_FRONTEND noninteractive
-ENV TZ Etc/UTC
-
-RUN apt-get update \
-    && apt-get upgrade -y \
-    && apt-get -y install gcc wget make xz-utils yasm \
-    && wget https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/ffmpeg/7:5.1.1-1ubuntu1/ffmpeg_5.1.1.orig.tar.xz \
-    && tar xvf ffmpeg_5.1.1.orig.tar.xz \
-    && cd ffmpeg-5.1.1 \
-    && ./configure \
-    && make install -j $(nproc)
-
 FROM python:3.11-slim-buster as reading-tracker
 
 LABEL maintainer="<kolobov.kirill@list.ru>"
 ENV PYTHONUNBUFFERED 1
 
-COPY --from=builder /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
-COPY --from=builder /usr/local/bin/ffprobe /usr/local/bin/ffprobe
-
+# TODO: add multi-stage later
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get -y install curl gcc portaudio19-dev flac libasound-dev \
+    && apt-get -y install curl gcc portaudio19-dev flac libasound-dev wget make \
+    && wget https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/ffmpeg/7:5.1.1-1ubuntu1/ffmpeg_5.1.1.orig.tar.xz \
+    && tar xvf ffmpeg_5.1.1.orig.tar.xz \
+    && rm ffmpeg_5.1.1.orig.tar.xz \
+    && cd ffmpeg-5.1.1 \
+    && ./configure \
+    && make -j $(nproc) \
+    && make install -j $(nproc) \
+    && cd .. && rm -rf ffmpeg-5.1.1 \
     && pip install -U pip --no-cache-dir \
     && pip install poetry --no-cache-dir \
+    && apt-get remove -y wget make \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
