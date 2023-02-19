@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED 1
 # TODO: add multi-stage later
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get -y install curl gcc portaudio19-dev flac libasound-dev wget make \
+    && apt-get -y install curl gcc portaudio19-dev flac libasound-dev wget make yasm \
     && wget https://launchpad.net/ubuntu/+archive/primary/+sourcefiles/ffmpeg/7:5.1.1-1ubuntu1/ffmpeg_5.1.1.orig.tar.xz \
     && tar xvf ffmpeg_5.1.1.orig.tar.xz \
     && rm ffmpeg_5.1.1.orig.tar.xz \
