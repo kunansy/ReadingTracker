@@ -15,8 +15,7 @@ RUN apt-get update \
     && make -j $(nproc) \
     && make install -j $(nproc) \
     && cd .. && rm -rf ffmpeg-5.1.1 \
-    && pip install -U pip --no-cache-dir \
-    && pip install poetry --no-cache-dir \
+    && pip install -U pip poetry --no-cache-dir \
     && apt-get remove -y wget make \
     && rm -rf /var/lib/apt/lists/*
 
