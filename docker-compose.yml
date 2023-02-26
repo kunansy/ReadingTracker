@@ -45,6 +45,7 @@ services:
         hard: -1
     environment:
       - MCL=1
+      - TELEMETRY=0
 
   reading-tracker:
     image: kunansy/reading_tracker:2.19.2
