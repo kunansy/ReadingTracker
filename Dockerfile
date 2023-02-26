@@ -19,12 +19,12 @@ RUN apt-get update \
     && apt-get remove -y wget make \
     && rm -rf /var/lib/apt/lists/*
 
-COPY poetry.lock pyproject.toml /
+COPY poetry.lock pyproject.toml entrypoint.sh /
 RUN poetry config virtualenvs.create false \
     && poetry install --only main -n \
-    && rm poetry.lock pyproject.toml
+    && ./entrypoint.sh \
+    && rm poetry.lock pyproject.toml entrypoint.sh
 
-RUN useradd -ms /bin/bash tracker
 USER tracker
 WORKDIR /app
 
