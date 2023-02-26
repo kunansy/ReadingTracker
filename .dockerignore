@@ -17,7 +17,6 @@ coverage.xml
 .hypothesis
 .env
 *.db
-*.sh
 .github
 *.md
 
