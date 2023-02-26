@@ -449,10 +449,12 @@ def create_graphic(graph: nx.DiGraph, **kwargs) -> str:
     net.options = {"interaction": {"hover": True}}
     net.from_nx(graph)
 
-    net.show("tmp.html")
-    with open('tmp.html') as f:
-        resp = f.read()
-    os.remove("tmp.html")
+    tmp_file = Path("tmp.html")
+
+    net.show(str(tmp_file))
+    resp = tmp_file.read_text()
+
+    tmp_file.unlink()
 
     logger.debug("Graphic created")
     return resp
