@@ -239,6 +239,7 @@ async def transcript_speech(data: bytes = Body()):
 
     logger.info("Start reading file")
     audio = recognizer.read_file(path)
+    recognizer.remove(path)
 
     logger.info("File read, start recognition")
     if not (result := recognizer.recognize(audio)):
