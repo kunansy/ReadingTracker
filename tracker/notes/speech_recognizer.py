@@ -28,6 +28,10 @@ def dump(content: bytes) -> Path:
     return path
 
 
+def remove(path: Path) -> None:
+    path.unlink(missing_ok=True)
+
+
 def fix_file_format(path: Path) -> None:
     logger.debug("Fix file format, size=%s", path.stat().st_size)
 
