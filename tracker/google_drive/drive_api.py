@@ -22,13 +22,9 @@ class GoogleDriveException(Exception):
 
 @lru_cache
 def _get_drive_creds() -> ServiceAccountCreds:
-    if not (creds_file := settings.DRIVE_CREDS_PATH).exists():
-        raise ValueError("Creds file not found")
-
-    creds_json = orjson.loads(creds_file.read_text())
     creds = ServiceAccountCreds(
         scopes=SCOPES,
-        **creds_json
+        **settings.DRIVE_CREDS
     )
 
     return creds

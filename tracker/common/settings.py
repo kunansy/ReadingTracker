@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 
+import orjson
 from environs import Env
 from marshmallow.validate import OneOf
 
@@ -53,7 +54,7 @@ with env.prefixed("LOGGER_"):
     LOGGER_LEVEL = env.log_level("LEVEL", 'debug')
 
 with env.prefixed("DRIVE_"):
-    DRIVE_CREDS_PATH = env.path("CREDS_PATH", "data/creds.json")
+    DRIVE_CREDS = orjson.loads(env('CREDS'))
 
 with env.prefixed('MANTICORE_MYSQL_'):
     MANTICORE_MYSQL_HOST = env('HOST')
