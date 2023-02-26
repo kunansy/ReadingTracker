@@ -45,6 +45,7 @@
 .iframe {
     height: 60vh;
     width: 65%;
+    border: none;
     margin: auto;
     display: flex;
 }
