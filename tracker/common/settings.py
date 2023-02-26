@@ -20,7 +20,7 @@ if (version_file := Path('VERSION')).exists():
     API_VERSION = version_file.read_text().strip()
 
 DATA_DIR = Path('data/')
-os.makedirs(DATA_DIR, exist_ok=True)
+DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 with env.prefixed("API_"):
     API_DEBUG = env.bool("DEBUG", False)
