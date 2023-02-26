@@ -63,7 +63,7 @@ services:
     networks:
       - tracker-net
     volumes:
-      - ./data:/app/data 
+      - ./data:/app/data:rw
     healthcheck:
       test: curl -f http://localhost:8000/readiness || exit 1
       interval: 10s
