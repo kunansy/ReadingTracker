@@ -1,7 +1,6 @@
 import asyncio
 import datetime
 from collections import defaultdict
-from pathlib import Path
 from typing import Any, Iterable
 from uuid import UUID
 
@@ -9,7 +8,7 @@ import networkx as nx
 import sqlalchemy.sql as sa
 from pyvis.network import Network
 
-from tracker.common import database
+from tracker.common import database, settings
 from tracker.common.log import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
@@ -449,7 +448,7 @@ def create_graphic(graph: nx.DiGraph, **kwargs) -> str:
     net.options = {"interaction": {"hover": True}}
     net.from_nx(graph)
 
-    tmp_file = Path("tmp.html")
+    tmp_file = settings.DATA_DIR / "tmp.html"
 
     net.show(str(tmp_file))
     resp = tmp_file.read_text()
