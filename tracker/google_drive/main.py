@@ -9,7 +9,7 @@ import orjson
 
 from tracker.common import database
 from tracker.common.log import logger
-from tracker.google_drive import drive_api, db
+from tracker.google_drive import db, drive_api
 
 
 async def backup() -> db.DBSnapshot:

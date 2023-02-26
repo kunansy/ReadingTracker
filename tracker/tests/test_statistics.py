@@ -8,7 +8,7 @@ import sqlalchemy.sql as sa
 
 from tracker.common import database
 from tracker.models import models
-from tracker.reading_log import statistics as st, db
+from tracker.reading_log import db, statistics as st
 
 
 def mean(coll: Sequence[int | float | Decimal]) -> int | float | Decimal:

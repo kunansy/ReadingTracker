@@ -4,7 +4,7 @@ from decimal import Decimal
 import pytest
 import sqlalchemy.sql as sa
 
-from tracker.common import settings, database
+from tracker.common import database, settings
 from tracker.models import models
 from tracker.system import trends
 

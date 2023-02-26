@@ -2,19 +2,8 @@ import datetime
 import uuid
 
 import sqlalchemy
-from sqlalchemy import (
-    DateTime,
-    Integer,
-    MetaData,
-    Table,
-    Unicode,
-    Boolean,
-    Enum,
-    UniqueConstraint,
-    BigInteger,
-    Date
-)
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy import BigInteger, Boolean, Date, DateTime, Enum, Integer, MetaData, Table, Unicode, UniqueConstraint
+from sqlalchemy.dialects.postgresql import JSONB, UUID
 
 from tracker.models import enums
 

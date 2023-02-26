@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 from pathlib import Path
-from typing import NamedTuple, Any
+from typing import Any, NamedTuple
 from uuid import UUID
 
 import sqlalchemy.sql as sa

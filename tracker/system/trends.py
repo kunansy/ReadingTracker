@@ -4,7 +4,7 @@ import statistics
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
-from typing import NamedTuple, Sequence, Generator
+from typing import Generator, NamedTuple, Sequence
 
 import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa

@@ -8,7 +8,7 @@ import sqlalchemy.sql as sa
 from tracker.common import database
 from tracker.common.log import logger
 from tracker.common.schemas import CustomBaseModel
-from tracker.models import models, enums
+from tracker.models import enums, models
 from tracker.notes import db as notes_db
 from tracker.reading_log import db as log_db
 

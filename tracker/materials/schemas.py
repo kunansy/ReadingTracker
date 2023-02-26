@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import Form
-from pydantic import conint, HttpUrl
+from pydantic import HttpUrl, conint
 
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums

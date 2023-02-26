@@ -4,7 +4,7 @@ import pytest
 import sqlalchemy.sql as sa
 
 from tracker.common import database
-from tracker.models import models, enums
+from tracker.models import enums, models
 from tracker.notes import db
 
 

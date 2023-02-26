@@ -2,11 +2,11 @@ import asyncio
 from typing import Any, Iterable
 from uuid import UUID
 
-from fastapi import APIRouter, Request, Depends, Body, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from tracker.common import settings, manticoresearch
+from tracker.common import manticoresearch, settings
 from tracker.common.log import logger
 from tracker.models import enums
 from tracker.notes import db, schemas, speech_recognizer as recognizer

@@ -1,7 +1,7 @@
 import asyncio
 import datetime
-import os
 from collections import defaultdict
+from pathlib import Path
 from typing import Any, Iterable
 from uuid import UUID
 
@@ -12,7 +12,7 @@ from pyvis.network import Network
 from tracker.common import database
 from tracker.common.log import logger
 from tracker.common.schemas import CustomBaseModel
-from tracker.models import models, enums
+from tracker.models import enums, models
 from tracker.notes import schemas
 
 

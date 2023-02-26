@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from tracker.cards.routes import router as cards_router
-from tracker.common import database, settings, manticoresearch
+from tracker.common import database, manticoresearch, settings
 from tracker.common.log import logger
 from tracker.materials.routes import router as materials_router
 from tracker.notes.routes import router as notes_router
