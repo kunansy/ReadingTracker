@@ -21,7 +21,7 @@ RUN apt-get update \
 
 COPY poetry.lock pyproject.toml /
 RUN poetry config virtualenvs.create false \
-    && poetry install --no-dev -n \
+    && poetry install --only main -n \
     && rm poetry.lock pyproject.toml
 
 RUN useradd -ms /bin/bash tracker
