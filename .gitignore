@@ -131,7 +131,3 @@ dmypy.json
 # user data
 *.json
 *.db
-
-*.sh
-*.wav
-tmp.html
