@@ -19,11 +19,13 @@ RUN apt-get update \
     && apt-get remove -y wget make \
     && rm -rf /var/lib/apt/lists/*
 
-WORKDIR /app
-
 COPY poetry.lock pyproject.toml /
 RUN poetry config virtualenvs.create false \
     && poetry install --no-dev -n
+
+RUN useradd -ms /bin/bash tracker
+USER tracker
+WORKDIR /app
 
 COPY /templates /app/templates
 COPY /static /app/static
