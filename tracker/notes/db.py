@@ -39,10 +39,10 @@ class Note(CustomBaseModel):
 
     @property
     def info(self) -> str:
-        return f"ID: {self.note_id}\n" \
-               f"Number: {self.note_number}\n" \
-               f"Material ID: {self.material_id}\n\n" \
-               f"{self}"
+        return (f"ID: {self.note_id}\n"
+                f"Number: {self.note_number}\n"
+                f"Material ID: {self.material_id}\n\n"
+                f"{self}")
 
     def highlight(self, from_: str, to: str) -> None:
         self.content = self.content.replace(from_, to)

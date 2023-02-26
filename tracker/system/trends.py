@@ -139,12 +139,12 @@ class TimeSpan:
         self.stop = stop
 
     def format(self) -> str:
-        return f"{self.start.strftime(settings.DATE_FORMAT)}_" \
-               f"{self.stop.strftime(settings.DATE_FORMAT)}"
+        return (f"{self.start.strftime(settings.DATE_FORMAT)}_"
+                f"{self.stop.strftime(settings.DATE_FORMAT)}")
 
     def __str__(self) -> str:
-        return f"[{self.start.strftime(settings.DATE_FORMAT)}; " \
-               f"{self.stop.strftime(settings.DATE_FORMAT)}]"
+        return (f"[{self.start.strftime(settings.DATE_FORMAT)}; "
+                f"{self.stop.strftime(settings.DATE_FORMAT)}]")
 
 
 def _get_span(size: int) -> TimeSpan:

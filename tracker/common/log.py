@@ -3,8 +3,8 @@ import logging
 from tracker.common import settings
 
 
-MSG_FMT = "{levelname:<8} [{asctime},{msecs:3.0f}] [PID:{process}] " \
-          "[{filename}:{funcName}():{lineno}] {message}"
+MSG_FMT = ("{levelname:<8} [{asctime},{msecs:3.0f}] [PID:{process}] "
+           "[{filename}:{funcName}():{lineno}] {message}")
 DATE_FMT = "%d.%m.%Y %H:%M:%S"
 
 formatter = logging.Formatter(

@@ -212,8 +212,8 @@ async def _get_max_record(*,
 
 
 async def _would_be_total() -> int:
-    query = "sum(count) + avg(count) * " \
-            "(max(date) - min(date) - count(1) + 1)"
+    query = ("sum(count) + avg(count) * "
+             "(max(date) - min(date) - count(1) + 1)")
     stmt = sa.select(sa.text(query))\
         .select_from(models.ReadingLog)
 
