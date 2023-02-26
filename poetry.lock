@@ -2273,13 +2273,13 @@ six = ">=1.4.0"
 
 [[package]]
 name = "pyvis"
-version = "0.3.2"
+version = "0.3.1"
 description = "A Python network graph visualization library"
 category = "main"
 optional = false
 python-versions = ">3.6"
 files = [
-    {file = "pyvis-0.3.2-py3-none-any.whl", hash = "sha256:5720c4ca8161dc5d9ab352015723abb7a8bb8fb443edeb07f7a322db34a97555"},
+    {file = "pyvis-0.3.1.tar.gz", hash = "sha256:aa817caac54afc9a4df38ada6f46636b842a8bd57197bb6aca5084699da04307"},
 ]
 
 [package.dependencies]
@@ -2830,4 +2830,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "d894b105872f86a888b9db972f8c91fb546448787c2cbc4d2e4526c68ad7033c"
+content-hash = "d1c4a0d7cd023eeed2fbf05bd7658755efd5e14c9f3706b868cb3589b2b86f3f"
