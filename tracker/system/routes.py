@@ -69,8 +69,7 @@ async def graphic(request: Request,
         titles_task = tg.create_task(
             db.get_read_material_titles())
 
-    context = {
-        **context,
+    context |= {
         'material_id': material_id,
         'last_days': last_days,
         'graphic_image': graphic_image_task.result(),
