@@ -6,7 +6,7 @@ target-version = "py311"
 
 [tool.poetry]
 name = "readingtracker"
-version = "2.19.5"
+version = "2.19.6"
 description = "Reading queue, logging the reading, keep some notes"
 authors = ["kunansy <kolobov.kirill@list.ru>"]
 license = "MIT"
