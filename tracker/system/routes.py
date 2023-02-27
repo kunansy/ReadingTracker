@@ -9,7 +9,6 @@ from pydantic import conint
 
 from tracker.common.log import logger
 from tracker.google_drive import main as drive_api
-from tracker.notes import db as notes_db
 from tracker.system import db, trends
 
 
@@ -37,7 +36,6 @@ async def graphic(request: Request,
                   last_days: conint(ge=1) = 7): # type: ignore
     context: dict[str, Any] = {
         'request': request,
-        'show_links_graph': True
     }
     if material_id:
         material_id_: str | None = str(material_id)
@@ -131,11 +129,3 @@ async def restore(request: Request):
         context['notes_count'] = snapshot_dict['notes'].counter
 
     return templates.TemplateResponse("system/restore.html", context)
-
-
-@router.get('/links',
-            response_class=HTMLResponse)
-async def get_links_graphic():
-    notes = await notes_db.get_notes()
-    graph = notes_db.link_all_notes(notes)
-    return notes_db.create_graphic(graph)
