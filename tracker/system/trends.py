@@ -235,6 +235,21 @@ async def get_span_notes_statistics(*,
         stat=stat, span=span, span_size=span_size)
 
 
+def _get_colors(completion_dates: dict[str, datetime.datetime] | None,
+                days: list[str]) -> list[str] | None:
+    if not completion_dates:
+        return None
+
+    dates = {
+        date.date().strftime(settings.DATE_FORMAT)
+        for date in completion_dates.values()
+    }
+    return [
+        'green' if day in dates else 'steelblue'
+        for day in days
+    ]
+
+
 def _create_graphic(*,
                     stat: SpanStatistics,
                     title: str = 'Total items completed',
