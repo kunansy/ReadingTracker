@@ -117,6 +117,10 @@ class SpanStatistics:
     def lost_pages(self) -> int:
         return round(self.zero_count * self.mean)
 
+    @property
+    def would_be_total(self) -> int:
+        return self.total + self.lost_pages
+
     def __str__(self) -> str:
         return '\n'.join(str(day) for day in self.data)
 
