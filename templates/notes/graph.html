@@ -1,0 +1,15 @@
+{% extends 'index.html' %}
+
+{%- block style -%}
+<link rel="stylesheet" href="{{ url_for('static', path='notes/notes.css') }}">
+{%- endblock style -%}
+
+{%- block header -%}
+    {% from 'submenu.html' import submenu %}
+    {% call submenu(('Search notes', '/notes'), ('Add note', '/notes/add-view'), ('Graph', '/notes/graph')) %}
+    {% endcall %}
+{%- endblock header -%}
+
+{% block main %}
+<iframe srcdoc="{{ graph }}" class="network"></iframe>
+{% endblock main %}
