@@ -251,3 +251,15 @@ async def transcript_speech(data: bytes = Body()):
     logger.info("Transcript got: %s", best)
 
     return best
+
+
+@router.get('/graph', response_class=HTMLResponse)
+async def get_graph(request: Request):
+    notes = await db.get_notes()
+    graph = db.link_all_notes(notes)
+
+    context = {
+        'request': request,
+        'graph': db.create_graphic(graph)
+    }
+    return templates.TemplateResponse("notes/graph.html", context)
