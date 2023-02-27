@@ -76,3 +76,11 @@ p.note-content {
 div.note p {
     word-wrap: break-word;
 }
+
+.network {
+    height: 100vh;
+    width: 85%;
+    border: none;
+    margin: auto;
+    display: flex;
+}
