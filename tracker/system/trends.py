@@ -253,11 +253,16 @@ def _get_colors(completion_dates: dict[str, datetime.datetime] | None,
 def _create_graphic(*,
                     stat: SpanStatistics,
                     title: str = 'Total items completed',
-                    show_mean_line: bool = True) -> str:
+                    show_mean_line: bool = True,
+                    completion_dates: dict[str, datetime.datetime] | None = None) -> str:
     logger.debug("Creating graphic started")
 
+    days = stat.days
+    # set completion dates color to green
+    colors = _get_colors(completion_dates, days)
+
     fig, ax = plt.subplots(figsize=(12, 10))
-    bar = ax.barh(stat.days, stat.values, edgecolor="white")
+    bar = ax.barh(days, stat.values, edgecolor="white", color=colors)
     ax.bar_label(bar)
 
     if show_mean_line:
