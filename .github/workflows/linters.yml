@@ -18,6 +18,7 @@ jobs:
         
     - name: Install Poetry
       run: |
+        sudo apt-get install -y portaudio19-dev libasound-dev
         pip install pipx
         pipx install poetry
 
