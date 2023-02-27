@@ -52,9 +52,11 @@ async def graphic(request: Request,
         reading_trend_task = tg.create_task(trends.get_span_reading_statistics(span_size=last_days))
         notes_trend_task = tg.create_task(trends.get_span_notes_statistics(span_size=last_days))
         tracker_statistics_task = tg.create_task(db.get_tracker_statistics())
+        completion_dates_task = tg.create_task(db.get_completion_dates())
 
     reading_trend = reading_trend_task.result()
     notes_trend = notes_trend_task.result()
+    completion_dates = completion_dates_task.result()
 
     async with asyncio.TaskGroup() as tg:
         graphic_image_task = tg.create_task(db.create_reading_graphic(
@@ -62,7 +64,8 @@ async def graphic(request: Request,
             last_days=last_days
         ))
         reading_trend_graphic_task = tg.create_task(
-            trends.create_reading_graphic(reading_trend, span_size=last_days))
+            trends.create_reading_graphic(
+                reading_trend, span_size=last_days, completion_dates=completion_dates))
         notes_trend_graphic_task = tg.create_task(
             trends.create_notes_graphic(notes_trend, span_size=last_days))
         titles_task = tg.create_task(

@@ -290,13 +290,15 @@ def _create_graphic(*,
 
 async def create_reading_graphic(stat: SpanStatistics | None = None,
                                  *,
-                                 span_size: int = 7) -> str:
+                                 span_size: int = 7,
+                                 completion_dates: dict[str, datetime.datetime] | None = None) -> str:
     logger.info("Creating reading graphic")
 
     stat = stat or await get_span_reading_statistics(span_size=span_size)
     return _create_graphic(
         stat=stat,
-        title='Total pages read'
+        title='Total pages read',
+        completion_dates=completion_dates
     )
 
 

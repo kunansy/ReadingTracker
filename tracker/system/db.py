@@ -101,3 +101,6 @@ async def create_reading_graphic(*,
 
 async def get_tracker_statistics() -> statistics.TrackerStatistics:
     return await statistics.get_tracker_statistics()
+
+
+get_completion_dates = logs_db.get_completion_dates
