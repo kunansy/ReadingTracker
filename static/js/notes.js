@@ -1,5 +1,5 @@
 async function openNote(note_id, target_ = "_blank") {
-    await window.open('/notes/update-view/?note_id=' + note_id, target=target_);
+    await window.open('/notes/note?note_id=' + note_id, target=target_);
 }
 
 async function addTag(tag) {
