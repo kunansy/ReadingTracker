@@ -1,0 +1,55 @@
+{% extends 'index.html' %}
+
+{%- block style -%}
+<link rel="stylesheet" href="{{ url_for('static', path='notes/add_note.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='notes/notes.css') }}">
+{%- endblock style -%}
+
+{%- block header -%}
+    {% from 'submenu.html' import submenu %}
+    {% call submenu(('Search notes', '/notes'), ('Add note', '/notes/add-view'), ('Graph', '/notes/graph')) %}
+    {% endcall %}
+{%- endblock header -%}
+
+{% block main %}
+    {% set page_name = 'Page' %}
+    {% set chapter_name = 'Chapter' %}
+    {% if material_type == 'lecture' %}
+        {% set page_name = 'Minute' %}
+    {% elif material_type == 'course' %}
+        {% set chapter_name = 'Block' %}
+        {% set page_name = 'Lecture' %}
+    {% endif %}
+    {% set is_outlined = 'No' %}
+    {%- if material_is_outlined -%}
+        {% set is_outlined = 'Yes' %}
+    {%- endif -%}
+    <div class="form">
+    <div class="to-link">
+        {% if note_links.to %}
+            <div class="note-link" onclick=openNote("{{ note_links.to.note_id }}","_self") title="{{ note_links.to.info }}"></div>
+        {% endif %}
+    </div>
+    <div class="note" id="{{ note_id }}">
+        <p class="little-text"> Note number: {{ note_number }}</p>
+        <p class="medium-text"> Note id: {{ note_id }}</p>
+        <p class="medium-text"> Material id: {{ material_id }}</p>
+        <p class="note-content"> {{ content | safe }}</p>
+        <p class="medium-text"> {{ page_name }}: {{ page }} of {{ material_pages }}</p>
+        <p class="medium-text"> Added at: {{ added_at }}</p>
+        <hr>
+        <p class="medium-text"> Material title: «{{ material_title }}»</p>
+        <p class="medium-text"> Material authors: {{ material_authors }}</p>
+        <p class="medium-text"> Is material outlined: {{ is_outlined }}</p>
+        <p class="medium-text" title="How many notes link to this one"> Links count: {{ links_count }} </p>
+    </div>
+    <div class="from-links">
+        {% for link in note_links.from %}
+            <div class="note-link" onclick=openNote("{{ link.note_id }}","_self") title="{{ link.info }}"> From </div>
+        {% endfor %}
+    </div>
+    </div>
+
+    <iframe src="/notes/links?note_id={{ note_id }}" class="iframe"></iframe>
+    <script src="{{ url_for('static', path='js/notes.js')}}"></script>
+{% endblock main %}
