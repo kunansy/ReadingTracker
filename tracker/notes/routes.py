@@ -8,6 +8,7 @@ from fastapi.templating import Jinja2Templates
 
 from tracker.common import manticoresearch, settings
 from tracker.common.log import logger
+from tracker.materials import db as materials_db
 from tracker.models import enums
 from tracker.notes import db, schemas, speech_recognizer as recognizer
 
@@ -89,6 +90,41 @@ async def get_notes(request: Request,
         context['material_id'] = material_id
 
     return templates.TemplateResponse("notes/notes.html", context)
+
+
+@router.get('/note', response_class=HTMLResponse)
+async def get_note(request: Request, note_id: UUID):
+    if not (note := await db.get_note(note_id=note_id)):
+        raise HTTPException(status_code=404, detail=f"Note id={note_id} not found")
+
+    async with asyncio.TaskGroup() as tg:
+        get_material_task = tg.create_task(materials_db.get_material(material_id=note.material_id))
+        get_links_from_task = tg.create_task(db.get_links_from(note_id=note_id))
+        if note.link_id:
+            get_link_to_task = tg.create_task(db.get_note(note_id=note.link_id))
+        else:
+            get_link_to_task = tg.create_task(asyncio.sleep(1 / 1000, result=None))
+
+    links_from = get_links_from_task.result()
+    material = get_material_task.result()
+
+    note_links = {
+        "from": links_from,
+        "to": get_link_to_task.result()
+    }
+
+    context = note.dict() | {
+        'request': request,
+        'note_links': note_links,
+        'added_at': note.added_at.strftime(settings.DATETIME_FORMAT),
+        'material_title': material.title,
+        'material_authors': material.authors,
+        'material_type': material.material_type,
+        'material_pages': material.pages,
+        'material_is_outlined': material.is_outlined,
+    }
+
+    return templates.TemplateResponse("notes/note.html", context)
 
 
 @router.get('/add-view', response_class=HTMLResponse)
