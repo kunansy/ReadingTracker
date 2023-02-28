@@ -14,6 +14,7 @@
   - [Repeat](#repeat)
   - [Reading log](#reading-log)
   - [Notes](#notes)
+    - [Notes graph](#notes-graph)
   - [System](#system)
 
 ## What is that?
@@ -67,6 +68,7 @@ You should:
 * Add _links_ to help connect notes together using [Zettelkasten method](https://writingcooperative.com/zettelkasten-how-one-german-scholar-was-so-freakishly-productive-997e4e0ca125).
 * Each note should be linked to note that has a direct link to it: `[[c2ed0ac7-fe4f-4a23-a00c-8f61d16398ea]]`
 
+### Notes graph
 Also, here there is a graph with all notes.
 ![Notes graph](docs/notes_graph.png)
 
