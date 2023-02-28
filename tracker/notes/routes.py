@@ -243,7 +243,7 @@ async def delete_note(note_id: UUID = Body(embed=True)):
 
 
 @router.get('/links', response_class=HTMLResponse)
-async def get_note_links(note_id: UUID):
+async def get_note_graph(note_id: UUID):
     notes = {
         note.note_id: note
         for note in await db.get_notes()
