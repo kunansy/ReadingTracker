@@ -21,6 +21,7 @@
   - [System](#system)
     - [Material reading graphic](#material-reading-graphic)
     - [Tracker statistics](#tracker-statistics)
+    - [Read pages statistics](#read-pages-statistics)
 
 ## What is that?
 The project is expected to help you to read books:
@@ -107,3 +108,10 @@ How the material was being reading:
 
 ### Tracker statistics
 ![Tracker statistics](docs/tracker_statistics.png)
+
+### Read pages statistics
+Statistics of read pages for the time span.
+
+* `Would be total` -- how many pages would be read if there were no empty days;
+* A day when a material was completed is marked in green.
+![Read pages](docs/read_pages.png)
