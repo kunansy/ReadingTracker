@@ -55,9 +55,9 @@
         <div class="submit-button" id="stop"> Stop </div>
     </div>
 
-{% if links %}
+{% if possible_links %}
     <ul class="links-list" title="Note links">
-        {% for link in links %}
+        {% for link in possible_links %}
             <li title="{{ link.info }}" onclick="addTag('[[{{ link.note_id  }}]]')" value="'[[{{ link.note_id  }}]]'"> {{ link.short_content }} </li>
         {% endfor %}
     </ul>
