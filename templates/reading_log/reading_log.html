@@ -20,7 +20,7 @@
             <div class="record error">
         {% endif %}
 
-        <p class="counter"> {{ loop.index }} / {{ loop.length }}</p>
+        <p class="little-text"> {{ loop.index }} / {{ loop.length }}</p>
         <p> Date: {{ info.date.strftime(DATE_FORMAT) }} </p>
         <p> Title: «{{ info.material_title }}» </p>
         <p> Count: {{ info.count }}</p>

@@ -83,7 +83,7 @@
             <h4 class="chapter_number" id="material-{{material_id}}-chapter-{{chapter}}"> {{ chapter_name }}: {{ chapter }} </h4>
             {% for note in note_c %}
             <div class="note hover" id="{{ note.note_id }}">
-                <p class="counter"> {{ index.value }} / {{ length }}</p>
+                <p class="little-text"> {{ index.value }} / {{ length }}</p>
                 <p class="note-content"> {{ note.content | safe }} </p>
                 <p class="note-page"> {{ page_name }}: {{ note.page }} </p>
                 <p class="links-count" title="How many notes link to this one"> Links count: {{ note.links_count }} </p>

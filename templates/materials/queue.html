@@ -15,7 +15,7 @@
     {%- for estimate in estimates -%}
     {% set material = estimate.material %}
     <div class="material hover" id="{{ material.material_id }}">
-        <p class="counter"> {{ loop.index }} / {{ loop.length }}</p>
+        <p class="little-text"> {{ loop.index }} / {{ loop.length }}</p>
         <p> Title: «{{ material.title }}» </p>
         <p> Author: {{ material.authors }} </p>
         {% set items = 'Pages' %}
