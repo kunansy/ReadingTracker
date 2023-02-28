@@ -101,6 +101,8 @@ Tags and links lists might be scrolled left/right.
 
 ## System
 Here there are reading graphic, backuping and restoring from the Google Drive.
+
+All graphic shows statistics for chosen time span (a week by default).
 ![System](docs/system.png)
 
 ### Material reading graphic
