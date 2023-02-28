@@ -84,3 +84,33 @@ div.note p {
     margin: auto;
     display: flex;
 }
+
+.form {
+    display: flex;
+    margin: auto;
+    flex-direction: row;
+}
+
+.from-links {
+    flex-direction: column;
+    align-self: center;
+    margin-left: 1em;
+}
+
+.to-link {
+    display: flex;
+    align-items: center;
+    margin-right: 1em;
+}
+
+.note-link {
+    content: url('../left-arrow.png');
+}
+
+.iframe {
+    height: 70vh;
+    width: 80%;
+    border: none;
+    margin: auto;
+    display: flex;
+}

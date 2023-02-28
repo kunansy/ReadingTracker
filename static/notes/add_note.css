@@ -42,14 +42,6 @@
     height: 20vh;
 }
 
-.iframe {
-    height: 70vh;
-    width: 80%;
-    border: none;
-    margin: auto;
-    display: flex;
-}
-
 fieldset.add-note-fieldset {
     display: flex;
     margin: auto;
@@ -58,27 +50,6 @@ fieldset.add-note-fieldset {
 
 legend.add-note-legend {
     text-align: center;
-}
-
-.form {
-    display: flex;
-    margin: auto;
-    flex-direction: row;
-}
-
-.from-links {
-    flex-direction: column;
-    align-self: center;
-    margin-left: 1em;
-}
-
-.to-link {
-    display: flex;
-    align-items: center;
-    margin-right: 1em;
-}
-.note-link {
-    content: url('../left-arrow.png');
 }
 
 .voice-record {
