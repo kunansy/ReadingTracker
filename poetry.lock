@@ -2591,6 +2591,18 @@ secure = ["certifi", "cryptography (>=1.3.4)", "idna (>=2.0.0)", "ipaddress", "p
 socks = ["PySocks (>=1.5.6,!=1.5.7,<2.0)"]
 
 [[package]]
+name = "uuid6"
+version = "2022.10.25"
+description = "New time-based UUID formats which are suited for use as a database key"
+category = "main"
+optional = false
+python-versions = ">=3.7"
+files = [
+    {file = "uuid6-2022.10.25-py3-none-any.whl", hash = "sha256:bd9b874081968c5f24af7ec7a3f48175197806224cc6f4833914f671854c6266"},
+    {file = "uuid6-2022.10.25.tar.gz", hash = "sha256:0a56935de9c1ce8dd8559225b845549d94917d9e24ad4b1cc2328eea5be0010c"},
+]
+
+[[package]]
 name = "uvicorn"
 version = "0.20.0"
 description = "The lightning-fast ASGI server."
@@ -2842,4 +2854,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "c96ecc74b0ee01987f13139a27d79de482108519ae453101d0f601d1f48d960d"
+content-hash = "bebea1826a051ece1cebcb8053054f9c98218df64e3d17400baa97b419c5afbd"
