@@ -86,7 +86,7 @@
                 <p class="little-text"> {{ index.value }} / {{ length }}</p>
                 <p class="note-content"> {{ note.content | safe }} </p>
                 <p class="note-page"> {{ page_name }}: {{ note.page }} </p>
-                <p class="links-count" title="How many notes link to this one"> Links count: {{ note.links_count }} </p>
+                <p class="medium-text" title="How many notes link to this one"> Links count: {{ note.links_count }} </p>
             </div>
 
             {% set index.value = index.value + 1 %}
