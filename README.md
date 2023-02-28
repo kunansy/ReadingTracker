@@ -16,6 +16,7 @@
   - [Notes](#notes)
     - [Notes graph](#notes-graph)
     - [Note context menu](#note-context-menu)
+    - [Show the note](#show-the-note)
   - [System](#system)
 
 ## What is that?
@@ -76,6 +77,13 @@ Also, here there is a graph with all notes.
 ### Note context menu
 The user can open a note with context menu, edit it or delete.
 ![Note context menu](docs/note_context_menu.png)
+
+### Show the note
+Using these arrows user can iter over all note links.
+![Open note](docs/open_note.png)
+
+Here is a graph with the current note links.
+![Note links](docs/note_links.png)
 
 ## System
 Here there are reading graphic, backuping and restoring from the Google Drive.
