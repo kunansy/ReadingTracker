@@ -27,8 +27,7 @@ def _filter_notes(*,
         note.note_id: note
         for note in notes
     }
-    # TODO: save order of search results,
-    #  add _score field to Note model (?)
+    # order of search results saved, because ids sorted by weight
     return [
         notes_[note_id]
         for note_id in ids
@@ -82,7 +81,6 @@ async def get_notes(request: Request,
         found_note_ids = _find_tags_intersection(notes, requested_tags)
         notes = _filter_notes(notes=notes, ids=found_note_ids)
     if query := search.query:
-        # TODO: filter by material_id too
         search_results = await manticoresearch.search(query)
         notes = _filter_notes(notes=notes, ids=search_results.keys())
         _highlight_snippets(notes, search_results)
