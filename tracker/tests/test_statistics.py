@@ -18,7 +18,7 @@ def mean(coll: Sequence[int | float | Decimal]) -> int | float | Decimal:
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     'material_id,logs,completion_dates', (
-        ("5c66e1ca-eb52-47e5-af50-c48b345c7e6c", True, True), # clear reading, Foer
+        ("5c66e1ca-eb52-47e5-af50-c48b345c7e6c", True, True),  # clear reading, Foer
         ("5c66e1ca-eb52-47e5-af50-c48b345c7e6c", True, False),
         ("5c66e1ca-eb52-47e5-af50-c48b345c7e6c", False, True),
         ("5c66e1ca-eb52-47e5-af50-c48b345c7e6c", False, False),

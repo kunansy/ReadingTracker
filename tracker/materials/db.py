@@ -297,7 +297,7 @@ async def _get_material_statistics(*,
         remaining_days = round(remaining_pages / mean)
         would_be_completed = database.utcnow() + datetime.timedelta(days=remaining_days)
     else:
-        would_be_completed = remaining_days = remaining_pages = None # type: ignore
+        would_be_completed = remaining_days = remaining_pages = None  # type: ignore
 
     total_reading_duration = _get_total_reading_duration(
         started_at=status.started_at, completed_at=status.completed_at)
@@ -442,7 +442,7 @@ async def update_material(*,
         "material_type": material_type,
         "tags": tags,
         "link": link,
-     }
+    }
 
     stmt = models.Materials \
         .update().values(values)\

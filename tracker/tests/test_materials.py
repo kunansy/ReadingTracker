@@ -364,7 +364,7 @@ async def test_reading_statistics():
 
     for st in result:
         if (m_id := st.material.material_id) not in m_log_st:
-            print(f"ERROR: unread material skipped {m_id}") # noqa: T201
+            print(f"ERROR: unread material skipped {m_id}")  # noqa: T201
             continue
         log_st = m_log_st[m_id]
 

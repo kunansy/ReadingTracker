@@ -33,7 +33,7 @@ async def system_view():
 @router.get('/graphics')
 async def graphic(request: Request,
                   material_id: UUID | None = None,
-                  last_days: conint(ge=1) = 7): # type: ignore
+                  last_days: conint(ge=1) = 7):  # type: ignore
     context: dict[str, Any] = {
         'request': request,
     }

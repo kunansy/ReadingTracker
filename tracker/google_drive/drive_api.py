@@ -106,7 +106,7 @@ async def _get_file_content(file_id: str) -> dict[str, Any]:
     file = orjson.loads(tmp_file.read())
 
     tmp_file.close()
-    os.remove(tmp_file.name) # noqa: PL107
+    os.remove(tmp_file.name)  # noqa: PL107
     return file
 
 
