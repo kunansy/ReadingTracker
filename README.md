@@ -115,7 +115,7 @@ How the material was being reading:
 ### Read pages statistics
 Statistics of read pages for the time span.
 
-* `Would be total` -- how many pages would be read if there were no empty days;
+* `Would be total` — how many pages would be read if there were no empty days;
 * A day when a material was completed is marked in green.
 ![Read pages](docs/read_pages.png)
 
