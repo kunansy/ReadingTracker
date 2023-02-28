@@ -19,6 +19,7 @@
     - [Show the note](#show-the-note)
     - [Edit the note](#edit-the-note)
   - [System](#system)
+    - [Material reading graphic](#material-reading-graphic)
 
 ## What is that?
 The project is expected to help you to read books:
@@ -98,3 +99,7 @@ Tags and links lists might be scrolled left/right.
 ## System
 Here there are reading graphic, backuping and restoring from the Google Drive.
 ![System](docs/system.png)
+
+### Material reading graphic
+How the material was being reading:
+![Reading material graphic](docs/reading_material.png)
