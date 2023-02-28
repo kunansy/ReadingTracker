@@ -144,6 +144,12 @@ const addMaterialContextMenuItems = (material) => {
     contextMenu.appendChild(openMaterialNotesBtn(material.id));
 }
 
+const openNoteBtn = (note_id) => {
+    return createContextMenuItem(
+        "Open",
+        () => {window.open('/notes/note?note_id=' + note_id)}
+    );
+}
 
 const editNoteBtn = (note_id) => {
     return createContextMenuItem(
@@ -177,6 +183,7 @@ const addNoteContextMenuItems = (note) => {
         return;
     }
 
+    contextMenu.appendChild(openNoteBtn(note.id));
     contextMenu.appendChild(editNoteBtn(note.id));
     contextMenu.appendChild(deleteNoteBth(note.id));
 }
