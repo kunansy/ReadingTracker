@@ -29,7 +29,7 @@ The project is expected to help you to read books:
 2. Create the Google Drive service account: https://labnol.org/google-api-service-account-220404, first 4 steps.
 3. Create env file and fill it: `cp env.template .env`.
 4. Run docker container: `docker compose up -d --build --force-recreate`
-5. Migrate the database: `python3 main.py`
+5. Migrate the database: `docker exec -i -t reading_tracker python3 /app/tracker/main.py`
 
 ## Structure
 ### Queue
