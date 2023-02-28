@@ -57,7 +57,8 @@ there are less than average pages, green if there are more.
 
 ## Notes
 Here there are notes, the most important info from the materials. 
-The user can search a note with Manticoresearch.
+The user can search a note with Manticoresearch by any text query, 
+filter notes by materials or tags.
 ![Notes](docs/notes.png)
 
 You should:
