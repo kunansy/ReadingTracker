@@ -20,6 +20,7 @@
     - [Edit the note](#edit-the-note)
   - [System](#system)
     - [Material reading graphic](#material-reading-graphic)
+    - [Tracker statistics](#tracker-statistics)
 
 ## What is that?
 The project is expected to help you to read books:
@@ -103,3 +104,6 @@ Here there are reading graphic, backuping and restoring from the Google Drive.
 ### Material reading graphic
 How the material was being reading:
 ![Reading material graphic](docs/reading_material.png)
+
+### Tracker statistics
+![Tracker statistics](docs/tracker_statistics.png)
