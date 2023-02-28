@@ -1,5 +1,5 @@
 # ReadingTracker
-![Tests status](https://github.com/kunansy/ReadingTracker/actions/workflows/python-app.yml/badge.svg)
+![Tests status](https://github.com/kunansy/ReadingTracker/actions/workflows/linters.yml/badge.svg)
 ![Build Status](https://github.com/kunansy/ReadingTracker/actions/workflows/buildx-docker-image.yml/badge.svg)
 ![Stable Version](https://img.shields.io/github/v/tag/kunansy/ReadingTracker)
 ![Latest Release](https://img.shields.io/github/v/release/kunansy/ReadingTracker?color=%233D9970)
