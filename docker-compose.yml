@@ -22,9 +22,7 @@ services:
       retries: 3
 
   tracker-search:
-    build:
-      dockerfile: manticore/Dockerfile
-      context: .
+    image: kunansy/tracker_search:6.0.2
     container_name: tracker-search
     restart: always
     ports:
