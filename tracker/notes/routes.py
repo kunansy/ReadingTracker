@@ -260,6 +260,6 @@ async def get_graph(request: Request):
 
     context = {
         'request': request,
-        'graph': db.create_graphic(graph, height='100vh')
+        'graph': db.create_graphic(graph, height='80vh')
     }
     return templates.TemplateResponse("notes/graph.html", context)
