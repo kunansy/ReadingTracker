@@ -17,6 +17,7 @@
     - [Notes graph](#notes-graph)
     - [Note context menu](#note-context-menu)
     - [Show the note](#show-the-note)
+    - [Edit the note](#edit-the-note)
   - [System](#system)
 
 ## What is that?
@@ -84,6 +85,15 @@ Using these arrows user can iter over all note links.
 
 Here is a graph with the current note links.
 ![Note links](docs/note_links.png)
+
+### Edit the note
+When edit the note the user can:
+* Use speech recognition and enter text using a voice (buttons `Start`, `Stop`);
+* Choose some compatible tags (tags are sorted so that the ones used in notes for this material come first);
+* Choose the link to another note: there are only notes with the same tags ordered by tags intersection.
+
+Tags and links lists might be scrolled left/right.
+![Edit note](docs/edit_note.png)
 
 ## System
 Here there are reading graphic, backuping and restoring from the Google Drive.
