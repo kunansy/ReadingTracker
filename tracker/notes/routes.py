@@ -115,7 +115,8 @@ async def get_note(request: Request, note_id: UUID):
         get_material_task = tg.create_task(materials_db.get_material(material_id=note.material_id))
         get_note_links_task = tg.create_task(get_note_links(note))
 
-    material = get_material_task.result()
+    if not (material := get_material_task.result()):
+        raise HTTPException(status_code=404, detail=f"Material id={note.material_id} not found")
 
     context = note.dict() | {
         'request': request,
