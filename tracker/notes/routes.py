@@ -52,6 +52,20 @@ def _highlight_snippets(notes: list[db.Note],
         note.highlight(result.replace_substring, result.snippet)
 
 
+async def get_note_links(note: db.Note) -> dict[str, Any]:
+    async with asyncio.TaskGroup() as tg:
+        get_links_from_task = tg.create_task(db.get_links_from(note_id=note.note_id))
+        if note.link_id:
+            get_link_to_task = tg.create_task(db.get_note(note_id=note.link_id))
+        else:
+            get_link_to_task = tg.create_task(asyncio.sleep(1 / 1000, result=None))
+
+    return {
+        "from": get_links_from_task.result(),
+        "to": get_link_to_task.result()
+    }
+
+
 @router.get('/', response_class=HTMLResponse)
 async def get_notes(request: Request,
                     search: schemas.SearchParams = Depends()):
@@ -99,23 +113,13 @@ async def get_note(request: Request, note_id: UUID):
 
     async with asyncio.TaskGroup() as tg:
         get_material_task = tg.create_task(materials_db.get_material(material_id=note.material_id))
-        get_links_from_task = tg.create_task(db.get_links_from(note_id=note_id))
-        if note.link_id:
-            get_link_to_task = tg.create_task(db.get_note(note_id=note.link_id))
-        else:
-            get_link_to_task = tg.create_task(asyncio.sleep(1 / 1000, result=None))
+        get_note_links_task = tg.create_task(get_note_links(note))
 
-    links_from = get_links_from_task.result()
     material = get_material_task.result()
-
-    note_links = {
-        "from": links_from,
-        "to": get_link_to_task.result()
-    }
 
     context = note.dict() | {
         'request': request,
-        'note_links': note_links,
+        'note_links': get_note_links_task.result(),
         'added_at': note.added_at.strftime(settings.DATETIME_FORMAT),
         'material_title': material.title,
         'material_authors': material.authors,
