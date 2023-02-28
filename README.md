@@ -15,6 +15,7 @@
   - [Reading log](#reading-log)
   - [Notes](#notes)
     - [Notes graph](#notes-graph)
+    - [Note context menu](#note-context-menu)
   - [System](#system)
 
 ## What is that?
@@ -71,6 +72,10 @@ You should:
 ### Notes graph
 Also, here there is a graph with all notes.
 ![Notes graph](docs/notes_graph.png)
+
+### Note context menu
+The user can open a note with context menu, edit it or delete.
+![Note context menu](docs/note_context_menu.png)
 
 ## System
 Here there are reading graphic, backuping and restoring from the Google Drive.
