@@ -1,7 +1,7 @@
 import datetime
-import uuid
 
 import sqlalchemy
+import uuid6
 from sqlalchemy import BigInteger, Boolean, Date, DateTime, Enum, Integer, MetaData, Table, Unicode, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 
@@ -34,7 +34,7 @@ def PrimaryKey(*args, **kwargs) -> sqlalchemy.Column:
 
 
 def _uuid_gen() -> str:
-    return str(uuid.uuid4())
+    return str(uuid6.uuid6())
 
 
 _utc_now = datetime.datetime.utcnow
