@@ -22,6 +22,7 @@
     - [Material reading graphic](#material-reading-graphic)
     - [Tracker statistics](#tracker-statistics)
     - [Read pages statistics](#read-pages-statistics)
+    - [Inserted notes statistics](#inserted-notes-statistics)
 
 ## What is that?
 The project is expected to help you to read books:
@@ -115,3 +116,8 @@ Statistics of read pages for the time span.
 * `Would be total` -- how many pages would be read if there were no empty days;
 * A day when a material was completed is marked in green.
 ![Read pages](docs/read_pages.png)
+
+### Inserted notes statistics
+Statistics of inserted notes for the time span.
+
+![Inserted notes](docs/inserted_notes.png)
