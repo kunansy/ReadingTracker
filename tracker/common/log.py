@@ -12,7 +12,7 @@ formatter = logging.Formatter(
 )
 
 stream_handler = logging.StreamHandler()
-stream_handler.setLevel(logging.DEBUG)
+stream_handler.setLevel(settings.LOGGER_LEVEL)
 stream_handler.setFormatter(formatter)
 
 logger = logging.getLogger(settings.LOGGER_NAME)
