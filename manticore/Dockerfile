@@ -6,9 +6,7 @@ RUN apt-get update && \
     apt-get upgrade -y && \
     wget https://repo.manticoresearch.com/repository/morphology/en.pak.tgz && \
     wget https://repo.manticoresearch.com/repository/morphology/ru.pak.tgz && \
-    tar xvf en.pak.tgz && \
-    tar xvf ru.pak.tgz && \
+    tar xvf en.pak.tgz -C /usr/share/manticore/ && \
+    tar xvf ru.pak.tgz -C /usr/share/manticore/ && \
     rm en.pak.tgz && \
-    rm ru.pak.tgz && \
-    mv en.pak /usr/share/manticore/ && \
-    mv ru.pak /usr/share/manticore/
+    rm ru.pak.tgz
