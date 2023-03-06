@@ -7,7 +7,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from tracker.common import manticoresearch, settings
-from tracker.common.log import logger
+from tracker.common.logger import logger
 from tracker.materials import db as materials_db
 from tracker.models import enums
 from tracker.notes import db, schemas, speech_recognizer as recognizer

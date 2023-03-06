@@ -9,7 +9,7 @@ import sqlalchemy.sql as sa
 from pyvis.network import Network
 
 from tracker.common import database, settings
-from tracker.common.log import logger
+from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
 from tracker.notes import schemas

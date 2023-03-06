@@ -8,7 +8,7 @@ from aiomysql.cursors import Cursor as MysqlCursor
 from pydantic import validator
 
 from tracker.common import database, settings
-from tracker.common.log import logger
+from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import models
 

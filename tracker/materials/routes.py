@@ -6,7 +6,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from tracker.common import settings
-from tracker.common.log import logger
+from tracker.common.logger import logger
 from tracker.materials import db, schemas
 from tracker.models import enums
 

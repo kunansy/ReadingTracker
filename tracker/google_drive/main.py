@@ -8,7 +8,7 @@ from typing import Any
 import orjson
 
 from tracker.common import database
-from tracker.common.log import logger
+from tracker.common.logger import logger
 from tracker.google_drive import db, drive_api
 
 

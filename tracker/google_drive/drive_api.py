@@ -10,7 +10,7 @@ import orjson
 from aiogoogle.auth.creds import ServiceAccountCreds
 
 from tracker.common import settings
-from tracker.common.log import logger
+from tracker.common.logger import logger
 
 
 SCOPES = ['https://www.googleapis.com/auth/drive']

@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.schema import Table
 
 from tracker.common import database, settings
-from tracker.common.log import logger
+from tracker.common.logger import logger
 from tracker.models import models
 
 

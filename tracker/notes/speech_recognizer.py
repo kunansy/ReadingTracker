@@ -4,8 +4,9 @@ import pydub
 import speech_recognition
 
 from tracker.common import settings
-from tracker.common.log import logger
+from tracker.common.logger import logger
 from tracker.notes import schemas
+
 
 recognizer = speech_recognition.Recognizer()
 

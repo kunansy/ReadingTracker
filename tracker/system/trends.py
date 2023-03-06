@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa
 
 from tracker.common import database, settings
-from tracker.common.log import logger
+from tracker.common.logger import logger
 from tracker.models import models
 
 
