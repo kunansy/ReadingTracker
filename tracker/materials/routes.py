@@ -190,3 +190,12 @@ async def get_repeating_queue(request: Request):
         'DATE_FORMAT': settings.DATE_FORMAT
     }
     return templates.TemplateResponse("materials/repeat.html", context)
+
+
+@router.get('/count')
+async def get_materials_count():
+    count = await db.get_materials_count()
+
+    return {
+        "count": count
+    }
