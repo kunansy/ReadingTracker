@@ -1,9 +1,11 @@
 import asyncio
 import datetime
 from decimal import Decimal
+from typing import cast
 from uuid import UUID
 
 import sqlalchemy.sql as sa
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracker.common import database
 from tracker.common.logger import logger
@@ -678,3 +680,102 @@ async def get_queue_end() -> int:
 
     async with database.session() as ses:
         return await ses.scalar(stmt) or 0
+
+
+def _get_material_index_uniqueness_constraint_name() -> str:
+    name: str | None = None
+
+    # closure to cache
+    def internal() -> str:
+        nonlocal name
+        if name:
+            return name
+
+        for constraint in models.Materials.constraints:
+            if constraint.deferrable and constraint.contains_column(models.Materials.c.index):
+                name = cast(str, constraint.name)
+                return name
+
+        raise ValueError("Deferrable material index constraint not found")
+    return internal()
+
+
+async def _set_unique_index_deferred(conn: AsyncSession) -> None:
+    constraint_name = _get_material_index_uniqueness_constraint_name()
+    await conn.execute(sa.text(f"SET CONSTRAINTS {constraint_name} DEFERRED"))
+
+
+async def _set_unique_index_immediate(conn: AsyncSession) -> None:
+    constraint_name = _get_material_index_uniqueness_constraint_name()
+    await conn.execute(sa.text(f"SET CONSTRAINTS {constraint_name} IMMEDIATE"))
+
+
+async def _shift_queue_down(*,
+                            conn: AsyncSession,
+                            start: int,
+                            stop: int) -> None:
+    shift_queue_stmt = models.Materials.update() \
+        .values({"index": models.Materials.c.index + 1}) \
+        .where(models.Materials.c.index >= start) \
+        .where(models.Materials.c.index < stop)
+
+    await conn.execute(shift_queue_stmt)
+
+
+async def _shift_queue_up(*,
+                          conn: AsyncSession,
+                          start: int,
+                          stop: int) -> None:
+    shift_queue_stmt = models.Materials.update() \
+        .values({"index": models.Materials.c.index - 1}) \
+        .where(models.Materials.c.index > start) \
+        .where(models.Materials.c.index <= stop) \
+
+    await conn.execute(shift_queue_stmt)
+
+
+async def _get_material_index(material_id: UUID) -> int:
+    if not (material := await get_material(material_id=str(material_id))):
+        raise ValueError(f"Material id = {material_id} not found")
+
+    return material.index
+
+
+async def swap_order(material_id: UUID,
+                     new_material_index: int) -> None:
+    logger.info("Setting material=%s to %s index", material_id, new_material_index)
+
+    # move to temporary index to save uniqueness
+    update_index_stmt = models.Materials \
+        .update().values({"index": -1}) \
+        .where(models.Materials.c.material_id == str(material_id))
+
+    async with database.transaction() as conn:
+        old_material_index = await _get_material_index(material_id)
+        logger.debug("Old material index = %s", old_material_index)
+
+        if old_material_index == new_material_index:
+            logger.warning("Indexes are equal, terminating")
+            return None
+
+        await _set_unique_index_deferred(conn)
+        await conn.execute(update_index_stmt)
+
+        if old_material_index > new_material_index:
+            logger.info("Move material upper")
+
+            await _shift_queue_down(
+                conn=conn, start=new_material_index, stop=old_material_index)
+        elif old_material_index < new_material_index:
+            logger.info("Move material lower")
+
+            await _shift_queue_up(
+                conn=conn, start=old_material_index, stop=new_material_index)
+        else:
+            raise ValueError(f"Wrong indexes got: {old_material_index}, {new_material_index}, {material_id=}")
+
+        # set the target index
+        update_index_stmt = update_index_stmt.values({"index": new_material_index})
+        await conn.execute(update_index_stmt)
+
+        await _set_unique_index_immediate(conn)
