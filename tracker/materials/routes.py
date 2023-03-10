@@ -192,20 +192,20 @@ async def get_repeating_queue(request: Request):
     return templates.TemplateResponse("materials/repeat.html", context)
 
 
-@router.get('/queue/end')
-async def get_queue_end():
-    """ Get the last material index in the queue """
-    index = await db.get_queue_end()
+@router.get('/queue/start')
+async def get_queue_start():
+    """ Get the first material index in the queue """
+    index = await db.get_queue_start()
 
     return {
         "index": index
     }
 
 
-@router.get('/queue/start')
-async def get_queue_start():
-    """ Get the first material index in the queue """
-    index = await db.get_queue_start()
+@router.get('/queue/end')
+async def get_queue_end():
+    """ Get the last material index in the queue """
+    index = await db.get_queue_end()
 
     return {
         "index": index
