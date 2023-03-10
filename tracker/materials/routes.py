@@ -192,12 +192,13 @@ async def get_repeating_queue(request: Request):
     return templates.TemplateResponse("materials/repeat.html", context)
 
 
-@router.get('/count')
-async def get_materials_count():
-    count = await db.get_materials_count()
+@router.get('/queue/end')
+async def get_queue_end():
+    """ Get the last material index in the queue """
+    index = await db.get_queue_end()
 
     return {
-        "count": count
+        "index": index
     }
 
 

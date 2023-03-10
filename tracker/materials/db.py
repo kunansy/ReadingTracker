@@ -654,9 +654,14 @@ async def get_repeating_queue() -> list[RepeatingQueue]:
     return queue
 
 
-async def get_materials_count() -> int:
-    stmt = sa.select(sa.func.count(1)) \
-        .select_from(models.Materials)
+async def get_queue_end() -> int:
+    stmt = sa.select(models.Materials.c.index) \
+        .join(models.Statuses,
+              models.Statuses.c.material_id == models.Materials.c.material_id,
+              isouter=True) \
+        .where(models.Statuses.c.status_id == None) \
+        .order_by(models.Materials.c.index.desc())\
+        .limit(1)
 
     async with database.session() as ses:
         return await ses.scalar(stmt) or 0
