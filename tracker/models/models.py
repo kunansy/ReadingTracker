@@ -4,6 +4,7 @@ import sqlalchemy
 import uuid6
 from sqlalchemy import BigInteger, Boolean, Date, DateTime, Enum, Integer, MetaData, Table, Unicode, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB, UUID
+from sqlalchemy.sql.type_api import UserDefinedType
 
 from tracker.models import enums
 
@@ -33,6 +34,11 @@ def PrimaryKey(*args, **kwargs) -> sqlalchemy.Column:
     return Column(*args, **kwargs)
 
 
+class Serial(UserDefinedType):
+    def get_col_spec(self, **kw):
+        return "serial"
+
+
 def _uuid_gen() -> str:
     return str(uuid6.uuid6())
 
@@ -53,7 +59,7 @@ Materials = Table(
     Column('link', Unicode(2048), nullable=True),
     Column('added_at', DateTime, default=_utc_now),
     Column('is_outlined', Boolean, default=False),
-    Column('index', Integer, autoincrement=True),
+    Column('index', Serial),
 
     UniqueConstraint('title', 'material_type', name='uix_material'),
     # uniqueness should be deferrable
