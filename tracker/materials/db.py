@@ -664,11 +664,12 @@ async def get_materials_count() -> int:
 
 async def get_queue_start() -> int:
     stmt = sa.select(models.Materials.c.index) \
-        .order_by(models.Materials.c.index) \
         .join(models.Statuses,
               models.Statuses.c.material_id == models.Materials.c.material_id,
               isouter=True) \
-        .where(models.Statuses.c.status_id == None)
+        .where(models.Statuses.c.status_id == None) \
+        .order_by(models.Materials.c.index)\
+        .limit(1)
 
     async with database.session() as ses:
         return await ses.scalar(stmt) or 1
