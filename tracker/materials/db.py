@@ -120,7 +120,7 @@ async def _get_free_materials() -> list[Material]:
 
     stmt = sa.select(models.Materials) \
         .where(~sa.exists(assigned_condition)) \
-        .order_by(models.Materials.c.added_at)
+        .order_by(models.Materials.c.index)
 
     async with database.session() as ses:
         materials = [
