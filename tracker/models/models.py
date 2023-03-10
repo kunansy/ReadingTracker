@@ -35,6 +35,8 @@ def PrimaryKey(*args, **kwargs) -> sqlalchemy.Column:
 
 
 class Serial(UserDefinedType):
+    cache_ok = True
+
     def get_col_spec(self, **kw):
         return "serial"
 
