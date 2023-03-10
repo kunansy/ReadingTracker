@@ -99,7 +99,7 @@ async def _get_mean_read_pages() -> Decimal:
 async def get_material(*,
                        material_id: str) -> Material | None:
     logger.debug("Getting material=%s", material_id)
-    stmt = sa.select(models.Materials)\
+    stmt = sa.select(models.Materials) \
         .where(models.Materials.c.material_id == material_id)
 
     async with database.session() as ses:
@@ -134,8 +134,8 @@ async def _get_free_materials() -> list[Material]:
 
 def _get_reading_materials_stmt() -> sa.Select:
     reading_logs_cte = sa.select([models.ReadingLog.c.material_id,
-                                  sa.func.max(models.ReadingLog.c.date).label('date')])\
-        .group_by(models.ReadingLog.c.material_id)\
+                                  sa.func.max(models.ReadingLog.c.date).label('date')]) \
+        .group_by(models.ReadingLog.c.material_id) \
         .cte('reading_logs')
 
     return sa.select([models.Materials,
@@ -212,8 +212,8 @@ async def get_last_material_started() -> str | None:
     """ Get last started and not completed material """
     logger.info("Getting the last material started")
 
-    stmt = _get_reading_materials_stmt()\
-        .order_by(models.Statuses.c.started_at.desc())\
+    stmt = _get_reading_materials_stmt() \
+        .order_by(models.Statuses.c.started_at.desc()) \
         .limit(1)
 
     async with database.session() as ses:
@@ -384,7 +384,7 @@ async def reading_statistics() -> list[MaterialStatistics]:
 async def get_material_tags() -> set[str]:
     logger.info("Getting material tags")
 
-    stmt = sa.select(models.Materials.c.tags)\
+    stmt = sa.select(models.Materials.c.tags) \
         .where(models.Materials.c.tags != None)
 
     async with database.session() as ses:
@@ -418,7 +418,7 @@ async def insert_material(*,
         "link": link,
         "material_type": material_type,
     }
-    stmt = models.Materials\
+    stmt = models.Materials \
         .insert().values(values)
 
     async with database.session() as ses:
@@ -447,7 +447,7 @@ async def update_material(*,
     }
 
     stmt = models.Materials \
-        .update().values(values)\
+        .update().values(values) \
         .where(models.Materials.c.material_id == str(material_id))
 
     async with database.session() as ses:
@@ -469,7 +469,7 @@ async def start_material(*,
         "material_id": str(material_id),
         "started_at": start_date
     }
-    stmt = models.Statuses\
+    stmt = models.Statuses \
         .insert().values(values)
 
     async with database.session() as ses:
@@ -494,8 +494,8 @@ async def complete_material(*,
     values = {
         "completed_at": completion_date
     }
-    stmt = models.Statuses\
-        .update().values(values)\
+    stmt = models.Statuses \
+        .update().values(values) \
         .where(models.Statuses.c.material_id == str(material_id))
 
     async with database.session() as ses:
@@ -512,8 +512,8 @@ async def outline_material(*,
         "is_outlined": True
     }
 
-    stmt = models.Materials\
-        .update().values(values)\
+    stmt = models.Materials \
+        .update().values(values) \
         .where(models.Materials.c.material_id == str(material_id))
 
     async with database.session() as ses:
@@ -530,7 +530,7 @@ async def repeat_material(*,
         "material_id": str(material_id),
         "repeated_at": database.utcnow()
     }
-    stmt = models.Repeats\
+    stmt = models.Repeats \
         .insert().values(values)
 
     async with database.session() as ses:
@@ -600,10 +600,10 @@ async def get_repeats_analytics() -> dict[str, RepeatAnalytics]:
     stmt = sa.select([models.Statuses.c.material_id,
                       sa.func.count(models.Repeats.c.repeat_id).label("repeats_count"),
                       last_repeated_at,
-                      (sa.func.now() - repetition_or_completion_date).label('priority_days')])\
+                      (sa.func.now() - repetition_or_completion_date).label('priority_days')]) \
         .join(models.Repeats,
               models.Repeats.c.material_id == models.Statuses.c.material_id,
-              isouter=True)\
+              isouter=True) \
         .group_by(models.Statuses.c.material_id)
 
     async with database.session() as ses:
@@ -655,7 +655,7 @@ async def get_repeating_queue() -> list[RepeatingQueue]:
 
 
 async def get_materials_count() -> int:
-    stmt = sa.select(sa.func.count(1))\
+    stmt = sa.select(sa.func.count(1)) \
         .select_from(models.Materials)
 
     async with database.session() as ses:
