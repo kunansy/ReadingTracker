@@ -210,3 +210,11 @@ async def get_queue_end():
     return {
         "index": index
     }
+
+
+@router.post('/queue/swap-order', response_class=RedirectResponse)
+async def update_queue_order(material_id: UUID, index: int):
+    await db.swap_order(material_id, index)
+
+    redirect_url = router.url_path_for(get_queue.__name__)
+    return RedirectResponse(redirect_url, status_code=302)
