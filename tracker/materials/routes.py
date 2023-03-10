@@ -1,7 +1,7 @@
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -125,6 +125,12 @@ async def update_material(material: schemas.UpdateMaterial = Depends()):
 
 @router.post('/start/{material_id}')
 async def start_material(material_id: UUID):
+    if not (material := await db.get_material(material_id=str(material_id))):
+        raise HTTPException(status_code=404, detail=f"Material {material_id} not found")
+    # don't shift queue if the material is the first item
+    if material.index != (queue_start := await db.get_queue_start()):
+        await db.swap_order(material_id, queue_start)
+
     await db.start_material(material_id=material_id)
 
     redirect_url = router.url_path_for(get_queue.__name__)
