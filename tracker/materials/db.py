@@ -15,6 +15,7 @@ from tracker.reading_log import db as log_db
 
 class Material(CustomBaseModel):
     material_id: str
+    index: int
     title: str
     authors: str
     pages: int
@@ -171,7 +172,8 @@ async def _parse_material_status_response(*,
                     tags=row.tags,
                     link=row.link,
                     added_at=row.added_at,
-                    is_outlined=row.is_outlined
+                    is_outlined=row.is_outlined,
+                    index=row.index
                 ),
                 status=Status(
                     status_id=row.status_id,
