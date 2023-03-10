@@ -203,7 +203,7 @@ async def get_materials_count():
 
 @router.get('/queue/start')
 async def get_queue_start():
-    """ Get the first not queue material index """
+    """ Get the first material index in the queue """
     index = await db.get_queue_start()
 
     return {
