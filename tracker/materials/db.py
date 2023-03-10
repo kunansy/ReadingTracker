@@ -650,3 +650,11 @@ async def get_repeating_queue() -> list[RepeatingQueue]:
 
     logger.debug("Repeating queue got, %s materials found", len(queue))
     return queue
+
+
+async def get_materials_count() -> int:
+    stmt = sa.select(sa.func.count(1))\
+        .select_from(models.Materials)
+
+    async with database.session() as ses:
+        return await ses.scalar(stmt) or 0
