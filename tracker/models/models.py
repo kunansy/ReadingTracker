@@ -53,6 +53,7 @@ Materials = Table(
     Column('link', Unicode(2048), nullable=True),
     Column('added_at', DateTime, default=_utc_now),
     Column('is_outlined', Boolean, default=False),
+    Column('index', Integer, autoincrement=True),
 
     UniqueConstraint('title', 'material_type', name='uix_material')
 )
