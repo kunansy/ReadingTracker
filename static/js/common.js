@@ -144,6 +144,62 @@ const addMaterialContextMenuItems = (material) => {
     contextMenu.appendChild(openMaterialNotesBtn(material.id));
 }
 
+const swapQueueOrder = async (material_id, index) => {
+    await fetch(`/materials/queue/swap-order?material_id=${material_id}&index=${index}`, {
+        method: 'POST',
+        headers: {'Content-type': 'application/json'},
+    });
+
+    await window.location.reload();
+}
+
+const moveToIndex = (name, material_id, index) => {
+    return createContextMenuItem(
+        name,
+        async () => {await swapQueueOrder(material_id, index)}
+    );
+}
+
+const getQueueEnd = async () => {
+    let resp = await fetch("/materials/queue/end", {
+        method: 'GET',
+        headers: {'Content-type': 'application/json'},
+    });
+
+    let json = await resp.json();
+    return json['index']
+}
+
+const getQueueStart = async () => {
+    let resp = await fetch("/materials/queue/start", {
+        method: 'GET',
+        headers: {'Content-type': 'application/json'},
+    });
+
+    let json = await resp.json();
+    return json['index']
+}
+
+const addQueueItemContextMenuItems = async (material) => {
+    // ? replace 'material' context menu
+    contextMenu.innerHTML = '';
+
+    let materialId = material.id;
+    let index = +material.getAttribute("index");
+    let queueStart = await getQueueStart();
+    let queueEnd = await getQueueEnd();
+
+    contextMenu.appendChild(editMaterialBtn(materialId));
+    if (index > queueStart) {
+        contextMenu.appendChild(moveToIndex("Move top", materialId, queueStart));
+        contextMenu.appendChild(moveToIndex("Move upper", materialId, index - 1));
+    }
+    if (index < queueEnd) {
+        contextMenu.appendChild(moveToIndex("Move lower", materialId, index + 1));
+        contextMenu.appendChild(moveToIndex("Move bottom", materialId, queueEnd));
+    }
+}
+
 const openNoteBtn = (note_id) => {
     return createContextMenuItem(
         "Open",
@@ -189,6 +245,7 @@ const addNoteContextMenuItems = (note) => {
 }
 
 addContextMenu('.material', addMaterialContextMenuItems);
+addContextMenu('.queue-item', addQueueItemContextMenuItems);
 addContextMenu('.note', addNoteContextMenuItems);
 
 document.addEventListener("DOMContentLoaded", async () => {
