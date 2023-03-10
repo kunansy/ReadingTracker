@@ -55,7 +55,9 @@ Materials = Table(
     Column('is_outlined', Boolean, default=False),
     Column('index', Integer, autoincrement=True),
 
-    UniqueConstraint('title', 'material_type', name='uix_material')
+    UniqueConstraint('title', 'material_type', name='uix_material'),
+    # uniqueness should be deferrable
+    UniqueConstraint('index', name='uix_materials_index', deferrable=True),
 )
 
 ReadingLog = Table(
