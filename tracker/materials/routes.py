@@ -29,6 +29,7 @@ async def root():
 @router.get('/queue', response_class=HTMLResponse)
 async def get_queue(request: Request):
     estimates = await db.estimate()
+    estimates.sort(key=lambda estimate: estimate.material.index)
 
     context = {
         'request': request,
