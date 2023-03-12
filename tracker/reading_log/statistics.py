@@ -250,7 +250,7 @@ async def get_tracker_statistics() -> TrackerStatistics:
         finished_at=finished_at_task.result(),
         duration=duration_task.result(),
         lost_time=lost_time_task.result(),
-        mean=mean_task.result(),
+        mean=float(mean_task.result()),
         median=median_task.result(),
         total_pages_read=total_pages_task.result(),
         total_materials_completed=total_materials_task.result(),
