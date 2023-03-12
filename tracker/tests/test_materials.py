@@ -345,6 +345,7 @@ async def test_reading_statistics():
         sa.select(1)
         .select_from(models.ReadingLog)
         .where(models.ReadingLog.c.material_id == models.Materials.c.material_id)
+        .scalar_subquery()
     )
     reading_materials_stmt = db._get_reading_materials_stmt()\
         .where(log_exists)
