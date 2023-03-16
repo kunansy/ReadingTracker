@@ -92,7 +92,7 @@ class RepeatingQueue(CustomBaseModel):
     priority_months: int
 
 
-async def _get_mean_read_pages() -> Decimal:
+async def get_mean_read_pages() -> Decimal:
     from tracker.reading_log.statistics import get_mean_read_pages
 
     return await get_mean_read_pages()
@@ -330,7 +330,7 @@ async def completed_statistics() -> list[MaterialStatistics]:
 
     async with asyncio.TaskGroup() as tg:
         completed_materials_task = tg.create_task(_get_completed_materials())
-        mean_read_pages_task = tg.create_task(_get_mean_read_pages())
+        mean_read_pages_task = tg.create_task(get_mean_read_pages())
         all_notes_count_task = tg.create_task(notes_db.get_all_notes_count())
         logs_task = tg.create_task(log_db.get_log_records())
         completion_dates_task = tg.create_task(log_db.get_completion_dates())
@@ -359,7 +359,7 @@ async def reading_statistics() -> list[MaterialStatistics]:
 
     async with asyncio.TaskGroup() as tg:
         reading_materials_task = tg.create_task(_get_reading_materials())
-        mean_read_pages_task = tg.create_task(_get_mean_read_pages())
+        mean_read_pages_task = tg.create_task(get_mean_read_pages())
         all_notes_count_task = tg.create_task(notes_db.get_all_notes_count())
         logs_task = tg.create_task(log_db.get_log_records())
         completion_dates_task = tg.create_task(log_db.get_completion_dates())
@@ -555,7 +555,7 @@ async def estimate() -> list[MaterialEstimate]:
     step = datetime.timedelta(days=1)
 
     async with asyncio.TaskGroup() as tg:
-        get_mean_task = tg.create_task(_get_mean_read_pages())
+        get_mean_task = tg.create_task(get_mean_read_pages())
         get_free_materials_task = tg.create_task(_get_free_materials())
 
     # start today, not when all reading material will be completed

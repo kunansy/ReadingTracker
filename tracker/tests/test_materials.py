@@ -37,7 +37,7 @@ async def get_statuses() -> list[db.Status]:
 async def test_get_mean_read_pages():
     from tracker.reading_log.statistics import get_mean_read_pages
 
-    assert await db._get_mean_read_pages() == await get_mean_read_pages()
+    assert await db.get_mean_read_pages() == await get_mean_read_pages()
 
 
 @pytest.mark.asyncio
