@@ -171,22 +171,16 @@ class Note(CustomBaseModel):
             content = formatter(content)
         return content
 
-    @validator('link_id', pre=False)
-    def get_link(cls,
-                 link_id: UUID | None,
-                 values: dict[str, Any]) -> UUID | None:
-        content = values['content']
-        if link := LINK_PATTERN.search(content):
+    @property
+    def link_id(self) -> UUID | None:
+        if link := LINK_PATTERN.search(self.content):
             return UUID(link.group(1))
 
         return None
 
-    @validator('tags', pre=False)
-    def get_tags(cls,
-                 tags: list[str],
-                 values: dict[str, Any]) -> list[str]:
-        content = values['content']
-        if tags := TAGS_PATTERN.findall(content):
+    @property
+    def tags(self) -> list[str]:
+        if tags := TAGS_PATTERN.findall(self.content):
             return [tag.strip().lower() for tag in tags]
 
         return []
