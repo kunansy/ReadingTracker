@@ -105,7 +105,9 @@ Notes = Table(
     Column('chapter', Integer),
     Column('page', Integer),
     Column('tags', JSONB, nullable=True),
-    Column('is_deleted', Boolean, default=False)
+    Column('is_deleted', Boolean, default=False),
+
+    UniqueConstraint('note_number', name='uix_notes_note_number', deferrable=True),
 )
 
 Cards = Table(
