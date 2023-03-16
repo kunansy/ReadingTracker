@@ -43,7 +43,6 @@
         <hr title="Remains">
         <p> Remaining {{ items.lower() }}: {{ ms.remaining_pages }} </p>
         <p> Remaining days: {{ ms.remaining_days }} </p>
-        <p> Expected mean: {{ ms.mean }} {{ items.lower() }} per day </p>
         <p> Would be completed: {{ ms.would_be_completed.strftime(DATE_FORMAT) }} </p>
         {%- if ms.max_record and ms.min_record -%}
             <hr title="Min/max">
