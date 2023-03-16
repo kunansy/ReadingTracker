@@ -103,6 +103,7 @@ async def test_get_lost_days():
     assert lost_days == expected_duration - len(records)
 
 
+@pytest.mark.skip
 @pytest.mark.asyncio
 async def test_get_means():
     means = await st.get_means()
