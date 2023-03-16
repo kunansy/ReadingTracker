@@ -104,10 +104,13 @@ async def test_get_lost_days():
 
 
 @pytest.mark.asyncio
-async def test_get_mean_read_pages():
-    mean_pages = await st.get_mean_read_pages()
+async def test_get_means():
+    means = await st.get_means()
     records = await db.get_log_records()
     record_counts = [Decimal(record.count) for record in records]
+
+    # TODO: wtf?
+    mean_pages = mean(list(means.values()))
 
     assert records
     assert mean_pages == round(mean(record_counts), 2)
