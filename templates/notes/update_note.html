@@ -47,7 +47,7 @@
 {% if possible_links %}
     <ul class="links-list" title="Note links">
         {% for link in possible_links %}
-            <li title="{{ link.info }}" onclick="addTag('[[{{ link.note_id  }}]]')" value="'[[{{ link.note_id  }}]]'"> {{ link.short_content }} </li>
+            <li title="{{ link.info }}" onclick="addTag('[[{{ link.note_id  }}]]',true)" value="'[[{{ link.note_id  }}]]'"> {{ link.short_content }} </li>
         {% endfor %}
     </ul>
 {% endif %}
