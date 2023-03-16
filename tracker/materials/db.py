@@ -555,12 +555,11 @@ async def estimate() -> list[MaterialEstimate]:
     step = datetime.timedelta(days=1)
 
     async with asyncio.TaskGroup() as tg:
-        # start when all reading material will be completed
-        get_start_task = tg.create_task(_end_of_reading())
         get_mean_task = tg.create_task(_get_mean_read_pages())
         get_free_materials_task = tg.create_task(_get_free_materials())
 
-    last_date = get_start_task.result() + step
+    # start today, not when all reading material will be completed
+    last_date = datetime.date.today()
     mean = get_mean_task.result()
     forecasts = []
 
