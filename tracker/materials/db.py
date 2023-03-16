@@ -567,6 +567,8 @@ async def estimate() -> list[MaterialEstimate]:
     for material in get_free_materials_task.result():
         expected_duration = round(material.pages / mean)
         expected_end = last_date + datetime.timedelta(days=expected_duration)
+        # [start; stop]
+        expected_duration += 1
 
         forecasts += [MaterialEstimate(
             material=material,
