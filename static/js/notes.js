@@ -2,12 +2,21 @@ async function openNote(note_id, target_ = "_blank") {
     await window.open('/notes/note?note_id=' + note_id, target=target_);
 }
 
-async function addTag(tag) {
+async function addTag(tag, newLine = false) {
     let content = document.getElementById('input-content');
+    let newContent = '';
+
+    if (content.value.length === 0) {
+        newContent = tag;
+    } else if (newLine) {
+        newContent = content.value + '\n' + tag;
+    } else {
+        newContent = content.value + ' ' + tag;
+    }
 
     // WTF: the f*cking shadow DOM
-    content.textContent = content.value + ' ' + tag;
-    content.value = content.textContent;
+    content.textContent = newContent;
+    content.value = newContent;
 }
 
 const recordAudio = async () => {
