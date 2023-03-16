@@ -206,9 +206,7 @@ async def add_note(*,
                    content: str,
                    chapter: int,
                    page: int,
-                   tags: list[str],
-                   date: datetime.datetime | None = None) -> str:
-    date = date or database.utcnow()
+                   tags: list[str]) -> str:
     logger.debug("Adding note for material_id='%s'", material_id)
 
     values = {
@@ -216,7 +214,6 @@ async def add_note(*,
         'content': content,
         'chapter': chapter,
         'page': page,
-        'added_at': date,
         'tags': tags,
         'link_id': str(link_id) if link_id else None
     }
