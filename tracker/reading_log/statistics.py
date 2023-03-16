@@ -244,7 +244,7 @@ async def get_tracker_statistics() -> TrackerStatistics:
         finished_at_task = tg.create_task(_get_last_date())
         duration_task = tg.create_task(_get_log_duration())
         lost_time_task = tg.create_task(_get_lost_days())
-        mean_task = tg.create_task(get_mean_read_pages())
+        mean_task = tg.create_task(get_means())
         median_task = tg.create_task(_get_median_pages_read_per_day())
         total_pages_task = tg.create_task(_get_total_read_pages())
         total_materials_task = tg.create_task(_get_total_materials_completed())
@@ -252,12 +252,14 @@ async def get_tracker_statistics() -> TrackerStatistics:
         min_log_record_task = tg.create_task(_get_min_record())
         max_log_record_task = tg.create_task(_get_max_record())
 
+    mean = mean_task.result().get(enums.MaterialTypesEnum.book, Decimal(1))
+
     return TrackerStatistics(
         started_at=started_at_task.result(),
         finished_at=finished_at_task.result(),
         duration=duration_task.result(),
         lost_time=lost_time_task.result(),
-        mean=float(mean_task.result()),
+        mean=float(mean),
         median=median_task.result(),
         total_pages_read=total_pages_task.result(),
         total_materials_completed=total_materials_task.result(),

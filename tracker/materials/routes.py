@@ -29,7 +29,7 @@ async def root():
 @router.get('/queue', response_class=HTMLResponse)
 async def get_queue(request: Request):
     estimates = await db.estimate()
-    mean = await db.get_mean_read_pages()
+    mean = await db.get_means()
 
     context = {
         'request': request,
