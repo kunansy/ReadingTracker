@@ -50,9 +50,16 @@ const recordAudio = async () => {
         ).then(async (resp) => {
             let json = await resp.json();
             let noteContent = document.getElementById('input-content');
+            let newContent = '';
 
-            noteContent.textContent = noteContent.value + ' ' + json['transcript'];
-            noteContent.value = noteContent.textContent;
+            if (noteContent.value.length === 0) {
+                newContent = json['transcript'];
+            } else {
+                newContent = noteContent.value + ' ' + json['transcript'];
+            }
+
+            noteContent.textContent = newContent;
+            noteContent.value = newContent;
         }).catch((error) => {
             console.log(`Server error: ${error}`);
         }).finally(() => {
