@@ -36,6 +36,7 @@
         <p> Will be started: {{ estimate.will_be_started.strftime(DATE_FORMAT) }} </p>
         <p> Will be completed: {{ estimate.will_be_completed.strftime(DATE_FORMAT) }} </p>
         <p> Expected duration: {{ estimate.expected_duration }} days </p>
+        <p> Expected mean: {{ mean }} {{ items }} per day </p>
 
         <form class="form start" action="/materials/start/{{ material.material_id }}" METHOD="POST" title="Start the material id={{ material.material_id }}">
             <button type="submit" class="submit-button"> Start </button>
