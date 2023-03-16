@@ -57,4 +57,4 @@ def get_best_result(results: dict) -> schemas.RecognitionResult:
         raise ValueError("No results found")
 
     texts.sort(key=lambda result: result.get('confidence', 0), reverse=True)
-    return texts[0].lower()
+    return texts[0]
