@@ -236,3 +236,7 @@ celebrate {
 #context-menu .item:hover {
     background: #dedede;
 }
+
+.div-btn {
+    cursor: pointer;
+}
