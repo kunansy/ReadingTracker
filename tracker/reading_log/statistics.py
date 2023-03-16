@@ -7,7 +7,7 @@ import sqlalchemy.sql as sa
 from tracker.common import database
 from tracker.common.schemas import CustomBaseModel
 from tracker.materials.db import _convert_duration_to_period
-from tracker.models import models
+from tracker.models import enums, models
 from tracker.reading_log import db
 
 
@@ -135,12 +135,19 @@ async def _get_lost_days() -> int:
         return await ses.scalar(stmt)
 
 
-async def get_mean_read_pages() -> Decimal:
-    stmt = sa.select(sa.func.avg(models.ReadingLog.c.count))
+async def get_means() -> enums.MEANS:
+    """ Mean read pages, articles, seen lectures, listen audiobooks ect """
+    stmt = sa.select([models.Materials.c.material_type.label('mtype'),
+                      sa.func.avg(models.ReadingLog.c.count).label('count')])\
+        .join(models.ReadingLog,
+              models.ReadingLog.c.material_id == models.Materials.c.material_id)\
+        .group_by(models.Materials.c.material_type)
 
     async with database.session() as ses:
-        mean = await ses.scalar(stmt)
-    return round(mean, 2)
+        return {
+            row.mtype: round(row.count, 2)
+            for row in (await ses.execute(stmt)).all()
+        }
 
 
 async def _get_median_pages_read_per_day() -> float:
