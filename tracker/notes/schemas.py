@@ -1,11 +1,12 @@
 import re
-from typing import Any, TypedDict
+from typing import TypedDict
 from uuid import UUID
 
 from fastapi import Form
 from pydantic import conint, constr, validator
 
 from tracker.common.schemas import CustomBaseModel
+
 
 PUNCTUATION_MAPPING = {
     "--": "—",
