@@ -82,10 +82,12 @@ const recordAudio = async () => {
 let isStarted = false;
 
 document.getElementById('start').addEventListener("click", async () => {
-    if (!isStarted) {
-        isStarted = true;
-        const recorder = await recordAudio();
-        console.log("Listening started");
-        recorder.start();
+    if (isStarted) {
+        return;
     }
+
+    isStarted = true;
+    const recorder = await recordAudio();
+    console.log("Listening started");
+    recorder.start();
 });
