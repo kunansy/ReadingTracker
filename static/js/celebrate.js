@@ -1,7 +1,7 @@
 // https://atuin.ru/blog/razletayushhiesya-chasticy-pri-nazhatii-na-knopku/
 // modified and improved
 
-function pop(e) {
+function Celebrate(e) {
     // amount of items in animation
     let amount = 250;
     if (e.clientX === 0 && e.clientY === 0) {
@@ -62,5 +62,6 @@ function removeParticle (e) {
     e.target.effect.target.remove();
 }
 
-const btns = document.querySelectorAll(".celebrate-btn");
-btns.forEach(btn => btn.addEventListener('mouseover', pop));
+document.querySelectorAll(".celebrate-btn").forEach((btn) => {
+    btn.addEventListener('mouseover', Celebrate);
+});
