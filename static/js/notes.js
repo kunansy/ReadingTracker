@@ -68,6 +68,8 @@ const recordAudio = async () => {
             console.log(`Server error: ${error}`);
         }).finally(() => {
             audioChunks = [];
+            loader.classList.remove("loader");
+            document.body.classList.remove("loader-background");
         });
     })
 
