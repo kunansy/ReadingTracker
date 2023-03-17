@@ -22,6 +22,7 @@ async function addTag(tag, newLine = false) {
 const recordAudio = async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
     const mediaRecorder = new MediaRecorder(stream);
+    const loader = document.getElementById("loader");
     let audioChunks = [];
 
     mediaRecorder.addEventListener("dataavailable", event => {
@@ -39,6 +40,9 @@ const recordAudio = async () => {
         console.log("Result audio ", audio.audioBlob.size);
         let fd = new FormData();
         fd.append("data", audio.audioBlob, "tmp.wav");
+
+        document.body.classList.add("loader-background");
+        loader.classList.add("loader");
 
         fetch(
             '/notes/transcript',
