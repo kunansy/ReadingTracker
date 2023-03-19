@@ -260,9 +260,10 @@ async def delete_note(note_id: UUID = Body(embed=True)):
 async def restore_note(note_id: UUID = Body(embed=True)):
     note_id_str = str(note_id)
 
-    async with asyncio.TaskGroup() as tg:
-        tg.create_task(db.restore_note(note_id=note_id_str))
-        tg.create_task(manticoresearch.insert(note_id=note_id_str))
+    # without task group because manticore could not insert
+    # deleted note, so first we should restore it in db
+    await db.restore_note(note_id=note_id_str)
+    await manticoresearch.insert(note_id=note_id_str)
 
 
 @router.get('/links', response_class=HTMLResponse)
