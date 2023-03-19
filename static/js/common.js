@@ -252,6 +252,16 @@ const restoreNoteBtn = (note_id) => {
     );
 }
 
+async function isNoteDeleted(note_id) {
+    let resp = await fetch(`/notes/is-deleted?note_id=${note_id}`, {
+        method: 'GET',
+        headers: {'Content-type': 'application/json'},
+    });
+
+    let json = await resp.json();
+    return json['is_deleted'];
+}
+
 const addNoteContextMenuItems = (note) => {
     // ? on duplicate click don't add items again;
     if (contextMenu.children.length > 0) {
