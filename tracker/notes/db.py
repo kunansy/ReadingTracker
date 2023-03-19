@@ -284,15 +284,11 @@ async def restore_note(*,
     logger.debug("Note restored")
 
 
-async def get_tags(*,
-                   material_id: str | UUID | None = None) -> set[str]:
-    logger.debug("Getting tags for material_id=%s", material_id)
+async def get_tags() -> set[str]:
+    logger.debug("Getting tags")
 
     stmt = sa.select(models.Notes.c.tags)\
         .where(models.Notes.c.tags != [])
-
-    if material_id:
-        stmt = stmt.where(models.Notes.c.material_id == str(material_id))
 
     async with database.session() as ses:
         tags: list[str] = sum((await ses.scalars(stmt)).all(), [])
