@@ -227,3 +227,8 @@ class TranscriptTextResponse(CustomBaseModel):
     @validator('confidence')
     def convert_to_percent(cls, value: float) -> float:
         return round(value * 100, 2)
+
+
+class IsNoteDeletedResponse(CustomBaseModel):
+    note_id: UUID
+    is_deleted: bool
