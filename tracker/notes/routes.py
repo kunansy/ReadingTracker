@@ -245,6 +245,15 @@ async def delete_note(note_id: UUID = Body(embed=True)):
         tg.create_task(manticoresearch.delete(note_id=note_id_str))
 
 
+@router.post('/restore', status_code=201)
+async def restore_note(note_id: UUID = Body(embed=True)):
+    note_id_str = str(note_id)
+
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(db.restore_note(note_id=note_id_str))
+        tg.create_task(manticoresearch.insert(note_id=note_id_str))
+
+
 @router.get('/links', response_class=HTMLResponse)
 async def get_note_graph(note_id: UUID):
     notes = {
