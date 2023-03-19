@@ -485,12 +485,12 @@ async def get_sorted_tags(*,
 
     async with asyncio.TaskGroup() as tg:
         get_tags_task = tg.create_task(get_tags())
-        get_materials_tags = tg.create_task(get_tags(material_id=material_id))
+        get_materials_tags = tg.create_task(get_material_tags(material_id))
 
     tags, materials_tags = get_tags_task.result(), get_materials_tags.result()
-    tags -= materials_tags
+    tags -= set(materials_tags)
 
-    result = sorted(materials_tags) + sorted(tags)
+    result = materials_tags + sorted(tags)
     logger.debug("%s sorted tags got", len(result))
 
     return result
