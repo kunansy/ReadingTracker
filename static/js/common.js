@@ -262,7 +262,7 @@ async function isNoteDeleted(note_id) {
     return json['is_deleted'];
 }
 
-const addNoteContextMenuItems = (note) => {
+const addNoteContextMenuItems = async (note) => {
     // ? on duplicate click don't add items again;
     if (contextMenu.children.length > 0) {
         return;
@@ -270,7 +270,11 @@ const addNoteContextMenuItems = (note) => {
 
     contextMenu.appendChild(openNoteBtn(note.id));
     contextMenu.appendChild(editNoteBtn(note.id));
-    contextMenu.appendChild(deleteNoteBth(note.id));
+    if (await isNoteDeleted(note.id)) {
+        contextMenu.appendChild(restoreNoteBtn(note.id));
+    } else {
+        contextMenu.appendChild(deleteNoteBtn(note.id));
+    }
 }
 
 addContextMenu('.material', addMaterialContextMenuItems);
