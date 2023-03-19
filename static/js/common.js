@@ -226,6 +226,18 @@ const deleteNote = async (note_id) => {
     await window.location.reload();
 }
 
+const restoreNote = async (note_id) => {
+    await fetch("/notes/restore", {
+        method: 'POST',
+        headers: {
+            'Content-type': 'application/json'
+        },
+        body: JSON.stringify({'note_id': note_id})
+    });
+
+    await window.location.reload();
+}
+
 const deleteNoteBth = (note_id) => {
     return createContextMenuItem(
         "Delete",
