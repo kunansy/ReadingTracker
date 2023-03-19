@@ -743,14 +743,26 @@ async def _get_material_index(material_id: UUID) -> int:
     return material.index
 
 
+async def _set_material_index(*,
+                              material_id: UUID,
+                              index: int,
+                              conn: AsyncSession) -> None:
+    logger.debug("Setting material_id=%s to index=%s", material_id, index)
+    if not conn.in_transaction():
+        raise ValueError("Could not update index outside a transaction")
+
+    stmt = models.Materials \
+        .update().values({"index": index}) \
+        .where(models.Materials.c.material_id == str(material_id))
+
+    await conn.execute(stmt)
+
+    logger.debug("Index set")
+
+
 async def swap_order(material_id: UUID,
                      new_material_index: int) -> None:
     logger.info("Setting material=%s to %s index", material_id, new_material_index)
-
-    # move to temporary index to save uniqueness
-    update_index_stmt = models.Materials \
-        .update().values({"index": -1}) \
-        .where(models.Materials.c.material_id == str(material_id))
 
     async with database.transaction() as conn:
         old_material_index = await _get_material_index(material_id)
@@ -761,7 +773,8 @@ async def swap_order(material_id: UUID,
             return None
 
         await _set_unique_index_deferred(conn)
-        await conn.execute(update_index_stmt)
+        # move to temporary index to save uniqueness
+        await _set_material_index(material_id=material_id, index=-1, conn=conn)
 
         if old_material_index > new_material_index:
             logger.info("Move material upper")
@@ -777,7 +790,7 @@ async def swap_order(material_id: UUID,
             raise ValueError(f"Wrong indexes got: {old_material_index}, {new_material_index}, {material_id=}")
 
         # set the target index
-        update_index_stmt = update_index_stmt.values({"index": new_material_index})
-        await conn.execute(update_index_stmt)
+        await _set_material_index(
+            material_id=material_id, index=new_material_index, conn=conn)
 
         await _set_unique_index_immediate(conn)
