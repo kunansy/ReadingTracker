@@ -245,6 +245,13 @@ const deleteNoteBth = (note_id) => {
     );
 }
 
+const restoreNoteBtn = (note_id) => {
+    return createContextMenuItem(
+        "Restore",
+        async () => {await restoreNote(note_id)}
+    );
+}
+
 const addNoteContextMenuItems = (note) => {
     // ? on duplicate click don't add items again;
     if (contextMenu.children.length > 0) {
