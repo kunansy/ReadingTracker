@@ -238,7 +238,7 @@ const restoreNote = async (note_id) => {
     await window.location.reload();
 }
 
-const deleteNoteBth = (note_id) => {
+const deleteNoteBtn = (note_id) => {
     return createContextMenuItem(
         "Delete",
         async () => {await deleteNote(note_id)}
