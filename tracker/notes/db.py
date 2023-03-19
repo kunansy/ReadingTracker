@@ -1,6 +1,6 @@
 import asyncio
 import datetime
-from collections import defaultdict
+from collections import Counter, defaultdict
 from typing import Any, Iterable
 from uuid import UUID
 
@@ -301,6 +301,23 @@ async def get_tags(*,
     logger.debug("Total %s unique tags got", len(tags_set))
 
     return tags_set
+
+
+async def get_material_tags(material_id: str | UUID) -> list[str]:
+    logger.debug("Getting tags for material_id=%s", material_id)
+
+    stmt = sa.select(models.Notes.c.tags) \
+        .where(models.Notes.c.material_id == str(material_id)) \
+        .where(models.Notes.c.tags != [])
+
+    async with database.session() as ses:
+        tags: list[str] = sum((await ses.scalars(stmt)).all(), [])
+
+    tags_counter = Counter(tags)
+    logger.debug("Total %s unique tags got", len(tags_counter))
+
+    # sort by frequency
+    return [tag for tag, _ in tags_counter.most_common()]
 
 
 async def get_possible_links(note: Note) -> list[Note]:
