@@ -492,7 +492,7 @@ async def get_links_from(*,
 
 
 async def is_deleted(note_id: str) -> bool:
-    stmt = sa.select(models.Notes.c.is_deleted == False)\
+    stmt = sa.select(models.Notes.c.is_deleted == True)\
         .where(models.Notes.c.note_id == note_id)
 
     async with database.session() as ses:
