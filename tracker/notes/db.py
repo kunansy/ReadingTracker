@@ -489,3 +489,14 @@ async def get_links_from(*,
             Note(**row)
             for row in (await ses.execute(stmt)).mappings().all()
         ]
+
+
+async def is_deleted(note_id: str) -> bool:
+    stmt = sa.select(models.Notes.c.is_deleted == False)\
+        .where(models.Notes.c.note_id == note_id)
+
+    async with database.session() as ses:
+        if (r := await ses.scalar(stmt)) is None:
+            raise ValueError(f"Note id={note_id} not found")
+
+    return r
