@@ -236,6 +236,17 @@ async def update_note(note: schemas.UpdateNote = Depends()):
     return RedirectResponse(redirect_url, status_code=302)
 
 
+@router.get('/is-deleted',
+            response_model=schemas.IsNoteDeletedResponse)
+async def is_note_deleted(note_id: UUID):
+    result = await db.is_deleted(note_id=str(note_id))
+
+    return {
+        "is_deleted": result,
+        "note_id": note_id
+    }
+
+
 @router.delete('/delete', status_code=201)
 async def delete_note(note_id: UUID = Body(embed=True)):
     note_id_str = str(note_id)
