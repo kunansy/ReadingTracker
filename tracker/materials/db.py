@@ -69,6 +69,10 @@ class MaterialStatistics(CustomBaseModel):
     # according to mean read pages count
     would_be_completed: datetime.date | None = None
 
+    @property
+    def percent_completed(self) -> float:
+        return round(self.total / self.material.pages * 100, 2)
+
 
 class RepeatAnalytics(CustomBaseModel):
     repeats_count: int
