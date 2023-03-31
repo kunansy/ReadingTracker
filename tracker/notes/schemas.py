@@ -221,7 +221,7 @@ class RecognitionResult(TypedDict):
 
 
 class TranscriptTextResponse(CustomBaseModel):
-    transcript: constr(to_lower=True)
+    transcript: str
     confidence: float
 
     @validator('transcript')
