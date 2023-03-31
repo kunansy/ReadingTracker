@@ -63,5 +63,14 @@ function removeParticle (e) {
 }
 
 document.querySelectorAll(".celebrate-btn").forEach((btn) => {
-    btn.addEventListener('mouseover', Celebrate);
+    let timeoutId = null;
+
+    // celebrate only of mouse stay on bth some time
+    btn.addEventListener('mouseover', (e) => {
+        timeoutId = setTimeout(() => {Celebrate(e)}, 150);
+    });
+    // otherwise don't celebrate (if the bth overed accidentally)
+    btn.addEventListener('mouseout', () => {
+        clearTimeout(timeoutId);
+    })
 });
