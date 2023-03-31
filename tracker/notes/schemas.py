@@ -224,6 +224,10 @@ class TranscriptTextResponse(CustomBaseModel):
     transcript: constr(to_lower=True)
     confidence: float
 
+    @validator('transcript')
+    def capitalize_transcript(cls, transcript: str) -> str:
+        return transcript.capitalize()
+
     @validator('confidence')
     def convert_to_percent(cls, value: float) -> float:
         return round(value * 100, 2)
