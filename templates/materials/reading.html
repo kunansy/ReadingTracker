@@ -36,7 +36,7 @@
         <p> Started at: {{ ms.started_at.strftime(DATE_FORMAT) }} </p>
         <p> Is being reading: {{ ms.duration  }} days </p>
         <p> Total duration: {{ ms.total_reading_duration  }} </p>
-        <p> Total {{ items.lower() }} completed: {{ ms.total }} </p>
+        <p> Total {{ items.lower() }} completed: {{ ms.total }}, {{ ms.percent_completed }}% </p>
         <p> Notes count: {{ ms.notes_count }} notes </p>
         <p> Mean: {{ ms.mean }} {{ items.lower() }} per day </p>
         <p> Lost time: {{ ms.lost_time }} days </p>
