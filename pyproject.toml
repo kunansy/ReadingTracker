@@ -1,6 +1,6 @@
 [tool.ruff]
 line-length = 150
-ignore = ["E711"]
+ignore = ["E711","E712"]
 
 target-version = "py311"
 
