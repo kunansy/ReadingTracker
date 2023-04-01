@@ -40,7 +40,7 @@
             <p> Last repeated at: {{ last_repeated_at }} </p>
             <p> Priority: {{ repeat.priority_months }} </p>
 
-            <form class="repeat" action="/materials/repeat/{{ repeat.material_id }}" METHOD="POST" title="Repeat the material id={{ repeat.material_id }}">
+            <form class="repeat" action="/materials/repeat/{{ repeat.material_id }}" METHOD="POST" title="Repeat the material" id={{ repeat.material_id }}">
                 <button type="submit" class="submit-button"> Repeat </button>
             </form>
         </div>
