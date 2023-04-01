@@ -46,6 +46,7 @@
         </div>
     {% endfor %}
 
+    <script src="{{ url_for('static', path='js/celebrate.js')}}"></script>
     {% from 'arrows.html' import arrows %}
     {% call arrows() %}
     {% endcall %}
