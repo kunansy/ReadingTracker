@@ -53,12 +53,13 @@
 
         {%- if not material.is_outlined -%}
             <form class="outline" action="/materials/outline/{{ material.material_id }}" METHOD="POST" title="Mark the material id={{ material.material_id }} as outlined">
-                <button type="submit" class="submit-button"> Outline </button>
+                <button type="submit" class="submit-button celebrate-btn"> Outline </button>
             </form>
         {%- endif  -%}
     </div>
     {% endfor %}
 
+    <script src="{{ url_for('static', path='js/celebrate.js')}}"></script>
     {% from 'arrows.html' import arrows %}
     {% call arrows() %}
     {% endcall %}
