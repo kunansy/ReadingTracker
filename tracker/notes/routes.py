@@ -193,6 +193,7 @@ async def update_note_view(note_id: UUID,
         material_type = tg.create_task(db.get_material_type(material_id=note.material_id))
         get_tags_task = tg.create_task(db.get_sorted_tags(material_id=note.material_id))
         get_possible_links_task = tg.create_task(db.get_possible_links(note=note))
+        get_titles_task = tg.create_task(db.get_material_titles())
 
     context |= {
         'material_id': note.material_id,
@@ -203,6 +204,7 @@ async def update_note_view(note_id: UUID,
         'page': note.page,
         'success': success,
         'tags': get_tags_task.result(),
+        'titles': get_titles_task.result(),
     }
     if not note.link_id:
         context['possible_links'] = get_possible_links_task.result()
