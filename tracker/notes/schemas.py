@@ -62,6 +62,10 @@ def _replace_lt(string: str) -> str:
     return string.replace('<', "&lt;")
 
 
+def _replace_gt(string: str) -> str:
+    return string.replace('>', "&gt;")
+
+
 def _mark_bold(string: str) -> str:
     count = string.count('**')
     assert count % 2 == 0, "Bold markers are not balanced"
@@ -116,6 +120,7 @@ NOTES_FORMATTERS = (
     _up_first_letter,
     _replace_punctuation,
     _replace_lt,
+    _replace_gt,
     _mark_bold,
     _mark_italic,
     _mark_code,
