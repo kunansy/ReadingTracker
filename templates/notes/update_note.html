@@ -21,7 +21,7 @@
     <form action="/notes/update" method="POST">
         <fieldset class="add-note-fieldset">
         <legend class="add-note-legend"> Update note </legend>
-        <input class="input input-datalist hide" name="material_id" value="{{ material_id }}" title="ID of the material">
+        <input class="input input-datalist" name="material_id" value="{{ material_id }}" title="ID of the material">
         <input class="input input-datalist" name="note_id" value="{{ note_id }}" title="ID of the note">
         <textarea class="input altch" id="input-content" placeholder="Enter a content" name="content" title="Text of the note">{{ content }}</textarea>
         {% set page_number = 'page number' %}
