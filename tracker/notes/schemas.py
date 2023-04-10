@@ -59,11 +59,11 @@ def _replace_new_lines(string: str) -> str:
 
 
 def _replace_lt(string: str) -> str:
-    return string.replace('<', "&lt;")
+    return string.replace(' < ', " &lt; ")
 
 
 def _replace_gt(string: str) -> str:
-    return string.replace('>', "&gt;")
+    return string.replace(' > ', " &gt; ")
 
 
 def _mark_bold(string: str) -> str:
