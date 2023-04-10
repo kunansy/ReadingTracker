@@ -21,13 +21,13 @@
     <form action="/notes/update" method="POST">
         <fieldset class="add-note-fieldset">
         <legend class="add-note-legend"> Update note </legend>
-        <input class="input input-datalist" list="books" name="material_id" value="{{ material_id }}" title="ID of the material">
+        <input class="input input-datalist" list="books" name="material_id" value="{{ material_id }}" title="ID of the material" placeholder="Choose a material">
         <datalist id="books">
             {% for material_id, title in titles | dictsort(by='value') %}
                 <option value="{{ material_id }}"> «{{ title }}»
             {% endfor %}
         </datalist>
-        <input class="input input-datalist" name="note_id" value="{{ note_id }}" title="ID of the note">
+        <input class="input input-datalist" name="note_id" value="{{ note_id }}" title="ID of the note" placeholder="ID of the note">
         <textarea class="input altch" id="input-content" placeholder="Enter a content" name="content" title="Text of the note">{{ content }}</textarea>
         {% set page_number = 'page number' %}
         {% set chapter_number = 'chapter number' %}
