@@ -6,7 +6,7 @@
 
 {%- block header -%}
     {% from 'submenu.html' import submenu %}
-    {% call submenu(('Search notes', '/notes'), ('Add note', '/notes/add-view'), ('Graph', '/notes/graph')) %}
+    {% call submenu(('Search notes', '/notes'), ('Add note', '/notes/add-view'), ('Graph', '/notes/graph?material_id=' + material_id | safe)) %}
     {% endcall %}
 {%- endblock header -%}
 
