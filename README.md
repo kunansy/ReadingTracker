@@ -73,7 +73,7 @@ You should:
 * Create small notes with one idea in each note.
 * Add _tags_ that helps to link some ideas into topic groups: `#health`, `#history`, `#linguistics` etc.
 * Add _links_ to help connect notes together using [Zettelkasten method](https://writingcooperative.com/zettelkasten-how-one-german-scholar-was-so-freakishly-productive-997e4e0ca125).
-* Each note should be linked to note that has a direct link to it: `[[c2ed0ac7-fe4f-4a23-a00c-8f61d16398ea]]`
+* Each note should be linked to a note that is directed linked to it, as follows: `[[c2ed0ac7-fe4f-4a23-a00c-8f61d16398ea]]`
 
 ### Notes graph
 Also, here there is a graph with all notes.
