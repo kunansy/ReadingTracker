@@ -77,7 +77,10 @@ You should:
 
 ### Notes graph
 Also, here there is a graph with all notes.
-![Notes graph](docs/notes_graph.png)
+![Notes graph](docs/all_notes_graph.png)
+
+Or graph for selected material.
+![Notes graph](docs/material_notes_graph.png)
 
 ### Note context menu
 The user can open a note with context menu, edit it or delete.
