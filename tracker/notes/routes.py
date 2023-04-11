@@ -304,14 +304,23 @@ async def transcript_speech(data: bytes = Body()):
 @router.get('/graph', response_class=HTMLResponse)
 async def get_graph(request: Request,
                     material_id: str | None = None):
-    notes = await db.get_notes()
-    titles = await db.get_material_titles()
+    async with asyncio.TaskGroup() as tg:
+        get_notes_task = tg.create_task(db.get_notes())
+        get_titles_task = tg.create_task(db.get_material_titles())
+        if material_id:
+            get_material_notes_task = tg.create_task(
+                db.get_notes(material_id=material_id))
+        else:
+            get_material_notes_task = tg.create_task(
+                asyncio.sleep(1 / 100_000, result=[]))
+
+    notes = get_notes_task.result()
 
     if material_id:
         notes = {note.note_id: note for note in notes}
         material_notes = {
             note.note_id
-            for note in await db.get_notes(material_id=material_id)
+            for note in get_material_notes_task.result()
         }
         graph = db.create_material_graph(material_notes, notes)
     else:
@@ -320,7 +329,7 @@ async def get_graph(request: Request,
     context = {
         'request': request,
         'graph': db.create_graphic(graph, height='80vh'),
-        'titles': titles,
+        'titles': get_titles_task.result(),
         'material_id': material_id,
     }
     return templates.TemplateResponse("notes/graph.html", context)
