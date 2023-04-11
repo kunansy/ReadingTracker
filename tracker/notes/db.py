@@ -461,7 +461,24 @@ def create_material_graph(material_notes: set[str],
 
         graph = nx.compose(graph, note_graph)
 
+    _highlight_other_material_notes(
+        graph=graph, notes=notes, material_id=material_id)
+
     return graph
+
+
+def _highlight_other_material_notes(*,
+                                    graph: nx.DiGraph,
+                                    material_id: str,
+                                    notes: dict[str, Note],
+                                    color: str | None = 'black') -> None:
+    notes_from_other_material = {
+        note_id: {'color': color}
+        for note_id in graph.nodes
+        if notes[note_id].material_id != material_id
+    }
+
+    nx.set_node_attributes(graph, notes_from_other_material)
 
 
 def create_graphic(graph: nx.DiGraph, **kwargs) -> str:
