@@ -446,7 +446,9 @@ def link_all_notes(notes: list[Note]) -> nx.DiGraph:
     return graph
 
 
-def create_material_graph(material_notes: set[str],
+def create_material_graph(*,
+                          material_id: str,
+                          material_notes: set[str],
                           notes: dict[str, Note]) -> nx.DiGraph:
     if not (material_notes and notes):
         raise ValueError("No notes passed")
