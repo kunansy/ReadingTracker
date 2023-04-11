@@ -305,6 +305,8 @@ async def transcript_speech(data: bytes = Body()):
 async def get_graph(request: Request,
                     material_id: str | None = None):
     notes = await db.get_notes()
+    titles = await db.get_material_titles()
+
     if material_id:
         notes = {note.note_id: note for note in notes}
         material_notes = {
@@ -317,6 +319,8 @@ async def get_graph(request: Request,
 
     context = {
         'request': request,
-        'graph': db.create_graphic(graph, height='80vh')
+        'graph': db.create_graphic(graph, height='80vh'),
+        'titles': titles,
+        'material_id': material_id,
     }
     return templates.TemplateResponse("notes/graph.html", context)
