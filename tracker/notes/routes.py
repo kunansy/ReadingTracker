@@ -302,9 +302,18 @@ async def transcript_speech(data: bytes = Body()):
 
 
 @router.get('/graph', response_class=HTMLResponse)
-async def get_graph(request: Request):
+async def get_graph(request: Request,
+                    material_id: str | None = None):
     notes = await db.get_notes()
-    graph = db.link_all_notes(notes)
+    if material_id:
+        notes = {note.note_id: note for note in notes}
+        material_notes = {
+            note.note_id
+            for note in await db.get_notes(material_id=material_id)
+        }
+        graph = db.create_material_graph(material_notes, notes)
+    else:
+        graph = db.link_all_notes(notes)
 
     context = {
         'request': request,
