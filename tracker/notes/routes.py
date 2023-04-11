@@ -317,12 +317,12 @@ async def get_graph(request: Request,
     notes = get_notes_task.result()
 
     if material_id:
-        notes = {note.note_id: note for note in notes}
+        notes_dict = {note.note_id: note for note in notes}
         material_notes = {
             note.note_id
             for note in get_material_notes_task.result()
         }
-        graph = db.create_material_graph(material_notes, notes)
+        graph = db.create_material_graph(material_notes, notes_dict)
     else:
         graph = db.link_all_notes(notes)
 
