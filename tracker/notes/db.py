@@ -446,6 +446,24 @@ def link_all_notes(notes: list[Note]) -> nx.DiGraph:
     return graph
 
 
+def create_material_graph(material_notes: set[str],
+                          notes: dict[str, Note]) -> nx.DiGraph:
+    if not (material_notes and notes):
+        raise ValueError("No notes passed")
+
+    graph = nx.DiGraph()
+    while material_notes:
+        note_id = material_notes.pop()
+        note_graph = link_notes(note_id=note_id, notes=notes, color=None)
+
+        for node in note_graph.nodes:
+            material_notes.discard(node)
+
+        graph = nx.compose(graph, note_graph)
+
+    return graph
+
+
 def create_graphic(graph: nx.DiGraph, **kwargs) -> str:
     logger.debug("Creating graphic for graph with %s nodes, %s edges",
                  len(graph.nodes), len(graph.edges))
