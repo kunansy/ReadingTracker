@@ -226,3 +226,12 @@ async def update_queue_order(material_id: UUID, index: int):
 
     redirect_url = router.url_path_for(get_queue.__name__)
     return RedirectResponse(redirect_url, status_code=302)
+
+
+@router.get('/is-reading')
+async def is_material_reading(material_id: str):
+    is_reading = await db.is_reading(material_id=material_id)
+
+    return {
+        "is_reading": is_reading
+    }
