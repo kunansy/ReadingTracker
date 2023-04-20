@@ -798,3 +798,14 @@ async def swap_order(material_id: UUID,
             material_id=material_id, index=new_material_index, conn=conn)
 
         await _set_unique_index_immediate(conn)
+
+
+async def is_reading(*,
+                     material_id: str) -> bool:
+    stmt = sa.select(sa.func.count(1) == 1) \
+        .select_from(models.Statuses) \
+        .where(models.Statuses.c.material_id == material_id) \
+        .where(models.Statuses.c.completed_at == None)
+
+    async with database.session() as ses:
+        return await ses.scalar(stmt)

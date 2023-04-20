@@ -222,14 +222,3 @@ async def insert_log_record(*,
         await ses.execute(stmt)
 
     logger.debug("Log record inserted")
-
-
-async def is_material_reading(*,
-                              material_id: str) -> bool:
-    stmt = sa.select(sa.func.count(1) == 1)\
-        .select_from(models.Statuses) \
-        .where(models.Statuses.c.material_id == material_id)\
-        .where(models.Statuses.c.completed_at == None)
-
-    async with database.session() as ses:
-        return await ses.scalar(stmt)
