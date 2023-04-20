@@ -142,6 +142,16 @@ const addMaterialLog = (material_id) => {
     );
 }
 
+const isMaterialReading = async (material_id) => {
+    let resp = await fetch(`/materials/is-reading?material_id=${material_id}`, {
+        method: 'GET',
+        headers: {'Content-type': 'application/json'},
+    });
+
+    let json = await resp.json();
+    return json['is_reading'];
+}
+
 const addMaterialContextMenuItems = async (material) => {
     // ? on duplicate click don't add items again;
     if (contextMenu.children.length > 0) {
@@ -262,7 +272,7 @@ const restoreNoteBtn = (note_id) => {
     );
 }
 
-async function isNoteDeleted(note_id) {
+const isNoteDeleted = async (note_id) => {
     let resp = await fetch(`/notes/is-deleted?note_id=${note_id}`, {
         method: 'GET',
         headers: {'Content-type': 'application/json'},
@@ -270,16 +280,6 @@ async function isNoteDeleted(note_id) {
 
     let json = await resp.json();
     return json['is_deleted'];
-}
-
-async function isMaterialReading(material_id) {
-    let resp = await fetch(`/materials/is-reading?material_id=${material_id}`, {
-        method: 'GET',
-        headers: {'Content-type': 'application/json'},
-    });
-
-    let json = await resp.json();
-    return json['is_reading'];
 }
 
 const addNoteContextMenuItems = async (note) => {
