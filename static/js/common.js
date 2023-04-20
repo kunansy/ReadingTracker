@@ -135,13 +135,23 @@ const openMaterialNotesBtn = (material_id) => {
     );
 }
 
-const addMaterialContextMenuItems = (material) => {
+const addMaterialLog = (material_id) => {
+    return createContextMenuItem(
+        "Add reading log",
+        () => {window.open('/reading_log/add-view?material_id=' + material_id)}
+    );
+}
+
+const addMaterialContextMenuItems = async (material) => {
     // ? on duplicate click don't add items again;
     if (contextMenu.children.length > 0) {
         return;
     }
     contextMenu.appendChild(editMaterialBtn(material.id));
     contextMenu.appendChild(openMaterialNotesBtn(material.id));
+    if (await isMaterialReading(material.id)) {
+        contextMenu.appendChild(addMaterialLog(material.id));
+    }
 }
 
 const swapQueueOrder = async (material_id, index) => {
@@ -260,6 +270,16 @@ async function isNoteDeleted(note_id) {
 
     let json = await resp.json();
     return json['is_deleted'];
+}
+
+async function isMaterialReading(material_id) {
+    let resp = await fetch(`/materials/is-reading?material_id=${material_id}`, {
+        method: 'GET',
+        headers: {'Content-type': 'application/json'},
+    });
+
+    let json = await resp.json();
+    return json['is_reading'];
 }
 
 const addNoteContextMenuItems = async (note) => {
