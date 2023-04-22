@@ -42,12 +42,11 @@ async def add_log_record_view(request: Request,
         if material_id:
             is_material_reading = tg.create_task(
                 materials_db.is_reading(material_id=material_id))
-        else:
-            get_reading_material_id = tg.create_task(db.get_material_reading_now())
+        get_reading_material_id = tg.create_task(db.get_material_reading_now())
     today = datetime.datetime.utcnow()
 
     log_material_id = material_id
-    if not is_material_reading.result():
+    if not material_id or not is_material_reading.result():
         log_material_id = get_reading_material_id.result()
 
     context = {
