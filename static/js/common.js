@@ -2,40 +2,45 @@ async function openNotes(material_id) {
     await window.open('/notes?material_id=' + material_id);
 }
 
-const addHotkeys = () => {
-    let textInputs = document.querySelectorAll('.altch');
+const surroundSelection = (field, prefix, siffux) => {
+    const before = field.value.substring(0, field.selectionStart);
+    const sel = field.value.substring(field.selectionStart, field.selectionEnd);
+    const after = field.value.substring(field.selectionEnd);
 
-    let onClick = (e) => {
-        let input = e.target;
-        
-        // on Alt-Q
-        if (e.keyCode === 81 && e.altKey) {
-            input.value += '«»';
-        }
-        // on Alt-T
-        else if (e.keyCode === 84 && e.altKey) {
-            input.value += '–';
-        }
-        // on Ctrl-B
-        else if (e.keyCode === 66 && e.ctrlKey) {
-            input.value += '<span class="font-weight-bold"></span>';
-        }
-        // on Ctrl-I
-        else if (e.keyCode === 73 && e.ctrlKey) {
-            input.value += '<span class="font-italic"></span>';
-        }
-        // on Alt-B
-        else if (e.keyCode === 66 && e.altKey) {
-            input.value += '<span class="sub"></span>';
-        }
-        // on Alt-P
-        else if (e.keyCode === 80 && e.altKey) {
-            input.value += '<span class="sup"></span>';
-        }
-    }
-    for (let textInput of textInputs) {
-        textInput.addEventListener('keyup', onClick, true);
-    }
+    field.value = `${before}${prefix}${sel}${siffux}${after}`;
+};
+
+const addHotkeys = () => {
+    document.querySelectorAll('.altch').forEach((elem) => {
+        elem.addEventListener("keydown", (e) => {
+            let input = e.target;
+
+            // on Alt-Q
+            if (e.keyCode === 81 && e.altKey) {
+                surroundSelection(input, '«', '»');
+            }
+            // on Alt-T
+            else if (e.keyCode === 84 && e.altKey) {
+                input.value += '–';
+            }
+            // on Ctrl-B
+            else if (e.keyCode === 66 && e.ctrlKey) {
+                surroundSelection(input, "**", "**");
+            }
+            // on Ctrl-I
+            else if (e.keyCode === 73 && e.ctrlKey) {
+                surroundSelection(input, "__", "__");
+            }
+            // on Alt-B
+            else if (e.keyCode === 66 && e.altKey) {
+                surroundSelection(input, "<span class=sub>", "</span>");
+            }
+            // on Alt-P
+            else if (e.keyCode === 80 && e.altKey) {
+                surroundSelection(input, "<span class=sup>", "</span>");
+            }
+        }, true);
+    });
 };
 
 const contextMenu = document.getElementById("context-menu");
