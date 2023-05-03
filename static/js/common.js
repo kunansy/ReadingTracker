@@ -15,12 +15,12 @@ const addHotkeys = () => {
         elem.addEventListener("keydown", (e) => {
             let input = e.target;
 
-            // on Alt-Q
-            if (e.keyCode === 81 && e.altKey) {
+            // on Ctrl-Q
+            if (e.keyCode === 81 && e.ctrlKey) {
                 surroundSelection(input, '«', '»');
             }
-            // on Alt-T
-            else if (e.keyCode === 84 && e.altKey) {
+            // on Ctrl-T
+            else if (e.keyCode === 84 && e.ctrlKey) {
                 input.value += '–';
             }
             // on Ctrl-B
@@ -35,8 +35,8 @@ const addHotkeys = () => {
             else if (e.keyCode === 66 && e.altKey) {
                 surroundSelection(input, "<span class=sub>", "</span>");
             }
-            // on Alt-P
-            else if (e.keyCode === 80 && e.altKey) {
+            // on Ctrl-P
+            else if (e.keyCode === 80 && e.ctrlKey) {
                 surroundSelection(input, "<span class=sup>", "</span>");
             }
         }, true);
