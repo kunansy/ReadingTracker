@@ -117,18 +117,19 @@ const addContextMenu = (selector, addContextMenuItemsFn) => {
     });
 }
 
+const hideContentMenu = () => {
+    contextMenu.classList.remove("visible");
+    contextMenu.innerHTML = '';
+}
+
 scope.addEventListener("click", (e) => {
     // ? close the menu if the user clicks outside of it
     if (e.target.offsetParent !== contextMenu) {
-      contextMenu.classList.remove("visible");
-      contextMenu.innerHTML = '';
+        hideContentMenu();
     }
 });
 
-window.onscroll = () => {
-    contextMenu.classList.remove("visible");
-    contextMenu.innerHTML = '';
-};
+window.onscroll = hideContentMenu;
 
 const createContextMenuItem = (name, onclickFn) => {
     const node = document.createElement("div");
