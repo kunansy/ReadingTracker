@@ -329,9 +329,30 @@ const addCopyNoteIdListener = () => {
     })
 }
 
+const addLink = (note_id) => {
+    let field = document.getElementById("input-content");
+    field.value += `\n[[${note_id}]]`;
+}
+
+const addLinkBtn = (note_id) => {
+    return createContextMenuItem(
+        "Add link",
+        () => {
+            addLink(note_id);
+            hideContentMenu();
+        }
+    );
+}
+
+const addNoteAlertContextMenuItems = (note) => {
+    contextMenu.appendChild(openNoteBtn(note.id));
+    contextMenu.appendChild(addLinkBtn(note.id));
+}
+
 addContextMenu('.material', addMaterialContextMenuItems);
 addContextMenu('.queue-item', addQueueItemContextMenuItems);
 addContextMenu('.note', addNoteContextMenuItems);
+addContextMenu('.add-note-alert', addNoteAlertContextMenuItems);
 
 addCopyNoteIdListener();
 
