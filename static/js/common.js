@@ -315,9 +315,24 @@ const addNoteContextMenuItems = async (note) => {
     }
 }
 
+const addCopyNoteIdListener = () => {
+    document.querySelectorAll('.note-id-row').forEach((elem) => {
+        elem.addEventListener("click", async () => {
+            const noteId = elem.textContent.split(' ')[3].trim();
+            const type = "text/plain";
+            const blob = new Blob([noteId], { type });
+            const data = [new ClipboardItem({ [type]: blob })];
+
+            await navigator.clipboard.write(data);
+        })
+    })
+}
+
 addContextMenu('.material', addMaterialContextMenuItems);
 addContextMenu('.queue-item', addQueueItemContextMenuItems);
 addContextMenu('.note', addNoteContextMenuItems);
+
+addCopyNoteIdListener();
 
 document.addEventListener("DOMContentLoaded", async () => {
     addHotkeys();
