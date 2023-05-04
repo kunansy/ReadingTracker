@@ -10,9 +10,14 @@ const surroundSelection = (field, prefix, siffux) => {
     field.value = `${before}${prefix}${sel}${siffux}${after}`;
 };
 
+const isUuid = (value) => {
+    const regexExp = /^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$/gi;
+    return regexExp.test(value);
+}
+
 const addHotkeys = () => {
     document.querySelectorAll('.altch').forEach((elem) => {
-        elem.addEventListener("keydown", (e) => {
+        elem.addEventListener("keydown", async (e) => {
             let input = e.target;
 
             // on Ctrl-Q
@@ -38,6 +43,14 @@ const addHotkeys = () => {
             // on Ctrl-P
             else if (e.keyCode === 80 && e.ctrlKey) {
                 surroundSelection(input, "<span class=sup>", "</span>");
+            }
+            // on Ctrl-K
+            else if (e.keyCode === 75 && e.ctrlKey) {
+                let text = await navigator.clipboard.readText();
+                text = text.trim();
+                if (isUuid(text)) {
+                    input.value += `\n[[${text}]]`;
+                }
             }
         }, true);
     });
