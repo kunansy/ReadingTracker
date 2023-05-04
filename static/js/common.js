@@ -36,12 +36,12 @@ const addHotkeys = () => {
             else if (e.keyCode === 73 && e.ctrlKey) {
                 surroundSelection(input, "__", "__");
             }
-            // on Alt-B
-            else if (e.keyCode === 66 && e.altKey) {
+            // on Alt-Down
+            else if (e.keyCode === 40 && e.altKey) {
                 surroundSelection(input, "<span class=sub>", "</span>");
             }
-            // on Ctrl-P
-            else if (e.keyCode === 80 && e.ctrlKey) {
+            // on Alt-Up
+            else if (e.keyCode === 38 && e.altKey) {
                 surroundSelection(input, "<span class=sup>", "</span>");
             }
             // on Ctrl-K
