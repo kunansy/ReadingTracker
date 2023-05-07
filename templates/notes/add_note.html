@@ -12,7 +12,7 @@
 
 {% block main %}
 {% if note_id %}
-    <div class="alert success hover" onclick=openNote("{{ note_id }}")> Note '{{ note_id }}' successfully inserted. </div>
+    <div class="alert success hover add-note-alert" id="{{ note_id }}"> Note '{{ note_id }}' successfully inserted. </div>
 {% endif %}
 
 {% if titles %}
