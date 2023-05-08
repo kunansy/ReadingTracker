@@ -33,7 +33,7 @@ pyvis = "0.3.1"
 speechrecognition = "~3.10.0"
 pyaudio = "~0.2.13"
 pydub = "~0.25.1"
-uuid6 = "~2023.4.25"
+uuid6 = "~2023.5.2"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "~1.2.0"
