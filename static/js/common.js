@@ -15,7 +15,7 @@ const isUuid = (value) => {
     return regexExp.test(value);
 }
 
-const addHotkeys = () => {
+const addHotKeys = () => {
     document.querySelectorAll('.altch').forEach((elem) => {
         elem.addEventListener("keydown", async (e) => {
             let input = e.target;
@@ -357,5 +357,5 @@ addContextMenu('.add-note-alert', addNoteAlertContextMenuItems);
 addCopyNoteIdListener();
 
 document.addEventListener("DOMContentLoaded", async () => {
-    addHotkeys();
+    addHotKeys();
 });
