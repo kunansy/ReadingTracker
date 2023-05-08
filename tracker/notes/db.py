@@ -231,6 +231,7 @@ async def add_note(*,
 
 async def update_note(*,
                       note_id: str,
+                      material_id: str,
                       link_id: UUID | None,
                       content: str,
                       page: int,
@@ -239,6 +240,7 @@ async def update_note(*,
     logger.debug("Updating note_id='%s'", note_id)
 
     values = {
+        'material_id': material_id,
         'content': content,
         'page': page,
         'chapter': chapter,
