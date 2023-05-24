@@ -21,8 +21,7 @@ templates = Jinja2Templates(directory="templates")
 @router.get('/')
 async def get_reading_log(request: Request, material_id: str | None = None):
     async with asyncio.TaskGroup() as tg:
-        get_reading_logs = tg.create_task(db.get_log_records(
-            material_id=str(material_id)))
+        get_reading_logs = tg.create_task(db.get_log_records(material_id=material_id))
         get_mean_materials_read_pages = tg.create_task(
             db.get_mean_materials_read_pages())
         get_titles_task = tg.create_task(db.get_titles())
