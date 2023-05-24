@@ -291,16 +291,6 @@ const restoreNoteBtn = (note_id) => {
     );
 }
 
-const isNoteDeleted = async (note_id) => {
-    let resp = await fetch(`/notes/is-deleted?note_id=${note_id}`, {
-        method: 'GET',
-        headers: {'Content-type': 'application/json'},
-    });
-
-    let json = await resp.json();
-    return json['is_deleted'];
-}
-
 const getNote = async (note_id) => {
     let resp = await fetch(`/notes/note-json?note_id=${note_id}`, {
         method: 'GET',
@@ -319,7 +309,7 @@ const addNoteContextMenuItems = async (note) => {
 
     contextMenu.appendChild(openNoteBtn(note.id));
     contextMenu.appendChild(editNoteBtn(note.id));
-    if (await isNoteDeleted(note.id)) {
+    if (await note_json['is_deleted']) {
         contextMenu.appendChild(restoreNoteBtn(note.id));
     } else {
         contextMenu.appendChild(deleteNoteBtn(note.id));
