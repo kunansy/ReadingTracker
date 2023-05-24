@@ -346,6 +346,7 @@ const addLinkBtn = (note_id) => {
 
 const addNoteAlertContextMenuItems = (note) => {
     contextMenu.appendChild(openNoteBtn(note.id));
+    contextMenu.appendChild(editNoteBtn(note.id));
     contextMenu.appendChild(addLinkBtn(note.id));
 }
 
