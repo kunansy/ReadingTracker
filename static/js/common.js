@@ -301,11 +301,21 @@ const isNoteDeleted = async (note_id) => {
     return json['is_deleted'];
 }
 
+const getNote = async (note_id) => {
+    let resp = await fetch(`/notes/note-json?note_id=${note_id}`, {
+        method: 'GET',
+        headers: {'Content-type': 'application/json'},
+    });
+
+    return await resp.json();
+}
+
 const addNoteContextMenuItems = async (note) => {
     // ? on duplicate click don't add items again;
     if (contextMenu.children.length > 0) {
         return;
     }
+    let note_json = await getNote(note.id);
 
     contextMenu.appendChild(openNoteBtn(note.id));
     contextMenu.appendChild(editNoteBtn(note.id));
@@ -313,6 +323,11 @@ const addNoteContextMenuItems = async (note) => {
         contextMenu.appendChild(restoreNoteBtn(note.id));
     } else {
         contextMenu.appendChild(deleteNoteBtn(note.id));
+    }
+    let url = new URL(document.URL);
+    // when it's a single note page
+    if (url.pathname === "/notes/note") {
+        contextMenu.appendChild(openMaterialNotesBtn(note_json['material_id']));
     }
 }
 
