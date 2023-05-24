@@ -11,6 +11,20 @@
 {% endblock header %}
 
 {% block main %}
+{% if titles %}
+    <div class="form">
+        <form action="/reading_log" method="GET">
+            <input class="input" list="books" name="material_id" value="{{ material_id or '' }}" placeholder="Choose a material">
+            <datalist id="books">
+                {% for material_id, title in titles | dictsort(by='value') %}
+                    <option value="{{ material_id }}"> «{{ title }}»
+                {% endfor %}
+            </datalist>
+            <button type="submit" class="submit-button"> Search </button>
+        </form>
+    </div>
+{% endif %}
+
 {% if log %}
     {% for info in log | sort(attribute="date", reverse=True) %}
         {% set count = info.count %}

@@ -6,8 +6,8 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from tracker.common import settings
-from tracker.reading_log import db, schemas
 from tracker.materials import db as materials_db
+from tracker.reading_log import db, schemas
 
 
 router = APIRouter(
@@ -19,16 +19,20 @@ templates = Jinja2Templates(directory="templates")
 
 
 @router.get('/')
-async def get_reading_log(request: Request):
+async def get_reading_log(request: Request, material_id: str | None = None):
     async with asyncio.TaskGroup() as tg:
-        get_reading_logs = tg.create_task(db.get_log_records())
+        get_reading_logs = tg.create_task(db.get_log_records(
+            material_id=str(material_id)))
         get_mean_materials_read_pages = tg.create_task(
             db.get_mean_materials_read_pages())
+        get_titles_task = tg.create_task(db.get_titles())
 
     context = {
         'request': request,
         'log': get_reading_logs.result(),
         'mean_materials_read_pages': get_mean_materials_read_pages.result(),
+        'titles': get_titles_task.result(),
+        'material_id': material_id or '',
         'DATE_FORMAT': settings.DATE_FORMAT,
     }
     return templates.TemplateResponse("reading_log/reading_log.html", context)
