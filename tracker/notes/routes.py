@@ -130,6 +130,17 @@ async def get_note(request: Request, note_id: UUID):
     return templates.TemplateResponse("notes/note.html", context)
 
 
+@router.get('/note-json',
+            response_model=schemas.GetNoteJsonResponse)
+async def get_note_json(note_id: UUID):
+    if not (note := await db.get_note(note_id=note_id)):
+        raise HTTPException(status_code=404, detail=f"Note id={note_id} not found")
+
+    return note.dict() | {
+        'added_at': note.added_at.strftime(settings.DATETIME_FORMAT),
+    }
+
+
 @router.get('/add-view', response_class=HTMLResponse)
 async def add_note_view(request: Request):
     material_id = request.cookies.get('material_id', '')

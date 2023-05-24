@@ -246,3 +246,17 @@ class TranscriptTextResponse(CustomBaseModel):
 class IsNoteDeletedResponse(CustomBaseModel):
     note_id: UUID
     is_deleted: bool
+
+
+class GetNoteJsonResponse(CustomBaseModel):
+    note_id: UUID
+    link_id: UUID | None
+    material_id: UUID
+    content: str
+    added_at: str
+    chapter: int
+    page: int
+    tags: set[str]
+    is_deleted: bool
+    note_number: int
+    links_count: int | None
