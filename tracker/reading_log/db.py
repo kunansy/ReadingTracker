@@ -90,6 +90,25 @@ async def get_reading_material_titles() -> dict[str, str]:
     return titles
 
 
+async def get_titles() -> dict[str, str]:
+    """ Get titles for materials even been read """
+    logger.debug("Getting reading material titles")
+
+    stmt = sa.select([models.Materials.c.material_id,
+                      models.Materials.c.title])\
+        .join(models.Statuses,
+              models.Statuses.c.material_id == models.Materials.c.material_id)
+
+    async with database.session() as ses:
+        titles = {
+            str(material_id): title
+            for material_id, title in (await ses.execute(stmt)).all()
+        }
+
+    logger.debug("%s materials titles got", len(titles))
+    return titles
+
+
 async def get_completion_dates() -> dict[str, datetime.datetime]:
     logger.debug("Getting completion dates")
 
