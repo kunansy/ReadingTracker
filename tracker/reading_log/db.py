@@ -44,13 +44,17 @@ async def get_mean_materials_read_pages() -> dict[str, Decimal]:
     return mean
 
 
-async def get_log_records() -> list[LogRecord]:
+async def get_log_records(*,
+                          material_id: str | None = None) -> list[LogRecord]:
     logger.debug("Getting all log records")
 
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title.label('material_title')])\
         .join(models.Materials,
               models.Materials.c.material_id == models.ReadingLog.c.material_id)
+
+    if material_id:
+        stmt = stmt.where(models.Materials.c.material_id == material_id)
 
     async with database.session() as ses:
         records = [
