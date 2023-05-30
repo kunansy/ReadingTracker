@@ -1,6 +1,5 @@
 import asyncio
 from typing import Any
-from uuid import UUID
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -32,17 +31,14 @@ async def system_view():
 
 @router.get('/graphics')
 async def graphic(request: Request,
-                  material_id: UUID | None = None,
+                  material_id: str | None = None,
                   last_days: conint(ge=1) = 7):  # type: ignore
     context: dict[str, Any] = {
         'request': request,
     }
-    if material_id:
-        material_id_: str | None = str(material_id)
-    else:
-        material_id_ = await db.get_material_reading_now()
+    material_id = material_id or await db.get_material_reading_now()
 
-    if material_id_ is None:
+    if material_id is None:
         context['what'] = "No material found to show"
         return templates.TemplateResponse("errors/404.html", context)
 
@@ -58,7 +54,7 @@ async def graphic(request: Request,
 
     async with asyncio.TaskGroup() as tg:
         graphic_image_task = tg.create_task(db.create_reading_graphic(
-            material_id=material_id_,
+            material_id=material_id,
             last_days=last_days
         ))
         reading_trend_graphic_task = tg.create_task(
