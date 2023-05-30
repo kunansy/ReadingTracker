@@ -59,46 +59,6 @@ class TrackerStatistics(CustomBaseModel):
         return round(self.would_be_total / self.total_pages_read, 2) * 100
 
 
-async def get_m_log_statistics(*,
-                               material_id: str,
-                               logs: list[db.LogRecord] | None = None,
-                               completion_dates: dict[str, datetime.datetime] | None = None) -> LogStatistics | None:
-    """ Get material statistics from logs """
-    if not await contains(material_id=material_id):
-        return None
-
-    async with asyncio.TaskGroup() as tg:
-        if not logs:
-            get_log_records_task = tg.create_task(db.get_log_records())
-        else:
-            get_log_records_task = tg.create_task(asyncio.sleep(1 / 1000, []))
-        get_min_record_task = tg.create_task(_get_min_record(material_id=material_id))
-        get_max_record_task = tg.create_task(_get_max_record(material_id=material_id))
-
-    log_records = logs or get_log_records_task.result()
-    duration = sum(
-        1
-        for log_record in log_records
-        if log_record.material_id == material_id
-    )
-    total = lost_time = 0
-    async for date, info in db.data(log_records=log_records, completion_dates=completion_dates):
-        if material_id != info.material_id:
-            continue
-        total += info.count
-        lost_time += info.count == 0
-
-    return LogStatistics(
-        material_id=material_id,
-        total=total,
-        lost_time=lost_time,
-        duration=duration,
-        mean=round(total / duration),
-        min_record=get_min_record_task.result(),
-        max_record=get_max_record_task.result()
-    )
-
-
 async def calculate_materials_stat(material_ids: set[str]) -> dict[str, LogStatistics]:
     """ Get materials statistic from logs. Calculating
     several stats should reduce iteration over logs.data() """
