@@ -81,7 +81,7 @@ async def calculate_materials_stat(material_ids: set[str]) -> dict[str, LogStati
         row.duration += count != 0
         row.lost_time += count == 0
         row.total += count
-        if not (min_r := row.min_record) or min_r.count > count and count != 0:
+        if not (min_r := row.min_record) or min_r.count > count != 0:
             row.min_record = database.MinMax(date=date, count=count)
         if not (max_r := row.max_record) or max_r.count < count:
             row.max_record = database.MinMax(date=date, count=count)
