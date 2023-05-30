@@ -99,6 +99,36 @@ async def get_m_log_statistics(*,
     )
 
 
+async def calculate_materials_stat(material_ids: set[str]) -> dict[str, LogStatistics]:
+    """ Get materials statistic from logs. Calculating
+    several stats should reduce iteration over logs.data() """
+    stat: dict[str, LogStatistics] = {
+        material_id: LogStatistics(
+            material_id=material_id,
+            total=0,
+            lost_time=0,
+            duration=0,
+        )
+        for material_id in material_ids
+    }
+
+    async for date, info in db.data():
+        if info.material_id not in material_ids:
+            continue
+        count = info.count
+        row = stat[info.material_id]
+
+        row.duration += count != 0
+        row.lost_time += count == 0
+        row.total += count
+        if not (min_r := row.min_record) or min_r.count > count and count != 0:
+            row.min_record = database.MinMax(date=date, count=count)
+        if not (max_r := row.max_record) or max_r.count < count:
+            row.max_record = database.MinMax(date=date, count=count)
+
+    return stat
+
+
 async def _get_start_date() -> datetime.date:
     stmt = sa.select(sa.func.min(models.ReadingLog.c.date))
 
