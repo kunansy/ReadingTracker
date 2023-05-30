@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 from decimal import Decimal
-from typing import cast
+from typing import Any, cast
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -12,7 +12,6 @@ from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
 from tracker.notes import db as notes_db
-from tracker.reading_log import db as log_db
 
 
 class Material(CustomBaseModel):
@@ -274,23 +273,19 @@ def _get_total_reading_duration(*,
     return _convert_duration_to_period(duration)
 
 
-async def _get_material_statistics(*,
-                                   material_status: MaterialStatus,
-                                   notes_count: int,
-                                   mean_total: Decimal,
-                                   logs: list[log_db.LogRecord] | None = None,
-                                   completion_dates: dict[str, datetime.datetime] | None = None) -> MaterialStatistics:
+def _get_material_statistics(*,
+                             material_status: MaterialStatus,
+                             notes_count: int,
+                             mean_total: Decimal,
+                             log_stats: dict[str, Any]) -> MaterialStatistics:
     """ Calculate statistics for reading or completed material """
-    from tracker.reading_log.statistics import get_m_log_statistics
 
     material, status = material_status.material, material_status.status
     material_id = material.material_id
 
     logger.debug("Calculating statistics material_id=%s", material_id)
 
-    log_st = await get_m_log_statistics(
-        material_id=material_id, logs=logs, completion_dates=completion_dates)
-    if log_st:
+    if log_st := log_stats.get(material_id):
         mean, total = log_st.mean, log_st.total
         duration, lost_time = log_st.duration, log_st.lost_time
 
@@ -330,61 +325,64 @@ async def _get_material_statistics(*,
 
 
 async def completed_statistics() -> list[MaterialStatistics]:
+    from tracker.reading_log.statistics import calculate_materials_stat
+
     logger.info("Calculating completed materials statistics")
 
     async with asyncio.TaskGroup() as tg:
         completed_materials_task = tg.create_task(_get_completed_materials())
         mean_read_pages_task = tg.create_task(get_means())
         all_notes_count_task = tg.create_task(notes_db.get_all_notes_count())
-        logs_task = tg.create_task(log_db.get_log_records())
-        completion_dates_task = tg.create_task(log_db.get_completion_dates())
+
+    material_statuses = completed_materials_task.result()
+    ids = {ms.material_id for ms in material_statuses}
+    log_stats = await calculate_materials_stat(ids)
 
     all_notes_count = all_notes_count_task.result()
     mean_read_pages = mean_read_pages_task.result()
 
-    async with asyncio.TaskGroup() as tg:
-        tasks = [
-            tg.create_task(_get_material_statistics(
-                material_status=material_status,
-                notes_count=all_notes_count.get(material_status.material_id, 0),
-                mean_total=mean_read_pages.get(material_status.material.material_type, Decimal(1)),
-                logs=logs_task.result(),
-                completion_dates=completion_dates_task.result()
-            ))
-            for material_status in completed_materials_task.result()
-        ]
+    result = [
+        _get_material_statistics(
+            material_status=material_status,
+            notes_count=all_notes_count.get(material_status.material_id, 0),
+            mean_total=mean_read_pages.get(material_status.material.material_type, Decimal(1)),
+            log_stats=log_stats
+        )
+        for material_status in material_statuses
+    ]
 
-    logger.info("%s materials statistics calculated", len(tasks))
-    return [task.result() for task in tasks]
+    logger.info("%s materials statistics calculated", len(result))
+    return result
 
 
 async def reading_statistics() -> list[MaterialStatistics]:
+    from tracker.reading_log.statistics import calculate_materials_stat
+
     logger.info("Calculating reading materials statistics")
 
     async with asyncio.TaskGroup() as tg:
         reading_materials_task = tg.create_task(_get_reading_materials())
         mean_read_pages_task = tg.create_task(get_means())
         all_notes_count_task = tg.create_task(notes_db.get_all_notes_count())
-        logs_task = tg.create_task(log_db.get_log_records())
-        completion_dates_task = tg.create_task(log_db.get_completion_dates())
 
+    material_statuses = reading_materials_task.result()
+    ids = {ms.material_id for ms in material_statuses}
+    log_stats = await calculate_materials_stat(ids)
     all_notes_count = all_notes_count_task.result()
     mean_read_pages = mean_read_pages_task.result()
 
-    async with asyncio.TaskGroup() as tg:
-        tasks = [
-            tg.create_task(_get_material_statistics(
-                material_status=material_status,
-                notes_count=all_notes_count.get(material_status.material_id, 0),
-                mean_total=mean_read_pages.get(material_status.material.material_type, Decimal(1)),
-                logs=logs_task.result(),
-                completion_dates=completion_dates_task.result()
-            ))
-            for material_status in reading_materials_task.result()
-        ]
+    result = [
+        _get_material_statistics(
+            material_status=material_status,
+            notes_count=all_notes_count.get(material_status.material_id, 0),
+            mean_total=mean_read_pages.get(material_status.material.material_type, Decimal(1)),
+            log_stats=log_stats
+        )
+        for material_status in material_statuses
+    ]
 
-    logger.info("%s materials statistics calculated", len(tasks))
-    return [task.result() for task in tasks]
+    logger.info("%s materials statistics calculated", len(result))
+    return result
 
 
 async def get_material_tags() -> set[str]:
