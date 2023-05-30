@@ -26,7 +26,7 @@
     </div>
 
     <div class="graphic-image reading-graphic">
-        <img src="data:image/png;base64,{{ graphic_image }}">
+        <img src="data:image/svg+xml;base64,{{ graphic_image }}">
     </div>
 
     <div class="tracker-statistics statistics">
@@ -47,7 +47,7 @@
 
     <div class="graphic-image trend reading-trend">
         <h3 class="header"> Read pages </h3>
-        <img src="data:image/png;base64,{{ reading_trend_image }}">
+        <img src="data:image/svg+xml;base64,{{ reading_trend_image }}">
 
         <div class="statistics">
             <p> Total: {{ reading_trend.total }} </p>
@@ -62,7 +62,7 @@
 
     <div class="graphic-image trend notes-trend">
         <h3 class="header"> Inserted notes </h3>
-        <img src="data:image/png;base64,{{ notes_trend_image }}">
+        <img src="data:image/svg+xml;base64,{{ notes_trend_image }}">
 
         <div class="statistics">
             <p> Total: {{ notes_trend.total }} </p>

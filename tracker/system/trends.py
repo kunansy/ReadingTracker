@@ -288,7 +288,7 @@ def _create_graphic(*,
     plt.gca().invert_yaxis()
 
     tmpbuf = BytesIO()
-    fig.savefig(tmpbuf, format='png')
+    fig.savefig(tmpbuf, format='svg')
 
     image = base64.b64encode(tmpbuf.getvalue()).decode('utf-8')
 

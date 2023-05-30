@@ -95,7 +95,7 @@ async def create_reading_graphic(*,
     ax.legend()
 
     buff = BytesIO()
-    fig.savefig(buff, format='png')
+    fig.savefig(buff, format='svg')
     return base64.b64encode(buff.getvalue()).decode('utf-8')
 
 
