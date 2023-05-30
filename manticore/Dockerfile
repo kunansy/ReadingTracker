@@ -9,4 +9,7 @@ RUN apt-get update && \
     tar xvf en.pak.tgz -C /usr/share/manticore/ && \
     tar xvf ru.pak.tgz -C /usr/share/manticore/ && \
     rm en.pak.tgz && \
-    rm ru.pak.tgz
+    rm ru.pak.tgz && \
+    apt-get clean && \
+    apt-get autoclean && \
+    rm -rf /var/lib/apt/lists/*
