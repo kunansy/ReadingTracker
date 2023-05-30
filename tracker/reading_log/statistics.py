@@ -18,8 +18,8 @@ class LogStatistics(CustomBaseModel):
     lost_time: int
     # days the material was being reading
     duration: int
-    min_record: database.MinMax | None
-    max_record: database.MinMax | None
+    min_record: database.MinMax | None = None
+    max_record: database.MinMax | None = None
 
     @property
     def mean(self) -> int:
