@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import time
 from decimal import Decimal
 from typing import Any, cast
 from uuid import UUID
@@ -328,6 +329,7 @@ async def completed_statistics() -> list[MaterialStatistics]:
     from tracker.reading_log.statistics import calculate_materials_stat
 
     logger.info("Calculating completed materials statistics")
+    start = time.perf_counter()
 
     async with asyncio.TaskGroup() as tg:
         completed_materials_task = tg.create_task(_get_completed_materials())
@@ -351,7 +353,10 @@ async def completed_statistics() -> list[MaterialStatistics]:
         for material_status in material_statuses
     ]
 
-    logger.info("%s materials statistics calculated", len(result))
+    exec_time = round(time.perf_counter() - start, 2)
+    logger.info("%s materials statistics calculated for %ss",
+                len(result), exec_time)
+
     return result
 
 
@@ -359,6 +364,7 @@ async def reading_statistics() -> list[MaterialStatistics]:
     from tracker.reading_log.statistics import calculate_materials_stat
 
     logger.info("Calculating reading materials statistics")
+    start = time.perf_counter()
 
     async with asyncio.TaskGroup() as tg:
         reading_materials_task = tg.create_task(_get_reading_materials())
@@ -381,7 +387,10 @@ async def reading_statistics() -> list[MaterialStatistics]:
         for material_status in material_statuses
     ]
 
-    logger.info("%s materials statistics calculated", len(result))
+    exec_time = round(time.perf_counter() - start, 2)
+    logger.info("%s materials statistics calculated for %ss",
+                len(result), exec_time)
+
     return result
 
 
