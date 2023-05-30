@@ -44,7 +44,7 @@
         <p> Notes count: {{ ms.notes_count }} notes </p>
         <p> Was being reading: {{ ms.duration }} days </p>
         <p> Lost time: {{ ms.lost_time }} days </p>
-        <p> Average: {{ ms.mean }} {{ items.lower() }} per day </p>
+        <p> Mean: {{ ms.mean }} {{ items.lower() }} per day </p>
         {%- if ms.max_record and ms.min_record -%}
             <hr title="Min/max">
             <p> Max: {{ ms.max_record.count }} {{ items.lower() }}, {{ ms.max_record.date.strftime(DATE_FORMAT) }} </p>
