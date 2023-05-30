@@ -316,10 +316,8 @@ async def test_completed_statistics():
         material
         for material in await db._get_completed_materials()
     ]
-    m_log_st = {
-        material.material_id: await statistics.get_m_log_statistics(material_id=material.material_id)
-        for material in materials
-    }
+    m_log_st = await statistics.calculate_materials_stat(
+        material_ids={m.material_id for m in materials})
 
     result = await db.completed_statistics()
     assert len(result) == len(materials)
@@ -355,10 +353,8 @@ async def test_reading_statistics():
         for material in await db._parse_material_status_response(
             stmt=reading_materials_stmt)
     ]
-    m_log_st = {
-        material.material_id: await statistics.get_m_log_statistics(material_id=material.material_id)
-        for material in materials
-    }
+    m_log_st = await statistics.calculate_materials_stat(
+        material_ids={m.material_id for m in materials})
 
     result = await db.reading_statistics()
     assert len(result) >= len(materials)
