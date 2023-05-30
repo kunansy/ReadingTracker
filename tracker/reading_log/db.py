@@ -159,10 +159,12 @@ async def data(*,
     while iter_over_dates <= database.utcnow().date():
         last_material_id = _safe_list_get(materials, -1, None)
 
-        if ((completion_date := completion_dates.get(last_material_id))
-                and completion_date.date() < iter_over_dates):
+        # several materials might be completed the one day
+        completion_date = completion_dates.get(last_material_id)
+        while completion_date and completion_date.date() < iter_over_dates:
             materials.pop()
             last_material_id = _safe_list_get(materials, -1, None)
+            completion_date = completion_dates.get(last_material_id)
 
         if not (log_records_ := log_records_dict.get(iter_over_dates)):
             log_record = LogRecord(material_id=last_material_id, count=0, date=iter_over_dates)
