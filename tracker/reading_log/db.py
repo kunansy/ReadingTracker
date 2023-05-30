@@ -183,6 +183,8 @@ async def data(*,
                     # are being reading one by one
                     materials.remove(material_id)
                     materials += [material_id]
+                    # if several materials have read in one day
+                    last_material_id = material_id
 
                 yield iter_over_dates, log_record
             iter_over_dates += step
