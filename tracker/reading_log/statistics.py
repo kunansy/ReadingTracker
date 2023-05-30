@@ -18,9 +18,12 @@ class LogStatistics(CustomBaseModel):
     lost_time: int
     # days the material was being reading
     duration: int
-    mean: int
     min_record: database.MinMax | None
     max_record: database.MinMax | None
+
+    @property
+    def mean(self) -> int:
+        return round(self.total / (self.duration or 1))
 
 
 class TrackerStatistics(CustomBaseModel):
