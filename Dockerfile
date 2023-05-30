@@ -17,6 +17,8 @@ RUN apt-get update \
     && cd .. && rm -rf ffmpeg-5.1.1 \
     && pip install -U pip poetry --no-cache-dir \
     && apt-get remove -y wget make \
+    && apt-get clean \
+    && apt-get autoclean \
     && rm -rf /var/lib/apt/lists/*
 
 COPY poetry.lock pyproject.toml entrypoint.sh /
