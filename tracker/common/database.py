@@ -18,9 +18,9 @@ class DatabaseException(Exception):
 
 
 class MinMax(CustomBaseModel):
-    log_id: str
-    material_id: str
-    material_title: str
+    log_id: str = ''
+    material_id: str = ''
+    material_title: str = ''
     count: int
     date: datetime.date
 
