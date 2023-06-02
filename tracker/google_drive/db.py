@@ -127,7 +127,10 @@ def _convert_str_to_date(value: JSON_FIELD_TYPES) -> JSON_FIELD_TYPES | DATE_TYP
 
 
 def _get_now() -> str:
-    return database.utcnow().strftime(settings.DATETIME_FORMAT).replace(' ', '_')
+    return database.utcnow()\
+        .strftime(settings.DATETIME_FORMAT)\
+        .replace(' ', '_')\
+        .replace(':', '-')
 
 
 def get_dump_filename(*,
