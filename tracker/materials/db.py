@@ -284,8 +284,6 @@ def _get_material_statistics(*,
     material, status = material_status.material, material_status.status
     material_id = material.material_id
 
-    logger.debug("Calculating statistics material_id=%s", material_id)
-
     if log_st := log_stats.get(material_id):
         mean, total = log_st.mean, log_st.total
         duration, lost_time = log_st.duration, log_st.lost_time
@@ -306,7 +304,6 @@ def _get_material_statistics(*,
     total_reading_duration = _get_total_reading_duration(
         started_at=status.started_at, completed_at=status.completed_at)
 
-    logger.debug("Material statistics calculated")
     return MaterialStatistics(
         material=material,
         started_at=status.started_at,
