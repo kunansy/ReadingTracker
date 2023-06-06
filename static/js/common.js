@@ -154,7 +154,7 @@ const openMaterialNotesBtn = (material_id) => {
     );
 }
 
-const addMaterialLog = (material_id) => {
+const addMaterialLogBtn = (material_id) => {
     return createContextMenuItem(
         "Add reading log",
         () => {window.open('/reading_log/add-view?material_id=' + material_id)}
@@ -180,7 +180,7 @@ const addMaterialContextMenuItems = async (material) => {
     contextMenu.appendChild(openMaterialNotesBtn(material.id));
 
     if (material.classList.contains("reading")) {
-        contextMenu.appendChild(addMaterialLog(material.id));
+        contextMenu.appendChild(addMaterialLogBtn(material.id));
     }
 }
 
