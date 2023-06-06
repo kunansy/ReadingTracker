@@ -15,7 +15,7 @@
 {% if statistics %}
     {% for ms in statistics %}
     {%- set material = ms.material -%}
-    <div class="material hover" id="{{ material.material_id }}">
+    <div class="material hover reading" id="{{ material.material_id }}">
         <p> Title: «{{ material.title }}» </p>
         <p> Author: {{ material.authors }} </p>
         {% set items = 'Pages' %}
