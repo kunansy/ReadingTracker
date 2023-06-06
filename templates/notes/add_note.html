@@ -20,7 +20,7 @@
         <form action="/notes/add" method="POST">
             <fieldset class="add-note-fieldset">
             <legend class="add-note-legend"> Add note </legend>
-            <input class="input input-datalist" list="books" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
+            <input id="input_material_id" class="input input-datalist" list="books" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
             <datalist id="books">
                 {% for material_id, title in titles | dictsort(by='value') %}
                     <option value="{{ material_id }}"> «{{ title }}»
