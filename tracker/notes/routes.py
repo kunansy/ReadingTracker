@@ -346,3 +346,12 @@ async def get_graph(request: Request,
         'material_id': material_id,
     }
     return templates.TemplateResponse("notes/graph.html", context)
+
+
+@router.get("/tags")
+async def get_tags(material_id: UUID):
+    tags = await db.get_sorted_tags(material_id=material_id)
+
+    return {
+        "tags": tags
+    }
