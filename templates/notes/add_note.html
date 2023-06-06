@@ -52,7 +52,7 @@
     <script src="{{ url_for('static', path='js/common.js')}}"></script>
 
     {% if tags %}
-    <ul class="tags-list" title="Note tags">
+    <ul id="tags-list" class="tags-list" title="Note tags">
         {% for tag in tags %}
             <li onclick="addTag('#{{ tag }}')" value="{{ tag }}"> #{{ tag }} </li>
         {% endfor %}
