@@ -192,11 +192,14 @@ const addMaterialContextMenuItems = async (material) => {
     }
     contextMenu.appendChild(editMaterialBtn(material.id));
     contextMenu.appendChild(openMaterialNotesBtn(material.id));
-    contextMenu.appendChild(addMaterialNotesBtn(material.id));
 
     if (material.classList.contains("reading")) {
         contextMenu.appendChild(openMaterialLogBtn(material.id));
+        // add notes btn should be in this position
+        contextMenu.appendChild(addMaterialNotesBtn(material.id));
         contextMenu.appendChild(addMaterialLogBtn(material.id));
+    } else {
+        contextMenu.appendChild(addMaterialNotesBtn(material.id));
     }
 }
 
