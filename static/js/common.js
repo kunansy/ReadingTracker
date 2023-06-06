@@ -178,7 +178,8 @@ const addMaterialContextMenuItems = async (material) => {
     }
     contextMenu.appendChild(editMaterialBtn(material.id));
     contextMenu.appendChild(openMaterialNotesBtn(material.id));
-    if (await isMaterialReading(material.id)) {
+
+    if (material.classList.contains("reading")) {
         contextMenu.appendChild(addMaterialLog(material.id));
     }
 }
