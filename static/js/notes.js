@@ -97,3 +97,35 @@ document.getElementById('start').addEventListener("click", async () => {
     console.log("Listening started");
     recorder.start();
 });
+
+const getTags = async (material_id) => {
+    let resp = await fetch(`/notes/tags?material_id=${material_id}`, {
+        method: 'GET',
+        headers: {'Content-type': 'application/json'},
+    });
+
+    return await resp.json();
+};
+
+document.getElementById('input_material_id').addEventListener("input", async (e) => {
+    const materialId = e.target.value;
+    if (!(materialId && isUuid(materialId))) {
+        return;
+    }
+
+    const ul = document.getElementById("tags-list");
+    ul.innerHTML = "";
+
+    let materialTags = await getTags(materialId);
+    materialTags = materialTags['tags'];
+
+    for (let tag of materialTags) {
+        const li = document.createElement("li");
+        li.setAttribute("value", tag);
+        tag = `#${tag}`;
+        li.onclick = () => {addTag(tag)};
+        li.textContent = tag;
+
+        ul.append(li);
+    }
+});
