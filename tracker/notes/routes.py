@@ -142,8 +142,8 @@ async def get_note_json(note_id: UUID):
 
 
 @router.get('/add-view', response_class=HTMLResponse)
-async def add_note_view(request: Request):
-    material_id = request.cookies.get('material_id', '')
+async def add_note_view(request: Request, material_id: str | None = None):
+    material_id = material_id or request.cookies.get('material_id', '')
 
     async with asyncio.TaskGroup() as tg:
         get_titles_task = tg.create_task(db.get_material_titles())
