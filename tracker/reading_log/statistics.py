@@ -62,21 +62,20 @@ class TrackerStatistics(CustomBaseModel):
 async def calculate_materials_stat(material_ids: set[str]) -> dict[str, LogStatistics]:
     """ Get materials statistic from logs. Calculating
     several stats should reduce iteration over logs.data() """
-    stat: dict[str, LogStatistics] = {
-        material_id: LogStatistics(
-            material_id=material_id,
-            total=0,
-            lost_time=0,
-            duration=0,
-        )
-        for material_id in material_ids
-    }
+    stat: dict[str, LogStatistics] = {}
 
     async for date, info in db.data():
-        if info.material_id not in material_ids:
+        if (material_id := info.material_id) not in material_ids:
             continue
+        if material_id not in stat:
+            stat[material_id] = LogStatistics(
+                material_id=material_id,
+                total=0,
+                lost_time=0,
+                duration=0,
+            )
         count = info.count
-        row = stat[info.material_id]
+        row = stat[material_id]
 
         row.duration += count != 0
         row.lost_time += count == 0
