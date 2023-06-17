@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import datetime
 import statistics
@@ -12,6 +13,7 @@ import sqlalchemy.sql as sa
 from tracker.common import database, settings
 from tracker.common.logger import logger
 from tracker.models import models
+from tracker.system import schemas
 
 
 class TrendException(database.DatabaseException):
@@ -155,6 +157,12 @@ class TimeSpan:
                 f"{self.stop.strftime(settings.DATE_FORMAT)}]")
 
 
+@dataclass
+class SpanAnalysis:
+    reading: SpanStatistics
+    notes: SpanStatistics
+
+
 def _get_span(size: int) -> TimeSpan:
     now = datetime.date.today()
     start = now - datetime.timedelta(days=size - 1)
@@ -241,6 +249,25 @@ async def get_span_notes_statistics(*,
 
     return _get_span_statistics(
         stat=stat, span=span, span_size=span_size)
+
+
+async def get_span_analytics(__span: schemas.GetSpanReportRequest) -> SpanAnalysis:
+    size = __span.size
+    span = TimeSpan(start=__span.start, stop=__span.stop, span_size=size)
+
+    async with asyncio.TaskGroup() as tg:
+        reading_stats_task = tg.create_task(_calculate_span_reading_statistics(span))
+        notes_stats_task = tg.create_task(_calculate_span_notes_statistics(span))
+
+    reading_stats = _get_span_statistics(
+        stat=reading_stats_task.result(), span=span, span_size=size)
+    notes_stats = _get_span_statistics(
+        stat=notes_stats_task.result(), span=span, span_size=size)
+
+    return SpanAnalysis(
+        reading=reading_stats,
+        notes=notes_stats
+    )
 
 
 def _get_colors(completion_dates: dict[str, datetime.datetime] | None,
