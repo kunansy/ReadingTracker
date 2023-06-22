@@ -252,6 +252,7 @@ async def get_span_notes_statistics(*,
 
 
 async def get_span_analytics(__span: schemas.GetSpanReportRequest) -> SpanAnalysis:
+    """ Calculate both reading and notes statistics """
     size = __span.size
     span = TimeSpan(start=__span.start, stop=__span.stop, span_size=size)
 
@@ -272,6 +273,7 @@ async def get_span_analytics(__span: schemas.GetSpanReportRequest) -> SpanAnalys
 
 def _get_colors(completion_dates: dict[str, datetime.datetime] | None,
                 days: list[str]) -> list[str] | None:
+    """ Mark the days when a material completed with green """
     if not completion_dates:
         return None
 
