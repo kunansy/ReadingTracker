@@ -100,7 +100,7 @@ async def test_get_notes(material_id: UUID | None):
     async with database.session() as ses:
         notes_count = await ses.scalar(stmt) or 0
 
-    assert len(notes) == notes_count, f"Some notes missed, {len(notes)} != {len(notes_count)}"
+    assert len(notes) == notes_count, f"Some notes missed, {len(notes)} != {notes_count}"
 
 
 @pytest.mark.asyncio
