@@ -692,7 +692,7 @@ def _get_material_index_uniqueness_constraint_name() -> str:
             return name
 
         for constraint in models.Materials.constraints:
-            if constraint.deferrable and constraint.contains_column(models.Materials.c.index): # type: ignore
+            if constraint.deferrable and constraint.contains_column(models.Materials.c.index):  # type: ignore
                 name = cast(str, constraint.name)
                 return name
 

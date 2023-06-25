@@ -182,7 +182,7 @@ async def _get_min_record(*,
             return database.MinMax(
                 material_id=minmax.material_id,
                 log_id=minmax.log_id,
-                count=minmax.count, # type: ignore
+                count=minmax.count,  # type: ignore
                 date=minmax.date,
                 material_title=minmax.title
             )
@@ -205,7 +205,7 @@ async def _get_max_record(*,
             return database.MinMax(
                 material_id=minmax.material_id,
                 log_id=minmax.log_id,
-                count=minmax.count, # type: ignore
+                count=minmax.count,  # type: ignore
                 date=minmax.date,
                 material_title=minmax.title
             )

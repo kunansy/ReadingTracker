@@ -60,7 +60,7 @@ async def get_log_records(*,
         records = [
             LogRecord(
                 date=row.date,
-                count=row.count, # type: ignore
+                count=row.count,  # type: ignore
                 material_id=row.material_id,
                 material_title=row.material_title,
             )
