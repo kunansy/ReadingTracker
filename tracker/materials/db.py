@@ -16,7 +16,7 @@ from tracker.notes import db as notes_db
 
 
 class Material(CustomBaseModel):
-    material_id: str
+    material_id: UUID
     index: int
     title: str
     authors: str
@@ -29,8 +29,8 @@ class Material(CustomBaseModel):
 
 
 class Status(CustomBaseModel):
-    status_id: str
-    material_id: str
+    status_id: UUID
+    material_id: UUID
     started_at: datetime.datetime
     completed_at: datetime.datetime | None
 
@@ -40,7 +40,7 @@ class MaterialStatus(CustomBaseModel):
     status: Status
 
     @property
-    def material_id(self) -> str:
+    def material_id(self) -> UUID:
         return self.material.material_id
 
 
@@ -83,7 +83,7 @@ class RepeatAnalytics(CustomBaseModel):
 
 
 class RepeatingQueue(CustomBaseModel):
-    material_id: str
+    material_id: UUID
     title: str
     pages: int
     material_type: enums.MaterialTypesEnum
@@ -103,7 +103,7 @@ async def get_means() -> enums.MEANS:
 
 
 async def get_material(*,
-                       material_id: str) -> Material | None:
+                       material_id: UUID) -> Material | None:
     logger.debug("Getting material=%s", material_id)
     stmt = sa.select(models.Materials) \
         .where(models.Materials.c.material_id == material_id)
@@ -232,11 +232,11 @@ async def get_last_material_started() -> str | None:
 
 
 async def _get_status(*,
-                      material_id: UUID | str) -> Status | None:
+                      material_id: UUID) -> Status | None:
     logger.debug("Getting status for material_id=%s", material_id)
 
     stmt = sa.select(models.Statuses) \
-        .where(models.Statuses.c.material_id == str(material_id))
+        .where(models.Statuses.c.material_id == material_id)
 
     async with database.session() as ses:
         if status := (await ses.execute(stmt)).mappings().one_or_none():
@@ -278,7 +278,7 @@ def _get_material_statistics(*,
                              material_status: MaterialStatus,
                              notes_count: int,
                              mean_total: Decimal,
-                             log_stats: dict[str, Any]) -> MaterialStatistics:
+                             log_stats: dict[UUID, Any]) -> MaterialStatistics:
     """ Calculate statistics for reading or completed material """
 
     material, status = material_status.material, material_status.status
@@ -458,7 +458,7 @@ async def update_material(*,
 
     stmt = models.Materials \
         .update().values(values) \
-        .where(models.Materials.c.material_id == str(material_id))
+        .where(models.Materials.c.material_id == material_id)
 
     async with database.session() as ses:
         await ses.execute(stmt)
@@ -476,7 +476,7 @@ async def start_material(*,
         raise ValueError("Start date must be less than today")
 
     values = {
-        "material_id": str(material_id),
+        "material_id": material_id,
         "started_at": start_date
     }
     stmt = models.Statuses \
@@ -489,7 +489,7 @@ async def start_material(*,
 
 
 async def complete_material(*,
-                            material_id: UUID | str,
+                            material_id: UUID,
                             completion_date: datetime.date | None = None) -> None:
     logger.debug("Completing material_id=%s", material_id)
     completion_date = completion_date or database.utcnow().date()
@@ -506,7 +506,7 @@ async def complete_material(*,
     }
     stmt = models.Statuses \
         .update().values(values) \
-        .where(models.Statuses.c.material_id == str(material_id))
+        .where(models.Statuses.c.material_id == material_id)
 
     async with database.session() as ses:
         await ses.execute(stmt)
@@ -524,7 +524,7 @@ async def outline_material(*,
 
     stmt = models.Materials \
         .update().values(values) \
-        .where(models.Materials.c.material_id == str(material_id))
+        .where(models.Materials.c.material_id == material_id)
 
     async with database.session() as ses:
         await ses.execute(stmt)
@@ -537,7 +537,7 @@ async def repeat_material(*,
     logger.debug("Repeating material_id='%s'", material_id)
 
     values = {
-        "material_id": str(material_id),
+        "material_id": material_id,
         "repeated_at": database.utcnow()
     }
     stmt = models.Repeats \
@@ -604,7 +604,7 @@ def _get_priority_days(field: datetime.timedelta | None) -> int:
     return getattr(field, "days", 0)
 
 
-async def get_repeats_analytics() -> dict[str, RepeatAnalytics]:
+async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
     logger.debug("Getting repeat analytics")
 
     last_repeated_at = sa.func.max(models.Repeats.c.repeated_at).label("last_repeated_at")
@@ -620,7 +620,7 @@ async def get_repeats_analytics() -> dict[str, RepeatAnalytics]:
 
     async with database.session() as ses:
         analytics = {
-            str(row.material_id): RepeatAnalytics(
+            row.material_id: RepeatAnalytics(
                 repeats_count=row.repeats_count,
                 last_repeated_at=row.last_repeated_at,
                 priority_days=_get_priority_days(row.priority_days),
@@ -745,7 +745,7 @@ async def _shift_queue_up(*,
 
 
 async def _get_material_index(material_id: UUID) -> int:
-    if not (material := await get_material(material_id=str(material_id))):
+    if not (material := await get_material(material_id=material_id)):
         raise ValueError(f"Material id = {material_id} not found")
 
     return material.index
@@ -761,7 +761,7 @@ async def _set_material_index(*,
 
     stmt = models.Materials \
         .update().values({"index": index}) \
-        .where(models.Materials.c.material_id == str(material_id))
+        .where(models.Materials.c.material_id == material_id)
 
     await conn.execute(stmt)
 
@@ -805,7 +805,7 @@ async def swap_order(material_id: UUID,
 
 
 async def is_reading(*,
-                     material_id: str) -> bool:
+                     material_id: UUID) -> bool:
     stmt = sa.select(sa.func.count(1) == 1) \
         .select_from(models.Statuses) \
         .where(models.Statuses.c.material_id == material_id) \
