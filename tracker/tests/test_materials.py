@@ -285,17 +285,20 @@ async def test_get_material_statistics_unread():
     material_status = db.MaterialStatus(
         material=material,
         status=db.Status(
-            status_id=1,
+            status_id=uuid.uuid4(),
             material_id=material.material_id,
             started_at=datetime.datetime.utcnow()
         )
     )
     mean_total = Decimal(50)
+    m_log_st = await statistics.calculate_materials_stat(
+        material_ids={material.material_id})
 
-    result = await db._get_material_statistics(
+    result = db._get_material_statistics(
         material_status=material_status,
         notes_count=10,
-        mean_total=mean_total
+        mean_total=mean_total,
+        log_stats={material.material_id: m_log_st}
     )
 
     assert result.completed_at is None
@@ -547,14 +550,14 @@ def test_get_priority_days(field, expected):
 
 @pytest.mark.asyncio
 async def test_get_repeats_analytics_only_repeated():
-    stmt = sa.select([models.Repeats.c.material_id,
-                      sa.func.max(models.Repeats.c.repeated_at).label('last_repeated_at'),
-                      sa.func.count(1).label('repeats_count')])\
+    stmt = sa.select(models.Repeats.c.material_id,
+                     sa.func.max(models.Repeats.c.repeated_at).label('last_repeated_at'),
+                     sa.func.count(1).label('repeats_count'))\
         .group_by(models.Repeats.c.material_id)
 
     async with database.session() as ses:
         repeats = {
-            str(row.material_id): row
+            row.material_id: row
             for row in await ses.execute(stmt)
         }
 
@@ -591,6 +594,6 @@ async def test_get_repeats_analytics_only_not_repeated():
     )
 )
 async def test_is_reading(material_id, expected):
-    result = await db.is_reading(material_id=material_id)
+    result = await db.is_reading(material_id=uuid.UUID(material_id))
 
     assert result is expected
