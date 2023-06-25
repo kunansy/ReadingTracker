@@ -2,13 +2,13 @@ import asyncio
 from typing import Any
 
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, ORJSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import conint
 
 from tracker.common.logger import logger
 from tracker.google_drive import main as drive_api
-from tracker.system import db, trends
+from tracker.system import db, schemas, trends
 
 
 router = APIRouter(
@@ -124,3 +124,32 @@ async def restore(request: Request):
         context['notes_count'] = snapshot_dict['notes'].counter
 
     return templates.TemplateResponse("system/restore.html", context)
+
+
+@router.post('/report',
+             response_model=schemas.GetSpanReportResponse,
+             response_class=ORJSONResponse)
+async def get_span_report(span: schemas.GetSpanReportRequest):
+    """ Get analytics for the span: analyze materials,
+    read items and inserted notes """
+    span_analysis = await trends.get_span_analytics(span)
+
+    return {
+        "completed_materials": span_analysis.materials_analytics.stats,
+        "total_materials_completed": span_analysis.materials_analytics.total,
+
+        "read_items": span_analysis.reading_analytics.stats,
+        "reading_total": span_analysis.reading.total,
+        "reading_median": span_analysis.reading.median,
+        "reading_mean": span_analysis.reading.mean,
+        "reading_lost_count": span_analysis.reading.lost_pages,
+        "reading_zero_days": span_analysis.reading.zero_count,
+        "reading_would_be_total": span_analysis.reading.would_be_total,
+
+        "notes_total": span_analysis.notes.total,
+        "notes_median": span_analysis.notes.median,
+        "notes_mean": span_analysis.notes.mean,
+        "notes_lost_count": span_analysis.notes.lost_pages,
+        "notes_zero_days": span_analysis.notes.zero_count,
+        "notes_would_be_total": span_analysis.notes.would_be_total,
+    }
