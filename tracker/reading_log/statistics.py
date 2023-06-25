@@ -130,10 +130,9 @@ async def _get_lost_days() -> int:
 
 async def get_means() -> enums.MEANS:
     """ Mean read pages, articles, seen lectures, listen audiobooks ect """
-    stmt = sa.select([models.Materials.c.material_type.label('mtype'),
-                      sa.func.avg(models.ReadingLog.c.count).label('count')])\
-        .join(models.ReadingLog,
-              models.ReadingLog.c.material_id == models.Materials.c.material_id)\
+    stmt = sa.select(models.Materials.c.material_type.label('mtype'),
+                     sa.func.avg(models.ReadingLog.c.count).label('count'))\
+        .join(models.ReadingLog)\
         .group_by(models.Materials.c.material_type)
 
     async with database.session() as ses:
@@ -165,10 +164,9 @@ async def contains(*,
 
 async def _get_min_record(*,
                           material_id: UUID | None = None) -> database.MinMax | None:
-    stmt = sa.select([models.ReadingLog,
-                      models.Materials.c.title]) \
-        .join(models.Materials,
-              models.ReadingLog.c.material_id == models.Materials.c.material_id) \
+    stmt = sa.select(models.ReadingLog,
+                     models.Materials.c.title) \
+        .join(models.Materials) \
         .order_by(models.ReadingLog.c.count) \
         .limit(1)
 
@@ -189,10 +187,9 @@ async def _get_min_record(*,
 
 async def _get_max_record(*,
                           material_id: UUID | None = None) -> database.MinMax | None:
-    stmt = sa.select([models.ReadingLog,
-                      models.Materials.c.title]) \
-        .join(models.Materials,
-              models.ReadingLog.c.material_id == models.Materials.c.material_id) \
+    stmt = sa.select(models.ReadingLog,
+                     models.Materials.c.title) \
+        .join(models.Materials) \
         .order_by(models.ReadingLog.c.count.desc()) \
         .limit(1)
 
