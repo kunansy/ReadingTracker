@@ -16,7 +16,7 @@ async def notes_with_cards() -> list[UUID]:
               models.Cards.c.note_id == models.Notes.c.note_id)
 
     async with database.session() as ses:
-        return (await ses.execute(stmt)).all()
+        return await ses.scalars(stmt) # type: ignore
 
 
 async def add_card(*,
