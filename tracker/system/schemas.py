@@ -23,8 +23,8 @@ class GetSpanReportRequest(CustomBaseModel):
     @validator('stop')
     def validate_start_less_than_stop(cls,
                                       stop: datetime.date,
-                                      config: dict[str, Any]) -> datetime.date:
-        start = config['start']
+                                      values: dict[str, Any]) -> datetime.date:
+        start = values['start']
         assert stop < start, "Stop must be less than start"
 
         return stop
