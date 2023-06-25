@@ -90,7 +90,7 @@ async def _get_note(*,
         .where(models.Notes.c.note_id == note_id)
 
     async with database.session() as ses:
-        if note := (await ses.execute(stmt)).one_or_none():
+        if note := (await ses.execute(stmt)).mappings().one_or_none():
             logger.debug("Note got")
             return Note(**note)
 
