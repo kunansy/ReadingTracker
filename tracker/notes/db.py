@@ -396,7 +396,7 @@ def _link_cohesive_notes(graph: nx.DiGraph,
 
     if link_id:
         graph.add_nodes_from([_get_note_link(notes[link_id])])
-        graph.add_edge(note_id, link_id)
+        graph.add_edge(str(note_id), str(link_id))
 
         _link_cohesive_notes(graph, notes, link_id, visited=visited)
 
@@ -405,7 +405,7 @@ def _link_cohesive_notes(graph: nx.DiGraph,
 
     for link in links_from:
         graph.add_nodes_from([_get_note_link(notes[link.note_id])])
-        graph.add_edge(link.note_id, note_id)
+        graph.add_edge(str(link.note_id), str(note_id))
 
         _link_cohesive_notes(graph, notes, link.note_id, visited=visited)
 
