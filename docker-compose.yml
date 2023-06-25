@@ -16,7 +16,7 @@ services:
     networks:
        - tracker-net
     healthcheck:
-      test: pg_isready -U ${DB_USERNAME} -q -d ${DB_NAME}
+      test: ["CMD", "pg_isready", "-U", "${DB_USERNAME}", "-q", "-d", "${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -63,7 +63,7 @@ services:
     volumes:
       - ./data:/app/data:rw
     healthcheck:
-      test: curl -f http://localhost:8000/readiness || exit 1
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/readiness || exit 1"]
       interval: 10s
       timeout: 5s
       retries: 3
