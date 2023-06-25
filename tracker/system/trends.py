@@ -302,6 +302,27 @@ async def _materials_analytics(span: TimeSpan) -> _MaterialAnalytics:
     )
 
 
+async def _reading_analytics(span: TimeSpan) -> _MaterialAnalytics:
+    """ Get how many pages were read in the span,
+    group them by material types """
+    stmt = sa.select([models.Materials.c.material_type,
+                      sa.func.sum(models.ReadingLog.c.count).label('count')]) \
+        .join(models.ReadingLog,
+              models.ReadingLog.c.material_id == models.Materials.c.material_id) \
+        .where(models.ReadingLog.c.date >= span.start) \
+        .where(models.ReadingLog.c.date <= span.stop) \
+        .group_by(models.Materials.c.material_type)
+
+    async with database.session() as ses:
+        res = (await ses.execute(stmt)).all()
+    stats = {r.material_type: r.count for r in res}
+
+    return _MaterialAnalytics(
+        stats=stats,
+        total=sum(stats.values())
+    )
+
+
 def _get_colors(completion_dates: dict[str, datetime.datetime] | None,
                 days: list[str]) -> list[str] | None:
     """ Mark the days when a material completed with green """
