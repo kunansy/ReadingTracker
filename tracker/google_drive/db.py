@@ -5,6 +5,7 @@ from typing import Any, NamedTuple
 from uuid import UUID
 
 import sqlalchemy.sql as sa
+from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.schema import Table
 
@@ -62,10 +63,8 @@ def _convert_date_to_str(value: DATE_TYPES | JSON_FIELD_TYPES) -> DATE_TYPES | J
     return value
 
 
-def _serialize_to_json(value: DATE_TYPES | UUID | JSON_FIELD_TYPES) -> JSON_FIELD_TYPES:
-    if _is_uuid(value):
-        return str(value)
-    return _convert_date_to_str(value)
+def _serialize_to_json(value: DATE_TYPES | UUID | JSON_FIELD_TYPES) -> DATE_TYPES | JSON_FIELD_TYPES:
+    return jsonable_encoder(_convert_date_to_str(value))  # type: ignore
 
 
 async def _get_table_snapshot(*,
