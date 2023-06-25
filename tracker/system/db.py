@@ -2,6 +2,7 @@ import base64
 import datetime
 from io import BytesIO
 from typing import NamedTuple
+from uuid import UUID
 
 import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa
@@ -18,7 +19,7 @@ class ReadingData(NamedTuple):
 
 
 async def _get_graphic_data(*,
-                            material_id: str,
+                            material_id: UUID,
                             last_days: int) -> ReadingData:
     dates, counts, total = [], [], 0
 
@@ -36,25 +37,24 @@ async def _get_graphic_data(*,
     )
 
 
-async def get_read_material_titles() -> dict[str, str]:
-    stmt = sa.select([models.Materials.c.material_id,
-                      models.Materials.c.title])\
-        .join(models.Statuses,
-              models.Statuses.c.material_id == models.Materials.c.material_id)
+async def get_read_material_titles() -> dict[UUID, str]:
+    stmt = sa.select(models.Materials.c.material_id,
+                     models.Materials.c.title)\
+        .join(models.Statuses)
 
     async with database.session() as ses:
         return {
-            str(material_id): title
+            material_id: title
             for material_id, title in (await ses.execute(stmt)).all()
         }
 
 
-async def get_material_reading_now() -> str | None:
+async def get_material_reading_now() -> UUID | None:
     return await logs_db.get_material_reading_now()
 
 
 async def create_reading_graphic(*,
-                                 material_id: str,
+                                 material_id: UUID,
                                  last_days: int) -> str:
     if not (material := await materials_db.get_material(material_id=material_id)):
         raise ValueError(f"'{material_id=}' not found")
