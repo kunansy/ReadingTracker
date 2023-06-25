@@ -5,7 +5,7 @@ import statistics
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
-from typing import Generator, NamedTuple, Sequence
+from typing import Any, Generator, NamedTuple, Sequence
 
 import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa
@@ -324,7 +324,7 @@ async def _reading_analytics(span: TimeSpan) -> _MaterialAnalytics:
     )
 
 
-def _get_colors(completion_dates: dict[str, datetime.datetime] | None,
+def _get_colors(completion_dates: dict[Any, datetime.datetime] | None,
                 days: list[str]) -> list[str] | None:
     """ Mark the days when a material completed with green """
     if not completion_dates:
@@ -344,7 +344,7 @@ def _create_graphic(*,
                     stat: SpanStatistics,
                     title: str = 'Total items completed',
                     show_mean_line: bool = True,
-                    completion_dates: dict[str, datetime.datetime] | None = None) -> str:
+                    completion_dates: dict[Any, datetime.datetime] | None = None) -> str:
     logger.debug("Creating graphic started")
 
     days = stat.days
@@ -381,7 +381,7 @@ def _create_graphic(*,
 async def create_reading_graphic(stat: SpanStatistics | None = None,
                                  *,
                                  span_size: int = 7,
-                                 completion_dates: dict[str, datetime.datetime] | None = None) -> str:
+                                 completion_dates: dict[Any, datetime.datetime] | None = None) -> str:
     logger.info("Creating reading graphic")
 
     stat = stat or await get_span_reading_statistics(span_size=span_size)
