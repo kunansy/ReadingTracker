@@ -62,6 +62,12 @@ def _convert_date_to_str(value: DATE_TYPES | JSON_FIELD_TYPES) -> DATE_TYPES | J
     return value
 
 
+def _serialize_to_json(value: DATE_TYPES | UUID | JSON_FIELD_TYPES) -> JSON_FIELD_TYPES:
+    if _is_uuid(value):
+        return str(value)
+    return _convert_date_to_str(value)
+
+
 async def _get_table_snapshot(*,
                               table: Table) -> TableSnapshot:
     logger.debug("Getting '%s' snapshot", table.name)
@@ -70,7 +76,7 @@ async def _get_table_snapshot(*,
     async with database.session() as ses:
         rows = [
             {
-                str(key): _convert_date_to_str(value)
+                str(key): _serialize_to_json(value)
                 for key, value in row.items()
             }
             for row in (await ses.execute(stmt)).mappings().all()
