@@ -99,8 +99,5 @@ async def create_reading_graphic(*,
     return base64.b64encode(buff.getvalue()).decode('utf-8')
 
 
-async def get_tracker_statistics() -> statistics.TrackerStatistics:
-    return await statistics.get_tracker_statistics()
-
-
+get_tracker_statistics = statistics.get_tracker_statistics
 get_completion_dates = logs_db.get_completion_dates
