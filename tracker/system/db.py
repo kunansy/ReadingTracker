@@ -49,10 +49,6 @@ async def get_read_material_titles() -> dict[UUID, str]:
         }
 
 
-async def get_material_reading_now() -> UUID | None:
-    return await logs_db.get_material_reading_now()
-
-
 async def create_reading_graphic(*,
                                  material_id: UUID,
                                  last_days: int) -> str:
@@ -99,5 +95,6 @@ async def create_reading_graphic(*,
     return base64.b64encode(buff.getvalue()).decode('utf-8')
 
 
+get_material_reading_now = logs_db.get_material_reading_now
 get_tracker_statistics = statistics.get_tracker_statistics
 get_completion_dates = logs_db.get_completion_dates
