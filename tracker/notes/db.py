@@ -231,7 +231,7 @@ async def add_note(*,
 
 
 async def update_note(*,
-                      note_id: str,
+                      note_id: UUID,
                       material_id: str,
                       link_id: UUID | None,
                       content: str,
@@ -260,7 +260,7 @@ async def update_note(*,
 
 
 async def _del_or_restore(*,
-                          note_id: str,
+                          note_id: UUID,
                           is_deleted: bool) -> None:
     values = {
         "is_deleted": is_deleted
@@ -274,14 +274,14 @@ async def _del_or_restore(*,
 
 
 async def delete_note(*,
-                      note_id: str) -> None:
+                      note_id: UUID) -> None:
     logger.debug("Deleting note_id='%s'", note_id)
     await _del_or_restore(note_id=note_id, is_deleted=True)
     logger.debug("Note deleted")
 
 
 async def restore_note(*,
-                       note_id: str) -> None:
+                       note_id: UUID) -> None:
     logger.debug("Restoring note_id='%s'", note_id)
     await _del_or_restore(note_id=note_id, is_deleted=False)
     logger.debug("Note restored")
