@@ -31,8 +31,8 @@ def _safe_list_get(lst: list[Any],
 async def get_mean_materials_read_pages() -> dict[UUID, Decimal]:
     logger.debug("Getting mean reading read pages count of materials")
 
-    stmt = sa.select([models.ReadingLog.c.material_id,
-                      sa.func.avg(models.ReadingLog.c.count).label('mean')]) \
+    stmt = sa.select(models.ReadingLog.c.material_id,
+                     sa.func.avg(models.ReadingLog.c.count).label('mean')) \
         .group_by(models.ReadingLog.c.material_id)
 
     async with database.session() as ses:
@@ -49,10 +49,9 @@ async def get_log_records(*,
                           material_id: str | None = None) -> list[LogRecord]:
     logger.debug("Getting all log records")
 
-    stmt = sa.select([models.ReadingLog,
-                      models.Materials.c.title.label('material_title')])\
-        .join(models.Materials,
-              models.Materials.c.material_id == models.ReadingLog.c.material_id)
+    stmt = sa.select(models.ReadingLog,
+                     models.Materials.c.title.label('material_title'))\
+        .join(models.Materials)
 
     if material_id:
         stmt = stmt.where(models.Materials.c.material_id == material_id)
@@ -75,10 +74,9 @@ async def get_log_records(*,
 async def get_reading_material_titles() -> dict[UUID, str]:
     logger.debug("Getting reading material titles")
 
-    stmt = sa.select([models.Materials.c.material_id,
-                      models.Materials.c.title])\
-        .join(models.Statuses,
-              models.Statuses.c.material_id == models.Materials.c.material_id)\
+    stmt = sa.select(models.Materials.c.material_id,
+                     models.Materials.c.title)\
+        .join(models.Statuses)\
         .where(models.Statuses.c.completed_at == None)
 
     async with database.session() as ses:
@@ -95,10 +93,9 @@ async def get_titles() -> dict[UUID, str]:
     """ Get titles for materials even been read """
     logger.debug("Getting reading material titles")
 
-    stmt = sa.select([models.Materials.c.material_id,
-                      models.Materials.c.title])\
-        .join(models.Statuses,
-              models.Statuses.c.material_id == models.Materials.c.material_id)
+    stmt = sa.select(models.Materials.c.material_id,
+                     models.Materials.c.title)\
+        .join(models.Statuses)
 
     async with database.session() as ses:
         titles = {
@@ -113,10 +110,9 @@ async def get_titles() -> dict[UUID, str]:
 async def get_completion_dates() -> dict[UUID, datetime.datetime]:
     logger.debug("Getting completion dates")
 
-    stmt = sa.select([models.Materials.c.material_id,
-                      models.Statuses.c.completed_at]) \
-        .join(models.Statuses,
-              models.Statuses.c.material_id == models.Materials.c.material_id) \
+    stmt = sa.select(models.Materials.c.material_id,
+                     models.Statuses.c.completed_at) \
+        .join(models.Statuses) \
         .where(models.Statuses.c.completed_at != None)
 
     async with database.session() as ses:
