@@ -1,4 +1,5 @@
 import base64
+from uuid import UUID
 
 import pytest
 
@@ -18,6 +19,7 @@ from tracker.system import db
     )
 )
 async def test_get_graphic_data_clear_reading(material_id, last_days):
+    material_id = UUID(material_id)
     result = await db._get_graphic_data(material_id=material_id, last_days=last_days)
     logs = await logs_db.get_log_records()
 
@@ -41,6 +43,8 @@ async def test_get_graphic_data_clear_reading(material_id, last_days):
     )
 )
 async def test_get_graphic_data_unclear_reading(material_id, last_days):
+    material_id = UUID(material_id)
+
     result = await db._get_graphic_data(material_id=material_id, last_days=last_days)
     logs = await logs_db.get_log_records()
 
@@ -85,7 +89,7 @@ async def test_get_material_reading_now():
 async def test_create_reading_graphic(material_id, last_days):
 
     result = await db.create_reading_graphic(
-        material_id=material_id, last_days=last_days)
+        material_id=UUID(material_id), last_days=last_days)
 
     assert result
     assert base64.b64decode(result, validate=True)
@@ -93,14 +97,14 @@ async def test_create_reading_graphic(material_id, last_days):
 
 @pytest.mark.asyncio
 async def test_create_reading_graphic_material_not_found():
-    material_id = "d012fba9-efe0-4171-b3e7-730c3c3b2666"
+    material_id = UUID("d012fba9-efe0-4171-b3e7-730c3c3b2666")
     last_days = 14
 
     with pytest.raises(ValueError) as e:
         await db.create_reading_graphic(
             material_id=material_id, last_days=last_days)
 
-    assert str(e.value) == "'material_id='d012fba9-efe0-4171-b3e7-730c3c3b2666'' not found"
+    assert str(e.value) == "'material_id=UUID('d012fba9-efe0-4171-b3e7-730c3c3b2666')' not found"
 
 
 @pytest.mark.asyncio
