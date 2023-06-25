@@ -44,9 +44,9 @@ async def add_card(*,
 async def get_cards_list() -> list[dict[str, Any]]:
     logger.info("Getting all cards")
 
-    stmt = sa.select([models.Cards,
-                      models.Notes,
-                      models.Materials.c.title]) \
+    stmt = sa.select(models.Cards,
+                     models.Notes,
+                     models.Materials.c.title) \
         .join(models.Notes,
               models.Cards.c.note_id == models.Notes.c.note_id)\
         .join(models.Materials,
