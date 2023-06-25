@@ -159,8 +159,9 @@ class TimeSpan:
 
 @dataclass
 class _MaterialAnalytics:
-    completed_materials_stats: dict[enums.MaterialTypesEnum, int]
-    total_materials_completed: int
+    """ Analytics grouped by material type """
+    stats: dict[enums.MaterialTypesEnum, int]
+    total: int
 
 
 @dataclass
