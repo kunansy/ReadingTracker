@@ -167,6 +167,7 @@ class _MaterialAnalytics:
 class SpanAnalysis:
     reading: SpanStatistics
     notes: SpanStatistics
+    materials: _MaterialAnalytics
 
 
 def _get_span(size: int) -> TimeSpan:
@@ -265,6 +266,7 @@ async def get_span_analytics(__span: schemas.GetSpanReportRequest) -> SpanAnalys
     async with asyncio.TaskGroup() as tg:
         reading_stats_task = tg.create_task(_calculate_span_reading_statistics(span))
         notes_stats_task = tg.create_task(_calculate_span_notes_statistics(span))
+        material_stats_task = tg.create_task(_materials_analytics(span))
 
     reading_stats = _get_span_statistics(
         stat=reading_stats_task.result(), span=span, span_size=size)
@@ -273,7 +275,8 @@ async def get_span_analytics(__span: schemas.GetSpanReportRequest) -> SpanAnalys
 
     return SpanAnalysis(
         reading=reading_stats,
-        notes=notes_stats
+        notes=notes_stats,
+        materials = material_stats_task.result(),
     )
 
 
