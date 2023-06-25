@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -39,7 +40,7 @@ async def get_reading_log(request: Request, material_id: str | None = None):
 
 @router.get('/add-view')
 async def add_log_record_view(request: Request,
-                              material_id: str | None = None):
+                              material_id: UUID | None = None):
     async with asyncio.TaskGroup() as tg:
         get_titles = tg.create_task(db.get_reading_material_titles())
         if material_id:
@@ -63,7 +64,7 @@ async def add_log_record_view(request: Request,
 
 @router.post('/add')
 async def add_log_record(record: schemas.LogRecord = Depends()):
-    if not await materials_db.is_reading(material_id=str(record.material_id)):
+    if not await materials_db.is_reading(material_id=record.material_id):
         raise HTTPException(status_code=400, detail="Material not reading")
 
     await db.insert_log_record(
