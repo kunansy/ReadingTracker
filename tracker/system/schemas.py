@@ -9,12 +9,15 @@ from tracker.common.schemas import CustomBaseModel
 
 class GetSpanReportRequest(CustomBaseModel):
     start: datetime.date
-    stop: datetime.date
+    stop: datetime.date | None = None
 
     def __init__(self,
                  start: datetime.date = Form(...),
-                 stop: datetime.date = Form(None)) -> None:
-        stop = stop or datetime.date.today()
+                 stop: datetime.date | None = Form(None)) -> None:
+        # way to check Form value is None
+        if not isinstance(stop, str):
+            stop = datetime.date.today()
+
         super().__init__(
             start=start,
             stop=stop
