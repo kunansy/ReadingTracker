@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 from decimal import Decimal
+from uuid import UUID
 
 import sqlalchemy.sql as sa
 
@@ -12,7 +13,7 @@ from tracker.reading_log import db
 
 
 class LogStatistics(CustomBaseModel):
-    material_id: str
+    material_id: UUID
     # total spent time including empty days
     total: int
     lost_time: int
@@ -59,10 +60,10 @@ class TrackerStatistics(CustomBaseModel):
         return round(self.would_be_total / self.total_pages_read, 2) * 100
 
 
-async def calculate_materials_stat(material_ids: set[str]) -> dict[str, LogStatistics]:
+async def calculate_materials_stat(material_ids: set[UUID]) -> dict[UUID, LogStatistics]:
     """ Get materials statistic from logs. Calculating
     several stats should reduce iteration over logs.data() """
-    stat: dict[str, LogStatistics] = {}
+    stat: dict[UUID, LogStatistics] = {}
 
     async for date, info in db.data():
         if (material_id := info.material_id) not in material_ids:
@@ -153,7 +154,7 @@ async def _get_median_pages_read_per_day() -> float:
 
 
 async def contains(*,
-                   material_id: str) -> bool:
+                   material_id: UUID) -> bool:
     stmt = sa.select(sa.func.count(1) >= 1) \
         .select_from(models.ReadingLog) \
         .where(models.ReadingLog.c.material_id == material_id)
@@ -163,7 +164,7 @@ async def contains(*,
 
 
 async def _get_min_record(*,
-                          material_id: str | None = None) -> database.MinMax | None:
+                          material_id: UUID | None = None) -> database.MinMax | None:
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title]) \
         .join(models.Materials,
@@ -187,7 +188,7 @@ async def _get_min_record(*,
 
 
 async def _get_max_record(*,
-                          material_id: str | None = None) -> database.MinMax | None:
+                          material_id: UUID | None = None) -> database.MinMax | None:
     stmt = sa.select([models.ReadingLog,
                       models.Materials.c.title]) \
         .join(models.Materials,
