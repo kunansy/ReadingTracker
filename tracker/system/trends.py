@@ -12,7 +12,7 @@ import sqlalchemy.sql as sa
 
 from tracker.common import database, settings
 from tracker.common.logger import logger
-from tracker.models import models
+from tracker.models import enums, models
 from tracker.system import schemas
 
 
@@ -155,6 +155,12 @@ class TimeSpan:
     def __str__(self) -> str:
         return (f"[{self.start.strftime(settings.DATE_FORMAT)}; "
                 f"{self.stop.strftime(settings.DATE_FORMAT)}]")
+
+
+@dataclass
+class _MaterialAnalytics:
+    completed_materials_stats: dict[enums.MaterialTypesEnum, int]
+    total_materials_completed: int
 
 
 @dataclass
