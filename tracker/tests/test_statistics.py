@@ -1,5 +1,5 @@
 import random
-import uuid
+from uuid import UUID, uuid4
 from decimal import Decimal
 from typing import Sequence
 
@@ -19,13 +19,13 @@ def mean(coll: Sequence[int | float | Decimal]) -> int | float | Decimal:
 @pytest.mark.parametrize(
     'material_id', (
         # clear reading, Foer
-        "5c66e1ca-eb52-47e5-af50-c48b345c7e6c",
+        UUID("5c66e1ca-eb52-47e5-af50-c48b345c7e6c"),
         # 451, Bradbury, some material inside completed, some read
-        "a4fec52b-ed43-48e8-a888-d393606ac010",
+        UUID("a4fec52b-ed43-48e8-a888-d393606ac010"),
         # Lermontov
-        "dd89c273-3bbe-49f8-8049-239379a7fc65",
+        UUID("dd89c273-3bbe-49f8-8049-239379a7fc65"),
         # Bulgakov
-        "fd569d08-240e-4f60-b39d-e37265fbfe24",
+        UUID("fd569d08-240e-4f60-b39d-e37265fbfe24"),
     )
 )
 async def test_calculate_materials_stat(material_id):
@@ -134,13 +134,13 @@ async def test_contains():
         for record in random.sample(records, 10)
     ])
 
-    assert not await st.contains(material_id=str(uuid.uuid4()))
+    assert not await st.contains(material_id=uuid4())
 
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     'material_id', (
-        "5c66e1ca-eb52-47e5-af50-c48b345c7e6c",
+        UUID("5c66e1ca-eb52-47e5-af50-c48b345c7e6c"),
         None,
     )
 )
@@ -163,7 +163,7 @@ async def test_get_min_record(material_id):
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     'material_id', (
-        "5c66e1ca-eb52-47e5-af50-c48b345c7e6c",
+        UUID("5c66e1ca-eb52-47e5-af50-c48b345c7e6c"),
         None,
     )
 )
@@ -185,13 +185,13 @@ async def test_get_max_record(material_id):
 
 @pytest.mark.asyncio
 async def test_get_min_record_nof_found():
-    result = await st._get_min_record(material_id=str(uuid.uuid4()))
+    result = await st._get_min_record(material_id=uuid4())
     assert result is None
 
 
 @pytest.mark.asyncio
 async def test_get_max_record_nof_found():
-    result = await st._get_max_record(material_id=str(uuid.uuid4()))
+    result = await st._get_max_record(material_id=uuid4())
     assert result is None
 
 

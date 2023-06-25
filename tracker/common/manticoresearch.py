@@ -1,6 +1,7 @@
 import datetime
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+from uuid import UUID
 
 import aiomysql
 import sqlalchemy.sql as sa
@@ -18,7 +19,7 @@ class ManticoreException(Exception):
 
 
 class Note(CustomBaseModel):
-    note_id: str
+    note_id: UUID
     content: str
     added_at: datetime.datetime
 
@@ -61,9 +62,9 @@ async def _cursor() -> AsyncGenerator[MysqlCursor, None]:
 
 
 def _get_note_stmt() -> sa.Select:
-    return sa.select([models.Notes.c.note_id,
-                      models.Notes.c.content,
-                      models.Notes.c.added_at]) \
+    return sa.select(models.Notes.c.note_id,
+                     models.Notes.c.content,
+                     models.Notes.c.added_at) \
         .where(~models.Notes.c.is_deleted)
 
 
@@ -82,14 +83,14 @@ async def _get_notes() -> list[Note]:
 
 
 async def _get_note(*,
-                    note_id: str) -> Note:
+                    note_id: UUID) -> Note:
     logger.debug("Getting note=%s", note_id)
 
     stmt = _get_note_stmt() \
         .where(models.Notes.c.note_id == note_id)
 
     async with database.session() as ses:
-        if note := (await ses.execute(stmt)).one_or_none():
+        if note := (await ses.execute(stmt)).mappings().one_or_none():
             logger.debug("Note got")
             return Note(**note)
 
@@ -147,7 +148,7 @@ async def init() -> None:
     logger.info("Manticore search init completed")
 
 
-async def insert(note_id: str) -> None:
+async def insert(note_id: UUID) -> None:
     logger.debug("Inserting note=%s", note_id)
     note = await _get_note(note_id=note_id)
 
@@ -160,7 +161,7 @@ async def insert(note_id: str) -> None:
     logger.debug("Note inserted")
 
 
-async def delete(note_id: str) -> None:
+async def delete(note_id: UUID) -> None:
     logger.debug("Deleting note=%s", note_id)
 
     query = "DELETE FROM notes WHERE note_id=%s"
@@ -171,7 +172,7 @@ async def delete(note_id: str) -> None:
     logger.debug("Note deleted")
 
 
-async def update(note_id: str) -> None:
+async def update(note_id: UUID) -> None:
     logger.debug("Updating note=%s", note_id)
 
     await delete(note_id)
@@ -197,7 +198,7 @@ def _get_search_query() -> str:
     """
 
 
-async def search(query: str) -> dict[str, SearchResult]:
+async def search(query: str) -> dict[UUID, SearchResult]:
     logger.debug("Searching notes like: '%s'", query)
     if not query:
         return {}
@@ -207,7 +208,7 @@ async def search(query: str) -> dict[str, SearchResult]:
     async with _cursor() as cur:
         await cur.execute(db_query, query)
         results = {
-            row[0]: SearchResult(
+            UUID(row[0]): SearchResult(
                 replace_substring=row[1],
                 snippet=row[2]
             )

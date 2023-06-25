@@ -16,7 +16,7 @@ async def notes_with_cards() -> list[UUID]:
               models.Cards.c.note_id == models.Notes.c.note_id)
 
     async with database.session() as ses:
-        return (await ses.execute(stmt)).all()
+        return await ses.scalars(stmt)  # type: ignore
 
 
 async def add_card(*,
@@ -44,9 +44,9 @@ async def add_card(*,
 async def get_cards_list() -> list[dict[str, Any]]:
     logger.info("Getting all cards")
 
-    stmt = sa.select([models.Cards,
-                      models.Notes,
-                      models.Materials.c.title]) \
+    stmt = sa.select(models.Cards,
+                     models.Notes,
+                     models.Materials.c.title) \
         .join(models.Notes,
               models.Cards.c.note_id == models.Notes.c.note_id)\
         .join(models.Materials,
@@ -71,4 +71,4 @@ async def get_cards_count() -> int:
         .select_from(models.Cards)
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        return await ses.scalar(stmt) or 0

@@ -6,6 +6,7 @@ from uuid import UUID
 
 import networkx as nx
 import sqlalchemy.sql as sa
+from fastapi.encoders import jsonable_encoder
 from pyvis.network import Network
 
 from tracker.common import database, settings
@@ -16,9 +17,9 @@ from tracker.notes import schemas
 
 
 class Note(CustomBaseModel):
-    note_id: str
-    link_id: str | None
-    material_id: str
+    note_id: UUID
+    link_id: UUID | None
+    material_id: UUID
     content: str
     added_at: datetime.datetime
     chapter: int
@@ -50,7 +51,7 @@ class Note(CustomBaseModel):
         return schemas.demark_note(self.content)
 
 
-def get_distinct_chapters(notes: list[Note]) -> defaultdict[str, set[int]]:
+def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[int]]:
     logger.debug("Getting distinct chapters")
 
     # chapters of the shown materials,
@@ -82,8 +83,8 @@ async def get_material_type(*,
 async def get_material_types() -> dict[str, enums.MaterialTypesEnum]:
     logger.debug("Getting material types")
 
-    stmt = sa.select([models.Materials.c.material_id,
-                      models.Materials.c.material_type])
+    stmt = sa.select(models.Materials.c.material_id,
+                     models.Materials.c.material_type)
 
     async with database.session() as ses:
         types = {
@@ -95,15 +96,15 @@ async def get_material_types() -> dict[str, enums.MaterialTypesEnum]:
     return types
 
 
-async def get_material_titles() -> dict[str, str]:
+async def get_material_titles() -> dict[UUID, str]:
     logger.debug("Getting material titles")
 
-    stmt = sa.select([models.Materials.c.material_id,
-                      models.Materials.c.title])
+    stmt = sa.select(models.Materials.c.material_id,
+                     models.Materials.c.title)
 
     async with database.session() as ses:
         titles = {
-            str(row.material_id): row.title
+            row.material_id: row.title
             for row in (await ses.execute(stmt)).mappings().all()
         }
 
@@ -111,19 +112,19 @@ async def get_material_titles() -> dict[str, str]:
     return titles
 
 
-async def get_material_with_notes_titles() -> dict[str, str]:
+async def get_material_with_notes_titles() -> dict[UUID, str]:
     """ Get materials that have a note. """
     logger.debug("Getting material with note titles")
 
-    stmt = sa.select([sa.text("distinct on (materials.material_id) materials.material_id"),
-                      models.Materials.c.title])\
+    stmt = sa.select(sa.text("distinct on (materials.material_id) materials.material_id"),
+                     models.Materials.c.title)\
         .join(models.Notes,
               models.Notes.c.material_id == models.Materials.c.material_id)\
         .where(~models.Notes.c.is_deleted)
 
     async with database.session() as ses:
         titles = {
-            str(row.material_id): row.title
+            row.material_id: row.title
             for row in (await ses.execute(stmt)).mappings().all()
         }
 
@@ -138,7 +139,7 @@ def _get_note_stmt(*,
     links_count_query = "(select count(1) as links_count from notes where link_id = n.note_id)"
 
     notes_model = models.Notes.alias('n')
-    stmt = sa.select([notes_model, sa.text(links_count_query)]) \
+    stmt = sa.select(notes_model, sa.text(links_count_query)) \
         .where(~notes_model.c.is_deleted) \
         .order_by(notes_model.c.note_number)
 
@@ -182,20 +183,20 @@ async def get_note(*,
     return None
 
 
-async def get_all_notes_count() -> dict[str, int]:
+async def get_all_notes_count() -> dict[UUID, int]:
     """ Get notes count for the materials. """
 
     logger.debug("Getting notes count for all materials")
 
-    stmt = sa.select([models.Notes.c.material_id.label('material_id'),
-                      sa.func.count(1).label('count')]) \
+    stmt = sa.select(models.Notes.c.material_id.label('material_id'),
+                     sa.func.count(1).label('count')) \
         .select_from(models.Notes) \
         .where(~models.Notes.c.is_deleted) \
         .group_by(models.Notes.c.material_id)
 
     async with database.session() as ses:
         return {
-            str(material_id): count
+            material_id: count
             for material_id, count in (await ses.execute(stmt)).all()
         }
 
@@ -230,7 +231,7 @@ async def add_note(*,
 
 
 async def update_note(*,
-                      note_id: str,
+                      note_id: UUID,
                       material_id: str,
                       link_id: UUID | None,
                       content: str,
@@ -259,7 +260,7 @@ async def update_note(*,
 
 
 async def _del_or_restore(*,
-                          note_id: str,
+                          note_id: UUID,
                           is_deleted: bool) -> None:
     values = {
         "is_deleted": is_deleted
@@ -273,14 +274,14 @@ async def _del_or_restore(*,
 
 
 async def delete_note(*,
-                      note_id: str) -> None:
+                      note_id: UUID) -> None:
     logger.debug("Deleting note_id='%s'", note_id)
     await _del_or_restore(note_id=note_id, is_deleted=True)
     logger.debug("Note deleted")
 
 
 async def restore_note(*,
-                       note_id: str) -> None:
+                       note_id: UUID) -> None:
     logger.debug("Restoring note_id='%s'", note_id)
     await _del_or_restore(note_id=note_id, is_deleted=False)
     logger.debug("Note restored")
@@ -344,7 +345,7 @@ async def get_possible_links(note: Note) -> list[Note]:
 
 
 def _get_links_from(*,
-                    note_id: str,
+                    note_id: UUID,
                     notes: Iterable[Note]) -> list[Note]:
     """ Get all notes linked with the given one """
 
@@ -356,18 +357,18 @@ def _get_links_from(*,
 
 
 def _get_note_link(note: Note, **attrs) -> tuple[str, dict[str, Any]]:
-    return (note.note_id, {
+    return (str(note.note_id), jsonable_encoder({
         **attrs,
         "material_id": note.material_id,
         "note_number": note.note_number,
         "label": note.short_content,
-    })
+    }))
 
 
 def _add_links_to(graph: nx.DiGraph,
-                  notes: dict[str, Note],
-                  note_id: str,
-                  even_added_notes: set[str]) -> None:
+                  notes: dict[UUID, Note],
+                  note_id: UUID,
+                  even_added_notes: set[UUID]) -> None:
     if not (link_id := notes[note_id].link_id) or link_id in even_added_notes:
         return None
 
@@ -375,16 +376,16 @@ def _add_links_to(graph: nx.DiGraph,
     even_added_notes.add(link_id)
 
     graph.add_nodes_from([_get_note_link(notes[link_id])])
-    graph.add_edge(note_id, link_id)
+    graph.add_edge(str(note_id), str(link_id))
 
     _add_links_to(graph, notes, link_id, even_added_notes)
 
 
 def _link_cohesive_notes(graph: nx.DiGraph,
-                         notes: dict[str, Note],
-                         note_id: str,
+                         notes: dict[UUID, Note],
+                         note_id: UUID,
                          *,
-                         visited: set[str]) -> None:
+                         visited: set[UUID]) -> None:
     """ Iter over graph and find all note links """
 
     if note_id in visited:
@@ -395,7 +396,7 @@ def _link_cohesive_notes(graph: nx.DiGraph,
 
     if link_id:
         graph.add_nodes_from([_get_note_link(notes[link_id])])
-        graph.add_edge(note_id, link_id)
+        graph.add_edge(str(note_id), str(link_id))
 
         _link_cohesive_notes(graph, notes, link_id, visited=visited)
 
@@ -404,14 +405,14 @@ def _link_cohesive_notes(graph: nx.DiGraph,
 
     for link in links_from:
         graph.add_nodes_from([_get_note_link(notes[link.note_id])])
-        graph.add_edge(link.note_id, note_id)
+        graph.add_edge(str(link.note_id), str(note_id))
 
         _link_cohesive_notes(graph, notes, link.note_id, visited=visited)
 
 
 def link_notes(*,
-               note_id: str,
-               notes: dict[str, Note],
+               note_id: UUID,
+               notes: dict[UUID, Note],
                color: str | None = 'black') -> nx.DiGraph:
     logger.debug("Linking %s notes from the %s", len(notes), note_id)
 
@@ -438,7 +439,7 @@ def link_all_notes(notes: list[Note]) -> nx.DiGraph:
     for note in notes:
         nodes += [_get_note_link(note)]
         if note.link_id:
-            edges += [(note.note_id, note.link_id)]
+            edges += [(str(note.note_id), str(note.link_id))]
 
     graph = nx.DiGraph()
     graph.add_nodes_from(nodes)
@@ -449,9 +450,9 @@ def link_all_notes(notes: list[Note]) -> nx.DiGraph:
 
 
 def create_material_graph(*,
-                          material_id: str,
-                          material_notes: set[str],
-                          notes: dict[str, Note]) -> nx.DiGraph:
+                          material_id: UUID,
+                          material_notes: set[UUID],
+                          notes: dict[UUID, Note]) -> nx.DiGraph:
     if not (material_notes and notes):
         raise ValueError("No notes passed")
 
@@ -473,8 +474,8 @@ def create_material_graph(*,
 
 def _highlight_other_material_notes(*,
                                     graph: nx.DiGraph,
-                                    material_id: str,
-                                    notes: dict[str, Note],
+                                    material_id: UUID,
+                                    notes: dict[UUID, Note],
                                     color: str | None = 'black') -> None:
     notes_from_other_material = {
         note_id: {'color': color}

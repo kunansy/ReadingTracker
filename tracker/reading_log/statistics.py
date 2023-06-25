@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 from decimal import Decimal
+from uuid import UUID
 
 import sqlalchemy.sql as sa
 
@@ -12,7 +13,7 @@ from tracker.reading_log import db
 
 
 class LogStatistics(CustomBaseModel):
-    material_id: str
+    material_id: UUID
     # total spent time including empty days
     total: int
     lost_time: int
@@ -59,10 +60,10 @@ class TrackerStatistics(CustomBaseModel):
         return round(self.would_be_total / self.total_pages_read, 2) * 100
 
 
-async def calculate_materials_stat(material_ids: set[str]) -> dict[str, LogStatistics]:
+async def calculate_materials_stat(material_ids: set[UUID]) -> dict[UUID, LogStatistics]:
     """ Get materials statistic from logs. Calculating
     several stats should reduce iteration over logs.data() """
-    stat: dict[str, LogStatistics] = {}
+    stat: dict[UUID, LogStatistics] = {}
 
     async for date, info in db.data():
         if (material_id := info.material_id) not in material_ids:
@@ -92,14 +93,18 @@ async def _get_start_date() -> datetime.date:
     stmt = sa.select(sa.func.min(models.ReadingLog.c.date))
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        if res := await ses.scalar(stmt):
+            return res
+        raise ValueError(f"Table is empty, value is none: {res!r}")
 
 
 async def _get_last_date() -> datetime.date:
     stmt = sa.select(sa.func.max(models.ReadingLog.c.date))
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        if res := await ses.scalar(stmt):
+            return res
+        raise ValueError(f"Table is empty, value is none: {res!r}")
 
 
 async def _get_log_duration() -> int:
@@ -115,7 +120,7 @@ async def _get_total_read_pages() -> int:
     stmt = sa.select(sa.func.sum(models.ReadingLog.c.count))
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        return await ses.scalar(stmt) or 0
 
 
 async def _get_lost_days() -> int:
@@ -129,15 +134,14 @@ async def _get_lost_days() -> int:
 
 async def get_means() -> enums.MEANS:
     """ Mean read pages, articles, seen lectures, listen audiobooks ect """
-    stmt = sa.select([models.Materials.c.material_type.label('mtype'),
-                      sa.func.avg(models.ReadingLog.c.count).label('count')])\
-        .join(models.ReadingLog,
-              models.ReadingLog.c.material_id == models.Materials.c.material_id)\
+    stmt = sa.select(models.Materials.c.material_type.label('mtype'),
+                     sa.func.avg(models.ReadingLog.c.count).label('cnt'))\
+        .join(models.ReadingLog)\
         .group_by(models.Materials.c.material_type)
 
     async with database.session() as ses:
         return {
-            row.mtype: round(row.count, 2)
+            row.mtype: round(row.cnt, 2)
             for row in (await ses.execute(stmt)).all()
         }
 
@@ -153,21 +157,20 @@ async def _get_median_pages_read_per_day() -> float:
 
 
 async def contains(*,
-                   material_id: str) -> bool:
+                   material_id: UUID) -> bool:
     stmt = sa.select(sa.func.count(1) >= 1) \
         .select_from(models.ReadingLog) \
         .where(models.ReadingLog.c.material_id == material_id)
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        return await ses.scalar(stmt) or False
 
 
 async def _get_min_record(*,
-                          material_id: str | None = None) -> database.MinMax | None:
-    stmt = sa.select([models.ReadingLog,
-                      models.Materials.c.title]) \
-        .join(models.Materials,
-              models.ReadingLog.c.material_id == models.Materials.c.material_id) \
+                          material_id: UUID | None = None) -> database.MinMax | None:
+    stmt = sa.select(models.ReadingLog,
+                     models.Materials.c.title) \
+        .join(models.Materials) \
         .order_by(models.ReadingLog.c.count) \
         .limit(1)
 
@@ -179,7 +182,7 @@ async def _get_min_record(*,
             return database.MinMax(
                 material_id=minmax.material_id,
                 log_id=minmax.log_id,
-                count=minmax.count,
+                count=minmax.count,  # type: ignore
                 date=minmax.date,
                 material_title=minmax.title
             )
@@ -187,11 +190,10 @@ async def _get_min_record(*,
 
 
 async def _get_max_record(*,
-                          material_id: str | None = None) -> database.MinMax | None:
-    stmt = sa.select([models.ReadingLog,
-                      models.Materials.c.title]) \
-        .join(models.Materials,
-              models.ReadingLog.c.material_id == models.Materials.c.material_id) \
+                          material_id: UUID | None = None) -> database.MinMax | None:
+    stmt = sa.select(models.ReadingLog,
+                     models.Materials.c.title) \
+        .join(models.Materials) \
         .order_by(models.ReadingLog.c.count.desc()) \
         .limit(1)
 
@@ -203,7 +205,7 @@ async def _get_max_record(*,
             return database.MinMax(
                 material_id=minmax.material_id,
                 log_id=minmax.log_id,
-                count=minmax.count,
+                count=minmax.count,  # type: ignore
                 date=minmax.date,
                 material_title=minmax.title
             )
@@ -227,7 +229,7 @@ async def _get_total_materials_completed() -> int:
         .where(models.Statuses.c.completed_at != None)
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        return await ses.scalar(stmt) or 0
 
 
 async def get_tracker_statistics() -> TrackerStatistics:

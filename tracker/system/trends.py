@@ -5,7 +5,7 @@ import statistics
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
-from typing import Generator, NamedTuple, Sequence
+from typing import Any, Generator, NamedTuple, Sequence
 
 import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa
@@ -190,8 +190,8 @@ def _iterate_over_span(span: TimeSpan,
 async def _calculate_span_reading_statistics(span: TimeSpan) -> dict[datetime.date, int]:
     logger.debug("Calculating span reading statistics")
 
-    stmt = sa.select([models.ReadingLog.c.date,
-                      sa.func.sum(models.ReadingLog.c.count).label('count')])\
+    stmt = sa.select(models.ReadingLog.c.date,
+                     sa.func.sum(models.ReadingLog.c.count).label('cnt'))\
         .where(models.ReadingLog.c.date >= span.start)\
         .where(models.ReadingLog.c.date <= span.stop)\
         .group_by(models.ReadingLog.c.date)
@@ -202,7 +202,7 @@ async def _calculate_span_reading_statistics(span: TimeSpan) -> dict[datetime.da
     logger.debug("Span reading statistics calculated")
 
     return {
-        row.date: row.count
+        row.date: row.cnt
         for row in rows
     }
 
@@ -210,8 +210,8 @@ async def _calculate_span_reading_statistics(span: TimeSpan) -> dict[datetime.da
 async def _calculate_span_notes_statistics(span: TimeSpan) -> dict[datetime.date, int]:
     logger.debug("Calculating span notes statistics")
 
-    stmt = sa.select([sa.func.date(models.Notes.c.added_at).label('date'),
-                      sa.func.count(models.Notes.c.note_id)]) \
+    stmt = sa.select(sa.func.date(models.Notes.c.added_at).label('date'),
+                     sa.func.count(models.Notes.c.note_id).label('cnt')) \
         .group_by(sa.func.date(models.Notes.c.added_at)) \
         .where(sa.func.date(models.Notes.c.added_at) >= span.start) \
         .where(sa.func.date(models.Notes.c.added_at) <= span.stop)
@@ -222,7 +222,7 @@ async def _calculate_span_notes_statistics(span: TimeSpan) -> dict[datetime.date
     logger.debug("Span notes statistics calculated")
 
     return {
-        row.date: row.count
+        row.date: row.cnt
         for row in rows
     }
 
@@ -287,17 +287,16 @@ async def get_span_analytics(__span: schemas.GetSpanReportRequest) -> SpanAnalys
 async def _materials_analytics(span: TimeSpan) -> _MaterialAnalytics:
     """ Get how many materials was completed in the span,
     group them by material types """
-    stmt = sa.select([models.Materials.c.material_type,
-                      sa.func.count(models.Materials.c.material_id.distinct()).label('count')])\
-        .join(models.Statuses,
-              models.Statuses.c.material_id == models.Materials.c.material_id) \
+    stmt = sa.select(models.Materials.c.material_type,
+                     sa.func.count(models.Materials.c.material_id.distinct()).label('cnt'))\
+        .join(models.Statuses) \
         .where(models.Statuses.c.completed_at >= span.start) \
         .where(models.Statuses.c.completed_at <= span.stop) \
         .group_by(models.Materials.c.material_type)
 
     async with database.session() as ses:
         res = (await ses.execute(stmt)).all()
-    stats = {r.material_type: r.count for r in res}
+    stats = {r.material_type: r.cnt for r in res}
 
     return _MaterialAnalytics(
         stats=stats,
@@ -308,17 +307,16 @@ async def _materials_analytics(span: TimeSpan) -> _MaterialAnalytics:
 async def _reading_analytics(span: TimeSpan) -> _MaterialAnalytics:
     """ Get how many pages were read in the span,
     group them by material types """
-    stmt = sa.select([models.Materials.c.material_type,
-                      sa.func.sum(models.ReadingLog.c.count).label('count')]) \
-        .join(models.ReadingLog,
-              models.ReadingLog.c.material_id == models.Materials.c.material_id) \
+    stmt = sa.select(models.Materials.c.material_type,
+                     sa.func.sum(models.ReadingLog.c.count).label('cnt')) \
+        .join(models.ReadingLog) \
         .where(models.ReadingLog.c.date >= span.start) \
         .where(models.ReadingLog.c.date <= span.stop) \
         .group_by(models.Materials.c.material_type)
 
     async with database.session() as ses:
         res = (await ses.execute(stmt)).all()
-    stats = {r.material_type: r.count for r in res}
+    stats = {r.material_type: r.cnt for r in res}
 
     return _MaterialAnalytics(
         stats=stats,
@@ -326,7 +324,7 @@ async def _reading_analytics(span: TimeSpan) -> _MaterialAnalytics:
     )
 
 
-def _get_colors(completion_dates: dict[str, datetime.datetime] | None,
+def _get_colors(completion_dates: dict[Any, datetime.datetime] | None,
                 days: list[str]) -> list[str] | None:
     """ Mark the days when a material completed with green """
     if not completion_dates:
@@ -346,7 +344,7 @@ def _create_graphic(*,
                     stat: SpanStatistics,
                     title: str = 'Total items completed',
                     show_mean_line: bool = True,
-                    completion_dates: dict[str, datetime.datetime] | None = None) -> str:
+                    completion_dates: dict[Any, datetime.datetime] | None = None) -> str:
     logger.debug("Creating graphic started")
 
     days = stat.days
@@ -383,7 +381,7 @@ def _create_graphic(*,
 async def create_reading_graphic(stat: SpanStatistics | None = None,
                                  *,
                                  span_size: int = 7,
-                                 completion_dates: dict[str, datetime.datetime] | None = None) -> str:
+                                 completion_dates: dict[Any, datetime.datetime] | None = None) -> str:
     logger.info("Creating reading graphic")
 
     stat = stat or await get_span_reading_statistics(span_size=span_size)

@@ -22,7 +22,7 @@ templates = Jinja2Templates(directory="templates")
 
 def _filter_notes(*,
                   notes: list[db.Note],
-                  ids: Iterable[str]) -> list[db.Note]:
+                  ids: Iterable[UUID]) -> list[db.Note]:
     notes_ = {
         note.note_id: note
         for note in notes
@@ -35,7 +35,7 @@ def _filter_notes(*,
     ]
 
 
-def _find_tags_intersection(notes: list[db.Note], tags: set[str]) -> set[str]:
+def _find_tags_intersection(notes: list[db.Note], tags: set[str]) -> set[UUID]:
     return {
         note.note_id
         for note in notes
@@ -45,7 +45,7 @@ def _find_tags_intersection(notes: list[db.Note], tags: set[str]) -> set[str]:
 
 
 def _highlight_snippets(notes: list[db.Note],
-                        search_results: dict[str, manticoresearch.SearchResult]) -> None:
+                        search_results: dict[UUID, manticoresearch.SearchResult]) -> None:
     for note in notes:
         result = search_results[note.note_id]
         note.highlight(result.replace_substring, result.snippet)
@@ -183,7 +183,7 @@ async def add_note(note: schemas.Note = Depends()):
     if material_type := await db.get_material_type(material_id=note.material_id):
         response.set_cookie('material_type', material_type, expires=5)
 
-    await manticoresearch.insert(note_id=note_id)
+    await manticoresearch.insert(note_id=UUID(note_id))
 
     return response
 
@@ -226,11 +226,10 @@ async def update_note_view(note_id: UUID,
 @router.post('/update', response_class=RedirectResponse)
 async def update_note(note: schemas.UpdateNote = Depends()):
     success = True
-    note_id = str(note.note_id)
 
     try:
         await db.update_note(
-            note_id=note_id,
+            note_id=note.note_id,
             material_id=str(note.material_id),
             link_id=note.link_id,
             content=note.content,
@@ -239,7 +238,7 @@ async def update_note(note: schemas.UpdateNote = Depends()):
             tags=note.tags,
         )
 
-        await manticoresearch.update(note_id=note_id)
+        await manticoresearch.update(note_id=note.note_id)
     except Exception as e:
         logger.error("Error updating note: %s", repr(e))
         success = False
@@ -263,21 +262,17 @@ async def is_note_deleted(note_id: UUID):
 
 @router.delete('/delete', status_code=201)
 async def delete_note(note_id: UUID = Body(embed=True)):
-    note_id_str = str(note_id)
-
     async with asyncio.TaskGroup() as tg:
-        tg.create_task(db.delete_note(note_id=note_id_str))
-        tg.create_task(manticoresearch.delete(note_id=note_id_str))
+        tg.create_task(db.delete_note(note_id=note_id))
+        tg.create_task(manticoresearch.delete(note_id=note_id))
 
 
 @router.post('/restore', status_code=201)
 async def restore_note(note_id: UUID = Body(embed=True)):
-    note_id_str = str(note_id)
-
     # without task group because manticore could not insert
     # deleted note, so first we should restore it in db
-    await db.restore_note(note_id=note_id_str)
-    await manticoresearch.insert(note_id=note_id_str)
+    await db.restore_note(note_id=note_id)
+    await manticoresearch.insert(note_id=note_id)
 
 
 @router.get('/links', response_class=HTMLResponse)
@@ -286,7 +281,7 @@ async def get_note_graph(note_id: UUID):
         note.note_id: note
         for note in await db.get_notes()
     }
-    graph = db.link_notes(note_id=str(note_id), notes=notes)
+    graph = db.link_notes(note_id=note_id, notes=notes)
     return db.create_graphic(graph)
 
 
@@ -315,7 +310,7 @@ async def transcript_speech(data: bytes = Body()):
 
 @router.get('/graph', response_class=HTMLResponse)
 async def get_graph(request: Request,
-                    material_id: str | None = None):
+                    material_id: UUID | None = None):
     async with asyncio.TaskGroup() as tg:
         get_notes_task = tg.create_task(db.get_notes())
         get_titles_task = tg.create_task(db.get_material_titles())

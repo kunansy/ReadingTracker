@@ -27,8 +27,8 @@ def test_safe_list_get(lst, index, default, value):
 async def test_get_mean_materials_read_pages():
     stat = await db.get_mean_materials_read_pages()
 
-    stmt = sa.select([models.ReadingLog.c.material_id,
-                      models.ReadingLog.c.count])
+    stmt = sa.select(models.ReadingLog.c.material_id,
+                     models.ReadingLog.c.count)
 
     async with database.session() as ses:
         result = (await ses.execute(stmt)).all()
@@ -63,15 +63,15 @@ async def test_get_log_records():
 
 @pytest.mark.asyncio
 async def test_get_reading_material_titles():
-    stmt = sa.select([models.Materials.c.material_id,
-                      models.Materials.c.title]) \
+    stmt = sa.select(models.Materials.c.material_id,
+                     models.Materials.c.title) \
         .join(models.Statuses,
               models.Statuses.c.material_id == models.Materials.c.material_id) \
         .where(models.Statuses.c.completed_at == None)
 
     async with database.session() as ses:
         expected = {
-            str(material_id): title
+            material_id: title
             for material_id, title in (await ses.execute(stmt)).all()
         }
 
@@ -87,15 +87,15 @@ async def test_get_reading_material_titles():
 async def test_get_completion_dates():
     dates = await db.get_completion_dates()
 
-    stmt = sa.select([models.Materials.c.material_id,
-                      models.Statuses.c.completed_at]) \
+    stmt = sa.select(models.Materials.c.material_id,
+                     models.Statuses.c.completed_at) \
         .join(models.Statuses,
               models.Statuses.c.material_id == models.Materials.c.material_id) \
         .where(models.Statuses.c.completed_at != None)
 
     async with database.session() as ses:
         expected = {
-            str(material_id): completed_at
+            material_id: completed_at
             for material_id, completed_at in (await ses.execute(stmt)).all()
         }
 

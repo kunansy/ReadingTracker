@@ -2,6 +2,7 @@ import datetime
 from collections import defaultdict
 from decimal import Decimal
 from typing import Any, AsyncGenerator, DefaultDict
+from uuid import UUID
 
 import sqlalchemy.sql as sa
 
@@ -14,7 +15,7 @@ from tracker.models import models
 class LogRecord(CustomBaseModel):
     date: datetime.date
     count: int
-    material_id: str
+    material_id: UUID
     material_title: str | None = None
 
 
@@ -27,16 +28,16 @@ def _safe_list_get(lst: list[Any],
         return default
 
 
-async def get_mean_materials_read_pages() -> dict[str, Decimal]:
+async def get_mean_materials_read_pages() -> dict[UUID, Decimal]:
     logger.debug("Getting mean reading read pages count of materials")
 
-    stmt = sa.select([models.ReadingLog.c.material_id,
-                      sa.func.avg(models.ReadingLog.c.count).label('mean')]) \
+    stmt = sa.select(models.ReadingLog.c.material_id,
+                     sa.func.avg(models.ReadingLog.c.count).label('mean')) \
         .group_by(models.ReadingLog.c.material_id)
 
     async with database.session() as ses:
         mean = {
-            str(material_id): round(mean, 2)
+            material_id: round(mean, 2)
             for material_id, mean in (await ses.execute(stmt)).all()
         }
 
@@ -48,10 +49,9 @@ async def get_log_records(*,
                           material_id: str | None = None) -> list[LogRecord]:
     logger.debug("Getting all log records")
 
-    stmt = sa.select([models.ReadingLog,
-                      models.Materials.c.title.label('material_title')])\
-        .join(models.Materials,
-              models.Materials.c.material_id == models.ReadingLog.c.material_id)
+    stmt = sa.select(models.ReadingLog,
+                     models.Materials.c.title.label('material_title'))\
+        .join(models.Materials)
 
     if material_id:
         stmt = stmt.where(models.Materials.c.material_id == material_id)
@@ -60,7 +60,7 @@ async def get_log_records(*,
         records = [
             LogRecord(
                 date=row.date,
-                count=row.count,
+                count=row.count,  # type: ignore
                 material_id=row.material_id,
                 material_title=row.material_title,
             )
@@ -71,18 +71,17 @@ async def get_log_records(*,
     return records
 
 
-async def get_reading_material_titles() -> dict[str, str]:
+async def get_reading_material_titles() -> dict[UUID, str]:
     logger.debug("Getting reading material titles")
 
-    stmt = sa.select([models.Materials.c.material_id,
-                      models.Materials.c.title])\
-        .join(models.Statuses,
-              models.Statuses.c.material_id == models.Materials.c.material_id)\
+    stmt = sa.select(models.Materials.c.material_id,
+                     models.Materials.c.title)\
+        .join(models.Statuses)\
         .where(models.Statuses.c.completed_at == None)
 
     async with database.session() as ses:
         titles = {
-            str(material_id): title
+            material_id: title
             for material_id, title in (await ses.execute(stmt)).all()
         }
 
@@ -90,18 +89,17 @@ async def get_reading_material_titles() -> dict[str, str]:
     return titles
 
 
-async def get_titles() -> dict[str, str]:
+async def get_titles() -> dict[UUID, str]:
     """ Get titles for materials even been read """
     logger.debug("Getting reading material titles")
 
-    stmt = sa.select([models.Materials.c.material_id,
-                      models.Materials.c.title])\
-        .join(models.Statuses,
-              models.Statuses.c.material_id == models.Materials.c.material_id)
+    stmt = sa.select(models.Materials.c.material_id,
+                     models.Materials.c.title)\
+        .join(models.Statuses)
 
     async with database.session() as ses:
         titles = {
-            str(material_id): title
+            material_id: title
             for material_id, title in (await ses.execute(stmt)).all()
         }
 
@@ -109,18 +107,17 @@ async def get_titles() -> dict[str, str]:
     return titles
 
 
-async def get_completion_dates() -> dict[str, datetime.datetime]:
+async def get_completion_dates() -> dict[UUID, datetime.datetime]:
     logger.debug("Getting completion dates")
 
-    stmt = sa.select([models.Materials.c.material_id,
-                      models.Statuses.c.completed_at]) \
-        .join(models.Statuses,
-              models.Statuses.c.material_id == models.Materials.c.material_id) \
+    stmt = sa.select(models.Materials.c.material_id,
+                     models.Statuses.c.completed_at) \
+        .join(models.Statuses) \
         .where(models.Statuses.c.completed_at != None)
 
     async with database.session() as ses:
         dates = {
-            str(material_id): completed_at
+            material_id: completed_at
             for material_id, completed_at in (await ses.execute(stmt)).all()
         }
 
@@ -130,7 +127,7 @@ async def get_completion_dates() -> dict[str, datetime.datetime]:
 
 async def data(*,
                log_records: list[LogRecord] | None = None,
-               completion_dates: dict[str, datetime.datetime] | None = None) -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
+               completion_dates: dict[UUID, datetime.datetime] | None = None) -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
     """ Get pairs: (date, info) of all days from start to stop.
 
     If the day is empty, material_id is supposed
@@ -146,7 +143,7 @@ async def data(*,
         log_records_dict[log_record.date] += [log_record]
 
     # stack for materials
-    materials: list[str] = []
+    materials: list[UUID] = []
     try:
         completion_dates = completion_dates or await get_completion_dates()
     except Exception as e:
@@ -198,11 +195,14 @@ async def is_log_empty() -> bool:
     async with database.session() as ses:
         is_empty = await ses.scalar(stmt)
 
+    if is_empty is None:
+        is_empty = True
+
     logger.debug("Log empty: %s", is_empty)
     return is_empty
 
 
-async def get_material_reading_now() -> str | None:
+async def get_material_reading_now() -> UUID | None:
     logger.debug("Getting material reading now")
 
     if await is_log_empty():

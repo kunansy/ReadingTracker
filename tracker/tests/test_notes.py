@@ -1,4 +1,5 @@
 from itertools import groupby
+from uuid import UUID
 
 import pytest
 import sqlalchemy.sql as sa
@@ -63,8 +64,7 @@ async def test_get_material_titles():
 @pytest.mark.asyncio
 async def test_get_material_with_notes_titles():
     stmt = sa.select(models.Materials.c.material_id)\
-        .join(models.Notes,
-              models.Notes.c.material_id == models.Materials.c.material_id)\
+        .join(models.Notes)\
         .where(~models.Notes.c.is_deleted)
 
     async with database.session() as ses:
@@ -79,11 +79,11 @@ async def test_get_material_with_notes_titles():
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     'material_id', (
-        "5c66e1ca-eb52-47e5-af50-c48b345c7e6c",
+        UUID("5c66e1ca-eb52-47e5-af50-c48b345c7e6c"),
         None,
     )
 )
-async def test_get_notes(material_id: str | None):
+async def test_get_notes(material_id: UUID | None):
     notes = await db.get_notes(material_id=material_id)
 
     assert all(not note.is_deleted for note in notes), "Deleted note found"
@@ -98,9 +98,9 @@ async def test_get_notes(material_id: str | None):
         stmt = stmt.where(models.Notes.c.material_id == material_id)
 
     async with database.session() as ses:
-        notes_count = await ses.scalar(stmt)
+        notes_count = await ses.scalar(stmt) or 0
 
-    assert len(notes) == notes_count, f"Some notes missed, {len(notes)} != {len(notes_count)}"
+    assert len(notes) == notes_count, f"Some notes missed, {len(notes)} != {notes_count}"
 
 
 @pytest.mark.asyncio
@@ -149,7 +149,7 @@ async def test_link_notes(note_id):
         for note in await db.get_notes()
     }
 
-    result = db.link_notes(note_id=note_id, notes=notes)
+    result = db.link_notes(note_id=UUID(note_id), notes=notes)
 
     assert len(result.nodes) == 7
     assert len(result.edges) == 6
@@ -177,7 +177,7 @@ async def test_link_notes_without_links(note_id):
         for note in await db.get_notes()
     }
 
-    result = db.link_notes(note_id=note_id, notes=notes)
+    result = db.link_notes(note_id=UUID(note_id), notes=notes)
 
     assert len(result.nodes) == 1
     assert len(result.edges) == 0
@@ -255,5 +255,5 @@ async def test_get_links_from(note_id, expected):
         for exp_note_id in expected
     ]
 
-    result = await db.get_links_from(note_id=note_id)
+    result = await db.get_links_from(note_id=UUID(note_id))
     assert result == expected_notes

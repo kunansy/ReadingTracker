@@ -1,6 +1,7 @@
 import datetime
 from contextlib import asynccontextmanager
 from typing import AsyncGenerator
+from uuid import UUID
 
 import sqlalchemy.sql as sa
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -18,8 +19,8 @@ class DatabaseException(Exception):
 
 
 class MinMax(CustomBaseModel):
-    log_id: str = ''
-    material_id: str = ''
+    log_id: UUID | str = ''
+    material_id: UUID | str = ''
     material_title: str = ''
     count: int
     date: datetime.date

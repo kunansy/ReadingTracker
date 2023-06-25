@@ -1,5 +1,6 @@
 import asyncio
 from typing import Any
+from uuid import UUID
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, ORJSONResponse, RedirectResponse
@@ -31,7 +32,7 @@ async def system_view():
 
 @router.get('/graphics')
 async def graphic(request: Request,
-                  material_id: str | None = None,
+                  material_id: UUID | None = None,
                   last_days: conint(ge=1) = 7):  # type: ignore
     context: dict[str, Any] = {
         'request': request,
