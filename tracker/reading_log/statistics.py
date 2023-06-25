@@ -135,13 +135,13 @@ async def _get_lost_days() -> int:
 async def get_means() -> enums.MEANS:
     """ Mean read pages, articles, seen lectures, listen audiobooks ect """
     stmt = sa.select(models.Materials.c.material_type.label('mtype'),
-                     sa.func.avg(models.ReadingLog.c.count).label('count'))\
+                     sa.func.avg(models.ReadingLog.c.count).label('cnt'))\
         .join(models.ReadingLog)\
         .group_by(models.Materials.c.material_type)
 
     async with database.session() as ses:
         return {
-            row.mtype: round(row.count, 2)
+            row.mtype: round(row.cnt, 2)
             for row in (await ses.execute(stmt)).all()
         }
 

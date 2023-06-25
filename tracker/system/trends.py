@@ -191,7 +191,7 @@ async def _calculate_span_reading_statistics(span: TimeSpan) -> dict[datetime.da
     logger.debug("Calculating span reading statistics")
 
     stmt = sa.select(models.ReadingLog.c.date,
-                     sa.func.sum(models.ReadingLog.c.count).label('count'))\
+                     sa.func.sum(models.ReadingLog.c.count).label('cnt'))\
         .where(models.ReadingLog.c.date >= span.start)\
         .where(models.ReadingLog.c.date <= span.stop)\
         .group_by(models.ReadingLog.c.date)
@@ -202,7 +202,7 @@ async def _calculate_span_reading_statistics(span: TimeSpan) -> dict[datetime.da
     logger.debug("Span reading statistics calculated")
 
     return {
-        row.date: row.count
+        row.date: row.cnt
         for row in rows
     }
 
@@ -211,7 +211,7 @@ async def _calculate_span_notes_statistics(span: TimeSpan) -> dict[datetime.date
     logger.debug("Calculating span notes statistics")
 
     stmt = sa.select(sa.func.date(models.Notes.c.added_at).label('date'),
-                     sa.func.count(models.Notes.c.note_id)) \
+                     sa.func.count(models.Notes.c.note_id).label('cnt')) \
         .group_by(sa.func.date(models.Notes.c.added_at)) \
         .where(sa.func.date(models.Notes.c.added_at) >= span.start) \
         .where(sa.func.date(models.Notes.c.added_at) <= span.stop)
@@ -222,7 +222,7 @@ async def _calculate_span_notes_statistics(span: TimeSpan) -> dict[datetime.date
     logger.debug("Span notes statistics calculated")
 
     return {
-        row.date: row.count
+        row.date: row.cnt
         for row in rows
     }
 
@@ -288,7 +288,7 @@ async def _materials_analytics(span: TimeSpan) -> _MaterialAnalytics:
     """ Get how many materials was completed in the span,
     group them by material types """
     stmt = sa.select(models.Materials.c.material_type,
-                     sa.func.count(models.Materials.c.material_id.distinct()).label('count'))\
+                     sa.func.count(models.Materials.c.material_id.distinct()).label('cnt'))\
         .join(models.Statuses) \
         .where(models.Statuses.c.completed_at >= span.start) \
         .where(models.Statuses.c.completed_at <= span.stop) \
@@ -296,7 +296,7 @@ async def _materials_analytics(span: TimeSpan) -> _MaterialAnalytics:
 
     async with database.session() as ses:
         res = (await ses.execute(stmt)).all()
-    stats = {r.material_type: r.count for r in res}
+    stats = {r.material_type: r.cnt for r in res}
 
     return _MaterialAnalytics(
         stats=stats,
@@ -308,7 +308,7 @@ async def _reading_analytics(span: TimeSpan) -> _MaterialAnalytics:
     """ Get how many pages were read in the span,
     group them by material types """
     stmt = sa.select(models.Materials.c.material_type,
-                     sa.func.sum(models.ReadingLog.c.count).label('count')) \
+                     sa.func.sum(models.ReadingLog.c.count).label('cnt')) \
         .join(models.ReadingLog) \
         .where(models.ReadingLog.c.date >= span.start) \
         .where(models.ReadingLog.c.date <= span.stop) \
@@ -316,7 +316,7 @@ async def _reading_analytics(span: TimeSpan) -> _MaterialAnalytics:
 
     async with database.session() as ses:
         res = (await ses.execute(stmt)).all()
-    stats = {r.material_type: r.count for r in res}
+    stats = {r.material_type: r.cnt for r in res}
 
     return _MaterialAnalytics(
         stats=stats,
