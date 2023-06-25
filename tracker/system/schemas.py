@@ -9,7 +9,7 @@ from tracker.common.schemas import CustomBaseModel
 
 class GetSpanReportRequest(CustomBaseModel):
     start: datetime.date
-    stop: datetime.date | None = None
+    stop: datetime.date
 
     def __init__(self,
                  start: datetime.date = Form(...),
