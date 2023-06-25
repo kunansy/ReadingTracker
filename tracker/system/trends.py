@@ -282,25 +282,23 @@ async def get_span_analytics(__span: schemas.GetSpanReportRequest) -> SpanAnalys
 
 
 async def _materials_analytics(span: TimeSpan) -> _MaterialAnalytics:
-    completed_materials_stmt = sa.select([models.Materials.c.material_type,
-                                          sa.func.sum(models.ReadingLog.c.count).label('count')])\
-        .join(models.ReadingLog,
-              models.ReadingLog.c.material_id == models.Materials.c.material_id)\
-        .where(models.ReadingLog.c.date >= span.start)\
-        .where(models.ReadingLog.c.date <= span.stop) \
+    """ Get how many materials was completed in the span,
+    group them by material types """
+    stmt = sa.select([models.Materials.c.material_type,
+                      sa.func.count(models.Materials.c.material_id.distinct()).label('count')])\
+        .join(models.Statuses,
+              models.Statuses.c.material_id == models.Materials.c.material_id) \
+        .where(models.Statuses.c.completed_at >= span.start) \
+        .where(models.Statuses.c.completed_at <= span.stop) \
         .group_by(models.Materials.c.material_type)
 
     async with database.session() as ses:
-        res = (await ses.execute(completed_materials_stmt)).all()
-
-    stats = {
-        r.material_type: r.count
-        for r in res
-    }
+        res = (await ses.execute(stmt)).all()
+    stats = {r.material_type: r.count for r in res}
 
     return _MaterialAnalytics(
-        completed_materials_stats=stats,
-        total_materials_completed=sum(stats.values())
+        stats=stats,
+        total=sum(stats.values())
     )
 
 
