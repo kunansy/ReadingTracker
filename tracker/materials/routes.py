@@ -76,7 +76,7 @@ async def update_material_view(request: Request,
         'request': request,
     }
 
-    if not (material := await db.get_material(material_id=str(material_id))):
+    if not (material := await db.get_material(material_id=material_id)):
         context['what'] = f"'{material_id=}' not found"
         return templates.TemplateResponse("errors/404.html", context)
 
@@ -127,7 +127,7 @@ async def update_material(material: schemas.UpdateMaterial = Depends()):
 
 @router.post('/start/{material_id}')
 async def start_material(material_id: UUID):
-    if not (material := await db.get_material(material_id=str(material_id))):
+    if not (material := await db.get_material(material_id=material_id)):
         raise HTTPException(status_code=404, detail=f"Material {material_id} not found")
     # don't shift queue if the material is the first item
     if material.index != (queue_start := await db.get_queue_start()):
@@ -229,7 +229,7 @@ async def update_queue_order(material_id: UUID, index: int):
 
 
 @router.get('/is-reading')
-async def is_material_reading(material_id: str):
+async def is_material_reading(material_id: UUID):
     is_reading = await db.is_reading(material_id=material_id)
 
     return {

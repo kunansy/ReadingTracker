@@ -208,7 +208,7 @@ async def _get_completed_materials() -> list[MaterialStatus]:
     return completed_materials
 
 
-async def get_last_material_started() -> str | None:
+async def get_last_material_started() -> UUID | None:
     """ Get last started and not completed material """
     logger.info("Getting the last material started")
 
