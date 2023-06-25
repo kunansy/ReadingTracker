@@ -5,6 +5,7 @@ from fastapi import Form
 from pydantic import validator
 
 from tracker.common.schemas import CustomBaseModel
+from tracker.models import enums
 
 
 class GetSpanReportRequest(CustomBaseModel):
@@ -44,3 +45,23 @@ class GetSpanReportRequest(CustomBaseModel):
             start=self.start - datetime.timedelta(days=ago),
             stop=self.stop - datetime.timedelta(days=ago),
         )
+
+
+class GetSpanReportResponse(CustomBaseModel):
+    completed_materials: dict[enums.MaterialTypesEnum, int]
+    total_materials_completed: int
+
+    read_items: dict[enums.MaterialTypesEnum, int]
+    reading_total: int
+    reading_median: float
+    reading_mean: float
+    reading_lost_count: int
+    reading_zero_days: int
+    reading_would_be_total: int
+
+    notes_total: int
+    notes_median: float
+    notes_mean: float
+    notes_lost_count: int
+    notes_zero_days: int
+    notes_would_be_total: int
