@@ -68,8 +68,8 @@ async def test_calculate_span_reading_statistics(start, stop, size):
     span = trends.TimeSpan(start=start, stop=stop, span_size=size)
     result = await trends._calculate_span_reading_statistics(span=span)
 
-    stmt = sa.select([models.ReadingLog.c.date,
-                      sa.func.sum(models.ReadingLog.c.count)]) \
+    stmt = sa.select(models.ReadingLog.c.date,
+                     sa.func.sum(models.ReadingLog.c.count)) \
         .where(models.ReadingLog.c.date >= span.start) \
         .where(models.ReadingLog.c.date <= span.stop) \
         .group_by(models.ReadingLog.c.date)
@@ -96,8 +96,8 @@ async def test_calculate_span_notes_statistics(start, stop, size):
     span = trends.TimeSpan(start=start, stop=stop, span_size=size)
     result = await trends._calculate_span_notes_statistics(span=span)
 
-    stmt = sa.select([sa.func.date(models.Notes.c.added_at).label('date'),
-                      sa.func.count(models.Notes.c.note_id)]) \
+    stmt = sa.select(sa.func.date(models.Notes.c.added_at).label('date'),
+                     sa.func.count(models.Notes.c.note_id)) \
         .group_by(sa.func.date(models.Notes.c.added_at)) \
         .where(sa.func.date(models.Notes.c.added_at) >= span.start) \
         .where(sa.func.date(models.Notes.c.added_at) <= span.stop)
