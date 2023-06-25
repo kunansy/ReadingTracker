@@ -25,7 +25,7 @@ class GetSpanReportRequest(CustomBaseModel):
                                       stop: datetime.date,
                                       values: dict[str, Any]) -> datetime.date:
         start = values['start']
-        assert stop < start, "Stop must be less than start"
+        assert stop > start, "Start must be less than stop"
 
         return stop
 
