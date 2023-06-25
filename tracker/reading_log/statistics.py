@@ -93,14 +93,18 @@ async def _get_start_date() -> datetime.date:
     stmt = sa.select(sa.func.min(models.ReadingLog.c.date))
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        if res := await ses.scalar(stmt):
+            return res
+        raise ValueError(f"Table is empty, value is none: {res!r}")
 
 
 async def _get_last_date() -> datetime.date:
     stmt = sa.select(sa.func.max(models.ReadingLog.c.date))
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        if res := await ses.scalar(stmt):
+            return res
+        raise ValueError(f"Table is empty, value is none: {res!r}")
 
 
 async def _get_log_duration() -> int:
@@ -116,7 +120,7 @@ async def _get_total_read_pages() -> int:
     stmt = sa.select(sa.func.sum(models.ReadingLog.c.count))
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        return await ses.scalar(stmt) or 0
 
 
 async def _get_lost_days() -> int:
@@ -159,7 +163,7 @@ async def contains(*,
         .where(models.ReadingLog.c.material_id == material_id)
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        return await ses.scalar(stmt) or False
 
 
 async def _get_min_record(*,
@@ -225,7 +229,7 @@ async def _get_total_materials_completed() -> int:
         .where(models.Statuses.c.completed_at != None)
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        return await ses.scalar(stmt) or 0
 
 
 async def get_tracker_statistics() -> TrackerStatistics:

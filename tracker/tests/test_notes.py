@@ -98,7 +98,7 @@ async def test_get_notes(material_id: UUID | None):
         stmt = stmt.where(models.Notes.c.material_id == material_id)
 
     async with database.session() as ses:
-        notes_count = await ses.scalar(stmt)
+        notes_count = await ses.scalar(stmt) or 0
 
     assert len(notes) == notes_count, f"Some notes missed, {len(notes)} != {len(notes_count)}"
 

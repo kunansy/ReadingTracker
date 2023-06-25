@@ -71,4 +71,4 @@ async def get_cards_count() -> int:
         .select_from(models.Cards)
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        return await ses.scalar(stmt) or 0

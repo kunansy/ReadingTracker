@@ -195,6 +195,9 @@ async def is_log_empty() -> bool:
     async with database.session() as ses:
         is_empty = await ses.scalar(stmt)
 
+    if is_empty is None:
+        is_empty = True
+
     logger.debug("Log empty: %s", is_empty)
     return is_empty
 

@@ -802,4 +802,4 @@ async def is_reading(*,
         .where(models.Statuses.c.completed_at == None)
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        return await ses.scalar(stmt) or False
