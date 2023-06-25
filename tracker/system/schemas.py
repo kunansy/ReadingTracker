@@ -34,6 +34,9 @@ class GetSpanReportRequest(CustomBaseModel):
         return (self.stop - self.start).days + 1
 
     def create_span_ago(self, ago: int) -> "GetSpanReportRequest":
+        if ago <= 0:
+            raise ValueError(f"Ago must be > 0, {ago!r} found")
+
         return self.__class__(
             start=self.start - datetime.timedelta(days=ago),
             stop=self.stop - datetime.timedelta(days=ago),
