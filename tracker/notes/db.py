@@ -82,8 +82,8 @@ async def get_material_type(*,
 async def get_material_types() -> dict[str, enums.MaterialTypesEnum]:
     logger.debug("Getting material types")
 
-    stmt = sa.select([models.Materials.c.material_id,
-                      models.Materials.c.material_type])
+    stmt = sa.select(models.Materials.c.material_id,
+                     models.Materials.c.material_type)
 
     async with database.session() as ses:
         types = {
@@ -98,8 +98,8 @@ async def get_material_types() -> dict[str, enums.MaterialTypesEnum]:
 async def get_material_titles() -> dict[str, str]:
     logger.debug("Getting material titles")
 
-    stmt = sa.select([models.Materials.c.material_id,
-                      models.Materials.c.title])
+    stmt = sa.select(models.Materials.c.material_id,
+                     models.Materials.c.title)
 
     async with database.session() as ses:
         titles = {
@@ -115,8 +115,8 @@ async def get_material_with_notes_titles() -> dict[str, str]:
     """ Get materials that have a note. """
     logger.debug("Getting material with note titles")
 
-    stmt = sa.select([sa.text("distinct on (materials.material_id) materials.material_id"),
-                      models.Materials.c.title])\
+    stmt = sa.select(sa.text("distinct on (materials.material_id) materials.material_id"),
+                     models.Materials.c.title)\
         .join(models.Notes,
               models.Notes.c.material_id == models.Materials.c.material_id)\
         .where(~models.Notes.c.is_deleted)
@@ -138,7 +138,7 @@ def _get_note_stmt(*,
     links_count_query = "(select count(1) as links_count from notes where link_id = n.note_id)"
 
     notes_model = models.Notes.alias('n')
-    stmt = sa.select([notes_model, sa.text(links_count_query)]) \
+    stmt = sa.select(notes_model, sa.text(links_count_query)) \
         .where(~notes_model.c.is_deleted) \
         .order_by(notes_model.c.note_number)
 
@@ -187,8 +187,8 @@ async def get_all_notes_count() -> dict[str, int]:
 
     logger.debug("Getting notes count for all materials")
 
-    stmt = sa.select([models.Notes.c.material_id.label('material_id'),
-                      sa.func.count(1).label('count')]) \
+    stmt = sa.select(models.Notes.c.material_id.label('material_id'),
+                     sa.func.count(1).label('count')) \
         .select_from(models.Notes) \
         .where(~models.Notes.c.is_deleted) \
         .group_by(models.Notes.c.material_id)
