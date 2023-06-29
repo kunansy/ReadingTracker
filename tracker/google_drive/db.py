@@ -197,8 +197,8 @@ async def get_tables_analytics() -> dict[str, int]:
         for table in table_names[:-1]
     ] + [f"SELECT '{table_names[-1]}' AS name, COUNT(1) AS cnt FROM {table_names[-1]}"]
 
-    query = '\n'.join(query)
-    stmt = sa.text(query)
+    query = '\n'.join(query)  # type: ignore
+    stmt = sa.text(query)  # type: ignore
 
     async with database.session() as ses:
         res = (await ses.execute(stmt)).mappings().all()
