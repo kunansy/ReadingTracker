@@ -1,13 +1,10 @@
-import asyncio
 import datetime
 from pathlib import Path
 from typing import Any, NamedTuple
 from uuid import UUID
 
 import sqlalchemy.sql as sa
-from fastapi.encoders import jsonable_encoder
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql.schema import Table
 
 from tracker.common import database, settings
 from tracker.common.logger import logger
@@ -37,12 +34,6 @@ class DBSnapshot(NamedTuple):
             for table_snapshot in self.tables
         }
 
-    def table_to_rows(self) -> dict[str, list[dict[str, DATE_TYPES | JSON_FIELD_TYPES]]]:
-        return {
-            str(table_snapshot.table_name): table_snapshot.rows
-            for table_snapshot in self.tables
-        }
-
 
 TABLES = {
     models.Materials.name: models.Materials,
@@ -53,50 +44,6 @@ TABLES = {
     models.Repeats.name: models.Repeats,
     models.NoteRepeatsHistory.name: models.NoteRepeatsHistory,
 }
-
-
-def _convert_date_to_str(value: DATE_TYPES | JSON_FIELD_TYPES) -> DATE_TYPES | JSON_FIELD_TYPES:
-    if isinstance(value, datetime.datetime):
-        return value.strftime(settings.DATETIME_FORMAT)
-    if isinstance(value, datetime.date):
-        return value.strftime(settings.DATE_FORMAT)
-    return value
-
-
-def _serialize_to_json(value: DATE_TYPES | UUID | JSON_FIELD_TYPES) -> DATE_TYPES | JSON_FIELD_TYPES:
-    return jsonable_encoder(_convert_date_to_str(value))  # type: ignore
-
-
-async def _get_table_snapshot(*,
-                              table: Table) -> TableSnapshot:
-    logger.debug("Getting '%s' snapshot", table.name)
-    stmt = sa.select(table)
-
-    async with database.session() as ses:
-        rows = [
-            {
-                str(key): _serialize_to_json(value)
-                for key, value in row.items()
-            }
-            for row in (await ses.execute(stmt)).mappings().all()
-        ]
-
-    logger.info("'%s' snapshot got, %s rows", table.name, len(rows))
-    return TableSnapshot(
-        table_name=table.name,
-        rows=rows
-    )
-
-
-async def get_db_snapshot() -> DBSnapshot:
-    async with asyncio.TaskGroup() as tg:
-        tasks = [
-            tg.create_task(_get_table_snapshot(table=table))
-            for table_name, table in TABLES.items()
-        ]
-
-    table_snapshots = [task.result() for task in tasks]
-    return DBSnapshot(tables=table_snapshots)
 
 
 def _is_uuid(value: str) -> bool:
@@ -187,3 +134,23 @@ async def restore_db(*,
         logger.info("%s: %s rows inserted",
                     table.name, len(values))
     return snapshot
+
+
+async def get_tables_analytics() -> dict[str, int]:
+    table_names = list(TABLES.keys())
+
+    query = [
+        f"SELECT '{table}' AS name, COUNT(1) AS cnt FROM {table} UNION"
+        for table in table_names[:-1]
+    ] + [f"SELECT '{table_names[-1]}' AS name, COUNT(1) AS cnt FROM {table_names[-1]}"]
+
+    query = '\n'.join(query)  # type: ignore
+    stmt = sa.text(query)  # type: ignore
+
+    async with database.session() as ses:
+        res = (await ses.execute(stmt)).mappings().all()
+
+    return {
+        r.name: r.cnt
+        for r in res
+    }

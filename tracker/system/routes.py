@@ -1,4 +1,5 @@
 import asyncio
+import os
 from typing import Any
 from uuid import UUID
 
@@ -9,6 +10,7 @@ from pydantic import conint
 
 from tracker.common.logger import logger
 from tracker.google_drive import main as drive_api
+from tracker.google_drive.db import get_tables_analytics
 from tracker.system import db, schemas, trends
 
 
@@ -83,10 +85,12 @@ async def graphic(request: Request,
 
 @router.get('/backup')
 async def backup(request: Request):
-    status, snapshot_dict = 'ok', None
+    status, stat = 'ok', None
     try:
-        snapshot = await drive_api.backup()
-        snapshot_dict = snapshot.to_dict()
+        # TODO: later run backupper as a service
+        status_code = os.WEXITSTATUS(os.system("./backup"))
+        assert status_code == 0, "Backup error"
+        stat = await get_tables_analytics()
     except Exception as e:
         logger.error("Backup error: %s", repr(e))
         status = 'backup-failed'
@@ -95,17 +99,18 @@ async def backup(request: Request):
         'request': request,
         'status': status
     }
-    if snapshot_dict:
-        context['materials_count'] = snapshot_dict['materials'].counter
-        context['logs_count'] = snapshot_dict['reading_log'].counter
-        context['statuses_count'] = snapshot_dict['statuses'].counter
-        context['notes_count'] = snapshot_dict['notes'].counter
+    if stat:
+        context['materials_count'] = stat['materials']
+        context['logs_count'] = stat['reading_log']
+        context['statuses_count'] = stat['statuses']
+        context['notes_count'] = stat['notes']
 
     return templates.TemplateResponse("system/backup.html", context)
 
 
 @router.get('/restore')
 async def restore(request: Request):
+    # TODO
     status, snapshot_dict = 'ok', None
     try:
         snapshot = await drive_api.restore()
