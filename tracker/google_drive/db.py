@@ -187,3 +187,23 @@ async def restore_db(*,
         logger.info("%s: %s rows inserted",
                     table.name, len(values))
     return snapshot
+
+
+async def get_tables_analytics() -> dict[str, int]:
+    table_names = list(TABLES.keys())
+
+    query = [
+        f"SELECT '{table}' AS name, COUNT(1) AS cnt FROM {table} UNION"
+        for table in table_names[:-1]
+    ] + [f"SELECT '{table_names[-1]}' AS name, COUNT(1) AS cnt FROM {table_names[-1]}"]
+
+    query = '\n'.join(query)
+    stmt = sa.text(query)
+
+    async with database.session() as ses:
+        res = (await ses.execute(stmt)).mappings().all()
+
+    return {
+        r.name: r.cnt
+        for r in res
+    }
