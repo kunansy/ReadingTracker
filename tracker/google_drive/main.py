@@ -12,24 +12,6 @@ from tracker.common.logger import logger
 from tracker.google_drive import db, drive_api
 
 
-async def backup() -> db.DBSnapshot:
-    logger.info("Backuping started")
-    start_time = time.perf_counter()
-
-    db_snapshot = await db.get_db_snapshot()
-    filename = db.get_dump_filename()
-
-    await drive_api.send_dump(
-        dump=db_snapshot.table_to_rows(),
-        filename=filename
-    )
-
-    logger.info("Backuping completed, %ss",
-                round(time.perf_counter() - start_time, 2))
-
-    return db_snapshot
-
-
 def _read_local_dump(filepath: Path) -> dict[str, Any]:
     if not filepath.exists():
         raise drive_api.GoogleDriveException("%s file not found", filepath)
@@ -107,7 +89,7 @@ async def main() -> None:
     args = parse_args()
 
     if args.backup:
-        await backup()
+        raise NotImplementedError
     elif args.restore:
         await restore()
     elif args.get_last_dump:
@@ -117,9 +99,7 @@ async def main() -> None:
     elif dump_path := args.restore_offline:
         await restore(dump_path=dump_path)
     elif args.backup_offline:
-        snapshot = await db.get_db_snapshot()
-        filepath = db.get_dump_filename(prefix='offline_backup')
-        _dump_json(snapshot.table_to_rows(), filepath=filepath)
+        raise NotImplementedError
 
 
 if __name__ == "__main__":

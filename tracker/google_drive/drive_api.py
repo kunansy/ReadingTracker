@@ -2,7 +2,6 @@ import contextlib
 import os
 import tempfile
 from functools import lru_cache
-from pathlib import Path
 from typing import Any, AsyncGenerator
 
 import aiogoogle
@@ -52,28 +51,6 @@ async def _get_folder_id(*,
         )
 
     return response['files'][0]['id']
-
-
-async def send_dump(*,
-                    dump: dict[str, Any],
-                    filename: Path) -> None:
-    logger.debug("Sending file %s", filename)
-
-    file_metadata = {
-        'name': f"{filename.name}",
-        'parents': [await _get_folder_id()]
-    }
-
-    # don't remove it, store in the data dir
-    with filename.open('wb') as f:
-        f.write(orjson.dumps(dump))
-
-    async with _drive_client() as (client, drive):
-        await client.as_service_account(
-            drive.files.create(
-                upload_file=filename, json=file_metadata))
-
-    logger.debug("File sent")
 
 
 async def _get_last_dump_id() -> str:
