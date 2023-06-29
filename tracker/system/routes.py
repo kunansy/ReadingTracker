@@ -110,6 +110,7 @@ async def backup(request: Request):
 
 @router.get('/restore')
 async def restore(request: Request):
+    # TODO
     status, snapshot_dict = 'ok', None
     try:
         snapshot = await drive_api.restore()
