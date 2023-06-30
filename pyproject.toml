@@ -34,6 +34,8 @@ speechrecognition = "~3.10.0"
 pyaudio = "~0.2.13"
 pydub = "~0.25.1"
 uuid6 = "~2023.5.2"
+grpcio = "~1.56.0"
+grpcio-tools = "~1.56.0"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "~1.4.0"
