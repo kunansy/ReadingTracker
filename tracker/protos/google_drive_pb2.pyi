@@ -19,7 +19,14 @@ class BackupRequest(_message.Message):
     db_password: str
     db_name: str
     with_enc: bool
-    def __init__(self, db_host: _Optional[str] = ..., db_port: _Optional[str] = ..., db_username: _Optional[str] = ..., db_password: _Optional[str] = ..., db_name: _Optional[str] = ..., with_enc: bool = ...) -> None: ...
+
+    def __init__(self,
+                 db_host: _Optional[str] = ...,
+                 db_port: _Optional[str] = ...,
+                 db_username: _Optional[str] = ...,
+                 db_password: _Optional[str] = ...,
+                 db_name: _Optional[str] = ...,
+                 with_enc: bool = ...) -> None: ...
 
 
 class BackupReply(_message.Message):
