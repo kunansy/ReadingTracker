@@ -4,7 +4,6 @@ from typing import ClassVar as _ClassVar, Optional as _Optional
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
-
 class BackupRequest(_message.Message):
     __slots__ = ["db_host", "db_port", "db_username", "db_password", "db_name", "with_enc"]
     DB_HOST_FIELD_NUMBER: _ClassVar[int]
@@ -19,7 +18,6 @@ class BackupRequest(_message.Message):
     db_password: str
     db_name: str
     with_enc: bool
-
     def __init__(self,
                  db_host: _Optional[str] = ...,
                  db_port: _Optional[str] = ...,
@@ -27,7 +25,6 @@ class BackupRequest(_message.Message):
                  db_password: _Optional[str] = ...,
                  db_name: _Optional[str] = ...,
                  with_enc: bool = ...) -> None: ...
-
 
 class BackupReply(_message.Message):
     __slots__ = ["file_id"]
