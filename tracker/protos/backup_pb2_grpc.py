@@ -2,7 +2,7 @@
 """Client and server classes corresponding to protobuf-defined services."""
 import grpc
 
-import backup_pb2 as backup__pb2
+from tracker.protos import backup_pb2 as backup__pb2
 
 
 class GoogleDriveStub(object):
