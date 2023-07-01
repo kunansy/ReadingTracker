@@ -11,7 +11,7 @@ from grpc.aio import insecure_channel as grpc_chan
 from tracker.common import database
 from tracker.common.logger import logger
 from tracker.google_drive import db, drive_api
-from tracker.protos import google_drive_pb2, google_drive_pb2_grpc
+from tracker.protos import backup_pb2, backup_pb2_grpc
 
 
 def _read_local_dump(filepath: Path) -> dict[str, Any]:
@@ -55,8 +55,8 @@ async def backup() -> str | None:
     start = time.perf_counter()
 
     async with grpc_chan(cfg.BACKUP_TARGET) as channel:
-        stub = google_drive_pb2_grpc.GoogleDriveStub(channel)
-        response = await stub.Backup(google_drive_pb2.BackupRequest(
+        stub = backup_pb2_grpc.GoogleDriveStub(channel)
+        response = await stub.Backup(backup_pb2.BackupRequest(
             db_host=cfg.DB_HOST, db_port=str(cfg.DB_PORT), db_username=cfg.DB_USERNAME,
             db_password=cfg.DB_PASSWORD, db_name=cfg.DB_NAME, with_enc=False
         ))
