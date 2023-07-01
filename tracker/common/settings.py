@@ -61,6 +61,11 @@ with env.prefixed('MANTICORE_MYSQL_'):
     MANTICORE_MYSQL_PORT = env.int('PORT', 9306)
     MANTICORE_MYSQL_DB_NAME = env('DB_NAME', 'Manticore')
 
+with env.prefixed("BACKUP_"):
+    BACKUP_HOST = env('HOST')
+    BACKUP_PORT = env.int('PORT')
+    BACKUP_TARGET = f"{BACKUP_HOST}:{BACKUP_PORT}"
+
 path = os.environ.get('PATH')
 os.environ.clear()
 

@@ -1,5 +1,4 @@
 import asyncio
-import os
 from typing import Any
 from uuid import UUID
 
@@ -85,21 +84,15 @@ async def graphic(request: Request,
 
 @router.get('/backup')
 async def backup(request: Request):
-    status, stat = 'ok', None
-    try:
-        # TODO: later run backupper as a service
-        status_code = os.WEXITSTATUS(os.system("./backup"))
-        assert status_code == 0, "Backup error"
-        stat = await get_tables_analytics()
-    except Exception as e:
-        logger.error("Backup error: %s", repr(e))
-        status = 'backup-failed'
+    async with asyncio.TaskGroup() as tg:
+        tg.create_task(drive_api.backup())
+        get_stat_task = tg.create_task(get_tables_analytics())
 
     context: dict[str, Any] = {
         'request': request,
-        'status': status
+        'status': 'ok'
     }
-    if stat:
+    if stat := get_stat_task.result():
         context['materials_count'] = stat['materials']
         context['logs_count'] = stat['reading_log']
         context['statuses_count'] = stat['statuses']
