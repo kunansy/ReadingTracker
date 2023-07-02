@@ -151,4 +151,7 @@ async def get_span_report(span: schemas.GetSpanReportRequest):
         "notes_lost_count": span_analysis.notes.lost_pages,
         "notes_zero_days": span_analysis.notes.zero_count,
         "notes_would_be_total": span_analysis.notes.would_be_total,
+
+        "repeats_total": span_analysis.repeat_analytics.repeats_count,
+        "repeat_unique_materials_count": span_analysis.repeat_analytics.unique_materials_count,
     }

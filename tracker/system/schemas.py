@@ -65,3 +65,6 @@ class GetSpanReportResponse(CustomBaseModel):
     notes_lost_count: int
     notes_zero_days: int
     notes_would_be_total: int
+
+    repeats_total: int
+    repeat_unique_materials_count: int
