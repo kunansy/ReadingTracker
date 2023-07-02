@@ -165,11 +165,18 @@ class _MaterialAnalytics:
 
 
 @dataclass
+class _RepeatAnalytics:
+    repeats_count: int
+    unique_materials_count: int
+
+
+@dataclass
 class SpanAnalysis:
     reading: SpanStatistics
     notes: SpanStatistics
     materials_analytics: _MaterialAnalytics
     reading_analytics: _MaterialAnalytics
+    repeat_analytics: _RepeatAnalytics
 
 
 def _get_span(size: int) -> TimeSpan:
@@ -270,6 +277,7 @@ async def get_span_analytics(__span: schemas.GetSpanReportRequest) -> SpanAnalys
         notes_stats_task = tg.create_task(_calculate_span_notes_statistics(span))
         material_analytics_task = tg.create_task(_materials_analytics(span))
         reading_analytics_task = tg.create_task(_reading_analytics(span))
+        repeat_analytics_task = tg.create_task(_get_repeats_count(span))
 
     reading_stats = _get_span_statistics(
         stat=reading_stats_task.result(), span=span, span_size=size)
@@ -281,6 +289,7 @@ async def get_span_analytics(__span: schemas.GetSpanReportRequest) -> SpanAnalys
         notes=notes_stats,
         materials_analytics=material_analytics_task.result(),
         reading_analytics=reading_analytics_task.result(),
+        repeat_analytics=repeat_analytics_task.result(),
     )
 
 
@@ -322,6 +331,24 @@ async def _reading_analytics(span: TimeSpan) -> _MaterialAnalytics:
         stats=stats,
         total=sum(stats.values())
     )
+
+
+async def _get_repeats_count(span: TimeSpan) -> _RepeatAnalytics:
+    stmt = sa.select(sa.func.count(1).label('cnt'),
+                     sa.func.count(models.Repeats.c.material_id.distinct()).label('ucnt'))\
+        .select_from(models.Repeats)\
+        .where(sa.func.date(models.Repeats.c.repeated_at) >= span.start) \
+        .where(sa.func.date(models.Repeats.c.repeated_at) <= span.stop)
+
+    async with database.session() as ses:
+        res = (await ses.execute(stmt)).mappings().one_or_none()
+
+    if res:
+        return _RepeatAnalytics(
+            repeats_count=res.cnt,
+            unique_materials_count=res.ucnt
+        )
+    return _RepeatAnalytics(0, 0)
 
 
 def _get_colors(completion_dates: dict[Any, datetime.datetime] | None,
