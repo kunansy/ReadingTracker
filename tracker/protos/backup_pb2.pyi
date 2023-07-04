@@ -14,14 +14,14 @@ class BackupRequest(_message.Message):
     DB_NAME_FIELD_NUMBER: _ClassVar[int]
     DELETE_AFTER_FIELD_NUMBER: _ClassVar[int]
     db_host: str
-    db_port: str
+    db_port: int
     db_username: str
     db_password: str
     db_name: str
     delete_after: bool
     def __init__(self,
                  db_host: _Optional[str] = ...,
-                 db_port: _Optional[str] = ...,
+                 db_port: _Optional[int] = ...,
                  db_username: _Optional[str] = ...,
                  db_password: _Optional[str] = ...,
                  db_name: _Optional[str] = ...,

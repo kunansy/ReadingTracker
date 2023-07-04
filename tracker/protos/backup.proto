@@ -10,7 +10,7 @@ service GoogleDrive {
 
 message BackupRequest {
     string db_host = 1;
-    string db_port = 2;
+    uint32 db_port = 2;
     string db_username = 3;
     string db_password = 4;
     string db_name = 5;
