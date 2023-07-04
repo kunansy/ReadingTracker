@@ -58,7 +58,7 @@ async def backup() -> str | None:
         stub = backup_pb2_grpc.GoogleDriveStub(channel)
         response = await stub.Backup(backup_pb2.BackupRequest(
             db_host=cfg.DB_HOST, db_port=str(cfg.DB_PORT), db_username=cfg.DB_USERNAME,
-            db_password=cfg.DB_PASSWORD, db_name=cfg.DB_NAME, with_enc=False
+            db_password=cfg.DB_PASSWORD, db_name=cfg.DB_NAME, delete_after=False
         ))
 
     file_id = getattr(response, "file_id", None)
