@@ -13,17 +13,17 @@ from google.protobuf.internal import builder as _builder
 _sym_db = _symbol_database.Default()
 
 DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(
-    b'\n\x0c\x62\x61\x63kup.proto\x12\x06\x62\x61\x63kup\"~\n\rBackupRequest\x12\x0f\n\x07\x64\x62_host\x18\x01 \x01(\t\x12\x0f\n\x07\x64\x62_port\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x62_username\x18\x03 \x01(\t\x12\x13\n\x0b\x64\x62_password\x18\x04 \x01(\t\x12\x0f\n\x07\x64\x62_name\x18\x05 \x01(\t\x12\x10\n\x08with_enc\x18\x06 \x01(\x08\"\x1e\n\x0b\x42\x61\x63kupReply\x12\x0f\n\x07\x66ile_id\x18\x01 \x01(\t2C\n\x0bGoogleDrive\x12\x34\n\x06\x42\x61\x63kup\x12\x15.backup.BackupRequest\x1a\x13.backup.BackupReplyb\x06proto3')  # noqa
+    b'\n\x0c\x62\x61\x63kup.proto\x12\x06\x62\x61\x63kup\"\x82\x01\n\rBackupRequest\x12\x0f\n\x07\x64\x62_host\x18\x01 \x01(\t\x12\x0f\n\x07\x64\x62_port\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x62_username\x18\x03 \x01(\t\x12\x13\n\x0b\x64\x62_password\x18\x04 \x01(\t\x12\x0f\n\x07\x64\x62_name\x18\x05 \x01(\t\x12\x14\n\x0c\x64\x65lete_after\x18\x06 \x01(\x08\"\x1e\n\x0b\x42\x61\x63kupReply\x12\x0f\n\x07\x66ile_id\x18\x01 \x01(\t2C\n\x0bGoogleDrive\x12\x34\n\x06\x42\x61\x63kup\x12\x15.backup.BackupRequest\x1a\x13.backup.BackupReplyb\x06proto3')  # noqa
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'backup_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
     DESCRIPTOR._options = None
-    _globals['_BACKUPREQUEST']._serialized_start = 24
-    _globals['_BACKUPREQUEST']._serialized_end = 150
-    _globals['_BACKUPREPLY']._serialized_start = 152
-    _globals['_BACKUPREPLY']._serialized_end = 182
-    _globals['_GOOGLEDRIVE']._serialized_start = 184
-    _globals['_GOOGLEDRIVE']._serialized_end = 251
+    _globals['_BACKUPREQUEST']._serialized_start = 25
+    _globals['_BACKUPREQUEST']._serialized_end = 155
+    _globals['_BACKUPREPLY']._serialized_start = 157
+    _globals['_BACKUPREPLY']._serialized_end = 187
+    _globals['_GOOGLEDRIVE']._serialized_start = 189
+    _globals['_GOOGLEDRIVE']._serialized_end = 256
 # @@protoc_insertion_point(module_scope)
