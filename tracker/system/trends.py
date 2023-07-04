@@ -339,6 +339,7 @@ async def _get_repeats_count(span: TimeSpan) -> _RepeatAnalytics:
         .select_from(models.Repeats)\
         .where(sa.func.date(models.Repeats.c.repeated_at) >= span.start) \
         .where(sa.func.date(models.Repeats.c.repeated_at) <= span.stop)
+    # TODO: convert datetime to date where its required
 
     async with database.session() as ses:
         res = (await ses.execute(stmt)).mappings().one_or_none()
