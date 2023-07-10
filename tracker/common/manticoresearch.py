@@ -125,7 +125,7 @@ async def insert_all(notes: list[Note]) -> None:
     async with _cursor() as cur:
         await cur.executemany(
             INSERT_QUERY,
-            (list(note.dict().values()) for note in notes)
+            (list(note.model_dump().values()) for note in notes)
         )
 
     logger.debug("Notes inserted")
@@ -155,7 +155,7 @@ async def insert(note_id: UUID) -> None:
     async with _cursor() as cur:
         await cur.execute(
             INSERT_QUERY,
-            list(note.dict().values())
+            list(note.model_dump().values())
         )
 
     logger.debug("Note inserted")

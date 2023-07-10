@@ -116,7 +116,7 @@ async def get_note(request: Request, note_id: UUID):
     if not (material := get_material_task.result()):
         raise HTTPException(status_code=404, detail=f"Material id={note.material_id} not found")
 
-    context = note.dict() | {
+    context = note.model_dump() | {
         'request': request,
         'note_links': get_note_links_task.result(),
         'added_at': note.added_at.strftime(settings.DATETIME_FORMAT),
@@ -136,7 +136,7 @@ async def get_note_json(note_id: UUID):
     if not (note := await db.get_note(note_id=note_id)):
         raise HTTPException(status_code=404, detail=f"Note id={note_id} not found")
 
-    return note.dict() | {
+    return note.model_dump() | {
         'added_at': note.added_at.strftime(settings.DATETIME_FORMAT),
     }
 
@@ -168,7 +168,7 @@ async def add_note(note: schemas.Note = Depends()):
     redirect_url = router.url_path_for(add_note_view.__name__)
     response = RedirectResponse(redirect_url, status_code=302)
 
-    for key, value in note.dict(exclude={'content', 'tags', 'link_id'}).items():
+    for key, value in note.model_dump(exclude={'content', 'tags', 'link_id'}).items():
         response.set_cookie(key, value, expires=3600)
 
     note_id = await db.add_note(
