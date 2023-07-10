@@ -78,7 +78,7 @@ async def validation_exception_handler(request: Request,
         "error": {
             "type": exc.__class__.__name__,
             "args": exc.args,
-            "json": exc.json(indent=4)
+            "json": repr(exc)
         }
     }
 
