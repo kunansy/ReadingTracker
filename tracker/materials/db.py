@@ -291,7 +291,7 @@ def _get_material_statistics(*,
     if status.completed_at is None:
         remaining_pages = material.pages - total
         remaining_days = round(remaining_pages / mean)
-        would_be_completed = database.utcnow() + datetime.timedelta(days=remaining_days)
+        would_be_completed = database.utcnow().date() + datetime.timedelta(days=remaining_days)
     else:
         would_be_completed = remaining_days = remaining_pages = None  # type: ignore
 
