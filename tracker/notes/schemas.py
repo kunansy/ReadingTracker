@@ -3,7 +3,7 @@ from typing import TypedDict
 from uuid import UUID
 
 from fastapi import Form
-from pydantic import conint, constr, validator
+from pydantic import conint, constr, field_validator
 
 from tracker.common.schemas import CustomBaseModel
 
@@ -162,14 +162,14 @@ class Note(CustomBaseModel):
             **kwargs
         )
 
-    @validator('content')
+    @field_validator('content')
     def validate_double_brackets_count(cls,
                                        content: str) -> str:
         assert content.count('[[') == content.count(']]')
 
         return content
 
-    @validator('content')
+    @field_validator('content')
     def format_content(cls,
                        content: str) -> str:
         for formatter in NOTES_FORMATTERS:
@@ -234,11 +234,11 @@ class TranscriptTextResponse(CustomBaseModel):
     transcript: str
     confidence: float
 
-    @validator('transcript')
+    @field_validator('transcript')
     def capitalize_transcript(cls, transcript: str) -> str:
         return transcript.capitalize()
 
-    @validator('confidence')
+    @field_validator('confidence')
     def convert_to_percent(cls, value: float) -> float:
         return round(value * 100, 2)
 

@@ -2,7 +2,7 @@ import datetime
 from typing import Any
 
 from fastapi import Form
-from pydantic import validator
+from pydantic import field_validator
 
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums
@@ -24,7 +24,7 @@ class GetSpanReportRequest(CustomBaseModel):
             stop=stop
         )
 
-    @validator('stop', pre=False, always=True)
+    @field_validator('stop', check_fields=True)
     def validate_start_less_than_stop(cls,
                                       stop: datetime.date,
                                       values: dict[str, Any]) -> datetime.date:

@@ -6,7 +6,7 @@ from uuid import UUID
 import aiomysql
 import sqlalchemy.sql as sa
 from aiomysql.cursors import Cursor as MysqlCursor
-from pydantic import validator
+from pydantic import field_validator
 
 from tracker.common import database, settings
 from tracker.common.logger import logger
@@ -23,7 +23,7 @@ class Note(CustomBaseModel):
     content: str
     added_at: datetime.datetime
 
-    @validator('content')
+    @field_validator('content')
     def remove_tags_from_content(cls, content: str) -> str:
         """ Remove tags from note content to don't search on it """
         if (index := content.find('#')) == -1:
