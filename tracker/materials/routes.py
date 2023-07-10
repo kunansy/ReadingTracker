@@ -61,7 +61,7 @@ async def insert_material(material: schemas.Material = Depends()):
         pages=material.pages,
         material_type=material.material_type,
         tags=material.tags,
-        link=material.link
+        link=material.get_link()
     )
 
     redirect_url = router.url_path_for(insert_material_view.__name__)
@@ -112,7 +112,7 @@ async def update_material(material: schemas.UpdateMaterial = Depends()):
             pages=material.pages,
             material_type=material.material_type,
             tags=material.tags,
-            link=material.link
+            link=material.get_link()
         )
     except Exception as e:
         logger.error("Error updating material_id='%s': %s",

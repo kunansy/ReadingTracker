@@ -33,6 +33,11 @@ class Material(CustomBaseModel):
             **kwargs
         )
 
+    def get_link(self) -> str | None:
+        if link := self.link:
+            return str(link)
+        return None
+
 
 class UpdateMaterial(Material):
     material_id: UUID
