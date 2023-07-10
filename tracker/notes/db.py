@@ -480,7 +480,7 @@ def _highlight_other_material_notes(*,
     notes_from_other_material = {
         note_id: {'color': color}
         for note_id in graph.nodes
-        if notes[note_id].material_id != material_id
+        if notes[UUID(note_id)].material_id != material_id
     }
 
     nx.set_node_attributes(graph, notes_from_other_material)
