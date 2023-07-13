@@ -620,7 +620,7 @@ async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
                 priority_days=_get_priority_days(row.priority_days),
                 priority_months=_calculate_priority_months(row.priority_days)
             )
-            for row in await ses.execute(stmt)
+            for row in (await ses.execute(stmt)).all()
         }
 
     logger.debug("%s materials to repeat got", len(analytics))
