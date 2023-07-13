@@ -32,7 +32,7 @@ class Status(CustomBaseModel):
     status_id: UUID
     material_id: UUID
     started_at: datetime.datetime
-    completed_at: datetime.datetime | None
+    completed_at: datetime.datetime | None = None
 
 
 class MaterialStatus(CustomBaseModel):
