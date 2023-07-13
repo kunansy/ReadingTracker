@@ -27,7 +27,8 @@ class Note(CustomBaseModel):
     tags: set[str]
     is_deleted: bool
     note_number: int
-    links_count: int | None
+    # only for listing/one-page view
+    links_count: int | None = None
 
     @property
     def content_md(self) -> str:
