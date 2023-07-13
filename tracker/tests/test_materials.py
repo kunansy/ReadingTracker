@@ -526,8 +526,13 @@ async def test_estimate():
     "field,expected", (
         (None, 0),
         (datetime.timedelta(days=29), 0),
-        (datetime.timedelta(days=59), 1),
-        (datetime.timedelta(days=92), 2),
+        (datetime.timedelta(days=30), 1),
+        # 44 / 30 < 1.5 rounds to 1
+        (datetime.timedelta(days=44), 1),
+        # but when 45 / 30 = 1.5 rounds to 2
+        (datetime.timedelta(days=45), 2),
+        (datetime.timedelta(days=59), 2),
+        (datetime.timedelta(days=92), 3),
         (datetime.timedelta(days=2), 0),
         (datetime.timedelta(days=0), 0),
     )

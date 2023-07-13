@@ -588,7 +588,7 @@ async def estimate() -> list[MaterialEstimate]:
 def _calculate_priority_months(field: datetime.timedelta | None) -> int:
     if not field:
         return 0
-    if (days := field.days - 29) <= 0:
+    if (days := field.days) < 30:
         return 0
     # it's expected to repeat materials every month
     return round(days / 30)
