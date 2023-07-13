@@ -287,7 +287,7 @@ async def test_get_material_statistics_unread():
         status=db.Status(
             status_id=uuid.uuid4(),
             material_id=material.material_id,
-            started_at=datetime.datetime.utcnow()
+            started_at=datetime.datetime.utcnow().date()
         )
     )
     mean_total = Decimal(50)
