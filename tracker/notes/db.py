@@ -203,7 +203,7 @@ async def get_all_notes_count() -> dict[UUID, int]:
 
 
 async def add_note(*,
-                   material_id: UUID,
+                   material_id: UUID | None,
                    link_id: UUID | None,
                    content: str,
                    chapter: int,
@@ -212,7 +212,7 @@ async def add_note(*,
     logger.debug("Adding note for material_id='%s'", material_id)
 
     values = {
-        'material_id': str(material_id),
+        'material_id': str(material_id) if material_id else None,
         'content': content,
         'chapter': chapter,
         'page': page,

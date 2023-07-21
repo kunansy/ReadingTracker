@@ -143,13 +143,13 @@ def demark_note(string: str) -> str:
 
 
 class Note(CustomBaseModel):
-    material_id: UUID
+    material_id: UUID | None
     content: constr(strip_whitespace=True)
     chapter: conint(ge=0) = 0
     page: conint(ge=0) = 0
 
     def __init__(self,
-                 material_id: UUID = Form(...),
+                 material_id: UUID = Form(None),
                  content: str = Form(...),
                  chapter: int = Form(0),
                  page: int = Form(0),
