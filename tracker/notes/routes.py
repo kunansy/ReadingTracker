@@ -180,7 +180,8 @@ async def add_note(note: schemas.Note = Depends()):
         tags=note.tags,
     )
     response.set_cookie('note_id', note_id, expires=5)
-    if material_type := await db.get_material_type(material_id=note.material_id):
+    if (material_id := note.material_id) and \
+            (material_type := await db.get_material_type(material_id=material_id)):
         response.set_cookie('material_type', material_type, expires=5)
 
     await manticoresearch.insert(note_id=UUID(note_id))
