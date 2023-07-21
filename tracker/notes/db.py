@@ -7,9 +7,10 @@ from uuid import UUID
 import networkx as nx
 import sqlalchemy.sql as sa
 from fastapi.encoders import jsonable_encoder
+from pydantic import field_validator
 from pyvis.network import Network
 
-from tracker.common import database, settings
+from tracker.common import database
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
@@ -29,6 +30,14 @@ class Note(CustomBaseModel):
     note_number: int
     # only for listing/one-page view
     links_count: int | None = None
+
+    @field_validator('material_id', mode='before')
+    def replace_null_material_id(cls, material_id: UUID | None) -> UUID:
+        # Some notes don't have material, so to work
+        # with them set material_id to zero uuid
+        if material_id:
+            return material_id
+        return UUID(int=0)
 
     @property
     def content_md(self) -> str:
@@ -203,7 +212,7 @@ async def get_all_notes_count() -> dict[UUID, int]:
 
 
 async def add_note(*,
-                   material_id: UUID,
+                   material_id: UUID | None,
                    link_id: UUID | None,
                    content: str,
                    chapter: int,
@@ -212,7 +221,7 @@ async def add_note(*,
     logger.debug("Adding note for material_id='%s'", material_id)
 
     values = {
-        'material_id': str(material_id),
+        'material_id': str(material_id) if material_id else None,
         'content': content,
         'chapter': chapter,
         'page': page,
@@ -500,12 +509,7 @@ def create_graphic(graph: nx.DiGraph, **kwargs) -> str:
     net.options = {"interaction": {"hover": True}}
     net.from_nx(graph)
 
-    tmp_file = settings.DATA_DIR / "tmp.html"
-
-    net.show(str(tmp_file))
-    resp = tmp_file.read_text()
-
-    tmp_file.unlink()
+    resp = net.generate_html()
 
     logger.debug("Graphic created")
     return resp
