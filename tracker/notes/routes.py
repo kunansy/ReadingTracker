@@ -311,7 +311,7 @@ async def transcript_speech(data: bytes = Body()):
 
 @router.get('/graph', response_class=HTMLResponse)
 async def get_graph(request: Request,
-                    material_id: UUID | None = None):
+                    material_id: UUID | str | None = None):
     async with asyncio.TaskGroup() as tg:
         get_notes_task = tg.create_task(db.get_notes())
         get_titles_task = tg.create_task(db.get_material_titles())
