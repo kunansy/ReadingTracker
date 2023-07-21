@@ -7,6 +7,7 @@ from uuid import UUID
 import networkx as nx
 import sqlalchemy.sql as sa
 from fastapi.encoders import jsonable_encoder
+from pydantic import field_validator
 from pyvis.network import Network
 
 from tracker.common import database
@@ -29,6 +30,14 @@ class Note(CustomBaseModel):
     note_number: int
     # only for listing/one-page view
     links_count: int | None = None
+
+    @field_validator('material_id', mode='before')
+    def replace_null_material_id(cls, material_id: UUID | None) -> UUID:
+        # Some notes don't have material, so to work
+        # with them set material_id to zero uuid
+        if material_id:
+            return material_id
+        return UUID(int=0)
 
     @property
     def content_md(self) -> str:
