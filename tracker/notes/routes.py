@@ -330,8 +330,9 @@ async def get_graph(request: Request,
             note.note_id
             for note in get_material_notes_task.result()
         }
+        # material_id might be an empty string only, if it's str
         graph = db.create_material_graph(
-            material_id=material_id, material_notes=material_notes, notes=notes_dict)
+            material_id=material_id, material_notes=material_notes, notes=notes_dict) # type: ignore
     else:
         graph = db.link_all_notes(notes)
 
