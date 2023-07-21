@@ -9,7 +9,7 @@ import sqlalchemy.sql as sa
 from fastapi.encoders import jsonable_encoder
 from pyvis.network import Network
 
-from tracker.common import database, settings
+from tracker.common import database
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
@@ -500,12 +500,7 @@ def create_graphic(graph: nx.DiGraph, **kwargs) -> str:
     net.options = {"interaction": {"hover": True}}
     net.from_nx(graph)
 
-    tmp_file = settings.DATA_DIR / "tmp.html"
-
-    net.show(str(tmp_file))
-    resp = tmp_file.read_text()
-
-    tmp_file.unlink()
+    resp = net.generate_html()
 
     logger.debug("Graphic created")
     return resp
