@@ -220,6 +220,7 @@ async def _calculate_span_notes_statistics(span: TimeSpan) -> dict[datetime.date
     stmt = sa.select(sa.func.date(models.Notes.c.added_at).label('date'),
                      sa.func.count(models.Notes.c.note_id).label('cnt')) \
         .group_by(sa.func.date(models.Notes.c.added_at)) \
+        .where(~models.Notes.c.is_deleted) \
         .where(sa.func.date(models.Notes.c.added_at) >= span.start) \
         .where(sa.func.date(models.Notes.c.added_at) <= span.stop)
 
