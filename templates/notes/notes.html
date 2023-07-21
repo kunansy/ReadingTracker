@@ -44,7 +44,7 @@
             {% endif %}
             <div class="material-link">
             <details open class="chapters">
-                <summary> <a class="title-link" href="#material-{{ material_id }}"> «{{ titles[material_id] }}» </a> </summary>
+                <summary> <a class="title-link" href="#material-{{ material_id }}"> «{{ titles.get(material_id, "Without material") }}» </a> </summary>
                 <div class="chapters">
                     {% for chapter in chapters | sort %}
                         <a class="chapter-link" href="#material-{{ material_id }}-chapter-{{ chapter }}"> {{ chapter_name }} {{ chapter }} </a>
