@@ -113,19 +113,19 @@ async def get_note(request: Request, note_id: UUID):
         get_material_task = tg.create_task(materials_db.get_material(material_id=note.material_id))
         get_note_links_task = tg.create_task(get_note_links(note))
 
-    if not (material := get_material_task.result()):
-        raise HTTPException(status_code=404, detail=f"Material id={note.material_id} not found")
-
     context = note.model_dump() | {
         'request': request,
         'note_links': get_note_links_task.result(),
         'added_at': note.added_at.strftime(settings.DATETIME_FORMAT),
-        'material_title': material.title,
-        'material_authors': material.authors,
-        'material_type': material.material_type,
-        'material_pages': material.pages,
-        'material_is_outlined': material.is_outlined,
     }
+    if material := get_material_task.result():
+        context |= {
+            'material_title': material.title,
+            'material_authors': material.authors,
+            'material_type': material.material_type,
+            'material_pages': material.pages,
+            'material_is_outlined': material.is_outlined,
+        }
 
     return templates.TemplateResponse("notes/note.html", context)
 
