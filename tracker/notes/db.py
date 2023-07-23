@@ -54,10 +54,9 @@ class Note(CustomBaseModel):
                 f"Material ID: {self.material_id}\n\n"
                 f"{self}")
 
-    @property  # type: ignore
-    def material_id(self) -> str | None:
+    def get_material_id(self) -> str:
         if self.material_id == UUID(int=0):
-            return None
+            return ''
         return str(self.material_id)
 
     def highlight(self, from_: str, to: str) -> None:
