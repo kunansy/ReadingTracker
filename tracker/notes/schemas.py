@@ -208,8 +208,7 @@ class UpdateNote(Note):
             page=page,
         )
 
-    @property
-    def material_id(self) -> str | None:
+    def get_material_id(self) -> str | None:
         if self.material_id == UUID(int=0):
             return None
         return str(self.material_id)
