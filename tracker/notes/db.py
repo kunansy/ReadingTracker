@@ -82,6 +82,8 @@ def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[int]]:
 async def get_material_type(*,
                             material_id: UUID | str) -> str | None:
     logger.debug("Getting material_id=%s type", material_id)
+    if not material_id:
+        return None
 
     stmt = sa.select(models.Materials.c.material_type)\
         .where(models.Materials.c.material_id == str(material_id))
