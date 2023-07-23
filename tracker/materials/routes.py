@@ -189,13 +189,15 @@ async def get_completed_materials(request: Request):
 
 
 @router.get('/repeat-view', response_class=HTMLResponse)
-async def get_repeating_queue(request: Request):
-    repeating_queue = await db.get_repeating_queue()
+async def get_repeating_queue(request: Request, only_outlined: str = 'off'):
+    is_outlined = only_outlined == 'on'
+    repeating_queue = await db.get_repeating_queue(is_outlined)
 
     context = {
         'request': request,
         'repeating_queue': repeating_queue,
-        'DATE_FORMAT': settings.DATE_FORMAT
+        'DATE_FORMAT': settings.DATE_FORMAT,
+        'is_outlined': is_outlined
     }
     return templates.TemplateResponse("materials/repeat.html", context)
 
