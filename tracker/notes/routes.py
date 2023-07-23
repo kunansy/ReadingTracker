@@ -231,7 +231,7 @@ async def update_note(note: schemas.UpdateNote = Depends()):
     try:
         await db.update_note(
             note_id=note.note_id,
-            material_id=str(note.material_id),
+            material_id=note.material_id,
             link_id=note.link_id,
             content=note.content,
             chapter=note.chapter,

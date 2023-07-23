@@ -248,7 +248,7 @@ async def add_note(*,
 
 async def update_note(*,
                       note_id: UUID,
-                      material_id: str,
+                      material_id: str | None,
                       link_id: UUID | None,
                       content: str,
                       page: int,
