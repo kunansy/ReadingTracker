@@ -627,7 +627,7 @@ async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
     return analytics
 
 
-async def get_repeating_queue() -> list[RepeatingQueue]:
+async def get_repeating_queue(is_outlined: bool) -> list[RepeatingQueue]:
     logger.debug("Getting repeating queue")
 
     async with asyncio.TaskGroup() as tg:
@@ -637,6 +637,14 @@ async def get_repeating_queue() -> list[RepeatingQueue]:
 
     notes_count = notes_count_task.result()
     repeat_analytics = repeat_analytics_task.result()
+
+    completed_materials = (material for material in completed_materials_task.result())
+    if is_outlined:
+        completed_materials = (
+            material
+            for material in completed_materials_task.result()
+            if material.material.is_outlined
+        )
 
     queue = [
         RepeatingQueue(
@@ -652,7 +660,7 @@ async def get_repeating_queue() -> list[RepeatingQueue]:
             priority_days=repeat_analytics[material_status.material_id].priority_days,
             priority_months=repeat_analytics[material_status.material_id].priority_months
         )
-        for material_status in completed_materials_task.result()
+        for material_status in completed_materials
         if repeat_analytics[material_status.material_id].priority_months > 0
     ]
 
