@@ -195,7 +195,7 @@ class UpdateNote(Note):
     note_id: UUID
 
     def __init__(self,
-                 material_id: UUID = Form(...),
+                 material_id: UUID | None = Form(None),
                  note_id: UUID = Form(...),
                  content: str = Form(...),
                  chapter: int = Form(0),
