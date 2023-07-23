@@ -11,6 +11,15 @@
 {%- endblock header -%}
 
 {% block main %}
+<div class="form">
+    <form action="/materials/repeat-view" method="GET">
+    <div class="outlined-checkbox">
+        <input id="only_outlined" class="input" type="checkbox" name="only_outlined" {% if is_outlined %} checked {% endif %} placeholder="Choose a material">
+        <label for="only_outlined"> Only outlined </label>
+    </div>
+        <button type="submit" class="submit-button"> Search </button>
+    </form>
+</div>
 {% if repeating_queue %}
     {% for repeat in repeating_queue | sort(attribute='priority_months', reverse=True) %}
         {% set is_outlined = 'No' %}

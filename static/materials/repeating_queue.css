@@ -14,3 +14,11 @@ hr {
     size: 10px;
 }
 
+div.outlined-checkbox {
+    display: flex;
+    align-items: center;
+}
+
+input#only_outlined {
+    max-width: 2vw;
+}
