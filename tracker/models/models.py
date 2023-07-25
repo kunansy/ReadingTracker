@@ -100,6 +100,7 @@ Notes = Table(
     Column('note_number', Serial),
     Column('material_id', ForeignKey('materials.material_id'), index=True, nullable=True),
     Column('link_id', ForeignKey('notes.note_id'), nullable=True, comment='By Zettelkasten method'),
+    Column('title', Unicode(4096), nullable=True, unique=True),
     Column('content', Unicode(65_536)),
     Column('added_at', DateTime, default=_utc_now),
     Column('chapter', Integer),
