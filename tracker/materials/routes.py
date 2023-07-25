@@ -202,6 +202,11 @@ async def get_repeat_view(request: Request, only_outlined: Literal['on', 'off'] 
     return templates.TemplateResponse("materials/repeat.html", context)
 
 
+@router.get('/repeat-queue', response_model=list[db.RepeatingQueue])
+async def get_repeat_queue(only_outlined: bool = False):
+    return await db.get_repeating_queue(only_outlined)
+
+
 @router.get('/queue/start')
 async def get_queue_start():
     """ Get the first material index in the queue """
