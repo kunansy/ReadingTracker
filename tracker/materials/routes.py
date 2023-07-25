@@ -160,7 +160,7 @@ async def outline_material(material_id: UUID):
 async def repeat_material(material_id: UUID):
     await db.repeat_material(material_id=material_id)
 
-    redirect_url = router.url_path_for(get_repeating_queue.__name__)
+    redirect_url = router.url_path_for(get_repeat_view.__name__)
     return RedirectResponse(redirect_url, status_code=302)
 
 
