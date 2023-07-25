@@ -174,6 +174,7 @@ async def add_note(note: schemas.Note = Depends()):
     note_id = await db.add_note(
         material_id=note.material_id,
         link_id=note.link_id,
+        title=note.title,
         content=note.content,
         chapter=note.chapter,
         page=note.page,
