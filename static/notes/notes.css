@@ -73,6 +73,10 @@ p.note-content {
     font-size: 2.25vh;
     font-weight: 300;
 }
+.large-text {
+    font-size: 3.25vh;
+    font-weight: 300;
+}
 div.note p {
     word-wrap: break-word;
 }
