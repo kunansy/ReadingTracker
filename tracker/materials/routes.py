@@ -189,7 +189,7 @@ async def get_completed_materials(request: Request):
 
 
 @router.get('/repeat-view', response_class=HTMLResponse)
-async def get_repeating_queue(request: Request, only_outlined: Literal['on', 'off'] = 'off'):
+async def get_repeat_view(request: Request, only_outlined: Literal['on', 'off'] = 'off'):
     is_outlined = only_outlined == 'on'
     repeating_queue = await db.get_repeating_queue(is_outlined)
 
