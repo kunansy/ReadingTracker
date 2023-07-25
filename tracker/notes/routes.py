@@ -168,7 +168,7 @@ async def add_note(note: schemas.Note = Depends()):
     redirect_url = router.url_path_for(add_note_view.__name__)
     response = RedirectResponse(redirect_url, status_code=302)
 
-    for key, value in note.model_dump(exclude={'content', 'tags', 'link_id'}, exclude_none=True).items():
+    for key, value in note.model_dump(exclude={'content', 'tags', 'link_id', 'title'}, exclude_none=True).items():
         response.set_cookie(key, value, expires=3600)
 
     note_id = await db.add_note(
