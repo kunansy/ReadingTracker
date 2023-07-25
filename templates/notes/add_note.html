@@ -26,6 +26,7 @@
                     <option value="{{ material_id }}"> «{{ title }}»
                 {% endfor %}
             </datalist>
+            <input class="input" placeholder="Enter a title" name="title" value="{{ title }}" title="Title of the note">
             {% set page_number = 'page number' %}
             {% set chapter_number = 'chapter number' %}
             {% if material_type == 'lecture' %}
