@@ -200,12 +200,14 @@ class UpdateNote(Note):
     def __init__(self,
                  material_id: UUID | None = Form(None),
                  note_id: UUID = Form(...),
+                 title: str | None = Form(None),
                  content: str = Form(...),
                  chapter: int = Form(0),
                  page: int = Form(0)):
         super().__init__(
             material_id=material_id,
             note_id=note_id,
+            title=title,
             content=content,
             chapter=chapter,
             page=page,
