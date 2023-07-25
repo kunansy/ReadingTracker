@@ -28,6 +28,7 @@
             {% endfor %}
         </datalist>
         <input class="input input-datalist" name="note_id" value="{{ note_id }}" title="ID of the note" placeholder="ID of the note">
+        <input class="input" placeholder="Enter a title" name="title" value="{{ title }}" title="Title of the note">
         <textarea class="input altch" id="input-content" placeholder="Enter a content" name="content" title="Text of the note">{{ content }}</textarea>
         {% set page_number = 'page number' %}
         {% set chapter_number = 'chapter number' %}

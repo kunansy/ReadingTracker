@@ -21,6 +21,7 @@ class Note(CustomBaseModel):
     note_id: UUID
     link_id: UUID | None
     material_id: UUID
+    title: str | None
     content: str
     added_at: datetime.datetime
     chapter: int
@@ -221,6 +222,7 @@ async def get_all_notes_count() -> dict[UUID, int]:
 async def add_note(*,
                    material_id: UUID | None,
                    link_id: UUID | None,
+                   title: str | None,
                    content: str,
                    chapter: int,
                    page: int,
@@ -229,6 +231,7 @@ async def add_note(*,
 
     values = {
         'material_id': str(material_id) if material_id else None,
+        'title': title,
         'content': content,
         'chapter': chapter,
         'page': page,
@@ -251,6 +254,7 @@ async def update_note(*,
                       note_id: UUID,
                       material_id: str | None,
                       link_id: UUID | None,
+                      title: str | None,
                       content: str,
                       page: int,
                       chapter: int,
@@ -259,6 +263,7 @@ async def update_note(*,
 
     values = {
         'material_id': material_id,
+        'title': title,
         'content': content,
         'page': page,
         'chapter': chapter,

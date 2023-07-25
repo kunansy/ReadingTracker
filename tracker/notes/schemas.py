@@ -144,18 +144,21 @@ def demark_note(string: str) -> str:
 
 class Note(CustomBaseModel):
     material_id: UUID | None
+    title: str | None = None
     content: constr(strip_whitespace=True)
     chapter: conint(ge=0) = 0
     page: conint(ge=0) = 0
 
     def __init__(self,
                  material_id: UUID = Form(None),
+                 title: str | None = Form(None),
                  content: str = Form(...),
                  chapter: int = Form(0),
                  page: int = Form(0),
                  **kwargs):
         super().__init__(
             material_id=material_id,
+            title=title,
             content=content,
             chapter=chapter,
             page=page,
@@ -197,12 +200,14 @@ class UpdateNote(Note):
     def __init__(self,
                  material_id: UUID | None = Form(None),
                  note_id: UUID = Form(...),
+                 title: str | None = Form(None),
                  content: str = Form(...),
                  chapter: int = Form(0),
                  page: int = Form(0)):
         super().__init__(
             material_id=material_id,
             note_id=note_id,
+            title=title,
             content=content,
             chapter=chapter,
             page=page,
@@ -257,6 +262,7 @@ class GetNoteJsonResponse(CustomBaseModel):
     note_id: UUID
     link_id: UUID | None
     material_id: UUID
+    title: str | None
     content: str
     added_at: str
     chapter: int
