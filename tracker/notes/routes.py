@@ -235,6 +235,7 @@ async def update_note(note: schemas.UpdateNote = Depends()):
             note_id=note.note_id,
             material_id=note.get_material_id(),
             link_id=note.link_id,
+            title=note.title,
             content=note.content,
             chapter=note.chapter,
             page=note.page,
