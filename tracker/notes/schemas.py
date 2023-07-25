@@ -262,6 +262,7 @@ class GetNoteJsonResponse(CustomBaseModel):
     note_id: UUID
     link_id: UUID | None
     material_id: UUID
+    title: str | None
     content: str
     added_at: str
     chapter: int
