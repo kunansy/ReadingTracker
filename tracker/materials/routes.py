@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -189,7 +189,7 @@ async def get_completed_materials(request: Request):
 
 
 @router.get('/repeat-view', response_class=HTMLResponse)
-async def get_repeating_queue(request: Request, only_outlined: str = 'off'):
+async def get_repeating_queue(request: Request, only_outlined: Literal['on', 'off'] = 'off'):
     is_outlined = only_outlined == 'on'
     repeating_queue = await db.get_repeating_queue(is_outlined)
 
