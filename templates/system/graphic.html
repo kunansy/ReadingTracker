@@ -32,8 +32,8 @@
     <div class="tracker-statistics statistics">
         <h3 class="header"> Tracker statistics </h3>
         {% set stat = tracker_statistics %}
-        <p> Started at: {{ stat.started_at }} </p>
-        <p> Finished at: {{ stat.finished_at }} </p>
+        <p> First record date: {{ stat.started_at }} </p>
+        <p> Last record date: {{ stat.finished_at }} </p>
         <p> Duration: {{ stat.duration_period }} </p>
         <p> Lost time: {{ stat.lost_time_period }}, {{ stat.lost_time_percent }}% </p>
         <p> Mean: {{ stat.mean | round(1, 'ceil') }} </p>
