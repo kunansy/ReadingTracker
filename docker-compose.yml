@@ -46,7 +46,7 @@ services:
       - TELEMETRY=0
 
   reading-tracker:
-    image: kunansy/reading_tracker:2.20.33
+    image: kunansy/reading_tracker:2.20.34
     container_name: reading-tracker
     env_file: .env
     restart: always
