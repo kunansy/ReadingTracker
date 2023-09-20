@@ -25,7 +25,7 @@ RUN poetry config virtualenvs.create false \
 USER tracker
 WORKDIR /app
 
-COPY /templates /app/templates
-COPY /static /app/static
-COPY /tracker /app/tracker
-COPY VERSION /app/VERSION
+COPY /templates ./templates
+COPY /static ./static
+COPY /tracker ./tracker
+COPY VERSION ./VERSION
