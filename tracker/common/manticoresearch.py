@@ -118,7 +118,7 @@ async def _create_table() -> None:
 
 
 async def insert_all(notes: list[Note]) -> None:
-    logger.debug("Inserting all %s notes", notes)
+    logger.debug("Inserting all %s notes", len(notes))
     if not notes:
         return None
 
