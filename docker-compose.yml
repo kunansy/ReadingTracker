@@ -45,6 +45,21 @@ services:
       - MCL=1
       - TELEMETRY=0
 
+  tracker-backup:
+    image: kunansy/fast-backup:0.4.1
+    restart: always
+    container_name: tracker-backup
+    env_file: .env
+    entrypoint: ["/app/backup-server"]
+    ports:
+      - "127.0.0.1:${BACKUP_PORT}:50051"
+    volumes:
+      - ./data:/app/data:rw
+    networks:
+      - tracker-net
+    healthcheck:
+      test: exit 0
+
   reading-tracker:
     image: kunansy/reading_tracker:2.20.34
     container_name: reading-tracker
