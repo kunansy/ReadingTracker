@@ -14,7 +14,7 @@ license = "MIT"
 [tool.poetry.dependencies]
 python = "^3.11"
 SQLAlchemy = "~2.0.0"
-pydantic = "~2.1.1"
+pydantic = "~2.4.2"
 environs = "~9.5.0"
 asyncpg = "~0.28.0"
 fastapi = "~0.103.0"
@@ -55,7 +55,7 @@ flake8-use-pathlib = "^0.3.0"
 flake8-builtins = "^2.1.0"
 flake8-comments = "^0.1.2"
 flake8-absolute-import = "^1.0.0.1"
-flake8-markdown = "^0.4.0"
+flake8-markdown = "~0.5.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
