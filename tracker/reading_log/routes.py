@@ -64,8 +64,8 @@ async def add_log_record_view(request: Request,
 
 @router.post('/add')
 async def add_log_record(record: schemas.LogRecord = Depends()):
-    if not await materials_db.is_reading(material_id=record.material_id):
-        raise HTTPException(status_code=400, detail="Material not reading")
+    if not await db.is_record_correct(**record.model_dump()):
+        raise HTTPException(status_code=400, detail="Invalid record")
 
     await db.insert_log_record(
         material_id=str(record.material_id),

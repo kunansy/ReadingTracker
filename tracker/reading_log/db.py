@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from collections import defaultdict
 from decimal import Decimal
@@ -9,6 +10,7 @@ import sqlalchemy.sql as sa
 from tracker.common import database
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
+from tracker.materials import db as materials_db
 from tracker.models import models
 
 
@@ -249,3 +251,41 @@ async def insert_log_record(*,
         await ses.execute(stmt)
 
     logger.debug("Log record inserted")
+
+
+async def is_record_correct(*,
+                            material_id: UUID,
+                            date: datetime.date,
+                            count: int) -> bool:
+    if date > datetime.date.today() or count <= 0:
+        raise ValueError("Invalid args")
+
+    async with asyncio.TaskGroup() as tg:
+        reading_materials_task = tg.create_task(materials_db._get_reading_materials())
+        log_records_task = tg.create_task(get_log_records(material_id=str(material_id)))
+
+    materials = [
+        material
+        for material in reading_materials_task.result()
+        if material.material_id == material_id
+    ]
+    if not materials:
+        logger.warning("No reading material id=%s found", material_id)
+        return False
+    material = materials[0]
+
+    st = material.status
+    if date < st.started_at or st.completed_at and date > st.completed_at:
+        logger.warning("Date is not inside the range %s not in [%s; %s]",
+                       date, st.started_at, st.completed_at)
+        return False
+
+    total_pages_read = sum(
+        record.count
+        for record in log_records_task.result()
+    )
+    if total_pages_read + count > material.material.pages:
+        logger.warning("There are more pages than the material has: ")
+        return False
+
+    return True
