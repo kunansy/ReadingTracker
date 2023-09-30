@@ -56,7 +56,7 @@ async def _get_folder_id(*,
 async def _get_last_dump_id() -> str:
     logger.debug("Getting last dump started")
     folder_id = await _get_folder_id()
-    query = f"name contains 'tracker_' and mimeType='application/json' and '{folder_id}' in parents"
+    query = f"name contains 'tracker_' and '{folder_id}' in parents"
 
     async with _drive_client() as (client, drive):
         response = await client.as_service_account(
