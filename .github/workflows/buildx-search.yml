@@ -1,4 +1,4 @@
-name: Build docker image
+name: Build search image
 
 on: workflow_dispatch
 

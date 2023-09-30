@@ -1,4 +1,4 @@
-name: Build docker image
+name: Build ffmpeg image
 
 on: workflow_dispatch
 
