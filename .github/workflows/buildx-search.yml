@@ -27,6 +27,6 @@ jobs:
         with:
           context: .
           file: ./manticore/Dockerfile
-          platforms: linux/amd64,linux/arm/v8,linux/arm64
+          platforms: linux/amd64,linux/arm64
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/tracker_search:6.0.2
