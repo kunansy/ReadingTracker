@@ -591,7 +591,7 @@ def _calculate_priority_months(field: datetime.timedelta | None) -> int:
     if (days := field.days) < 30:
         return 0
     # it's expected to repeat materials every month
-    return round(days / 30)
+    return days // 30
 
 
 def _get_priority_days(field: datetime.timedelta | None) -> int:
