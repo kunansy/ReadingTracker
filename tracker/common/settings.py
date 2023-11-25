@@ -12,7 +12,7 @@ env.read_env()
 DATE_FORMAT = '%d-%m-%Y'
 DATETIME_FORMAT = f"{DATE_FORMAT} %H:%M:%S"
 
-DSN_TEMPLATE = "postgresql+asyncpg://{username}:{password}" "@{host}:{port}/{db_name}"
+DSN_TEMPLATE = "postgresql+asyncpg://{username}:{password}@{host}:{port}/{db_name}"
 
 API_VERSION = "0.1.0"
 if (version_file := Path("VERSION")).exists():
