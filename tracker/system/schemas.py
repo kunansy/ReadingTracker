@@ -46,24 +46,22 @@ class GetSpanReportRequest(CustomBaseModel):
         )
 
 
+class _SpanStats(CustomBaseModel):
+    total: int
+    median: float
+    mean: float
+    lost_count: int
+    zero_days: int
+    would_be_total: int
+
+
 class GetSpanReportResponse(CustomBaseModel):
     completed_materials: dict[enums.MaterialTypesEnum, int]
     total_materials_completed: int
 
     read_items: dict[enums.MaterialTypesEnum, int]
-    reading_total: int
-    reading_median: float
-    reading_mean: float
-    reading_lost_count: int
-    reading_zero_days: int
-    reading_would_be_total: int
-
-    notes_total: int
-    notes_median: float
-    notes_mean: float
-    notes_lost_count: int
-    notes_zero_days: int
-    notes_would_be_total: int
+    reading: _SpanStats
+    notes: _SpanStats
 
     repeats_total: int
     repeat_unique_materials_count: int
