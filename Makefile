@@ -13,5 +13,11 @@ lint-black:
 format:
 	black .
 
+cov:
+	coverage run -m pytest .
+
+cov-show:
+	coverage report -m
+
 run:
 	PYTHONPATH=. python3 tracker/main.py
