@@ -214,7 +214,7 @@ async def get_all_notes_count() -> dict[UUID, int]:
 
     async with database.session() as ses:
         return {
-            material_id: count
+            material_id or UUID(int=0): count
             for material_id, count in (await ses.execute(stmt)).all()
         }
 

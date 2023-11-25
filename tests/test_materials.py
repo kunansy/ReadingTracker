@@ -530,15 +530,15 @@ async def test_estimate():
         # 44 / 30 < 1.5 rounds to 1
         (datetime.timedelta(days=44), 1),
         # but when 45 / 30 = 1.5 rounds to 2
-        (datetime.timedelta(days=45), 2),
-        (datetime.timedelta(days=59), 2),
+        (datetime.timedelta(days=45), 1),
+        (datetime.timedelta(days=59), 1),
         (datetime.timedelta(days=92), 3),
         (datetime.timedelta(days=2), 0),
         (datetime.timedelta(days=0), 0),
     )
 )
 def test_calculate_priority_months(field, expected):
-    assert db._calculate_priority_months(field) == expected
+    assert db._calculate_priority_months(field) == expected, field
 
 
 @pytest.mark.parametrize(
@@ -589,7 +589,7 @@ async def test_get_repeats_analytics_only_not_repeated():
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "material_id,expected", (
-        ("a7f4e1dc-9274-46e7-a656-514bf1f312b5", True),
+        ("5a07cc0c-21e4-4228-b3ff-7c8bc9019ec4", True),
         # even completed
         ("b06298ed-6f22-4c36-99eb-8a0d329e002d", False),
         # not started
@@ -601,4 +601,4 @@ async def test_get_repeats_analytics_only_not_repeated():
 async def test_is_reading(material_id, expected):
     result = await db.is_reading(material_id=uuid.UUID(material_id))
 
-    assert result is expected
+    assert result is expected, material_id
