@@ -108,7 +108,7 @@ class SpanStatistics:
         )
 
     @property
-    def zero_count(self) -> int:
+    def zero_days(self) -> int:
         return sum(
             1
             for day in self.data
@@ -117,7 +117,7 @@ class SpanStatistics:
 
     @property
     def lost_pages(self) -> int:
-        return round(self.zero_count * self.mean)
+        return round(self.zero_days * self.mean)
 
     @property
     def would_be_total(self) -> int:

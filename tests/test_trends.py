@@ -156,7 +156,7 @@ async def test_get_span_statistics(start, stop, size):
     if result.min.amount != 0:
         assert result.min.amount == min(values)
 
-    assert result.zero_count == (span.stop - span.start).days + 1 - len(stat)
+    assert result.zero_days == (span.stop - span.start).days + 1 - len(stat)
 
 
 @pytest.mark.asyncio
