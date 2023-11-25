@@ -385,7 +385,7 @@ def _create_graphic(*,
     ax.bar_label(bar)
 
     if show_mean_line:
-        line = plt.axvline(x=stat.mean, color='black', linestyle='-')
+        line = plt.axvline(x=float(stat.mean), color='black', linestyle='-')
         line.set_label(f'Mean {stat.mean} items')
 
     xlim = -0.5, int(stat.max.amount * 1.2) or 100
