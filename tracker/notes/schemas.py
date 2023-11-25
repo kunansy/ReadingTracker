@@ -22,8 +22,10 @@ DEMARK_BOLD_PATTERN = re.compile(f'<span class="?{BOLD_MARKER}"?>(.*?)</span>')
 DEMARK_ITALIC_PATTERN = re.compile(f'<span class="?{ITALIC_MARKER}"?>(.*?)</span>')
 DEMARK_CODE_PATTERN = re.compile(f'<span class="?{CODE_MARKER}"?>(.*?)</span>')
 
-TAGS_PATTERN = re.compile(r'#(\w+)\b')
-LINK_PATTERN = re.compile(r'\[\[([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})\]\]')
+TAGS_PATTERN = re.compile(r"#(\w+)\b")
+LINK_PATTERN = re.compile(
+    r"\[\[([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})\]\]"
+)
 
 
 def _replace_quotes(string: str) -> str:
@@ -37,7 +39,7 @@ def _replace_quotes(string: str) -> str:
 
 
 def _add_dot(string: str) -> str:
-    if not string or string.endswith(('.', '?', '!')):
+    if not string or string.endswith((".", "?", "!")):
         return string
     return f"{string}."
 
@@ -59,15 +61,15 @@ def _replace_new_lines(string: str) -> str:
 
 
 def _replace_lt(string: str) -> str:
-    return string.replace(' < ', " &lt; ")
+    return string.replace(" < ", " &lt; ")
 
 
 def _replace_gt(string: str) -> str:
-    return string.replace(' > ', " &gt; ")
+    return string.replace(" > ", " &gt; ")
 
 
 def _mark_bold(string: str) -> str:
-    count = string.count('**')
+    count = string.count("**")
     assert count % 2 == 0, "Bold markers are not balanced"
 
     for _ in range(count // 2):
@@ -79,7 +81,7 @@ def _mark_bold(string: str) -> str:
 
 
 def _mark_italic(string: str) -> str:
-    count = string.count('__')
+    count = string.count("__")
     assert count % 2 == 0, "Italic markers are not balanced"
 
     for _ in range(count // 2):
@@ -89,7 +91,7 @@ def _mark_italic(string: str) -> str:
 
 
 def _mark_code(string: str) -> str:
-    count = string.count('`')
+    count = string.count("`")
     assert count % 2 == 0, "Code markers are not balanced"
 
     for _ in range(count // 2):
@@ -99,19 +101,19 @@ def _mark_code(string: str) -> str:
 
 
 def _demark_bold(string: str) -> str:
-    return DEMARK_BOLD_PATTERN.sub(r'**\1**', string)
+    return DEMARK_BOLD_PATTERN.sub(r"**\1**", string)
 
 
 def _demark_italic(string: str) -> str:
-    return DEMARK_ITALIC_PATTERN.sub(r'__\1__', string)
+    return DEMARK_ITALIC_PATTERN.sub(r"__\1__", string)
 
 
 def _demark_code(string: str) -> str:
-    return DEMARK_CODE_PATTERN.sub(r'`\1`', string)
+    return DEMARK_CODE_PATTERN.sub(r"`\1`", string)
 
 
 def _dereplace_new_lines(string: str) -> str:
-    return re.sub(r'<br/?>', '\n', string)
+    return re.sub(r"<br/?>", "\n", string)
 
 
 NOTES_FORMATTERS = (
@@ -136,7 +138,7 @@ NOTES_DEMARKERS = (
 
 
 def demark_note(string: str) -> str:
-    """ to show the note in update form """
+    """to show the note in update form"""
     for formatter in NOTES_DEMARKERS:
         string = formatter(string)
     return string
@@ -149,32 +151,32 @@ class Note(CustomBaseModel):
     chapter: conint(ge=0) = 0
     page: conint(ge=0) = 0
 
-    def __init__(self,
-                 material_id: UUID = Form(None),
-                 title: str | None = Form(None),
-                 content: str = Form(...),
-                 chapter: int = Form(0),
-                 page: int = Form(0),
-                 **kwargs):
+    def __init__(
+        self,
+        material_id: UUID = Form(None),
+        title: str | None = Form(None),
+        content: str = Form(...),
+        chapter: int = Form(0),
+        page: int = Form(0),
+        **kwargs,
+    ):
         super().__init__(
             material_id=material_id,
             title=title,
             content=content,
             chapter=chapter,
             page=page,
-            **kwargs
+            **kwargs,
         )
 
-    @field_validator('content')
-    def validate_double_brackets_count(cls,
-                                       content: str) -> str:
-        assert content.count('[[') == content.count(']]')
+    @field_validator("content")
+    def validate_double_brackets_count(cls, content: str) -> str:
+        assert content.count("[[") == content.count("]]")
 
         return content
 
-    @field_validator('content')
-    def format_content(cls,
-                       content: str) -> str:
+    @field_validator("content")
+    def format_content(cls, content: str) -> str:
         for formatter in NOTES_FORMATTERS:
             content = formatter(content)
         return content
@@ -197,13 +199,15 @@ class Note(CustomBaseModel):
 class UpdateNote(Note):
     note_id: UUID
 
-    def __init__(self,
-                 material_id: UUID | None = Form(None),
-                 note_id: UUID = Form(...),
-                 title: str | None = Form(None),
-                 content: str = Form(...),
-                 chapter: int = Form(0),
-                 page: int = Form(0)):
+    def __init__(
+        self,
+        material_id: UUID | None = Form(None),
+        note_id: UUID = Form(...),
+        title: str | None = Form(None),
+        content: str = Form(...),
+        chapter: int = Form(0),
+        page: int = Form(0),
+    ):
         super().__init__(
             material_id=material_id,
             note_id=note_id,
@@ -228,11 +232,7 @@ class SearchParams(CustomBaseModel):
         if not (tags_query := self.tags_query):
             return set()
 
-        return set(
-            tag.strip()
-            for tag in tags_query.split()
-            if tag.strip()
-        )
+        return set(tag.strip() for tag in tags_query.split() if tag.strip())
 
 
 class RecognitionResult(TypedDict):
@@ -244,11 +244,11 @@ class TranscriptTextResponse(CustomBaseModel):
     transcript: str
     confidence: float
 
-    @field_validator('transcript')
+    @field_validator("transcript")
     def capitalize_transcript(cls, transcript: str) -> str:
         return transcript.capitalize()
 
-    @field_validator('confidence')
+    @field_validator("confidence")
     def convert_to_percent(cls, value: float) -> float:
         return round(value * 100, 2)
 

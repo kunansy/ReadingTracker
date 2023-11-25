@@ -20,7 +20,7 @@ app = FastAPI(
     description="Reading queue, logging the reading, keep some notes",
     version=settings.API_VERSION,
     debug=settings.API_DEBUG,
-    default_response_class=ORJSONResponse
+    default_response_class=ORJSONResponse,
 )
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -34,8 +34,7 @@ app.include_router(system_router)
 
 
 @app.exception_handler(database.DatabaseException)
-async def database_exception_handler(request: Request,
-                                     exc: database.DatabaseException):
+async def database_exception_handler(request: Request, exc: database.DatabaseException):
     logger.exception("Database exception occurred, (%s), %s", request.url, str(exc))
 
     context = {
@@ -43,72 +42,60 @@ async def database_exception_handler(request: Request,
         "error": {
             "type": exc.__class__.__name__,
             "args": exc.args,
-            "json": f"Database exception: {exc}"
-        }
+            "json": f"Database exception: {exc}",
+        },
     }
 
     return templates.TemplateResponse("errors/500.html", context)
 
 
 @app.exception_handler(manticoresearch.ManticoreException)
-async def manticore_exception_handler(request: Request,
-                                      exc: manticoresearch.ManticoreException):
-    logger.exception("Manticoresearch exception occurred, (%s), %s", request.url, str(exc))
+async def manticore_exception_handler(
+    request: Request, exc: manticoresearch.ManticoreException
+):
+    logger.exception(
+        "Manticoresearch exception occurred, (%s), %s", request.url, str(exc)
+    )
 
     context = {
         "request": request,
         "error": {
             "type": exc.__class__.__name__,
             "args": exc.args,
-            "json": f"Manticoresearch exception: {exc}"
-        }
+            "json": f"Manticoresearch exception: {exc}",
+        },
     }
 
     return templates.TemplateResponse("errors/500.html", context)
 
 
 @app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request,
-                                       exc: RequestValidationError):
-    logger.exception("Validation error occurred, (%s), %s",
-                     request.url, str(exc))
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.exception("Validation error occurred, (%s), %s", request.url, str(exc))
 
     context = {
         "request": request,
-        "error": {
-            "type": exc.__class__.__name__,
-            "args": exc.args,
-            "json": repr(exc)
-        }
+        "error": {"type": exc.__class__.__name__, "args": exc.args, "json": repr(exc)},
     }
 
     return templates.TemplateResponse("errors/500.html", context)
 
 
 @app.exception_handler(HTTPException)
-async def http_exception_handler(request: Request,
-                                 exc: HTTPException):
-    logger.exception("HTTP exception occurred, (%s), %s",
-                     request.url, str(exc))
+async def http_exception_handler(request: Request, exc: HTTPException):
+    logger.exception("HTTP exception occurred, (%s), %s", request.url, str(exc))
 
-    context = {
-        "request": request,
-        "what": repr(exc)
-    }
+    context = {"request": request, "what": repr(exc)}
 
     return templates.TemplateResponse("errors/404.html", context)
 
 
-@app.get('/liveness',
-         include_in_schema=False)
+@app.get("/liveness", include_in_schema=False)
 async def liveness():
-    return ORJSONResponse(
-        content={"status": "ok"}
-    )
+    return ORJSONResponse(content={"status": "ok"})
 
 
-@app.get('/readiness',
-         include_in_schema=False)
+@app.get("/readiness", include_in_schema=False)
 async def readiness():
     status_code = 500
 
@@ -119,10 +106,7 @@ async def readiness():
     if db_readiness.result() is manticore_readiness.result() is True:
         status_code = 200
 
-    return ORJSONResponse(
-        content={},
-        status_code=status_code
-    )
+    return ORJSONResponse(content={}, status_code=status_code)
 
 
 async def init() -> None:
@@ -130,5 +114,5 @@ async def init() -> None:
     await manticoresearch.init()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     asyncio.run(init())

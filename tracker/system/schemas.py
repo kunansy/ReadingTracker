@@ -12,23 +12,20 @@ class GetSpanReportRequest(CustomBaseModel):
     start: datetime.date
     stop: datetime.date
 
-    def __init__(self,
-                 start: datetime.date = Form(...),
-                 stop: datetime.date | None = Form(None)) -> None:
+    def __init__(
+        self, start: datetime.date = Form(...), stop: datetime.date | None = Form(None)
+    ) -> None:
         # way to check Form value is None
         if not isinstance(stop, str):
             stop = datetime.date.today()
 
-        super().__init__(
-            start=start,
-            stop=stop
-        )
+        super().__init__(start=start, stop=stop)
 
-    @field_validator('stop')
-    def validate_start_less_than_stop(cls,
-                                      stop: datetime.date,
-                                      info: ValidationInfo) -> datetime.date:
-        start = info.data['start']
+    @field_validator("stop")
+    def validate_start_less_than_stop(
+        cls, stop: datetime.date, info: ValidationInfo
+    ) -> datetime.date:
+        start = info.data["start"]
         assert stop > start, "Start must be less than stop"
 
         return stop

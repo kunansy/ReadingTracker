@@ -12,7 +12,7 @@ from tracker.common import settings
 from tracker.common.logger import logger
 
 
-SCOPES = ['https://www.googleapis.com/auth/drive']
+SCOPES = ["https://www.googleapis.com/auth/drive"]
 
 
 class GoogleDriveException(Exception):
@@ -21,20 +21,19 @@ class GoogleDriveException(Exception):
 
 @lru_cache
 def _get_drive_creds() -> ServiceAccountCreds:
-    creds = ServiceAccountCreds(
-        scopes=SCOPES,
-        **settings.DRIVE_CREDS
-    )
+    creds = ServiceAccountCreds(scopes=SCOPES, **settings.DRIVE_CREDS)
 
     return creds
 
 
 @contextlib.asynccontextmanager
-async def _drive_client() -> AsyncGenerator[tuple[aiogoogle.Aiogoogle, aiogoogle.GoogleAPI], None]:
+async def _drive_client() -> AsyncGenerator[
+    tuple[aiogoogle.Aiogoogle, aiogoogle.GoogleAPI], None
+]:
     creds = _get_drive_creds()
 
     async with aiogoogle.Aiogoogle(service_account_creds=creds) as client:
-        drive_v3 = await client.discover('drive', 'v3')
+        drive_v3 = await client.discover("drive", "v3")
         try:
             yield client, drive_v3
         except Exception as e:
@@ -42,15 +41,15 @@ async def _drive_client() -> AsyncGenerator[tuple[aiogoogle.Aiogoogle, aiogoogle
             raise GoogleDriveException(e) from e
 
 
-async def _get_folder_id(*,
-                         folder_name: str = 'tracker') -> str:
+async def _get_folder_id(*, folder_name: str = "tracker") -> str:
     async with _drive_client() as (client, drive):
         response = await client.as_service_account(
             drive.files.list(
-                q=f"name = '{folder_name}'", spaces='drive', fields='files(id)')
+                q=f"name = '{folder_name}'", spaces="drive", fields="files(id)"
+            )
         )
 
-    return response['files'][0]['id']
+    return response["files"][0]["id"]
 
 
 async def _get_last_dump_id() -> str:
@@ -61,13 +60,14 @@ async def _get_last_dump_id() -> str:
     async with _drive_client() as (client, drive):
         response = await client.as_service_account(
             drive.files.list(
-                q=query, spaces='drive', fields='files(id,modifiedTime,name)')
+                q=query, spaces="drive", fields="files(id,modifiedTime,name)"
+            )
         )
-    files = response['files']
-    files.sort(key=lambda resp: resp['modifiedTime'], reverse=True)
+    files = response["files"]
+    files.sort(key=lambda resp: resp["modifiedTime"], reverse=True)
 
     logger.debug("%s files found", len(files))
-    return files[0]['id']
+    return files[0]["id"]
 
 
 async def _get_file_content(file_id: str) -> dict[str, Any]:
@@ -77,7 +77,7 @@ async def _get_file_content(file_id: str) -> dict[str, Any]:
 
     async with _drive_client() as (client, drive):
         await client.as_service_account(
-            drive.files.get(fileId=file_id, download_file=tmp_file.name, alt='media'),
+            drive.files.get(fileId=file_id, download_file=tmp_file.name, alt="media"),
         )
 
     file = orjson.loads(tmp_file.read())

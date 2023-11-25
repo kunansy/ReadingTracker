@@ -19,9 +19,9 @@ class DatabaseException(Exception):
 
 
 class MinMax(CustomBaseModel):
-    log_id: UUID | str = ''
-    material_id: UUID | str = ''
-    material_title: str = ''
+    log_id: UUID | str = ""
+    material_id: UUID | str = ""
+    material_title: str = ""
     count: int
     date: datetime.date
 
@@ -29,7 +29,7 @@ class MinMax(CustomBaseModel):
 engine = create_async_engine(
     settings.DB_URI,
     isolation_level=settings.DB_ISOLATION_LEVEL,
-    connect_args={'timeout': settings.DB_TIMEOUT}
+    connect_args={"timeout": settings.DB_TIMEOUT},
 )
 
 utcnow = datetime.datetime.utcnow

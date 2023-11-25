@@ -3,13 +3,13 @@ import logging
 from tracker.common import settings
 
 
-MSG_FMT = ("{levelname:<8} [{asctime},{msecs:3.0f}] [PID:{process}] "
-           "[{filename}:{funcName}():{lineno}] {message}")
+MSG_FMT = (
+    "{levelname:<8} [{asctime},{msecs:3.0f}] [PID:{process}] "
+    "[{filename}:{funcName}():{lineno}] {message}"
+)
 DATE_FMT = "%d.%m.%Y %H:%M:%S"
 
-formatter = logging.Formatter(
-    fmt=MSG_FMT, datefmt=DATE_FMT, style='{'
-)
+formatter = logging.Formatter(fmt=MSG_FMT, datefmt=DATE_FMT, style="{")
 
 stream_handler = logging.StreamHandler()
 stream_handler.setLevel(settings.LOGGER_LEVEL)

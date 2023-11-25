@@ -2,4 +2,4 @@ from pydantic import BaseModel, ConfigDict
 
 
 class CustomBaseModel(BaseModel):
-    model_config = ConfigDict(extra='forbid')
+    model_config = ConfigDict(extra="forbid")

@@ -32,7 +32,7 @@ class Note(CustomBaseModel):
     # only for listing/one-page view
     links_count: int | None = None
 
-    @field_validator('material_id', mode='before')
+    @field_validator("material_id", mode="before")
     def replace_null_material_id(cls, material_id: UUID | None) -> UUID:
         # Some notes don't have material, so to work
         # with them set material_id to zero uuid
@@ -50,14 +50,16 @@ class Note(CustomBaseModel):
 
     @property
     def info(self) -> str:
-        return (f"ID: {self.note_id}\n"
-                f"Number: {self.note_number}\n"
-                f"Material ID: {self.material_id}\n\n"
-                f"{self}")
+        return (
+            f"ID: {self.note_id}\n"
+            f"Number: {self.note_number}\n"
+            f"Material ID: {self.material_id}\n\n"
+            f"{self}"
+        )
 
     def get_material_id(self) -> str:
         if self.material_id == UUID(int=0):
-            return ''
+            return ""
         return str(self.material_id)
 
     def highlight(self, from_: str, to: str) -> None:
@@ -80,14 +82,14 @@ def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[int]]:
     return chapters
 
 
-async def get_material_type(*,
-                            material_id: UUID | str) -> str | None:
+async def get_material_type(*, material_id: UUID | str) -> str | None:
     logger.debug("Getting material_id=%s type", material_id)
     if not material_id:
         return None
 
-    stmt = sa.select(models.Materials.c.material_type)\
-        .where(models.Materials.c.material_id == str(material_id))
+    stmt = sa.select(models.Materials.c.material_type).where(
+        models.Materials.c.material_id == str(material_id)
+    )
 
     async with database.session() as ses:
         if material_type := await ses.scalar(stmt):
@@ -101,8 +103,7 @@ async def get_material_type(*,
 async def get_material_types() -> dict[str, enums.MaterialTypesEnum]:
     logger.debug("Getting material types")
 
-    stmt = sa.select(models.Materials.c.material_id,
-                     models.Materials.c.material_type)
+    stmt = sa.select(models.Materials.c.material_id, models.Materials.c.material_type)
 
     async with database.session() as ses:
         types = {
@@ -117,8 +118,7 @@ async def get_material_types() -> dict[str, enums.MaterialTypesEnum]:
 async def get_material_titles() -> dict[UUID, str]:
     logger.debug("Getting material titles")
 
-    stmt = sa.select(models.Materials.c.material_id,
-                     models.Materials.c.title)
+    stmt = sa.select(models.Materials.c.material_id, models.Materials.c.title)
 
     async with database.session() as ses:
         titles = {
@@ -131,14 +131,17 @@ async def get_material_titles() -> dict[UUID, str]:
 
 
 async def get_material_with_notes_titles() -> dict[UUID, str]:
-    """ Get materials that have a note. """
+    """Get materials that have a note."""
     logger.debug("Getting material with note titles")
 
-    stmt = sa.select(sa.text("distinct on (materials.material_id) materials.material_id"),
-                     models.Materials.c.title)\
-        .join(models.Notes,
-              models.Notes.c.material_id == models.Materials.c.material_id)\
+    stmt = (
+        sa.select(
+            sa.text("distinct on (materials.material_id) materials.material_id"),
+            models.Materials.c.title,
+        )
+        .join(models.Notes, models.Notes.c.material_id == models.Materials.c.material_id)
         .where(~models.Notes.c.is_deleted)
+    )
 
     async with database.session() as ses:
         titles = {
@@ -150,16 +153,22 @@ async def get_material_with_notes_titles() -> dict[UUID, str]:
     return titles
 
 
-def _get_note_stmt(*,
-                   note_id: UUID | str | None = None,
-                   material_id: UUID | str | None = None,
-                   link_id: UUID | str | None = None) -> sa.Select:
-    links_count_query = "(select count(1) as links_count from notes where link_id = n.note_id)"
+def _get_note_stmt(
+    *,
+    note_id: UUID | str | None = None,
+    material_id: UUID | str | None = None,
+    link_id: UUID | str | None = None,
+) -> sa.Select:
+    links_count_query = (
+        "(select count(1) as links_count from notes where link_id = n.note_id)"
+    )
 
-    notes_model = models.Notes.alias('n')
-    stmt = sa.select(notes_model, sa.text(links_count_query)) \
-        .where(~notes_model.c.is_deleted) \
+    notes_model = models.Notes.alias("n")
+    stmt = (
+        sa.select(notes_model, sa.text(links_count_query))
+        .where(~notes_model.c.is_deleted)
         .order_by(notes_model.c.note_number)
+    )
 
     if note_id:
         stmt = stmt.where(notes_model.c.note_id == str(note_id))
@@ -171,23 +180,18 @@ def _get_note_stmt(*,
     return stmt
 
 
-async def get_notes(*,
-                    material_id: UUID | str | None = None) -> list[Note]:
+async def get_notes(*, material_id: UUID | str | None = None) -> list[Note]:
     logger.debug("Getting notes material_id=%s", material_id)
 
     stmt = _get_note_stmt(material_id=material_id)
 
     async with database.session() as ses:
-        notes = [
-            Note(**row)
-            for row in (await ses.execute(stmt)).mappings().all()
-        ]
+        notes = [Note(**row) for row in (await ses.execute(stmt)).mappings().all()]
     logger.debug("%s notes got", len(notes))
     return notes
 
 
-async def get_note(*,
-                   note_id: UUID | str) -> Note | None:
+async def get_note(*, note_id: UUID | str) -> Note | None:
     logger.debug("Getting note_id='%s'", note_id)
 
     stmt = _get_note_stmt(note_id=note_id)
@@ -202,15 +206,19 @@ async def get_note(*,
 
 
 async def get_all_notes_count() -> dict[UUID, int]:
-    """ Get notes count for the materials. """
+    """Get notes count for the materials."""
 
     logger.debug("Getting notes count for all materials")
 
-    stmt = sa.select(models.Notes.c.material_id.label('material_id'),
-                     sa.func.count(1).label('count')) \
-        .select_from(models.Notes) \
-        .where(~models.Notes.c.is_deleted) \
+    stmt = (
+        sa.select(
+            models.Notes.c.material_id.label("material_id"),
+            sa.func.count(1).label("count"),
+        )
+        .select_from(models.Notes)
+        .where(~models.Notes.c.is_deleted)
         .group_by(models.Notes.c.material_id)
+    )
 
     async with database.session() as ses:
         return {
@@ -219,29 +227,29 @@ async def get_all_notes_count() -> dict[UUID, int]:
         }
 
 
-async def add_note(*,
-                   material_id: UUID | None,
-                   link_id: UUID | None,
-                   title: str | None,
-                   content: str,
-                   chapter: int,
-                   page: int,
-                   tags: list[str]) -> str:
+async def add_note(
+    *,
+    material_id: UUID | None,
+    link_id: UUID | None,
+    title: str | None,
+    content: str,
+    chapter: int,
+    page: int,
+    tags: list[str],
+) -> str:
     logger.debug("Adding note for material_id='%s'", material_id)
 
     values = {
-        'material_id': str(material_id) if material_id else None,
-        'title': title,
-        'content': content,
-        'chapter': chapter,
-        'page': page,
-        'tags': tags,
-        'link_id': str(link_id) if link_id else None
+        "material_id": str(material_id) if material_id else None,
+        "title": title,
+        "content": content,
+        "chapter": chapter,
+        "page": page,
+        "tags": tags,
+        "link_id": str(link_id) if link_id else None,
     }
 
-    stmt = models.Notes.\
-        insert().values(values)\
-        .returning(models.Notes.c.note_id)
+    stmt = models.Notes.insert().values(values).returning(models.Notes.c.note_id)
 
     async with database.session() as ses:
         note_id = await ses.scalar(stmt)
@@ -250,30 +258,30 @@ async def add_note(*,
     return str(note_id)
 
 
-async def update_note(*,
-                      note_id: UUID,
-                      material_id: str | None,
-                      link_id: UUID | None,
-                      title: str | None,
-                      content: str,
-                      page: int,
-                      chapter: int,
-                      tags: list[str]) -> None:
+async def update_note(
+    *,
+    note_id: UUID,
+    material_id: str | None,
+    link_id: UUID | None,
+    title: str | None,
+    content: str,
+    page: int,
+    chapter: int,
+    tags: list[str],
+) -> None:
     logger.debug("Updating note_id='%s'", note_id)
 
     values = {
-        'material_id': material_id,
-        'title': title,
-        'content': content,
-        'page': page,
-        'chapter': chapter,
-        'tags': tags,
-        'link_id': str(link_id) if link_id else None
+        "material_id": material_id,
+        "title": title,
+        "content": content,
+        "page": page,
+        "chapter": chapter,
+        "tags": tags,
+        "link_id": str(link_id) if link_id else None,
     }
 
-    stmt = models.Notes. \
-        update().values(values) \
-        .where(models.Notes.c.note_id == note_id)
+    stmt = models.Notes.update().values(values).where(models.Notes.c.note_id == note_id)
 
     async with database.session() as ses:
         await ses.execute(stmt)
@@ -281,29 +289,21 @@ async def update_note(*,
     logger.debug("Note updated")
 
 
-async def _del_or_restore(*,
-                          note_id: UUID,
-                          is_deleted: bool) -> None:
-    values = {
-        "is_deleted": is_deleted
-    }
-    stmt = models.Notes \
-        .update().values(values) \
-        .where(models.Notes.c.note_id == note_id)
+async def _del_or_restore(*, note_id: UUID, is_deleted: bool) -> None:
+    values = {"is_deleted": is_deleted}
+    stmt = models.Notes.update().values(values).where(models.Notes.c.note_id == note_id)
 
     async with database.session() as ses:
         await ses.execute(stmt)
 
 
-async def delete_note(*,
-                      note_id: UUID) -> None:
+async def delete_note(*, note_id: UUID) -> None:
     logger.debug("Deleting note_id='%s'", note_id)
     await _del_or_restore(note_id=note_id, is_deleted=True)
     logger.debug("Note deleted")
 
 
-async def restore_note(*,
-                       note_id: UUID) -> None:
+async def restore_note(*, note_id: UUID) -> None:
     logger.debug("Restoring note_id='%s'", note_id)
     await _del_or_restore(note_id=note_id, is_deleted=False)
     logger.debug("Note restored")
@@ -312,8 +312,7 @@ async def restore_note(*,
 async def get_tags() -> set[str]:
     logger.debug("Getting tags")
 
-    stmt = sa.select(models.Notes.c.tags)\
-        .where(models.Notes.c.tags != [])
+    stmt = sa.select(models.Notes.c.tags).where(models.Notes.c.tags != [])
 
     async with database.session() as ses:
         tags: list[str] = sum((await ses.scalars(stmt)).all(), [])
@@ -327,9 +326,11 @@ async def get_tags() -> set[str]:
 async def get_material_tags(material_id: str | UUID) -> list[str]:
     logger.debug("Getting tags for material_id=%s", material_id)
 
-    stmt = sa.select(models.Notes.c.tags) \
-        .where(models.Notes.c.material_id == str(material_id)) \
+    stmt = (
+        sa.select(models.Notes.c.tags)
+        .where(models.Notes.c.material_id == str(material_id))
         .where(models.Notes.c.tags != [])
+    )
 
     async with database.session() as ses:
         tags: list[str] = sum((await ses.scalars(stmt)).all(), [])
@@ -342,22 +343,24 @@ async def get_material_tags(material_id: str | UUID) -> list[str]:
 
 
 async def get_possible_links(note: Note) -> list[Note]:
-    """ Get notes with which the given one might be linked.
-     So possibility coeff = size of tags set intersection. """
+    """Get notes with which the given one might be linked.
+    So possibility coeff = size of tags set intersection."""
 
-    logger.debug("Getting possible links for note=%s, tags=%s",
-                 note.note_id, note.tags)
+    logger.debug("Getting possible links for note=%s, tags=%s", note.note_id, note.tags)
 
-    stmt = sa.select(models.Notes) \
-        .where(~models.Notes.c.is_deleted) \
-        .where(models.Notes.c.note_id != note.note_id) \
-        .where(sa.text(f"tags ?| array(SELECT jsonb_array_elements_text(tags) FROM notes WHERE note_id = '{note.note_id}')"))
+    stmt = (
+        sa.select(models.Notes)
+        .where(~models.Notes.c.is_deleted)
+        .where(models.Notes.c.note_id != note.note_id)
+        .where(
+            sa.text(
+                f"tags ?| array(SELECT jsonb_array_elements_text(tags) FROM notes WHERE note_id = '{note.note_id}')"
+            )
+        )
+    )
 
     async with database.session() as ses:
-        links = [
-            Note(**link)
-            for link in (await ses.execute(stmt)).mappings().all()
-        ]
+        links = [Note(**link) for link in (await ses.execute(stmt)).mappings().all()]
 
     # most possible first
     links.sort(key=lambda link: len(link.tags & note.tags), reverse=True)
@@ -366,31 +369,29 @@ async def get_possible_links(note: Note) -> list[Note]:
     return links
 
 
-def _get_links_from(*,
-                    note_id: UUID,
-                    notes: Iterable[Note]) -> list[Note]:
-    """ Get all notes linked with the given one """
+def _get_links_from(*, note_id: UUID, notes: Iterable[Note]) -> list[Note]:
+    """Get all notes linked with the given one"""
 
-    return [
-        note
-        for note in notes
-        if note.link_id == note_id
-    ]
+    return [note for note in notes if note.link_id == note_id]
 
 
 def _get_note_link(note: Note, **attrs) -> tuple[str, dict[str, Any]]:
-    return (str(note.note_id), jsonable_encoder({
-        **attrs,
-        "material_id": note.material_id,
-        "note_number": note.note_number,
-        "label": note.short_content,
-    }))
+    return (
+        str(note.note_id),
+        jsonable_encoder(
+            {
+                **attrs,
+                "material_id": note.material_id,
+                "note_number": note.note_number,
+                "label": note.short_content,
+            }
+        ),
+    )
 
 
-def _add_links_to(graph: nx.DiGraph,
-                  notes: dict[UUID, Note],
-                  note_id: UUID,
-                  even_added_notes: set[UUID]) -> None:
+def _add_links_to(
+    graph: nx.DiGraph, notes: dict[UUID, Note], note_id: UUID, even_added_notes: set[UUID]
+) -> None:
     if not (link_id := notes[note_id].link_id) or link_id in even_added_notes:
         return None
 
@@ -403,12 +404,10 @@ def _add_links_to(graph: nx.DiGraph,
     _add_links_to(graph, notes, link_id, even_added_notes)
 
 
-def _link_cohesive_notes(graph: nx.DiGraph,
-                         notes: dict[UUID, Note],
-                         note_id: UUID,
-                         *,
-                         visited: set[UUID]) -> None:
-    """ Iter over graph and find all note links """
+def _link_cohesive_notes(
+    graph: nx.DiGraph, notes: dict[UUID, Note], note_id: UUID, *, visited: set[UUID]
+) -> None:
+    """Iter over graph and find all note links"""
 
     if note_id in visited:
         return None
@@ -432,10 +431,9 @@ def _link_cohesive_notes(graph: nx.DiGraph,
         _link_cohesive_notes(graph, notes, link.note_id, visited=visited)
 
 
-def link_notes(*,
-               note_id: UUID,
-               notes: dict[UUID, Note],
-               color: str | None = 'black') -> nx.DiGraph:
+def link_notes(
+    *, note_id: UUID, notes: dict[UUID, Note], color: str | None = "black"
+) -> nx.DiGraph:
     logger.debug("Linking %s notes from the %s", len(notes), note_id)
 
     graph = nx.DiGraph()
@@ -444,8 +442,7 @@ def link_notes(*,
     # link together all cohesive notes, which bounds with the given one
     _link_cohesive_notes(graph, notes, note_id, visited=set())
 
-    logger.debug("Notes linked, %s nodes, %s edges",
-                 len(graph.nodes), len(graph.edges))
+    logger.debug("Notes linked, %s nodes, %s edges", len(graph.nodes), len(graph.edges))
 
     return graph
 
@@ -471,10 +468,9 @@ def link_all_notes(notes: list[Note]) -> nx.DiGraph:
     return graph
 
 
-def create_material_graph(*,
-                          material_id: UUID,
-                          material_notes: set[UUID],
-                          notes: dict[UUID, Note]) -> nx.DiGraph:
+def create_material_graph(
+    *, material_id: UUID, material_notes: set[UUID], notes: dict[UUID, Note]
+) -> nx.DiGraph:
     if not (material_notes and notes):
         raise ValueError("No notes passed")
 
@@ -488,19 +484,20 @@ def create_material_graph(*,
 
         graph = nx.compose(graph, note_graph)
 
-    _highlight_other_material_notes(
-        graph=graph, notes=notes, material_id=material_id)
+    _highlight_other_material_notes(graph=graph, notes=notes, material_id=material_id)
 
     return graph
 
 
-def _highlight_other_material_notes(*,
-                                    graph: nx.DiGraph,
-                                    material_id: UUID,
-                                    notes: dict[UUID, Note],
-                                    color: str | None = 'black') -> None:
+def _highlight_other_material_notes(
+    *,
+    graph: nx.DiGraph,
+    material_id: UUID,
+    notes: dict[UUID, Note],
+    color: str | None = "black",
+) -> None:
     notes_from_other_material = {
-        note_id: {'color': color}
+        note_id: {"color": color}
         for note_id in graph.nodes
         if notes[UUID(note_id)].material_id != material_id
     }
@@ -509,14 +506,14 @@ def _highlight_other_material_notes(*,
 
 
 def create_graphic(graph: nx.DiGraph, **kwargs) -> str:
-    logger.debug("Creating graphic for graph with %s nodes, %s edges",
-                 len(graph.nodes), len(graph.edges))
+    logger.debug(
+        "Creating graphic for graph with %s nodes, %s edges",
+        len(graph.nodes),
+        len(graph.edges),
+    )
 
     net = Network(
-        cdn_resources="remote",
-        directed=True,
-        neighborhood_highlight=True,
-        **kwargs
+        cdn_resources="remote", directed=True, neighborhood_highlight=True, **kwargs
     )
     net.options = {"interaction": {"hover": True}}
     net.from_nx(graph)
@@ -527,10 +524,9 @@ def create_graphic(graph: nx.DiGraph, **kwargs) -> str:
     return resp
 
 
-async def get_sorted_tags(*,
-                          material_id: str | UUID | None) -> list[str]:
-    """ Get tags especially for the material, means there should be tags
-    from the notes for the material in the beginning of the result list. """
+async def get_sorted_tags(*, material_id: str | UUID | None) -> list[str]:
+    """Get tags especially for the material, means there should be tags
+    from the notes for the material in the beginning of the result list."""
     logger.debug("Getting sorted tags for material_id=%s", material_id)
 
     if not material_id:
@@ -550,21 +546,18 @@ async def get_sorted_tags(*,
     return result
 
 
-async def get_links_from(*,
-                         note_id: UUID | str) -> list[Note]:
-    """ Get notes which linked to the given one """
+async def get_links_from(*, note_id: UUID | str) -> list[Note]:
+    """Get notes which linked to the given one"""
     stmt = _get_note_stmt(link_id=note_id)
 
     async with database.session() as ses:
-        return [
-            Note(**row)
-            for row in (await ses.execute(stmt)).mappings().all()
-        ]
+        return [Note(**row) for row in (await ses.execute(stmt)).mappings().all()]
 
 
 async def is_deleted(note_id: str) -> bool:
-    stmt = sa.select(models.Notes.c.is_deleted == True)\
-        .where(models.Notes.c.note_id == note_id)
+    stmt = sa.select(models.Notes.c.is_deleted == True).where(
+        models.Notes.c.note_id == note_id
+    )
 
     async with database.session() as ses:
         if (r := await ses.scalar(stmt)) is None:

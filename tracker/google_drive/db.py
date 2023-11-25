@@ -55,14 +55,17 @@ def _is_uuid(value: str) -> bool:
 
 
 def _contains_letter(value: str) -> bool:
-    return any(
-        symbol.isalpha()
-        for symbol in value
-    )
+    return any(symbol.isalpha() for symbol in value)
 
 
 def _convert_str_to_date(value: JSON_FIELD_TYPES) -> JSON_FIELD_TYPES | DATE_TYPES:
-    if not value or not isinstance(value, str) or _is_uuid(value) or _contains_letter(value) or value.isdigit():
+    if (
+        not value
+        or not isinstance(value, str)
+        or _is_uuid(value)
+        or _contains_letter(value)
+        or value.isdigit()
+    ):
         return value
 
     try:
@@ -79,14 +82,15 @@ def _convert_str_to_date(value: JSON_FIELD_TYPES) -> JSON_FIELD_TYPES | DATE_TYP
 
 
 def _get_now() -> str:
-    return database.utcnow()\
-        .strftime(settings.DATETIME_FORMAT)\
-        .replace(' ', '_')\
-        .replace(':', '-')
+    return (
+        database.utcnow()
+        .strftime(settings.DATETIME_FORMAT)
+        .replace(" ", "_")
+        .replace(":", "-")
+    )
 
 
-def get_dump_filename(*,
-                      prefix: str = 'tracker') -> Path:
+def get_dump_filename(*, prefix: str = "tracker") -> Path:
     filename = f"{prefix}_{_get_now()}.json"
     return settings.DATA_DIR / filename
 
@@ -95,25 +99,15 @@ def _convert_dump_to_snapshot(dump_data: DUMP_TYPE) -> DBSnapshot:
     tables = []
     for table_name, values in dump_data.items():
         rows = [
-            {
-                key: _convert_str_to_date(value)
-                for key, value in row.items()
-            }
+            {key: _convert_str_to_date(value) for key, value in row.items()}
             for row in values
         ]
-        tables += [
-            TableSnapshot(
-                table_name=table_name,
-                rows=rows
-            )
-        ]
+        tables += [TableSnapshot(table_name=table_name, rows=rows)]
 
     return DBSnapshot(tables=tables)
 
 
-async def restore_db(*,
-                     dump: dict[str, Any],
-                     conn: AsyncSession) -> DBSnapshot:
+async def restore_db(*, dump: dict[str, Any], conn: AsyncSession) -> DBSnapshot:
     if not dump:
         raise ValueError("Dump is empty")
 
@@ -131,8 +125,7 @@ async def restore_db(*,
         stmt = table.insert().values(values)
         await conn.execute(stmt)
 
-        logger.info("%s: %s rows inserted",
-                    table.name, len(values))
+        logger.info("%s: %s rows inserted", table.name, len(values))
     return snapshot
 
 
@@ -144,13 +137,10 @@ async def get_tables_analytics() -> dict[str, int]:
         for table in table_names[:-1]
     ] + [f"SELECT '{table_names[-1]}' AS name, COUNT(1) AS cnt FROM {table_names[-1]}"]
 
-    query = '\n'.join(query)  # type: ignore
+    query = "\n".join(query)  # type: ignore
     stmt = sa.text(query)  # type: ignore
 
     async with database.session() as ses:
         res = (await ses.execute(stmt)).mappings().all()
 
-    return {
-        r.name: r.cnt
-        for r in res
-    }
+    return {r.name: r.cnt for r in res}

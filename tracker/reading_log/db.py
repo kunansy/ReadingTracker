@@ -21,9 +21,7 @@ class LogRecord(CustomBaseModel):
     material_title: str | None = None
 
 
-def _safe_list_get(lst: list[Any],
-                   index: int,
-                   default: Any = None) -> Any:
+def _safe_list_get(lst: list[Any], index: int, default: Any = None) -> Any:
     try:
         return lst[index]
     except IndexError:
@@ -33,9 +31,10 @@ def _safe_list_get(lst: list[Any],
 async def get_mean_materials_read_pages() -> dict[UUID, Decimal]:
     logger.debug("Getting mean reading read pages count of materials")
 
-    stmt = sa.select(models.ReadingLog.c.material_id,
-                     sa.func.avg(models.ReadingLog.c.count).label('mean')) \
-        .group_by(models.ReadingLog.c.material_id)
+    stmt = sa.select(
+        models.ReadingLog.c.material_id,
+        sa.func.avg(models.ReadingLog.c.count).label("mean"),
+    ).group_by(models.ReadingLog.c.material_id)
 
     async with database.session() as ses:
         mean = {
@@ -47,13 +46,12 @@ async def get_mean_materials_read_pages() -> dict[UUID, Decimal]:
     return mean
 
 
-async def get_log_records(*,
-                          material_id: str | None = None) -> list[LogRecord]:
+async def get_log_records(*, material_id: str | None = None) -> list[LogRecord]:
     logger.debug("Getting all log records")
 
-    stmt = sa.select(models.ReadingLog,
-                     models.Materials.c.title.label('material_title'))\
-        .join(models.Materials)
+    stmt = sa.select(
+        models.ReadingLog, models.Materials.c.title.label("material_title")
+    ).join(models.Materials)
 
     if material_id:
         stmt = stmt.where(models.Materials.c.material_id == material_id)
@@ -76,15 +74,15 @@ async def get_log_records(*,
 async def get_reading_material_titles() -> dict[UUID, str]:
     logger.debug("Getting reading material titles")
 
-    stmt = sa.select(models.Materials.c.material_id,
-                     models.Materials.c.title)\
-        .join(models.Statuses)\
+    stmt = (
+        sa.select(models.Materials.c.material_id, models.Materials.c.title)
+        .join(models.Statuses)
         .where(models.Statuses.c.completed_at == None)
+    )
 
     async with database.session() as ses:
         titles = {
-            material_id: title
-            for material_id, title in (await ses.execute(stmt)).all()
+            material_id: title for material_id, title in (await ses.execute(stmt)).all()
         }
 
     logger.debug("%s reading materials titles got", len(titles))
@@ -92,17 +90,16 @@ async def get_reading_material_titles() -> dict[UUID, str]:
 
 
 async def get_titles() -> dict[UUID, str]:
-    """ Get titles for materials even been read """
+    """Get titles for materials even been read"""
     logger.debug("Getting reading material titles")
 
-    stmt = sa.select(models.Materials.c.material_id,
-                     models.Materials.c.title)\
-        .join(models.Statuses)
+    stmt = sa.select(models.Materials.c.material_id, models.Materials.c.title).join(
+        models.Statuses
+    )
 
     async with database.session() as ses:
         titles = {
-            material_id: title
-            for material_id, title in (await ses.execute(stmt)).all()
+            material_id: title for material_id, title in (await ses.execute(stmt)).all()
         }
 
     logger.debug("%s materials titles got", len(titles))
@@ -112,10 +109,11 @@ async def get_titles() -> dict[UUID, str]:
 async def get_completion_dates() -> dict[UUID, datetime.datetime]:
     logger.debug("Getting completion dates")
 
-    stmt = sa.select(models.Materials.c.material_id,
-                     models.Statuses.c.completed_at) \
-        .join(models.Statuses) \
+    stmt = (
+        sa.select(models.Materials.c.material_id, models.Statuses.c.completed_at)
+        .join(models.Statuses)
         .where(models.Statuses.c.completed_at != None)
+    )
 
     async with database.session() as ses:
         dates = {
@@ -127,10 +125,12 @@ async def get_completion_dates() -> dict[UUID, datetime.datetime]:
     return dates
 
 
-async def data(*,
-               log_records: list[LogRecord] | None = None,
-               completion_dates: dict[UUID, datetime.datetime] | None = None) -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
-    """ Get pairs: (date, info) of all days from start to stop.
+async def data(
+    *,
+    log_records: list[LogRecord] | None = None,
+    completion_dates: dict[UUID, datetime.datetime] | None = None,
+) -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
+    """Get pairs: (date, info) of all days from start to stop.
 
     If the day is empty, material_id is supposed
     as the material_id of the last not empty day.
@@ -166,7 +166,9 @@ async def data(*,
             completion_date = completion_dates.get(last_material_id)
 
         if not (log_records_ := log_records_dict.get(iter_over_dates)):
-            log_record = LogRecord(material_id=last_material_id, count=0, date=iter_over_dates)
+            log_record = LogRecord(
+                material_id=last_material_id, count=0, date=iter_over_dates
+            )
 
             yield iter_over_dates, log_record
             iter_over_dates += step
@@ -191,8 +193,7 @@ async def data(*,
 
 async def is_log_empty() -> bool:
     logger.debug("Checking the log is empty")
-    stmt = sa.select(sa.func.count(1) == 0)\
-        .select_from(models.ReadingLog)
+    stmt = sa.select(sa.func.count(1) == 0).select_from(models.ReadingLog)
 
     async with database.session() as ses:
         is_empty = await ses.scalar(stmt)
@@ -232,20 +233,13 @@ async def get_material_reading_now() -> UUID | None:
     return material_id
 
 
-async def insert_log_record(*,
-                            material_id: str,
-                            count: int,
-                            date: datetime.date) -> None:
-    logger.debug("Inserting log material_id=%s, count=%s, date=%s",
-                 material_id, count, date)
+async def insert_log_record(*, material_id: str, count: int, date: datetime.date) -> None:
+    logger.debug(
+        "Inserting log material_id=%s, count=%s, date=%s", material_id, count, date
+    )
 
-    values = {
-        'material_id': material_id,
-        'count': count,
-        'date': date
-    }
-    stmt = models.ReadingLog \
-        .insert().values(values)
+    values = {"material_id": material_id, "count": count, "date": date}
+    stmt = models.ReadingLog.insert().values(values)
 
     async with database.session() as ses:
         await ses.execute(stmt)
@@ -253,10 +247,9 @@ async def insert_log_record(*,
     logger.debug("Log record inserted")
 
 
-async def is_record_correct(*,
-                            material_id: UUID,
-                            date: datetime.date,
-                            count: int) -> bool:
+async def is_record_correct(
+    *, material_id: UUID, date: datetime.date, count: int
+) -> bool:
     if date > datetime.date.today() or count <= 0:
         raise ValueError("Invalid args")
 
@@ -276,14 +269,15 @@ async def is_record_correct(*,
 
     st = material.status
     if date < st.started_at.date() or st.completed_at and date > st.completed_at.date():
-        logger.warning("Date is not inside the range %s not in [%s; %s]",
-                       date, st.started_at, st.completed_at)
+        logger.warning(
+            "Date is not inside the range %s not in [%s; %s]",
+            date,
+            st.started_at,
+            st.completed_at,
+        )
         return False
 
-    total_pages_read = sum(
-        record.count
-        for record in log_records_task.result()
-    )
+    total_pages_read = sum(record.count for record in log_records_task.result())
     if total_pages_read + count > material.material.pages:
         logger.warning("There are more pages than the material has: ")
         return False

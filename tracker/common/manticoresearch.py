@@ -23,10 +23,10 @@ class Note(CustomBaseModel):
     content: str
     added_at: datetime.datetime
 
-    @field_validator('content')
+    @field_validator("content")
     def remove_tags_from_content(cls, content: str) -> str:
-        """ Remove tags from note content to don't search on it """
-        if (index := content.find('#')) == -1:
+        """Remove tags from note content to don't search on it"""
+        if (index := content.find("#")) == -1:
             return content
 
         return content[:index].strip()
@@ -45,7 +45,7 @@ async def _cursor() -> AsyncGenerator[MysqlCursor, None]:
     new_session = await aiomysql.connect(
         host=settings.MANTICORE_MYSQL_HOST,
         port=settings.MANTICORE_MYSQL_PORT,
-        db=settings.MANTICORE_MYSQL_DB_NAME
+        db=settings.MANTICORE_MYSQL_DB_NAME,
     )
 
     try:
@@ -62,10 +62,9 @@ async def _cursor() -> AsyncGenerator[MysqlCursor, None]:
 
 
 def _get_note_stmt() -> sa.Select:
-    return sa.select(models.Notes.c.note_id,
-                     models.Notes.c.content,
-                     models.Notes.c.added_at) \
-        .where(~models.Notes.c.is_deleted)
+    return sa.select(
+        models.Notes.c.note_id, models.Notes.c.content, models.Notes.c.added_at
+    ).where(~models.Notes.c.is_deleted)
 
 
 async def _get_notes() -> list[Note]:
@@ -73,21 +72,16 @@ async def _get_notes() -> list[Note]:
     stmt = _get_note_stmt()
 
     async with database.session() as ses:
-        notes = [
-            Note(**row)
-            for row in (await ses.execute(stmt)).mappings().all()
-        ]
+        notes = [Note(**row) for row in (await ses.execute(stmt)).mappings().all()]
 
     logger.debug("%s notes got", len(notes))
     return notes
 
 
-async def _get_note(*,
-                    note_id: UUID) -> Note:
+async def _get_note(*, note_id: UUID) -> Note:
     logger.debug("Getting note=%s", note_id)
 
-    stmt = _get_note_stmt() \
-        .where(models.Notes.c.note_id == note_id)
+    stmt = _get_note_stmt().where(models.Notes.c.note_id == note_id)
 
     async with database.session() as ses:
         if note := (await ses.execute(stmt)).mappings().one_or_none():
@@ -95,7 +89,7 @@ async def _get_note(*,
             return Note(**note)
 
     logger.exception("Note=%s not found", note_id)
-    raise ValueError(f'Note {note_id} not found')
+    raise ValueError(f"Note {note_id} not found")
 
 
 async def _drop_table() -> None:
@@ -124,8 +118,7 @@ async def insert_all(notes: list[Note]) -> None:
 
     async with _cursor() as cur:
         await cur.executemany(
-            INSERT_QUERY,
-            (list(note.model_dump().values()) for note in notes)
+            INSERT_QUERY, (list(note.model_dump().values()) for note in notes)
         )
 
     logger.debug("Notes inserted")
@@ -153,10 +146,7 @@ async def insert(note_id: UUID) -> None:
     note = await _get_note(note_id=note_id)
 
     async with _cursor() as cur:
-        await cur.execute(
-            INSERT_QUERY,
-            list(note.model_dump().values())
-        )
+        await cur.execute(INSERT_QUERY, list(note.model_dump().values()))
 
     logger.debug("Note inserted")
 
@@ -208,10 +198,7 @@ async def search(query: str) -> dict[UUID, SearchResult]:
     async with _cursor() as cur:
         await cur.execute(db_query, query)
         results = {
-            UUID(row[0]): SearchResult(
-                replace_substring=row[1],
-                snippet=row[2]
-            )
+            UUID(row[0]): SearchResult(replace_substring=row[1], snippet=row[2])
             for row in await cur.fetchall()
         }
 

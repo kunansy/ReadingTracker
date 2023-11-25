@@ -4,11 +4,11 @@ from typing import TypeAlias
 
 
 class MaterialTypesEnum(str, Enum):
-    book = 'book'
-    article = 'article'
-    course = 'course'
-    lecture = 'lecture'
-    audiobook = 'audiobook'
+    book = "book"
+    article = "article"
+    course = "course"
+    lecture = "lecture"
+    audiobook = "audiobook"
 
 
 MEANS: TypeAlias = dict[MaterialTypesEnum, Decimal]
