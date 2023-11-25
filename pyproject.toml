@@ -2,11 +2,11 @@
 line-length = 150
 ignore = ["E711","E712"]
 
-target-version = "py311"
+target-version = "py312"
 
 [tool.black]
 line-length=90
-target-version = ["py311"]
+target-version = ["py312"]
 workers = 10
 exclude = "protos"
 
@@ -19,7 +19,7 @@ exclude = "backup_pb2_grpc.py"
 builtins-ignorelist = ["max", "min", "format"]
 
 [tool.mypy]
-python_version = 3.11
+python_version = 3.12
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
@@ -34,7 +34,7 @@ authors = ["kunansy <k@kunansy.ru>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.12"
 SQLAlchemy = "~2.0.0"
 pydantic = "~2.5.2"
 environs = "~9.5.0"
@@ -56,15 +56,15 @@ speechrecognition = "~3.10.0"
 pyaudio = "~0.2.13"
 pydub = "~0.25.1"
 uuid6 = "~2023.5.2"
-grpcio = "~1.56.0"
-grpcio-tools = "~1.56.0"
+grpcio = "~1.59.0"
+grpcio-tools = "~1.59.0"
 types-protobuf = "^4.23.0.1"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "~1.7.1"
 flake8 = "~6.1.0"
 bumpversion = "~0.6.0"
-greenlet = "~2.0.1"
+greenlet = "~3.0.1"
 ruff = "~0.1.6"
 pytest = "~7.4.0"
 pytest-asyncio = "~0.21.0"
