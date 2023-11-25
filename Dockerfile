@@ -16,7 +16,7 @@ RUN poetry config virtualenvs.create false \
     && poetry install --only main -n \
     && ./entrypoint.sh \
     && rm poetry.lock pyproject.toml entrypoint.sh  \
-    && apt-get remove gcc g++ build-essention cargo pkg-config -y \
+    && apt-get remove gcc g++ build-essential cargo pkg-config -y \
     && apt-get autoremove -y \
     && apt-get clean \
     && apt-get autoclean \
