@@ -138,20 +138,8 @@ async def get_span_report(span: schemas.GetSpanReportRequest):
         "total_materials_completed": span_analysis.materials_analytics.total,
 
         "read_items": span_analysis.reading_analytics.stats,
-        "reading_total": span_analysis.reading.total,
-        "reading_median": span_analysis.reading.median,
-        "reading_mean": span_analysis.reading.mean,
-        "reading_lost_count": span_analysis.reading.lost_pages,
-        "reading_zero_days": span_analysis.reading.zero_count,
-        "reading_would_be_total": span_analysis.reading.would_be_total,
-
-        "notes_total": span_analysis.notes.total,
-        "notes_median": span_analysis.notes.median,
-        "notes_mean": span_analysis.notes.mean,
-        "notes_lost_count": span_analysis.notes.lost_pages,
-        "notes_zero_days": span_analysis.notes.zero_count,
-        "notes_would_be_total": span_analysis.notes.would_be_total,
-
+        "reading": span_analysis.reading.dump(),
+        "notes": span_analysis.notes.dump(),
         "repeats_total": span_analysis.repeat_analytics.repeats_count,
         "repeat_unique_materials_count": span_analysis.repeat_analytics.unique_materials_count,
     }
