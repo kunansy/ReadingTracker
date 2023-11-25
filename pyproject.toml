@@ -18,6 +18,14 @@ exclude = "backup_pb2_grpc.py"
 #allow these var/func names
 builtins-ignorelist = ["max", "min", "format"]
 
+[tool.mypy]
+python_version = 3.11
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "*.schemas.*"
+ignore_errors = true
+
 [tool.poetry]
 name = "readingtracker"
 version = "2.19.7"
