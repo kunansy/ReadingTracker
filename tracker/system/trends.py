@@ -123,6 +123,16 @@ class SpanStatistics:
     def would_be_total(self) -> int:
         return self.total + self.lost_pages
 
+    def dump(self) -> dict[str, Any]:
+        return {
+            "total": self.total,
+            "median": self.median,
+            "mean": self.mean,
+            "lost_pages": self.lost_pages,
+            "zero_days": self.zero_days,
+            "would_be_total": self.would_be_total,
+        }
+
     def __str__(self) -> str:
         return '\n'.join(str(day) for day in self.data)
 
