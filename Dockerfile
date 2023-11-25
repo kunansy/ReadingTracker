@@ -8,7 +8,7 @@ COPY --from=kunansy/ffmpeg:5.1.1 /usr/local/bin/ffprobe /usr/local/bin/ffprobe
 
 RUN apt-get update \
     && apt-get upgrade -y \
-    && apt-get -y install gcc curl portaudio19-dev flac libasound-dev g++ \
+    && apt-get -y install gcc curl portaudio19-dev flac libasound-dev g++ libffi-dev \
     && pip install -U pip poetry --no-cache-dir
 
 COPY poetry.lock pyproject.toml entrypoint.sh /
