@@ -2,7 +2,7 @@ lint: lint-black
 	ruff . && mypy .
 
 lint-flake:
-	flake8 && mypy .
+	flake8
 
 test:
 	pytest -n 7
