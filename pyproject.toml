@@ -56,6 +56,7 @@ flake8-builtins = "^2.1.0"
 flake8-comments = "^0.1.2"
 flake8-absolute-import = "^1.0.0.1"
 flake8-markdown = "~0.5.0"
+pytest-xdist = "~3.5.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
