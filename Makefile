@@ -7,5 +7,11 @@ lint-flake:
 test:
 	pytest -n 7
 
+lint-black:
+	black --check --diff --color .
+
+format:
+	black .
+
 run:
 	PYTHONPATH=. python3 tracker/main.py
