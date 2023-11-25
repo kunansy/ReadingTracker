@@ -10,6 +10,14 @@ target-version = ["py311"]
 workers = 10
 exclude = "protos"
 
+[tool.flake8]
+max-line-length = 150
+#comparison with None, comparison with bool, line break before/after binary op,
+ignore = ["E711", "E712", "W503", "W504"]
+exclude = "backup_pb2_grpc.py"
+#allow these var/func names
+builtins-ignorelist = ["max", "min", "format"]
+
 [tool.poetry]
 name = "readingtracker"
 version = "2.19.7"
@@ -64,6 +72,7 @@ flake8-absolute-import = "^1.0.0.1"
 flake8-markdown = "~0.5.0"
 pytest-xdist = "~3.5.0"
 black = "~23.11.0"
+flake8-pyproject = "~1.2.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
