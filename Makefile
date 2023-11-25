@@ -1,4 +1,4 @@
-lint:
+lint: lint-black
 	ruff . && mypy .
 
 lint-flake:
