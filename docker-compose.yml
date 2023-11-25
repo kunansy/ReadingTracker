@@ -61,7 +61,7 @@ services:
       test: exit 0
 
   reading-tracker:
-    image: kunansy/reading_tracker:2.20.34
+    image: kunansy/reading_tracker:2.21.0
     container_name: reading-tracker
     env_file: .env
     restart: always
