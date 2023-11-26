@@ -22,7 +22,7 @@ services:
       retries: 3
 
   tracker-search:
-    image: kunansy/tracker_search:6.0.2
+    image: kunansy/tracker_search:6.2.12
     container_name: tracker-search
     restart: always
     ports:
