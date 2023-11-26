@@ -56,13 +56,12 @@ async def backup() -> str | None:
     async with grpc_chan(cfg.BACKUP_TARGET) as channel:
         stub = backup_pb2_grpc.GoogleDriveStub(channel)
         response = await stub.Backup(
-            backup_pb2.BackupRequest(
+            backup_pb2.DBRequest(
                 db_host=cfg.DB_HOST,
                 db_port=cfg.DB_PORT,
                 db_username=cfg.DB_USERNAME,
                 db_password=cfg.DB_PASSWORD,
                 db_name=cfg.DB_NAME,
-                delete_after=False,
             )
         )
 
