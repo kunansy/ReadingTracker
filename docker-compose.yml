@@ -72,7 +72,8 @@ services:
        - "127.0.0.1:${API_PORT}:8000"
     entrypoint: ["gunicorn", "tracker.main:app", "--bind", "0.0.0.0:8000", "--workers",
                  "${API_ASGI_WORKERS}", "--worker-class", "uvicorn.workers.UvicornWorker",
-                 "--access-logfile", "-", "--error-logfile", "-", "--log-level", "${LOGGER_LEVEL}"]
+                 "--access-logfile", "-", "--error-logfile", "-", "--log-level", "${LOGGER_LEVEL}",
+                 "--forwarded-allow-ips", "*"]
     networks:
       - tracker-net
     volumes:
