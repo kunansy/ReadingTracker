@@ -65,6 +65,7 @@ def _convert_str_to_date(value: JSON_FIELD_TYPES) -> JSON_FIELD_TYPES | DATE_TYP
         or _is_uuid(value)
         or _contains_letter(value)
         or value.isdigit()
+        or value == "-"
     ):
         return value
 
