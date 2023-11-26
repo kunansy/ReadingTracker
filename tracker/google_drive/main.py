@@ -55,7 +55,7 @@ async def backup() -> str | None:
 
     async with grpc_chan(cfg.BACKUP_TARGET) as channel:
         stub = backup_pb2_grpc.GoogleDriveStub(channel)
-        response = await stub.Backup(
+        response: backup_pb2.BackupReply = await stub.Backup(
             backup_pb2.DBRequest(
                 db_host=cfg.DB_HOST,
                 db_port=cfg.DB_PORT,
@@ -65,7 +65,7 @@ async def backup() -> str | None:
             )
         )
 
-    file_id = getattr(response, "file_id", None)
+    file_id = response.file_id
     exec_time = round(time.perf_counter() - start, 2)
     logger.info("Backup completed for %ss, file_id: '%s'", exec_time, file_id)
 
