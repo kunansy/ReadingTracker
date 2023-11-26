@@ -100,7 +100,7 @@ def _read_local_dump(filepath: Path) -> dict[str, Any]:
         return orjson.loads(f.read())
 
 
-def _dump_json(data: dict[str, Any], *, filepath: Path) -> None:
+def dump_json(data: dict[str, Any], *, filepath: Path) -> None:
     dump_data = orjson.dumps(data)
     with filepath.open("wb") as f:
         f.write(dump_data)
@@ -127,19 +127,17 @@ async def restore(*, dump_path: Path | None = None) -> db.DBSnapshot:
 
 
 async def backup() -> str | None:
-    import tracker.common.settings as cfg
-
     start = time.perf_counter()
 
-    async with grpc_chan(cfg.BACKUP_TARGET) as channel:
+    async with grpc_chan(settings.BACKUP_TARGET) as channel:
         stub = backup_pb2_grpc.GoogleDriveStub(channel)
         response: backup_pb2.BackupReply = await stub.Backup(
             backup_pb2.DBRequest(
-                db_host=cfg.DB_HOST,
-                db_port=cfg.DB_PORT,
-                db_username=cfg.DB_USERNAME,
-                db_password=cfg.DB_PASSWORD,
-                db_name=cfg.DB_NAME,
+                db_host=settings.DB_HOST,
+                db_port=settings.DB_PORT,
+                db_username=settings.DB_USERNAME,
+                db_password=settings.DB_PASSWORD,
+                db_name=settings.DB_NAME,
             )
         )
 
