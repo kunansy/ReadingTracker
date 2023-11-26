@@ -60,9 +60,9 @@ services:
     healthcheck:
       test: exit 0
 
-  reading-tracker:
+  tracker-app:
     image: kunansy/reading_tracker:2.21.0
-    container_name: reading-tracker
+    container_name: tracker-app
     env_file: .env
     restart: always
     depends_on:
