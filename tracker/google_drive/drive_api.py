@@ -7,9 +7,11 @@ from typing import Any, AsyncGenerator
 import aiogoogle
 import orjson
 from aiogoogle.auth.creds import ServiceAccountCreds
+from grpc.aio import insecure_channel as grpc_chan
 
 from tracker.common import settings
 from tracker.common.logger import logger
+from tracker.protos import backup_pb2_grpc, backup_pb2
 
 
 SCOPES = ["https://www.googleapis.com/auth/drive"]
@@ -88,7 +90,10 @@ async def _get_file_content(file_id: str) -> dict[str, Any]:
 
 
 async def get_dump() -> dict[str, Any]:
-    if not (dump_file_id := await _get_last_dump_id()):
-        raise ValueError("Dump not found")
+    async with grpc_chan(settings.BACKUP_TARGET) as channel:
+        stub = backup_pb2_grpc.GoogleDriveStub(channel)
+        response: backup_pb2.DownloadReply = await stub.DownloadLatestBackup(
+            backup_pb2.Empty()
+        )
 
-    return await _get_file_content(dump_file_id)
+    return orjson.loads(response.file_content)
