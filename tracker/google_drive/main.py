@@ -45,7 +45,7 @@ async def main() -> None:
     args = parse_args()
 
     if args.backup:
-        raise NotImplementedError
+        await drive_api.backup()
     elif args.restore:
         await drive_api.restore()
     elif args.get_last_dump:
