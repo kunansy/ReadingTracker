@@ -34,10 +34,6 @@ jobs:
       run: |
         poetry install --no-interaction --no-root
 
-    - name: Check code by flake8
+    - name: Check code
       run: |
-        poetry run flake8
-
-    - name: Check code by mypy
-      run: |
-        poetry run mypy .
+        make lint
