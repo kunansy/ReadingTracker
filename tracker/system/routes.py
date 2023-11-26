@@ -8,7 +8,7 @@ from fastapi.templating import Jinja2Templates
 from pydantic import conint
 
 from tracker.common.logger import logger
-from tracker.google_drive import main as drive_api
+from tracker.google_drive import drive_api
 from tracker.google_drive.db import get_tables_analytics
 from tracker.system import db, schemas, trends
 
