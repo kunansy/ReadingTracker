@@ -46,7 +46,7 @@ services:
       - TELEMETRY=0
 
   tracker-backup:
-    image: kunansy/fast-backup:0.4.1
+    image: kunansy/fast-backup:0.5.0
     restart: always
     container_name: tracker-backup
     env_file: .env
