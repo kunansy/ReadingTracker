@@ -218,7 +218,7 @@ class UpdateNote(Note):
         )
 
     def get_material_id(self) -> str | None:
-        if self.material_id == UUID(int=0):
+        if self.material_id in (UUID(int=0), None):
             return None
         return str(self.material_id)
 
