@@ -1,3 +1,5 @@
+NUMCPU := $(shell nproc 2> /dev/null || sysctl -n hw.ncpu 2> /dev/null)
+
 lint: lint-black
 	ruff . && mypy .
 
@@ -8,7 +10,7 @@ test:
 	pytest -n 7
 
 lint-black:
-	black --check --diff --color .
+	@black --check --diff --workers $(NUMCPU) --color .
 
 format:
 	black .
