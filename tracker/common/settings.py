@@ -71,7 +71,10 @@ with env.prefixed("BACKUP_"):
     BACKUP_TARGET = f"{BACKUP_HOST}:{BACKUP_PORT}"
 
 path = os.environ.get("PATH")
+metrics_dir = os.environ.get("PROMETHEUS_MULTIPROC_DIR")
+
 os.environ.clear()
 
 if path:
     os.environ["PATH"] = path
+os.environ["PROMETHEUS_MULTIPROC_DIR"] = metrics_dir  # type: ignore
