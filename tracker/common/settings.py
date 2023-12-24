@@ -9,7 +9,7 @@ from marshmallow.validate import OneOf
 env = Env()
 env.read_env()
 
-DATE_FORMAT = "%d-%m-%Y"
+DATE_FORMAT = "%Y-%m-%d"
 DATETIME_FORMAT = f"{DATE_FORMAT} %H:%M:%S"
 
 DSN_TEMPLATE = "postgresql+asyncpg://{username}:{password}@{host}:{port}/{db_name}"
