@@ -5,10 +5,8 @@ from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import ORJSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
-
 from redis import asyncio as aioredis
 
 from tracker.cards.routes import router as cards_router
