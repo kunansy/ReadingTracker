@@ -8,10 +8,12 @@ from fastapi.templating import Jinja2Templates
 from pydantic import conint
 
 from tracker.common.logger import logger
+from tracker.common.schemas import ORJSONEncoder
 from tracker.google_drive import drive_api
 from tracker.google_drive.db import get_tables_analytics
 from tracker.system import db, schemas, trends
 
+from fastapi_cache.decorator import cache
 
 router = APIRouter(prefix="/system", tags=["system"], default_response_class=HTMLResponse)
 templates = Jinja2Templates(directory="templates")
@@ -27,6 +29,7 @@ async def system_view():
 
 
 @router.get("/graphics")
+@cache(namespace="system", coder=ORJSONEncoder, expire=7)
 async def graphic(
     request: Request, material_id: UUID | None = None, last_days: conint(ge=1) = 7  # type: ignore
 ):
@@ -122,6 +125,7 @@ async def restore(request: Request):
 @router.post(
     "/report", response_model=schemas.GetSpanReportResponse, response_class=ORJSONResponse
 )
+@cache(namespace="system", coder=ORJSONEncoder, expire=5)
 async def get_span_report(span: schemas.GetSpanReportRequest):
     """Get analytics for the span: analyze materials,
     read items and inserted notes"""
