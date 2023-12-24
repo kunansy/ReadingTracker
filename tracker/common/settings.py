@@ -21,6 +21,10 @@ if (version_file := Path("VERSION")).exists():
 DATA_DIR = Path("data/")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
+with env.prefixed("CACHE_"):
+    CACHE_URL = env("URL", "redis://tracker-cache")
+    CACHE_PASSWORD = env("CACHE_PASSWORD")
+
 with env.prefixed("API_"):
     API_DEBUG = env.bool("DEBUG", False)
 
