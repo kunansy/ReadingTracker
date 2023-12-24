@@ -106,7 +106,7 @@ class SpanStatistics:
             "total": self.total,
             "median": self.median,
             "mean": self.mean,
-            "lost_pages": self.lost_pages,
+            "lost_count": self.lost_pages,
             "zero_days": self.zero_days,
             "would_be_total": self.would_be_total,
         }
