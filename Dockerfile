@@ -2,6 +2,7 @@ FROM python:3.12-slim-bullseye
 
 LABEL maintainer="<k@kunansy.ru>"
 ENV PYTHONUNBUFFERED 1
+ENV PROMETHEUS_MULTIPROC_DIR=./metrics/
 
 COPY --from=kunansy/ffmpeg:5.1.1 /usr/local/bin/ffmpeg /usr/local/bin/ffmpeg
 COPY --from=kunansy/ffmpeg:5.1.1 /usr/local/bin/ffprobe /usr/local/bin/ffprobe

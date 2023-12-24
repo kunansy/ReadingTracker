@@ -101,6 +101,7 @@ services:
       - tracker-net
     volumes:
       - ./data:/app/data:rw
+      - ./metrics:/app/metrics:rw
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/readiness || exit 1"]
       interval: 10s
