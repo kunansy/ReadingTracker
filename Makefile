@@ -10,7 +10,7 @@ test:
 	pytest -n auto
 
 lint-black:
-	@black --check --diff --workers $(NUMCPU) --color .
+	black --check --diff --workers $(NUMCPU) --color .
 
 format:
 	black .
