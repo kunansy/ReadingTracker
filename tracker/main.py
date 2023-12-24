@@ -46,6 +46,7 @@ async def startup():
         encoding="utf8",
         decode_responses=True,
     )
+    assert await redis.ping()
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
 
