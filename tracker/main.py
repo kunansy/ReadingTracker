@@ -6,6 +6,11 @@ from fastapi.responses import ORJSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from fastapi_cache import FastAPICache
+from fastapi_cache.backends.redis import RedisBackend
+
+from redis import asyncio as aioredis
+
 from tracker.cards.routes import router as cards_router
 from tracker.common import database, manticoresearch, settings
 from tracker.common.logger import logger
@@ -31,6 +36,17 @@ app.include_router(notes_router)
 app.include_router(materials_router)
 app.include_router(cards_router)
 app.include_router(system_router)
+
+
+@app.on_event("startup")
+async def startup():
+    redis = aioredis.from_url(
+        settings.CACHE_URL,
+        password=settings.CACHE_PASSWORD,
+        encoding="utf8",
+        decode_responses=True,
+    )
+    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
 
 @app.exception_handler(database.DatabaseException)
