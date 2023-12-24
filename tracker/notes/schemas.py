@@ -183,7 +183,7 @@ class Note(CustomBaseModel):
 
     @field_validator("content")
     def fix_double_spaces(cls, content: str) -> str:
-        return ''.join(content.split(" "))
+        return "".join(content.split(" "))
 
     @property
     def link_id(self) -> UUID | None:
