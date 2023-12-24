@@ -58,6 +58,7 @@ uuid6 = "~2023.5.2"
 grpcio = "~1.59.0"
 grpcio-tools = "~1.59.0"
 types-protobuf = "^4.23.0.1"
+fastapi-cache2 = {extras = ["redis"], version = "^0.2.1"}
 
 [tool.poetry.group.dev.dependencies]
 mypy = "~1.8.0"
@@ -80,6 +81,7 @@ flake8-markdown = "~0.5.0"
 pytest-xdist = "~3.5.0"
 black = "~23.12.1"
 flake8-pyproject = "~1.2.3"
+types-redis = "^4.6.0.11"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
