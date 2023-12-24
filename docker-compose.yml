@@ -65,6 +65,8 @@ services:
     container_name: tracker-cache
     restart: always
     env_file: .env
+    command: >
+      --requirepass ${CACHE_PASSWORD}
     networks:
       - tracker-net
     ports:
