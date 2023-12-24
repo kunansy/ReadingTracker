@@ -1,4 +1,5 @@
 import asyncio
+import os
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException, RequestValidationError
@@ -8,6 +9,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi_cache import FastAPICache
 from fastapi_cache.backends.redis import RedisBackend
 from redis import asyncio as aioredis
+from starlette_exporter import PrometheusMiddleware, handle_metrics
 
 from tracker.cards.routes import router as cards_router
 from tracker.common import database, manticoresearch, settings
@@ -25,6 +27,18 @@ app = FastAPI(
     debug=settings.API_DEBUG,
     default_response_class=ORJSONResponse,
 )
+
+app.add_middleware(
+    PrometheusMiddleware,
+    app_name="tracker",
+    prefix="tracker",
+    labels={
+        "server_name": os.getenv("HOSTNAME"),
+    },
+    group_paths=True,
+    skip_paths=["/readiness", "/liveness"],
+)
+app.add_route("/metrics", handle_metrics)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
