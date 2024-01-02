@@ -19,7 +19,7 @@ jobs:
     - name: Install Poetry
       run: |
         sudo apt-get install -y portaudio19-dev libasound-dev
-        pip install pipx black
+        pip install pipx black ruff mypy
         pipx install poetry
 
     - name: Validate the pyproject.toml
