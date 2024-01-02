@@ -7,7 +7,7 @@ lint-flake:
 	flake8
 
 test:
-	pytest -n auto
+	pytest -n 7
 
 lint-black:
 	black --check --diff --workers $(NUMCPU) --color .
