@@ -213,7 +213,7 @@ async def get_all_notes_count() -> dict[UUID, int]:
     stmt = (
         sa.select(
             models.Notes.c.material_id.label("material_id"),
-            sa.func.count(1).label("count"),
+            sa.func.count(1).label("count"),  # type: ignore
         )
         .select_from(models.Notes)
         .where(~models.Notes.c.is_deleted)

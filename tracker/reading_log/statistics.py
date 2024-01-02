@@ -158,7 +158,7 @@ async def _get_median_pages_read_per_day() -> float:
 
 async def contains(*, material_id: UUID) -> bool:
     stmt = (
-        sa.select(sa.func.count(1) >= 1)
+        sa.select(sa.func.count(1) >= 1)  # type: ignore
         .select_from(models.ReadingLog)
         .where(models.ReadingLog.c.material_id == material_id)
     )
@@ -224,7 +224,7 @@ async def _would_be_total() -> int:
 
 
 async def _get_total_materials_completed() -> int:
-    stmt = sa.select(sa.func.count(1)).where(models.Statuses.c.completed_at != None)
+    stmt = sa.select(sa.func.count(1)).where(models.Statuses.c.completed_at != None)  # type: ignore
 
     async with database.session() as ses:
         return await ses.scalar(stmt) or 0

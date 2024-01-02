@@ -193,7 +193,7 @@ async def data(
 
 async def is_log_empty() -> bool:
     logger.debug("Checking the log is empty")
-    stmt = sa.select(sa.func.count(1) == 0).select_from(models.ReadingLog)
+    stmt = sa.select(sa.func.count(1) == 0).select_from(models.ReadingLog)  # type: ignore
 
     async with database.session() as ses:
         is_empty = await ses.scalar(stmt)

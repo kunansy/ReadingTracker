@@ -327,7 +327,7 @@ async def _reading_analytics(span: TimeSpan) -> _MaterialAnalytics:
 async def _get_repeats_count(span: TimeSpan) -> _RepeatAnalytics:
     stmt = (
         sa.select(
-            sa.func.count(1).label("cnt"),
+            sa.func.count(1).label("cnt"),  # type: ignore
             sa.func.count(models.Repeats.c.material_id.distinct()).label("ucnt"),
         )
         .select_from(models.Repeats)

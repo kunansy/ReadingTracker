@@ -828,7 +828,7 @@ async def swap_order(material_id: UUID, new_material_index: int) -> None:
 
 async def is_reading(*, material_id: UUID) -> bool:
     stmt = (
-        sa.select(sa.func.count(1) == 1)
+        sa.select(sa.func.count(1) == 1)  # type: ignore
         .select_from(models.Statuses)
         .where(models.Statuses.c.material_id == material_id)
         .where(models.Statuses.c.completed_at == None)

@@ -101,7 +101,7 @@ async def test_get_notes(material_id: UUID | None):
         ), "Note with wrong material id found"
 
     stmt = (
-        sa.select(sa.func.count(1))
+        sa.select(sa.func.count(1))  # type: ignore
         .select_from(models.Notes)
         .where(~models.Notes.c.is_deleted)
     )
