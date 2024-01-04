@@ -275,3 +275,21 @@ class GetNoteJsonResponse(CustomBaseModel):
     is_deleted: bool
     note_number: int
     links_count: int | None
+
+
+class AutocompletionResponse(CustomBaseModel):
+    autocompletions: list[str]
+
+    @field_validator("autocompletions")
+    def strip_variants(cls, autocompletions: list[str]) -> list[str]:
+        return [variant.strip() for variant in autocompletions]
+
+    @field_validator("autocompletions")
+    def remove_new_lines(cls, autocompletions: list[str]) -> list[str]:
+        return [
+            variant.replace("<br/>", "")
+            .replace("<br>", "")
+            .replace("\n", "")
+            .replace("\r", "")
+            for variant in autocompletions
+        ]
