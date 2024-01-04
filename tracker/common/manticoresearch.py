@@ -206,6 +206,25 @@ async def search(query: str) -> dict[UUID, SearchResult]:
     return results
 
 
+async def autocompletion(*, query: str, limit: int = 5) -> list[str]:
+    from tracker.notes.schemas import BOLD_MARKER
+
+    logger.debug("Searching autocompletions for: '%s'", query)
+
+    db_query = f"""
+    SELECT 
+       HIGHLIGHT({{snippet_separator='',before_match='<span class={BOLD_MARKER}>',after_match='</span>'}})
+       FROM notes WHERE MATCH('@content {query}* ') ORDER BY WEIGHT() DESC LIMIT %s
+   """
+
+    async with _cursor() as cur:
+        await cur.execute(db_query, limit)
+        autocompletions = [row[0] for row in await cur.fetchall()]
+
+    logger.debug("%s autocompletions found", len(autocompletions))
+    return autocompletions
+
+
 async def readiness() -> bool:
     query = "SHOW STATUS like 'uptime'"
 
