@@ -87,16 +87,18 @@ const recordAudio = async () => {
 
 let isStarted = false;
 
-document.getElementById('start').addEventListener("click", async () => {
-    if (isStarted) {
-        return;
-    }
+if (document.getElementById("start")) {
+    document.getElementById('start').addEventListener("click", async () => {
+        if (isStarted) {
+            return;
+        }
 
-    isStarted = true;
-    const recorder = await recordAudio();
-    console.log("Listening started");
-    recorder.start();
-});
+        isStarted = true;
+        const recorder = await recordAudio();
+        console.log("Listening started");
+        recorder.start();
+    });
+}
 
 const getTags = async (material_id) => {
     let resp = await fetch(`/notes/tags?material_id=${material_id}`, {
@@ -107,25 +109,27 @@ const getTags = async (material_id) => {
     return await resp.json();
 };
 
-document.getElementById('input_material_id').addEventListener("input", async (e) => {
-    const materialId = e.target.value;
-    if (!(materialId && isUuid(materialId))) {
-        return;
-    }
+if (document.getElementById("input_material_id")) {
+    document.getElementById('input_material_id').addEventListener("input", async (e) => {
+        const materialId = e.target.value;
+        if (!(materialId && isUuid(materialId))) {
+            return;
+        }
 
-    const ul = document.getElementById("tags-list");
-    ul.innerHTML = "";
+        const ul = document.getElementById("tags-list");
+        ul.innerHTML = "";
 
-    let materialTags = await getTags(materialId);
-    materialTags = materialTags['tags'];
+        let materialTags = await getTags(materialId);
+        materialTags = materialTags['tags'];
 
-    for (let tag of materialTags) {
-        const li = document.createElement("li");
-        li.setAttribute("value", tag);
-        tag = `#${tag}`;
-        li.onclick = () => {addTag(tag)};
-        li.textContent = tag;
+        for (let tag of materialTags) {
+            const li = document.createElement("li");
+            li.setAttribute("value", tag);
+            tag = `#${tag}`;
+            li.onclick = () => {addTag(tag)};
+            li.textContent = tag;
 
-        ul.append(li);
-    }
-});
+            ul.append(li);
+        }
+    });
+}
