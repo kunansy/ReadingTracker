@@ -348,3 +348,10 @@ async def get_tags(material_id: UUID):
     tags = await db.get_sorted_tags(material_id=material_id)
 
     return {"tags": tags}
+
+
+@router.get("/autocompletion", response_model=schemas.AutocompletionResponse)
+async def autocompletion(query: str, limit: int = 10):
+    autocompletions = await manticoresearch.autocompletion(query=query, limit=limit)
+
+    return {"autocompletions": autocompletions}
