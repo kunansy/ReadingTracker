@@ -68,23 +68,25 @@ class Note(CustomBaseModel):
     def __str__(self) -> str:
         return schemas.demark_note(self.content)
 
-    def _mark_tags_as_links(self) -> str:
+    @classmethod
+    def _mark_tags_with_ref(cls, text: str, tags: set[str]) -> str:
         from tracker.notes.routes import get_notes, router
 
         search_url = router.url_path_for(get_notes.__name__)
 
-        content = self.content
-        for tag in self.tags:
-            content = content.replace(
-                f"#{tag}",
-                f'<a href={settings.TRACKER_URL}{search_url}?tags_query={tag} target="_blank">#{tag}</a>',
+        for tag in tags:
+            link_text = f"#{tag}"
+            text = text.replace(
+                link_text,
+                f'<a href={settings.TRACKER_URL}{search_url}?tags_query={tag} target="_blank">{link_text}</a>',
             )
 
-        return content
+        return text
 
     @property
     def content_html(self) -> str:
-        return self._mark_tags_as_links()
+        content = self._mark_tags_with_ref(self.content, self.tags)
+        return content
 
 
 def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[int]]:
