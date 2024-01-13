@@ -10,7 +10,7 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import field_validator
 from pyvis.network import Network
 
-from tracker.common import database
+from tracker.common import database, settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
@@ -67,6 +67,24 @@ class Note(CustomBaseModel):
 
     def __str__(self) -> str:
         return schemas.demark_note(self.content)
+
+    def _mark_tags_as_links(self) -> str:
+        from tracker.notes.routes import get_notes, router
+
+        search_url = router.url_path_for(get_notes.__name__)
+
+        content = self.content
+        for tag in self.tags:
+            content = content.replace(
+                f"#{tag}",
+                f'<a href={settings.TRACKER_URL}{search_url}?tags_query={tag} target="_blank">#{tag}</a>',
+            )
+
+        return content
+
+    @property
+    def content_html(self) -> str:
+        return self._mark_tags_as_links()
 
 
 def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[int]]:
