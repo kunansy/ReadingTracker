@@ -106,4 +106,5 @@
     {% import 'errors/not_found.html' as not_found %}
     {% call not_found.not_found('notes') %} {% endcall %}
 {% endif %}
+<script src="{{ url_for('static', path='js/notes.js')}}"></script>
 {% endblock main %}
