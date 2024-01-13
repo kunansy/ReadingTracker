@@ -88,7 +88,7 @@
                 {% if note.title %}
                     <p class="note-title large-text"> «{{ note.title }}» </p>
                 {% endif %}
-                <p class="note-content"> {{ note.content | safe }} </p>
+                <p class="note-content"> {{ note.content_html | safe }} </p>
                 <p class="note-page"> {{ page_name }}: {{ note.page }} </p>
                 <p class="medium-text" title="How many notes link to this one"> Links count: {{ note.links_count }} </p>
             </div>
