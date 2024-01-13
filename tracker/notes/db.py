@@ -83,9 +83,25 @@ class Note(CustomBaseModel):
 
         return text
 
+    @classmethod
+    def _mark_link_with_ref(cls, text: str, link_id: str | UUID | None) -> str:
+        if not link_id:
+            return text
+
+        from tracker.notes.routes import get_note, router
+
+        note_url = router.url_path_for(get_note.__name__)
+        link_text = f"[[{link_id}]]"
+
+        return text.replace(
+            link_text,
+            f'<a id="link-ref" href={settings.TRACKER_URL}{note_url}?note_id={link_id} target="_blank">{link_text}</a>',
+        )
+
     @property
     def content_html(self) -> str:
         content = self._mark_tags_with_ref(self.content, self.tags)
+        content = self._mark_link_with_ref(content, self.link_id)
         return content
 
 
