@@ -133,3 +133,24 @@ if (document.getElementById("input_material_id")) {
         }
     });
 }
+
+const links = document.querySelectorAll("a#link-ref");
+if (links) {
+    links.forEach((link) => {
+        link.addEventListener("mouseover", async (e) => {
+            const link_id = e.target.textContent.replace("[[", "").replace("]]", "");
+
+            const cache = localStorage.getItem(`link-ref-${link_id}`);
+            // TODO: it works only from cache
+            if (cache) {
+                link.title = cache;
+            } else {
+                const note = await getNote(link_id);
+                const content = note["content"];
+
+                localStorage.setItem(`link-ref-${link_id}`, content);
+                link.title = content;
+            }
+        })
+    })
+}
