@@ -42,6 +42,8 @@ div.group {
 .material_title {
     margin: auto;
     font-size: 6vh;
+    max-width: 75%;
+    text-align: center;
 }
 .chapter_number {
     margin: 4vh auto 1vh;
