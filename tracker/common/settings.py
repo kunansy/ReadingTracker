@@ -26,8 +26,11 @@ TRACKER_URL = env(
 )
 
 with env.prefixed("CACHE_"):
-    CACHE_URL = env("URL", "redis://tracker-cache")
+    _CACHE_URL = env("URL", "redis://tracker-cache")
+    _CACHE_PORT = env.int("PORT", 6379)
     CACHE_PASSWORD = env("PASSWORD")
+
+CACHE_URL = f"{_CACHE_URL}:{_CACHE_PORT}"
 
 with env.prefixed("API_"):
     API_DEBUG = env.bool("DEBUG", False)
