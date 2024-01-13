@@ -21,6 +21,10 @@ if (version_file := Path("VERSION")).exists():
 DATA_DIR = Path("data/")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
+TRACKER_URL = env(
+    "TRACKER_URL", "http://tracker-app:8000", validate=lambda url: not url.endswith("/")
+)
+
 with env.prefixed("CACHE_"):
     CACHE_URL = env("URL", "redis://tracker-cache")
     CACHE_PASSWORD = env("PASSWORD")
