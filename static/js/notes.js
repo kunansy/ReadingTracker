@@ -154,3 +154,46 @@ if (links) {
         })
     })
 }
+
+const contentInput = document.getElementById("input-content");
+if (contentInput) {
+    contentInput.addEventListener("keyup", async (e) => {
+        const text = e.target.value;
+
+        const resp = await fetch(
+            `https://speller.yandex.net/services/spellservice.json/checkText?text=${text.replaceAll(" ", "+")}`,
+            {
+                method: "GET",
+                headers: {'Content-type': 'application/json'},
+            }
+        );
+
+        const errata = await resp.json();
+
+        if (errata.length === 0) {
+            document.getElementById("input-content-errata").innerHTML = '';
+        }
+        else {
+            const alert = document.getElementById("input-content-errata");
+            const image = document.createElement("img");
+
+            image.id = "input-content-errata-img";
+            image.src = "/static/errata-alert.png";
+
+            alert.title = "";
+
+            if (!alert.children.namedItem("input-content-errata-img")) {
+                alert.appendChild(image);
+            }
+
+            let isFirst = true;
+            for (let erratum of errata) {
+                if (!isFirst) {
+                    alert.title += '\n';
+                }
+                isFirst = false;
+                alert.title += `${erratum["word"]} – ${erratum["s"].join(", ")}`
+            }
+        }
+    })
+}
