@@ -62,3 +62,8 @@ legend.add-note-legend {
     justify-content: center;
     align-items: center;
 }
+
+#input-content-errata {
+    display: flex;
+    margin: auto;
+}
