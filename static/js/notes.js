@@ -155,9 +155,14 @@ if (links) {
     })
 }
 
+const sleep = async (seconds) => {
+    return new Promise(resolve => setTimeout(resolve, seconds));
+};
+
 const contentInput = document.getElementById("input-content");
 if (contentInput) {
     contentInput.addEventListener("keyup", async (e) => {
+        await sleep(2);
         const text = e.target.value;
 
         const resp = await fetch(
