@@ -82,7 +82,7 @@ services:
       retries: 3
 
   tracker-app:
-    image: kunansy/reading_tracker:2.23.6
+    image: kunansy/reading_tracker:2.23.7
     container_name: tracker-app
     env_file: .env
     restart: always
