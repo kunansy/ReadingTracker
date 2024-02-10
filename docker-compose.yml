@@ -166,3 +166,4 @@ volumes:
 
 networks:
   tracker-net:
+    external: true
