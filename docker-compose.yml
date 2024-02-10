@@ -1,8 +1,29 @@
 version: '3'
 
+x-db-img: &db-img
+  image: postgres:15-alpine
+
+x-search-img: &search-img
+  image: kunansy/tracker_search:6.2.12
+
+x-backup-img: &backup-img
+  image: kunansy/fast-backup:0.5.2
+
+x-cache-img: &cache-img
+  image: redis:7.2-alpine
+
+x-tracker-img: &tracker-img
+  image: kunansy/reading_tracker:2.23.7
+
+x-prometheus-img: &prometheus-img
+  image: prom/prometheus:2.48
+
+x-grafana-img: &grafana-img
+  image: grafana/grafana:10.0
+
 services:
   tracker-db:
-    image: postgres:15-alpine
+    <<: *db-img
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -22,7 +43,7 @@ services:
       retries: 3
 
   tracker-search:
-    image: kunansy/tracker_search:6.2.12
+    <<: *search-img
     container_name: tracker-search
     restart: always
     ports:
@@ -46,7 +67,7 @@ services:
       - TELEMETRY=0
 
   tracker-backup:
-    image: kunansy/fast-backup:0.5.2
+    <<: *backup-img
     restart: always
     container_name: tracker-backup
     env_file: .env
@@ -61,7 +82,7 @@ services:
       test: exit 0
 
   tracker-cache:
-    image: redis:7.2-alpine
+    <<: *cache-img
     container_name: tracker-cache
     restart: always
     env_file: .env
@@ -82,7 +103,7 @@ services:
       retries: 3
 
   tracker-app:
-    image: kunansy/reading_tracker:2.23.7
+    <<: *tracker-img
     container_name: tracker-app
     env_file: .env
     restart: always
@@ -109,7 +130,7 @@ services:
       retries: 3
 
   tracker-prometheus:
-    image: prom/prometheus:2.48
+    <<: *prometheus-img
     container_name: tracker-prometheus
     ports:
       - "127.0.0.1:9090:9090"
@@ -122,7 +143,7 @@ services:
       - tracker-net
 
   tracker-grafana:
-    image: grafana/grafana:10.0
+    <<: *grafana-img
     container_name: tracker-grafana
     ports:
       - "127.0.0.1:3000:3000"
