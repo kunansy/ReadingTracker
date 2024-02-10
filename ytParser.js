@@ -9,6 +9,8 @@ const parseDuration = (duration) => {
             total += parseInt(parts[1]);
         case 1:
             total += Math.floor(parseInt(parts[0]) / 60);
+        default:
+            console.error(`Could not parse duration: ${duration}`);
     }
 
     return total;
