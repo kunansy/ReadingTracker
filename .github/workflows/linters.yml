@@ -33,6 +33,7 @@ jobs:
       run: |
         poetry config virtualenvs.create false
         poetry install --no-interaction --no-root
+        mypy --install-types
 
     - name: Check code
       run: |
