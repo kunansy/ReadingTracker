@@ -3,7 +3,7 @@ import datetime
 from collections import defaultdict
 from collections.abc import AsyncGenerator
 from decimal import Decimal
-from typing import Any, DefaultDict
+from typing import Any
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -141,7 +141,7 @@ async def data(
     if not (log_records := log_records or await get_log_records()):
         return
 
-    log_records_dict: DefaultDict[datetime.date, list[LogRecord]] = defaultdict(list)
+    log_records_dict: defaultdict[datetime.date, list[LogRecord]] = defaultdict(list)
     for log_record in log_records:
         log_records_dict[log_record.date] += [log_record]
 

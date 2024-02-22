@@ -411,7 +411,7 @@ async def test_start_material_invalid_date():
     with pytest.raises(ValueError) as e:
         await db.start_material(material_id=material_id, start_date=date)
 
-    assert "Start date must be less than today" == str(e.value)
+    assert str(e.value) == "Start date must be less than today"
 
 
 @pytest.mark.asyncio
