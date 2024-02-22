@@ -70,3 +70,4 @@ class ParsedMaterial(CustomBaseModel):
     title: str
     type: str
     link: str
+    duration: int | None = None

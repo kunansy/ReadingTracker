@@ -1,7 +1,6 @@
 import asyncio
 import datetime
 import time
-import urllib.parse
 from decimal import Decimal
 from typing import Any, cast
 from uuid import UUID
@@ -868,12 +867,30 @@ def parse_habr(html: str) -> dict[str, str]:
     return {"title": title.get_text(), "author": author.get_text().strip()}
 
 
+def _parse_duration(duration: str) -> int:
+    duration = duration\
+        .replace("PT", "")\
+        .replace("H", " ")\
+        .replace("M", " ")\
+        .replace("S", "")
+
+    parts = duration.split()
+    total = 0
+
+    if len(parts) == 3:
+        total += int(parts[0]) * 60
+        parts.pop(0)
+    if len(parts) == 2:
+        total += int(parts[0])
+        parts.pop(0)
+    if len(parts) == 1:
+        total += round(int(parts[0]) / 60)
+
+    return total
+
+
 async def parse_youtube(video_id: str, *, timeout: int = 5) -> dict[str, str]:
-    params = {
-        "part": "snippet",
-        "id": video_id,
-        "key": settings.YOUTUBE_API_KEY
-    }
+    params = {"part": "snippet,contentDetails", "id": video_id, "key": settings.YOUTUBE_API_KEY}
 
     timeout_value = aiohttp.ClientTimeout(timeout)
     async with aiohttp.ClientSession(timeout=timeout_value) as ses:
@@ -882,7 +899,12 @@ async def parse_youtube(video_id: str, *, timeout: int = 5) -> dict[str, str]:
         resp_json = await resp.json()
         resp.raise_for_status()
 
+    title = resp_json["items"][0]["snippet"]["title"]
+    author = resp_json["items"][0]["snippet"]["channelTitle"]
+    duration = resp_json["items"][0]["contentDetails"]["duration"]
+
     return {
-        "title": resp_json["items"][0]["snippet"]["title"],
-        "author": resp_json["items"][0]["snippet"]["channelTitle"],
+        "title": title,
+        "author": author,
+        "duration": _parse_duration(duration)
     }
