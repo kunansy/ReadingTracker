@@ -252,9 +252,10 @@ async def _get_status(*, material_id: UUID) -> Status | None:
 
 
 def _convert_duration_to_period(duration: datetime.timedelta | int) -> str:
-    total_days = duration
     if isinstance(duration, datetime.timedelta):
         total_days = duration.days
+    else:
+        total_days = duration
 
     years_str = months_str = days_str = ""
 
@@ -720,9 +721,9 @@ def _get_material_index_uniqueness_constraint_name() -> str:
             return name
 
         for constraint in models.Materials.constraints:
-            if constraint.deferrable and constraint.contains_column(
+            if constraint.deferrable and constraint.contains_column(  # type: ignore
                 models.Materials.c.index
-            ):  # type: ignore
+            ):
                 name = cast(str, constraint.name)
                 return name
 

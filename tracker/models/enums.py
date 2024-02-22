@@ -1,5 +1,6 @@
 from decimal import Decimal
 from enum import Enum
+from typing import TypeAlias
 
 
 class MaterialTypesEnum(str, Enum):
@@ -10,4 +11,4 @@ class MaterialTypesEnum(str, Enum):
     audiobook = "audiobook"
 
 
-type MEANS = dict[MaterialTypesEnum, Decimal]
+MEANS: TypeAlias = dict[MaterialTypesEnum, Decimal]  # noqa: UP040
