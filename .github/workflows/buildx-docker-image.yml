@@ -31,7 +31,7 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/reading_tracker:2.23.10
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/reading_tracker:2.23.11
       -
         name: Build and push arm
         uses: docker/build-push-action@v3
@@ -39,4 +39,4 @@ jobs:
           context: .
           platforms: linux/arm64
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/reading_tracker:2.23.10
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/reading_tracker:2.23.11
