@@ -12,11 +12,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v4
-    - name: Set up Python3.12
       with:
         python-version: '3.12'
-      run: python3 --help
-        
+
     - name: Install Poetry
       run: |
         sudo apt-get install -y portaudio19-dev libasound-dev
