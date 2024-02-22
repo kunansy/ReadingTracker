@@ -65,7 +65,7 @@ async def readiness() -> bool:
 
 
 @compiles(DropTable, "postgresql")
-def _compile_drop_table(element, compiler, **kwargs):
+def _compile_drop_table(element, compiler, **kwargs) -> str:  # noqa: ANN001
     return compiler.visit_drop_table(element) + " CASCADE"
 
 
