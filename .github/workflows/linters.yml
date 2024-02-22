@@ -15,7 +15,7 @@ jobs:
     - name: Set up Python3.12
       with:
         python-version: '3.12'
-      run: poetry --help
+      run: python3 --help
         
     - name: Install Poetry
       run: |
