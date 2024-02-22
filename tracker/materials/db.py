@@ -252,10 +252,9 @@ async def _get_status(*, material_id: UUID) -> Status | None:
 
 
 def _convert_duration_to_period(duration: datetime.timedelta | int) -> str:
+    total_days = duration
     if isinstance(duration, datetime.timedelta):
         total_days = duration.days
-    else:
-        total_days = duration
 
     years_str = months_str = days_str = ""
 
