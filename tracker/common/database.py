@@ -52,9 +52,8 @@ async def session(**kwargs) -> AsyncGenerator[AsyncSession, None]:
 
 @asynccontextmanager
 async def transaction(**kwargs) -> AsyncGenerator[AsyncSession, None]:
-    async with session(**kwargs) as ses:
-        async with ses.begin():
-            yield ses
+    async with session(**kwargs) as ses, ses.begin():
+        yield ses
 
 
 async def readiness() -> bool:
