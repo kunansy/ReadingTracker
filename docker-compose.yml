@@ -1,7 +1,7 @@
 version: '3'
 
 x-db-img: &db-img
-  image: postgres:15-alpine
+  image: postgres:16-alpine
 
 x-search-img: &search-img
   image: kunansy/tracker_search:6.2.12
