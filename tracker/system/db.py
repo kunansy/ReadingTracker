@@ -10,8 +10,10 @@ import sqlalchemy.sql as sa
 from tracker.common import database
 from tracker.materials import db as materials_db
 from tracker.models import models
-from tracker.reading_log import db as logs_db
-from tracker.reading_log import statistics
+from tracker.reading_log import (
+    db as logs_db,
+    statistics,
+)
 
 
 class ReadingData(NamedTuple):

@@ -14,8 +14,11 @@ from tracker.common.logger import logger
 from tracker.common.schemas import ORJSONEncoder
 from tracker.materials import db as materials_db
 from tracker.models import enums
-from tracker.notes import db, schemas
-from tracker.notes import speech_recognizer as recognizer
+from tracker.notes import (
+    db,
+    schemas,
+    speech_recognizer as recognizer,
+)
 
 
 router = APIRouter(
