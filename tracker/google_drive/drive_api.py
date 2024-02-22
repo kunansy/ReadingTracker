@@ -42,6 +42,12 @@ async def restore(*, dump_path: Path | None = None) -> db.DBSnapshot:
         await database.recreate_db()
         snapshot = await db.restore_db(conn=ses, dump=dump)
 
+        logger.debug("Set notes sequence value")
+        await db.set_notes_seq_value(snapshot_dict["notes"], ses)
+
+        logger.debug("Set materials sequence value")
+        await db.set_materials_seq_value(snapshot_dict["materials"], ses)
+
         logger.info(
             "Restoring completed, %ss", round(time.perf_counter() - start_time, 2)
         )

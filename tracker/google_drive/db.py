@@ -148,3 +148,30 @@ async def get_tables_analytics() -> dict[str, int]:
         res = (await ses.execute(stmt)).mappings().all()
 
     return {r.name: r.cnt for r in res}
+
+
+async def _set_seq_value(
+    *, conn: AsyncSession, table_name: str, field_name: str, rows: TableSnapshot
+) -> None:
+    # TODO: iterate over table and find Serial fields
+    max_note_number = max(row.get(field_name, 0) for row in rows.rows)
+    seq_name = f"{table_name}_{field_name}_seq"
+
+    query = f"SELECT setval('{seq_name}', {max_note_number}, true)"
+    await conn.execute(sa.text(query))
+
+
+async def set_notes_seq_value(notes: TableSnapshot, conn: AsyncSession) -> None:
+    model = models.Notes
+
+    await _set_seq_value(
+        conn=conn, table_name=model.name, field_name=model.c.note_number.name, rows=notes
+    )
+
+
+async def set_materials_seq_value(materials: TableSnapshot, conn: AsyncSession) -> None:
+    model = models.Materials
+
+    await _set_seq_value(
+        conn=conn, table_name=model.name, field_name=model.c.index.name, rows=materials
+    )
