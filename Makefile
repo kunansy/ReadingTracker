@@ -16,7 +16,7 @@ lint-format:
 	@ruff format --check
 
 format:
-	ruff format
+	@ruff format
 	@ruff check --fix
 
 cov:
