@@ -1,6 +1,6 @@
 import datetime
 from pathlib import Path
-from typing import Any, NamedTuple
+from typing import NamedTuple
 from uuid import UUID
 
 import sqlalchemy.sql as sa
