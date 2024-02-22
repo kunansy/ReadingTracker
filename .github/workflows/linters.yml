@@ -19,7 +19,7 @@ jobs:
       run: |
         sudo apt-get install -y portaudio19-dev libasound-dev
         pip install pipx
-        pipx install poetry ruff mypy
+        pipx install poetry ruff mypy types-redis types-protobuf
 
     - name: Validate the pyproject.toml
       run: |
@@ -33,7 +33,6 @@ jobs:
       run: |
         poetry config virtualenvs.create false
         poetry install --no-interaction --no-root
-        mypy --install-types
 
     - name: Check code
       run: |
