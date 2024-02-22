@@ -24,5 +24,8 @@ cov:
 cov-show:
 	coverage report -m
 
-run:
+init:
 	PYTHONPATH=. python3 tracker/main.py
+
+run:
+	PYTHONPATH=. uvicorn tracker.main:app --host 127.0.0.1 --port 9999 --reload --loop uvloop
