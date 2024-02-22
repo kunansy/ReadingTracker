@@ -8,7 +8,7 @@ async function addTag(tag, newLine = false) {
 
     if (content.value.length === 0) {
         newContent = tag;
-    } else if (tag.startsWith("#") && !content.value.contains("#")) {
+    } else if (tag.startsWith("#") && !content.value.includes("#")) {
         newContent = content.value + tag;
     } else if (newLine) {
         newContent = content.value + '\n' + tag;
