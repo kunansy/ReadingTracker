@@ -10,3 +10,8 @@ fieldset.material-fieldset {
 legend.material-legend {
     text-align: center;
 }
+
+.parse-material-source {
+    display: flex;
+    margin: auto auto 2vh;
+}

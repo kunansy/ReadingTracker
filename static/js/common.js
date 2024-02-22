@@ -385,3 +385,40 @@ addCopyNoteIdListener();
 document.addEventListener("DOMContentLoaded", async () => {
     addHotKeys();
 });
+
+const parseBtn = document.getElementById("parse-btn");
+if (parseBtn) {
+    parseBtn.onclick = async () => {
+        let link = document.getElementById("parse-url").value;
+        if (link.includes("habr")) {
+            var resp = await fetch(`/materials/parse/habr?link=${link.toString()}`, {
+                method: 'POST',
+                headers: {'Content-type': 'application/json'},
+            });
+        } else if (link.includes("youtu")) {
+            var resp = await fetch(`/materials/parse/youtube?link=${link.toString()}`, {
+                method: 'POST',
+                headers: {'Content-type': 'application/json'},
+            });
+        }
+
+        let respJson = await resp.json();
+
+        let titleField = document.getElementById("input-title");
+        let authorsField = document.getElementById("input-authors");
+        let durationField = document.getElementById("inout-duration");
+        let linkField = document.getElementById("input-link");
+
+        titleField.textContent = respJson["title"];
+        titleField.value = respJson["title"];
+
+        authorsField.textContent = respJson["author"];
+        authorsField.value = respJson["author"];
+
+        durationField.textContent = respJson["duration"];
+        durationField.value = respJson["duration"];
+
+        linkField.textContent = respJson["link"];
+        linkField.value = respJson["link"];
+    };
+}
