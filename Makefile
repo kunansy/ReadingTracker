@@ -17,6 +17,7 @@ lint-format:
 
 format:
 	ruff format
+	@ruff check --fix
 
 cov:
 	coverage run -m pytest .
