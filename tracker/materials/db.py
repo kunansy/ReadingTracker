@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import Any, cast
 from uuid import UUID
 
+import bs4
 import sqlalchemy.sql as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -839,3 +840,16 @@ async def is_reading(*, material_id: UUID) -> bool:
 
     async with database.session() as ses:
         return await ses.scalar(stmt) or False
+
+
+def parse_habr(html: str) -> dict[str, str]:
+    soup = bs4.BeautifulSoup(html, "lxml")
+
+    title = soup.find("div", {"class": "tm-article-snippet"}).find(
+        "h1", {"class": "tm-title"}
+    )
+    author = soup.find("div", {"class": "tm-article-snippet"}).find(
+        "a", {"class": "tm-user-info__username"}
+    )
+
+    return {"title": title.get_text(), "author": author.get_text().strip()}

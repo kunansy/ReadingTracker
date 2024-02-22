@@ -1,11 +1,13 @@
 from typing import Any, Literal
 from uuid import UUID
 
+import aiohttp
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi_cache.coder import PickleCoder
 from fastapi_cache.decorator import cache
+from pydantic import HttpUrl
 
 from tracker.common import settings
 from tracker.common.logger import logger
@@ -244,3 +246,23 @@ async def is_material_reading(material_id: UUID):
     is_reading = await db.is_reading(material_id=material_id)
 
     return {"is_reading": is_reading}
+
+
+@router.post("/parse/habr", response_model=schemas.ParsedMaterial)
+async def parse_habr_article(link: HttpUrl):
+    if not (host := link.host):
+        return HTTPException(detail="Invalid habr url", status_code=400)
+
+    if not (host.startswith("habr.") and host.endswith((".com", ".ru"))):
+        return HTTPException(detail="Invalid habr url", status_code=400)
+
+    timeout = aiohttp.ClientTimeout(5)
+    async with aiohttp.ClientSession(timeout=timeout) as ses:
+        resp = await ses.get(str(link))
+        resp.raise_for_status()
+
+        html = await resp.text("utf-8")
+
+    article_info = db.parse_habr(html)
+
+    return {"link": str(link), "type": "article", **article_info}
