@@ -1,7 +1,7 @@
 lint:
-	@MAKE lint-ruff
-	@MAKE lint-format
-	@MAKE lint-mypy
+	$(MAKE) lint-ruff
+	$(MAKE) lint-format
+	$(MAKE) lint-mypy
 
 test:
 	pytest -n 7
