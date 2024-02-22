@@ -1,5 +1,6 @@
 import asyncio
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request
@@ -13,7 +14,8 @@ from tracker.common.logger import logger
 from tracker.common.schemas import ORJSONEncoder
 from tracker.materials import db as materials_db
 from tracker.models import enums
-from tracker.notes import db, schemas, speech_recognizer as recognizer
+from tracker.notes import db, schemas
+from tracker.notes import speech_recognizer as recognizer
 
 
 router = APIRouter(

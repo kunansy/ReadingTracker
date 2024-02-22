@@ -5,10 +5,10 @@ from typing import Any
 import orjson
 from grpc.aio import insecure_channel as grpc_chan
 
-from tracker.common import settings, database
+from tracker.common import database, settings
 from tracker.common.logger import logger
 from tracker.google_drive import db
-from tracker.protos import backup_pb2_grpc, backup_pb2
+from tracker.protos import backup_pb2, backup_pb2_grpc
 
 
 class GoogleDriveException(Exception):

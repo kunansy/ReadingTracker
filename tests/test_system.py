@@ -4,7 +4,8 @@ from uuid import UUID
 import pytest
 
 from tracker.materials import db as materials_db
-from tracker.reading_log import db as logs_db, statistics
+from tracker.reading_log import db as logs_db
+from tracker.reading_log import statistics
 from tracker.system import db
 
 

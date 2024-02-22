@@ -2,10 +2,11 @@ import asyncio
 import base64
 import datetime
 import statistics
+from collections.abc import Generator, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
-from typing import Any, Generator, NamedTuple, Sequence
+from typing import Any, NamedTuple
 
 import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa

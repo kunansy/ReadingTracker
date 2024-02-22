@@ -1,8 +1,9 @@
 import asyncio
 import datetime
 from collections import defaultdict
+from collections.abc import AsyncGenerator
 from decimal import Decimal
-from typing import Any, AsyncGenerator, DefaultDict
+from typing import Any, DefaultDict
 from uuid import UUID
 
 import sqlalchemy.sql as sa

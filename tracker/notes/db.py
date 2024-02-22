@@ -1,7 +1,8 @@
 import asyncio
 import datetime
 from collections import Counter, defaultdict
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 from uuid import UUID
 
 import networkx as nx

@@ -1,6 +1,6 @@
 import datetime
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator
 from uuid import UUID
 
 import sqlalchemy.sql as sa
