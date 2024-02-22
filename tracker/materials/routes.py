@@ -1,7 +1,6 @@
 from typing import Any, Literal
 from uuid import UUID
 
-import aiohttp
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -260,3 +259,17 @@ async def parse_habr_article(link: HttpUrl):
     article_info = db.parse_habr(html)
 
     return {"link": str(link), "type": "article", **article_info}
+
+
+@router.post("/parse/youtube")
+async def parse_youtube_video(link: HttpUrl):
+    if not (host := link.host):
+        return HTTPException(detail="Invalid youtube url", status_code=400)
+
+    if host.replace("www.", "") not in ("youtube.com", "youtu.be"):
+        return HTTPException(detail="Invalid youtube url", status_code=400)
+
+    video_id = link.query_params()[0][1]
+    video_info = await db.parse_youtube(video_id)
+
+    return {"link": str(link), "type": "lecture", **video_info}

@@ -77,6 +77,11 @@ with env.prefixed("BACKUP_"):
     BACKUP_PORT = env.int("PORT")
     BACKUP_TARGET = f"{BACKUP_HOST}:{BACKUP_PORT}"
 
+
+with env.prefixed("YOUTUBE_API_"):
+    YOUTUBE_API_URL = env.url("URL", "https://youtube.googleapis.com/youtube/v3/videos")
+    YOUTUBE_API_KEY = env("KEY")
+
 path = os.environ.get("PATH")
 metrics_dir = os.environ.get("PROMETHEUS_MULTIPROC_DIR")
 

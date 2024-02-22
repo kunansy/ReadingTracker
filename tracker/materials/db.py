@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import time
+import urllib.parse
 from decimal import Decimal
 from typing import Any, cast
 from uuid import UUID
@@ -10,7 +11,7 @@ import bs4
 import sqlalchemy.sql as sa
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tracker.common import database
+from tracker.common import database, settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
@@ -865,3 +866,23 @@ def parse_habr(html: str) -> dict[str, str]:
     )
 
     return {"title": title.get_text(), "author": author.get_text().strip()}
+
+
+async def parse_youtube(video_id: str, *, timeout: int = 5) -> dict[str, str]:
+    params = {
+        "part": "snippet",
+        "id": video_id,
+        "key": settings.YOUTUBE_API_KEY
+    }
+
+    timeout = aiohttp.ClientTimeout(timeout)
+    async with aiohttp.ClientSession(timeout=timeout) as ses:
+        resp = await ses.get(settings.YOUTUBE_API_URL.geturl(), params=params)
+
+        resp_json = await resp.json()
+        resp.raise_for_status()
+
+    return {
+        "title": resp_json["items"][0]["snippet"]["title"],
+        "author": resp_json["items"][0]["snippet"]["channelTitle"],
+    }
