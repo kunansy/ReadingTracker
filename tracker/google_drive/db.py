@@ -34,6 +34,18 @@ class DBSnapshot(NamedTuple):
             for table_snapshot in self.tables
         }
 
+    @classmethod
+    def from_dump(cls, dump_data: DUMP_TYPE) -> "DBSnapshot":
+        tables = []
+        for table_name, values in dump_data.items():
+            rows = [
+                {key: _convert_str_to_date(value) for key, value in row.items()}
+                for row in values
+            ]
+            tables += [TableSnapshot(table_name=table_name, rows=rows)]
+
+        return DBSnapshot(tables=tables)
+
 
 TABLES = {
     models.Materials.name: models.Materials,
@@ -96,23 +108,10 @@ def get_dump_filename(*, prefix: str = "tracker") -> Path:
     return settings.DATA_DIR / filename
 
 
-def _convert_dump_to_snapshot(dump_data: DUMP_TYPE) -> DBSnapshot:
-    tables = []
-    for table_name, values in dump_data.items():
-        rows = [
-            {key: _convert_str_to_date(value) for key, value in row.items()}
-            for row in values
-        ]
-        tables += [TableSnapshot(table_name=table_name, rows=rows)]
+async def restore_db(*, snapshot: DBSnapshot, conn: AsyncSession) -> None:
+    if not snapshot.tables:
+        raise ValueError("Snapshot is empty")
 
-    return DBSnapshot(tables=tables)
-
-
-async def restore_db(*, dump: dict[str, Any], conn: AsyncSession) -> DBSnapshot:
-    if not dump:
-        raise ValueError("Dump is empty")
-
-    snapshot = _convert_dump_to_snapshot(dump)
     snapshot_dict = snapshot.to_dict()
 
     # order of tables matters
@@ -127,7 +126,6 @@ async def restore_db(*, dump: dict[str, Any], conn: AsyncSession) -> DBSnapshot:
         await conn.execute(stmt)
 
         logger.info("%s: %s rows inserted", table.name, len(values))
-    return snapshot
 
 
 async def get_tables_analytics() -> dict[str, int]:

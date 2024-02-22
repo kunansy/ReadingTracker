@@ -8,6 +8,7 @@ from grpc.aio import insecure_channel as grpc_chan
 from tracker.common import database, settings
 from tracker.common.logger import logger
 from tracker.google_drive import db
+from tracker.google_drive.db import DBSnapshot
 from tracker.protos import backup_pb2, backup_pb2_grpc
 
 
@@ -39,8 +40,11 @@ async def restore(*, dump_path: Path | None = None) -> db.DBSnapshot:
         else:
             dump = await get_dump()
 
+        snapshot = DBSnapshot.from_dump(dump)
+
         await database.recreate_db()
-        snapshot = await db.restore_db(conn=ses, dump=dump)
+        await db.restore_db(conn=ses, snapshot=snapshot)
+        snapshot_dict = snapshot.to_dict()
 
         logger.debug("Set notes sequence value")
         await db.set_notes_seq_value(snapshot_dict["notes"], ses)
