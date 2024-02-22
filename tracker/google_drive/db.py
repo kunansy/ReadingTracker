@@ -17,6 +17,7 @@ DUMP_TYPE = dict[str, list[dict[str, JSON_FIELD_TYPES]]]
 
 
 class TableSnapshot(NamedTuple):
+    # TODO: use a pydantic model
     table_name: str
     rows: list[dict[str, DATE_TYPES | JSON_FIELD_TYPES]]
 
