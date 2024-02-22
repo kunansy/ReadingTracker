@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import Any, cast
 from uuid import UUID
 
+import aiohttp
 import bs4
 import sqlalchemy.sql as sa
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -840,6 +841,17 @@ async def is_reading(*, material_id: UUID) -> bool:
 
     async with database.session() as ses:
         return await ses.scalar(stmt) or False
+
+
+async def get_html(link: str, *, timeout: int = 5) -> str:
+    timeout = aiohttp.ClientTimeout(timeout)
+    async with aiohttp.ClientSession(timeout=timeout) as ses:
+        resp = await ses.get(str(link))
+        resp.raise_for_status()
+
+        html = await resp.text("utf-8")
+
+    return html
 
 
 def parse_habr(html: str) -> dict[str, str]:

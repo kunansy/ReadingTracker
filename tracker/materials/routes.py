@@ -256,13 +256,7 @@ async def parse_habr_article(link: HttpUrl):
     if not (host.startswith("habr.") and host.endswith((".com", ".ru"))):
         return HTTPException(detail="Invalid habr url", status_code=400)
 
-    timeout = aiohttp.ClientTimeout(5)
-    async with aiohttp.ClientSession(timeout=timeout) as ses:
-        resp = await ses.get(str(link))
-        resp.raise_for_status()
-
-        html = await resp.text("utf-8")
-
+    html = await db.get_html(str(link))
     article_info = db.parse_habr(html)
 
     return {"link": str(link), "type": "article", **article_info}
