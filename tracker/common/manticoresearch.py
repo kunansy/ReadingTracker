@@ -185,7 +185,7 @@ def _get_search_query() -> str:
     FROM notes
     WHERE match(%s)
     ORDER BY weight() DESC
-    """
+    """  # noqa
 
 
 async def search(query: str) -> dict[UUID, SearchResult]:

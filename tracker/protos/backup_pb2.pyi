@@ -17,8 +17,14 @@ class DBRequest(_message.Message):
     db_username: str
     db_password: str
     db_name: str
-    def __init__(self, db_host: _Optional[str] = ..., db_port: _Optional[int] = ..., db_username: _Optional[str] = ..., db_password: _Optional[str] = ..., db_name: _Optional[str] = ...) -> None: ...
-
+    def __init__(
+        self,
+        db_host: _Optional[str] = ...,
+        db_port: _Optional[int] = ...,
+        db_username: _Optional[str] = ...,
+        db_password: _Optional[str] = ...,
+        db_name: _Optional[str] = ...,
+    ) -> None: ...
 
 class BackupReply(_message.Message):
     __slots__ = ["file_id"]

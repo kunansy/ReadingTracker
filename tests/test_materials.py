@@ -180,7 +180,7 @@ async def test_get_last_material_started():
 @pytest.mark.asyncio
 @pytest.mark.parametrize("material_status", ("completed", "started", "not started"))
 async def test_get_status(
-    material_status: Literal["completed", "started", "not started"]
+    material_status: Literal["completed", "started", "not started"],
 ):
     materials = {material.material_id: material for material in await get_materials()}
     statuses = {status.material_id: status for status in await get_statuses()}

@@ -27,11 +27,11 @@ def test_span_methods(size):
 
     assert (
         span.format()
-        == f"{start.strftime(settings.DATE_FORMAT)}_{today.strftime(settings.DATE_FORMAT)}"
+        == f"{start.strftime(settings.DATE_FORMAT)}_{today.strftime(settings.DATE_FORMAT)}"  # noqa
     )
     assert (
         str(span)
-        == f"[{start.strftime(settings.DATE_FORMAT)}; {today.strftime(settings.DATE_FORMAT)}]"
+        == f"[{start.strftime(settings.DATE_FORMAT)}; {today.strftime(settings.DATE_FORMAT)}]"  # noqa
     )
 
 
@@ -231,7 +231,7 @@ def test_span_statistics_init_exception(size):
 def test_span_statistics_empty_start():
     stat = trends.SpanStatistics([], span_size=0)
     with pytest.raises(trends.TrendException) as e:
-        stat.start
+        stat.start  # noqa
 
     assert str(e.value) == "Span statistics is empty"
 
@@ -239,7 +239,7 @@ def test_span_statistics_empty_start():
 def test_span_statistics_empty_stop():
     stat = trends.SpanStatistics([], span_size=0)
     with pytest.raises(trends.TrendException) as e:
-        stat.stop
+        stat.stop  # noqa
 
     assert str(e.value) == "Span statistics is empty"
 

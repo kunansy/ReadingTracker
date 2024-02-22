@@ -31,7 +31,9 @@ async def system_view():
 @router.get("/graphics")
 @cache(namespace="system", coder=PickleCoder, expire=7)
 async def graphic(
-    request: Request, material_id: UUID | None = None, last_days: conint(ge=1) = 7  # type: ignore
+    request: Request,
+    material_id: UUID | None = None,
+    last_days: conint(ge=1) = 7,  # type: ignore
 ):
     context: dict[str, Any] = {
         "request": request,
@@ -137,5 +139,5 @@ async def get_span_report(span: schemas.GetSpanReportRequest):
         "reading": span_analysis.reading.dump(),
         "notes": span_analysis.notes.dump(),
         "repeats_total": span_analysis.repeat_analytics.repeats_count,
-        "repeat_unique_materials_count": span_analysis.repeat_analytics.unique_materials_count,
+        "repeat_materials_count": span_analysis.repeat_analytics.unique_materials_count,
     }

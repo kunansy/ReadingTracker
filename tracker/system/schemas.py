@@ -62,4 +62,4 @@ class GetSpanReportResponse(CustomBaseModel):
     notes: _SpanStats
 
     repeats_total: int
-    repeat_unique_materials_count: int
+    repeat_materials_count: int

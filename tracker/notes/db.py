@@ -78,7 +78,7 @@ class Note(CustomBaseModel):
             link_text = f"#{tag}"
             text = text.replace(
                 link_text,
-                f'<a href={settings.TRACKER_URL}{search_url}?tags_query={tag} target="_blank">{link_text}</a>',
+                f'<a href={settings.TRACKER_URL}{search_url}?tags_query={tag} target="_blank">{link_text}</a>',  # noqa
             )
 
         return text
@@ -95,7 +95,7 @@ class Note(CustomBaseModel):
 
         return text.replace(
             link_text,
-            f'<a id="link-ref" href={settings.TRACKER_URL}{note_url}?note_id={link_id} target="_blank">{link_text}</a>',
+            f'<a id="link-ref" href={settings.TRACKER_URL}{note_url}?note_id={link_id} target="_blank">{link_text}</a>',  # noqa
         )
 
     @property
@@ -390,7 +390,7 @@ async def get_possible_links(note: Note) -> list[Note]:
         .where(models.Notes.c.note_id != note.note_id)
         .where(
             sa.text(
-                f"tags ?| array(SELECT jsonb_array_elements_text(tags) FROM notes WHERE note_id = '{note.note_id}')"
+                f"tags ?| array(SELECT jsonb_array_elements_text(tags) FROM notes WHERE note_id = '{note.note_id}')"  # noqa
             )
         )
     )

@@ -236,7 +236,7 @@ class SearchParams(CustomBaseModel):
         if not (tags_query := self.tags_query):
             return set()
 
-        return set(tag.strip() for tag in tags_query.split() if tag.strip())
+        return {tag.strip() for tag in tags_query.split() if tag.strip()}
 
 
 class RecognitionResult(TypedDict):

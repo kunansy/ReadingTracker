@@ -721,7 +721,9 @@ def _get_material_index_uniqueness_constraint_name() -> str:
             return name
 
         for constraint in models.Materials.constraints:
-            if constraint.deferrable and constraint.contains_column(models.Materials.c.index):  # type: ignore
+            if constraint.deferrable and constraint.contains_column(
+                models.Materials.c.index
+            ):  # type: ignore
                 name = cast(str, constraint.name)
                 return name
 
@@ -815,7 +817,8 @@ async def swap_order(material_id: UUID, new_material_index: int) -> None:
             )
         else:
             raise ValueError(
-                f"Wrong indexes got: {old_material_index}, {new_material_index}, {material_id=}"
+                f"Wrong indexes got: {old_material_index}, "
+                f"{new_material_index}, {material_id=}"
             )
 
         # set the target index

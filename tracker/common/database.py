@@ -45,7 +45,7 @@ async def session(**kwargs) -> AsyncGenerator[AsyncSession, None]:
         logger.exception("Error with the session")
 
         await new_session.rollback()
-        raise DatabaseException(e)
+        raise DatabaseException(e) from e
     finally:
         await new_session.close()
 
