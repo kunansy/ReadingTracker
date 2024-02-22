@@ -2,10 +2,11 @@
 line-length = 90
 indent-width = 4
 target-version = "py312"
-exclude = ["backup_pb2_grpc.py"]
+exclude = ["backup_pb2_grpc.py", "backup_pb2.pyi"]
 extend-exclude = ["tests"]
 
 [tool.ruff.lint]
+# "E265", "E261", "E262", in preview
 select = ["ANN", "B", "C", "E", "F", "I", "Q", "S", "SIM", "UP", "W"]
 ignore = [
     "ANN002", "ANN003", "ANN101", "ANN102", "ANN201", "ANN401",
