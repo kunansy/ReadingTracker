@@ -868,11 +868,9 @@ def parse_habr(html: str) -> dict[str, str]:
 
 
 def _parse_duration(duration: str) -> int:
-    duration = duration\
-        .replace("PT", "")\
-        .replace("H", " ")\
-        .replace("M", " ")\
-        .replace("S", "")
+    duration = (
+        duration.replace("PT", "").replace("H", " ").replace("M", " ").replace("S", "")
+    )
 
     parts = duration.split()
     total = 0
@@ -889,8 +887,12 @@ def _parse_duration(duration: str) -> int:
     return total
 
 
-async def parse_youtube(video_id: str, *, timeout: int = 5) -> dict[str, str]:
-    params = {"part": "snippet,contentDetails", "id": video_id, "key": settings.YOUTUBE_API_KEY}
+async def parse_youtube(video_id: str, *, timeout: int = 5) -> dict[str, str | int]:
+    params = {
+        "part": "snippet,contentDetails",
+        "id": video_id,
+        "key": settings.YOUTUBE_API_KEY,
+    }
 
     timeout_value = aiohttp.ClientTimeout(timeout)
     async with aiohttp.ClientSession(timeout=timeout_value) as ses:
@@ -903,8 +905,4 @@ async def parse_youtube(video_id: str, *, timeout: int = 5) -> dict[str, str]:
     author = resp_json["items"][0]["snippet"]["channelTitle"]
     duration = resp_json["items"][0]["contentDetails"]["duration"]
 
-    return {
-        "title": title,
-        "author": author,
-        "duration": _parse_duration(duration)
-    }
+    return {"title": title, "author": author, "duration": _parse_duration(duration)}

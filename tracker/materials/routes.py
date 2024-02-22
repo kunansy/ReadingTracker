@@ -247,7 +247,11 @@ async def is_material_reading(material_id: UUID):
     return {"is_reading": is_reading}
 
 
-@router.post("/parse/habr", response_model=schemas.ParsedMaterial)
+@router.post(
+    "/parse/habr",
+    response_model=schemas.ParsedMaterial,
+    response_model_exclude_unset=True,
+)
 async def parse_habr_article(link: HttpUrl):
     if not (host := link.host):
         return HTTPException(detail="Invalid habr url", status_code=400)
