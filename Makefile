@@ -1,19 +1,22 @@
-NUMCPU := $(shell nproc 2> /dev/null || sysctl -n hw.ncpu 2> /dev/null)
-
-lint: lint-black
-	ruff . && mypy .
-
-lint-flake:
-	flake8
+lint:
+	@MAKE lint-ruff
+	@MAKE lint-format
+	@MAKE lint-mypy
 
 test:
 	pytest -n 7
 
-lint-black:
-	black --check --diff --workers $(NUMCPU) --color .
+lint-mypy:
+	@mypy .
+
+lint-ruff:
+	@ruff check .
+
+lint-format:
+	@ruff format --check
 
 format:
-	black .
+	ruff format
 
 cov:
 	coverage run -m pytest .
