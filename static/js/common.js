@@ -408,6 +408,7 @@ if (parseBtn) {
         let authorsField = document.getElementById("input-authors");
         let durationField = document.getElementById("input-duration");
         let linkField = document.getElementById("input-link");
+        let typeField = document.getElementById("input-type");
 
         titleField.textContent = respJson["title"];
         titleField.value = respJson["title"];
@@ -417,6 +418,9 @@ if (parseBtn) {
 
         durationField.textContent = respJson["duration"];
         durationField.value = respJson["duration"];
+
+        typeField.textContent = respJson["type"];
+        typeField.value = respJson["type"];
 
         linkField.textContent = respJson["link"];
         linkField.value = respJson["link"];
