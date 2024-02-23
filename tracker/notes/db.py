@@ -77,9 +77,7 @@ class Note(CustomBaseModel):
         search_url = router.url_path_for(get_notes.__name__)
 
         for tag in tags:
-            link_text = (
-                f'<a href={settings.TRACKER_URL}{search_url}?tags_query={tag} target="_blank">#{tag}</a>',  # noqa
-            )
+            link_text = f'<a href={settings.TRACKER_URL}{search_url}?tags_query={tag} target="_blank">#{tag}</a>'  # noqa
 
             text = re.sub(rf"(\W)#({tag})(\W)", rf"\1{link_text}\3", text)
 
