@@ -145,7 +145,7 @@ async def start_material(material_id: UUID):
 async def complete_material(material_id: UUID):
     await db.complete_material(material_id=material_id)
 
-    redirect_url = router.url_path_for(get_reading_materials.__name__)
+    redirect_url = router.url_path_for(get_completed_materials.__name__)
     return RedirectResponse(redirect_url, status_code=302)
 
 
