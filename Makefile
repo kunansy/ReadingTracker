@@ -19,6 +19,12 @@ fmt:
 	@ruff format
 	@ruff check --fix
 
+patch:
+	@bumpversion --commit --tag patch
+
+minor:
+	@bumpversion --commit --tag minor
+
 cov:
 	coverage run -m pytest .
 
