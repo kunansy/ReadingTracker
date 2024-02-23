@@ -52,7 +52,7 @@ def _up_first_letter(string: str) -> str:
 
 def _replace_punctuation(string: str) -> str:
     for src, dst in PUNCTUATION_MAPPING.items():
-        string = string.replace(src, dst)
+        string = string.replace(f" {src} ", f" {dst} ")
     return string
 
 
