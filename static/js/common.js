@@ -406,7 +406,7 @@ if (parseBtn) {
 
         let titleField = document.getElementById("input-title");
         let authorsField = document.getElementById("input-authors");
-        let durationField = document.getElementById("inout-duration");
+        let durationField = document.getElementById("input-duration");
         let linkField = document.getElementById("input-link");
 
         titleField.textContent = respJson["title"];
