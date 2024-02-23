@@ -1,19 +1,19 @@
 lint:
-	$(MAKE) lint-ruff
-	$(MAKE) lint-format
-	$(MAKE) lint-mypy
+	@$(MAKE) lint-ruff
+	@$(MAKE) lint-format
+	@$(MAKE) lint-mypy
 
 test:
 	pytest -n 7
 
 lint-mypy:
-	@mypy .
+	@mypy . > /dev/null
 
 lint-ruff:
 	@ruff check .
 
 lint-format:
-	@ruff format --check
+	@ruff format --check --quiet
 
 format:
 	@ruff format
