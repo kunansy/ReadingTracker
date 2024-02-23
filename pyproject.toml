@@ -47,20 +47,6 @@ lines-after-imports = 2
 [tool.ruff.lint.flake8-annotations]
 suppress-none-returning = true
 
-[tool.black]
-line-length=90
-target-version = ["py312"]
-workers = 10
-exclude = "protos"
-
-[tool.flake8]
-max-line-length = 150
-#comparison with None, comparison with bool, line break before/after binary op,
-ignore = ["E711", "E712", "W503", "W504"]
-exclude = "backup_pb2_grpc.py"
-#allow these var/func names
-builtins-ignorelist = ["max", "min", "format"]
-
 [tool.mypy]
 python_version = 3.12
 ignore_missing_imports = true
