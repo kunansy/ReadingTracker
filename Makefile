@@ -15,7 +15,7 @@ lint-ruff:
 lint-format:
 	@ruff format --check --quiet
 
-format:
+fmt:
 	@ruff format
 	@ruff check --fix
 
