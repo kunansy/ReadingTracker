@@ -26,7 +26,7 @@
             <legend class="material-legend"> Add a material </legend>
             <input id="input-title" class="input altch" type="text" placeholder="Enter a title" name="title" value="{{ title }}" title="Title of the material">
             <input id="input-authors" class="input" type="text" placeholder="Enter authors" name="authors" value="{{ authors }}" title="Authors of the material">
-            <input id="inout-duration" class="input" type="number" placeholder="Enter a count of pages" name="pages" value="{{ pages }}" title="Count of pages in the materials">
+            <input id="input-duration" class="input" type="number" placeholder="Enter a count of pages" name="pages" value="{{ pages }}" title="Count of pages in the materials">
             <input id="input-type" class="input" type="text" list="material_types" placeholder="Enter material type" name="material_type" value="book" title="Type of the material">
             <datalist id="material_types">
                 {% for type in material_types %}
