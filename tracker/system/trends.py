@@ -88,7 +88,11 @@ class SpanStatistics:
 
     @property
     def min(self) -> DayStatistics:
-        return min(self.data, key=lambda day: day.amount)
+        data = filter(lambda day: day.amount != 0, self.data)
+        try:
+            return min(data, key=lambda day: day.amount)
+        except ValueError:
+            return self.data[0]
 
     @property
     def zero_days(self) -> int:
