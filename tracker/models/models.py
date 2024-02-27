@@ -58,7 +58,10 @@ def _uuid_gen() -> str:
     return str(uuid6.uuid6())
 
 
-_utc_now = datetime.datetime.utcnow
+def _utc_now() -> datetime.datetime:
+    return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+
+
 metadata = MetaData()
 
 Materials = Table(

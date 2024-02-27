@@ -274,7 +274,7 @@ def _convert_duration_to_period(duration: datetime.timedelta | int) -> str:
 def _get_total_reading_duration(
     *, started_at: datetime.datetime, completed_at: datetime.datetime | None
 ) -> str:
-    completion_date = completed_at or datetime.datetime.utcnow()
+    completion_date = completed_at or database.utcnow()
     duration = completion_date - started_at + datetime.timedelta(days=1)
 
     return _convert_duration_to_period(duration)

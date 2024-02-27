@@ -32,7 +32,9 @@ engine = create_async_engine(
     connect_args={"timeout": settings.DB_TIMEOUT},
 )
 
-utcnow = datetime.datetime.utcnow
+
+def utcnow() -> datetime.datetime:
+    return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
 
 
 @asynccontextmanager

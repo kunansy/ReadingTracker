@@ -265,7 +265,7 @@ async def test_get_material_statistics_unread():
         status=db.Status(
             status_id=uuid.uuid4(),
             material_id=material.material_id,
-            started_at=datetime.datetime.utcnow().date(),
+            started_at=database.utcnow().date(),
         ),
     )
     mean_total = Decimal(50)
@@ -551,7 +551,7 @@ async def test_get_repeats_analytics_only_repeated():
 
         assert (
             repeat.priority_days
-            == (datetime.datetime.utcnow() - valid_repeat.last_repeated_at).days
+            == (database.utcnow() - valid_repeat.last_repeated_at).days
         )
 
 
