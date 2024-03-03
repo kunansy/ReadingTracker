@@ -44,7 +44,7 @@ def _find_tags_intersection(notes: list[db.Note], tags: set[str]) -> set[UUID]:
 
 
 def _highlight_snippets(
-    notes: list[db.Note], search_results: dict[UUID, manticoresearch.SearchResult]
+    notes: list[db.Note], search_results: dict[UUID, manticoresearch.SearchResult],
 ) -> None:
     for note in notes:
         result = search_results[note.note_id]
@@ -109,7 +109,7 @@ async def get_note(request: Request, note_id: UUID):
 
     async with asyncio.TaskGroup() as tg:
         get_material_task = tg.create_task(
-            materials_db.get_material(material_id=note.material_id)
+            materials_db.get_material(material_id=note.material_id),
         )
         get_note_links_task = tg.create_task(get_note_links(note))
 
@@ -155,7 +155,7 @@ async def add_note_view(request: Request, material_id: str | None = None):
         "request": request,
         "material_id": material_id,
         "material_type": request.cookies.get(
-            "material_type", enums.MaterialTypesEnum.book.name
+            "material_type", enums.MaterialTypesEnum.book.name,
         ),
         "content": request.cookies.get("content", ""),
         "page": request.cookies.get("page", ""),
@@ -173,7 +173,7 @@ async def add_note(note: schemas.Note = Depends()):
     response = RedirectResponse(redirect_url, status_code=302)
 
     for key, value in note.model_dump(
-        exclude={"content", "tags", "link_id", "title"}, exclude_none=True
+        exclude={"content", "tags", "link_id", "title"}, exclude_none=True,
     ).items():
         response.set_cookie(key, value, expires=3600)
 
@@ -320,11 +320,11 @@ async def get_graph(request: Request, material_id: UUID | str | None = None):
         get_titles_task = tg.create_task(db.get_material_titles())
         if material_id:
             get_material_notes_task = tg.create_task(
-                db.get_notes(material_id=material_id)
+                db.get_notes(material_id=material_id),
             )
         else:
             get_material_notes_task = tg.create_task(
-                asyncio.sleep(1 / 100_000, result=[])
+                asyncio.sleep(1 / 100_000, result=[]),
             )
 
     notes = get_notes_task.result()

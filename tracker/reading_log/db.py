@@ -54,7 +54,7 @@ async def get_log_records(*, material_id: str | None = None) -> list[LogRecord]:
     logger.debug("Getting all log records")
 
     stmt = sa.select(
-        models.ReadingLog, models.Materials.c.title.label("material_title")
+        models.ReadingLog, models.Materials.c.title.label("material_title"),
     ).join(models.Materials)
 
     if material_id:
@@ -64,7 +64,7 @@ async def get_log_records(*, material_id: str | None = None) -> list[LogRecord]:
         records = [
             LogRecord(
                 date=row.date,
-                count=row.count,  # type: ignore
+                count=cast(int, row.count),
                 material_id=row.material_id,
                 material_title=row.material_title,
             )
@@ -85,24 +85,22 @@ async def get_reading_material_titles() -> dict[UUID, str]:
     )
 
     async with database.session() as ses:
-        titles = {
-            material_id: title for material_id, title in (await ses.execute(stmt)).all()
-        }
+        titles: dict[UUID, str] = dict((await ses.execute(stmt)).all())  # type: ignore[arg-type]
 
     logger.debug("%s reading materials titles got", len(titles))
     return titles
 
 
 async def get_titles() -> dict[UUID, str]:
-    """Get titles for materials even been read"""
+    """Get titles for materials even been read."""
     logger.debug("Getting reading material titles")
 
     stmt = sa.select(models.Materials.c.material_id, models.Materials.c.title).join(
-        models.Statuses
+        models.Statuses,
     )
 
     async with database.session() as ses:
-        titles = {
+        titles = {  # noqa: C416
             material_id: title for material_id, title in (await ses.execute(stmt)).all()
         }
 
@@ -120,7 +118,7 @@ async def get_completion_dates() -> dict[UUID | None, datetime.datetime]:
     )
 
     async with database.session() as ses:
-        dates = {
+        dates = {  # noqa: C416
             material_id: completed_at
             for material_id, completed_at in (await ses.execute(stmt)).all()
         }
@@ -171,7 +169,7 @@ async def data(
 
         if not (log_records_ := log_records_dict.get(iter_over_dates)):
             log_record = LogRecord(
-                material_id=cast(UUID, last_material_id), count=0, date=iter_over_dates
+                material_id=cast(UUID, last_material_id), count=0, date=iter_over_dates,
             )
 
             yield iter_over_dates, log_record
@@ -197,7 +195,7 @@ async def data(
 
 async def is_log_empty() -> bool:
     logger.debug("Checking the log is empty")
-    stmt = sa.select(sa.func.count(1) == 0).select_from(models.ReadingLog)  # type: ignore
+    stmt = sa.select(sa.func.count(1) == 0).select_from(models.ReadingLog)  # type: ignore[arg-type]
 
     async with database.session() as ses:
         is_empty = await ses.scalar(stmt)
@@ -239,7 +237,7 @@ async def get_material_reading_now() -> UUID | None:
 
 async def insert_log_record(*, material_id: str, count: int, date: datetime.date) -> None:
     logger.debug(
-        "Inserting log material_id=%s, count=%s, date=%s", material_id, count, date
+        "Inserting log material_id=%s, count=%s, date=%s", material_id, count, date,
     )
 
     values = {"material_id": material_id, "count": count, "date": date}
@@ -252,13 +250,13 @@ async def insert_log_record(*, material_id: str, count: int, date: datetime.date
 
 
 async def is_record_correct(
-    *, material_id: UUID, date: datetime.date, count: int
+    *, material_id: UUID, date: datetime.date, count: int,
 ) -> bool:
-    if date > datetime.date.today() or count <= 0:
+    if date > database.utcnow().date() or count <= 0:
         raise ValueError("Invalid args")
 
     async with asyncio.TaskGroup() as tg:
-        reading_materials_task = tg.create_task(materials_db._get_reading_materials())
+        reading_materials_task = tg.create_task(materials_db.get_reading_materials())
         log_records_task = tg.create_task(get_log_records(material_id=str(material_id)))
 
     materials = [

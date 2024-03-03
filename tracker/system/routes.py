@@ -33,7 +33,7 @@ async def system_view():
 async def graphic(
     request: Request,
     material_id: UUID | None = None,
-    last_days: conint(ge=1) = 7,  # type: ignore
+    last_days: conint(ge=1) = 7,  # type: ignore[valid-type]
 ):
     context: dict[str, Any] = {
         "request": request,
@@ -46,10 +46,10 @@ async def graphic(
 
     async with asyncio.TaskGroup() as tg:
         reading_trend_task = tg.create_task(
-            trends.get_span_reading_statistics(span_size=last_days)
+            trends.get_span_reading_statistics(span_size=last_days),
         )
         notes_trend_task = tg.create_task(
-            trends.get_span_notes_statistics(span_size=last_days)
+            trends.get_span_notes_statistics(span_size=last_days),
         )
         tracker_statistics_task = tg.create_task(db.get_tracker_statistics())
         completion_dates_task = tg.create_task(db.get_completion_dates())
@@ -60,15 +60,15 @@ async def graphic(
 
     async with asyncio.TaskGroup() as tg:
         graphic_image_task = tg.create_task(
-            db.create_reading_graphic(material_id=material_id, last_days=last_days)
+            db.create_reading_graphic(material_id=material_id, last_days=last_days),
         )
         reading_trend_graphic_task = tg.create_task(
             trends.create_reading_graphic(
-                reading_trend, span_size=last_days, completion_dates=completion_dates
-            )
+                reading_trend, span_size=last_days, completion_dates=completion_dates,
+            ),
         )
         notes_trend_graphic_task = tg.create_task(
-            trends.create_notes_graphic(notes_trend, span_size=last_days)
+            trends.create_notes_graphic(notes_trend, span_size=last_days),
         )
         titles_task = tg.create_task(db.get_read_material_titles())
 
@@ -125,11 +125,12 @@ async def restore(request: Request):
 
 
 @router.post(
-    "/report", response_model=schemas.GetSpanReportResponse, response_class=ORJSONResponse
+    "/report",
+    response_model=schemas.GetSpanReportResponse,
+    response_class=ORJSONResponse,
 )
 async def get_span_report(span: schemas.GetSpanReportRequest):
-    """Get analytics for the span: analyze materials,
-    read items and inserted notes"""
+    """Get analytics for the span: analyze materials, read items and inserted notes."""
     span_analysis = await trends.get_span_analytics(span)
 
     return {

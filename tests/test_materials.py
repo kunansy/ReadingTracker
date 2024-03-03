@@ -100,7 +100,7 @@ async def test_parse_material_status_response(is_completed):
 
 @pytest.mark.asyncio
 async def test_get_reading_materials():
-    reading_materials = await db._get_reading_materials()
+    reading_materials = await db.get_reading_materials()
 
     materials = {material.material_id: material for material in await get_materials()}
     statuses = {status.material_id: status for status in await get_statuses()}

@@ -107,7 +107,7 @@ async def get_means() -> enums.MEANS:
 async def get_material(*, material_id: UUID) -> Material | None:
     logger.debug("Getting material=%s", material_id)
     stmt = sa.select(models.Materials).where(
-        models.Materials.c.material_id == material_id
+        models.Materials.c.material_id == material_id,
     )
 
     async with database.session() as ses:
@@ -198,7 +198,7 @@ async def _parse_material_status_response(*, stmt: sa.Select) -> list[MaterialSt
         ]
 
 
-async def _get_reading_materials() -> list[MaterialStatus]:
+async def get_reading_materials() -> list[MaterialStatus]:
     logger.info("Getting reading materials")
 
     reading_materials_stmt = _get_reading_materials_stmt()
@@ -213,7 +213,7 @@ async def _get_completed_materials() -> list[MaterialStatus]:
 
     completed_materials_stmt = _get_completed_materials_stmt()
     completed_materials = await _parse_material_status_response(
-        stmt=completed_materials_stmt
+        stmt=completed_materials_stmt,
     )
 
     logger.info("%s completed materials found", len(completed_materials))
@@ -221,7 +221,7 @@ async def _get_completed_materials() -> list[MaterialStatus]:
 
 
 async def get_last_material_started() -> UUID | None:
-    """Get last started and not completed material"""
+    """Get last started and not completed material."""
     logger.info("Getting the last material started")
 
     stmt = (
@@ -254,7 +254,7 @@ async def _get_status(*, material_id: UUID) -> Status | None:
 
 
 def _convert_duration_to_period(duration: datetime.timedelta | int) -> str:
-    if isinstance(duration, datetime.timedelta):
+    if isinstance(duration, datetime.timedelta):  # noqa: SIM108
         total_days = duration.days
     else:
         total_days = duration
@@ -272,7 +272,7 @@ def _convert_duration_to_period(duration: datetime.timedelta | int) -> str:
 
 
 def _get_total_reading_duration(
-    *, started_at: datetime.datetime, completed_at: datetime.datetime | None
+    *, started_at: datetime.datetime, completed_at: datetime.datetime | None,
 ) -> str:
     completion_date = completed_at or database.utcnow()
     duration = completion_date - started_at + datetime.timedelta(days=1)
@@ -287,8 +287,7 @@ def _get_material_statistics(
     mean_total: Decimal,
     log_stats: dict[UUID, Any],
 ) -> MaterialStatistics:
-    """Calculate statistics for reading or completed material"""
-
+    """Calculate statistics for reading or completed material."""
     material, status = material_status.material, material_status.status
     material_id = material.material_id
 
@@ -305,14 +304,14 @@ def _get_material_statistics(
     if status.completed_at is None:
         remaining_pages = material.pages - total
         remaining_days = round(remaining_pages / mean)
-        would_be_completed = database.utcnow().date() + datetime.timedelta(
-            days=remaining_days
+        would_be_completed: datetime.date | None = database.utcnow().date() + datetime.timedelta(
+            days=remaining_days,
         )
     else:
-        would_be_completed = remaining_days = remaining_pages = None  # type: ignore
+        would_be_completed = remaining_days = remaining_pages = None
 
     total_reading_duration = _get_total_reading_duration(
-        started_at=status.started_at, completed_at=status.completed_at
+        started_at=status.started_at, completed_at=status.completed_at,
     )
 
     return MaterialStatistics(
@@ -356,7 +355,7 @@ async def completed_statistics() -> list[MaterialStatistics]:
             material_status=material_status,
             notes_count=all_notes_count.get(material_status.material_id, 0),
             mean_total=mean_read_pages.get(
-                material_status.material.material_type, Decimal(1)
+                material_status.material.material_type, Decimal(1),
             ),
             log_stats=log_stats,
         )
@@ -376,7 +375,7 @@ async def reading_statistics() -> list[MaterialStatistics]:
     start = time.perf_counter()
 
     async with asyncio.TaskGroup() as tg:
-        reading_materials_task = tg.create_task(_get_reading_materials())
+        reading_materials_task = tg.create_task(get_reading_materials())
         mean_read_pages_task = tg.create_task(get_means())
         all_notes_count_task = tg.create_task(notes_db.get_all_notes_count())
 
@@ -391,7 +390,7 @@ async def reading_statistics() -> list[MaterialStatistics]:
             material_status=material_status,
             notes_count=all_notes_count.get(material_status.material_id, 0),
             mean_total=mean_read_pages.get(
-                material_status.material.material_type, Decimal(1)
+                material_status.material.material_type, Decimal(1),
             ),
             log_stats=log_stats,
         )
@@ -481,7 +480,7 @@ async def update_material(
 
 
 async def start_material(
-    *, material_id: UUID, start_date: datetime.date | None = None
+    *, material_id: UUID, start_date: datetime.date | None = None,
 ) -> None:
     start_date = start_date or database.utcnow().date()
     logger.debug("Starting material_id=%s", material_id)
@@ -499,7 +498,7 @@ async def start_material(
 
 
 async def complete_material(
-    *, material_id: UUID, completion_date: datetime.date | None = None
+    *, material_id: UUID, completion_date: datetime.date | None = None,
 ) -> None:
     logger.debug("Completing material_id=%s", material_id)
     completion_date = completion_date or database.utcnow().date()
@@ -555,11 +554,11 @@ async def repeat_material(*, material_id: UUID) -> None:
 
 async def _end_of_reading() -> datetime.date:
     remaining_days = sum(stat.remaining_days or 0 for stat in await reading_statistics())
-    return datetime.date.today() + datetime.timedelta(days=remaining_days)
+    return database.utcnow().date() + datetime.timedelta(days=remaining_days)
 
 
 async def estimate() -> list[MaterialEstimate]:
-    """Get materials from queue with estimated time to read"""
+    """Get materials from queue with estimated time to read."""
     logger.info("Estimating materials started")
     step = datetime.timedelta(days=1)
 
@@ -568,7 +567,7 @@ async def estimate() -> list[MaterialEstimate]:
         get_free_materials_task = tg.create_task(_get_free_materials())
 
     # start today, not when all reading material will be completed
-    last_date = datetime.date.today()
+    last_date = database.utcnow().date()
     mean = get_mean_task.result()
     forecasts = []
 
@@ -585,7 +584,7 @@ async def estimate() -> list[MaterialEstimate]:
                 will_be_started=last_date,
                 will_be_completed=expected_end,
                 expected_duration=expected_duration,
-            )
+            ),
         ]
 
         last_date = expected_end + step
@@ -597,7 +596,7 @@ async def estimate() -> list[MaterialEstimate]:
 def _calculate_priority_months(field: datetime.timedelta | None) -> int:
     if not field:
         return 0
-    if (days := field.days) < 30:
+    if (days := field.days) < 30:  # noqa: PLR2004
         return 0
     # it's expected to repeat materials every month
     return days // 30
@@ -612,7 +611,7 @@ async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
 
     last_repeated_at = sa.func.max(models.Repeats.c.repeated_at).label("last_repeated_at")
     repetition_or_completion_date = sa.func.coalesce(
-        last_repeated_at, sa.func.max(models.Statuses.c.completed_at)
+        last_repeated_at, sa.func.max(models.Statuses.c.completed_at),
     )
     stmt = (
         sa.select(
@@ -644,7 +643,7 @@ async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
     return analytics
 
 
-async def get_repeating_queue(is_outlined: bool) -> list[RepeatingQueue]:
+async def get_repeating_queue(*, is_outlined: bool) -> list[RepeatingQueue]:
     logger.debug("Getting repeating queue")
 
     async with asyncio.TaskGroup() as tg:
@@ -723,8 +722,8 @@ def _get_material_index_uniqueness_constraint_name() -> str:
             return name
 
         for constraint in models.Materials.constraints:
-            if constraint.deferrable and constraint.contains_column(  # type: ignore
-                models.Materials.c.index
+            if constraint.deferrable and constraint.contains_column(  # type: ignore[attr-defined]
+                models.Materials.c.index,
             ):
                 name = cast(str, constraint.name)
                 return name
@@ -773,7 +772,7 @@ async def _get_material_index(material_id: UUID) -> int:
 
 
 async def _set_material_index(
-    *, material_id: UUID, index: int, conn: AsyncSession
+    *, material_id: UUID, index: int, conn: AsyncSession,
 ) -> None:
     logger.debug("Setting material_id=%s to index=%s", material_id, index)
     if not conn.in_transaction():
@@ -799,7 +798,7 @@ async def swap_order(material_id: UUID, new_material_index: int) -> None:
 
         if old_material_index == new_material_index:
             logger.warning("Indexes are equal, terminating")
-            return None
+            return
 
         await _set_unique_index_deferred(conn)
         # move to temporary index to save uniqueness
@@ -809,23 +808,23 @@ async def swap_order(material_id: UUID, new_material_index: int) -> None:
             logger.info("Move material upper")
 
             await _shift_queue_down(
-                conn=conn, start=new_material_index, stop=old_material_index
+                conn=conn, start=new_material_index, stop=old_material_index,
             )
         elif old_material_index < new_material_index:
             logger.info("Move material lower")
 
             await _shift_queue_up(
-                conn=conn, start=old_material_index, stop=new_material_index
+                conn=conn, start=old_material_index, stop=new_material_index,
             )
         else:
             raise ValueError(
                 f"Wrong indexes got: {old_material_index}, "
-                f"{new_material_index}, {material_id=}"
+                f"{new_material_index}, {material_id=}",
             )
 
         # set the target index
         await _set_material_index(
-            material_id=material_id, index=new_material_index, conn=conn
+            material_id=material_id, index=new_material_index, conn=conn,
         )
 
         await _set_unique_index_immediate(conn)
@@ -833,7 +832,7 @@ async def swap_order(material_id: UUID, new_material_index: int) -> None:
 
 async def is_reading(*, material_id: UUID) -> bool:
     stmt = (
-        sa.select(sa.func.count(1) == 1)  # type: ignore
+        sa.select(sa.func.count(1) == 1)  # type: ignore[arg-type]
         .select_from(models.Statuses)
         .where(models.Statuses.c.material_id == material_id)
         .where(models.Statuses.c.completed_at == None)
@@ -849,19 +848,18 @@ async def get_html(link: str, *, timeout: int = 5) -> str:
         resp = await ses.get(str(link))
         resp.raise_for_status()
 
-        html = await resp.text("utf-8")
+        return await resp.text("utf-8")
 
-    return html
 
 
 def parse_habr(html: str) -> dict[str, str]:
     soup = bs4.BeautifulSoup(html, "lxml")
 
     title = soup.find("div", {"class": "tm-article-snippet"}).find(
-        "h1", {"class": "tm-title"}
+        "h1", {"class": "tm-title"},
     )
     author = soup.find("div", {"class": "tm-article-snippet"}).find(
-        "a", {"class": "tm-user-info__username"}
+        "a", {"class": "tm-user-info__username"},
     )
 
     return {"title": title.get_text(), "author": author.get_text().strip()}
@@ -875,10 +873,10 @@ def _parse_duration(duration: str) -> int:
     parts = duration.split()
     total = 0
 
-    if len(parts) == 3:
+    if len(parts) == 3:  # noqa: PLR2004
         total += int(parts[0]) * 60
         parts.pop(0)
-    if len(parts) == 2:
+    if len(parts) == 2:  # noqa: PLR2004
         total += int(parts[0])
         parts.pop(0)
     if len(parts) == 1:

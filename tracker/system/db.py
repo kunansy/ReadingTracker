@@ -37,11 +37,11 @@ async def _get_graphic_data(*, material_id: UUID, last_days: int) -> ReadingData
 
 async def get_read_material_titles() -> dict[UUID, str]:
     stmt = sa.select(models.Materials.c.material_id, models.Materials.c.title).join(
-        models.Statuses
+        models.Statuses,
     )
 
     async with database.session() as ses:
-        return {
+        return {  # noqa: C416
             material_id: title for material_id, title in (await ses.execute(stmt)).all()
         }
 

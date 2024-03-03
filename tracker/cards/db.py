@@ -12,15 +12,15 @@ async def notes_with_cards() -> list[UUID]:
     logger.info("Getting notes with a card")
 
     stmt = sa.select(models.Notes.c.note_id).join(
-        models.Cards, models.Cards.c.note_id == models.Notes.c.note_id
+        models.Cards, models.Cards.c.note_id == models.Notes.c.note_id,
     )
 
     async with database.session() as ses:
-        return await ses.scalars(stmt)  # type: ignore
+        return await ses.scalars(stmt)  # type: ignore[return-value]
 
 
 async def add_card(
-    *, material_id: UUID, note_id: UUID, question: str, answer: str | None = None
+    *, material_id: UUID, note_id: UUID, question: str, answer: str | None = None,
 ) -> None:
     logger.debug("Adding new card")
 
@@ -45,7 +45,8 @@ async def get_cards_list() -> list[dict[str, Any]]:
         sa.select(models.Cards, models.Notes, models.Materials.c.title)
         .join(models.Notes, models.Cards.c.note_id == models.Notes.c.note_id)
         .join(
-            models.Materials, models.Notes.c.material_id == models.Materials.c.material_id
+            models.Materials,
+            models.Notes.c.material_id == models.Materials.c.material_id,
         )
     )
 
@@ -73,7 +74,7 @@ async def get_cards_list() -> list[dict[str, Any]]:
 async def get_cards_count() -> int:
     logger.debug("Getting amount of cards")
 
-    stmt = sa.select(sa.func.count(1)).select_from(models.Cards)  # type: ignore
+    stmt = sa.select(sa.func.count(1)).select_from(models.Cards)  # type: ignore[arg-type]
 
     async with database.session() as ses:
         return await ses.scalar(stmt) or 0

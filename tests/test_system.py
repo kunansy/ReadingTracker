@@ -70,7 +70,7 @@ async def test_get_graphic_data_unclear_reading(material_id, last_days):
 async def test_get_read_material_titles():
     result = await db.get_read_material_titles()
     materials = (
-        await materials_db._get_reading_materials()
+        await materials_db.get_reading_materials()
         + await materials_db._get_completed_materials()
     )
 

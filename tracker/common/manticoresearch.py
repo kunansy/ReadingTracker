@@ -25,7 +25,7 @@ class Note(CustomBaseModel):
 
     @field_validator("content")
     def remove_tags_from_content(cls, content: str) -> str:
-        """Remove tags from note content to don't search on it"""
+        """Remove tags from note content to don't search on it."""
         if (index := content.find("#")) == -1:
             return content
 
@@ -63,7 +63,7 @@ async def _cursor() -> AsyncGenerator[MysqlCursor, None]:
 
 def _get_note_stmt() -> sa.Select:
     return sa.select(
-        models.Notes.c.note_id, models.Notes.c.content, models.Notes.c.added_at
+        models.Notes.c.note_id, models.Notes.c.content, models.Notes.c.added_at,
     ).where(~models.Notes.c.is_deleted)
 
 
@@ -114,11 +114,11 @@ async def _create_table() -> None:
 async def insert_all(notes: list[Note]) -> None:
     logger.debug("Inserting all %s notes", len(notes))
     if not notes:
-        return None
+        return
 
     async with _cursor() as cur:
         await cur.executemany(
-            INSERT_QUERY, (list(note.model_dump().values()) for note in notes)
+            INSERT_QUERY, (list(note.model_dump().values()) for note in notes),
         )
 
     logger.debug("Notes inserted")
@@ -185,7 +185,7 @@ def _get_search_query() -> str:
     FROM notes
     WHERE match(%s)
     ORDER BY weight() DESC
-    """  # noqa
+    """  # noqa: E501
 
 
 async def search(query: str) -> dict[UUID, SearchResult]:
@@ -213,4 +213,4 @@ async def readiness() -> bool:
         await cur.execute(query)
         _, uptime = await cur.fetchone()
 
-    return uptime.isdigit() and int(uptime) >= 5
+    return uptime.isdigit() and int(uptime) >= 5  # noqa: PLR2004
