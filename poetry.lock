@@ -2535,12 +2535,12 @@ dev = ["atomicwrites (==1.4.1)", "attrs (==23.2.0)", "coverage (==7.4.1)", "hatc
 
 [[package]]
 name = "pyvis"
-version = "0.3.1"
+version = "0.3.2"
 description = "A Python network graph visualization library"
 optional = false
 python-versions = ">3.6"
 files = [
-    {file = "pyvis-0.3.1.tar.gz", hash = "sha256:aa817caac54afc9a4df38ada6f46636b842a8bd57197bb6aca5084699da04307"},
+    {file = "pyvis-0.3.2-py3-none-any.whl", hash = "sha256:5720c4ca8161dc5d9ab352015723abb7a8bb8fb443edeb07f7a322db34a97555"},
 ]
 
 [package.dependencies]
@@ -3111,4 +3111,4 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "4876a3facf999cce61e2264ca6d165950e2d8504346118326e27e0c847ad1d99"
+content-hash = "a954d00486cc52de3ddd9ad26c6bf7b7957b1d5d0b641a0820f01219f528ccd2"
