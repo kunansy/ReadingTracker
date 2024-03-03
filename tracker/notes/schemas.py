@@ -10,6 +10,7 @@ from tracker.common.schemas import CustomBaseModel
 
 PUNCTUATION_MAPPING = {
     "--": "—",
+    "–": "—",
     "<->": "↔",
     "->": "→",
     "<-": "←",
