@@ -69,7 +69,7 @@ def _demark_bold(string: str) -> str:
 
 
 def _demark_italic(string: str) -> str:
-    return DEMARK_ITALIC_PATTERN.sub(r"__\1__", string)
+    return DEMARK_ITALIC_PATTERN.sub(r"*\1*", string)
 
 
 def _demark_code(string: str) -> str:
