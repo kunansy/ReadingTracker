@@ -19,6 +19,7 @@ BOLD_MARKER = "font-weight-bold"
 ITALIC_MARKER = "font-italic"
 CODE_MARKER = "font-code"
 
+# save back compatibility with css style for now
 DEMARK_BOLD_PATTERN = re.compile(f'<span class="?{BOLD_MARKER}"?>(.*?)</span>')
 DEMARK_ITALIC_PATTERN = re.compile(f'<span class="?{ITALIC_MARKER}"?>(.*?)</span>')
 DEMARK_CODE_PATTERN = re.compile(f'<span class="?{CODE_MARKER}"?>(.*?)</span>')
