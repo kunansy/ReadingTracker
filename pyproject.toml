@@ -5,6 +5,7 @@ indent-width = 4
 target-version = "py312"
 exclude = ["backup_pb2_grpc.py", "backup_pb2.pyi"]
 extend-exclude = ["tests"]
+cache-dir = "/tmp/ruff-cache/"
 
 [tool.ruff.lint]
 # "E265", "E261", "E262", in preview
