@@ -36,13 +36,17 @@
         <p class="little-text"> Note number: {{ note_number }}</p>
         <p class="medium-text note-id-row hover"> Note id: {{ note_id }} </p>
         <p class="note-content"> {{ content | safe }}</p>
-        <p class="medium-text"> {{ page_name }}: {{ page }} of {{ material_pages }}</p>
+        {%- if material_pages -%}
+            <p class="medium-text"> {{ page_name }}: {{ page }} of {{ material_pages }}</p>
+        {%- endif -%}
         <p class="medium-text"> Added at: {{ added_at }}</p>
         <hr>
-        <p class="medium-text"> Material id: {{ material_id }}</p>
-        <p class="medium-text"> Material title: «{{ material_title }}»</p>
-        <p class="medium-text"> Material authors: {{ material_authors }}</p>
-        <p class="medium-text"> Is material outlined: {{ is_outlined }}</p>
+        {%- if material_title -%}
+            <p class="medium-text"> Material id: {{ material_id }}</p>
+            <p class="medium-text"> Material title: «{{ material_title }}»</p>
+            <p class="medium-text"> Material authors: {{ material_authors }}</p>
+            <p class="medium-text"> Is material outlined: {{ is_outlined }}</p>
+        {%- endif -%}
         <p class="medium-text" title="How many notes link to this one"> Links count: {{ links_count }} </p>
     </div>
     <div class="from-links">
