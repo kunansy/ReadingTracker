@@ -56,48 +56,12 @@ def _replace_punctuation(string: str) -> str:
     return string
 
 
-def _replace_new_lines(string: str) -> str:
-    return string.replace("\n", "<br/>")
-
-
 def _replace_lt(string: str) -> str:
     return string.replace(" < ", " &lt; ")
 
 
 def _replace_gt(string: str) -> str:
     return string.replace(" > ", " &gt; ")
-
-
-def _mark_bold(string: str) -> str:
-    count = string.count("**")
-    assert count % 2 == 0, "Bold markers are not balanced"
-
-    for _ in range(count // 2):
-        # don't add quotes around class names, because
-        # quotes will be replaced by the quotes formatter
-        string = string.replace("**", f"<span class={BOLD_MARKER}>", 1)
-        string = string.replace("**", "</span>", 1)
-    return string
-
-
-def _mark_italic(string: str) -> str:
-    count = string.count("__")
-    assert count % 2 == 0, "Italic markers are not balanced"
-
-    for _ in range(count // 2):
-        string = string.replace("__", f"<span class={ITALIC_MARKER}>", 1)
-        string = string.replace("__", "</span>", 1)
-    return string
-
-
-def _mark_code(string: str) -> str:
-    count = string.count("`")
-    assert count % 2 == 0, "Code markers are not balanced"
-
-    for _ in range(count // 2):
-        string = string.replace("`", f"<span class={CODE_MARKER}>", 1)
-        string = string.replace("`", "</span>", 1)
-    return string
 
 
 def _demark_bold(string: str) -> str:
@@ -123,10 +87,6 @@ NOTES_FORMATTERS = (
     _replace_punctuation,
     _replace_lt,
     _replace_gt,
-    _mark_bold,
-    _mark_italic,
-    _mark_code,
-    _replace_new_lines,
 )
 
 NOTES_DEMARKERS = (
