@@ -58,14 +58,6 @@ def _replace_punctuation(string: str) -> str:
     return string
 
 
-def _replace_lt(string: str) -> str:
-    return string.replace(" < ", " &lt; ")
-
-
-def _replace_gt(string: str) -> str:
-    return string.replace(" > ", " &gt; ")
-
-
 def _demark_bold(string: str) -> str:
     return DEMARK_BOLD_PATTERN.sub(r"**\1**", string)
 
@@ -87,8 +79,6 @@ NOTES_FORMATTERS = (
     _add_dot,
     _up_first_letter,
     _replace_punctuation,
-    _replace_lt,
-    _replace_gt,
 )
 
 NOTES_DEMARKERS = (
