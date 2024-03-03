@@ -70,6 +70,14 @@ def _demark_code(string: str) -> str:
     return DEMARK_CODE_PATTERN.sub(r"`\1`", string)
 
 
+def _dereplace_lt(string: str) -> str:
+    return re.sub(r"&lt;", "<", string)
+
+
+def _dereplace_gt(string: str) -> str:
+    return re.sub(r"&gt;", ">", string)
+
+
 def _dereplace_new_lines(string: str) -> str:
     return re.sub(r"<br/?>", "\n", string)
 
@@ -85,6 +93,8 @@ NOTES_DEMARKERS = (
     _demark_bold,
     _demark_italic,
     _demark_code,
+    _dereplace_lt,
+    _dereplace_gt,
     _dereplace_new_lines,
 )
 
