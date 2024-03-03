@@ -77,7 +77,7 @@ class Note(CustomBaseModel):
         search_url = router.url_path_for(get_notes.__name__)
 
         for tag in tags:
-            link_text = f'<a href={settings.TRACKER_URL}{search_url}?tags_query={tag} target="_blank">#{tag}</a>'  # noqa
+            link_text = f'<a href={settings.TRACKER_URL}{search_url}?tags_query={tag} target="_blank">#{tag}</a>'  # noqa: E501
 
             text = re.sub(rf"(\W)#({tag})(\W)", rf"\1{link_text}\3", text)
 
@@ -95,14 +95,13 @@ class Note(CustomBaseModel):
 
         return text.replace(
             link_text,
-            f'<a id="link-ref" href={settings.TRACKER_URL}{note_url}?note_id={link_id} target="_blank">{link_text}</a>',  # noqa
+            f'<a id="link-ref" href={settings.TRACKER_URL}{note_url}?note_id={link_id} target="_blank">{link_text}</a>',  # noqa: E501
         )
 
     @property
     def content_html(self) -> str:
         content = self._mark_tags_with_ref(self.content, self.tags)
-        content = self._mark_link_with_ref(content, self.link_id)
-        return content
+        return self._mark_link_with_ref(content, self.link_id)
 
 
 def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[int]]:
@@ -124,7 +123,7 @@ async def get_material_type(*, material_id: UUID | str) -> str | None:
         return None
 
     stmt = sa.select(models.Materials.c.material_type).where(
-        models.Materials.c.material_id == str(material_id)
+        models.Materials.c.material_id == str(material_id),
     )
 
     async with database.session() as ses:
@@ -243,13 +242,12 @@ async def get_note(*, note_id: UUID | str) -> Note | None:
 
 async def get_all_notes_count() -> dict[UUID, int]:
     """Get notes count for the materials."""
-
     logger.debug("Getting notes count for all materials")
 
     stmt = (
         sa.select(
             models.Notes.c.material_id.label("material_id"),
-            sa.func.count(1).label("count"),  # type: ignore
+            sa.func.count(1).label("count"),  # type: ignore[arg-type]
         )
         .select_from(models.Notes)
         .where(~models.Notes.c.is_deleted)
@@ -380,8 +378,9 @@ async def get_material_tags(material_id: str | UUID) -> list[str]:
 
 async def get_possible_links(note: Note) -> list[Note]:
     """Get notes with which the given one might be linked.
-    So possibility coeff = size of tags set intersection."""
 
+    So possibility coeff = size of tags set intersection.
+    """
     logger.debug("Getting possible links for note=%s, tags=%s", note.note_id, note.tags)
 
     stmt = (
@@ -390,8 +389,8 @@ async def get_possible_links(note: Note) -> list[Note]:
         .where(models.Notes.c.note_id != note.note_id)
         .where(
             sa.text(
-                f"tags ?| array(SELECT jsonb_array_elements_text(tags) FROM notes WHERE note_id = '{note.note_id}')"  # noqa
-            )
+                f"tags ?| array(SELECT jsonb_array_elements_text(tags) FROM notes WHERE note_id = '{note.note_id}')",  # noqa: S608, E501
+            ),
         )
     )
 
@@ -406,12 +405,11 @@ async def get_possible_links(note: Note) -> list[Note]:
 
 
 def _get_links_from(*, note_id: UUID, notes: Iterable[Note]) -> list[Note]:
-    """Get all notes linked with the given one"""
-
+    """Get all notes linked with the given one."""
     return [note for note in notes if note.link_id == note_id]
 
 
-def _get_note_link(note: Note, **attrs) -> tuple[str, dict[str, Any]]:
+def _get_note_link(note: Note, **attrs: str) -> tuple[str, dict[str, Any]]:
     return (
         str(note.note_id),
         jsonable_encoder(
@@ -420,16 +418,19 @@ def _get_note_link(note: Note, **attrs) -> tuple[str, dict[str, Any]]:
                 "material_id": note.material_id,
                 "note_number": note.note_number,
                 "label": note.short_content,
-            }
+            },
         ),
     )
 
 
 def _add_links_to(
-    graph: nx.DiGraph, notes: dict[UUID, Note], note_id: UUID, even_added_notes: set[UUID]
+    graph: nx.DiGraph,
+    notes: dict[UUID, Note],
+    note_id: UUID,
+    even_added_notes: set[UUID],
 ) -> None:
     if not (link_id := notes[note_id].link_id) or link_id in even_added_notes:
-        return None
+        return
 
     # to resolve circular recursion
     even_added_notes.add(link_id)
@@ -441,12 +442,15 @@ def _add_links_to(
 
 
 def _link_cohesive_notes(
-    graph: nx.DiGraph, notes: dict[UUID, Note], note_id: UUID, *, visited: set[UUID]
+    graph: nx.DiGraph,
+    notes: dict[UUID, Note],
+    note_id: UUID,
+    *,
+    visited: set[UUID],
 ) -> None:
-    """Iter over graph and find all note links"""
-
+    """Iterate over graph and find all note links."""
     if note_id in visited:
-        return None
+        return
 
     link_id = notes[note_id].link_id
     links_from = _get_links_from(note_id=note_id, notes=notes.values())
@@ -468,7 +472,10 @@ def _link_cohesive_notes(
 
 
 def link_notes(
-    *, note_id: UUID, notes: dict[UUID, Note], color: str | None = "black"
+    *,
+    note_id: UUID,
+    notes: dict[UUID, Note],
+    color: str | None = "black",
 ) -> nx.DiGraph:
     logger.debug("Linking %s notes from the %s", len(notes), note_id)
 
@@ -505,7 +512,10 @@ def link_all_notes(notes: list[Note]) -> nx.DiGraph:
 
 
 def create_material_graph(
-    *, material_id: UUID, material_notes: set[UUID], notes: dict[UUID, Note]
+    *,
+    material_id: UUID,
+    material_notes: set[UUID],
+    notes: dict[UUID, Note],
 ) -> nx.DiGraph:
     if not (material_notes and notes):
         raise ValueError("No notes passed")
@@ -549,7 +559,10 @@ def create_graphic(graph: nx.DiGraph, **kwargs) -> str:
     )
 
     net = Network(
-        cdn_resources="remote", directed=True, neighborhood_highlight=True, **kwargs
+        cdn_resources="remote",
+        directed=True,
+        neighborhood_highlight=True,
+        **kwargs,
     )
     net.options = {"interaction": {"hover": True}}
     net.from_nx(graph)
@@ -561,8 +574,11 @@ def create_graphic(graph: nx.DiGraph, **kwargs) -> str:
 
 
 async def get_sorted_tags(*, material_id: str | UUID | None) -> list[str]:
-    """Get tags especially for the material, means there should be tags
-    from the notes for the material in the beginning of the result list."""
+    """Get tags especially for the material.
+
+    Means there should be tags from the notes
+    for the material in the beginning of the result list.
+    """
     logger.debug("Getting sorted tags for material_id=%s", material_id)
 
     if not material_id:
@@ -583,7 +599,7 @@ async def get_sorted_tags(*, material_id: str | UUID | None) -> list[str]:
 
 
 async def get_links_from(*, note_id: UUID | str) -> list[Note]:
-    """Get notes which linked to the given one"""
+    """Get notes which linked to the given one."""
     stmt = _get_note_stmt(link_id=note_id)
 
     async with database.session() as ses:
@@ -592,7 +608,7 @@ async def get_links_from(*, note_id: UUID | str) -> list[Note]:
 
 async def is_deleted(note_id: str) -> bool:
     stmt = sa.select(models.Notes.c.is_deleted == True).where(
-        models.Notes.c.note_id == note_id
+        models.Notes.c.note_id == note_id,
     )
 
     async with database.session() as ses:

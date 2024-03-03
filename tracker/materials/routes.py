@@ -45,7 +45,7 @@ async def get_queue(request: Request):
 @router.get("/add-view", response_class=HTMLResponse)
 @cache(namespace="materials", coder=PickleCoder, expire=3)
 async def insert_material_view(request: Request):
-    """Insert a material to the queue"""
+    """Insert a material to the queue."""
     tags = await db.get_material_tags()
     context = {
         "request": request,
@@ -57,7 +57,7 @@ async def insert_material_view(request: Request):
 
 @router.post("/add", response_class=HTMLResponse)
 async def insert_material(material: schemas.Material = Depends()):
-    """Insert a material to the queue"""
+    """Insert a material to the queue."""
     await db.insert_material(
         title=material.title,
         authors=material.authors,
@@ -74,7 +74,9 @@ async def insert_material(material: schemas.Material = Depends()):
 @router.get("/update-view", response_class=HTMLResponse)
 @cache(namespace="materials", coder=PickleCoder, expire=3)
 async def update_material_view(
-    request: Request, material_id: UUID, success: bool | None = None
+    request: Request,
+    material_id: UUID,
+    success: bool | None = None,
 ):
     context: dict[str, Any] = {
         "request": request,
@@ -151,7 +153,7 @@ async def complete_material(material_id: UUID):
 
 @router.post("/outline/{material_id}")
 async def outline_material(material_id: UUID):
-    """Mark the material as outlined"""
+    """Mark the material as outlined."""
     await db.outline_material(material_id=material_id)
 
     redirect_url = router.url_path_for(get_reading_materials.__name__)
@@ -196,7 +198,7 @@ async def get_completed_materials(request: Request):
 @cache(namespace="materials", coder=PickleCoder, expire=5)
 async def get_repeat_view(request: Request, only_outlined: Literal["on", "off"] = "off"):
     is_outlined = only_outlined == "on"
-    repeating_queue = await db.get_repeating_queue(is_outlined)
+    repeating_queue = await db.get_repeating_queue(is_outlined=is_outlined)
 
     context = {
         "request": request,
@@ -209,14 +211,14 @@ async def get_repeat_view(request: Request, only_outlined: Literal["on", "off"] 
 
 @router.get("/repeat-queue", response_model=list[db.RepeatingQueue])
 @cache(namespace="materials", coder=ORJSONEncoder, expire=5)
-async def get_repeat_queue(only_outlined: bool = False):
-    return await db.get_repeating_queue(only_outlined)
+async def get_repeat_queue(*, only_outlined: bool = False):
+    return await db.get_repeating_queue(is_outlined=only_outlined)
 
 
 @router.get("/queue/start")
 @cache(namespace="materials", coder=ORJSONEncoder, expire=3)
 async def get_queue_start():
-    """Get the first material index in the queue"""
+    """Get the first material index in the queue."""
     index = await db.get_queue_start()
 
     return {"index": index}
@@ -225,7 +227,7 @@ async def get_queue_start():
 @router.get("/queue/end")
 @cache(namespace="materials", coder=ORJSONEncoder, expire=3)
 async def get_queue_end():
-    """Get the last material index in the queue"""
+    """Get the last material index in the queue."""
     index = await db.get_queue_end()
 
     return {"index": index}

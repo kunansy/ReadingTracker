@@ -1,4 +1,5 @@
 [tool.ruff]
+unsafe-fixes = true
 line-length = 90
 indent-width = 4
 target-version = "py312"
@@ -7,13 +8,35 @@ extend-exclude = ["tests"]
 
 [tool.ruff.lint]
 # "E265", "E261", "E262", in preview
-select = ["ANN", "B", "C", "E", "F", "I", "Q", "S", "SIM", "UP", "W"]
+select = ["ALL"]
 ignore = [
-    "ANN002", "ANN003", "ANN101", "ANN102", "ANN201", "ANN401",
-    "C416",
-    "E711", "E712",
-    "S101", "S110", "SIM108"
+    # typing kwargs/self/cls
+    "ANN003", "ANN101", "ANN102",
+    # catch Exception, docstr, lint/format conflicts
+    "BLE001", "D1", "D203", "D212", "D213",
+    # literal str in exc, f-str in exc, todo without issue, exc name
+    "EM101", "EM102", "FIX002", "N818",
+    # args count, sum([]), todo author/link
+    "PLR0913", "RUF017", "TD002", "TD003",
+    # todo colon/text, exc msg
+    "TD004", "TD005", "TRY003"
 ]
+
+
+[tool.ruff.lint.extend-per-file-ignores]
+# assert
+"tracker/tests/*" = ["S101"]
+# access to the private members, commented code,
+"tracker/protos/*" = ["SLF001", "ERA001"]
+"tracker/models/models.py" = ["N802", "ANN002"]
+# return type for routes
+"tracker/*/routes.py" = ["ANN201"]
+"tracker/main.py" = ["ANN201"]
+# == True for sql
+"tracker/*/db.py" = ["E711", "E712"]
+"tracker/reading_log/statistics.py" = ["E711", "E712"]
+"tracker/*/schemas.py" = ["S101"]
+
 
 [tool.ruff.format]
 quote-style = "double"
@@ -91,13 +114,12 @@ fastapi-cache2 = {extras = ["redis"], version = "^0.2.1"}
 starlette-exporter = "~0.21.0"
 beautifulsoup4 = "~4.12.2"
 lxml = "~5.1.0"
-pandas = "^2.2.1"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "~1.8.0"
 bumpversion = "~0.6.0"
 greenlet = "~3.0.1"
-ruff = "~0.2.0"
+ruff = "~0.3.0"
 pytest = "~8.0.0"
 pytest-asyncio = "~0.23.2"
 coverage = "~7.4.0"

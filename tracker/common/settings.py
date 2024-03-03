@@ -22,7 +22,9 @@ DATA_DIR = Path("data/")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 TRACKER_URL = env(
-    "TRACKER_URL", "http://tracker-app:8000", validate=lambda url: not url.endswith("/")
+    "TRACKER_URL",
+    "http://tracker-app:8000",
+    validate=lambda url: not url.endswith("/"),
 )
 
 with env.prefixed("CACHE_"):
@@ -89,4 +91,5 @@ os.environ.clear()
 
 if path:
     os.environ["PATH"] = path
-os.environ["PROMETHEUS_MULTIPROC_DIR"] = metrics_dir  # type: ignore
+if metrics_dir:
+    os.environ["PROMETHEUS_MULTIPROC_DIR"] = metrics_dir

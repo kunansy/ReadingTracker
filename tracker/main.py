@@ -58,7 +58,7 @@ async def startup():
         encoding="utf8",
         decode_responses=True,
     )
-    assert await redis.ping()
+    assert await redis.ping()  # noqa: S101
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
 
 
@@ -80,10 +80,13 @@ async def database_exception_handler(request: Request, exc: database.DatabaseExc
 
 @app.exception_handler(manticoresearch.ManticoreException)
 async def manticore_exception_handler(
-    request: Request, exc: manticoresearch.ManticoreException
+    request: Request,
+    exc: manticoresearch.ManticoreException,
 ):
     logger.exception(
-        "Manticoresearch exception occurred, (%s), %s", request.url, str(exc)
+        "Manticoresearch exception occurred, (%s), %s",
+        request.url,
+        str(exc),
     )
 
     context = {

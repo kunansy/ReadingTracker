@@ -21,14 +21,13 @@ from tracker.models import enums
 
 
 def Column(*args, **kwargs) -> sqlalchemy.Column:
-    """Make columns not nullable by default"""
+    """Make columns not nullable by default."""
     kwargs["nullable"] = kwargs.get("nullable", False)
     return sqlalchemy.Column(*args, **kwargs)
 
 
 def ForeignKey(*args, **kwargs) -> sqlalchemy.ForeignKey:
-    """Make foreign keys onupdate = 'CASCADE'
-    ondelete = 'RESTRICT' by default"""
+    """Make foreign keys onupdate = 'CASCADE' ondelete = 'RESTRICT' by default."""
     kwargs["onupdate"] = kwargs.get("onupdate", "CASCADE")
     kwargs["ondelete"] = kwargs.get("ondelete", "RESTRICT")
 
@@ -46,11 +45,11 @@ def PrimaryKey(*args, **kwargs) -> sqlalchemy.Column:
 
 
 class Serial(UserDefinedType):
-    """Sqlalchemy have no postgres Serial type"""
+    """Sqlalchemy have no postgres Serial type."""
 
     cache_ok = True
 
-    def get_col_spec(self, **kw):
+    def get_col_spec(self, **kw) -> str:  # noqa: ARG002
         return "serial"
 
 

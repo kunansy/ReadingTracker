@@ -62,7 +62,7 @@ TABLES = {
 def _is_uuid(value: str) -> bool:
     try:
         UUID(value)
-        return True
+        return True  # noqa: TRY300
     except ValueError:
         return False
 
@@ -83,13 +83,13 @@ def _convert_str_to_date(value: JSON_FIELD_TYPES) -> JSON_FIELD_TYPES | DATE_TYP
         return value
 
     try:
-        return datetime.datetime.strptime(value, settings.DATETIME_FORMAT)
-    except Exception:
+        return datetime.datetime.strptime(value, settings.DATETIME_FORMAT)  # noqa: DTZ007
+    except Exception:  # noqa: S110
         pass
 
     try:
-        return datetime.datetime.strptime(value, settings.DATE_FORMAT).date()
-    except Exception:
+        return datetime.datetime.strptime(value, settings.DATE_FORMAT).date()  # noqa: DTZ007
+    except Exception:  # noqa: S110
         pass
 
     raise ValueError(f"Invalid date format: {value!r}")
@@ -140,8 +140,8 @@ async def get_tables_analytics() -> dict[str, int]:
         + [f"SELECT '{table_names[-1]}' AS name, COUNT(1) AS cnt FROM {table_names[-1]}"]  # noqa: S608
     )
 
-    query = "\n".join(query)  # type: ignore
-    stmt = sa.text(query)  # type: ignore
+    query_str = "\n".join(query)
+    stmt = sa.text(query_str)
 
     async with database.session() as ses:
         res = (await ses.execute(stmt)).mappings().all()
@@ -150,7 +150,11 @@ async def get_tables_analytics() -> dict[str, int]:
 
 
 async def _set_seq_value(
-    *, conn: AsyncSession, table_name: str, field_name: str, rows: TableSnapshot
+    *,
+    conn: AsyncSession,
+    table_name: str,
+    field_name: str,
+    rows: TableSnapshot,
 ) -> None:
     # TODO: iterate over table and find Serial fields
     max_note_number = max(row.get(field_name, 0) for row in rows.rows)
@@ -164,7 +168,10 @@ async def set_notes_seq_value(notes: TableSnapshot, conn: AsyncSession) -> None:
     model = models.Notes
 
     await _set_seq_value(
-        conn=conn, table_name=model.name, field_name=model.c.note_number.name, rows=notes
+        conn=conn,
+        table_name=model.name,
+        field_name=model.c.note_number.name,
+        rows=notes,
     )
 
 
@@ -172,5 +179,8 @@ async def set_materials_seq_value(materials: TableSnapshot, conn: AsyncSession) 
     model = models.Materials
 
     await _set_seq_value(
-        conn=conn, table_name=model.name, field_name=model.c.index.name, rows=materials
+        conn=conn,
+        table_name=model.name,
+        field_name=model.c.index.name,
+        rows=materials,
     )

@@ -12,7 +12,7 @@ class CustomBaseModel(BaseModel):
 
 class ORJSONEncoder(Coder):
     @classmethod
-    def encode(cls, value: Any) -> bytes:  # noqa: ANN102
+    def encode(cls, value: Any) -> bytes:  # noqa: ANN401
         return orjson.dumps(
             value,
             default=jsonable_encoder,
@@ -20,5 +20,5 @@ class ORJSONEncoder(Coder):
         )
 
     @classmethod
-    def decode(cls, value: bytes) -> Any:  # noqa: ANN102
+    def decode(cls, value: bytes) -> Any:  # noqa: ANN401
         return orjson.loads(value)

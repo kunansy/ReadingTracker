@@ -24,7 +24,7 @@ DEMARK_CODE_PATTERN = re.compile(f'<span class="?{CODE_MARKER}"?>(.*?)</span>')
 
 TAGS_PATTERN = re.compile(r"\W#(\w+)\b")
 LINK_PATTERN = re.compile(
-    r"\[\[([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})\]\]"
+    r"\[\[([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})\]\]",
 )
 
 
@@ -98,7 +98,7 @@ NOTES_DEMARKERS = (
 
 
 def demark_note(string: str) -> str:
-    """to show the note in update form"""
+    """To show the note in update form."""
     for formatter in NOTES_DEMARKERS:
         string = formatter(string)
     return string
