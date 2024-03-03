@@ -36,7 +36,7 @@ class Note(CustomBaseModel):
 
     @field_validator("material_id", mode="before")
     def replace_null_material_id(cls, material_id: UUID | None) -> UUID:
-        # Some notes don't have material, so to work
+        # Some notes don't have a material, so to work
         # with them set material_id to zero uuid
         return material_id or UUID(int=0)
 
