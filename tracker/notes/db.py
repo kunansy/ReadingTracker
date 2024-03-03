@@ -38,9 +38,7 @@ class Note(CustomBaseModel):
     def replace_null_material_id(cls, material_id: UUID | None) -> UUID:
         # Some notes don't have material, so to work
         # with them set material_id to zero uuid
-        if material_id:
-            return material_id
-        return UUID(int=0)
+        return material_id or UUID(int=0)
 
     @property
     def content_md(self) -> str:
