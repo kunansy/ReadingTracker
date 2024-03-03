@@ -426,3 +426,8 @@ if (parseBtn) {
         linkField.value = respJson["link"];
     };
 }
+
+
+document.querySelectorAll("p.note-content").forEach((e) => {
+    e.innerHTML = marked.parse(e.innerHTML.replaceAll("<br>", "\n"));
+});
