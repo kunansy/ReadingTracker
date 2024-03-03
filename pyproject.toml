@@ -91,7 +91,6 @@ fastapi-cache2 = {extras = ["redis"], version = "^0.2.1"}
 starlette-exporter = "~0.21.0"
 beautifulsoup4 = "~4.12.2"
 lxml = "~5.1.0"
-pandas = "^2.2.1"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "~1.8.0"
