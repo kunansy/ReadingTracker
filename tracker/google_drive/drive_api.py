@@ -53,7 +53,8 @@ async def restore(*, dump_path: Path | None = None) -> db.DBSnapshot:
         await db.set_materials_seq_value(snapshot_dict["materials"], ses)
 
         logger.info(
-            "Restoring completed, %ss", round(time.perf_counter() - start_time, 2),
+            "Restoring completed, %ss",
+            round(time.perf_counter() - start_time, 2),
         )
 
     return snapshot

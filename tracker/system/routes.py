@@ -64,7 +64,9 @@ async def graphic(
         )
         reading_trend_graphic_task = tg.create_task(
             trends.create_reading_graphic(
-                reading_trend, span_size=last_days, completion_dates=completion_dates,
+                reading_trend,
+                span_size=last_days,
+                completion_dates=completion_dates,
             ),
         )
         notes_trend_graphic_task = tg.create_task(

@@ -424,10 +424,10 @@ def _get_note_link(note: Note, **attrs: str) -> tuple[str, dict[str, Any]]:
 
 
 def _add_links_to(
-        graph: nx.DiGraph,
-        notes: dict[UUID, Note],
-        note_id: UUID,
-        even_added_notes: set[UUID],
+    graph: nx.DiGraph,
+    notes: dict[UUID, Note],
+    note_id: UUID,
+    even_added_notes: set[UUID],
 ) -> None:
     if not (link_id := notes[note_id].link_id) or link_id in even_added_notes:
         return
@@ -442,7 +442,11 @@ def _add_links_to(
 
 
 def _link_cohesive_notes(
-    graph: nx.DiGraph, notes: dict[UUID, Note], note_id: UUID, *, visited: set[UUID],
+    graph: nx.DiGraph,
+    notes: dict[UUID, Note],
+    note_id: UUID,
+    *,
+    visited: set[UUID],
 ) -> None:
     """Iterate over graph and find all note links."""
     if note_id in visited:
@@ -468,7 +472,10 @@ def _link_cohesive_notes(
 
 
 def link_notes(
-    *, note_id: UUID, notes: dict[UUID, Note], color: str | None = "black",
+    *,
+    note_id: UUID,
+    notes: dict[UUID, Note],
+    color: str | None = "black",
 ) -> nx.DiGraph:
     logger.debug("Linking %s notes from the %s", len(notes), note_id)
 
@@ -505,7 +512,10 @@ def link_all_notes(notes: list[Note]) -> nx.DiGraph:
 
 
 def create_material_graph(
-    *, material_id: UUID, material_notes: set[UUID], notes: dict[UUID, Note],
+    *,
+    material_id: UUID,
+    material_notes: set[UUID],
+    notes: dict[UUID, Note],
 ) -> nx.DiGraph:
     if not (material_notes and notes):
         raise ValueError("No notes passed")
@@ -549,7 +559,10 @@ def create_graphic(graph: nx.DiGraph, **kwargs) -> str:
     )
 
     net = Network(
-        cdn_resources="remote", directed=True, neighborhood_highlight=True, **kwargs,
+        cdn_resources="remote",
+        directed=True,
+        neighborhood_highlight=True,
+        **kwargs,
     )
     net.options = {"interaction": {"hover": True}}
     net.from_nx(graph)

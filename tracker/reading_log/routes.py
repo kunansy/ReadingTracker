@@ -13,7 +13,9 @@ from tracker.reading_log import db, schemas
 
 
 router = APIRouter(
-    prefix="/reading_log", tags=["reading log"], default_response_class=HTMLResponse,
+    prefix="/reading_log",
+    tags=["reading log"],
+    default_response_class=HTMLResponse,
 )
 templates = Jinja2Templates(directory="templates")
 
@@ -67,7 +69,9 @@ async def add_log_record(record: schemas.LogRecord = Depends()):
         raise HTTPException(status_code=400, detail="Invalid record")
 
     await db.insert_log_record(
-        material_id=str(record.material_id), count=record.count, date=record.date,
+        material_id=str(record.material_id),
+        count=record.count,
+        date=record.date,
     )
 
     redirect_url = router.url_path_for(add_log_record_view.__name__)

@@ -44,7 +44,8 @@ def _find_tags_intersection(notes: list[db.Note], tags: set[str]) -> set[UUID]:
 
 
 def _highlight_snippets(
-    notes: list[db.Note], search_results: dict[UUID, manticoresearch.SearchResult],
+    notes: list[db.Note],
+    search_results: dict[UUID, manticoresearch.SearchResult],
 ) -> None:
     for note in notes:
         result = search_results[note.note_id]
@@ -155,7 +156,8 @@ async def add_note_view(request: Request, material_id: str | None = None):
         "request": request,
         "material_id": material_id,
         "material_type": request.cookies.get(
-            "material_type", enums.MaterialTypesEnum.book.name,
+            "material_type",
+            enums.MaterialTypesEnum.book.name,
         ),
         "content": request.cookies.get("content", ""),
         "page": request.cookies.get("page", ""),
@@ -173,7 +175,8 @@ async def add_note(note: schemas.Note = Depends()):
     response = RedirectResponse(redirect_url, status_code=302)
 
     for key, value in note.model_dump(
-        exclude={"content", "tags", "link_id", "title"}, exclude_none=True,
+        exclude={"content", "tags", "link_id", "title"},
+        exclude_none=True,
     ).items():
         response.set_cookie(key, value, expires=3600)
 

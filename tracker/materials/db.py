@@ -272,7 +272,9 @@ def _convert_duration_to_period(duration: datetime.timedelta | int) -> str:
 
 
 def _get_total_reading_duration(
-    *, started_at: datetime.datetime, completed_at: datetime.datetime | None,
+    *,
+    started_at: datetime.datetime,
+    completed_at: datetime.datetime | None,
 ) -> str:
     completion_date = completed_at or database.utcnow()
     duration = completion_date - started_at + datetime.timedelta(days=1)
@@ -304,14 +306,18 @@ def _get_material_statistics(
     if status.completed_at is None:
         remaining_pages = material.pages - total
         remaining_days = round(remaining_pages / mean)
-        would_be_completed: datetime.date | None = database.utcnow().date() + datetime.timedelta(
-            days=remaining_days,
+        would_be_completed: datetime.date | None = (
+            database.utcnow().date()
+            + datetime.timedelta(
+                days=remaining_days,
+            )
         )
     else:
         would_be_completed = remaining_days = remaining_pages = None
 
     total_reading_duration = _get_total_reading_duration(
-        started_at=status.started_at, completed_at=status.completed_at,
+        started_at=status.started_at,
+        completed_at=status.completed_at,
     )
 
     return MaterialStatistics(
@@ -355,7 +361,8 @@ async def completed_statistics() -> list[MaterialStatistics]:
             material_status=material_status,
             notes_count=all_notes_count.get(material_status.material_id, 0),
             mean_total=mean_read_pages.get(
-                material_status.material.material_type, Decimal(1),
+                material_status.material.material_type,
+                Decimal(1),
             ),
             log_stats=log_stats,
         )
@@ -390,7 +397,8 @@ async def reading_statistics() -> list[MaterialStatistics]:
             material_status=material_status,
             notes_count=all_notes_count.get(material_status.material_id, 0),
             mean_total=mean_read_pages.get(
-                material_status.material.material_type, Decimal(1),
+                material_status.material.material_type,
+                Decimal(1),
             ),
             log_stats=log_stats,
         )
@@ -480,7 +488,9 @@ async def update_material(
 
 
 async def start_material(
-    *, material_id: UUID, start_date: datetime.date | None = None,
+    *,
+    material_id: UUID,
+    start_date: datetime.date | None = None,
 ) -> None:
     start_date = start_date or database.utcnow().date()
     logger.debug("Starting material_id=%s", material_id)
@@ -498,7 +508,9 @@ async def start_material(
 
 
 async def complete_material(
-    *, material_id: UUID, completion_date: datetime.date | None = None,
+    *,
+    material_id: UUID,
+    completion_date: datetime.date | None = None,
 ) -> None:
     logger.debug("Completing material_id=%s", material_id)
     completion_date = completion_date or database.utcnow().date()
@@ -611,7 +623,8 @@ async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
 
     last_repeated_at = sa.func.max(models.Repeats.c.repeated_at).label("last_repeated_at")
     repetition_or_completion_date = sa.func.coalesce(
-        last_repeated_at, sa.func.max(models.Statuses.c.completed_at),
+        last_repeated_at,
+        sa.func.max(models.Statuses.c.completed_at),
     )
     stmt = (
         sa.select(
@@ -772,7 +785,10 @@ async def _get_material_index(material_id: UUID) -> int:
 
 
 async def _set_material_index(
-    *, material_id: UUID, index: int, conn: AsyncSession,
+    *,
+    material_id: UUID,
+    index: int,
+    conn: AsyncSession,
 ) -> None:
     logger.debug("Setting material_id=%s to index=%s", material_id, index)
     if not conn.in_transaction():
@@ -808,13 +824,17 @@ async def swap_order(material_id: UUID, new_material_index: int) -> None:
             logger.info("Move material upper")
 
             await _shift_queue_down(
-                conn=conn, start=new_material_index, stop=old_material_index,
+                conn=conn,
+                start=new_material_index,
+                stop=old_material_index,
             )
         elif old_material_index < new_material_index:
             logger.info("Move material lower")
 
             await _shift_queue_up(
-                conn=conn, start=old_material_index, stop=new_material_index,
+                conn=conn,
+                start=old_material_index,
+                stop=new_material_index,
             )
         else:
             raise ValueError(
@@ -824,7 +844,9 @@ async def swap_order(material_id: UUID, new_material_index: int) -> None:
 
         # set the target index
         await _set_material_index(
-            material_id=material_id, index=new_material_index, conn=conn,
+            material_id=material_id,
+            index=new_material_index,
+            conn=conn,
         )
 
         await _set_unique_index_immediate(conn)
@@ -851,15 +873,16 @@ async def get_html(link: str, *, timeout: int = 5) -> str:
         return await resp.text("utf-8")
 
 
-
 def parse_habr(html: str) -> dict[str, str]:
     soup = bs4.BeautifulSoup(html, "lxml")
 
     title = soup.find("div", {"class": "tm-article-snippet"}).find(
-        "h1", {"class": "tm-title"},
+        "h1",
+        {"class": "tm-title"},
     )
     author = soup.find("div", {"class": "tm-article-snippet"}).find(
-        "a", {"class": "tm-user-info__username"},
+        "a",
+        {"class": "tm-user-info__username"},
     )
 
     return {"title": title.get_text(), "author": author.get_text().strip()}

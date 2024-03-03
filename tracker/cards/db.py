@@ -12,7 +12,8 @@ async def notes_with_cards() -> list[UUID]:
     logger.info("Getting notes with a card")
 
     stmt = sa.select(models.Notes.c.note_id).join(
-        models.Cards, models.Cards.c.note_id == models.Notes.c.note_id,
+        models.Cards,
+        models.Cards.c.note_id == models.Notes.c.note_id,
     )
 
     async with database.session() as ses:
@@ -20,7 +21,11 @@ async def notes_with_cards() -> list[UUID]:
 
 
 async def add_card(
-    *, material_id: UUID, note_id: UUID, question: str, answer: str | None = None,
+    *,
+    material_id: UUID,
+    note_id: UUID,
+    question: str,
+    answer: str | None = None,
 ) -> None:
     logger.debug("Adding new card")
 

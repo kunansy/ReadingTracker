@@ -63,7 +63,9 @@ async def _cursor() -> AsyncGenerator[MysqlCursor, None]:
 
 def _get_note_stmt() -> sa.Select:
     return sa.select(
-        models.Notes.c.note_id, models.Notes.c.content, models.Notes.c.added_at,
+        models.Notes.c.note_id,
+        models.Notes.c.content,
+        models.Notes.c.added_at,
     ).where(~models.Notes.c.is_deleted)
 
 
@@ -118,7 +120,8 @@ async def insert_all(notes: list[Note]) -> None:
 
     async with _cursor() as cur:
         await cur.executemany(
-            INSERT_QUERY, (list(note.model_dump().values()) for note in notes),
+            INSERT_QUERY,
+            (list(note.model_dump().values()) for note in notes),
         )
 
     logger.debug("Notes inserted")

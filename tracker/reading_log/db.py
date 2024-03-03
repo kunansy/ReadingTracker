@@ -54,7 +54,8 @@ async def get_log_records(*, material_id: str | None = None) -> list[LogRecord]:
     logger.debug("Getting all log records")
 
     stmt = sa.select(
-        models.ReadingLog, models.Materials.c.title.label("material_title"),
+        models.ReadingLog,
+        models.Materials.c.title.label("material_title"),
     ).join(models.Materials)
 
     if material_id:
@@ -169,7 +170,9 @@ async def data(
 
         if not (log_records_ := log_records_dict.get(iter_over_dates)):
             log_record = LogRecord(
-                material_id=cast(UUID, last_material_id), count=0, date=iter_over_dates,
+                material_id=cast(UUID, last_material_id),
+                count=0,
+                date=iter_over_dates,
             )
 
             yield iter_over_dates, log_record
@@ -237,7 +240,10 @@ async def get_material_reading_now() -> UUID | None:
 
 async def insert_log_record(*, material_id: str, count: int, date: datetime.date) -> None:
     logger.debug(
-        "Inserting log material_id=%s, count=%s, date=%s", material_id, count, date,
+        "Inserting log material_id=%s, count=%s, date=%s",
+        material_id,
+        count,
+        date,
     )
 
     values = {"material_id": material_id, "count": count, "date": date}
@@ -250,7 +256,10 @@ async def insert_log_record(*, material_id: str, count: int, date: datetime.date
 
 
 async def is_record_correct(
-    *, material_id: UUID, date: datetime.date, count: int,
+    *,
+    material_id: UUID,
+    date: datetime.date,
+    count: int,
 ) -> bool:
     if date > database.utcnow().date() or count <= 0:
         raise ValueError("Invalid args")

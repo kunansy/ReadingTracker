@@ -74,7 +74,9 @@ async def insert_material(material: schemas.Material = Depends()):
 @router.get("/update-view", response_class=HTMLResponse)
 @cache(namespace="materials", coder=PickleCoder, expire=3)
 async def update_material_view(
-    request: Request, material_id: UUID, success: bool | None = None,
+    request: Request,
+    material_id: UUID,
+    success: bool | None = None,
 ):
     context: dict[str, Any] = {
         "request": request,
