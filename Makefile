@@ -7,7 +7,7 @@ test:
 	pytest -n 7
 
 lint-mypy:
-	@mypy . > /dev/null
+	@mypy .
 
 lint-ruff:
 	@ruff check .
