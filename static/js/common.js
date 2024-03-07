@@ -34,15 +34,15 @@ const addHotKeys = () => {
             }
             // on Ctrl-I
             else if (e.keyCode === 73 && e.ctrlKey) {
-                surroundSelection(input, "__", "__");
+                surroundSelection(input, "*", "*");
             }
             // on Alt-Down
             else if (e.keyCode === 40 && e.altKey) {
-                surroundSelection(input, "<span class=sub>", "</span>");
+                surroundSelection(input, "<sub>", "</sub>");
             }
             // on Alt-Up
             else if (e.keyCode === 38 && e.altKey) {
-                surroundSelection(input, "<span class=sup>", "</span>");
+                surroundSelection(input, "<sup>", "</sup>");
             }
             // on Ctrl-K
             else if (e.keyCode === 75 && e.ctrlKey) {
