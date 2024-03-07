@@ -922,8 +922,9 @@ async def parse_youtube(video_id: str, *, timeout: int = 5) -> dict[str, str | i
         resp_json = await resp.json()
         resp.raise_for_status()
 
-    title = resp_json["items"][0]["snippet"]["title"]
-    author = resp_json["items"][0]["snippet"]["channelTitle"]
-    duration = resp_json["items"][0]["contentDetails"]["duration"]
+    item = resp_json["items"][0]
+    title = item["snippet"]["title"]
+    author = item["snippet"]["channelTitle"]
+    duration = item["contentDetails"]["duration"]
 
     return {"title": title, "author": author, "duration": _parse_duration(duration)}
