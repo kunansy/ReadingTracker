@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi_cache.coder import PickleCoder
 from fastapi_cache.decorator import cache
 
-from tracker.common import manticoresearch, settings, kafka
+from tracker.common import kafka, manticoresearch, settings
 from tracker.common.logger import logger
 from tracker.common.schemas import ORJSONEncoder
 from tracker.materials import db as materials_db
@@ -365,5 +365,5 @@ async def get_tags(material_id: UUID):
 async def insert_to_repeat_queue(note_id: UUID):
     if await db.get_note(note_id=note_id):
         await kafka.repeat_note(note_id)
-
-    raise HTTPException(status_code=404, detail="Not found")
+    else:
+        raise HTTPException(status_code=404, detail="Not found")

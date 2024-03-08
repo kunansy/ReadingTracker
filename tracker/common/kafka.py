@@ -1,4 +1,3 @@
-import asyncio
 import uuid
 
 import aiokafka
@@ -16,7 +15,9 @@ async def _send_one(key: str, value: str, *, topic: str) -> None:
     await _PRODUCER.start()
 
     try:
-        logger.logger.debug("Sending a message: key=%s, value=%s, to %s", key, value, topic)
+        logger.logger.debug(
+            "Sending a message: key=%s, value=%s, to %s", key, value, topic,
+        )
         await _PRODUCER.send_and_wait(topic, key=key.encode(), value=value.encode())
     except aiokafka.errors.KafkaError:
         logger.logger.exception("Could not send message")
@@ -27,4 +28,4 @@ async def _send_one(key: str, value: str, *, topic: str) -> None:
 
 
 async def repeat_note(note_id: uuid.UUID | str) -> None:
-    await _send_one("note_id", note_id, topic=settings.KAFKA_REPEAT_NOTES_TOPIC)
+    await _send_one("note_id", str(note_id), topic=settings.KAFKA_REPEAT_NOTES_TOPIC)
