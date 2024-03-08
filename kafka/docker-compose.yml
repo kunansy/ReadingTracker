@@ -3,7 +3,6 @@ version: "3"
 services:
   zookeeper:
     image: confluentinc/cp-zookeeper:7.6.0
-    hostname: zookeeper
     container_name: zookeeper
     restart: always
     ports:
@@ -16,7 +15,6 @@ services:
 
   broker:
     image: confluentinc/cp-server:7.6.0
-    hostname: broker
     container_name: broker
     restart: always
     depends_on:
@@ -41,7 +39,6 @@ services:
 
   kafka-tools:
     image: confluentinc/cp-kafka:7.6.0
-    hostname: kafka-tools
     container_name: kafka-tools
     command: ["tail", "-f", "/dev/null"]
     network_mode: "host"
