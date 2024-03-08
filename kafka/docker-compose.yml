@@ -37,9 +37,9 @@ services:
       CONFLUENT_METRICS_ENABLE: "true"
       CONFLUENT_SUPPORT_CUSTOMER_ID: "anonymous"
 
-  kafka-tools:
+  kafka:
     image: confluentinc/cp-kafka:7.6.0
-    container_name: kafka-tools
+    container_name: kafka
     command: ["tail", "-f", "/dev/null"]
     network_mode: "host"
 
