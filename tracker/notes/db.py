@@ -341,7 +341,7 @@ async def restore_note(*, note_id: UUID) -> None:
     logger.debug("Note restored")
 
 
-async def get_tags() -> set[str]:
+async def _get_tags() -> set[str]:
     logger.debug("Getting tags")
 
     stmt = sa.select(models.Notes.c.tags).where(models.Notes.c.tags != [])
@@ -355,7 +355,7 @@ async def get_tags() -> set[str]:
     return tags_set
 
 
-async def get_material_tags(material_id: str | UUID) -> list[str]:
+async def _get_material_tags(material_id: str | UUID) -> list[str]:
     logger.debug("Getting tags for material_id=%s", material_id)
 
     stmt = (
@@ -584,12 +584,12 @@ async def get_sorted_tags(*, material_id: str | UUID | None) -> list[str]:
     logger.debug("Getting sorted tags for material_id=%s", material_id)
 
     if not material_id:
-        tags = await get_tags()
+        tags = await _get_tags()
         return sorted(tags)
 
     async with asyncio.TaskGroup() as tg:
-        get_tags_task = tg.create_task(get_tags())
-        get_materials_tags = tg.create_task(get_material_tags(material_id))
+        get_tags_task = tg.create_task(_get_tags())
+        get_materials_tags = tg.create_task(_get_material_tags(material_id))
 
     tags, materials_tags = get_tags_task.result(), get_materials_tags.result()
     tags -= set(materials_tags)

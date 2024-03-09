@@ -227,8 +227,8 @@ async def test_create_graphic():
 @pytest.mark.asyncio
 async def test_get_sorted_tags():
     material_id = "38e13f37-9d28-4c68-80b2-2bfdf6567372"
-    material_tags = await db.get_tags(material_id=material_id)
-    tags = await db.get_tags()
+    material_tags = await db._get_tags(material_id=material_id)
+    tags = await db._get_tags()
 
     test_result = await db.get_sorted_tags(material_id=material_id)
 
@@ -240,7 +240,7 @@ async def test_get_sorted_tags():
 
 @pytest.mark.asyncio
 async def test_get_sorted_tags_without_material():
-    tags = await db.get_tags()
+    tags = await db._get_tags()
 
     result = await db.get_sorted_tags(material_id=None)
 
