@@ -667,7 +667,14 @@ async def get_repeating_queue(*, is_outlined: bool) -> list[RepeatingQueue]:
     notes_count = notes_count_task.result()
     repeat_analytics = repeat_analytics_task.result()
 
-    completed_materials = (material for material in completed_materials_task.result())
+    completed_materials = (
+        material
+        for material in completed_materials_task.result()
+        # skip materials without notes and notwithstanding outlined
+        if not (
+            material.material.is_outlined and not notes_count.get(material.material_id)
+        )
+    )
     if is_outlined:
         completed_materials = (
             material
@@ -692,7 +699,7 @@ async def get_repeating_queue(*, is_outlined: bool) -> list[RepeatingQueue]:
             priority_months=repeat_analytics[material_status.material_id].priority_months,
         )
         for material_status in completed_materials
-        if repeat_analytics[material_status.material_id].priority_months > 0
+        # if repeat_analytics[material_status.material_id].priority_months > 0
     ]
 
     logger.debug("Repeating queue got, %s materials found", len(queue))
