@@ -13,7 +13,7 @@ x-cache-img: &cache-img
   image: redis:7.2-alpine
 
 x-tracker-img: &tracker-img
-  image: kunansy/reading_tracker:2.23.18
+  image: kunansy/reading_tracker:2.23.19
 
 x-prometheus-img: &prometheus-img
   image: prom/prometheus:2.48
