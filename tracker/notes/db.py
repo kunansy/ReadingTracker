@@ -413,6 +413,7 @@ def _get_note_link(note: Note, **attrs: str) -> tuple[str, dict[str, Any]]:
         jsonable_encoder(
             {
                 **attrs,
+                "title": note.content_md,
                 "material_id": note.material_id,
                 "note_number": note.note_number,
                 "label": note.short_content,
@@ -478,13 +479,9 @@ def link_notes(
     logger.debug("Linking %s notes from the %s", len(notes), note_id)
 
     graph = nx.DiGraph()
-    link_note_id, params = _get_note_link(notes[note_id])
-    link_note = notes[UUID(link_note_id)]
-
     graph.add_nodes_from(
-        [(link_note_id, params)],
+        [_get_note_link(notes[note_id])],
         color=color,
-        title=link_note.content_md,
     )
 
     # link together all cohesive notes, which bounds with the given one
