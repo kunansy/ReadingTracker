@@ -478,7 +478,14 @@ def link_notes(
     logger.debug("Linking %s notes from the %s", len(notes), note_id)
 
     graph = nx.DiGraph()
-    graph.add_nodes_from([_get_note_link(notes[note_id])], color=color)
+    link_note_id, params = _get_note_link(notes[note_id])
+    link_note = notes[UUID(link_note_id)]
+
+    graph.add_nodes_from(
+        [(link_note_id, params)],
+        color=color,
+        title=link_note.content_md,
+    )
 
     # link together all cohesive notes, which bounds with the given one
     _link_cohesive_notes(graph, notes, note_id, visited=set())
