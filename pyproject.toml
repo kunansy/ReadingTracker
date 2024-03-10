@@ -111,7 +111,6 @@ uuid6 = "~2024.01.12"
 grpcio = "~1.62.0"
 grpcio-tools = "~1.62.0"
 types-protobuf = "^4.23.0.1"
-fastapi-cache2 = {extras = ["redis"], version = "^0.2.1"}
 starlette-exporter = "~0.21.0"
 beautifulsoup4 = "~4.12.2"
 lxml = "~5.1.0"

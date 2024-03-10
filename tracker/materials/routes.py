@@ -4,13 +4,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from fastapi_cache.coder import PickleCoder
-from fastapi_cache.decorator import cache
 from pydantic import HttpUrl
 
 from tracker.common import settings
 from tracker.common.logger import logger
-from tracker.common.schemas import ORJSONEncoder
 from tracker.materials import db, schemas
 from tracker.models import enums
 
@@ -28,7 +25,6 @@ async def root():
 
 
 @router.get("/queue", response_class=HTMLResponse)
-@cache(namespace="materials", coder=PickleCoder, expire=3)
 async def get_queue(request: Request):
     estimates = await db.estimate()
     mean = await db.get_means()
@@ -43,7 +39,6 @@ async def get_queue(request: Request):
 
 
 @router.get("/add-view", response_class=HTMLResponse)
-@cache(namespace="materials", coder=PickleCoder, expire=3)
 async def insert_material_view(request: Request):
     """Insert a material to the queue."""
     tags = await db.get_material_tags()
@@ -72,7 +67,6 @@ async def insert_material(material: schemas.Material = Depends()):
 
 
 @router.get("/update-view", response_class=HTMLResponse)
-@cache(namespace="materials", coder=PickleCoder, expire=3)
 async def update_material_view(
     request: Request,
     material_id: UUID,
@@ -169,7 +163,6 @@ async def repeat_material(material_id: UUID):
 
 
 @router.get("/reading", response_class=HTMLResponse)
-@cache(namespace="materials", coder=PickleCoder, expire=3)
 async def get_reading_materials(request: Request):
     statistics = await db.reading_statistics()
 
@@ -182,7 +175,6 @@ async def get_reading_materials(request: Request):
 
 
 @router.get("/completed", response_class=HTMLResponse)
-@cache(namespace="materials", coder=PickleCoder, expire=3)
 async def get_completed_materials(request: Request):
     statistics = await db.completed_statistics()
 
@@ -195,7 +187,6 @@ async def get_completed_materials(request: Request):
 
 
 @router.get("/repeat-view", response_class=HTMLResponse)
-@cache(namespace="materials", coder=PickleCoder, expire=5)
 async def get_repeat_view(request: Request, only_outlined: Literal["on", "off"] = "off"):
     is_outlined = only_outlined == "on"
     repeating_queue = await db.get_repeating_queue(is_outlined=is_outlined)
@@ -210,13 +201,11 @@ async def get_repeat_view(request: Request, only_outlined: Literal["on", "off"] 
 
 
 @router.get("/repeat-queue", response_model=list[db.RepeatingQueue])
-@cache(namespace="materials", coder=ORJSONEncoder, expire=5)
 async def get_repeat_queue(*, only_outlined: bool = False):
     return await db.get_repeating_queue(is_outlined=only_outlined)
 
 
 @router.get("/queue/start")
-@cache(namespace="materials", coder=ORJSONEncoder, expire=3)
 async def get_queue_start():
     """Get the first material index in the queue."""
     index = await db.get_queue_start()
@@ -225,7 +214,6 @@ async def get_queue_start():
 
 
 @router.get("/queue/end")
-@cache(namespace="materials", coder=ORJSONEncoder, expire=3)
 async def get_queue_end():
     """Get the last material index in the queue."""
     index = await db.get_queue_end()
@@ -242,7 +230,6 @@ async def update_queue_order(material_id: UUID, index: int):
 
 
 @router.get("/is-reading")
-@cache(namespace="materials", coder=ORJSONEncoder, expire=3)
 async def is_material_reading(material_id: UUID):
     is_reading = await db.is_reading(material_id=material_id)
 

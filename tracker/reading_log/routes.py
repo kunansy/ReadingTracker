@@ -4,8 +4,6 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from fastapi_cache.coder import PickleCoder
-from fastapi_cache.decorator import cache
 
 from tracker.common import database, settings
 from tracker.materials import db as materials_db
@@ -21,7 +19,6 @@ templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/")
-@cache(namespace="system", coder=PickleCoder, expire=5)
 async def get_reading_log(request: Request, material_id: str | None = None):
     async with asyncio.TaskGroup() as tg:
         get_reading_logs = tg.create_task(db.get_log_records(material_id=material_id))
@@ -40,7 +37,6 @@ async def get_reading_log(request: Request, material_id: str | None = None):
 
 
 @router.get("/add-view")
-@cache(namespace="system", coder=PickleCoder, expire=5)
 async def add_log_record_view(request: Request, material_id: UUID | None = None):
     async with asyncio.TaskGroup() as tg:
         get_titles = tg.create_task(db.get_reading_material_titles())

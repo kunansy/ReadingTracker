@@ -6,9 +6,6 @@ from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import ORJSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
-from redis import asyncio as aioredis
 from starlette_exporter import PrometheusMiddleware, handle_metrics
 
 from tracker.cards.routes import router as cards_router
@@ -52,14 +49,7 @@ app.include_router(system_router)
 
 @app.on_event("startup")
 async def startup():
-    redis = aioredis.from_url(
-        settings.CACHE_URL,
-        password=settings.CACHE_PASSWORD,
-        encoding="utf8",
-        decode_responses=True,
-    )
-    assert await redis.ping()  # noqa: S101
-    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+    pass
 
 
 @app.exception_handler(database.DatabaseException)
