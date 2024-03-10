@@ -14,7 +14,7 @@ from tracker.models import enums
 from tracker.notes import (
     db,
     schemas,
-    speech_recognizer as recognizer,
+    speech_recognizer as recognizer, cache,
 )
 
 
@@ -261,10 +261,7 @@ async def update_note(note: schemas.UpdateNote = Depends()):
 
 @router.get("/is-deleted", response_model=schemas.IsNoteDeletedResponse)
 async def is_note_deleted(note_id: UUID):
-    if note := await redis_api.get_note(note_id, "is_deleted"):
-        return note | {"note_id": note_id}
-
-    result = await db.is_deleted(note_id=str(note_id))
+    result = await cache.is_deleted(note_id)
 
     return {"is_deleted": result, "note_id": note_id}
 
