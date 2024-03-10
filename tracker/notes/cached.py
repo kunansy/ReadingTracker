@@ -22,3 +22,10 @@ async def get_note_json(note_id: UUID | str) -> dict | None:
     return note.model_dump() | {
         "added_at": note.added_at.strftime(settings.DATETIME_FORMAT),
     }
+
+
+async def get_note(note_id: UUID | str) -> db.Note | None:
+    if note := await redis_api.get_note(note_id, *db.Note.model_fields.keys()):
+        return db.Note(**note)
+
+    return await db.get_note(note_id=note_id)

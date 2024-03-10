@@ -53,7 +53,7 @@ async def get_note_links(note: db.Note) -> dict[str, Any]:
     async with asyncio.TaskGroup() as tg:
         get_links_from_task = tg.create_task(db.get_links_from(note_id=note.note_id))
         if note.link_id:
-            get_link_to_task = tg.create_task(db.get_note(note_id=note.link_id))
+            get_link_to_task = tg.create_task(cached.get_note(note.link_id))
         else:
             get_link_to_task = tg.create_task(asyncio.sleep(1 / 1000, result=None))
 
@@ -100,7 +100,7 @@ async def get_notes(request: Request, search: schemas.SearchParams = Depends()):
 
 @router.get("/note", response_class=HTMLResponse)
 async def get_note(request: Request, note_id: UUID):
-    if not (note := await db.get_note(note_id=note_id)):
+    if not (note := await cached.get_note(note_id)):
         raise HTTPException(status_code=404, detail=f"Note id={note_id} not found")
 
     async with asyncio.TaskGroup() as tg:
@@ -197,7 +197,7 @@ async def update_note_view(note_id: UUID, request: Request, success: bool | None
         "request": request,
     }
 
-    if not (note := await db.get_note(note_id=note_id)):
+    if not (note := await cached.get_note(note_id)):
         context["what"] = f"Note id='{note_id}' not found"
         return templates.TemplateResponse("errors/404.html", context)
     material_id = note.get_material_id()
@@ -350,7 +350,7 @@ async def get_tags(material_id: UUID):
 
 @router.post("/repeat-queue/insert")
 async def insert_to_repeat_queue(note_id: UUID):
-    if await db.get_note(note_id=note_id):
+    if await cached.get_note(note_id):
         await kafka.repeat_note(note_id)
     else:
         raise HTTPException(status_code=404, detail="Not found")
