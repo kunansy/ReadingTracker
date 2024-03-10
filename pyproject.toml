@@ -115,6 +115,8 @@ starlette-exporter = "~0.21.0"
 beautifulsoup4 = "~4.12.2"
 lxml = "~5.1.0"
 aiokafka = "~0.10.0"
+redis = {version = "~5.0.2", extras = ["hiredis"]}
+aiohttp = "~3.9.3"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "~1.9.0"
