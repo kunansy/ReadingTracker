@@ -12,6 +12,7 @@ from tracker.cards.routes import router as cards_router
 from tracker.common import database, manticoresearch, redis_api, settings
 from tracker.common.logger import logger
 from tracker.materials.routes import router as materials_router
+from tracker.notes import db as notes_db
 from tracker.notes.routes import router as notes_router
 from tracker.reading_log.routes import router as reading_log_router
 from tracker.system.routes import router as system_router
@@ -48,8 +49,15 @@ app.include_router(system_router)
 
 
 @app.on_event("startup")
-async def startup():
-    pass
+async def init_cache():
+    logger.info("Init cache")
+    if not await redis_api.healthcheck():
+        raise ValueError("Redis is offline")
+
+    notes = await notes_db.get_notes()
+    await redis_api.set_notes(notes)
+
+    logger.info("Complete init")
 
 
 @app.exception_handler(database.DatabaseException)
