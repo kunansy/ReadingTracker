@@ -57,6 +57,10 @@ class Note(CustomBaseModel):
         # for redis
         return int(is_deleted)
 
+    @field_serializer("added_at")
+    def serialize_added_at(self, added_at: datetime.datetime) -> str:
+        return added_at.strftime(settings.DATETIME_FORMAT)
+
     @property
     def content_md(self) -> str:
         return str(self)
