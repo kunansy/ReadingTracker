@@ -41,6 +41,12 @@ class Note(CustomBaseModel):
         # with them set material_id to zero uuid
         return material_id or UUID(int=0)
 
+    @field_validator("tags", mode="before")
+    def load_tags(cls, tags: set[str] | str) -> set[str]:
+        if isinstance(tags, str):
+            return set(orjson.loads(tags))
+        return tags
+
     @field_serializer("tags", when_used="json")
     def serialize_tags(self, tags: set[str]) -> bytes:
         # for redis
