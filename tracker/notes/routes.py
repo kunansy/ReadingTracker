@@ -7,7 +7,7 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from tracker.common import kafka, manticoresearch, settings
+from tracker.common import kafka, manticoresearch, redis_api, settings
 from tracker.common.logger import logger
 from tracker.materials import db as materials_db
 from tracker.models import enums
@@ -257,6 +257,9 @@ async def update_note(note: schemas.UpdateNote = Depends()):
 
 @router.get("/is-deleted", response_model=schemas.IsNoteDeletedResponse)
 async def is_note_deleted(note_id: UUID):
+    if note := await redis_api.get_note(note_id, "is_deleted"):
+        return note | {"note_id": note_id}
+
     result = await db.is_deleted(note_id=str(note_id))
 
     return {"is_deleted": result, "note_id": note_id}
