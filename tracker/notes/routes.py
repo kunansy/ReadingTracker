@@ -129,7 +129,11 @@ async def get_note(request: Request, note_id: UUID):
 
 @router.get("/note-json", response_model=schemas.GetNoteJsonResponse)
 async def get_note_json(note_id: UUID):
-    if not (note := await db.get_note(note_id=note_id)):
+    if note_ := await redis_api.get_note(note_id, *db.Note.model_fields.keys()):
+        note = db.Note(**note_)
+    elif note_ := await db.get_note(note_id=note_id):
+        note = note_
+    else:
         raise HTTPException(status_code=404, detail=f"Note id={note_id} not found")
 
     return note.model_dump() | {
