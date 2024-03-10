@@ -41,12 +41,14 @@ class Note(CustomBaseModel):
         # with them set material_id to zero uuid
         return material_id or UUID(int=0)
 
-    @field_serializer("tags")
+    @field_serializer("tags", when_used="json")
     def serialize_tags(self, tags: set[str]) -> bytes:
+        # for redis
         return orjson.dumps(sorted(tags))
 
-    @field_serializer("is_deleted")
+    @field_serializer("is_deleted", when_used="json")
     def serialize_is_deleted(self, is_deleted: bool) -> int:  # noqa: FBT001
+        # for redis
         return int(is_deleted)
 
     @property
