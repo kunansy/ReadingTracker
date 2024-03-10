@@ -26,7 +26,10 @@ async def _send_one(key: str, value: str, *, topic: str) -> None:
 
     try:
         logger.logger.debug(
-            "Sending a message: key=%s, value=%s, to %s", key, value, topic,
+            "Sending a message: key=%s, value=%s, to %s",
+            key,
+            value,
+            topic,
         )
         await producer.send_and_wait(topic, key=key.encode(), value=value.encode())
     except aiokafka.errors.KafkaError:
