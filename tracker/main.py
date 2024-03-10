@@ -9,7 +9,7 @@ from fastapi.templating import Jinja2Templates
 from starlette_exporter import PrometheusMiddleware, handle_metrics
 
 from tracker.cards.routes import router as cards_router
-from tracker.common import database, manticoresearch, settings
+from tracker.common import database, manticoresearch, redis_api, settings
 from tracker.common.logger import logger
 from tracker.materials.routes import router as materials_router
 from tracker.notes.routes import router as notes_router
@@ -124,8 +124,14 @@ async def readiness():
     async with asyncio.TaskGroup() as tg:
         db_readiness = tg.create_task(database.readiness())
         manticore_readiness = tg.create_task(manticoresearch.readiness())
+        cache_readiness = tg.create_task(redis_api.healthcheck())
 
-    if db_readiness.result() is manticore_readiness.result() is True:
+    if (
+        db_readiness.result()
+        is manticore_readiness.result()
+        is cache_readiness.result()
+        is True
+    ):
         status_code = 200
 
     return ORJSONResponse(content={}, status_code=status_code)
