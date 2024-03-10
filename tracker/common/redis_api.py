@@ -1,4 +1,6 @@
+from collections.abc import Iterable
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from redis import asyncio as aioredis
 
@@ -37,6 +39,10 @@ async def _set_dict(name: str, payload: dict, *, db: int) -> None:
     await client(db).hmset(name, payload)
 
 
+async def _get_dict(name: str, fields: Iterable[str], *, db: int) -> list:
+    return await client(db).hmget(name, fields)
+
+
 async def set_notes(notes: list["tracker.notes.db.Note"]) -> None:
     for note in notes:
         await _set_dict(
@@ -48,3 +54,12 @@ async def set_notes(notes: list["tracker.notes.db.Note"]) -> None:
 
 async def healthcheck() -> bool:
     return await client(_NOTES_STORAGE).ping()
+
+
+async def get_note(note_id: UUID | str, *fields: str) -> dict | None:
+    result = await _get_dict(str(note_id), fields, db=_NOTES_STORAGE)
+
+    if not any(result):
+        return None
+
+    return dict(zip(fields, result, strict=False))
