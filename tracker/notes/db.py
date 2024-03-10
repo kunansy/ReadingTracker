@@ -7,9 +7,10 @@ from typing import Any
 from uuid import UUID
 
 import networkx as nx
+import orjson
 import sqlalchemy.sql as sa
 from fastapi.encoders import jsonable_encoder
-from pydantic import field_validator
+from pydantic import field_serializer, field_validator
 from pyvis.network import Network
 
 from tracker.common import database, settings
@@ -39,6 +40,14 @@ class Note(CustomBaseModel):
         # Some notes don't have a material, so to work
         # with them set material_id to zero uuid
         return material_id or UUID(int=0)
+
+    @field_serializer("tags")
+    def serialize_tags(self, tags: set[str]) -> bytes:
+        return orjson.dumps(sorted(tags))
+
+    @field_serializer("is_deleted")
+    def serialize_is_deleted(self, is_deleted: bool) -> int:  # noqa: FBT001
+        return int(is_deleted)
 
     @property
     def content_md(self) -> str:
