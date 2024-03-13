@@ -7,7 +7,7 @@ on:
     branches: [master]
 
 jobs:
-  test:
+  lint:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
@@ -17,8 +17,12 @@ jobs:
 
     - name: Install Poetry
       run: |
-        sudo apt-get install -y portaudio19-dev libasound-dev poetry
-        pip install ruff mypy 
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Install required packages
+      run: |
+        sudo apt-get install -y portaudio19-dev libasound-dev
 
     - name: Validate the pyproject.toml
       run: |
@@ -36,4 +40,6 @@ jobs:
 
     - name: Check code
       run: |
-        make lint
+        poetry run ruff check
+        poetry run ruff format --check --quiet
+        poetrey run mypy
