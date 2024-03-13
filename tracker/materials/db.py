@@ -677,9 +677,7 @@ async def get_repeating_queue(*, is_outlined: bool) -> list[RepeatingQueue]:
     )
     if is_outlined:
         completed_materials = (
-            material
-            for material in completed_materials_task.result()
-            if material.material.is_outlined
+            material for material in completed_materials if material.material.is_outlined
         )
 
     queue = [
