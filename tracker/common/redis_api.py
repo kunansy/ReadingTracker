@@ -1,4 +1,6 @@
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
+from functools import wraps
+from typing import Any
 from uuid import UUID
 
 from redis import asyncio as aioredis
@@ -9,27 +11,34 @@ from tracker.notes.db import Note
 
 _NOTES_STORAGE = 0
 
+FUNC_TYPE = Callable[[int], aioredis.Redis]
 
-def client(db: int) -> aioredis.Redis:
+
+def cache(func: FUNC_TYPE) -> FUNC_TYPE:
     clients: dict[int, aioredis.Redis] = {}
 
-    # TODO: fix wrong closure
-    def wrapper() -> aioredis.Redis:
+    @wraps(func)
+    def wrapped(db: int, *args: Any, **kwargs: Any) -> aioredis.Redis:
         nonlocal clients
+
         if db not in clients:
-            client = aioredis.from_url(
-                settings.CACHE_URL,
-                password=settings.CACHE_PASSWORD,
-                encoding="utf-8",
-                decode_responses=True,
-                db=db,
-                protocol=3,
-            )
-            clients[db] = client
+            clients[db] = func(db, *args, **kwargs)
 
         return clients[db]
 
-    return wrapper()
+    return wrapped
+
+
+@cache
+def client(db: int) -> aioredis.Redis:
+    return aioredis.from_url(
+        settings.CACHE_URL,
+        password=settings.CACHE_PASSWORD,
+        encoding="utf-8",
+        decode_responses=True,
+        db=db,
+        protocol=3,
+    )
 
 
 async def _set_dict(name: str, payload: dict, *, db: int) -> None:
