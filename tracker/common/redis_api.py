@@ -43,7 +43,7 @@ async def _get_dict(name: str, fields: Iterable[str], *, db: int) -> list:
 
 
 async def _delete_dict(name: str, *, db: int) -> None:
-    await client(db).hdel(name)
+    await client(db).delete(name)
 
 
 async def set_notes(notes: list[tracker.notes.db.Note]) -> None:
