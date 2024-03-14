@@ -13,6 +13,7 @@ _NOTES_STORAGE = 0
 def client(db: int) -> aioredis.Redis:
     clients: dict[int, aioredis.Redis] = {}
 
+    # TODO: fix wrong closure
     def wrapper() -> aioredis.Redis:
         nonlocal clients
         if db not in clients:
