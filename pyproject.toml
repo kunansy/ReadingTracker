@@ -19,8 +19,8 @@ ignore = [
     "EM101", "EM102", "FIX002", "N818",
     # args count, sum([]), todo author/link
     "PLR0913", "RUF017", "TD002", "TD003",
-    # todo colon/text, exc msg
-    "TD004", "TD005", "TRY003"
+    # todo colon/text, exc msg, any in kw/args 
+    "TD004", "TD005", "TRY003", "ANN401"
 ]
 
 
