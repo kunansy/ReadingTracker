@@ -7,14 +7,15 @@ from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from tracker.common import kafka, manticoresearch, redis_api, settings
+from tracker.common import kafka, manticoresearch, settings
 from tracker.common.logger import logger
 from tracker.materials import db as materials_db
 from tracker.models import enums
 from tracker.notes import (
+    cached,
     db,
     schemas,
-    speech_recognizer as recognizer, cached,
+    speech_recognizer as recognizer,
 )
 
 

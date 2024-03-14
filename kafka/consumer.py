@@ -1,4 +1,4 @@
-import asyncio
+import asyncio  # noqa: INP001
 
 from aiokafka import AIOKafkaConsumer
 
@@ -15,7 +15,7 @@ async def consume():
     try:
         msg = await consumer.getone()
         # async for msg in consumer:
-        print("consumed: ", msg.topic, msg.partition, msg.offset,
+        print("consumed: ", msg.topic, msg.partition, msg.offset,  # noqa: T201
               msg.key, msg.value, msg.timestamp)
 
         await consumer.commit()
