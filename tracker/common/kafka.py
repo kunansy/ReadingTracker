@@ -3,7 +3,7 @@ from collections.abc import Callable, Coroutine
 from functools import wraps
 from typing import Any
 
-from aiokafka import AIOKafkaProducer
+from aiokafka import AIOKafkaProducer, errors
 
 from tracker.common import logger, settings
 
@@ -44,7 +44,7 @@ async def _send_one(key: str, value: str, *, topic: str) -> None:
             topic,
         )
         await producer.send_and_wait(topic, key=key.encode(), value=value.encode())
-    except aiokafka.errors.KafkaError:
+    except errors.KafkaError:
         logger.logger.exception("Could not send message")
     else:
         logger.logger.debug("Message sent")
