@@ -22,9 +22,9 @@ from tracker.notes import schemas
 
 class Note(CustomBaseModel):
     note_id: UUID
-    link_id: UUID | None
+    link_id: UUID | None = None
     material_id: UUID
-    title: str | None
+    title: str | None = None
     content: str
     added_at: datetime.datetime
     chapter: int
