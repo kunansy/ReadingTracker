@@ -88,6 +88,7 @@ with env.prefixed("KAFKA_"):
     KAFKA_HOST = env("HOST", "localhost")
     KAFKA_PORT = env.int("PORT", 9092)
     KAFKA_REPEAT_NOTES_TOPIC = env("REPEAT_NOTES_TOPIC")
+    KAFKA_CACHE_NOTES_TOPIC = env("CACHE_NOTES_TOPIC")
 
     KAFKA_URL = f"{KAFKA_HOST}:{KAFKA_PORT}"
 
