@@ -3,8 +3,8 @@ from uuid import UUID
 
 from redis import asyncio as aioredis
 
-import tracker.notes.db
 from tracker.common import settings
+from tracker.notes.db import Note
 
 
 _NOTES_STORAGE = 0
@@ -44,7 +44,7 @@ async def _delete_dict(name: str, *, db: int) -> None:
     await client(db).delete(name)
 
 
-async def set_notes(notes: list[tracker.notes.db.Note]) -> None:
+async def set_notes(notes: list[Note]) -> None:
     for note in notes:
         await _set_dict(
             str(note.note_id),
@@ -66,8 +66,8 @@ async def get_note(note_id: UUID | str, *fields: str) -> dict | None:
     return dict(zip(fields, result, strict=False))
 
 
-async def set_note(note: tracker.notes.db.Note | dict) -> None:
-    if isinstance(note, tracker.notes.db.Note):
+async def set_note(note: Note | dict) -> None:
+    if isinstance(note, Note):
         note_dict = note.model_dump(mode="json", exclude_none=True)
     else:
         note_dict = note
