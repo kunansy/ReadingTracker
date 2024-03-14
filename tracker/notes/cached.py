@@ -17,7 +17,7 @@ async def is_deleted(note_id: UUID | str) -> bool:
 async def get_note_json(note_id: UUID | str) -> dict | None:
     if note_ := await redis_api.get_note(note_id, *_ALL_NOTE_FIELDS):
         note = db.Note(**note_)
-    elif note_ := await db.get_note(note_id=note_id):
+    elif note_ := await db.get_note(note_id=note_id):  # type: ignore[assignment]
         note = note_
     else:
         return None

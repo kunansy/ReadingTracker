@@ -1,13 +1,10 @@
 from collections.abc import Iterable
-from typing import TYPE_CHECKING
 from uuid import UUID
 
 from redis import asyncio as aioredis
 
-from tracker.common import settings
-
-
 import tracker.notes.db
+from tracker.common import settings
 
 
 _NOTES_STORAGE = 0
