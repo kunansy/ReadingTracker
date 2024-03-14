@@ -42,6 +42,10 @@ async def _get_dict(name: str, fields: Iterable[str], *, db: int) -> list:
     return await client(db).hmget(name, fields)
 
 
+async def _delete_dict(name: str, *, db: int) -> None:
+    await client(db).hdel(name)
+
+
 async def set_notes(notes: list[tracker.notes.db.Note]) -> None:
     for note in notes:
         await _set_dict(
@@ -73,3 +77,7 @@ async def set_note(note: tracker.notes.db.Note | dict) -> None:
     note_id = note_dict["note_id"]
 
     await _set_dict(note_id, note_dict, db=_NOTES_STORAGE)
+
+
+async def delete_note(note_id: UUID | str) -> None:
+    await _delete_dict(str(note_id), db=_NOTES_STORAGE)
