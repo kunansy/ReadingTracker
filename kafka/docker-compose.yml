@@ -40,6 +40,23 @@ services:
       CONFLUENT_METRICS_ENABLE: "true"
       CONFLUENT_SUPPORT_CUSTOMER_ID: "anonymous"
 
+  debezium:
+    image: quay.io/debezium/connect:2.5
+    restart: always
+    container_name: debezium
+    ports:
+     - "127.0.0.1:8083:8083"
+     - "127.0.0.1:8778:8778"
+     - "127.0.0.1:39092:9092"
+    depends_on:
+     - kafka
+    environment:
+     - BOOTSTRAP_SERVERS=broker:29092
+     - GROUP_ID=1
+     - CONFIG_STORAGE_TOPIC=debezium_config
+     - OFFSET_STORAGE_TOPIC=debezium_offsets
+     - STATUS_STORAGE_TOPIC=debezium_connect_statuses
+
   kafka:
     image: confluentinc/cp-kafka:7.6.0
     container_name: kafka
