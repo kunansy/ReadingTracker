@@ -7,8 +7,7 @@ from redis import asyncio as aioredis
 from tracker.common import settings
 
 
-if TYPE_CHECKING:
-    import tracker.notes.db
+import tracker.notes.db
 
 
 _NOTES_STORAGE = 0
@@ -43,7 +42,7 @@ async def _get_dict(name: str, fields: Iterable[str], *, db: int) -> list:
     return await client(db).hmget(name, fields)
 
 
-async def set_notes(notes: list["tracker.notes.db.Note"]) -> None:
+async def set_notes(notes: list[tracker.notes.db.Note]) -> None:
     for note in notes:
         await _set_dict(
             str(note.note_id),
@@ -63,3 +62,14 @@ async def get_note(note_id: UUID | str, *fields: str) -> dict | None:
         return None
 
     return dict(zip(fields, result, strict=False))
+
+
+async def set_note(note: tracker.notes.db.Note | dict) -> None:
+    if isinstance(note, tracker.notes.db.Note):
+        note_dict = note.model_dump(mode="json", exclude_none=True)
+    else:
+        note_dict = note
+
+    note_id = note_dict["note_id"]
+
+    await _set_dict(note_id, note_dict, db=_NOTES_STORAGE)
