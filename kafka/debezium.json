@@ -1,0 +1,28 @@
+{
+  "name": "pg-connector",
+  "config": {
+    "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+    "database.dbname": "",
+    "database.hostname": "",
+    "database.password": "",
+    "database.port": "",
+    "database.server.name": "",
+    "database.user": "",
+    "topic.prefix": "debezium",
+    "event.processing.failure.handling.mode": "fail",
+    "heartbeat.interval.ms": "0",
+    "key.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "key.converter.schemas.enable": true,
+    "max.batch.size": "1000",
+    "snapshot.mode": "never",
+    "plugin.name": "pgoutput",
+    "poll.interval.ms": "1000",
+    "publication.autocreate.mode": "disabled",
+    "publication.name": "",
+    "schema.include.list": "public",
+    "slot.name": "debezium",
+    "table.include.list": "",
+    "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+    "value.converter.schemas.enable": true
+  }
+}
