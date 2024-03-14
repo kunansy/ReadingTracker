@@ -4,6 +4,9 @@ from tracker.common import redis_api, settings
 from tracker.notes import db
 
 
+_ALL_NOTE_FIELDS = db.Note.model_fields.keys()
+
+
 async def is_deleted(note_id: UUID | str) -> bool:
     if note := await redis_api.get_note(note_id, "is_deleted"):
         return note["is_deleted"]
@@ -12,7 +15,7 @@ async def is_deleted(note_id: UUID | str) -> bool:
 
 
 async def get_note_json(note_id: UUID | str) -> dict | None:
-    if note_ := await redis_api.get_note(note_id, *db.Note.model_fields.keys()):
+    if note_ := await redis_api.get_note(note_id, *_ALL_NOTE_FIELDS):
         note = db.Note(**note_)
     elif note_ := await db.get_note(note_id=note_id):
         note = note_
@@ -25,7 +28,7 @@ async def get_note_json(note_id: UUID | str) -> dict | None:
 
 
 async def get_note(note_id: UUID | str) -> db.Note | None:
-    if note := await redis_api.get_note(note_id, *db.Note.model_fields.keys()):
+    if note := await redis_api.get_note(note_id, *_ALL_NOTE_FIELDS):
         return db.Note(**note)
 
     return await db.get_note(note_id=note_id)
