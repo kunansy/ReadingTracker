@@ -254,7 +254,7 @@ async def _get_status(*, material_id: UUID) -> Status | None:
 
 
 def _convert_duration_to_period(duration: datetime.timedelta | int) -> str:
-    if isinstance(duration, datetime.timedelta):  # noqa: SIM108
+    if isinstance(duration, datetime.timedelta):
         total_days = duration.days
     else:
         total_days = duration
