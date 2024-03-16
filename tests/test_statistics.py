@@ -7,6 +7,7 @@ import pytest
 import sqlalchemy.sql as sa
 
 from tracker.common import database
+from tracker.materials import db as materials_db
 from tracker.models import models
 from tracker.reading_log import db
 from tracker.reading_log import statistics as st
@@ -100,18 +101,35 @@ async def test_get_lost_days():
     assert lost_days == expected_duration - len(records)
 
 
-@pytest.mark.skip
 @pytest.mark.asyncio
 async def test_get_means():
     means = await st.get_means()
     records = await db.get_log_records()
-    record_counts = [Decimal(record.count) for record in records]
-
-    # TODO: wtf?
-    mean_pages = mean(list(means.values()))
 
     assert records
-    assert mean_pages == round(mean(record_counts), 2)
+
+    materials = {
+        material.material_id: material.material_type
+        for material in await materials_db.get_materials()
+    }
+    material_to_date = {
+        material_type: {
+            record.date: 0
+            for record in records
+        }
+        for material_type in materials.values()
+    }
+    for record in records:
+        material_type = materials[record.material_id]
+        material_to_date[material_type][record.date] += record.count
+
+    expected = {
+        material_type: mean([Decimal(value) for value in dates.values() if value != 0])
+        for material_type, dates in material_to_date.items()
+    }
+
+    for material_type, mean_ in means.items():
+        assert round(expected[material_type], 2) == mean_
 
 
 @pytest.mark.asyncio
