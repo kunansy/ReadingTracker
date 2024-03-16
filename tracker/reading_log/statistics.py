@@ -134,17 +134,29 @@ async def _get_lost_days() -> int:
 
 async def get_means() -> enums.MEANS:
     """Mean read pages, articles, seen lectures, listen audiobooks ect."""
-    stmt = (
+    group = (
         sa.select(
-            models.Materials.c.material_type.label("mtype"),
-            sa.func.avg(models.ReadingLog.c.count).label("cnt"),
+            models.Materials.c.material_type,
+            models.ReadingLog.c.date,
+            sa.func.sum(models.ReadingLog.c.count).label("sum"),
         )
-        .join(models.ReadingLog)
-        .group_by(models.Materials.c.material_type)
-    )
+        .join(
+            models.ReadingLog,
+            models.ReadingLog.c.material_id == models.Materials.c.material_id,
+        )
+        .group_by(models.ReadingLog.c.date, models.Materials.c.material_type)
+    ).cte("by_date")
+
+    stmt = sa.select(
+        group.c.material_type,
+        sa.func.avg(group.c.sum).label("cnt"),
+    ).group_by(group.c.material_type)
 
     async with database.session() as ses:
-        return {row.mtype: round(row.cnt, 2) for row in (await ses.execute(stmt)).all()}
+        return {
+            row.material_type: round(row.cnt, 2)
+            for row in (await ses.execute(stmt)).all()
+        }
 
 
 async def _get_median_pages_read_per_day() -> float:
