@@ -119,6 +119,16 @@ async def get_material(*, material_id: UUID) -> Material | None:
     return None
 
 
+async def get_materials() -> list[Material]:
+    stmt = sa.select(models.Materials)
+
+    async with database.session() as ses:
+        return [
+            Material(**material)
+            for material in (await ses.execute(stmt)).mappings().all()
+        ]
+
+
 async def _get_free_materials() -> list[Material]:
     logger.debug("Getting free materials")
 
