@@ -8,7 +8,7 @@ import sqlalchemy.sql as sa
 from aiomysql.cursors import Cursor as MysqlCursor
 from pydantic import field_validator
 
-from tracker.common import database, settings
+from tracker.common import database, settings, deprecated_async
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import models
@@ -180,6 +180,7 @@ async def update_content(
     logger.debug("Note updated")
 
 
+@deprecated_async
 async def update(note_id: UUID) -> None:
     logger.debug("Updating note=%s", note_id)
 
