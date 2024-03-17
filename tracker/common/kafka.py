@@ -37,7 +37,7 @@ async def _send_one(key: str, value: str, *, topic: str) -> None:
     await producer.start()
 
     try:
-        logger.logger.debug(
+        logger.debug(
             "Sending a message: key=%s, value=%s, to %s",
             key,
             value,
@@ -45,9 +45,9 @@ async def _send_one(key: str, value: str, *, topic: str) -> None:
         )
         await producer.send_and_wait(topic, key=key.encode(), value=value.encode())
     except errors.KafkaError:
-        logger.logger.exception("Could not send message")
+        logger.exception("Could not send message")
     else:
-        logger.logger.debug("Message sent")
+        logger.debug("Message sent")
     finally:
         await producer.stop()
 
