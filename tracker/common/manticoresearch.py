@@ -175,7 +175,8 @@ async def update_content(
     logger.debug("Updating note=%s", note_id)
 
     async with _cursor() as cur:
-        await cur.execute(UPDATE_QUERY, (note_id, content, added_at))
+        await cur.execute(DELETE_QUERY, note_id)
+        await cur.execute(INSERT_QUERY, (note_id, content, added_at))
 
     logger.debug("Note updated")
 
