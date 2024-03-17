@@ -71,9 +71,7 @@ async def _to_notify(payload: dict) -> None:
     pass
 
 
-async def _to_search_engine(msg: Record) -> None:
-    payload = msg.after
-
+async def _to_search_engine(payload: Note) -> None:
     logger.info("To search engine: note_id=%s", payload.note_id)
     if payload.is_deleted:
         logger.info("Delete the note")
