@@ -40,6 +40,7 @@ class SearchResult(CustomBaseModel):
 INSERT_QUERY = "INSERT INTO notes (note_id, content, added_at) VALUES (%s,%s,%s)"
 # https://manual.manticoresearch.com/Data_creation_and_modification/Updating_documents/REPLACE_vs_UPDATE
 UPDATE_QUERY = "REPLACE INTO notes (note_id, content, added_at) VALUES (%s,%s,%s)"
+DELETE_QUERY = "DELETE FROM notes WHERE note_id=%s"
 
 # search works only with `text` fields
 CREATE_TABLE_QUERY = """CREATE TABLE IF NOT EXISTS notes (
@@ -159,10 +160,8 @@ async def insert(note_id: UUID) -> None:
 async def delete(note_id: UUID | str) -> None:
     logger.debug("Deleting note=%s", note_id)
 
-    query = "DELETE FROM notes WHERE note_id=%s"
-
     async with _cursor() as cur:
-        await cur.execute(query, note_id)
+        await cur.execute(DELETE_QUERY, note_id)
 
     logger.debug("Note deleted")
 
