@@ -4,7 +4,7 @@ from functools import lru_cache
 import orjson
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 
-from tracker.common import settings, kafka
+from tracker.common import manticoresearch, settings, kafka
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.notes.db import Note
@@ -65,8 +65,17 @@ async def _to_notify(payload: dict) -> None:
     pass
 
 
-async def _to_search_engine(payload: dict) -> None:
-    pass
+async def _to_search_engine(msg: Record) -> None:
+    payload = msg.after
+
+    logger.info("To search engine: note_id=%s", payload.note_id)
+    if payload.is_deleted:
+        logger.info("Delete the note")
+        return await manticoresearch.delete(payload.note_id)
+
+    logger.info("Update the note")
+    return await manticoresearch.update_content(
+        note_id=payload.note_id, content=payload.content, added_at=payload.added_at)
 
 
 async def parse():
