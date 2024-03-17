@@ -89,11 +89,11 @@ async def _to_search_engine(payload: Note) -> None:
 
 
 async def parse():
-    async for _, after in iter_updates():
-        print(after)
-        await _to_notes_cache(after)
-        await _to_notify(after)
-        await _to_search_engine(after)
+    async for msg in iter_updates():
+        payload = msg.after
+        await _to_notes_cache(payload)
+        await _to_notify(payload)
+        await _to_search_engine(payload)
 
 
 import asyncio
