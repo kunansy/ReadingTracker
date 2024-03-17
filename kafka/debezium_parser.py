@@ -4,7 +4,7 @@ from functools import lru_cache
 import orjson
 from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
 
-from tracker.common import manticoresearch, settings, kafka
+from tracker.common import manticoresearch, settings, kafka, redis_api
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.notes.db import Note
@@ -57,9 +57,15 @@ async def iter_updates() -> AsyncIterable[Record]:
         await consumer.stop()
 
 
-async def _to_notes_cache(payload: dict) -> None:
-    pass
+async def _to_notes_cache(payload: Note) -> None:
+    logger.info("To cache: note_id=%s", payload.note_id)
 
+    if payload.is_deleted:
+        logger.info("Deleting the note")
+        await redis_api.delete_note(payload.note_id)
+    else:
+        logger.info("Updating the note")
+        await redis_api.set_note(payload.model_dump(mode="json", exclude_none=True))
 
 async def _to_notify(payload: dict) -> None:
     pass
