@@ -42,7 +42,6 @@ async def iter_updates() -> AsyncIterable[Record]:
         group_id="parse_debezium",
         request_timeout_ms=1000,
         auto_offset_reset="earliest",
-        # TODO
         enable_auto_commit=False,
     )
 
@@ -52,6 +51,8 @@ async def iter_updates() -> AsyncIterable[Record]:
         async for msg in consumer:
             payload = orjson.loads(msg.value)["payload"]
             yield Record(before=payload["before"], after=payload["after"])
+
+            await consumer.commit()
     except Exception:
         logger.exception("")
     finally:
