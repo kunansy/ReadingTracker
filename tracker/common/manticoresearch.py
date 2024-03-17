@@ -114,7 +114,7 @@ async def _create_table() -> None:
         await cur.execute(CREATE_TABLE_QUERY)
 
 
-async def insert_all(notes: list[Note]) -> None:
+async def _insert_all(notes: list[Note]) -> None:
     logger.debug("Inserting all %s notes", len(notes))
     if not notes:
         return
@@ -139,12 +139,13 @@ async def init() -> None:
     logger.debug("Getting notes")
     notes = await _get_notes()
     logger.debug("%s notes got, inserting", len(notes))
-    await insert_all(notes)
+    await _insert_all(notes)
     logger.debug("Notes inserted")
 
     logger.info("Manticore search init completed")
 
 
+@deprecated_async
 async def insert(note_id: UUID) -> None:
     logger.debug("Inserting note=%s", note_id)
     note = await _get_note(note_id=note_id)
