@@ -260,9 +260,7 @@ async def is_note_deleted(note_id: UUID):
 
 @router.delete("/delete", status_code=201)
 async def delete_note(note_id: UUID = Body(embed=True)):
-    async with asyncio.TaskGroup() as tg:
-        tg.create_task(db.delete_note(note_id=note_id))
-        tg.create_task(manticoresearch.delete(note_id=note_id))
+    await db.delete_note(note_id=note_id)
 
 
 @router.post("/restore", status_code=201)
