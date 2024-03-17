@@ -19,7 +19,7 @@ class Record(CustomBaseModel):
     def validate_after(cls, after: dict | None) -> dict | None:
         if not after:
             return None
-        after["added_at"] //= 10_000
+        after["added_at"] //= 1_000
         return after
 
     def is_insert(self) -> bool:
