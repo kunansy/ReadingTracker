@@ -187,8 +187,6 @@ async def add_note(note: schemas.Note = Depends()):
     ):
         response.set_cookie("material_type", material_type, expires=5)
 
-    await manticoresearch.insert(note_id=UUID(note_id))
-
     return response
 
 
@@ -243,7 +241,6 @@ async def update_note(note: schemas.UpdateNote = Depends()):
             tags=note.tags,
         )
 
-        await manticoresearch.update(note_id=note.note_id)  # type: ignore[call-arg]
     except Exception as e:
         logger.error("Error updating note: %s", repr(e))
         success = False
