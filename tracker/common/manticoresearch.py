@@ -38,7 +38,8 @@ class SearchResult(CustomBaseModel):
 
 
 INSERT_QUERY = "INSERT INTO notes (note_id, content, added_at) VALUES (%s,%s,%s)"
-UPDATE_QUERY = "UPDATE notes SET content=%s, added_at=%s WHERE note_id=%s"
+# https://manual.manticoresearch.com/Data_creation_and_modification/Updating_documents/REPLACE_vs_UPDATE
+UPDATE_QUERY = "REPLACE INTO notes (note_id, content, added_at) VALUES (%s,%s,%s)"
 
 # search works only with `text` fields
 CREATE_TABLE_QUERY = """CREATE TABLE IF NOT EXISTS notes (
@@ -175,7 +176,7 @@ async def update_content(
     logger.debug("Updating note=%s", note_id)
 
     async with _cursor() as cur:
-        await cur.execute(UPDATE_QUERY, content, added_at, note_id)
+        await cur.execute(UPDATE_QUERY, (note_id, content, added_at))
 
     logger.debug("Note updated")
 
