@@ -92,6 +92,10 @@ with env.prefixed("KAFKA_"):
 
     KAFKA_URL = f"{KAFKA_HOST}:{KAFKA_PORT}"
 
+# experiment funcs
+with env.prefixed("EX_"):
+    EX_ENABLE_KAFKA_TO_NOTIFY = env.bool("ENABLE_KAFKA_TO_NOTIFY", False)
+
 path = os.environ.get("PATH")
 metrics_dir = os.environ.get("PROMETHEUS_MULTIPROC_DIR")
 

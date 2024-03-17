@@ -105,8 +105,10 @@ async def parse():
     async for msg in iter_updates():
         payload = msg.after
         await _to_notes_cache(payload)
-        await _to_notify(payload)
         await _to_search_engine(payload)
+
+        if settings.EX_ENABLE_KAFKA_TO_NOTIFY:
+            await _to_notify(payload)
 
 
 asyncio.run(parse())
