@@ -154,7 +154,7 @@ async def insert(note_id: UUID) -> None:
     logger.debug("Note inserted")
 
 
-async def delete(note_id: UUID) -> None:
+async def delete(note_id: UUID | str) -> None:
     logger.debug("Deleting note=%s", note_id)
 
     query = "DELETE FROM notes WHERE note_id=%s"
