@@ -1,10 +1,11 @@
+import asyncio
 from collections.abc import AsyncIterable
-from functools import lru_cache
 
 import orjson
-from aiokafka import AIOKafkaConsumer, AIOKafkaProducer
+from aiokafka import AIOKafkaConsumer
+from pydantic import field_validator
 
-from tracker.common import manticoresearch, settings, kafka, redis_api
+from tracker.common import kafka, manticoresearch, redis_api, settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.notes.db import Note
@@ -42,7 +43,7 @@ async def iter_updates() -> AsyncIterable[Record]:
         request_timeout_ms=1000,
         auto_offset_reset="earliest",
         # TODO
-        enable_auto_commit=False
+        enable_auto_commit=False,
     )
 
     await consumer.start()
@@ -85,7 +86,10 @@ async def _to_search_engine(payload: Note) -> None:
 
     logger.info("Update the note")
     return await manticoresearch.update_content(
-        note_id=payload.note_id, content=payload.content, added_at=payload.added_at)
+        note_id=payload.note_id,
+        content=payload.content,
+        added_at=payload.added_at,
+    )
 
 
 async def parse():
@@ -96,5 +100,4 @@ async def parse():
         await _to_search_engine(payload)
 
 
-import asyncio
 asyncio.run(parse())

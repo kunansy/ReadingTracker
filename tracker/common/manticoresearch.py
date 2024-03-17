@@ -8,7 +8,7 @@ import sqlalchemy.sql as sa
 from aiomysql.cursors import Cursor as MysqlCursor
 from pydantic import field_validator
 
-from tracker.common import database, settings, deprecated_async
+from tracker.common import database, deprecated_async, settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import models
