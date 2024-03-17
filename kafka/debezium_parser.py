@@ -70,15 +70,17 @@ async def _to_notes_cache(payload: Note) -> None:
     if payload.is_deleted:
         logger.info("Deleting the note")
         await redis_api.delete_note(payload.note_id)
-    else:
-        logger.info("Updating the note")
-        await redis_api.set_note(payload.model_dump(mode="json", exclude_none=True))
+        return
+
+    logger.info("Updating the note")
+    await redis_api.set_note(payload.model_dump(mode="json", exclude_none=True))
 
 
 async def _to_notify(payload: Note) -> None:
     if payload.is_deleted:
         logger.info("The note has been deleted, don't notify")
         return
+
     logger.info("To notify: note_id=%s", payload.note_id)
     await kafka.repeat_note(payload.note_id)
     logger.info("Sent")
@@ -88,10 +90,11 @@ async def _to_search_engine(payload: Note) -> None:
     logger.info("To search engine: note_id=%s", payload.note_id)
     if payload.is_deleted:
         logger.info("Delete the note")
-        return await manticoresearch.delete(payload.note_id)
+        await manticoresearch.delete(payload.note_id)
+        return
 
     logger.info("Update the note")
-    return await manticoresearch.update_content(
+    await manticoresearch.update_content(
         note_id=payload.note_id,
         content=payload.content,
         added_at=payload.added_at,
