@@ -39,6 +39,13 @@ class SearchResult(CustomBaseModel):
 
 INSERT_QUERY = "INSERT INTO notes (note_id, content, added_at) VALUES (%s,%s,%s)"
 
+# search works only with `text` fields
+CREATE_TABLE_QUERY = """CREATE TABLE IF NOT EXISTS notes (
+    note_id string,
+    content text,
+    added_at timestamp) morphology='lemmatize_ru_all, lemmatize_en_all'
+"""
+
 
 @asynccontextmanager
 async def _cursor() -> AsyncGenerator[MysqlCursor, None]:
@@ -102,15 +109,8 @@ async def _drop_table() -> None:
 
 
 async def _create_table() -> None:
-    # search works only with `text` fields
-    query = """CREATE TABLE IF NOT EXISTS notes (
-        note_id string,
-        content text,
-        added_at timestamp) morphology='lemmatize_ru_all, lemmatize_en_all'
-    """
-
     async with _cursor() as cur:
-        await cur.execute(query)
+        await cur.execute(CREATE_TABLE_QUERY)
 
 
 async def insert_all(notes: list[Note]) -> None:
