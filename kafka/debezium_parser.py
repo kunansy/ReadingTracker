@@ -67,8 +67,14 @@ async def _to_notes_cache(payload: Note) -> None:
         logger.info("Updating the note")
         await redis_api.set_note(payload.model_dump(mode="json", exclude_none=True))
 
-async def _to_notify(payload: dict) -> None:
-    pass
+
+async def _to_notify(payload: Note) -> None:
+    if payload.is_deleted:
+        logger.info("The note has been deleted, don't notify")
+        return
+    logger.info("To notify: note_id=%s", payload.note_id)
+    await kafka.repeat_note(payload.note_id)
+    logger.info("Sent")
 
 
 async def _to_search_engine(payload: Note) -> None:
