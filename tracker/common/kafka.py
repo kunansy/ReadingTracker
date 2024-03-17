@@ -1,39 +1,16 @@
 import uuid
-from collections.abc import Callable, Coroutine
-from functools import wraps
-from typing import Any
 
 from aiokafka import AIOKafkaProducer, errors
 
 from tracker.common import logger, settings
 
 
-FUNC_TYPE = Callable[[], Coroutine[Any, Any, AIOKafkaProducer]]
-
-
-def cache(func: FUNC_TYPE) -> FUNC_TYPE:
-    producer: AIOKafkaProducer | None = None
-
-    @wraps(func)
-    async def wrapped(*args: Any, **kwargs: Any) -> AIOKafkaProducer:
-        nonlocal producer
-        if not producer:
-            producer = await func(*args, **kwargs)
-        return producer
-
-    return wrapped
-
-
-@cache
-async def _producer() -> AIOKafkaProducer:
-    return AIOKafkaProducer(
+async def _send_one(key: str, value: str, *, topic: str) -> None:
+    # TODO: create one in the context manager
+    producer = AIOKafkaProducer(
         bootstrap_servers=settings.KAFKA_URL,
         enable_idempotence=True,
     )
-
-
-async def _send_one(key: str, value: str, *, topic: str) -> None:
-    producer = await _producer()
     await producer.start()
 
     try:
