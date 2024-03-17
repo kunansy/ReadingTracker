@@ -54,7 +54,12 @@ async def iter_updates() -> AsyncIterable[Record]:
 
             await consumer.commit()
     except Exception:
-        logger.exception("")
+        logger.exception(
+            "Error consuming the message: topic=%s, offset=%s\nvalue=%s",
+            msg.topic,
+            msg.offset,
+            msg.value,
+        )
     finally:
         await consumer.stop()
 
