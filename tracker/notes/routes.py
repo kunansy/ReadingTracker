@@ -243,7 +243,7 @@ async def update_note(note: schemas.UpdateNote = Depends()):
             tags=note.tags,
         )
 
-        await manticoresearch.update(note_id=note.note_id)
+        await manticoresearch.update(note_id=note.note_id)  # type: ignore[call-arg]
     except Exception as e:
         logger.error("Error updating note: %s", repr(e))
         success = False
