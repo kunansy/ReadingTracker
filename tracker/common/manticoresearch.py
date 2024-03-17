@@ -38,6 +38,7 @@ class SearchResult(CustomBaseModel):
 
 
 INSERT_QUERY = "INSERT INTO notes (note_id, content, added_at) VALUES (%s,%s,%s)"
+UPDATE_QUERY = "UPDATE notes SET content=%s, added_at=%s WHERE note_id=%s"
 
 # search works only with `text` fields
 CREATE_TABLE_QUERY = """CREATE TABLE IF NOT EXISTS notes (
@@ -163,6 +164,20 @@ async def delete(note_id: UUID | str) -> None:
         await cur.execute(query, note_id)
 
     logger.debug("Note deleted")
+
+
+async def update_content(
+    *,
+    note_id: UUID | str,
+    content: str,
+    added_at: datetime.datetime,
+) -> None:
+    logger.debug("Updating note=%s", note_id)
+
+    async with _cursor() as cur:
+        await cur.execute(UPDATE_QUERY, content, added_at, note_id)
+
+    logger.debug("Note updated")
 
 
 async def update(note_id: UUID) -> None:
