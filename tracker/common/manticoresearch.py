@@ -38,8 +38,6 @@ class SearchResult(CustomBaseModel):
 
 
 INSERT_QUERY = "INSERT INTO notes (note_id, content, added_at) VALUES (%s,%s,%s)"
-# https://manual.manticoresearch.com/Data_creation_and_modification/Updating_documents/REPLACE_vs_UPDATE
-UPDATE_QUERY = "REPLACE INTO notes (note_id, content, added_at) VALUES (%s,%s,%s)"
 DELETE_QUERY = "DELETE FROM notes WHERE note_id=%s"
 
 # search works only with `text` fields
@@ -174,6 +172,7 @@ async def update_content(
 ) -> None:
     logger.debug("Updating note=%s", note_id)
 
+    # because SQL updating don't work, replace don't delete the old doc
     async with _cursor() as cur:
         await cur.execute(DELETE_QUERY, note_id)
         await cur.execute(INSERT_QUERY, (note_id, content, added_at))
