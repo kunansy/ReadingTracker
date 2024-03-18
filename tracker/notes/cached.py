@@ -5,6 +5,7 @@ from tracker.notes import db
 
 
 _ALL_NOTE_FIELDS = db.Note.model_fields.keys()
+# TODO: add cache-miss metrics
 
 
 async def is_deleted(note_id: UUID | str) -> bool:

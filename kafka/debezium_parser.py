@@ -19,6 +19,7 @@ class Record(CustomBaseModel):
     def validate_after(cls, after: dict | None) -> dict | None:
         if not after:
             return None
+        # TODO: compare value and divide depends on it
         after["added_at"] //= 1_000
         return after
 
