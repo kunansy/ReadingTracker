@@ -5,8 +5,6 @@ from uuid import UUID
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, ORJSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from fastapi_cache.coder import PickleCoder
-from fastapi_cache.decorator import cache
 from pydantic import conint
 
 from tracker.common.logger import logger
@@ -29,7 +27,6 @@ async def system_view():
 
 
 @router.get("/graphics")
-@cache(namespace="system", coder=PickleCoder, expire=7)
 async def graphic(
     request: Request,
     material_id: UUID | None = None,

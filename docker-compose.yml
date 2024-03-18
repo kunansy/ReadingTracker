@@ -107,11 +107,6 @@ services:
     container_name: tracker-app
     env_file: .env
     restart: always
-    depends_on:
-      - tracker-db
-      - tracker-search
-      - tracker-backup
-      - tracker-cache
     ports:
        - "127.0.0.1:${API_PORT}:8000"
     entrypoint: ["gunicorn", "tracker.main:app", "--bind", "0.0.0.0:8000", "--workers",
@@ -128,6 +123,17 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
+
+  tracker-debezium-parser:
+    <<: *tracker-img
+    container_name: tracker-debezium-parser
+    env_file: .env
+    restart: always
+    entrypoint: ["python3", "kafka/debezium_parser.py"]
+    networks:
+      - tracker-net
+    healthcheck:
+      test: "exit 0"
 
   tracker-prometheus:
     <<: *prometheus-img

@@ -315,6 +315,22 @@ const restoreNoteBtn = (note_id) => {
     );
 }
 
+const insertToRepeatQueue = (note_id) => {
+    return createContextMenuItem(
+        "Insert to repeat queue",
+        async () => {
+            let resp = await fetch(`/notes/repeat-queue/insert?note_id=${note_id}`, {
+                method: 'POST',
+                headers: {'Content-type': 'application/json'},
+            });
+
+            if (!resp.ok) {
+                console.log("Error: " + await resp.text());
+            }
+        }
+    );
+}
+
 const getNote = async (note_id) => {
     let resp = await fetch(`/notes/note-json?note_id=${note_id}`, {
         method: 'GET',
@@ -338,6 +354,8 @@ const addNoteContextMenuItems = async (note) => {
     } else {
         contextMenu.appendChild(deleteNoteBtn(note.id));
     }
+    contextMenu.appendChild(insertToRepeatQueue(note.id));
+
     let url = new URL(document.URL);
     // when it's a single note page
     if (url.pathname === "/notes/note") {

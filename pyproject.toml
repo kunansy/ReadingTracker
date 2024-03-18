@@ -19,8 +19,10 @@ ignore = [
     "EM101", "EM102", "FIX002", "N818",
     # args count, sum([]), todo author/link
     "PLR0913", "RUF017", "TD002", "TD003",
-    # todo colon/text, exc msg
-    "TD004", "TD005", "TRY003"
+    # todo colon/text, exc msg, any in kw/args
+    "TD004", "TD005", "TRY003", "ANN401",
+    # ternary op, setattr with const
+    "SIM108", "B010"
 ]
 
 
@@ -109,10 +111,12 @@ pydub = "~0.25.1"
 uuid6 = "~2024.01.12"
 grpcio = "~1.62.0"
 grpcio-tools = "~1.62.0"
-fastapi-cache2 = {extras = ["redis"], version = "^0.2.1"}
 starlette-exporter = "~0.21.0"
 beautifulsoup4 = "~4.12.2"
 lxml = "~5.1.0"
+aiokafka = "~0.10.0"
+redis = {version = "~5.0.2", extras = ["hiredis"]}
+aiohttp = "~3.9.3"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "~1.9.0"

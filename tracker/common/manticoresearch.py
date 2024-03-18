@@ -8,7 +8,7 @@ import sqlalchemy.sql as sa
 from aiomysql.cursors import Cursor as MysqlCursor
 from pydantic import field_validator
 
-from tracker.common import database, settings
+from tracker.common import database, deprecated_async, settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import models
@@ -38,6 +38,14 @@ class SearchResult(CustomBaseModel):
 
 
 INSERT_QUERY = "INSERT INTO notes (note_id, content, added_at) VALUES (%s,%s,%s)"
+DELETE_QUERY = "DELETE FROM notes WHERE note_id=%s"
+
+# search works only with `text` fields
+CREATE_TABLE_QUERY = """CREATE TABLE IF NOT EXISTS notes (
+    note_id string,
+    content text,
+    added_at timestamp) morphology='lemmatize_ru_all, lemmatize_en_all'
+"""
 
 
 @asynccontextmanager
@@ -102,18 +110,11 @@ async def _drop_table() -> None:
 
 
 async def _create_table() -> None:
-    # search works only with `text` fields
-    query = """CREATE TABLE IF NOT EXISTS notes (
-        note_id string,
-        content text,
-        added_at timestamp) morphology='lemmatize_ru_all, lemmatize_en_all'
-    """
-
     async with _cursor() as cur:
-        await cur.execute(query)
+        await cur.execute(CREATE_TABLE_QUERY)
 
 
-async def insert_all(notes: list[Note]) -> None:
+async def _insert_all(notes: list[Note]) -> None:
     logger.debug("Inserting all %s notes", len(notes))
     if not notes:
         return
@@ -138,12 +139,13 @@ async def init() -> None:
     logger.debug("Getting notes")
     notes = await _get_notes()
     logger.debug("%s notes got, inserting", len(notes))
-    await insert_all(notes)
+    await _insert_all(notes)
     logger.debug("Notes inserted")
 
     logger.info("Manticore search init completed")
 
 
+@deprecated_async
 async def insert(note_id: UUID) -> None:
     logger.debug("Inserting note=%s", note_id)
     note = await _get_note(note_id=note_id)
@@ -154,17 +156,32 @@ async def insert(note_id: UUID) -> None:
     logger.debug("Note inserted")
 
 
-async def delete(note_id: UUID) -> None:
+async def delete(note_id: UUID | str) -> None:
     logger.debug("Deleting note=%s", note_id)
 
-    query = "DELETE FROM notes WHERE note_id=%s"
-
     async with _cursor() as cur:
-        await cur.execute(query, note_id)
+        await cur.execute(DELETE_QUERY, note_id)
 
     logger.debug("Note deleted")
 
 
+async def update_content(
+    *,
+    note_id: UUID | str,
+    content: str,
+    added_at: datetime.datetime,
+) -> None:
+    logger.debug("Updating note=%s", note_id)
+
+    # because SQL updating don't work, replace don't delete the old doc
+    async with _cursor() as cur:
+        await cur.execute(DELETE_QUERY, note_id)
+        await cur.execute(INSERT_QUERY, (note_id, content, added_at))
+
+    logger.debug("Note updated")
+
+
+@deprecated_async
 async def update(note_id: UUID) -> None:
     logger.debug("Updating note=%s", note_id)
 

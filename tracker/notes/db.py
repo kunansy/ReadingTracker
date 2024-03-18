@@ -7,9 +7,10 @@ from typing import Any
 from uuid import UUID
 
 import networkx as nx
+import orjson
 import sqlalchemy.sql as sa
 from fastapi.encoders import jsonable_encoder
-from pydantic import field_validator
+from pydantic import field_serializer, field_validator
 from pyvis.network import Network
 
 from tracker.common import database, settings
@@ -21,9 +22,9 @@ from tracker.notes import schemas
 
 class Note(CustomBaseModel):
     note_id: UUID
-    link_id: UUID | None
+    link_id: UUID | None = None
     material_id: UUID
-    title: str | None
+    title: str | None = None
     content: str
     added_at: datetime.datetime
     chapter: int
@@ -39,6 +40,26 @@ class Note(CustomBaseModel):
         # Some notes don't have a material, so to work
         # with them set material_id to zero uuid
         return material_id or UUID(int=0)
+
+    @field_validator("tags", mode="before")
+    def load_tags(cls, tags: set[str] | str) -> set[str]:
+        if isinstance(tags, str):
+            return set(orjson.loads(tags))
+        return tags
+
+    @field_serializer("tags", when_used="json")
+    def serialize_tags(self, tags: set[str]) -> bytes:
+        # for redis
+        return orjson.dumps(sorted(tags))
+
+    @field_serializer("is_deleted", when_used="json")
+    def serialize_is_deleted(self, is_deleted: bool) -> int:  # noqa: FBT001
+        # for redis
+        return int(is_deleted)
+
+    @field_serializer("added_at")
+    def serialize_added_at(self, added_at: datetime.datetime) -> str:
+        return added_at.strftime(settings.DATETIME_FORMAT)
 
     @property
     def content_md(self) -> str:

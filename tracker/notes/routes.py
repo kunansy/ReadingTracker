@@ -6,15 +6,13 @@ from uuid import UUID
 from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from fastapi_cache.coder import PickleCoder
-from fastapi_cache.decorator import cache
 
-from tracker.common import manticoresearch, settings
+from tracker.common import kafka, manticoresearch, settings
 from tracker.common.logger import logger
-from tracker.common.schemas import ORJSONEncoder
 from tracker.materials import db as materials_db
 from tracker.models import enums
 from tracker.notes import (
+    cached,
     db,
     schemas,
     speech_recognizer as recognizer,
@@ -56,7 +54,7 @@ async def get_note_links(note: db.Note) -> dict[str, Any]:
     async with asyncio.TaskGroup() as tg:
         get_links_from_task = tg.create_task(db.get_links_from(note_id=note.note_id))
         if note.link_id:
-            get_link_to_task = tg.create_task(db.get_note(note_id=note.link_id))
+            get_link_to_task = tg.create_task(cached.get_note(note.link_id))
         else:
             get_link_to_task = tg.create_task(asyncio.sleep(1 / 1000, result=None))
 
@@ -64,7 +62,6 @@ async def get_note_links(note: db.Note) -> dict[str, Any]:
 
 
 @router.get("/", response_class=HTMLResponse)
-@cache(namespace="notes", coder=PickleCoder, expire=5)
 async def get_notes(request: Request, search: schemas.SearchParams = Depends()):
     material_id = search.material_id
     async with asyncio.TaskGroup() as tg:
@@ -103,9 +100,8 @@ async def get_notes(request: Request, search: schemas.SearchParams = Depends()):
 
 
 @router.get("/note", response_class=HTMLResponse)
-@cache(namespace="notes", coder=PickleCoder, expire=5)
 async def get_note(request: Request, note_id: UUID):
-    if not (note := await db.get_note(note_id=note_id)):
+    if not (note := await cached.get_note(note_id)):
         raise HTTPException(status_code=404, detail=f"Note id={note_id} not found")
 
     async with asyncio.TaskGroup() as tg:
@@ -133,18 +129,14 @@ async def get_note(request: Request, note_id: UUID):
 
 
 @router.get("/note-json", response_model=schemas.GetNoteJsonResponse)
-@cache(namespace="notes", coder=ORJSONEncoder, expire=5)
 async def get_note_json(note_id: UUID):
-    if not (note := await db.get_note(note_id=note_id)):
-        raise HTTPException(status_code=404, detail=f"Note id={note_id} not found")
+    if note := await cached.get_note_json(note_id):
+        return note
 
-    return note.model_dump() | {
-        "added_at": note.added_at.strftime(settings.DATETIME_FORMAT),
-    }
+    raise HTTPException(status_code=404, detail=f"Note id={note_id} not found")
 
 
 @router.get("/add-view", response_class=HTMLResponse)
-@cache(namespace="notes", coder=PickleCoder, expire=5)
 async def add_note_view(request: Request, material_id: str | None = None):
     material_id = material_id or request.cookies.get("material_id", "")
 
@@ -195,8 +187,6 @@ async def add_note(note: schemas.Note = Depends()):
     ):
         response.set_cookie("material_type", material_type, expires=5)
 
-    await manticoresearch.insert(note_id=UUID(note_id))
-
     return response
 
 
@@ -206,7 +196,7 @@ async def update_note_view(note_id: UUID, request: Request, success: bool | None
         "request": request,
     }
 
-    if not (note := await db.get_note(note_id=note_id)):
+    if not (note := await cached.get_note(note_id)):
         context["what"] = f"Note id='{note_id}' not found"
         return templates.TemplateResponse("errors/404.html", context)
     material_id = note.get_material_id()
@@ -251,7 +241,6 @@ async def update_note(note: schemas.UpdateNote = Depends()):
             tags=note.tags,
         )
 
-        await manticoresearch.update(note_id=note.note_id)
     except Exception as e:
         logger.error("Error updating note: %s", repr(e))
         success = False
@@ -263,30 +252,23 @@ async def update_note(note: schemas.UpdateNote = Depends()):
 
 
 @router.get("/is-deleted", response_model=schemas.IsNoteDeletedResponse)
-@cache(namespace="notes", coder=ORJSONEncoder, expire=3)
 async def is_note_deleted(note_id: UUID):
-    result = await db.is_deleted(note_id=str(note_id))
+    result = await cached.is_deleted(note_id)
 
     return {"is_deleted": result, "note_id": note_id}
 
 
 @router.delete("/delete", status_code=201)
 async def delete_note(note_id: UUID = Body(embed=True)):
-    async with asyncio.TaskGroup() as tg:
-        tg.create_task(db.delete_note(note_id=note_id))
-        tg.create_task(manticoresearch.delete(note_id=note_id))
+    await db.delete_note(note_id=note_id)
 
 
 @router.post("/restore", status_code=201)
 async def restore_note(note_id: UUID = Body(embed=True)):
-    # without task group because manticore could not insert
-    # deleted note, so first we should restore it in db
     await db.restore_note(note_id=note_id)
-    await manticoresearch.insert(note_id=note_id)
 
 
 @router.get("/links", response_class=HTMLResponse)
-@cache(namespace="notes", coder=PickleCoder, expire=5)
 async def get_note_graph(note_id: UUID):
     notes = {note.note_id: note for note in await db.get_notes()}
     graph = db.link_notes(note_id=note_id, notes=notes)
@@ -316,7 +298,6 @@ async def transcript_speech(data: bytes = Body()):
 
 
 @router.get("/graph", response_class=HTMLResponse)
-@cache(namespace="notes", coder=PickleCoder, expire=5)
 async def get_graph(request: Request, material_id: UUID | str | None = None):
     async with asyncio.TaskGroup() as tg:
         get_notes_task = tg.create_task(db.get_notes())
@@ -354,8 +335,15 @@ async def get_graph(request: Request, material_id: UUID | str | None = None):
 
 
 @router.get("/tags")
-@cache(namespace="notes", coder=PickleCoder, expire=5)
 async def get_tags(material_id: UUID):
     tags = await db.get_sorted_tags(material_id=material_id)
 
     return {"tags": tags}
+
+
+@router.post("/repeat-queue/insert")
+async def insert_to_repeat_queue(note_id: UUID):
+    if await cached.get_note(note_id):
+        await kafka.repeat_note(note_id)
+    else:
+        raise HTTPException(status_code=404, detail="Not found")

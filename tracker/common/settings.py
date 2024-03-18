@@ -84,6 +84,18 @@ with env.prefixed("YOUTUBE_API_"):
     YOUTUBE_API_URL = env.url("URL", "https://youtube.googleapis.com/youtube/v3/videos")
     YOUTUBE_API_KEY = env("KEY")
 
+with env.prefixed("KAFKA_"):
+    KAFKA_HOST = env("HOST", "localhost")
+    KAFKA_PORT = env.int("PORT", 9092)
+    KAFKA_REPEAT_NOTES_TOPIC = env("REPEAT_NOTES_TOPIC")
+    KAFKA_CACHE_NOTES_TOPIC = env("CACHE_NOTES_TOPIC")
+
+    KAFKA_URL = f"{KAFKA_HOST}:{KAFKA_PORT}"
+
+# experiment funcs
+with env.prefixed("EX_"):
+    EX_ENABLE_KAFKA_TO_NOTIFY = env.bool("ENABLE_KAFKA_TO_NOTIFY", False)
+
 path = os.environ.get("PATH")
 metrics_dir = os.environ.get("PROMETHEUS_MULTIPROC_DIR")
 
