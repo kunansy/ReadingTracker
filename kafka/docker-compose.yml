@@ -18,9 +18,9 @@ services:
     networks:
       - tracker-net
 
-  broker:
+  kafka:
     image: confluentinc/cp-server:7.6.0
-    container_name: broker
+    container_name: kafka
     restart: always
     depends_on:
       - zookeeper
@@ -31,12 +31,12 @@ services:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
       KAFKA_METRIC_REPORTERS: io.confluent.metrics.reporter.ConfluentMetricsReporter
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
       KAFKA_CONFLUENT_LICENSE_TOPIC_REPLICATION_FACTOR: 1
-      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: broker:29092
+      CONFLUENT_METRICS_REPORTER_BOOTSTRAP_SERVERS: kafka:29092
       CONFLUENT_METRICS_REPORTER_ZOOKEEPER_CONNECT: zookeeper:2181
       CONFLUENT_METRICS_REPORTER_TOPIC_REPLICAS: 1
       CONFLUENT_METRICS_ENABLE: "true"
@@ -55,11 +55,11 @@ services:
     depends_on:
      - kafka
     environment:
-     - BOOTSTRAP_SERVERS=broker:29092
-     - GROUP_ID=1
-     - CONFIG_STORAGE_TOPIC=debezium_config
-     - OFFSET_STORAGE_TOPIC=debezium_offsets
-     - STATUS_STORAGE_TOPIC=debezium_connect_statuses
+      - BOOTSTRAP_SERVERS=kafka:29092
+      - GROUP_ID=1
+      - CONFIG_STORAGE_TOPIC=debezium_config
+      - OFFSET_STORAGE_TOPIC=debezium_offsets
+      - STATUS_STORAGE_TOPIC=debezium_connect_statuses
     networks:
       - tracker-net
 
@@ -71,13 +71,13 @@ services:
     restart: always
     environment:
       - KAFKA_CLUSTERS_0_NAME=local
-      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=broker:29092
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:29092
       - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
       - KAFKA_CLUSTERS_0_PROPERTIES_SECURITY_PROTOCOL=PLAINTEXT
     networks:
       - tracker-net
     volumes: 
-      - ./data/broker:/var/lib/kafka/data
+      - ./data/kafka:/var/lib/kafka/data
 
 volumes:
   kafka-data:
