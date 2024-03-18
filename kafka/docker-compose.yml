@@ -63,16 +63,6 @@ services:
     networks:
       - tracker-net
 
-  kafka:
-    image: confluentinc/cp-kafka:7.6.0
-    container_name: kafka
-    command: ["tail", "-f", "/dev/null"]
-    network_mode: "host"
-    networks:
-      - tracker-net
-    volumes:
-      - kafka-data:/var/lib/kafka/data
-
   kafka-ui:
     image: provectuslabs/kafka-ui
     container_name: kafka-ui
