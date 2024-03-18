@@ -49,11 +49,11 @@ services:
     restart: always
     container_name: debezium
     ports:
-     - "127.0.0.1:8083:8083"
-     - "127.0.0.1:8778:8778"
-     - "127.0.0.1:39092:9092"
+      - "127.0.0.1:8083:8083"
+      - "127.0.0.1:8778:8778"
+      - "127.0.0.1:39092:9092"
     depends_on:
-     - kafka
+      - kafka
     environment:
       - BOOTSTRAP_SERVERS=kafka:29092
       - GROUP_ID=1
