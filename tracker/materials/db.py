@@ -119,6 +119,16 @@ async def get_material(*, material_id: UUID) -> Material | None:
     return None
 
 
+async def get_materials() -> list[Material]:
+    stmt = sa.select(models.Materials)
+
+    async with database.session() as ses:
+        return [
+            Material(**material)
+            for material in (await ses.execute(stmt)).mappings().all()
+        ]
+
+
 async def _get_free_materials() -> list[Material]:
     logger.debug("Getting free materials")
 
@@ -667,12 +677,17 @@ async def get_repeating_queue(*, is_outlined: bool) -> list[RepeatingQueue]:
     notes_count = notes_count_task.result()
     repeat_analytics = repeat_analytics_task.result()
 
-    completed_materials = (material for material in completed_materials_task.result())
+    completed_materials = (
+        material
+        for material in completed_materials_task.result()
+        # skip materials without notes and notwithstanding outlined
+        if not (
+            material.material.is_outlined and not notes_count.get(material.material_id)
+        )
+    )
     if is_outlined:
         completed_materials = (
-            material
-            for material in completed_materials_task.result()
-            if material.material.is_outlined
+            material for material in completed_materials if material.material.is_outlined
         )
 
     queue = [

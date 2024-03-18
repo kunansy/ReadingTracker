@@ -362,7 +362,7 @@ async def restore_note(*, note_id: UUID) -> None:
     logger.debug("Note restored")
 
 
-async def get_tags() -> set[str]:
+async def _get_tags() -> set[str]:
     logger.debug("Getting tags")
 
     stmt = sa.select(models.Notes.c.tags).where(models.Notes.c.tags != [])
@@ -376,7 +376,7 @@ async def get_tags() -> set[str]:
     return tags_set
 
 
-async def get_material_tags(material_id: str | UUID) -> list[str]:
+async def _get_material_tags(material_id: str | UUID) -> list[str]:
     logger.debug("Getting tags for material_id=%s", material_id)
 
     stmt = (
@@ -434,6 +434,7 @@ def _get_note_link(note: Note, **attrs: str) -> tuple[str, dict[str, Any]]:
         jsonable_encoder(
             {
                 **attrs,
+                "title": note.content_md,
                 "material_id": note.material_id,
                 "note_number": note.note_number,
                 "label": note.short_content,
@@ -499,7 +500,10 @@ def link_notes(
     logger.debug("Linking %s notes from the %s", len(notes), note_id)
 
     graph = nx.DiGraph()
-    graph.add_nodes_from([_get_note_link(notes[note_id])], color=color)
+    graph.add_nodes_from(
+        [_get_note_link(notes[note_id])],
+        color=color,
+    )
 
     # link together all cohesive notes, which bounds with the given one
     _link_cohesive_notes(graph, notes, note_id, visited=set())
@@ -601,12 +605,12 @@ async def get_sorted_tags(*, material_id: str | UUID | None) -> list[str]:
     logger.debug("Getting sorted tags for material_id=%s", material_id)
 
     if not material_id:
-        tags = await get_tags()
+        tags = await _get_tags()
         return sorted(tags)
 
     async with asyncio.TaskGroup() as tg:
-        get_tags_task = tg.create_task(get_tags())
-        get_materials_tags = tg.create_task(get_material_tags(material_id))
+        get_tags_task = tg.create_task(_get_tags())
+        get_materials_tags = tg.create_task(_get_material_tags(material_id))
 
     tags, materials_tags = get_tags_task.result(), get_materials_tags.result()
     tags -= set(materials_tags)
