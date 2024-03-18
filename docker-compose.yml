@@ -124,6 +124,17 @@ services:
       timeout: 5s
       retries: 3
 
+  tracker-debezium-parser:
+    <<: *tracker-img
+    container_name: tracker-debezium-parser
+    env_file: .env
+    restart: always
+    entrypoint: ["python3", "kafka/debezium_parser.py"]
+    networks:
+      - tracker-net
+    healthcheck:
+      test: "exit 0"
+
   tracker-prometheus:
     <<: *prometheus-img
     container_name: tracker-prometheus
