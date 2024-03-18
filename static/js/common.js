@@ -325,7 +325,7 @@ const insertToRepeatQueue = (note_id) => {
             });
 
             if (!resp.ok) {
-                console.log(await resp.text());
+                console.log("Error: " + await resp.text());
             }
         }
     );
