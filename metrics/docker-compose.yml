@@ -1,0 +1,64 @@
+version: '3'
+
+x-prometheus-img: &prometheus-img
+  image: prom/prometheus:v2.51.0
+
+x-grafana-img: &grafana-img
+  image: grafana/grafana:10.3.5
+
+services:
+  tracker-prometheus:
+    <<: *prometheus-img
+    container_name: tracker-prometheus
+    restart: always
+    ports:
+      - "127.0.0.1:9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml' 
+      - '--log.level=error'
+    networks:
+      - tracker-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider http://localhost:9090/-/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20k"
+        max-file: "3"
+
+  tracker-grafana:
+    <<: *grafana-img
+    container_name: tracker-grafana
+    restart: always
+    environment:
+      - GF_LOG_LEVEL=error
+    ports:
+      - "127.0.0.1:3000:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+    networks:
+      - tracker-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20k"
+        max-file: "3"
+
+volumes:
+  grafana_data:
+  prometheus_data:
+
+networks:
+  tracker-net:
+    external: true
