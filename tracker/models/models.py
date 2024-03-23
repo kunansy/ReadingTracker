@@ -54,7 +54,7 @@ class Serial(UserDefinedType):
 
 
 def _uuid_gen() -> str:
-    return str(uuid6.uuid6())
+    return str(uuid6.uuid7())
 
 
 def _utc_now() -> datetime.datetime:
