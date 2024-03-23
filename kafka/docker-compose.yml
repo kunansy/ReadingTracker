@@ -27,8 +27,6 @@ services:
     image: confluentinc/cp-server:7.6.0
     container_name: kafka
     restart: always
-    depends_on:
-      - zookeeper
     ports:
       - "127.0.0.1:9092:9092"
       - "127.0.0.1:29093:29093"
@@ -62,8 +60,6 @@ services:
       - "127.0.0.1:8083:8083"
       - "127.0.0.1:8778:8778"
       - "127.0.0.1:39092:9092"
-    depends_on:
-      - kafka
     environment:
       - BOOTSTRAP_SERVERS=kafka:29092
       - GROUP_ID=1
