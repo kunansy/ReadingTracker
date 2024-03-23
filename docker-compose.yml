@@ -7,7 +7,7 @@ x-search-img: &search-img
   image: kunansy/tracker_search:6.2.12
 
 x-backup-img: &backup-img
-  image: kunansy/fast-backup:0.5.2
+  image: kunansy/fast-backup:0.5.5
 
 x-cache-img: &cache-img
   image: redis:7.2-alpine
