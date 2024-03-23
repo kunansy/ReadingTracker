@@ -29,6 +29,6 @@ WORKDIR /app
 
 COPY /templates ./templates
 COPY /static ./static
-COPY /kafka/debezium_parser.py ./kafka/debezium_parser.py
+COPY /kafka ./kafka
 COPY /tracker ./tracker
 COPY VERSION ./VERSION
