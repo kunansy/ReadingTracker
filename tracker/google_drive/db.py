@@ -184,3 +184,72 @@ async def set_materials_seq_value(materials: TableSnapshot, conn: AsyncSession) 
         field_name=model.c.index.name,
         rows=materials,
     )
+
+
+async def create_repeat_notes_matview() -> None:
+    query = """
+    CREATE MATERIALIZED VIEW IF NOT EXISTS mvw_repeat_notes AS
+        WITH repeated_notes_freq AS (
+            SELECT note_id, count(1)
+            FROM note_repeats_history
+            GROUP BY note_id
+        ),
+        all_notes_freq AS (
+            SELECT
+                n.note_id AS note_id,
+                COALESCE(s.count, 0) AS "count"
+            FROM notes n
+            LEFT JOIN repeated_notes_freq s USING(note_id)
+            WHERE NOT n.is_deleted
+        ),
+        min_freq AS (
+            SELECT a.count AS m
+            FROM all_notes_freq a
+            ORDER BY a.count
+            LIMIT 1
+        ),
+        sample_notes AS (
+            SELECT 
+                n.note_id,
+                n.material_id,
+                n.page,
+                n.chapter,
+                n.title,
+                n.content,
+                n.added_at
+            FROM all_notes_freq f
+            JOIN min_freq m ON f.count = m.m
+            JOIN notes n ON f.note_id = n.note_id
+        ),
+        last_repeat AS (
+            SELECT m.material_id, r.repeated_at, COUNT(1) OVER (PARTITION BY r.material_id) as c
+            FROM sample_notes n
+            JOIN materials m using(material_id)
+            join repeats r using(material_id)
+            ORDER BY r.repeated_at DESC
+            LIMIT 1
+        )
+        SELECT
+            n.note_id,
+            m.material_id,
+            m.title as material_title,
+            m.authors,
+            n.title as note_title,
+            n.content,
+            n.added_at,
+            CASE
+                -- in this case the note have no material
+                WHEN m IS NULL THEN 'completed'
+                WHEN s IS NULL THEN 'queue'
+                WHEN s.completed_at IS NULL THEN 'reading'
+                ELSE 'completed'
+            END AS "material_status",
+            r.repeated_at,
+            r.c as repeats_count
+        FROM
+            sample_notes n
+        LEFT JOIN materials m on n.material_id = m.material_id
+        LEFT JOIN statuses s on s.material_id = m.material_id
+        LEFT JOIN last_repeat r on r.material_id = s.material_id
+    WITH NO DATA;
+    """
