@@ -15,12 +15,6 @@ x-cache-img: &cache-img
 x-tracker-img: &tracker-img
   image: kunansy/reading_tracker:2.24.0
 
-x-prometheus-img: &prometheus-img
-  image: prom/prometheus:2.48
-
-x-grafana-img: &grafana-img
-  image: grafana/grafana:10.0
-
 services:
   tracker-db:
     <<: *db-img
@@ -135,40 +129,10 @@ services:
     healthcheck:
       test: "exit 0"
 
-  tracker-prometheus:
-    <<: *prometheus-img
-    container_name: tracker-prometheus
-    ports:
-      - "127.0.0.1:9090:9090"
-    volumes:
-      - ./prometheus_data/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus-volume:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-    networks:
-      - tracker-net
-
-  tracker-grafana:
-    <<: *grafana-img
-    container_name: tracker-grafana
-    ports:
-      - "127.0.0.1:3000:3000"
-    volumes:
-      - grafana-volume:/var/lib/grafana
-    networks:
-      - tracker-net
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-
 volumes:
   database-volume:
   manticore-data:
   cache-volume:
-  grafana-volume:
-  prometheus-volume:
 
 networks:
   tracker-net:
