@@ -129,6 +129,17 @@ services:
     healthcheck:
       test: "exit 0"
 
+  tracker-matview-refresher:
+    <<: *tracker-img
+    container_name: tracker-matview-refresher
+    env_file: .env
+    restart: always
+    entrypoint: ["/srv/cronn", "-c", "59 * * * * python3 kafka/refresh_view.py"]
+    networks:
+      - tracker-net
+    healthcheck:
+      test: "exit 0"
+
 volumes:
   database-volume:
   manticore-data:
