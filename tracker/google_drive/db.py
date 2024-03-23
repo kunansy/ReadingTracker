@@ -186,7 +186,7 @@ async def set_materials_seq_value(materials: TableSnapshot, conn: AsyncSession) 
     )
 
 
-async def create_repeat_notes_matview() -> None:
+async def create_repeat_notes_matview(conn: AsyncSession) -> None:
     query = """
     CREATE MATERIALIZED VIEW IF NOT EXISTS mvw_repeat_notes AS
         WITH repeated_notes_freq AS (
@@ -266,3 +266,5 @@ async def create_repeat_notes_matview() -> None:
         LEFT JOIN last_repeat r ON r.material_id = s.material_id
     WITH NO DATA;
     """
+
+    await conn.execute(sa.text(query))
