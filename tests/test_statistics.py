@@ -255,9 +255,9 @@ async def test_get_tracker_statistics():
     )
 
     stat.duration = 706
-    assert stat.duration_period == "1 years 11 months 11 days"
+    assert stat.duration_period == "1 years, 11 months, 11 days"
     stat.lost_time = 706
-    assert stat.lost_time_period == "1 years 11 months 11 days"
+    assert stat.lost_time_period == "1 years, 11 months, 11 days"
 
     stat.lost_time = 23
     stat.duration = 100
