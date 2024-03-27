@@ -35,7 +35,7 @@
         <p> First record date: {{ stat.started_at }} </p>
         <p> Last record date: {{ stat.finished_at }} </p>
         <p> Duration: {{ stat.duration_period }} </p>
-        <p> Lost time: {{ stat.lost_time_period }}, {{ stat.lost_time_percent | round(2, 'ceil')}}% </p>
+        <p> Lost time: {{ stat.lost_time_period }}, {{ stat.lost_time_percent }}% </p>
         <p> Mean: {{ stat.mean | round(1, 'ceil') }} </p>
         <p> Median: {{ stat.median }} </p>
         <p> Total materials completed: {{ stat.total_materials_completed }} </p>
