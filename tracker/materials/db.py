@@ -269,16 +269,15 @@ def _convert_duration_to_period(duration: datetime.timedelta | int) -> str:
     else:
         total_days = duration
 
-    years_str = months_str = days_str = ""
-
+    period = []
     if years := total_days // 365:
-        years_str = f"{years} years "
+        period.append(f"{years} years")
     if months := total_days % 365 // 30:
-        months_str = f"{months} months "
+        period.append(f"{months} months")
     if days := total_days % 365 % 30:
-        days_str = f"{days} days"
+        period.append(f"{days} days")
 
-    return f"{years_str}{months_str}{days_str}".strip()
+    return ", ".join(period)
 
 
 def _get_total_reading_duration(
