@@ -51,8 +51,8 @@ class TrackerStatistics(CustomBaseModel):
         return _convert_duration_to_period(self.lost_time)
 
     @property
-    def lost_time_percent(self) -> float:
-        return round(self.lost_time / self.duration, 2) * 100
+    def lost_time_percent(self) -> int:
+        return round(self.lost_time / self.duration * 100)
 
     @property
     def would_be_total_percent(self) -> float:
