@@ -291,6 +291,13 @@ async def get_span_notes_statistics(*, span_size: int) -> SpanStatistics:
     return _get_span_statistics(stat=stat, span=span, span_size=span_size)
 
 
+async def get_span_completed_materials_statistics(*, span_size: int) -> SpanStatistics:
+    span = _get_span(span_size)
+    stat = await _calculate_span_completed_materials_statistics(span=span)
+
+    return _get_span_statistics(stat=stat, span=span, span_size=span_size)
+
+
 async def get_span_analytics(__span: schemas.GetSpanReportRequest) -> SpanAnalysis:
     """Calculate both reading and notes statistics."""
     size = __span.size
