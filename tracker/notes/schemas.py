@@ -15,6 +15,7 @@ PUNCTUATION_MAPPING = {
     "->": "→",
     "<-": "←",
 }
+# this is a legacy, since the last time Markdown syntax is used
 BOLD_MARKER = "font-weight-bold"
 ITALIC_MARKER = "font-italic"
 CODE_MARKER = "font-code"
