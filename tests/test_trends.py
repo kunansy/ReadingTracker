@@ -206,6 +206,25 @@ async def test_get_span_notes_statistics(size):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
+async def test_get_span_completed_materials_statistics(size):
+    result = await trends.get_span_completed_materials_statistics(span_size=size)
+
+    stop = datetime.date.today()
+    start = stop - datetime.timedelta(days=size - 1)
+    span = trends.TimeSpan(start=start, stop=stop, span_size=size)
+
+    assert result.start == start
+    assert result.stop == stop
+    assert result.span_size == size
+
+    stat = await trends._calculate_span_completed_materials_statistics(span=span)
+    expected = trends._get_span_statistics(stat=stat, span=span, span_size=size)
+
+    assert result == expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
 async def test_create_reading_graphic(size):
     result = await trends.create_reading_graphic(span_size=size)
 
