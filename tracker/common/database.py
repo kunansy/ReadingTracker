@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from uuid import UUID
 
 import sqlalchemy.sql as sa
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.ddl import DropTable
 
@@ -71,7 +71,7 @@ def _compile_drop_table(element, compiler, **kwargs) -> str:  # noqa: ANN001, AR
     return compiler.visit_drop_table(element) + " CASCADE"
 
 
-async def create_repeat_notes_matview(conn: AsyncSession) -> None:
+async def create_repeat_notes_matview(conn: AsyncSession | AsyncConnection) -> None:
     query = """
     CREATE MATERIALIZED VIEW IF NOT EXISTS mvw_repeat_notes AS
         WITH repeated_notes_freq AS (
