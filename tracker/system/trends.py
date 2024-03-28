@@ -458,7 +458,7 @@ def create_reading_graphic(
     )
 
 
-async def create_notes_graphic(
+def create_notes_graphic(
     stat: SpanStatistics,
 ) -> str:
     logger.info("Creating notes graphic")
@@ -466,7 +466,7 @@ async def create_notes_graphic(
     return _create_graphic(stat=stat, title="Total notes inserted")
 
 
-async def create_completed_materials_graphic(
+def create_completed_materials_graphic(
     stat: SpanStatistics,
 ) -> str:
     logger.info("Creating completed materials graphic")
