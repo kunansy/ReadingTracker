@@ -136,6 +136,9 @@ class Note(CustomBaseModel):
     def validate_double_brackets_count(cls, content: str) -> str:
         assert content.count("[[") == content.count("]]")
 
+        if "[[" in content and "]]" in content:
+            assert LINK_PATTERN.match(content) is not None
+
         return content
 
     @field_validator("content")
