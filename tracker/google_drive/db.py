@@ -157,10 +157,10 @@ async def _set_seq_value(
     rows: TableSnapshot,
 ) -> None:
     # TODO: iterate over table and find Serial fields
-    max_note_number = max(row.get(field_name, 0) for row in rows.rows)
+    max_index = max(row.get(field_name, 0) for row in rows.rows)
     seq_name = f"{table_name}_{field_name}_seq"
 
-    query = f"SELECT setval('{seq_name}', {max_note_number}, true)"
+    query = f"SELECT setval('{seq_name}', {max_index}, true)"
     await conn.execute(sa.text(query))
 
 
