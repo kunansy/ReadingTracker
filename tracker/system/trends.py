@@ -237,6 +237,29 @@ async def _calculate_span_notes_statistics(span: TimeSpan) -> dict[datetime.date
     return {row.date: row.cnt for row in rows}
 
 
+async def _calculate_span_completed_materials_statistics(
+    span: TimeSpan,
+) -> dict[datetime.date, int]:
+    logger.debug("Calculating span completed materials statistics")
+
+    stmt = (
+        sa.select(
+            sa.func.date(models.Statuses.c.completed_at).label("date"),
+            sa.func.count(models.Statuses.c.material_id).label("cnt"),
+        )
+        .group_by(sa.func.date(models.Statuses.c.completed_at))
+        .where(sa.func.date(models.Statuses.c.completed_at) >= span.start)
+        .where(sa.func.date(models.Statuses.c.completed_at) <= span.stop)
+    )
+
+    async with database.session() as ses:
+        rows = (await ses.execute(stmt)).all()
+
+    logger.debug("Span completed materials statistics calculated")
+
+    return {row.date: row.cnt for row in rows}
+
+
 def _get_span_statistics(
     *,
     stat: dict[datetime.date, int],
