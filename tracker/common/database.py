@@ -159,8 +159,10 @@ async def recreate_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(models.metadata.drop_all)
         await conn.run_sync(models.metadata.create_all)
+        await create_repeat_notes_matview(conn)
 
 
 async def create_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(models.metadata.create_all)
+        await create_repeat_notes_matview(conn)
