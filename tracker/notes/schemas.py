@@ -110,7 +110,7 @@ class Note(CustomBaseModel):
     material_id: UUID | None
     title: str | None = None
     content: constr(strip_whitespace=True)
-    chapter: conint(ge=0) = 0
+    chapter: constr(strip_whitespace=True) = ""
     page: conint(ge=0) = 0
 
     def __init__(
@@ -118,7 +118,7 @@ class Note(CustomBaseModel):
         material_id: UUID = Form(None),
         title: str | None = Form(None),
         content: str = Form(...),
-        chapter: int = Form(0),
+        chapter: str = Form(""),
         page: int = Form(0),
         **kwargs,
     ):
@@ -171,7 +171,7 @@ class UpdateNote(Note):
         note_id: UUID = Form(...),
         title: str | None = Form(None),
         content: str = Form(...),
-        chapter: int = Form(0),
+        chapter: str = Form(""),
         page: int = Form(0),
     ):
         super().__init__(
@@ -231,7 +231,7 @@ class GetNoteJsonResponse(CustomBaseModel):
     title: str | None
     content: str
     added_at: str
-    chapter: int
+    chapter: str
     page: int
     tags: set[str]
     is_deleted: bool
