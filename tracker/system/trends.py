@@ -464,3 +464,11 @@ async def create_notes_graphic(
     logger.info("Creating notes graphic")
 
     return _create_graphic(stat=stat, title="Total notes inserted")
+
+
+async def create_completed_materials_graphic(
+    stat: SpanStatistics,
+) -> str:
+    logger.info("Creating completed materials graphic")
+
+    return _create_graphic(stat=stat, title="Total materials completed")
