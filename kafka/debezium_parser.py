@@ -12,7 +12,7 @@ from tracker.notes.db import Note
 
 
 class Record(CustomBaseModel):
-    after: Note
+    after: Note | None
     before: Note | None = None
 
     @field_validator("after", mode="before")
@@ -30,9 +30,11 @@ class Record(CustomBaseModel):
         return self.after is not None and self.before is not None
 
     def is_delete(self) -> bool:
-        return self.after.is_deleted
+        return not self.after or self.after.is_deleted
 
     def dump_after(self) -> dict:
+        if not self.after:
+            raise ValueError("Could not dump none")
         return self.after.model_dump(mode="json", exclude_none=True)
 
 
