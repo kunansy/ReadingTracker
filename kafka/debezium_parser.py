@@ -89,20 +89,20 @@ async def iter_updates() -> AsyncIterable[Record]:
         await consumer.stop()
 
 
-async def _to_notes_cache(payload: Note) -> None:
+async def _to_notes_cache(payload: Record) -> None:
     logger.info("To cache: note_id=%s", payload.note_id)
 
-    if payload.is_deleted:
+    if payload.is_delete():
         logger.info("Deleting the note")
         await redis_api.delete_note(payload.note_id)
         return
 
     logger.info("Updating the note")
-    await redis_api.set_note(payload.model_dump(mode="json", exclude_none=True))
+    await redis_api.set_note(payload.dump_after())
 
 
-async def _to_notify(payload: Note) -> None:
-    if payload.is_deleted:
+async def _to_notify(payload: Record) -> None:
+    if payload.is_delete():
         logger.info("The note has been deleted, don't notify")
         return
 
@@ -111,9 +111,9 @@ async def _to_notify(payload: Note) -> None:
     logger.info("Sent")
 
 
-async def _to_search_engine(payload: Note) -> None:
+async def _to_search_engine(payload: Record) -> None:
     logger.info("To search engine: note_id=%s", payload.note_id)
-    if payload.is_deleted:
+    if payload.is_delete():
         logger.info("Delete the note")
         await manticoresearch.delete(payload.note_id)
         return
@@ -128,12 +128,11 @@ async def _to_search_engine(payload: Note) -> None:
 
 async def parse():
     async for msg in iter_updates():
-        payload = msg.after
-        await _to_notes_cache(payload)
-        await _to_search_engine(payload)
+        await _to_notes_cache(msg)
+        await _to_search_engine(msg)
 
         if settings.EX_ENABLE_KAFKA_TO_NOTIFY:
-            await _to_notify(payload)
+            await _to_notify(msg)
 
 
 asyncio.run(parse())
