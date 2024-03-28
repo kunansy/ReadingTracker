@@ -73,4 +73,18 @@
             <p> Min: {{ notes_trend.min }} </p>
         </div>
     </div>
+
+    <div class="graphic-image trend completed-materials-trend">
+        <h3 class="header"> Completed materials </h3>
+        <img src="data:image/svg+xml;base64,{{ completed_materials_trend_image }}">
+
+        <div class="statistics">
+            <p> Total: {{ completed_materials_trend.total }} </p>
+            <p> Zero days: {{ completed_materials_trend.zero_days }} </p>
+            <p> Mean: {{ completed_materials_trend.mean }} </p>
+            <p> Median: {{ completed_materials_trend.median }} </p>
+            <p> Max: {{ completed_materials_trend.max }} </p>
+            <p> Min: {{ completed_materials_trend.min }} </p>
+        </div>
+    </div>
 {% endblock main%}
