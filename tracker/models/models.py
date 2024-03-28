@@ -119,7 +119,7 @@ Notes = Table(
     Column("title", Unicode(4096), nullable=True, unique=True),
     Column("content", Unicode(65_536)),
     Column("added_at", DateTime, default=_utc_now),
-    Column("chapter", Integer),
+    Column("chapter", Unicode(4096)),
     Column("page", Integer),
     Column("tags", JSONB, nullable=True),
     Column("is_deleted", Boolean, default=False),
