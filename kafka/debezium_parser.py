@@ -1,5 +1,7 @@
 import asyncio
+import datetime
 from collections.abc import AsyncIterable
+from uuid import UUID
 
 import orjson
 from aiokafka import AIOKafkaConsumer
@@ -14,6 +16,26 @@ from tracker.notes.db import Note
 class Record(CustomBaseModel):
     after: Note | None
     before: Note | None = None
+
+    @property
+    def note_id(self) -> UUID:
+        if self.after:
+            return self.after.note_id
+        if self.before:
+            return self.before.note_id
+        raise ValueError("Note id not found")
+
+    @property
+    def content(self) -> str:
+        if self.after:
+            return self.after.content
+        raise ValueError("Content not found")
+
+    @property
+    def added_at(self) -> datetime.datetime:
+        if self.after:
+            return self.after.added_at
+        raise ValueError("Added at not found")
 
     @field_validator("after", mode="before")
     def validate_after(cls, after: dict | None) -> dict | None:
