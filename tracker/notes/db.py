@@ -27,7 +27,7 @@ class Note(CustomBaseModel):
     title: str | None = None
     content: str
     added_at: datetime.datetime
-    chapter: int
+    chapter: str
     page: int
     tags: set[str]
     is_deleted: bool
@@ -123,7 +123,7 @@ class Note(CustomBaseModel):
         return self._mark_link_with_ref(content, self.link_id)
 
 
-def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[int]]:
+def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[str]]:
     logger.debug("Getting distinct chapters")
 
     # chapters of the shown materials,
@@ -286,7 +286,7 @@ async def add_note(
     link_id: UUID | None,
     title: str | None,
     content: str,
-    chapter: int,
+    chapter: str,
     page: int,
     tags: list[str],
 ) -> str:
@@ -319,7 +319,7 @@ async def update_note(
     title: str | None,
     content: str,
     page: int,
-    chapter: int,
+    chapter: str,
     tags: list[str],
 ) -> None:
     logger.debug("Updating note_id='%s'", note_id)
