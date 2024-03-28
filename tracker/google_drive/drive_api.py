@@ -53,7 +53,7 @@ async def restore(*, dump_path: Path | None = None) -> db.DBSnapshot:
         await db.set_materials_seq_value(snapshot_dict["materials"], ses)
 
         logger.debug("Creating repeat notes material view")
-        await db.create_repeat_notes_matview(ses)
+        await database.create_repeat_notes_matview(ses)
 
         logger.info(
             "Restoring completed, %ss",
