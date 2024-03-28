@@ -414,15 +414,13 @@ def _create_graphic(
     return image
 
 
-async def create_reading_graphic(
-    stat: SpanStatistics | None = None,
+def create_reading_graphic(
+    stat: SpanStatistics,
     *,
-    span_size: int = 7,
     completion_dates: dict[Any, datetime.datetime] | None = None,
 ) -> str:
     logger.info("Creating reading graphic")
 
-    stat = stat or await get_span_reading_statistics(span_size=span_size)
     return _create_graphic(
         stat=stat,
         title="Total pages read",
@@ -431,11 +429,8 @@ async def create_reading_graphic(
 
 
 async def create_notes_graphic(
-    stat: SpanStatistics | None = None,
-    *,
-    span_size: int = 7,
+    stat: SpanStatistics,
 ) -> str:
     logger.info("Creating notes graphic")
 
-    stat = stat or await get_span_notes_statistics(span_size=span_size)
     return _create_graphic(stat=stat, title="Total notes inserted")
