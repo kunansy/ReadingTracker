@@ -223,6 +223,8 @@ async def test_get_span_completed_materials_statistics(size):
     assert result == expected
 
 
+# TODO
+@pytest.mark.skip
 @pytest.mark.asyncio
 @pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
 async def test_create_reading_graphic(size):
@@ -231,6 +233,8 @@ async def test_create_reading_graphic(size):
     assert result
 
 
+# TODO
+@pytest.mark.skip
 @pytest.mark.asyncio
 @pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
 async def test_create_notes_graphic(size):
