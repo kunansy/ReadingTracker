@@ -78,6 +78,7 @@ async def graphic(
         "graphic_image": graphic_image_task.result(),
         "reading_trend": reading_trend,
         "notes_trend": notes_trend,
+        "completed_materials_trend": completed_materials_trend,
         "reading_trend_image": reading_trend_graphic,
         "notes_trend_image": notes_trend_graphic,
         "completed_materials_trend_image": completed_materials_trend_graphic,
