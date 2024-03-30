@@ -1,9 +1,9 @@
 import re
-from typing import TypedDict
+from typing import Any, TypedDict
 from uuid import UUID
 
 from fastapi import Form
-from pydantic import conint, constr, field_validator
+from pydantic import conint, constr, field_validator, model_validator
 
 from tracker.common.schemas import CustomBaseModel
 
@@ -170,20 +170,23 @@ class Note(CustomBaseModel):
     def fix_double_spaces(cls, content: str) -> str:
         return " ".join(content.split(" "))
 
-    @field_validator("tags", mode="before")
-    def validate_tags(cls, tags: str) -> list[str]:
-        # fmt: off
-        tags = {
-            tag.strip()
-            for tag in tags.lower().replace("#", "").split()
-            if tag.strip()
-        }
-        # fmt: on
+    @model_validator(mode="before")
+    @classmethod
+    def validate_tags(cls, data: Any) -> Any:
+        if tags := data.get("tags"):
+            # fmt: off
+            tags = {
+                tag.strip()
+                for tag in tags.lower().replace("#", "").split()
+                if tag.strip()
+            }
+            # fmt: on
 
-        if any(not TAG_PATTERN.match(tag) for tag in tags):
-            raise ValueError("Invalid tags")
+            if any(not TAG_PATTERN.match(tag) for tag in tags):
+                raise ValueError("Invalid tags")
 
-        return sorted(tags)
+            data["tags"] = sorted(tags)
+        return data
 
     @field_validator("link_id", mode="before")
     def validate_link(cls, link_id: str | None) -> UUID | None:
