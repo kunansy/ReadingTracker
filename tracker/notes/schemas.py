@@ -123,7 +123,7 @@ class Note(CustomBaseModel):
     material_id: UUID | None
     title: str | None = None
     content: constr(strip_whitespace=True)
-    tags: set[str] | None = None
+    tags: list[str] | None = None
     link_id: UUID | None = None
     chapter: constr(strip_whitespace=True) = ""
     page: conint(ge=0) = 0
@@ -133,7 +133,7 @@ class Note(CustomBaseModel):
         material_id: UUID = Form(None),
         title: str | None = Form(None),
         content: str = Form(...),
-        tags: set[str] | None = Form(None),
+        tags: list[str] | None = Form(None),
         link_id: UUID | None = Form(None),
         chapter: str = Form(""),
         page: int = Form(0),
@@ -193,7 +193,7 @@ class UpdateNote(Note):
         note_id: UUID = Form(...),
         title: str | None = Form(None),
         content: str = Form(...),
-        tags: set[str] | None = Form(None),
+        tags: list[str] | None = Form(None),
         link_id: UUID | None = Form(None),
         chapter: str = Form(""),
         page: int = Form(0),
