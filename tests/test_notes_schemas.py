@@ -209,7 +209,7 @@ def test_tags_pattern(string, tags):
     "string,tags",
     (
         ("valid uuid4 [[fde197da-0c98-451e-a3aa-eb86116ab964]]", "fde197da-0c98-451e-a3aa-eb86116ab964"),
-        ("valid zero uuid [[00000000-0000-0000-0000-000000000000]]", "00000000-0000-0000-0000-000000000000"),
+        ("valid нулевой uuid [[00000000-0000-0000-0000-000000000000]]", "00000000-0000-0000-0000-000000000000"),
         ("valid uuid6 [[1eed93d0-4ee8-6fb2-93f6-a18e7cec9d61]]", "1eed93d0-4ee8-6fb2-93f6-a18e7cec9d61"),
         ("[[fde197da-0c98-451e-a3aa-eb86116ab964]] some text", "fde197da-0c98-451e-a3aa-eb86116ab964"),
         ("some text [[fde197da-0c98-451e-a3aa-eb86116ab964]] some text", "fde197da-0c98-451e-a3aa-eb86116ab964"),
@@ -223,6 +223,7 @@ def test_link_pattern(string, tags):
     "string,tags",
     (
         ("some text [[invalid-uuid]]", []),
+        ("текст [[плохой юид]]", []),
     ),
 )
 def test_link_pattern_without_uuid(string, tags):
