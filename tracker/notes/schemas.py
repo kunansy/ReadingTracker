@@ -156,7 +156,7 @@ class Note(CustomBaseModel):
         assert content.count("[[") == content.count("]]")
 
         if "[[" in content and "]]" in content:
-            assert LINK_PATTERN.match(content) is not None
+            assert LINK_PATTERN.search(content) is not None
 
         return content
 
