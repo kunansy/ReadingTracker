@@ -115,6 +115,8 @@ async def get_note(request: Request, note_id: UUID):
         "note_links": get_note_links_task.result(),
         "added_at": note.added_at.strftime(settings.DATETIME_FORMAT),
         "content": note.content_html,
+        "note_tags": note.tags_html,
+        "link_id": note.link_html,
     }
     if material := get_material_task.result():
         context |= {
@@ -155,6 +157,7 @@ async def add_note_view(request: Request, material_id: str | None = None):
         "page": request.cookies.get("page", ""),
         "chapter": request.cookies.get("chapter", ""),
         "note_id": request.cookies.get("note_id", ""),
+        "note_tags": request.cookies.get("note_tags", ""),
         "titles": get_titles_task.result(),
         "tags": get_tags_task.result(),
     }
@@ -181,7 +184,14 @@ async def add_note(note: schemas.Note = Depends()):
         page=note.page,
         tags=note.tags,
     )
+
     response.set_cookie("note_id", note_id, expires=5)
+    response.set_cookie(
+        "note_tags",
+        " ".join(f"#{tag}" for tag in note.tags or []),
+        expires=5,
+    )
+
     if (material_id := note.material_id) and (
         material_type := await db.get_material_type(material_id=material_id)
     ):
@@ -213,6 +223,8 @@ async def update_note_view(note_id: UUID, request: Request, success: bool | None
         "note_id": note.note_id,
         "title": note.title or "",
         "content": schemas.demark_note(note.content),
+        "link_id": note.link_id,
+        "note_tags": note.tags_str,
         "chapter": note.chapter,
         "page": note.page,
         "success": success,

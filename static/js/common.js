@@ -377,8 +377,8 @@ const addCopyNoteIdListener = () => {
 }
 
 const addLink = (note_id) => {
-    let field = document.getElementById("input-content");
-    field.value += `\n[[${note_id}]]`;
+    let field = document.getElementById("note-link");
+    field.value += `${note_id}`;
 }
 
 const addLinkBtn = (note_id) => {

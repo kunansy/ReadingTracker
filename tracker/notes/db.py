@@ -20,6 +20,9 @@ from tracker.models import enums, models
 from tracker.notes import schemas
 
 
+_TAG_PATTERN = r"(\B)#({tag})(\b)"
+
+
 class Note(CustomBaseModel):
     note_id: UUID
     link_id: UUID | None = None
@@ -95,32 +98,62 @@ class Note(CustomBaseModel):
 
         search_url = router.url_path_for(get_notes.__name__)
 
-        for tag in tags:
-            link_text = f'<a href={settings.TRACKER_URL}{search_url}?tags_query={tag} target="_blank">#{tag}</a>'  # noqa: E501
+        link_text_template = (
+            f"<a href={settings.TRACKER_URL}{search_url}?"
+            'tags_query={tag} target="_blank">#{tag}</a>'
+        )
 
-            text = re.sub(rf"(\W)#({tag})(\W)", rf"\1{link_text}\3", text)
+        for tag in sorted(tags, key=lambda tag: len(tag), reverse=True):
+            link_text = link_text_template.format(tag=tag)
+
+            text = re.sub(_TAG_PATTERN.format(tag=tag), rf"\1{link_text}\3", text)
 
         return text
 
-    @classmethod
-    def _mark_link_with_ref(cls, text: str, link_id: str | UUID | None) -> str:
-        if not link_id:
-            return text
+    @property
+    def link_html(self) -> str:
+        if not self.link_id:
+            return ""
 
         from tracker.notes.routes import get_note, router
 
         note_url = router.url_path_for(get_note.__name__)
-        link_text = f"[[{link_id}]]"
+        link_text = f"[[{self.link_id}]]"
 
-        return text.replace(
-            link_text,
-            f'<a id="link-ref" href={settings.TRACKER_URL}{note_url}?note_id={link_id} target="_blank">{link_text}</a>',  # noqa: E501
-        )
+        return f'<a id="link-ref" href={settings.TRACKER_URL}{note_url}?note_id={self.link_id} target="_blank">{link_text}</a>'  # noqa: E501
+
+    @classmethod
+    def _delete_tags(cls, text: str, tags: set[str]) -> str:
+        for tag in tags:
+            text = re.sub(_TAG_PATTERN.format(tag=tag), "", text)
+        return text
+
+    @classmethod
+    def _delete_link(cls, text: str, link_id: str | UUID | None) -> str:
+        if not link_id:
+            return text
+
+        return text.replace(f"[[{link_id}]]", "")
 
     @property
     def content_html(self) -> str:
-        content = self._mark_tags_with_ref(self.content, self.tags)
-        return self._mark_link_with_ref(content, self.link_id)
+        content = self._delete_link(self.content, self.link_id)
+        content = self._delete_tags(content, self.tags)
+        content = schemas.dereplace_new_lines(content).strip()
+
+        if content.endswith(("?", "!", ".")):
+            end = content[-1]
+            content = content.removesuffix(end).strip()
+
+        return schemas.add_dot(content)
+
+    @property
+    def tags_str(self) -> str:
+        return " ".join(f"#{tag}" for tag in sorted(self.tags))
+
+    @property
+    def tags_html(self) -> str:
+        return self._mark_tags_with_ref(self.tags_str, self.tags)
 
 
 def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[str]]:
@@ -288,7 +321,7 @@ async def add_note(
     content: str,
     chapter: str,
     page: int,
-    tags: list[str],
+    tags: list[str] | None,
 ) -> str:
     logger.debug("Adding note for material_id='%s'", material_id)
 
@@ -298,7 +331,7 @@ async def add_note(
         "content": content,
         "chapter": chapter,
         "page": page,
-        "tags": tags,
+        "tags": tags or [],
         "link_id": str(link_id) if link_id else None,
     }
 
@@ -320,7 +353,7 @@ async def update_note(
     content: str,
     page: int,
     chapter: str,
-    tags: list[str],
+    tags: list[str] | None,
 ) -> None:
     logger.debug("Updating note_id='%s'", note_id)
 
@@ -330,7 +363,7 @@ async def update_note(
         "content": content,
         "page": page,
         "chapter": chapter,
-        "tags": tags,
+        "tags": tags or [],
         "link_id": str(link_id) if link_id else None,
     }
 

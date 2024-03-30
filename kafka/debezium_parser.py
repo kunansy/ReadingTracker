@@ -28,7 +28,7 @@ class Record(CustomBaseModel):
     @property
     def content(self) -> str:
         if self.after:
-            return self.after.content
+            return self.after.content_html
         raise ValueError("Content not found")
 
     @property

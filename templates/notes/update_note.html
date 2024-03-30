@@ -39,6 +39,8 @@
             {% set chapter_name = 'block' %}
             {% set page_number = 'lecture number' %}
         {% endif %}
+        <input id="note-tags" class="input" placeholder="Enter tags" name="tags" value="{{ note_tags }}" title="Tags for the note">
+        <input id="note-link" class="input" placeholder="Enter a link" name="link_id" value="{{ link_id or "" }}" title="Link to the other note">
         <input class="input" placeholder="Enter a {{ chapter_name }}" name="chapter" value="{{ chapter }}" title="{{ chapter_name.capitalize() }} where the note might be found">
         <input class="input" type="number" placeholder="Enter a {{ page_number }}" name="page" value="{{ page }}" title="{{ page_number.capitalize() }} where the not might be found">
         <button type="submit" class="submit-button"> Save </button>

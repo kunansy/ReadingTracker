@@ -36,6 +36,12 @@
         <p class="little-text"> Note number: {{ note_number }}</p>
         <p class="medium-text note-id-row hover"> Note id: {{ note_id }} </p>
         <p class="note-content"> {{ content | safe }}</p>
+        {% if note_tags %}
+            <p class="note-content"> {{ note_tags | safe }} </p>
+        {% endif %}
+        {% if link_id %}
+            <p class="note-content"> {{ link_id | safe }} </p>
+        {% endif %}
         {%- if material_pages -%}
             <p class="medium-text"> {{ page_name }}: {{ page }} of {{ material_pages }}</p>
         {%- endif -%}

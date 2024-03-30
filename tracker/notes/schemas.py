@@ -1,9 +1,9 @@
 import re
-from typing import TypedDict
+from typing import Any, TypedDict
 from uuid import UUID
 
 from fastapi import Form
-from pydantic import conint, constr, field_validator
+from pydantic import conint, constr, field_validator, model_validator
 
 from tracker.common.schemas import CustomBaseModel
 
@@ -27,7 +27,9 @@ DEMARK_CODE_PATTERN = re.compile(f'<span class="?{CODE_MARKER}"?>(.*?)</span>')
 
 UP_INDEX_PATTERN = re.compile(r"(\S)\^(\S+)(\s)")
 
-TAGS_PATTERN = re.compile(r"\W#(\w+)\b")
+_TAG_PATTERN = r"(\w+)"
+TAG_PATTERN = re.compile(_TAG_PATTERN)
+TAGS_PATTERN = re.compile(rf"\W#{_TAG_PATTERN}\b")
 LINK_PATTERN = re.compile(
     r"\[\[([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})\]\]",
 )
@@ -43,7 +45,7 @@ def _replace_quotes(string: str) -> str:
     return string
 
 
-def _add_dot(string: str) -> str:
+def add_dot(string: str) -> str:
     if not string or string.endswith((".", "?", "!")):
         return string
     return f"{string}."
@@ -89,13 +91,13 @@ def _dereplace_gt(string: str) -> str:
     return re.sub(r"&gt;", ">", string)
 
 
-def _dereplace_new_lines(string: str) -> str:
+def dereplace_new_lines(string: str) -> str:
     return re.sub(r"<br/?>", "\n", string)
 
 
 NOTES_FORMATTERS = (
     _replace_quotes,
-    _add_dot,
+    add_dot,
     _up_first_letter,
     _replace_punctuation,
     _replace_up_index,
@@ -108,7 +110,7 @@ NOTES_DEMARKERS = (
     _demark_code,
     _dereplace_lt,
     _dereplace_gt,
-    _dereplace_new_lines,
+    dereplace_new_lines,
 )
 
 
@@ -123,6 +125,8 @@ class Note(CustomBaseModel):
     material_id: UUID | None
     title: str | None = None
     content: constr(strip_whitespace=True)
+    tags: list[str] | None = None
+    link_id: UUID | None = None
     chapter: constr(strip_whitespace=True) = ""
     page: conint(ge=0) = 0
 
@@ -131,6 +135,8 @@ class Note(CustomBaseModel):
         material_id: UUID = Form(None),
         title: str | None = Form(None),
         content: str = Form(...),
+        tags: str | None = Form(None),
+        link_id: UUID | None = Form(None),
         chapter: str = Form(""),
         page: int = Form(0),
         **kwargs,
@@ -139,6 +145,8 @@ class Note(CustomBaseModel):
             material_id=material_id,
             title=title,
             content=content,
+            tags=tags,
+            link_id=link_id,
             chapter=chapter,
             page=page,
             **kwargs,
@@ -149,7 +157,7 @@ class Note(CustomBaseModel):
         assert content.count("[[") == content.count("]]")
 
         if "[[" in content and "]]" in content:
-            assert LINK_PATTERN.match(content) is not None
+            assert LINK_PATTERN.search(content) is not None
 
         return content
 
@@ -163,19 +171,23 @@ class Note(CustomBaseModel):
     def fix_double_spaces(cls, content: str) -> str:
         return " ".join(content.split(" "))
 
-    @property
-    def link_id(self) -> UUID | None:
-        if link := LINK_PATTERN.search(self.content):
-            return UUID(link.group(1))
+    @model_validator(mode="before")
+    @classmethod
+    def validate_tags(cls, data: Any) -> Any:
+        if tags := data.get("tags"):
+            # fmt: off
+            tags = {
+                tag.strip()
+                for tag in tags.lower().replace("#", "").split()
+                if tag.strip()
+            }
+            # fmt: on
 
-        return None
+            if any(not TAG_PATTERN.match(tag) for tag in tags):
+                raise ValueError("Invalid tags")
 
-    @property
-    def tags(self) -> list[str]:
-        if tags := TAGS_PATTERN.findall(self.content):
-            return [tag.strip().lower() for tag in tags]
-
-        return []
+            data["tags"] = sorted(tags)
+        return data
 
 
 class UpdateNote(Note):
@@ -187,6 +199,8 @@ class UpdateNote(Note):
         note_id: UUID = Form(...),
         title: str | None = Form(None),
         content: str = Form(...),
+        tags: str | None = Form(None),
+        link_id: UUID | None = Form(None),
         chapter: str = Form(""),
         page: int = Form(0),
     ):
@@ -195,6 +209,8 @@ class UpdateNote(Note):
             note_id=note_id,
             title=title,
             content=content,
+            tags=tags,
+            link_id=link_id,
             chapter=chapter,
             page=page,
         )
