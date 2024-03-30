@@ -91,6 +91,12 @@
                     <p class="note-title large-text"> «{{ note.title }}» </p>
                 {% endif %}
                 <p class="note-content"> {{ note.content_html | safe }} </p>
+                {% if note.tags %}
+                    <p class="note-content"> {{ note.tags_str }} </p>
+                {% endif %}
+                {% if note.link_id %}
+                    <p class="note-content"> [[{{ note.link_id }}]] </p>
+                {% endif %}
                 <p class="note-page"> {{ page_name }}: {{ note.page }} </p>
                 <p class="medium-text" title="How many notes link to this one"> Links count: {{ note.links_count }} </p>
             </div>
