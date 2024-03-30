@@ -186,7 +186,9 @@ async def add_note(note: schemas.Note = Depends()):
 
     response.set_cookie("note_id", note_id, expires=5)
     response.set_cookie(
-        "note_tags", " ".join(f"#{tag}" for tag in note.tags or []), expires=5,
+        "note_tags",
+        " ".join(f"#{tag}" for tag in note.tags or []),
+        expires=5,
     )
 
     if (material_id := note.material_id) and (
