@@ -44,7 +44,7 @@ def _replace_quotes(string: str) -> str:
     return string
 
 
-def _add_dot(string: str) -> str:
+def add_dot(string: str) -> str:
     if not string or string.endswith((".", "?", "!")):
         return string
     return f"{string}."
@@ -90,13 +90,13 @@ def _dereplace_gt(string: str) -> str:
     return re.sub(r"&gt;", ">", string)
 
 
-def _dereplace_new_lines(string: str) -> str:
+def dereplace_new_lines(string: str) -> str:
     return re.sub(r"<br/?>", "\n", string)
 
 
 NOTES_FORMATTERS = (
     _replace_quotes,
-    _add_dot,
+    add_dot,
     _up_first_letter,
     _replace_punctuation,
     _replace_up_index,
@@ -109,7 +109,7 @@ NOTES_DEMARKERS = (
     _demark_code,
     _dereplace_lt,
     _dereplace_gt,
-    _dereplace_new_lines,
+    dereplace_new_lines,
 )
 
 

@@ -51,7 +51,7 @@ def test_replace_quotes_error(string):
     ),
 )
 def test_add_dot(string, expected):
-    assert schemas._add_dot(string) == expected
+    assert schemas.add_dot(string) == expected
 
 
 @pytest.mark.parametrize(
@@ -144,7 +144,7 @@ def test_dereplace_lt(string, expected):
     ),
 )
 def test_dereplace_new_lines(string, expected):
-    assert schemas._dereplace_new_lines(string) == expected
+    assert schemas.dereplace_new_lines(string) == expected
 
 
 @pytest.mark.parametrize(
