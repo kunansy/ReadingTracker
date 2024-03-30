@@ -119,8 +119,15 @@ class Note(CustomBaseModel):
 
     @property
     def content_html(self) -> str:
+        # TODO: remove tags/links from the text
         content = self._mark_tags_with_ref(self.content, self.tags)
         return self._mark_link_with_ref(content, self.link_id)
+
+    @property
+    def tags_str(self) -> str:
+        # TODO
+        tags = " ".join(f"#{tag}" for tag in sorted(self.tags))
+        return self._mark_tags_with_ref(tags, self.tags)
 
 
 def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[str]]:
