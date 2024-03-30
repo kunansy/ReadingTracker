@@ -214,6 +214,8 @@ async def update_note_view(note_id: UUID, request: Request, success: bool | None
         "note_id": note.note_id,
         "title": note.title or "",
         "content": schemas.demark_note(note.content),
+        "link_id": note.link_id,
+        "note_tags": note.tags_str,
         "chapter": note.chapter,
         "page": note.page,
         "success": success,
