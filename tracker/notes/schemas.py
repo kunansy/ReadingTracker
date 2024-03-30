@@ -188,13 +188,6 @@ class Note(CustomBaseModel):
             data["tags"] = sorted(tags)
         return data
 
-    @field_validator("link_id", mode="before")
-    def validate_link(cls, link_id: str | None) -> UUID | None:
-        if not link_id:
-            return None
-        # here also validate that link_id is a valid UUID
-        return UUID(link_id)
-
 
 class UpdateNote(Note):
     note_id: UUID
