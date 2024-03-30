@@ -295,7 +295,7 @@ async def add_note(
     content: str,
     chapter: str,
     page: int,
-    tags: list[str],
+    tags: list[str] | None,
 ) -> str:
     logger.debug("Adding note for material_id='%s'", material_id)
 
@@ -305,7 +305,7 @@ async def add_note(
         "content": content,
         "chapter": chapter,
         "page": page,
-        "tags": tags,
+        "tags": tags or [],
         "link_id": str(link_id) if link_id else None,
     }
 
@@ -327,7 +327,7 @@ async def update_note(
     content: str,
     page: int,
     chapter: str,
-    tags: list[str],
+    tags: list[str] | None,
 ) -> None:
     logger.debug("Updating note_id='%s'", note_id)
 
@@ -337,7 +337,7 @@ async def update_note(
         "content": content,
         "page": page,
         "chapter": chapter,
-        "tags": tags,
+        "tags": tags or [],
         "link_id": str(link_id) if link_id else None,
     }
 
