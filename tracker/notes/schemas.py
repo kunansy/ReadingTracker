@@ -123,6 +123,8 @@ class Note(CustomBaseModel):
     material_id: UUID | None
     title: str | None = None
     content: constr(strip_whitespace=True)
+    tags: set[str] | None = None
+    link_id: UUID | None = None
     chapter: constr(strip_whitespace=True) = ""
     page: conint(ge=0) = 0
 
@@ -131,6 +133,8 @@ class Note(CustomBaseModel):
         material_id: UUID = Form(None),
         title: str | None = Form(None),
         content: str = Form(...),
+        tags: set[str] | None = Form(None),
+        link_id: UUID | None = Form(None),
         chapter: str = Form(""),
         page: int = Form(0),
         **kwargs,
@@ -139,6 +143,8 @@ class Note(CustomBaseModel):
             material_id=material_id,
             title=title,
             content=content,
+            tags=tags,
+            link_id=link_id,
             chapter=chapter,
             page=page,
             **kwargs,
