@@ -156,6 +156,7 @@ async def add_note_view(request: Request, material_id: str | None = None):
         "page": request.cookies.get("page", ""),
         "chapter": request.cookies.get("chapter", ""),
         "note_id": request.cookies.get("note_id", ""),
+        "note_tags": request.cookies.get("note_tags", ""),
         "titles": get_titles_task.result(),
         "tags": get_tags_task.result(),
     }
@@ -182,7 +183,12 @@ async def add_note(note: schemas.Note = Depends()):
         page=note.page,
         tags=note.tags,
     )
+
     response.set_cookie("note_id", note_id, expires=5)
+    response.set_cookie(
+        "note_tags", " ".join(f"#{tag}" for tag in note.tags or []), expires=5,
+    )
+
     if (material_id := note.material_id) and (
         material_type := await db.get_material_type(material_id=material_id)
     ):
