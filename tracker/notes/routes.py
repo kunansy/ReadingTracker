@@ -116,6 +116,7 @@ async def get_note(request: Request, note_id: UUID):
         "added_at": note.added_at.strftime(settings.DATETIME_FORMAT),
         "content": note.content_html,
         "note_tags": note.tags_html,
+        "link_id": note.link_html,
     }
     if material := get_material_task.result():
         context |= {
