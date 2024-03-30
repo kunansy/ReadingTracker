@@ -27,7 +27,8 @@ DEMARK_CODE_PATTERN = re.compile(f'<span class="?{CODE_MARKER}"?>(.*?)</span>')
 
 UP_INDEX_PATTERN = re.compile(r"(\S)\^(\S+)(\s)")
 
-TAGS_PATTERN = re.compile(r"\W#(\w+)\b")
+TAG_PATTERN = re.compile(r"#(\w+)")
+TAGS_PATTERN = re.compile(rf"\W{TAG_PATTERN}\b")
 LINK_PATTERN = re.compile(
     r"\[\[([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})\]\]",
 )
@@ -169,19 +170,20 @@ class Note(CustomBaseModel):
     def fix_double_spaces(cls, content: str) -> str:
         return " ".join(content.split(" "))
 
-    @property
-    def link_id(self) -> UUID | None:
-        if link := LINK_PATTERN.search(self.content):
-            return UUID(link.group(1))
+    @field_validator("tags", mode="before")
+    def validate_tags(cls, tags: str) -> list[str]:
+        tags = {tag.replace("#", "").lower().strip() for tag in tags.split()}
+        if any(not TAG_PATTERN.match(tag) for tag in tags):
+            raise ValueError("Invalid tags")
 
-        return None
+        return sorted(tags)
 
-    @property
-    def tags(self) -> list[str]:
-        if tags := TAGS_PATTERN.findall(self.content):
-            return [tag.strip().lower() for tag in tags]
-
-        return []
+    @field_validator("link_id", mode="before")
+    def validate_link(cls, link_id: str | None) -> UUID | None:
+        if not link_id:
+            return None
+        # here also validate that link_id is a valid UUID
+        return UUID(link_id)
 
 
 class UpdateNote(Note):
