@@ -193,6 +193,8 @@ class UpdateNote(Note):
         note_id: UUID = Form(...),
         title: str | None = Form(None),
         content: str = Form(...),
+        tags: set[str] | None = Form(None),
+        link_id: UUID | None = Form(None),
         chapter: str = Form(""),
         page: int = Form(0),
     ):
@@ -201,6 +203,8 @@ class UpdateNote(Note):
             note_id=note_id,
             title=title,
             content=content,
+            tags=tags,
+            link_id=link_id,
             chapter=chapter,
             page=page,
         )
