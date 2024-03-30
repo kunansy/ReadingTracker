@@ -110,20 +110,17 @@ class Note(CustomBaseModel):
 
         return text
 
-    @classmethod
-    def _mark_link_with_ref(cls, text: str, link_id: str | UUID | None) -> str:
-        if not link_id:
-            return text
+    @property
+    def link_html(self) -> str:
+        if not self.link_id:
+            return ""
 
         from tracker.notes.routes import get_note, router
 
         note_url = router.url_path_for(get_note.__name__)
-        link_text = f"[[{link_id}]]"
+        link_text = f"[[{self.link_id}]]"
 
-        return text.replace(
-            link_text,
-            f'<a id="link-ref" href={settings.TRACKER_URL}{note_url}?note_id={link_id} target="_blank">{link_text}</a>',  # noqa: E501
-        )
+        return f'<a id="link-ref" href={settings.TRACKER_URL}{note_url}?note_id={self.link_id} target="_blank">{link_text}</a>'  # noqa: E501
 
     @classmethod
     def _delete_tags(cls, text: str, tags: set[str]) -> str:
