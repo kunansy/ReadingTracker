@@ -22,6 +22,7 @@
                 <option value="{{ material_id }}"> «{{ title }}»
                     {% endfor %}
             </datalist>
+            <p class="little-text" id="reading-info">{{ pages_read }} of {{ material_pages }}, {{ (pages_read / material_pages * 100) | round(1, 'ceil') }}%</p>
 
             <input class="input" type="date" placeholder="Enter the date" name="date" value="{{ date }}" title="Date of the record">
             <input class="input" type="number" placeholder="Enter a count of items" name="count" title="Count of completed items">
