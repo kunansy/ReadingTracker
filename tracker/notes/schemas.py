@@ -172,7 +172,14 @@ class Note(CustomBaseModel):
 
     @field_validator("tags", mode="before")
     def validate_tags(cls, tags: str) -> list[str]:
-        tags = {tag.replace("#", "").lower().strip() for tag in tags.split()}
+        # fmt: off
+        tags = {
+            tag.strip()
+            for tag in tags.lower().replace("#", "").split()
+            if tag.strip()
+        }
+        # fmt: on
+
         if any(not TAG_PATTERN.match(tag) for tag in tags):
             raise ValueError("Invalid tags")
 
