@@ -25,6 +25,8 @@ DEMARK_BOLD_PATTERN = re.compile(f'<span class="?{BOLD_MARKER}"?>(.*?)</span>')
 DEMARK_ITALIC_PATTERN = re.compile(f'<span class="?{ITALIC_MARKER}"?>(.*?)</span>')
 DEMARK_CODE_PATTERN = re.compile(f'<span class="?{CODE_MARKER}"?>(.*?)</span>')
 
+UP_INDEX_PATTERN = re.compile(r"(\S)\^(\S+)(\s)")
+
 TAGS_PATTERN = re.compile(r"\W#(\w+)\b")
 LINK_PATTERN = re.compile(
     r"\[\[([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})\]\]",
@@ -59,6 +61,10 @@ def _replace_punctuation(string: str) -> str:
     return string
 
 
+def _replace_up_index(string: str) -> str:
+    return UP_INDEX_PATTERN.sub(r"\1<sup>\2</sup>\3", string)
+
+
 def _demark_bold(string: str) -> str:
     return DEMARK_BOLD_PATTERN.sub(r"**\1**", string)
 
@@ -88,6 +94,7 @@ NOTES_FORMATTERS = (
     _add_dot,
     _up_first_letter,
     _replace_punctuation,
+    _replace_up_index,
 )
 
 NOTES_DEMARKERS = (
