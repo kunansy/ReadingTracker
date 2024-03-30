@@ -425,7 +425,8 @@ def _create_graphic(
         line = plt.axvline(x=float(stat.mean), color="black", linestyle="-")
         line.set_label(f"Mean {stat.mean} items")
 
-    xlim = -0.5, int(stat.max.amount * 1.2) or 100
+    a_percent = stat.max.amount / 100
+    xlim = - a_percent, a_percent * 115 or 100
 
     ax.set_title(title)
     ax.set_xlabel("Items count")
