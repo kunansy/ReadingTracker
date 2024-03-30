@@ -228,3 +228,17 @@ def test_link_pattern(string, tags):
 def test_link_pattern_without_uuid(string, tags):
     assert schemas.LINK_PATTERN.search(string) is None
 
+
+@pytest.mark.parametrize(
+    "string,expected",
+    (
+        ("some^42 text", "some<sup>42</sup> text"),
+        ("some^-1042 text", "some<sup>-1042</sup> text"),
+        ("some^text text", "some<sup>text</sup> text"),
+        ("some ^ text", "some ^ text"),
+        ("some ^text", "some ^text"),
+        ("^ some ^text ^", "^ some ^text ^"),
+    ),
+)
+def test_replace_up_index(string, expected):
+    assert schemas._replace_up_index(string) == expected
