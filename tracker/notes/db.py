@@ -152,9 +152,11 @@ class Note(CustomBaseModel):
 
     @property
     def tags_str(self) -> str:
-        # TODO
-        tags = " ".join(f"#{tag}" for tag in sorted(self.tags))
-        return self._mark_tags_with_ref(tags, self.tags)
+        return " ".join(f"#{tag}" for tag in sorted(self.tags))
+
+    @property
+    def tags_html(self) -> str:
+        return self._mark_tags_with_ref(self.tags_str, self.tags)
 
 
 def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[str]]:
