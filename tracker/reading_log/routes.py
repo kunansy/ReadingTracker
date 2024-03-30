@@ -79,18 +79,27 @@ async def add_log_record(record: schemas.LogRecord = Depends()):
     response_model=schemas.CompletionInfoSchema,
     response_class=ORJSONResponse,
 )
-async def completion_info(material_id: UUID):
+async def get_completion_info(material_id: UUID):
+    if completion_info := await _completion_info(material_id):
+        return completion_info
+
+    raise HTTPException(status_code=404, detail="Material not found")
+
+
+async def _completion_info(
+    material_id: UUID,
+) -> schemas.CompletionInfoSchema | None:
     async with asyncio.TaskGroup() as tg:
         material_task = tg.create_task(materials_db.get_material(material_id=material_id))
         reading_logs_task = tg.create_task(db.get_log_records(material_id=material_id))
 
     if not (material := material_task.result()):
-        raise HTTPException(status_code=404, detail="Material not found")
+        return None
     reading_logs = reading_logs_task.result()
 
-    return {
-        "material_pages": material.pages,
-        "material_type": material.material_type,
-        "pages_read": sum(record.count for record in reading_logs),
-        "read_days": len(reading_logs),
-    }
+    return schemas.CompletionInfoSchema(
+        material_pages=material.pages,
+        material_type=material.material_type,
+        pages_read=sum(record.count for record in reading_logs),
+        read_days=len(reading_logs),
+    )
