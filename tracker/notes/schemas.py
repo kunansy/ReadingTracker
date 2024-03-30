@@ -61,6 +61,10 @@ def _replace_punctuation(string: str) -> str:
     return string
 
 
+def _replace_inf(string: str) -> str:
+    return string.replace("\\inf", "∞")
+
+
 def _replace_up_index(string: str) -> str:
     return UP_INDEX_PATTERN.sub(r"\1<sup>\2</sup>\3", string)
 
@@ -95,6 +99,7 @@ NOTES_FORMATTERS = (
     _up_first_letter,
     _replace_punctuation,
     _replace_up_index,
+    _replace_inf,
 )
 
 NOTES_DEMARKERS = (
