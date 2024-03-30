@@ -100,7 +100,7 @@ class Note(CustomBaseModel):
             'tags_query={tag} target="_blank">#{tag}</a>'
         )
 
-        for tag in tags:
+        for tag in sorted(tags, key=lambda tag: len(tag), reverse=True):
             link_text = link_text_template.format(tag=tag)
 
             text = re.sub(rf"(\W)#({tag})(\W)", rf"\1{link_text}\3", text)
