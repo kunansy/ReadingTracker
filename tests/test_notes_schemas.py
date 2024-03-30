@@ -177,6 +177,20 @@ def test_replace_punctuation(string, expected):
 
 
 @pytest.mark.parametrize(
+    "string,expected",
+    (
+        ("\\inf some text", "∞ some text"),
+        (r"\inf some text", "∞ some text"),
+        ("some \\inf text", "some ∞ text"),
+        ("some text \\inf", "some text ∞"),
+        ("\\inf some \\inf text \\inf", "∞ some ∞ text ∞"),
+    ),
+)
+def test_replace_punctuation(string, expected):
+    assert schemas._replace_inf(string) == expected
+
+
+@pytest.mark.parametrize(
     "symbols,expected",
     (
         (["->", "<-", "--", "–", "<->"], " → ← — — ↔ "),
