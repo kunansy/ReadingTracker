@@ -1,4 +1,5 @@
 import asyncio
+from typing import cast
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -51,6 +52,8 @@ async def add_log_record_view(request: Request, material_id: UUID | None = None)
         log_material_id = get_reading_material_id.result()
 
     completion_info = await _completion_info(log_material_id)
+    # here material must exist
+    completion_info = cast(schemas.CompletionInfoSchema, completion_info)
 
     context = {
         "request": request,
@@ -91,8 +94,11 @@ async def get_completion_info(material_id: UUID):
 
 
 async def _completion_info(
-    material_id: UUID,
+    material_id: UUID | None,
 ) -> schemas.CompletionInfoSchema | None:
+    if not material_id:
+        return None
+
     async with asyncio.TaskGroup() as tg:
         material_task = tg.create_task(materials_db.get_material(material_id=material_id))
         reading_logs_task = tg.create_task(db.get_log_records(material_id=material_id))
