@@ -140,9 +140,15 @@ class Note(CustomBaseModel):
 
     @property
     def content_html(self) -> str:
-        # TODO: remove tags/links from the text
-        content = self._mark_tags_with_ref(self.content, self.tags)
-        return self._mark_link_with_ref(content, self.link_id)
+        content = self._delete_link(self.content, self.link_id)
+        content = self._delete_tags(content, self.tags)
+        content = schemas.dereplace_new_lines(content).strip()
+
+        if content.endswith(("?", "!", ".")):
+            end = content[-1]
+            content = content.removesuffix(end).strip()
+
+        return schemas.add_dot(content)
 
     @property
     def tags_str(self) -> str:
