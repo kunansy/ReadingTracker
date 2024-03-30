@@ -20,6 +20,9 @@ from tracker.models import enums, models
 from tracker.notes import schemas
 
 
+_TAG_PATTERN = r"(\B)#({tag})(\b)"
+
+
 class Note(CustomBaseModel):
     note_id: UUID
     link_id: UUID | None = None
@@ -103,7 +106,7 @@ class Note(CustomBaseModel):
         for tag in sorted(tags, key=lambda tag: len(tag), reverse=True):
             link_text = link_text_template.format(tag=tag)
 
-            text = re.sub(rf"(\B)#({tag})(\b)", rf"\1{link_text}\3", text)
+            text = re.sub(_TAG_PATTERN.format(tag=tag), rf"\1{link_text}\3", text)
 
         return text
 
