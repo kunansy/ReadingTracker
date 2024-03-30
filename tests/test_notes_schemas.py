@@ -186,7 +186,7 @@ def test_replace_punctuation(string, expected):
         ("\\inf some \\inf text \\inf", "∞ some ∞ text ∞"),
     ),
 )
-def test_replace_punctuation(string, expected):
+def test_replace_inf(string, expected):
     assert schemas._replace_inf(string) == expected
 
 
