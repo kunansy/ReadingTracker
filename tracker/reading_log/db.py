@@ -50,7 +50,7 @@ async def get_mean_materials_read_pages() -> dict[UUID, Decimal]:
     return mean
 
 
-async def get_log_records(*, material_id: str | None = None) -> list[LogRecord]:
+async def get_log_records(*, material_id: str | UUID | None = None) -> list[LogRecord]:
     logger.debug("Getting all log records")
 
     stmt = sa.select(
@@ -59,7 +59,7 @@ async def get_log_records(*, material_id: str | None = None) -> list[LogRecord]:
     ).join(models.Materials)
 
     if material_id:
-        stmt = stmt.where(models.Materials.c.material_id == material_id)
+        stmt = stmt.where(models.Materials.c.material_id == str(material_id))
 
     async with database.session() as ses:
         records = [
