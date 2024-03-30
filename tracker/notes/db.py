@@ -103,7 +103,7 @@ class Note(CustomBaseModel):
         for tag in sorted(tags, key=lambda tag: len(tag), reverse=True):
             link_text = link_text_template.format(tag=tag)
 
-            text = re.sub(rf"(\W)#({tag})(\W)", rf"\1{link_text}\3", text)
+            text = re.sub(rf"(\B)#({tag})(\b)", rf"\1{link_text}\3", text)
 
         return text
 
