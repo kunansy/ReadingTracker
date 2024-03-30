@@ -16,7 +16,7 @@
         <form action="/reading_log/add" method="POST">
             <fieldset class="log-record-fieldset">
             <legend class="log-record-legend"> Add a log record </legend>
-            <input class="input input-datalist" list="books" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
+            <input id="material_id" class="input input-datalist" list="books" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
             <datalist id="books">
                 {% for material_id, title in titles.items() %}
                 <option value="{{ material_id }}"> «{{ title }}»
@@ -32,6 +32,7 @@
     </div>
 
     <script src="{{ url_for('static', path='js/celebrate.js')}}"></script>
+    <script src="{{ url_for('static', path='js/reading_log.js')}}"></script>
 {%- else -%}
     {% import 'errors/not_found.html' as not_found %}
     {% call not_found.not_found('reading materials') %} {% endcall %}
