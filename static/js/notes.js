@@ -3,22 +3,16 @@ async function openNote(note_id, target_ = "_blank") {
 }
 
 async function addTag(tag, newLine = false) {
-    let content = document.getElementById('input-content');
-    let newContent = '';
+    let tags = document.getElementById('note-tags');
 
-    if (content.value.length === 0) {
-        newContent = tag;
-    } else if (tag.startsWith("#") && !content.value.includes("#")) {
-        newContent = content.value + tag;
-    } else if (newLine) {
-        newContent = content.value + '\n' + tag;
+    if (tags.value.length === 0) {
+        tags.value += tag;
     } else {
-        newContent = content.value + ' ' + tag;
+        tags.value += " " + tag;
     }
 
     // WTF: the f*cking shadow DOM
-    content.textContent = newContent;
-    content.value = newContent;
+    tags.textContent = tags.value;
 }
 
 const recordAudio = async () => {
