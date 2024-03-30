@@ -27,8 +27,9 @@ DEMARK_CODE_PATTERN = re.compile(f'<span class="?{CODE_MARKER}"?>(.*?)</span>')
 
 UP_INDEX_PATTERN = re.compile(r"(\S)\^(\S+)(\s)")
 
-TAG_PATTERN = re.compile(r"(\w+)")
-TAGS_PATTERN = re.compile(rf"\W#{TAG_PATTERN}\b")
+_TAG_PATTERN = r"(\w+)"
+TAG_PATTERN = re.compile(_TAG_PATTERN)
+TAGS_PATTERN = re.compile(rf"\W#{_TAG_PATTERN}\b")
 LINK_PATTERN = re.compile(
     r"\[\[([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})\]\]",
 )
