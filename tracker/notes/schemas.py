@@ -138,15 +138,6 @@ class Note(CustomBaseModel):
         )
 
     @field_validator("content")
-    def validate_double_brackets_count(cls, content: str) -> str:
-        assert content.count("[[") == content.count("]]")
-
-        if "[[" in content and "]]" in content:
-            assert LINK_PATTERN.search(content) is not None
-
-        return content
-
-    @field_validator("content")
     def format_content(cls, content: str) -> str:
         for formatter in NOTES_FORMATTERS:
             content = formatter(content)
