@@ -332,7 +332,7 @@ const insertToRepeatQueue = (note_id) => {
 }
 
 const getNote = async (note_id) => {
-    let resp = await fetch(`/notes/note-json?note_id=${note_id}`, {
+    let resp = await fetch(`/notes/note-json?note_id=${note_id.trim()}`, {
         method: 'GET',
         headers: {'Content-type': 'application/json'},
     });
