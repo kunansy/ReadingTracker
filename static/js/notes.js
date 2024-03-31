@@ -214,16 +214,23 @@ if (pagination) {
             let location = window.location.search;
             let currentPage = getPage(location);
 
-            if (!currentPage && location.includes("?"))
-                location += `?page=${page}`;
-            else if (!currentPage)
-                location += `&page=${page}`;
+            let toPage = 1;
+            if (parseInt(page))
+                toPage = page;
             else if (page.includes("»"))
-                location = location.replace(/page=\d+/ig, `page=${currentPage + 1}`);
+                toPage = !isNaN(currentPage) ? currentPage + 1 : toPage + 1;
             else if (page.includes("«"))
-                location = location.replace(/page=\d+/ig, `page=${currentPage - 1}`);
+                toPage = currentPage > 1 ? currentPage - 1 : 1;
+
+            if (!location.includes("?"))
+                location += "?"
+            else if (!location.includes("page") && !location.endsWith("&"))
+                location += "&"
+
+            if (!location.includes("page"))
+                location += `page=${toPage}`;
             else
-                location = location.replace(/page=\d+/ig, `page=${page}`);
+                location = location.replace(/page=\d+/ig, `page=${toPage}`);
 
             window.open(location, "_self");
         })
