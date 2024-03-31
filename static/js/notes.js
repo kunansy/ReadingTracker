@@ -198,21 +198,32 @@ if (contentInput) {
     })
 }
 
+
+const getPage = (location) => {
+    const urlParams = new URLSearchParams(location);
+    const page = urlParams.get('page');
+
+    return parseInt(page);
+};
+
 const pagination = document.querySelectorAll("div.pagination-item");
 if (pagination) {
     pagination.forEach((item) => {
         item.addEventListener("click", (e) => {
-            let page = item.textContent;
-
+            let page = item.textContent.trim();
             let location = window.location.search;
-            if (location.includes("page="))
-                location = location.replace(/page=\d/ig, `page=${page}`);
-            else if (!location.includes("?"))
-                location += `?page=${page}`;
-            else
-                location +=`&page=${page}`;
+            let currentPage = getPage(location);
 
-            console.log(location);
+            if (!currentPage && location.includes("?"))
+                location += `?page=${page}`;
+            else if (!currentPage)
+                location += `&page=${page}`;
+            else if (page.includes("»"))
+                location = location.replace(/page=\d+/ig, `page=${currentPage + 1}`);
+            else if (page.includes("«"))
+                location = location.replace(/page=\d+/ig, `page=${currentPage - 1}`);
+            else
+                location = location.replace(/page=\d+/ig, `page=${page}`);
 
             window.open(location, "_self");
         })
