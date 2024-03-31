@@ -122,30 +122,9 @@ class Note(CustomBaseModel):
 
         return f'<a id="link-ref" href={settings.TRACKER_URL}{note_url}?note_id={self.link_id} target="_blank">{link_text}</a>'  # noqa: E501
 
-    @classmethod
-    def _delete_tags(cls, text: str, tags: set[str]) -> str:
-        for tag in tags:
-            text = re.sub(_TAG_PATTERN.format(tag=tag), "", text)
-        return text
-
-    @classmethod
-    def _delete_link(cls, text: str, link_id: str | UUID | None) -> str:
-        if not link_id:
-            return text
-
-        return text.replace(f"[[{link_id}]]", "")
-
     @property
     def content_html(self) -> str:
-        content = self._delete_link(self.content, self.link_id)
-        content = self._delete_tags(content, self.tags)
-        content = schemas.dereplace_new_lines(content).strip()
-
-        if content.endswith(("?", "!", ".")):
-            end = content[-1]
-            content = content.removesuffix(end).strip()
-
-        return schemas.add_dot(content)
+        return self.content
 
     @property
     def tags_str(self) -> str:
