@@ -62,12 +62,12 @@
 {% endif %}
 
 <div class="form pagination">
-    <div class="pagination-item hover"> « </div>
     {% set range_start = 1 %}
     {% set range_stop = 11 %}
     {% if current_page > 5 %}
         {% set range_start = current_page - 4 %}
         {% set range_stop = current_page + 6 %}
+        <div class="pagination-item hover"> « </div>
     {% endif %}
     {% for page in range(range_start, range_stop) %}
         <div class="pagination-item hover {% if page == current_page %} current-page {% endif %}">{{ page }}</div>
