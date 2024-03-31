@@ -204,11 +204,15 @@ if (pagination) {
         item.addEventListener("click", (e) => {
             let page = item.textContent;
 
-            let location = window.location + `&page=${page}`;
-            if (!window.location.search.includes("?"))
-                location = window.location + `?page=${page}`;
-            else if (window.location.search.includes("page="))
-                location = location.replace(/page=\d/, `page=${page}`)
+            let location = window.location.search;
+            if (location.includes("page="))
+                location = location.replace(/page=\d/ig, `page=${page}`);
+            else if (!location.includes("?"))
+                location += `?page=${page}`;
+            else
+                location +=`&page=${page}`;
+
+            console.log(location);
 
             window.open(location, "_self");
         })
