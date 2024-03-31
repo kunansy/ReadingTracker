@@ -68,10 +68,6 @@ def _dereplace_gt(string: str) -> str:
     return re.sub(r"&gt;", ">", string)
 
 
-def dereplace_new_lines(string: str) -> str:
-    return re.sub(r"<br/?>", "\n", string)
-
-
 NOTES_FORMATTERS = (
     _replace_quotes,
     add_dot,
@@ -84,7 +80,6 @@ NOTES_FORMATTERS = (
 NOTES_DEMARKERS = (
     _dereplace_lt,
     _dereplace_gt,
-    dereplace_new_lines,
 )
 
 

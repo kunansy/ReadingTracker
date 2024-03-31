@@ -22,10 +22,14 @@ def _delete_link(text: str, link_id: str | UUID | None) -> str:
     return text.replace(f"[[{link_id}]]", "")
 
 
+def _dereplace_new_lines(string: str) -> str:
+    return re.sub(r"<br/?>", "\n", string)
+
+
 def _format_content(content: str, tags: set[str], link_id: UUID | None) -> str:
     content = _delete_link(content, link_id)
     content = _delete_tags(content, tags)
-    content = schemas.dereplace_new_lines(content).strip()
+    content = _dereplace_new_lines(content).strip()
 
     if content.endswith(("?", "!", ".")):
         end = content[-1]
