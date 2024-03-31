@@ -3,6 +3,7 @@ from functools import wraps
 from typing import Any
 from uuid import UUID
 
+import redis
 from redis import asyncio as aioredis
 
 from tracker.common import settings
@@ -67,7 +68,10 @@ async def healthcheck() -> bool:
 
 
 async def get_note(note_id: UUID | str, *fields: str) -> dict | None:
-    result = await _get_dict(str(note_id), fields, db=_NOTES_STORAGE)
+    try:
+        result = await _get_dict(str(note_id), fields, db=_NOTES_STORAGE)
+    except redis.exceptions.ConnectionError:
+        return None
 
     if not any(result):
         return None

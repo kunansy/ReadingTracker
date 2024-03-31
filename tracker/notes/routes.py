@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from pydantic import NonNegativeInt
 
 from tracker.common import kafka, manticoresearch, settings
 from tracker.common.logger import logger
@@ -62,13 +63,22 @@ async def get_note_links(note: db.Note) -> dict[str, Any]:
 
 
 @router.get("/", response_class=HTMLResponse)
-async def get_notes(request: Request, search: schemas.SearchParams = Depends()):
+async def get_notes(
+    request: Request,
+    page: NonNegativeInt = 1,
+    page_size: NonNegativeInt = 10,
+    search: schemas.SearchParams = Depends(),
+):
     material_id = search.material_id
+    offset = (page - 1) * page_size
     async with asyncio.TaskGroup() as tg:
-        get_notes_task = tg.create_task(db.get_notes(material_id=material_id))
+        get_notes_task = tg.create_task(
+            db.get_notes(material_id=material_id, limit=page_size, offset=offset),
+        )
         get_titles_task = tg.create_task(db.get_material_with_notes_titles())
         get_material_types_task = tg.create_task(db.get_material_types())
         get_tags_task = tg.create_task(db.get_sorted_tags(material_id=material_id))
+        get_material_notes_task = tg.create_task(db.get_all_notes_count())
 
     notes = get_notes_task.result()
 
@@ -87,11 +97,14 @@ async def get_notes(request: Request, search: schemas.SearchParams = Depends()):
         "notes": notes,
         "titles": get_titles_task.result(),
         "material_types": get_material_types_task.result(),
+        "material_notes": get_material_notes_task.result(),
         "chapters": chapters,
         "query": query,
         "DATE_FORMAT": settings.DATE_FORMAT,
         "tags": get_tags_task.result(),
         "tags_query": search.tags_query,
+        "current_page": page,
+        "page_size": page_size,
     }
     if material_id:
         context["material_id"] = material_id

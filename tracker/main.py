@@ -50,6 +50,9 @@ app.include_router(system_router)
 
 @app.on_event("startup")
 async def init_cache():
+    if settings.DEBUG_MODE:
+        return
+
     logger.info("Init cache")
     if not await redis_api.healthcheck():
         raise ValueError("Redis is offline")

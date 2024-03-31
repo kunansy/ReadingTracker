@@ -130,14 +130,13 @@ if (document.getElementById("input_material_id")) {
     });
 }
 
-const links = document.querySelectorAll("a#link-ref");
+const links = document.querySelectorAll("p.link-ref");
 if (links) {
     links.forEach((link) => {
-        link.addEventListener("mouseover", async (e) => {
+        link.addEventListener("mouseenter", async (e) => {
             const link_id = e.target.textContent.replace("[[", "").replace("]]", "");
 
             const cache = localStorage.getItem(`link-ref-${link_id}`);
-            // TODO: it works only from cache
             if (cache) {
                 link.title = cache;
             } else {
@@ -196,5 +195,44 @@ if (contentInput) {
                 alert.title += `${erratum["word"]} – ${erratum["s"].join(", ")}`
             }
         }
+    })
+}
+
+
+const getPage = (location) => {
+    const urlParams = new URLSearchParams(location);
+    const page = urlParams.get('page');
+
+    return parseInt(page);
+};
+
+const pagination = document.querySelectorAll("div.pagination-item");
+if (pagination) {
+    pagination.forEach((item) => {
+        item.addEventListener("click", (e) => {
+            let page = item.textContent.trim();
+            let location = window.location.search;
+            let currentPage = getPage(location);
+
+            let toPage = 1;
+            if (parseInt(page))
+                toPage = page;
+            else if (page.includes("»"))
+                toPage = !isNaN(currentPage) ? currentPage + 1 : toPage + 1;
+            else if (page.includes("«"))
+                toPage = currentPage > 1 ? currentPage - 1 : 1;
+
+            if (!location.includes("?"))
+                location += "?"
+            else if (!location.includes("page") && !location.endsWith("&"))
+                location += "&"
+
+            if (!location.includes("page"))
+                location += `page=${toPage}`;
+            else
+                location = location.replace(/page=\d+/ig, `page=${toPage}`);
+
+            window.open(location, "_self");
+        })
     })
 }
