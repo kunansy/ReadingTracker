@@ -71,43 +71,6 @@ def test_up_first_letter(string, expected):
 @pytest.mark.parametrize(
     "string,expected",
     (
-        ("<span class=\"font-weight-bold\">some text</span>", "**some text**"),
-        ("<span class=font-weight-bold>some text</span>", "**some text**"),
-        ("<span class=font-weight-bold>some text634852^^&**#$Q( aa</span>", "**some text634852^^&**#$Q( aa**"),
-    ),
-)
-def test_demark_bold(string, expected):
-    # '<span class="?{BOLD_MARKER}"?>(.*?)</span>
-    assert schemas._demark_bold(string) == expected
-
-
-@pytest.mark.parametrize(
-    "string,expected",
-    (
-        ("<span class=\"font-italic\">some text</span>", "*some text*"),
-        ("<span class=font-italic>some text</span>", "*some text*"),
-        ("<span class=font-italic>some text634852^^&**#$Q( aa</span>", "*some text634852^^&**#$Q( aa*"),
-    ),
-)
-def test_demark_italic(string, expected):
-    assert schemas._demark_italic(string) == expected
-
-
-@pytest.mark.parametrize(
-    "string,expected",
-    (
-        ("<span class=\"font-code\">some text</span>", "`some text`"),
-        ("<span class=font-code>some text</span>", "`some text`"),
-        ("<span class=font-code>some text634852^^&**#$Q( aa</span>", "`some text634852^^&**#$Q( aa`"),
-    ),
-)
-def test_demark_code(string, expected):
-    assert schemas._demark_code(string) == expected
-
-
-@pytest.mark.parametrize(
-    "string,expected",
-    (
         ("some &gt; text", "some > text"),
         ("some text &gt;", "some text >"),
         ("&gt; some text", "> some text"),
@@ -136,22 +99,7 @@ def test_dereplace_lt(string, expected):
 @pytest.mark.parametrize(
     "string,expected",
     (
-        ("some <br> text", "some \n text"),
-        ("some <br/> text", "some \n text"),
-        ("some text<br>", "some text\n"),
-        ("<br>some text", "\nsome text"),
-        ("<br>some text<br>", "\nsome text\n"),
-    ),
-)
-def test_dereplace_new_lines(string, expected):
-    assert schemas.dereplace_new_lines(string) == expected
-
-
-@pytest.mark.parametrize(
-    "string,expected",
-    (
-        ("<span class=font-code>some</span> <br> <span class=font-weight-bold>text</span> &gt;"
-         "<span class=\"font-italic\">to</span> test &lt;", "`some` \n **text** >*to* test <"),
+        ("`some` \n **text** &gt;*to* test &lt;", "`some` \n **text** >*to* test <"),
         ("`some` \n **text** >*to* test <", "`some` \n **text** >*to* test <"),
     ),
 )
@@ -202,22 +150,6 @@ def test_replace_punctuation_any_order(symbols, expected):
     string = " ".join(symbols)
     print(string)
     assert schemas._replace_punctuation(f" {string} ") == expected
-
-
-@pytest.mark.parametrize(
-    "string,tags",
-    (
-        ("#this_is_not_a_tag sdfhj#this_is_not", []),
-        ("#this_is_not_a_tag #this_is_a_tag", ["this_is_a_tag"]),
-        ("#this_is_not_a_tag #this_is_a_tag some text #a_tag", ["this_is_a_tag", "a_tag"]),
-        ("#this_is_not_a_tag", []),
-        ("some text #tag", ["tag"]),
-        ("some text #t some text", ["t"]),
-        ("# some text # some text #", []),
-    ),
-)
-def test_tags_pattern(string, tags):
-    assert schemas.TAGS_PATTERN.findall(string) == tags
 
 
 @pytest.mark.parametrize(

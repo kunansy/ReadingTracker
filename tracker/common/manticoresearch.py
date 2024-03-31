@@ -192,20 +192,18 @@ async def update(note_id: UUID) -> None:
 
 
 def _get_search_query() -> str:
-    from tracker.notes.schemas import BOLD_MARKER
-
     # the first highlight is the string which will
     # be replaced by the found highlighted snippet;
     # snippet_separator is a symbol around match
-    return f"""
+    return """
     SELECT
         note_id,
         HIGHLIGHT({{snippet_separator='',before_match='',after_match=''}}),
-        HIGHLIGHT({{snippet_separator='',before_match='<span class={BOLD_MARKER}>',after_match='</span>'}})
+        HIGHLIGHT({{snippet_separator='',before_match='**',after_match='**'}})
     FROM notes
     WHERE match(%s)
     ORDER BY weight() DESC
-    """  # noqa: E501
+    """
 
 
 async def search(query: str) -> dict[UUID, SearchResult]:
