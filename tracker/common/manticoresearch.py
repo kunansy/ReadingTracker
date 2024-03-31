@@ -198,8 +198,8 @@ def _get_search_query() -> str:
     return """
     SELECT
         note_id,
-        HIGHLIGHT({{snippet_separator='',before_match='',after_match=''}}),
-        HIGHLIGHT({{snippet_separator='',before_match='**',after_match='**'}})
+        HIGHLIGHT({snippet_separator='',before_match='',after_match=''}),
+        HIGHLIGHT({snippet_separator='',before_match='**',after_match='**'})
     FROM notes
     WHERE match(%s)
     ORDER BY weight() DESC
