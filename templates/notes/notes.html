@@ -92,7 +92,8 @@
             <h4 class="chapter_number" id="material-{{material_id}}-chapter-{{chapter}}"> {{ chapter_name }}: {{ chapter }} </h4>
             {% for note in note_c %}
             <div class="note hover" id="{{ note.note_id }}">
-                <p class="little-text"> {{ index.value }} / {{ length }}</p>
+{#              TODO #}
+                <p class="little-text"> {{ (current_page - 1) * page_size + index.value }} / {{ notes_count }}</p>
                 <p class="little-text note-id-row hover"> Note id: {{ note.note_id }} </p>
                 {% if note.title %}
                     <p class="note-title large-text"> «{{ note.title }}» </p>
