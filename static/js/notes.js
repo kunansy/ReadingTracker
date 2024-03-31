@@ -197,3 +197,20 @@ if (contentInput) {
         }
     })
 }
+
+const pagination = document.querySelectorAll("div.pagination-item");
+if (pagination) {
+    pagination.forEach((item) => {
+        item.addEventListener("click", (e) => {
+            let page = item.textContent;
+
+            let location = window.location + `&page=${page}`;
+            if (!window.location.search.includes("?"))
+                location = window.location + `?page=${page}`;
+            else if (window.location.search.includes("page="))
+                location = location.replace(/page=\d/, `page=${page}`)
+
+            window.open(location, "_self");
+        })
+    })
+}
