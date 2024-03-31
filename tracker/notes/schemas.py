@@ -71,18 +71,6 @@ def _replace_up_index(string: str) -> str:
     return UP_INDEX_PATTERN.sub(r"\1<sup>\2</sup>\3", string)
 
 
-def _demark_bold(string: str) -> str:
-    return DEMARK_BOLD_PATTERN.sub(r"**\1**", string)
-
-
-def _demark_italic(string: str) -> str:
-    return DEMARK_ITALIC_PATTERN.sub(r"*\1*", string)
-
-
-def _demark_code(string: str) -> str:
-    return DEMARK_CODE_PATTERN.sub(r"`\1`", string)
-
-
 def _dereplace_lt(string: str) -> str:
     return re.sub(r"&lt;", "<", string)
 
@@ -105,9 +93,6 @@ NOTES_FORMATTERS = (
 )
 
 NOTES_DEMARKERS = (
-    _demark_bold,
-    _demark_italic,
-    _demark_code,
     _dereplace_lt,
     _dereplace_gt,
     dereplace_new_lines,
