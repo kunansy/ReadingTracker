@@ -27,6 +27,8 @@ TRACKER_URL = env(
     validate=lambda url: not url.endswith("/"),
 )
 
+DEBUG_MODE = env.bool("DEBUG_MODE", False)
+
 with env.prefixed("CACHE_"):
     _CACHE_URL = env("URL", "redis://tracker-cache")
     _CACHE_PORT = env.int("PORT", 6379)
