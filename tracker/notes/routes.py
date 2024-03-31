@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from pydantic import NonNegativeInt
 
 from tracker.common import kafka, manticoresearch, settings
 from tracker.common.logger import logger
@@ -64,12 +65,12 @@ async def get_note_links(note: db.Note) -> dict[str, Any]:
 @router.get("/", response_class=HTMLResponse)
 async def get_notes(
     request: Request,
-    page: int = 0,
-    page_size: int = 10,
+    page: NonNegativeInt = 1,
+    page_size: NonNegativeInt = 10,
     search: schemas.SearchParams = Depends(),
 ):
     material_id = search.material_id
-    offset = page * page_size
+    offset = (page - 1) * page_size
     async with asyncio.TaskGroup() as tg:
         get_notes_task = tg.create_task(
             db.get_notes(material_id=material_id, limit=page_size, offset=offset),
