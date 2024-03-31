@@ -120,7 +120,7 @@ class Note(CustomBaseModel):
         note_url = router.url_path_for(get_note.__name__)
         link_text = f"[[{self.link_id}]]"
 
-        return f'<a id="link-ref" href={settings.TRACKER_URL}{note_url}?note_id={self.link_id} target="_blank">{link_text}</a>'  # noqa: E501
+        return f'<a class="link-ref" href={settings.TRACKER_URL}{note_url}?note_id={self.link_id} target="_blank">{link_text}</a>'  # noqa: E501
 
     @property
     def content_html(self) -> str:

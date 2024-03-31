@@ -130,14 +130,13 @@ if (document.getElementById("input_material_id")) {
     });
 }
 
-const links = document.querySelectorAll("a#link-ref");
+const links = document.querySelectorAll("p.link-ref");
 if (links) {
     links.forEach((link) => {
-        link.addEventListener("mouseover", async (e) => {
+        link.addEventListener("mouseenter", async (e) => {
             const link_id = e.target.textContent.replace("[[", "").replace("]]", "");
 
             const cache = localStorage.getItem(`link-ref-${link_id}`);
-            // TODO: it works only from cache
             if (cache) {
                 link.title = cache;
             } else {
