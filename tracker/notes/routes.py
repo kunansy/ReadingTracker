@@ -62,10 +62,18 @@ async def get_note_links(note: db.Note) -> dict[str, Any]:
 
 
 @router.get("/", response_class=HTMLResponse)
-async def get_notes(request: Request, search: schemas.SearchParams = Depends()):
+async def get_notes(
+    request: Request,
+    page: int = 0,
+    page_size: int = 10,
+    search: schemas.SearchParams = Depends(),
+):
     material_id = search.material_id
+    offset = page * page_size
     async with asyncio.TaskGroup() as tg:
-        get_notes_task = tg.create_task(db.get_notes(material_id=material_id))
+        get_notes_task = tg.create_task(
+            db.get_notes(material_id=material_id, limit=page_size, offset=offset),
+        )
         get_titles_task = tg.create_task(db.get_material_with_notes_titles())
         get_material_types_task = tg.create_task(db.get_material_types())
         get_tags_task = tg.create_task(db.get_sorted_tags(material_id=material_id))
