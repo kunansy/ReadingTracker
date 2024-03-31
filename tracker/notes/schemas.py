@@ -15,21 +15,10 @@ PUNCTUATION_MAPPING = {
     "->": "→",
     "<-": "←",
 }
-# this is a legacy, since the last time Markdown syntax is used
-BOLD_MARKER = "font-weight-bold"
-ITALIC_MARKER = "font-italic"
-CODE_MARKER = "font-code"
-
-# save back compatibility with css style for now
-DEMARK_BOLD_PATTERN = re.compile(f'<span class="?{BOLD_MARKER}"?>(.*?)</span>')
-DEMARK_ITALIC_PATTERN = re.compile(f'<span class="?{ITALIC_MARKER}"?>(.*?)</span>')
-DEMARK_CODE_PATTERN = re.compile(f'<span class="?{CODE_MARKER}"?>(.*?)</span>')
-
 UP_INDEX_PATTERN = re.compile(r"(\S)\^(\S+)(\s)")
 
 _TAG_PATTERN = r"(\w+)"
 TAG_PATTERN = re.compile(_TAG_PATTERN)
-TAGS_PATTERN = re.compile(rf"\W#{_TAG_PATTERN}\b")
 LINK_PATTERN = re.compile(
     r"\[\[([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})\]\]",
 )
