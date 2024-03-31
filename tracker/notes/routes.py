@@ -103,6 +103,8 @@ async def get_notes(
         "DATE_FORMAT": settings.DATE_FORMAT,
         "tags": get_tags_task.result(),
         "tags_query": search.tags_query,
+        "current_page": page,
+        "page_size": page_size,
     }
     if material_id:
         context["material_id"] = material_id
