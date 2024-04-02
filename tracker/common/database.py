@@ -29,7 +29,11 @@ class MinMax(CustomBaseModel):
 engine = create_async_engine(
     settings.DB_URI,
     isolation_level=settings.DB_ISOLATION_LEVEL,
-    connect_args={"timeout": settings.DB_TIMEOUT},
+    connect_args={
+        "timeout": settings.DB_TIMEOUT,
+        "statement_cache_size": 50,
+        "max_cached_statement_lifetime": 0,
+    },
 )
 
 
