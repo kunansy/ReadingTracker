@@ -1,8 +1,10 @@
 import datetime
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import Any
 from uuid import UUID
 
+import orjson
 import sqlalchemy.sql as sa
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 from sqlalchemy.ext.compiler import compiles
@@ -26,6 +28,10 @@ class MinMax(CustomBaseModel):
     date: datetime.date
 
 
+def _json_serializer(value: Any) -> str:
+    return orjson.dumps(value).decode("utf8")
+
+
 engine = create_async_engine(
     settings.DB_URI,
     isolation_level=settings.DB_ISOLATION_LEVEL,
@@ -34,6 +40,8 @@ engine = create_async_engine(
         "statement_cache_size": 50,
         "max_cached_statement_lifetime": 0,
     },
+    json_deserializer=orjson.loads,
+    json_serializer=_json_serializer,
 )
 
 
