@@ -1,5 +1,5 @@
 import asyncio
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from typing import Any, cast
 from uuid import UUID
 
@@ -60,6 +60,14 @@ async def get_note_links(note: db.Note) -> dict[str, Any]:
             get_link_to_task = tg.create_task(asyncio.sleep(1 / 1000, result=None))
 
     return {"from": get_links_from_task.result(), "to": get_link_to_task.result()}
+
+
+def _limit_notes[T](notes: Sequence[T], *, page: int, page_size: int) -> Sequence[T]:  # type: ignore[valid-type, name-defined]
+    if page < 1:
+        page = 1
+    if page_size < 0:
+        page_size = 0
+    return notes[(page - 1) * page_size : page * page_size]
 
 
 @router.get("/", response_class=HTMLResponse)
