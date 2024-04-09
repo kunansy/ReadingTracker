@@ -1,5 +1,5 @@
 import asyncio
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from typing import Any, cast
 from uuid import UUID
 
@@ -62,6 +62,14 @@ async def get_note_links(note: db.Note) -> dict[str, Any]:
     return {"from": get_links_from_task.result(), "to": get_link_to_task.result()}
 
 
+def _limit_notes[T](notes: Sequence[T], *, page: int, page_size: int) -> Sequence[T]:  # type: ignore[valid-type, name-defined]
+    if page < 1:
+        page = 1
+    if page_size < 0:
+        page_size = 0
+    return notes[(page - 1) * page_size : page * page_size]
+
+
 @router.get("/", response_class=HTMLResponse)
 async def get_notes(
     request: Request,
@@ -70,11 +78,8 @@ async def get_notes(
     search: schemas.SearchParams = Depends(),
 ):
     material_id = search.material_id
-    offset = (page - 1) * page_size
     async with asyncio.TaskGroup() as tg:
-        get_notes_task = tg.create_task(
-            db.get_notes(material_id=material_id, limit=page_size, offset=offset),
-        )
+        get_notes_task = tg.create_task(db.get_notes(material_id=material_id))
         get_titles_task = tg.create_task(db.get_material_with_notes_titles())
         get_material_types_task = tg.create_task(db.get_material_types())
         get_tags_task = tg.create_task(db.get_sorted_tags(material_id=material_id))
@@ -94,7 +99,7 @@ async def get_notes(
 
     context: dict[str, Any] = {
         "request": request,
-        "notes": notes,
+        "notes": _limit_notes(notes, page=page, page_size=page_size),
         "titles": get_titles_task.result(),
         "material_types": get_material_types_task.result(),
         "material_notes": get_material_notes_task.result(),

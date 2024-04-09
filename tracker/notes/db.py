@@ -246,19 +246,10 @@ def _get_note_stmt(
     return stmt
 
 
-async def get_notes(
-    *,
-    material_id: UUID | str | None = None,
-    limit: int | None = None,
-    offset: int | None = None,
-) -> list[Note]:
+async def get_notes(*, material_id: UUID | str | None = None) -> list[Note]:
     logger.debug("Getting notes material_id=%s", material_id)
 
     stmt = _get_note_stmt(material_id=material_id)
-    if limit:
-        stmt = stmt.limit(limit)
-    if offset:
-        stmt = stmt.offset(offset)
 
     async with database.session() as ses:
         notes = [Note(**row) for row in (await ses.execute(stmt)).mappings().all()]

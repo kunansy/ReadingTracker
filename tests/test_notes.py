@@ -6,7 +6,7 @@ import sqlalchemy.sql as sa
 
 from tracker.common import database
 from tracker.models import enums, models
-from tracker.notes import db
+from tracker.notes import db, routes
 
 
 @pytest.mark.asyncio
@@ -270,3 +270,20 @@ async def test_get_links_from(note_id, expected):
 
     result = await db.get_links_from(note_id=UUID(note_id))
     assert result == expected_notes
+
+
+@pytest.mark.parametrize(
+    "lst, page, page_size, expected", (
+        (list(range(100)), 1, 10, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+        (list(range(100)), 2, 10, [10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
+        (list(range(100)), 3, 10, [20, 21, 22, 23, 24, 25, 26, 27, 28, 29]),
+        (list(range(100)), 0, 10, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+        (list(range(100)), -5, 10, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
+        (list(range(100)), 1, -5, []),
+        (list(range(5)), 1, 10, [0, 1, 2, 3, 4]),
+        (list(range(5)), 2, 10, []),
+        ([], 1, 10, []),
+    )
+)
+def test_notes_limit(lst, page, page_size, expected):
+    assert routes._limit_notes(lst, page=page, page_size=page_size) == expected
