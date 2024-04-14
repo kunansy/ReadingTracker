@@ -195,13 +195,11 @@ async def search(query: str) -> dict[UUID, SearchResult]:
 
 
 async def autocompletion(*, query: str, limit: int = 5) -> list[str]:
-    from tracker.notes.schemas import BOLD_MARKER
-
     logger.debug("Searching autocompletions for: '%s'", query)
 
     db_query = f"""
-    SELECT 
-       HIGHLIGHT({{snippet_separator='',before_match='<span class={BOLD_MARKER}>',after_match='</span>'}})
+    SELECT
+       HIGHLIGHT({{snippet_separator='',before_match='**',after_match='**'}})
        FROM notes WHERE MATCH('@content {query}* ') ORDER BY WEIGHT() DESC LIMIT %s
    """
 
