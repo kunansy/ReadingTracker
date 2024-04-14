@@ -17,7 +17,8 @@
     <div class="form">
         <form id="search-notes-form" action="/notes" method="GET">
             <input class="input" list="books" name="material_id" value="{{ material_id or '' }}" placeholder="Choose a material">
-            <input class="input" name="query" value="{{ query or '' }}" placeholder="Enter a query">
+            <input id="search-hints" class="input" list="search-note-hints" name="query" value="{{ query or '' }}" placeholder="Enter a query">
+            <datalist id="search-note-hints"> </datalist>
             <input class="input" list="tags" name="tags_query" value="{{ tags_query or '' }}" placeholder="Enter tags">
             <datalist id="books">
               {% for material_id, title in titles | dictsort(by='value') %}
