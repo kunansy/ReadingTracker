@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from tracker.notes import speech_recognizer
 
 import pytest
@@ -20,3 +22,21 @@ def test_get_best_result_no_results():
         speech_recognizer.get_best_result({"error": "not found"})
 
     assert str(e.value) == "No results found"
+
+
+def test_recognize():
+    src = Path("tests/test_transcript_src.wav").read_bytes()
+    dst = Path("tests/test_transcript.wav").read_bytes()
+
+    file = speech_recognizer.get_file_content(src)
+    path = speech_recognizer.dump(file)
+    speech_recognizer.fix_file_format(path)
+
+    assert path.read_bytes() == dst
+
+    audio = speech_recognizer.read_file(path)
+
+    result = speech_recognizer.recognize(audio)
+    best = speech_recognizer.get_best_result(result)
+
+    assert best.model_dump() == {"transcript": "Этот файл записывается для теста и будет сохранён в test", "confidence": 88.91}
