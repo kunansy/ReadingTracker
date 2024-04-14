@@ -236,3 +236,39 @@ if (pagination) {
         })
     })
 }
+
+
+const searchHints = document.getElementById("search-hints");
+if (searchHints) {
+    searchHints.addEventListener("keydown", async (e) => {
+        if (!e.target.value)
+            return;
+        console.log(e.target.value);
+
+        let hints = await fetch(
+            `/notes/autocompletion?query=${e.target.value}&limit=5`,
+            {
+                method: "GET",
+                headers: {'Content-type': 'application/json'},
+            }
+        );
+
+        let respJson = await hints.json();
+        respJson = respJson["autocompletions"];
+
+        console.log(respJson);
+        let inputField = document.getElementById("search-hints");
+        inputField.removeAttribute("list");
+
+        let datalist = document.getElementById("search-note-hints");
+        datalist.innerHTML = "";
+
+        for (let hint of respJson) {
+            let option = document.createElement('option');
+            option.value = hint;
+            datalist.appendChild(option);
+        }
+
+        inputField.setAttribute("list", "search-note-hints");
+    })
+}
