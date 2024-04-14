@@ -1,5 +1,5 @@
 import re
-from typing import Any, TypedDict
+from typing import Any
 from uuid import UUID
 
 from fastapi import Form
@@ -191,11 +191,6 @@ class SearchParams(CustomBaseModel):
             return set()
 
         return {tag.strip() for tag in tags_query.split() if tag.strip()}
-
-
-class RecognitionResult(TypedDict):
-    transcript: str
-    confidence: float
 
 
 class TranscriptTextResponse(CustomBaseModel):

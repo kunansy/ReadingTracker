@@ -53,9 +53,9 @@ def recognize(audio: speech_recognition.AudioData) -> dict:
     return recognizer.recognize_google(audio, language="ru", show_all=True)
 
 
-def get_best_result(results: dict) -> schemas.RecognitionResult:
+def get_best_result(results: dict) -> schemas.TranscriptTextResponse:
     if not (texts := results.get("alternative")):
         raise ValueError("No results found")
 
     texts.sort(key=lambda result: result.get("confidence", 0), reverse=True)
-    return texts[0]
+    return schemas.TranscriptTextResponse(**texts[0])
