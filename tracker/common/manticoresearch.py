@@ -6,9 +6,8 @@ from uuid import UUID
 import aiomysql
 import sqlalchemy.sql as sa
 from aiomysql.cursors import Cursor as MysqlCursor
-from pydantic import field_validator
 
-from tracker.common import database, deprecated_async, settings
+from tracker.common import database, settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import models
@@ -22,14 +21,6 @@ class Note(CustomBaseModel):
     note_id: UUID
     content: str
     added_at: datetime.datetime
-
-    @field_validator("content")
-    def remove_tags_from_content(cls, content: str) -> str:
-        """Remove tags from note content to don't search on it."""
-        if (index := content.find("#")) == -1:
-            return content
-
-        return content[:index].strip()
 
 
 class SearchResult(CustomBaseModel):
@@ -145,17 +136,6 @@ async def init() -> None:
     logger.info("Manticore search init completed")
 
 
-@deprecated_async
-async def insert(note_id: UUID) -> None:
-    logger.debug("Inserting note=%s", note_id)
-    note = await _get_note(note_id=note_id)
-
-    async with _cursor() as cur:
-        await cur.execute(INSERT_QUERY, list(note.model_dump().values()))
-
-    logger.debug("Note inserted")
-
-
 async def delete(note_id: UUID | str) -> None:
     logger.debug("Deleting note=%s", note_id)
 
@@ -177,16 +157,6 @@ async def update_content(
     async with _cursor() as cur:
         await cur.execute(DELETE_QUERY, note_id)
         await cur.execute(INSERT_QUERY, (note_id, content, added_at))
-
-    logger.debug("Note updated")
-
-
-@deprecated_async
-async def update(note_id: UUID) -> None:
-    logger.debug("Updating note=%s", note_id)
-
-    await delete(note_id)
-    await insert(note_id)
 
     logger.debug("Note updated")
 
