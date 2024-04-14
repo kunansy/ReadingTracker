@@ -1,14 +1,16 @@
 import random
-from uuid import UUID, uuid4
+from collections.abc import Sequence
 from decimal import Decimal
-from typing import Sequence
+from uuid import UUID, uuid4
 
 import pytest
 import sqlalchemy.sql as sa
 
 from tracker.common import database
+from tracker.materials import db as materials_db
 from tracker.models import models
-from tracker.reading_log import db, statistics as st
+from tracker.reading_log import db
+from tracker.reading_log import statistics as st
 
 
 def mean(coll: Sequence[int | float | Decimal]) -> int | float | Decimal:
@@ -99,18 +101,35 @@ async def test_get_lost_days():
     assert lost_days == expected_duration - len(records)
 
 
-@pytest.mark.skip
 @pytest.mark.asyncio
 async def test_get_means():
     means = await st.get_means()
     records = await db.get_log_records()
-    record_counts = [Decimal(record.count) for record in records]
-
-    # TODO: wtf?
-    mean_pages = mean(list(means.values()))
 
     assert records
-    assert mean_pages == round(mean(record_counts), 2)
+
+    materials = {
+        material.material_id: material.material_type
+        for material in await materials_db.get_materials()
+    }
+    material_to_date = {
+        material_type: {
+            record.date: 0
+            for record in records
+        }
+        for material_type in materials.values()
+    }
+    for record in records:
+        material_type = materials[record.material_id]
+        material_to_date[material_type][record.date] += record.count
+
+    expected = {
+        material_type: mean([Decimal(value) for value in dates.values() if value != 0])
+        for material_type, dates in material_to_date.items()
+    }
+
+    for material_type, mean_ in means.items():
+        assert round(expected[material_type], 2) == mean_
 
 
 @pytest.mark.asyncio
@@ -229,20 +248,20 @@ async def test_get_tracker_statistics():
     stat = await st.get_tracker_statistics()
 
     assert stat
-    assert stat.lost_time_percent == round(stat.lost_time / stat.duration, 2) * 100
+    assert stat.lost_time_percent == round(stat.lost_time / stat.duration * 100)
     assert (
         stat.would_be_total_percent
         == round(stat.would_be_total / stat.total_pages_read, 2) * 100
     )
 
     stat.duration = 706
-    assert stat.duration_period == "1 years 11 months 11 days"
+    assert stat.duration_period == "1 years, 11 months, 11 days"
     stat.lost_time = 706
-    assert stat.lost_time_period == "1 years 11 months 11 days"
+    assert stat.lost_time_period == "1 years, 11 months, 11 days"
 
     stat.lost_time = 23
     stat.duration = 100
-    assert stat.lost_time_percent == 23.0
+    assert stat.lost_time_percent == 23
 
     stat.would_be_total = 142
     stat.total_pages_read = 71

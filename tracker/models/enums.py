@@ -11,4 +11,4 @@ class MaterialTypesEnum(str, Enum):
     audiobook = "audiobook"
 
 
-MEANS: TypeAlias = dict[MaterialTypesEnum, Decimal]
+MEANS: TypeAlias = dict[MaterialTypesEnum, Decimal]  # noqa: UP040

@@ -35,7 +35,7 @@
         <p> First record date: {{ stat.started_at }} </p>
         <p> Last record date: {{ stat.finished_at }} </p>
         <p> Duration: {{ stat.duration_period }} </p>
-        <p> Lost time: {{ stat.lost_time_period }}, {{ stat.lost_time_percent | round(2, 'ceil')}}% </p>
+        <p> Lost time: {{ stat.lost_time_period }}, {{ stat.lost_time_percent }}% </p>
         <p> Mean: {{ stat.mean | round(1, 'ceil') }} </p>
         <p> Median: {{ stat.median }} </p>
         <p> Total materials completed: {{ stat.total_materials_completed }} </p>
@@ -52,7 +52,7 @@
         <div class="statistics">
             <p> Total: {{ reading_trend.total }} </p>
             <p> Would be total: {{ reading_trend.would_be_total }} </p>
-            <p> Zero count: {{ reading_trend.zero_count }} </p>
+            <p> Zero days: {{ reading_trend.zero_days }} </p>
             <p> Mean: {{ reading_trend.mean }} </p>
             <p> Median: {{ reading_trend.median }} </p>
             <p> Max: {{ reading_trend.max }} </p>
@@ -66,11 +66,25 @@
 
         <div class="statistics">
             <p> Total: {{ notes_trend.total }} </p>
-            <p> Zero count: {{ notes_trend.zero_count }} </p>
+            <p> Zero days: {{ notes_trend.zero_days }} </p>
             <p> Mean: {{ notes_trend.mean }} </p>
             <p> Median: {{ notes_trend.median }} </p>
             <p> Max: {{ notes_trend.max }} </p>
             <p> Min: {{ notes_trend.min }} </p>
+        </div>
+    </div>
+
+    <div class="graphic-image trend completed-materials-trend">
+        <h3 class="header"> Completed materials </h3>
+        <img src="data:image/svg+xml;base64,{{ completed_materials_trend_image }}">
+
+        <div class="statistics">
+            <p> Total: {{ completed_materials_trend.total }} </p>
+            <p> Zero days: {{ completed_materials_trend.zero_days }} </p>
+            <p> Mean: {{ completed_materials_trend.mean }} </p>
+            <p> Median: {{ completed_materials_trend.median }} </p>
+            <p> Max: {{ completed_materials_trend.max }} </p>
+            <p> Min: {{ completed_materials_trend.min }} </p>
         </div>
     </div>
 {% endblock main%}

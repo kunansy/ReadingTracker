@@ -42,6 +42,8 @@ div.group {
 .material_title {
     margin: auto;
     font-size: 6vh;
+    max-width: 75%;
+    text-align: center;
 }
 .chapter_number {
     margin: 4vh auto 1vh;
@@ -117,4 +119,19 @@ div.note p {
     border: none;
     margin: auto;
     display: flex;
+}
+
+div.pagination {
+    display: flex;
+    margin: auto;
+    flex-direction: row;
+    border: black 0.25vh solid;
+    border-radius: .75vh;
+}
+div.pagination-item {
+    margin: 1vw;
+}
+
+div.current-page {
+    background-color: rgba(33, 33, 33, .5);
 }

@@ -11,6 +11,8 @@
 {%- endblock header -%}
 
 {% block main %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
 {% if titles %}
     <div class="form">
         <form action="/notes" method="GET">
@@ -33,6 +35,7 @@
 {% endif %}
 
 {% if chapters %}
+{#    TODO: divided endpoint to create a menu #}
     <div class="menu">
     <details class="menu">
         <summary> Menu </summary>
@@ -58,6 +61,20 @@
     </div>
 {% endif %}
 
+<div class="form pagination">
+    {% set range_start = 1 %}
+    {% set range_stop = 11 %}
+    {% if current_page > 5 %}
+        {% set range_start = current_page - 4 %}
+        {% set range_stop = current_page + 6 %}
+        <div class="pagination-item hover"> « </div>
+    {% endif %}
+    {% for page in range(range_start, range_stop) %}
+        <div class="pagination-item hover {% if page == current_page %} current-page {% endif %}">{{ page }}</div>
+    {% endfor %}
+    <div class="pagination-item hover"> » </div>
+</div>
+
 {% if notes %}
     {% set length = notes | length %}
     {% set index = namespace(value=1) %}
@@ -77,18 +94,26 @@
     {% endif %}
 
     <div class="group">
-        <h3 class="material_title" id="material-{{material_id}}"> «{{ titles.get(material_id, "Without material") }}» ({{ notes_m | length }})</h3>
+    {% set notes_count = material_notes.get(material_id, notes_m | length) %}
+        <h3 class="material_title" id="material-{{material_id}}"> «{{ titles.get(material_id, "Without material") }}» ({{ notes_count }})</h3>
 
         {% for chapter, note_c in notes_m | groupby('chapter') %}
             <h4 class="chapter_number" id="material-{{material_id}}-chapter-{{chapter}}"> {{ chapter_name }}: {{ chapter }} </h4>
             {% for note in note_c %}
             <div class="note hover" id="{{ note.note_id }}">
-                <p class="little-text"> {{ index.value }} / {{ length }}</p>
+{#              TODO #}
+                <p class="little-text"> {{ (current_page - 1) * page_size + index.value }} / {{ notes_count }}</p>
                 <p class="little-text note-id-row hover"> Note id: {{ note.note_id }} </p>
                 {% if note.title %}
                     <p class="note-title large-text"> «{{ note.title }}» </p>
                 {% endif %}
-                <p class="note-content"> {{ note.content | safe }} </p>
+                <p class="note-content"> {{ note.content_html | safe }} </p>
+                {% if note.tags %}
+                    <p class="note-content"> {{ note.tags_html | safe }} </p>
+                {% endif %}
+                {% if note.link_id %}
+                    <p class="note-content link-ref"> {{ note.link_html | safe }} </p>
+                {% endif %}
                 <p class="note-page"> {{ page_name }}: {{ note.page }} </p>
                 <p class="medium-text" title="How many notes link to this one"> Links count: {{ note.links_count }} </p>
             </div>
@@ -106,4 +131,5 @@
     {% import 'errors/not_found.html' as not_found %}
     {% call not_found.not_found('notes') %} {% endcall %}
 {% endif %}
+<script src="{{ url_for('static', path='js/notes.js')}}"></script>
 {% endblock main %}

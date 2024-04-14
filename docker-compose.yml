@@ -1,8 +1,23 @@
 version: '3'
 
+x-db-img: &db-img
+  image: postgres:16-alpine
+
+x-search-img: &search-img
+  image: kunansy/tracker_search:6.2.12
+
+x-backup-img: &backup-img
+  image: kunansy/fast-backup:0.5.5
+
+x-cache-img: &cache-img
+  image: redis:7.2-alpine
+
+x-tracker-img: &tracker-img
+  image: kunansy/reading_tracker:2.25.5
+
 services:
   tracker-db:
-    image: postgres:15-alpine
+    <<: *db-img
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -22,7 +37,7 @@ services:
       retries: 3
 
   tracker-search:
-    image: kunansy/tracker_search:6.2.12
+    <<: *search-img
     container_name: tracker-search
     restart: always
     ports:
@@ -46,7 +61,7 @@ services:
       - TELEMETRY=0
 
   tracker-backup:
-    image: kunansy/fast-backup:0.5.2
+    <<: *backup-img
     restart: always
     container_name: tracker-backup
     env_file: .env
@@ -61,7 +76,7 @@ services:
       test: exit 0
 
   tracker-cache:
-    image: redis:7.2-alpine
+    <<: *cache-img
     container_name: tracker-cache
     restart: always
     env_file: .env
@@ -70,7 +85,7 @@ services:
     networks:
       - tracker-net
     ports:
-      - "127.0.0.1:6379:6379"
+      - "127.0.0.1:${CACHE_PORT}:6379"
     volumes:
       - cache-volume:/data
     environment:
@@ -82,15 +97,10 @@ services:
       retries: 3
 
   tracker-app:
-    image: kunansy/reading_tracker:2.23.2
+    <<: *tracker-img
     container_name: tracker-app
     env_file: .env
     restart: always
-    depends_on:
-      - tracker-db
-      - tracker-search
-      - tracker-backup
-      - tracker-cache
     ports:
        - "127.0.0.1:${API_PORT}:8000"
     entrypoint: ["gunicorn", "tracker.main:app", "--bind", "0.0.0.0:8000", "--workers",
@@ -108,40 +118,33 @@ services:
       timeout: 5s
       retries: 3
 
-  tracker-prometheus:
-    image: prom/prometheus:2.48
-    container_name: tracker-prometheus
-    ports:
-      - "127.0.0.1:9090:9090"
-    volumes:
-      - ./prometheus_data/prometheus.yml:/etc/prometheus/prometheus.yml
-      - prometheus-volume:/prometheus
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-    networks:
-      - tracker-net
-
-  tracker-grafana:
-    image: grafana/grafana:10.0
-    container_name: tracker-grafana
-    ports:
-      - "127.0.0.1:3000:3000"
-    volumes:
-      - grafana-volume:/var/lib/grafana
+  tracker-debezium-parser:
+    <<: *tracker-img
+    container_name: tracker-debezium-parser
+    env_file: .env
+    restart: always
+    entrypoint: ["python3", "kafka/debezium_parser.py"]
     networks:
       - tracker-net
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
+      test: "exit 0"
+
+  tracker-matview-refresher:
+    <<: *tracker-img
+    container_name: tracker-matview-refresher
+    env_file: .env
+    restart: always
+    entrypoint: ["/srv/cronn", "-c", "59 * * * * python3 kafka/refresh_view.py"]
+    networks:
+      - tracker-net
+    healthcheck:
+      test: "exit 0"
 
 volumes:
   database-volume:
   manticore-data:
   cache-volume:
-  grafana-volume:
-  prometheus-volume:
 
 networks:
   tracker-net:
+    external: true

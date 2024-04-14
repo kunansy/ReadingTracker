@@ -6,15 +6,13 @@ from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import ORJSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi_cache import FastAPICache
-from fastapi_cache.backends.redis import RedisBackend
-from redis import asyncio as aioredis
 from starlette_exporter import PrometheusMiddleware, handle_metrics
 
 from tracker.cards.routes import router as cards_router
-from tracker.common import database, manticoresearch, settings
+from tracker.common import database, manticoresearch, redis_api, settings
 from tracker.common.logger import logger
 from tracker.materials.routes import router as materials_router
+from tracker.notes import db as notes_db
 from tracker.notes.routes import router as notes_router
 from tracker.reading_log.routes import router as reading_log_router
 from tracker.system.routes import router as system_router
@@ -51,15 +49,18 @@ app.include_router(system_router)
 
 
 @app.on_event("startup")
-async def startup():
-    redis = aioredis.from_url(
-        settings.CACHE_URL,
-        password=settings.CACHE_PASSWORD,
-        encoding="utf8",
-        decode_responses=True,
-    )
-    assert await redis.ping()
-    FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
+async def init_cache():
+    if settings.DEBUG_MODE:
+        return
+
+    logger.info("Init cache")
+    if not await redis_api.healthcheck():
+        raise ValueError("Redis is offline")
+
+    notes = await notes_db.get_notes()
+    await redis_api.set_notes(notes)
+
+    logger.info("Complete init")
 
 
 @app.exception_handler(database.DatabaseException)
@@ -80,10 +81,13 @@ async def database_exception_handler(request: Request, exc: database.DatabaseExc
 
 @app.exception_handler(manticoresearch.ManticoreException)
 async def manticore_exception_handler(
-    request: Request, exc: manticoresearch.ManticoreException
+    request: Request,
+    exc: manticoresearch.ManticoreException,
 ):
     logger.exception(
-        "Manticoresearch exception occurred, (%s), %s", request.url, str(exc)
+        "Manticoresearch exception occurred, (%s), %s",
+        request.url,
+        str(exc),
     )
 
     context = {
@@ -131,8 +135,14 @@ async def readiness():
     async with asyncio.TaskGroup() as tg:
         db_readiness = tg.create_task(database.readiness())
         manticore_readiness = tg.create_task(manticoresearch.readiness())
+        cache_readiness = tg.create_task(redis_api.healthcheck())
 
-    if db_readiness.result() is manticore_readiness.result() is True:
+    if (
+        db_readiness.result()
+        is manticore_readiness.result()
+        is cache_readiness.result()
+        is True
+    ):
         status_code = 200
 
     return ORJSONResponse(content={}, status_code=status_code)

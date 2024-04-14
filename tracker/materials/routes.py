@@ -4,12 +4,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from fastapi_cache.coder import PickleCoder
-from fastapi_cache.decorator import cache
+from pydantic import HttpUrl
 
 from tracker.common import settings
 from tracker.common.logger import logger
-from tracker.common.schemas import ORJSONEncoder
 from tracker.materials import db, schemas
 from tracker.models import enums
 
@@ -27,7 +25,6 @@ async def root():
 
 
 @router.get("/queue", response_class=HTMLResponse)
-@cache(namespace="materials", coder=PickleCoder, expire=3)
 async def get_queue(request: Request):
     estimates = await db.estimate()
     mean = await db.get_means()
@@ -42,9 +39,8 @@ async def get_queue(request: Request):
 
 
 @router.get("/add-view", response_class=HTMLResponse)
-@cache(namespace="materials", coder=PickleCoder, expire=3)
 async def insert_material_view(request: Request):
-    """Insert a material to the queue"""
+    """Insert a material to the queue."""
     tags = await db.get_material_tags()
     context = {
         "request": request,
@@ -56,7 +52,7 @@ async def insert_material_view(request: Request):
 
 @router.post("/add", response_class=HTMLResponse)
 async def insert_material(material: schemas.Material = Depends()):
-    """Insert a material to the queue"""
+    """Insert a material to the queue."""
     await db.insert_material(
         title=material.title,
         authors=material.authors,
@@ -71,9 +67,10 @@ async def insert_material(material: schemas.Material = Depends()):
 
 
 @router.get("/update-view", response_class=HTMLResponse)
-@cache(namespace="materials", coder=PickleCoder, expire=3)
 async def update_material_view(
-    request: Request, material_id: UUID, success: bool | None = None
+    request: Request,
+    material_id: UUID,
+    success: bool | None = None,
 ):
     context: dict[str, Any] = {
         "request": request,
@@ -136,7 +133,7 @@ async def start_material(material_id: UUID):
 
     await db.start_material(material_id=material_id)
 
-    redirect_url = router.url_path_for(get_queue.__name__)
+    redirect_url = router.url_path_for(get_reading_materials.__name__)
     return RedirectResponse(redirect_url, status_code=302)
 
 
@@ -144,13 +141,13 @@ async def start_material(material_id: UUID):
 async def complete_material(material_id: UUID):
     await db.complete_material(material_id=material_id)
 
-    redirect_url = router.url_path_for(get_reading_materials.__name__)
+    redirect_url = router.url_path_for(get_completed_materials.__name__)
     return RedirectResponse(redirect_url, status_code=302)
 
 
 @router.post("/outline/{material_id}")
 async def outline_material(material_id: UUID):
-    """Mark the material as outlined"""
+    """Mark the material as outlined."""
     await db.outline_material(material_id=material_id)
 
     redirect_url = router.url_path_for(get_reading_materials.__name__)
@@ -166,7 +163,6 @@ async def repeat_material(material_id: UUID):
 
 
 @router.get("/reading", response_class=HTMLResponse)
-@cache(namespace="materials", coder=PickleCoder, expire=3)
 async def get_reading_materials(request: Request):
     statistics = await db.reading_statistics()
 
@@ -179,7 +175,6 @@ async def get_reading_materials(request: Request):
 
 
 @router.get("/completed", response_class=HTMLResponse)
-@cache(namespace="materials", coder=PickleCoder, expire=3)
 async def get_completed_materials(request: Request):
     statistics = await db.completed_statistics()
 
@@ -192,10 +187,9 @@ async def get_completed_materials(request: Request):
 
 
 @router.get("/repeat-view", response_class=HTMLResponse)
-@cache(namespace="materials", coder=PickleCoder, expire=5)
 async def get_repeat_view(request: Request, only_outlined: Literal["on", "off"] = "off"):
     is_outlined = only_outlined == "on"
-    repeating_queue = await db.get_repeating_queue(is_outlined)
+    repeating_queue = await db.get_repeating_queue(is_outlined=is_outlined)
 
     context = {
         "request": request,
@@ -207,24 +201,21 @@ async def get_repeat_view(request: Request, only_outlined: Literal["on", "off"] 
 
 
 @router.get("/repeat-queue", response_model=list[db.RepeatingQueue])
-@cache(namespace="materials", coder=ORJSONEncoder, expire=5)
-async def get_repeat_queue(only_outlined: bool = False):
-    return await db.get_repeating_queue(only_outlined)
+async def get_repeat_queue(*, only_outlined: bool = False):
+    return await db.get_repeating_queue(is_outlined=only_outlined)
 
 
 @router.get("/queue/start")
-@cache(namespace="materials", coder=ORJSONEncoder, expire=3)
 async def get_queue_start():
-    """Get the first material index in the queue"""
+    """Get the first material index in the queue."""
     index = await db.get_queue_start()
 
     return {"index": index}
 
 
 @router.get("/queue/end")
-@cache(namespace="materials", coder=ORJSONEncoder, expire=3)
 async def get_queue_end():
-    """Get the last material index in the queue"""
+    """Get the last material index in the queue."""
     index = await db.get_queue_end()
 
     return {"index": index}
@@ -239,8 +230,39 @@ async def update_queue_order(material_id: UUID, index: int):
 
 
 @router.get("/is-reading")
-@cache(namespace="materials", coder=ORJSONEncoder, expire=3)
 async def is_material_reading(material_id: UUID):
     is_reading = await db.is_reading(material_id=material_id)
 
     return {"is_reading": is_reading}
+
+
+@router.post(
+    "/parse/habr",
+    response_model=schemas.ParsedMaterial,
+    response_model_exclude_unset=True,
+)
+async def parse_habr_article(link: HttpUrl):
+    if not (host := link.host):
+        return HTTPException(detail="Invalid habr url", status_code=400)
+
+    if not (host.startswith("habr.") and host.endswith((".com", ".ru"))):
+        return HTTPException(detail="Invalid habr url", status_code=400)
+
+    html = await db.get_html(str(link))
+    article_info = db.parse_habr(html)
+
+    return {"link": str(link), "type": "article", **article_info}
+
+
+@router.post("/parse/youtube")
+async def parse_youtube_video(link: HttpUrl):
+    if not (host := link.host):
+        return HTTPException(detail="Invalid youtube url", status_code=400)
+
+    if host.replace("www.", "") not in ("youtube.com", "youtu.be"):
+        return HTTPException(detail="Invalid youtube url", status_code=400)
+
+    video_id = link.query_params()[0][1]
+    video_info = await db.parse_youtube(video_id)
+
+    return {"link": str(link), "type": "lecture", **video_info}

@@ -2,10 +2,11 @@ import asyncio
 import base64
 import datetime
 import statistics
+from collections.abc import Generator, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 from io import BytesIO
-from typing import Any, Generator, NamedTuple, Sequence
+from typing import Any, NamedTuple
 
 import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa
@@ -36,11 +37,14 @@ class SpanStatistics:
     data: list[DayStatistics]
 
     def __init__(
-        self, days: Sequence[tuple[datetime.date, int]], *, span_size: int
+        self,
+        days: Sequence[tuple[datetime.date, int]],
+        *,
+        span_size: int,
     ) -> None:
         if len(days) != span_size:
             raise TrendException(
-                f"A span should contains exactly {span_size} days, but {len(days)} found"
+                f"A span should contains exactly {span_size} days, but {len(days)} found",
             )
 
         self.data = [DayStatistics(date=date, amount=amount) for date, amount in days]
@@ -87,7 +91,11 @@ class SpanStatistics:
 
     @property
     def min(self) -> DayStatistics:
-        return min(self.data, key=lambda day: day.amount)
+        data = filter(lambda day: day.amount != 0, self.data)
+        try:
+            return min(data, key=lambda day: day.amount)
+        except ValueError:
+            return self.data[0]
 
     @property
     def zero_days(self) -> int:
@@ -148,7 +156,7 @@ class TimeSpan:
 
 @dataclass
 class _MaterialAnalytics:
-    """Analytics grouped by material type"""
+    """Analytics grouped by material type."""
 
     stats: dict[enums.MaterialTypesEnum, int]
     total: int
@@ -170,14 +178,16 @@ class SpanAnalysis:
 
 
 def _get_span(size: int) -> TimeSpan:
-    now = datetime.date.today()
+    now = database.utcnow().date()
     start = now - datetime.timedelta(days=size - 1)
 
     return TimeSpan(start=start, stop=now, span_size=size)
 
 
 def _iterate_over_span(
-    span: TimeSpan, *, size: int
+    span: TimeSpan,
+    *,
+    size: int,
 ) -> Generator[datetime.date, None, None]:
     start = span.start
     for day in range(size):
@@ -189,7 +199,8 @@ async def _calculate_span_reading_statistics(span: TimeSpan) -> dict[datetime.da
 
     stmt = (
         sa.select(
-            models.ReadingLog.c.date, sa.func.sum(models.ReadingLog.c.count).label("cnt")
+            models.ReadingLog.c.date,
+            sa.func.sum(models.ReadingLog.c.count).label("cnt"),
         )
         .where(models.ReadingLog.c.date >= span.start)
         .where(models.ReadingLog.c.date <= span.stop)
@@ -226,8 +237,34 @@ async def _calculate_span_notes_statistics(span: TimeSpan) -> dict[datetime.date
     return {row.date: row.cnt for row in rows}
 
 
+async def _calculate_span_completed_materials_statistics(
+    span: TimeSpan,
+) -> dict[datetime.date, int]:
+    logger.debug("Calculating span completed materials statistics")
+
+    stmt = (
+        sa.select(
+            sa.func.date(models.Statuses.c.completed_at).label("date"),
+            sa.func.count(models.Statuses.c.material_id).label("cnt"),
+        )
+        .group_by(sa.func.date(models.Statuses.c.completed_at))
+        .where(sa.func.date(models.Statuses.c.completed_at) >= span.start)
+        .where(sa.func.date(models.Statuses.c.completed_at) <= span.stop)
+    )
+
+    async with database.session() as ses:
+        rows = (await ses.execute(stmt)).all()
+
+    logger.debug("Span completed materials statistics calculated")
+
+    return {row.date: row.cnt for row in rows}
+
+
 def _get_span_statistics(
-    *, stat: dict[datetime.date, int], span: TimeSpan, span_size: int
+    *,
+    stat: dict[datetime.date, int],
+    span: TimeSpan,
+    span_size: int,
 ) -> SpanStatistics:
     logger.debug("Getting span statistics of size = %s", span_size)
 
@@ -254,8 +291,15 @@ async def get_span_notes_statistics(*, span_size: int) -> SpanStatistics:
     return _get_span_statistics(stat=stat, span=span, span_size=span_size)
 
 
+async def get_span_completed_materials_statistics(*, span_size: int) -> SpanStatistics:
+    span = _get_span(span_size)
+    stat = await _calculate_span_completed_materials_statistics(span=span)
+
+    return _get_span_statistics(stat=stat, span=span, span_size=span_size)
+
+
 async def get_span_analytics(__span: schemas.GetSpanReportRequest) -> SpanAnalysis:
-    """Calculate both reading and notes statistics"""
+    """Calculate both reading and notes statistics."""
     size = __span.size
     span = TimeSpan(start=__span.start, stop=__span.stop, span_size=size)
 
@@ -267,10 +311,14 @@ async def get_span_analytics(__span: schemas.GetSpanReportRequest) -> SpanAnalys
         repeat_analytics_task = tg.create_task(_get_repeats_count(span))
 
     reading_stats = _get_span_statistics(
-        stat=reading_stats_task.result(), span=span, span_size=size
+        stat=reading_stats_task.result(),
+        span=span,
+        span_size=size,
     )
     notes_stats = _get_span_statistics(
-        stat=notes_stats_task.result(), span=span, span_size=size
+        stat=notes_stats_task.result(),
+        span=span,
+        span_size=size,
     )
 
     return SpanAnalysis(
@@ -283,8 +331,7 @@ async def get_span_analytics(__span: schemas.GetSpanReportRequest) -> SpanAnalys
 
 
 async def _materials_analytics(span: TimeSpan) -> _MaterialAnalytics:
-    """Get how many materials was completed in the span,
-    group them by material types"""
+    """Get how many materials was completed in the span, group them by material types."""
     stmt = (
         sa.select(
             models.Materials.c.material_type,
@@ -304,8 +351,7 @@ async def _materials_analytics(span: TimeSpan) -> _MaterialAnalytics:
 
 
 async def _reading_analytics(span: TimeSpan) -> _MaterialAnalytics:
-    """Get how many pages were read in the span,
-    group them by material types"""
+    """Get how many pages were read in the span, group them by material types."""
     stmt = (
         sa.select(
             models.Materials.c.material_type,
@@ -327,7 +373,7 @@ async def _reading_analytics(span: TimeSpan) -> _MaterialAnalytics:
 async def _get_repeats_count(span: TimeSpan) -> _RepeatAnalytics:
     stmt = (
         sa.select(
-            sa.func.count(1).label("cnt"),  # type: ignore
+            sa.func.count(1).label("cnt"),  # type: ignore[arg-type]
             sa.func.count(models.Repeats.c.material_id.distinct()).label("ucnt"),
         )
         .select_from(models.Repeats)
@@ -345,9 +391,10 @@ async def _get_repeats_count(span: TimeSpan) -> _RepeatAnalytics:
 
 
 def _get_colors(
-    completion_dates: dict[Any, datetime.datetime] | None, days: list[str]
+    completion_dates: dict[Any, datetime.datetime] | None,
+    days: list[str],
 ) -> list[str] | None:
-    """Mark the days when a material completed with green"""
+    """Mark the days when a material completed with green."""
     if not completion_dates:
         return None
 
@@ -378,7 +425,8 @@ def _create_graphic(
         line = plt.axvline(x=float(stat.mean), color="black", linestyle="-")
         line.set_label(f"Mean {stat.mean} items")
 
-    xlim = -0.5, int(stat.max.amount * 1.2) or 100
+    a_percent = stat.max.amount / 100
+    xlim = -a_percent, a_percent * 115 or 100
 
     ax.set_title(title)
     ax.set_xlabel("Items count")
@@ -397,24 +445,31 @@ def _create_graphic(
     return image
 
 
-async def create_reading_graphic(
-    stat: SpanStatistics | None = None,
+def create_reading_graphic(
+    stat: SpanStatistics,
     *,
-    span_size: int = 7,
     completion_dates: dict[Any, datetime.datetime] | None = None,
 ) -> str:
     logger.info("Creating reading graphic")
 
-    stat = stat or await get_span_reading_statistics(span_size=span_size)
     return _create_graphic(
-        stat=stat, title="Total pages read", completion_dates=completion_dates
+        stat=stat,
+        title="Total pages read",
+        completion_dates=completion_dates,
     )
 
 
-async def create_notes_graphic(
-    stat: SpanStatistics | None = None, *, span_size: int = 7
+def create_notes_graphic(
+    stat: SpanStatistics,
 ) -> str:
     logger.info("Creating notes graphic")
 
-    stat = stat or await get_span_notes_statistics(span_size=span_size)
     return _create_graphic(stat=stat, title="Total notes inserted")
+
+
+def create_completed_materials_graphic(
+    stat: SpanStatistics,
+) -> str:
+    logger.info("Creating completed materials graphic")
+
+    return _create_graphic(stat=stat, title="Total materials completed")

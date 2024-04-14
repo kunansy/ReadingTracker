@@ -34,15 +34,19 @@ const addHotKeys = () => {
             }
             // on Ctrl-I
             else if (e.keyCode === 73 && e.ctrlKey) {
-                surroundSelection(input, "__", "__");
+                surroundSelection(input, "*", "*");
+            }
+            // on Ctrl-J
+            else if (e.keyCode === 74 && e.ctrlKey) {
+                surroundSelection(input, "`", "`");
             }
             // on Alt-Down
             else if (e.keyCode === 40 && e.altKey) {
-                surroundSelection(input, "<span class=sub>", "</span>");
+                surroundSelection(input, "<sub>", "</sub>");
             }
             // on Alt-Up
             else if (e.keyCode === 38 && e.altKey) {
-                surroundSelection(input, "<span class=sup>", "</span>");
+                surroundSelection(input, "<sup>", "</sup>");
             }
             // on Ctrl-K
             else if (e.keyCode === 75 && e.ctrlKey) {
@@ -311,8 +315,24 @@ const restoreNoteBtn = (note_id) => {
     );
 }
 
+const insertToRepeatQueue = (note_id) => {
+    return createContextMenuItem(
+        "Insert to repeat queue",
+        async () => {
+            let resp = await fetch(`/notes/repeat-queue/insert?note_id=${note_id}`, {
+                method: 'POST',
+                headers: {'Content-type': 'application/json'},
+            });
+
+            if (!resp.ok) {
+                console.log("Error: " + await resp.text());
+            }
+        }
+    );
+}
+
 const getNote = async (note_id) => {
-    let resp = await fetch(`/notes/note-json?note_id=${note_id}`, {
+    let resp = await fetch(`/notes/note-json?note_id=${note_id.trim()}`, {
         method: 'GET',
         headers: {'Content-type': 'application/json'},
     });
@@ -334,6 +354,8 @@ const addNoteContextMenuItems = async (note) => {
     } else {
         contextMenu.appendChild(deleteNoteBtn(note.id));
     }
+    contextMenu.appendChild(insertToRepeatQueue(note.id));
+
     let url = new URL(document.URL);
     // when it's a single note page
     if (url.pathname === "/notes/note") {
@@ -355,8 +377,8 @@ const addCopyNoteIdListener = () => {
 }
 
 const addLink = (note_id) => {
-    let field = document.getElementById("input-content");
-    field.value += `\n[[${note_id}]]`;
+    let field = document.getElementById("note-link");
+    field.value += `${note_id}`;
 }
 
 const addLinkBtn = (note_id) => {
@@ -384,4 +406,50 @@ addCopyNoteIdListener();
 
 document.addEventListener("DOMContentLoaded", async () => {
     addHotKeys();
+});
+
+const parseBtn = document.getElementById("parse-btn");
+if (parseBtn) {
+    parseBtn.onclick = async () => {
+        let link = document.getElementById("parse-url").value;
+        if (link.includes("habr")) {
+            var resp = await fetch(`/materials/parse/habr?link=${link.toString()}`, {
+                method: 'POST',
+                headers: {'Content-type': 'application/json'},
+            });
+        } else if (link.includes("youtu")) {
+            var resp = await fetch(`/materials/parse/youtube?link=${link.toString()}`, {
+                method: 'POST',
+                headers: {'Content-type': 'application/json'},
+            });
+        }
+
+        let respJson = await resp.json();
+
+        let titleField = document.getElementById("input-title");
+        let authorsField = document.getElementById("input-authors");
+        let durationField = document.getElementById("input-duration");
+        let linkField = document.getElementById("input-link");
+        let typeField = document.getElementById("input-type");
+
+        titleField.textContent = respJson["title"];
+        titleField.value = respJson["title"];
+
+        authorsField.textContent = respJson["author"];
+        authorsField.value = respJson["author"];
+
+        durationField.textContent = respJson["duration"];
+        durationField.value = respJson["duration"];
+
+        typeField.textContent = respJson["type"];
+        typeField.value = respJson["type"];
+
+        linkField.textContent = respJson["link"];
+        linkField.value = respJson["link"];
+    };
+}
+
+
+document.querySelectorAll("p.note-content").forEach((e) => {
+    e.innerHTML = marked.parse(e.innerHTML.replaceAll("<br>", "\n"));
 });

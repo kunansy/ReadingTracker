@@ -1,19 +1,29 @@
-NUMCPU := $(shell nproc 2> /dev/null || sysctl -n hw.ncpu 2> /dev/null)
-
-lint: lint-black
-	ruff . && mypy .
-
-lint-flake:
-	flake8
+lint:
+	@$(MAKE) lint-ruff
+	@$(MAKE) lint-format
+	@$(MAKE) lint-mypy
 
 test:
 	pytest -n 7
 
-lint-black:
-	black --check --diff --workers $(NUMCPU) --color .
+lint-mypy:
+	@mypy .
 
-format:
-	black .
+lint-ruff:
+	@ruff check .
+
+lint-format:
+	@ruff format --check --quiet
+
+fmt:
+	@ruff format
+	@ruff check --fix
+
+patch:
+	@bumpversion --commit --tag patch
+
+minor:
+	@bumpversion --commit --tag minor
 
 cov:
 	coverage run -m pytest .
@@ -21,5 +31,8 @@ cov:
 cov-show:
 	coverage report -m
 
-run:
+init:
 	PYTHONPATH=. python3 tracker/main.py
+
+run:
+	PYTHONPATH=. uvicorn tracker.main:app --host 127.0.0.1 --port 9999 --reload --loop uvloop

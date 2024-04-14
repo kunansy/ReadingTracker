@@ -1,30 +1,36 @@
 import asyncio
 import datetime
+import re
 from collections import Counter, defaultdict
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 from uuid import UUID
 
 import networkx as nx
+import orjson
 import sqlalchemy.sql as sa
 from fastapi.encoders import jsonable_encoder
-from pydantic import field_validator
+from pydantic import field_serializer, field_validator
 from pyvis.network import Network
 
-from tracker.common import database
+from tracker.common import database, settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
 from tracker.notes import schemas
 
 
+_TAG_PATTERN = r"(\B)#({tag})(\b)"
+
+
 class Note(CustomBaseModel):
     note_id: UUID
-    link_id: UUID | None
+    link_id: UUID | None = None
     material_id: UUID
-    title: str | None
+    title: str | None = None
     content: str
     added_at: datetime.datetime
-    chapter: int
+    chapter: str
     page: int
     tags: set[str]
     is_deleted: bool
@@ -34,11 +40,29 @@ class Note(CustomBaseModel):
 
     @field_validator("material_id", mode="before")
     def replace_null_material_id(cls, material_id: UUID | None) -> UUID:
-        # Some notes don't have material, so to work
+        # Some notes don't have a material, so to work
         # with them set material_id to zero uuid
-        if material_id:
-            return material_id
-        return UUID(int=0)
+        return material_id or UUID(int=0)
+
+    @field_validator("tags", mode="before")
+    def load_tags(cls, tags: set[str] | str) -> set[str]:
+        if isinstance(tags, str):
+            return set(orjson.loads(tags))
+        return tags
+
+    @field_serializer("tags", when_used="json")
+    def serialize_tags(self, tags: set[str]) -> bytes:
+        # for redis
+        return orjson.dumps(sorted(tags))
+
+    @field_serializer("is_deleted", when_used="json")
+    def serialize_is_deleted(self, is_deleted: bool) -> int:  # noqa: FBT001
+        # for redis
+        return int(is_deleted)
+
+    @field_serializer("added_at")
+    def serialize_added_at(self, added_at: datetime.datetime) -> str:
+        return added_at.strftime(settings.DATETIME_FORMAT)
 
     @property
     def content_md(self) -> str:
@@ -68,8 +92,50 @@ class Note(CustomBaseModel):
     def __str__(self) -> str:
         return schemas.demark_note(self.content)
 
+    @classmethod
+    def _mark_tags_with_ref(cls, text: str, tags: set[str]) -> str:
+        from tracker.notes.routes import get_notes, router
 
-def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[int]]:
+        search_url = router.url_path_for(get_notes.__name__)
+
+        link_text_template = (
+            f"<a href={settings.TRACKER_URL}{search_url}?"
+            'tags_query={tag} target="_blank">#{tag}</a>'
+        )
+
+        for tag in sorted(tags, key=lambda tag: len(tag), reverse=True):
+            link_text = link_text_template.format(tag=tag)
+
+            text = re.sub(_TAG_PATTERN.format(tag=tag), rf"\1{link_text}\3", text)
+
+        return text
+
+    @property
+    def link_html(self) -> str:
+        if not self.link_id:
+            return ""
+
+        from tracker.notes.routes import get_note, router
+
+        note_url = router.url_path_for(get_note.__name__)
+        link_text = f"[[{self.link_id}]]"
+
+        return f'<a class="link-ref" href={settings.TRACKER_URL}{note_url}?note_id={self.link_id} target="_blank">{link_text}</a>'  # noqa: E501
+
+    @property
+    def content_html(self) -> str:
+        return self.content
+
+    @property
+    def tags_str(self) -> str:
+        return " ".join(f"#{tag}" for tag in sorted(self.tags))
+
+    @property
+    def tags_html(self) -> str:
+        return self._mark_tags_with_ref(self.tags_str, self.tags)
+
+
+def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[str]]:
     logger.debug("Getting distinct chapters")
 
     # chapters of the shown materials,
@@ -88,7 +154,7 @@ async def get_material_type(*, material_id: UUID | str) -> str | None:
         return None
 
     stmt = sa.select(models.Materials.c.material_type).where(
-        models.Materials.c.material_id == str(material_id)
+        models.Materials.c.material_id == str(material_id),
     )
 
     async with database.session() as ses:
@@ -207,13 +273,12 @@ async def get_note(*, note_id: UUID | str) -> Note | None:
 
 async def get_all_notes_count() -> dict[UUID, int]:
     """Get notes count for the materials."""
-
     logger.debug("Getting notes count for all materials")
 
     stmt = (
         sa.select(
             models.Notes.c.material_id.label("material_id"),
-            sa.func.count(1).label("count"),  # type: ignore
+            sa.func.count(1).label("count"),  # type: ignore[arg-type]
         )
         .select_from(models.Notes)
         .where(~models.Notes.c.is_deleted)
@@ -233,9 +298,9 @@ async def add_note(
     link_id: UUID | None,
     title: str | None,
     content: str,
-    chapter: int,
+    chapter: str,
     page: int,
-    tags: list[str],
+    tags: list[str] | None,
 ) -> str:
     logger.debug("Adding note for material_id='%s'", material_id)
 
@@ -245,7 +310,7 @@ async def add_note(
         "content": content,
         "chapter": chapter,
         "page": page,
-        "tags": tags,
+        "tags": tags or [],
         "link_id": str(link_id) if link_id else None,
     }
 
@@ -266,8 +331,8 @@ async def update_note(
     title: str | None,
     content: str,
     page: int,
-    chapter: int,
-    tags: list[str],
+    chapter: str,
+    tags: list[str] | None,
 ) -> None:
     logger.debug("Updating note_id='%s'", note_id)
 
@@ -277,7 +342,7 @@ async def update_note(
         "content": content,
         "page": page,
         "chapter": chapter,
-        "tags": tags,
+        "tags": tags or [],
         "link_id": str(link_id) if link_id else None,
     }
 
@@ -309,7 +374,7 @@ async def restore_note(*, note_id: UUID) -> None:
     logger.debug("Note restored")
 
 
-async def get_tags() -> set[str]:
+async def _get_tags() -> set[str]:
     logger.debug("Getting tags")
 
     stmt = sa.select(models.Notes.c.tags).where(models.Notes.c.tags != [])
@@ -323,7 +388,7 @@ async def get_tags() -> set[str]:
     return tags_set
 
 
-async def get_material_tags(material_id: str | UUID) -> list[str]:
+async def _get_material_tags(material_id: str | UUID) -> list[str]:
     logger.debug("Getting tags for material_id=%s", material_id)
 
     stmt = (
@@ -344,8 +409,9 @@ async def get_material_tags(material_id: str | UUID) -> list[str]:
 
 async def get_possible_links(note: Note) -> list[Note]:
     """Get notes with which the given one might be linked.
-    So possibility coeff = size of tags set intersection."""
 
+    So possibility coeff = size of tags set intersection.
+    """
     logger.debug("Getting possible links for note=%s, tags=%s", note.note_id, note.tags)
 
     stmt = (
@@ -354,8 +420,8 @@ async def get_possible_links(note: Note) -> list[Note]:
         .where(models.Notes.c.note_id != note.note_id)
         .where(
             sa.text(
-                f"tags ?| array(SELECT jsonb_array_elements_text(tags) FROM notes WHERE note_id = '{note.note_id}')"
-            )
+                f"tags ?| array(SELECT jsonb_array_elements_text(tags) FROM notes WHERE note_id = '{note.note_id}')",  # noqa: S608, E501
+            ),
         )
     )
 
@@ -370,30 +436,33 @@ async def get_possible_links(note: Note) -> list[Note]:
 
 
 def _get_links_from(*, note_id: UUID, notes: Iterable[Note]) -> list[Note]:
-    """Get all notes linked with the given one"""
-
+    """Get all notes linked with the given one."""
     return [note for note in notes if note.link_id == note_id]
 
 
-def _get_note_link(note: Note, **attrs) -> tuple[str, dict[str, Any]]:
+def _get_note_link(note: Note, **attrs: str) -> tuple[str, dict[str, Any]]:
     return (
         str(note.note_id),
         jsonable_encoder(
             {
                 **attrs,
+                "title": note.content_md,
                 "material_id": note.material_id,
                 "note_number": note.note_number,
                 "label": note.short_content,
-            }
+            },
         ),
     )
 
 
 def _add_links_to(
-    graph: nx.DiGraph, notes: dict[UUID, Note], note_id: UUID, even_added_notes: set[UUID]
+    graph: nx.DiGraph,
+    notes: dict[UUID, Note],
+    note_id: UUID,
+    even_added_notes: set[UUID],
 ) -> None:
     if not (link_id := notes[note_id].link_id) or link_id in even_added_notes:
-        return None
+        return
 
     # to resolve circular recursion
     even_added_notes.add(link_id)
@@ -405,12 +474,15 @@ def _add_links_to(
 
 
 def _link_cohesive_notes(
-    graph: nx.DiGraph, notes: dict[UUID, Note], note_id: UUID, *, visited: set[UUID]
+    graph: nx.DiGraph,
+    notes: dict[UUID, Note],
+    note_id: UUID,
+    *,
+    visited: set[UUID],
 ) -> None:
-    """Iter over graph and find all note links"""
-
+    """Iterate over graph and find all note links."""
     if note_id in visited:
-        return None
+        return
 
     link_id = notes[note_id].link_id
     links_from = _get_links_from(note_id=note_id, notes=notes.values())
@@ -432,12 +504,18 @@ def _link_cohesive_notes(
 
 
 def link_notes(
-    *, note_id: UUID, notes: dict[UUID, Note], color: str | None = "black"
+    *,
+    note_id: UUID,
+    notes: dict[UUID, Note],
+    color: str | None = "black",
 ) -> nx.DiGraph:
     logger.debug("Linking %s notes from the %s", len(notes), note_id)
 
     graph = nx.DiGraph()
-    graph.add_nodes_from([_get_note_link(notes[note_id])], color=color)
+    graph.add_nodes_from(
+        [_get_note_link(notes[note_id])],
+        color=color,
+    )
 
     # link together all cohesive notes, which bounds with the given one
     _link_cohesive_notes(graph, notes, note_id, visited=set())
@@ -469,7 +547,10 @@ def link_all_notes(notes: list[Note]) -> nx.DiGraph:
 
 
 def create_material_graph(
-    *, material_id: UUID, material_notes: set[UUID], notes: dict[UUID, Note]
+    *,
+    material_id: UUID,
+    material_notes: set[UUID],
+    notes: dict[UUID, Note],
 ) -> nx.DiGraph:
     if not (material_notes and notes):
         raise ValueError("No notes passed")
@@ -513,7 +594,10 @@ def create_graphic(graph: nx.DiGraph, **kwargs) -> str:
     )
 
     net = Network(
-        cdn_resources="remote", directed=True, neighborhood_highlight=True, **kwargs
+        cdn_resources="remote",
+        directed=True,
+        neighborhood_highlight=True,
+        **kwargs,
     )
     net.options = {"interaction": {"hover": True}}
     net.from_nx(graph)
@@ -525,17 +609,20 @@ def create_graphic(graph: nx.DiGraph, **kwargs) -> str:
 
 
 async def get_sorted_tags(*, material_id: str | UUID | None) -> list[str]:
-    """Get tags especially for the material, means there should be tags
-    from the notes for the material in the beginning of the result list."""
+    """Get tags especially for the material.
+
+    Means there should be tags from the notes
+    for the material in the beginning of the result list.
+    """
     logger.debug("Getting sorted tags for material_id=%s", material_id)
 
     if not material_id:
-        tags = await get_tags()
+        tags = await _get_tags()
         return sorted(tags)
 
     async with asyncio.TaskGroup() as tg:
-        get_tags_task = tg.create_task(get_tags())
-        get_materials_tags = tg.create_task(get_material_tags(material_id))
+        get_tags_task = tg.create_task(_get_tags())
+        get_materials_tags = tg.create_task(_get_material_tags(material_id))
 
     tags, materials_tags = get_tags_task.result(), get_materials_tags.result()
     tags -= set(materials_tags)
@@ -547,7 +634,7 @@ async def get_sorted_tags(*, material_id: str | UUID | None) -> list[str]:
 
 
 async def get_links_from(*, note_id: UUID | str) -> list[Note]:
-    """Get notes which linked to the given one"""
+    """Get notes which linked to the given one."""
     stmt = _get_note_stmt(link_id=note_id)
 
     async with database.session() as ses:
@@ -556,7 +643,7 @@ async def get_links_from(*, note_id: UUID | str) -> list[Note]:
 
 async def is_deleted(note_id: str) -> bool:
     stmt = sa.select(models.Notes.c.is_deleted == True).where(
-        models.Notes.c.note_id == note_id
+        models.Notes.c.note_id == note_id,
     )
 
     async with database.session() as ses:

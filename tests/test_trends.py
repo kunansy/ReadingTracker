@@ -27,11 +27,11 @@ def test_span_methods(size):
 
     assert (
         span.format()
-        == f"{start.strftime(settings.DATE_FORMAT)}_{today.strftime(settings.DATE_FORMAT)}"
+        == f"{start.strftime(settings.DATE_FORMAT)}_{today.strftime(settings.DATE_FORMAT)}"  # noqa
     )
     assert (
         str(span)
-        == f"[{start.strftime(settings.DATE_FORMAT)}; {today.strftime(settings.DATE_FORMAT)}]"
+        == f"[{start.strftime(settings.DATE_FORMAT)}; {today.strftime(settings.DATE_FORMAT)}]"  # noqa
     )
 
 
@@ -206,8 +206,28 @@ async def test_get_span_notes_statistics(size):
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
+async def test_get_span_completed_materials_statistics(size):
+    result = await trends.get_span_completed_materials_statistics(span_size=size)
+
+    stop = datetime.date.today()
+    start = stop - datetime.timedelta(days=size - 1)
+    span = trends.TimeSpan(start=start, stop=stop, span_size=size)
+
+    assert result.start == start
+    assert result.stop == stop
+    assert result.span_size == size
+
+    stat = await trends._calculate_span_completed_materials_statistics(span=span)
+    expected = trends._get_span_statistics(stat=stat, span=span, span_size=size)
+
+    assert result == expected
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
 async def test_create_reading_graphic(size):
-    result = await trends.create_reading_graphic(span_size=size)
+    stat = await trends.get_span_reading_statistics(span_size=size)
+    result = trends.create_reading_graphic(stat)
 
     assert result
 
@@ -215,7 +235,8 @@ async def test_create_reading_graphic(size):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
 async def test_create_notes_graphic(size):
-    result = await trends.create_notes_graphic(span_size=size)
+    stat = await trends.get_span_notes_statistics(span_size=size)
+    result = trends.create_notes_graphic(stat)
 
     assert result
 
@@ -231,7 +252,7 @@ def test_span_statistics_init_exception(size):
 def test_span_statistics_empty_start():
     stat = trends.SpanStatistics([], span_size=0)
     with pytest.raises(trends.TrendException) as e:
-        stat.start
+        stat.start  # noqa
 
     assert str(e.value) == "Span statistics is empty"
 
@@ -239,7 +260,7 @@ def test_span_statistics_empty_start():
 def test_span_statistics_empty_stop():
     stat = trends.SpanStatistics([], span_size=0)
     with pytest.raises(trends.TrendException) as e:
-        stat.stop
+        stat.stop  # noqa
 
     assert str(e.value) == "Span statistics is empty"
 

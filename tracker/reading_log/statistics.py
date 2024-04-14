@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 from decimal import Decimal
+from typing import cast
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -50,19 +51,20 @@ class TrackerStatistics(CustomBaseModel):
         return _convert_duration_to_period(self.lost_time)
 
     @property
-    def lost_time_percent(self) -> float:
-        return round(self.lost_time / self.duration, 2) * 100
+    def lost_time_percent(self) -> int:
+        return round(self.lost_time / self.duration * 100)
 
     @property
     def would_be_total_percent(self) -> float:
-        """How much would be total more than the
-        current total pages count in percent"""
+        """How much would be total more than the current total pages count in percent."""
         return round(self.would_be_total / self.total_pages_read, 2) * 100
 
 
 async def calculate_materials_stat(material_ids: set[UUID]) -> dict[UUID, LogStatistics]:
-    """Get materials statistic from logs. Calculating
-    several stats should reduce iteration over logs.data()"""
+    """Get materials statistic from logs.
+
+    Calculating several stats should reduce iteration over logs.data().
+    """
     stat: dict[UUID, LogStatistics] = {}
 
     async for date, info in db.data():
@@ -131,23 +133,35 @@ async def _get_lost_days() -> int:
 
 
 async def get_means() -> enums.MEANS:
-    """Mean read pages, articles, seen lectures, listen audiobooks ect"""
-    stmt = (
+    """Mean read pages, articles, seen lectures, listen audiobooks ect."""
+    group = (
         sa.select(
-            models.Materials.c.material_type.label("mtype"),
-            sa.func.avg(models.ReadingLog.c.count).label("cnt"),
+            models.Materials.c.material_type,
+            models.ReadingLog.c.date,
+            sa.func.sum(models.ReadingLog.c.count).label("sum"),
         )
-        .join(models.ReadingLog)
-        .group_by(models.Materials.c.material_type)
-    )
+        .join(
+            models.ReadingLog,
+            models.ReadingLog.c.material_id == models.Materials.c.material_id,
+        )
+        .group_by(models.ReadingLog.c.date, models.Materials.c.material_type)
+    ).cte("by_date")
+
+    stmt = sa.select(
+        group.c.material_type,
+        sa.func.avg(group.c.sum).label("cnt"),
+    ).group_by(group.c.material_type)
 
     async with database.session() as ses:
-        return {row.mtype: round(row.cnt, 2) for row in (await ses.execute(stmt)).all()}
+        return {
+            row.material_type: round(row.cnt, 2)
+            for row in (await ses.execute(stmt)).all()
+        }
 
 
 async def _get_median_pages_read_per_day() -> float:
     stmt = sa.select(
-        sa.text("PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY count) AS median")
+        sa.text("PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY count) AS median"),
     ).select_from(models.ReadingLog)
 
     async with database.session() as ses:
@@ -158,7 +172,7 @@ async def _get_median_pages_read_per_day() -> float:
 
 async def contains(*, material_id: UUID) -> bool:
     stmt = (
-        sa.select(sa.func.count(1) >= 1)  # type: ignore
+        sa.select(sa.func.count(1) >= 1)  # type: ignore[arg-type]
         .select_from(models.ReadingLog)
         .where(models.ReadingLog.c.material_id == material_id)
     )
@@ -183,7 +197,7 @@ async def _get_min_record(*, material_id: UUID | None = None) -> database.MinMax
             return database.MinMax(
                 material_id=minmax.material_id,
                 log_id=minmax.log_id,
-                count=minmax.count,  # type: ignore
+                count=cast(int, minmax.count),
                 date=minmax.date,
                 material_title=minmax.title,
             )
@@ -206,7 +220,7 @@ async def _get_max_record(*, material_id: UUID | None = None) -> database.MinMax
             return database.MinMax(
                 material_id=minmax.material_id,
                 log_id=minmax.log_id,
-                count=minmax.count,  # type: ignore
+                count=cast(int, minmax.count),
                 date=minmax.date,
                 material_title=minmax.title,
             )
@@ -224,7 +238,7 @@ async def _would_be_total() -> int:
 
 
 async def _get_total_materials_completed() -> int:
-    stmt = sa.select(sa.func.count(1)).where(models.Statuses.c.completed_at != None)  # type: ignore
+    stmt = sa.select(sa.func.count(1)).where(models.Statuses.c.completed_at != None)  # type: ignore[arg-type]
 
     async with database.session() as ses:
         return await ses.scalar(stmt) or 0

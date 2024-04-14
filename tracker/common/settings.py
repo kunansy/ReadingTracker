@@ -21,9 +21,20 @@ if (version_file := Path("VERSION")).exists():
 DATA_DIR = Path("data/")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
+TRACKER_URL = env(
+    "TRACKER_URL",
+    "http://tracker-app:8000",
+    validate=lambda url: not url.endswith("/"),
+)
+
+DEBUG_MODE = env.bool("DEBUG_MODE", False)
+
 with env.prefixed("CACHE_"):
-    CACHE_URL = env("URL", "redis://tracker-cache")
+    _CACHE_URL = env("URL", "redis://tracker-cache")
+    _CACHE_PORT = env.int("PORT", 6379)
     CACHE_PASSWORD = env("PASSWORD")
+
+CACHE_URL = f"{_CACHE_URL}:{_CACHE_PORT}"
 
 with env.prefixed("API_"):
     API_DEBUG = env.bool("DEBUG", False)
@@ -70,6 +81,23 @@ with env.prefixed("BACKUP_"):
     BACKUP_PORT = env.int("PORT")
     BACKUP_TARGET = f"{BACKUP_HOST}:{BACKUP_PORT}"
 
+
+with env.prefixed("YOUTUBE_API_"):
+    YOUTUBE_API_URL = env.url("URL", "https://youtube.googleapis.com/youtube/v3/videos")
+    YOUTUBE_API_KEY = env("KEY")
+
+with env.prefixed("KAFKA_"):
+    KAFKA_HOST = env("HOST", "localhost")
+    KAFKA_PORT = env.int("PORT", 9092)
+    KAFKA_REPEAT_NOTES_TOPIC = env("REPEAT_NOTES_TOPIC")
+    KAFKA_CACHE_NOTES_TOPIC = env("CACHE_NOTES_TOPIC")
+
+    KAFKA_URL = f"{KAFKA_HOST}:{KAFKA_PORT}"
+
+# experiment funcs
+with env.prefixed("EX_"):
+    EX_ENABLE_KAFKA_TO_NOTIFY = env.bool("ENABLE_KAFKA_TO_NOTIFY", False)
+
 path = os.environ.get("PATH")
 metrics_dir = os.environ.get("PROMETHEUS_MULTIPROC_DIR")
 
@@ -77,4 +105,5 @@ os.environ.clear()
 
 if path:
     os.environ["PATH"] = path
-os.environ["PROMETHEUS_MULTIPROC_DIR"] = metrics_dir  # type: ignore
+if metrics_dir:
+    os.environ["PROMETHEUS_MULTIPROC_DIR"] = metrics_dir

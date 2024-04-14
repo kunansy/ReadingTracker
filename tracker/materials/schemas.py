@@ -63,3 +63,11 @@ class UpdateMaterial(Material):
             tags=tags,
             link=link,
         )
+
+
+class ParsedMaterial(CustomBaseModel):
+    author: str
+    title: str
+    type: str
+    link: str
+    duration: int | None = None

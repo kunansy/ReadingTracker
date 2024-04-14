@@ -5,8 +5,6 @@ from uuid import UUID
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse, ORJSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from fastapi_cache.coder import PickleCoder
-from fastapi_cache.decorator import cache
 from pydantic import conint
 
 from tracker.common.logger import logger
@@ -29,9 +27,10 @@ async def system_view():
 
 
 @router.get("/graphics")
-@cache(namespace="system", coder=PickleCoder, expire=7)
 async def graphic(
-    request: Request, material_id: UUID | None = None, last_days: conint(ge=1) = 7  # type: ignore
+    request: Request,
+    material_id: UUID | None = None,
+    last_days: conint(ge=1) = 7,  # type: ignore[valid-type]
 ):
     context: dict[str, Any] = {
         "request": request,
@@ -44,31 +43,34 @@ async def graphic(
 
     async with asyncio.TaskGroup() as tg:
         reading_trend_task = tg.create_task(
-            trends.get_span_reading_statistics(span_size=last_days)
+            trends.get_span_reading_statistics(span_size=last_days),
         )
         notes_trend_task = tg.create_task(
-            trends.get_span_notes_statistics(span_size=last_days)
+            trends.get_span_notes_statistics(span_size=last_days),
+        )
+        completed_materials_trend_task = tg.create_task(
+            trends.get_span_completed_materials_statistics(span_size=last_days),
         )
         tracker_statistics_task = tg.create_task(db.get_tracker_statistics())
         completion_dates_task = tg.create_task(db.get_completion_dates())
+        titles_task = tg.create_task(db.get_read_material_titles())
+        graphic_image_task = tg.create_task(
+            db.create_reading_graphic(material_id=material_id, last_days=last_days),
+        )
 
     reading_trend = reading_trend_task.result()
     notes_trend = notes_trend_task.result()
+    completed_materials_trend = completed_materials_trend_task.result()
     completion_dates = completion_dates_task.result()
 
-    async with asyncio.TaskGroup() as tg:
-        graphic_image_task = tg.create_task(
-            db.create_reading_graphic(material_id=material_id, last_days=last_days)
-        )
-        reading_trend_graphic_task = tg.create_task(
-            trends.create_reading_graphic(
-                reading_trend, span_size=last_days, completion_dates=completion_dates
-            )
-        )
-        notes_trend_graphic_task = tg.create_task(
-            trends.create_notes_graphic(notes_trend, span_size=last_days)
-        )
-        titles_task = tg.create_task(db.get_read_material_titles())
+    notes_trend_graphic = trends.create_notes_graphic(notes_trend)
+    reading_trend_graphic = trends.create_reading_graphic(
+        reading_trend,
+        completion_dates=completion_dates,
+    )
+    completed_materials_trend_graphic = trends.create_completed_materials_graphic(
+        completed_materials_trend,
+    )
 
     context |= {
         "material_id": material_id,
@@ -76,8 +78,10 @@ async def graphic(
         "graphic_image": graphic_image_task.result(),
         "reading_trend": reading_trend,
         "notes_trend": notes_trend,
-        "reading_trend_image": reading_trend_graphic_task.result(),
-        "notes_trend_image": notes_trend_graphic_task.result(),
+        "completed_materials_trend": completed_materials_trend,
+        "reading_trend_image": reading_trend_graphic,
+        "notes_trend_image": notes_trend_graphic,
+        "completed_materials_trend_image": completed_materials_trend_graphic,
         "tracker_statistics": tracker_statistics_task.result(),
         "titles": titles_task.result(),
     }
@@ -103,7 +107,6 @@ async def backup(request: Request):
 
 @router.get("/restore")
 async def restore(request: Request):
-    # TODO
     status, snapshot_dict = "ok", None
     try:
         snapshot = await drive_api.restore()
@@ -123,11 +126,12 @@ async def restore(request: Request):
 
 
 @router.post(
-    "/report", response_model=schemas.GetSpanReportResponse, response_class=ORJSONResponse
+    "/report",
+    response_model=schemas.GetSpanReportResponse,
+    response_class=ORJSONResponse,
 )
 async def get_span_report(span: schemas.GetSpanReportRequest):
-    """Get analytics for the span: analyze materials,
-    read items and inserted notes"""
+    """Get analytics for the span: analyze materials, read items and inserted notes."""
     span_analysis = await trends.get_span_analytics(span)
 
     return {
@@ -137,5 +141,5 @@ async def get_span_report(span: schemas.GetSpanReportRequest):
         "reading": span_analysis.reading.dump(),
         "notes": span_analysis.notes.dump(),
         "repeats_total": span_analysis.repeat_analytics.repeats_count,
-        "repeat_unique_materials_count": span_analysis.repeat_analytics.unique_materials_count,
+        "repeat_materials_count": span_analysis.repeat_analytics.unique_materials_count,
     }

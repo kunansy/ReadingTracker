@@ -128,6 +128,4 @@ dmypy.json
 *.crt
 *.key
 
-# user data
-*.json
-*.db
+data/

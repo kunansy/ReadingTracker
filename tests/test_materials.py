@@ -100,7 +100,7 @@ async def test_parse_material_status_response(is_completed):
 
 @pytest.mark.asyncio
 async def test_get_reading_materials():
-    reading_materials = await db._get_reading_materials()
+    reading_materials = await db.get_reading_materials()
 
     materials = {material.material_id: material for material in await get_materials()}
     statuses = {status.material_id: status for status in await get_statuses()}
@@ -180,7 +180,7 @@ async def test_get_last_material_started():
 @pytest.mark.asyncio
 @pytest.mark.parametrize("material_status", ("completed", "started", "not started"))
 async def test_get_status(
-    material_status: Literal["completed", "started", "not started"]
+    material_status: Literal["completed", "started", "not started"],
 ):
     materials = {material.material_id: material for material in await get_materials()}
     statuses = {status.material_id: status for status in await get_statuses()}
@@ -216,13 +216,13 @@ async def test_get_status(
         (365, "1 years"),
         (1, "1 days"),
         (30, "1 months"),
-        (31, "1 months 1 days"),
-        (65, "2 months 5 days"),
-        (395, "1 years 1 months"),
-        (790, "2 years 2 months"),
-        (380, "1 years 15 days"),
-        (792, "2 years 2 months 2 days"),
-        (datetime.timedelta(days=792), "2 years 2 months 2 days"),
+        (31, "1 months, 1 days"),
+        (65, "2 months, 5 days"),
+        (395, "1 years, 1 months"),
+        (790, "2 years, 2 months"),
+        (380, "1 years, 15 days"),
+        (792, "2 years, 2 months, 2 days"),
+        (datetime.timedelta(days=792), "2 years, 2 months, 2 days"),
     ),
 )
 def test_convert_duration_to_period(duration, expected):
@@ -235,11 +235,11 @@ def test_convert_duration_to_period(duration, expected):
         (database.utcnow(), database.utcnow(), "1 days"),
         (database.utcnow() - datetime.timedelta(days=6), database.utcnow(), "7 days"),
         (database.utcnow() - datetime.timedelta(days=6), None, "7 days"),
-        (database.utcnow() - datetime.timedelta(days=30), None, "1 months 1 days"),
+        (database.utcnow() - datetime.timedelta(days=30), None, "1 months, 1 days"),
         (
             database.utcnow() - datetime.timedelta(days=30),
             database.utcnow(),
-            "1 months 1 days",
+            "1 months, 1 days",
         ),
     ),
 )
@@ -265,7 +265,7 @@ async def test_get_material_statistics_unread():
         status=db.Status(
             status_id=uuid.uuid4(),
             material_id=material.material_id,
-            started_at=datetime.datetime.utcnow().date(),
+            started_at=database.utcnow().date(),
         ),
     )
     mean_total = Decimal(50)
@@ -411,7 +411,7 @@ async def test_start_material_invalid_date():
     with pytest.raises(ValueError) as e:
         await db.start_material(material_id=material_id, start_date=date)
 
-    assert "Start date must be less than today" == str(e.value)
+    assert str(e.value) == "Start date must be less than today"
 
 
 @pytest.mark.asyncio
@@ -551,7 +551,7 @@ async def test_get_repeats_analytics_only_repeated():
 
         assert (
             repeat.priority_days
-            == (datetime.datetime.utcnow() - valid_repeat.last_repeated_at).days
+            == (database.utcnow() - valid_repeat.last_repeated_at).days
         )
 
 

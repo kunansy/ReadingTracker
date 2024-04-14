@@ -1,19 +1,23 @@
 import asyncio
-from typing import Any, Iterable
+from collections.abc import Iterable, Sequence
+from typing import Any, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from fastapi_cache.coder import PickleCoder
-from fastapi_cache.decorator import cache
+from pydantic import NonNegativeInt
 
-from tracker.common import manticoresearch, settings
+from tracker.common import kafka, manticoresearch, settings
 from tracker.common.logger import logger
-from tracker.common.schemas import ORJSONEncoder
 from tracker.materials import db as materials_db
 from tracker.models import enums
-from tracker.notes import db, schemas, speech_recognizer as recognizer
+from tracker.notes import (
+    cached,
+    db,
+    schemas,
+    speech_recognizer as recognizer,
+)
 
 
 router = APIRouter(
@@ -39,7 +43,8 @@ def _find_tags_intersection(notes: list[db.Note], tags: set[str]) -> set[UUID]:
 
 
 def _highlight_snippets(
-    notes: list[db.Note], search_results: dict[UUID, manticoresearch.SearchResult]
+    notes: list[db.Note],
+    search_results: dict[UUID, manticoresearch.SearchResult],
 ) -> None:
     for note in notes:
         result = search_results[note.note_id]
@@ -50,22 +55,35 @@ async def get_note_links(note: db.Note) -> dict[str, Any]:
     async with asyncio.TaskGroup() as tg:
         get_links_from_task = tg.create_task(db.get_links_from(note_id=note.note_id))
         if note.link_id:
-            get_link_to_task = tg.create_task(db.get_note(note_id=note.link_id))
+            get_link_to_task = tg.create_task(cached.get_note(note.link_id))
         else:
             get_link_to_task = tg.create_task(asyncio.sleep(1 / 1000, result=None))
 
     return {"from": get_links_from_task.result(), "to": get_link_to_task.result()}
 
 
+def _limit_notes[T](notes: Sequence[T], *, page: int, page_size: int) -> Sequence[T]:  # type: ignore[valid-type, name-defined]
+    if page < 1:
+        page = 1
+    if page_size < 0:
+        page_size = 0
+    return notes[(page - 1) * page_size : page * page_size]
+
+
 @router.get("/", response_class=HTMLResponse)
-@cache(namespace="notes", coder=PickleCoder, expire=5)
-async def get_notes(request: Request, search: schemas.SearchParams = Depends()):
+async def get_notes(
+    request: Request,
+    page: NonNegativeInt = 1,
+    page_size: NonNegativeInt = 10,
+    search: schemas.SearchParams = Depends(),
+):
     material_id = search.material_id
     async with asyncio.TaskGroup() as tg:
         get_notes_task = tg.create_task(db.get_notes(material_id=material_id))
         get_titles_task = tg.create_task(db.get_material_with_notes_titles())
         get_material_types_task = tg.create_task(db.get_material_types())
         get_tags_task = tg.create_task(db.get_sorted_tags(material_id=material_id))
+        get_material_notes_task = tg.create_task(db.get_all_notes_count())
 
     notes = get_notes_task.result()
 
@@ -81,14 +99,17 @@ async def get_notes(request: Request, search: schemas.SearchParams = Depends()):
 
     context: dict[str, Any] = {
         "request": request,
-        "notes": notes,
+        "notes": _limit_notes(notes, page=page, page_size=page_size),
         "titles": get_titles_task.result(),
         "material_types": get_material_types_task.result(),
+        "material_notes": get_material_notes_task.result(),
         "chapters": chapters,
         "query": query,
         "DATE_FORMAT": settings.DATE_FORMAT,
         "tags": get_tags_task.result(),
         "tags_query": search.tags_query,
+        "current_page": page,
+        "page_size": page_size,
     }
     if material_id:
         context["material_id"] = material_id
@@ -97,14 +118,13 @@ async def get_notes(request: Request, search: schemas.SearchParams = Depends()):
 
 
 @router.get("/note", response_class=HTMLResponse)
-@cache(namespace="notes", coder=PickleCoder, expire=5)
 async def get_note(request: Request, note_id: UUID):
-    if not (note := await db.get_note(note_id=note_id)):
+    if not (note := await cached.get_note(note_id)):
         raise HTTPException(status_code=404, detail=f"Note id={note_id} not found")
 
     async with asyncio.TaskGroup() as tg:
         get_material_task = tg.create_task(
-            materials_db.get_material(material_id=note.material_id)
+            materials_db.get_material(material_id=note.material_id),
         )
         get_note_links_task = tg.create_task(get_note_links(note))
 
@@ -112,6 +132,9 @@ async def get_note(request: Request, note_id: UUID):
         "request": request,
         "note_links": get_note_links_task.result(),
         "added_at": note.added_at.strftime(settings.DATETIME_FORMAT),
+        "content": note.content_html,
+        "note_tags": note.tags_html,
+        "link_id": note.link_html,
     }
     if material := get_material_task.result():
         context |= {
@@ -126,18 +149,14 @@ async def get_note(request: Request, note_id: UUID):
 
 
 @router.get("/note-json", response_model=schemas.GetNoteJsonResponse)
-@cache(namespace="notes", coder=ORJSONEncoder, expire=5)
 async def get_note_json(note_id: UUID):
-    if not (note := await db.get_note(note_id=note_id)):
-        raise HTTPException(status_code=404, detail=f"Note id={note_id} not found")
+    if note := await cached.get_note_json(note_id):
+        return note
 
-    return note.model_dump() | {
-        "added_at": note.added_at.strftime(settings.DATETIME_FORMAT),
-    }
+    raise HTTPException(status_code=404, detail=f"Note id={note_id} not found")
 
 
 @router.get("/add-view", response_class=HTMLResponse)
-@cache(namespace="notes", coder=PickleCoder, expire=5)
 async def add_note_view(request: Request, material_id: str | None = None):
     material_id = material_id or request.cookies.get("material_id", "")
 
@@ -149,7 +168,8 @@ async def add_note_view(request: Request, material_id: str | None = None):
         "request": request,
         "material_id": material_id,
         "material_type": request.cookies.get(
-            "material_type", enums.MaterialTypesEnum.book.name
+            "material_type",
+            enums.MaterialTypesEnum.book.name,
         ),
         "content": request.cookies.get("content", ""),
         "page": request.cookies.get("page", ""),
@@ -167,7 +187,8 @@ async def add_note(note: schemas.Note = Depends()):
     response = RedirectResponse(redirect_url, status_code=302)
 
     for key, value in note.model_dump(
-        exclude={"content", "tags", "link_id", "title"}, exclude_none=True
+        exclude={"content", "tags", "link_id", "title"},
+        exclude_none=True,
     ).items():
         response.set_cookie(key, value, expires=3600)
 
@@ -180,13 +201,12 @@ async def add_note(note: schemas.Note = Depends()):
         page=note.page,
         tags=note.tags,
     )
+
     response.set_cookie("note_id", note_id, expires=5)
     if (material_id := note.material_id) and (
         material_type := await db.get_material_type(material_id=material_id)
     ):
         response.set_cookie("material_type", material_type, expires=5)
-
-    await manticoresearch.insert(note_id=UUID(note_id))
 
     return response
 
@@ -197,7 +217,7 @@ async def update_note_view(note_id: UUID, request: Request, success: bool | None
         "request": request,
     }
 
-    if not (note := await db.get_note(note_id=note_id)):
+    if not (note := await cached.get_note(note_id)):
         context["what"] = f"Note id='{note_id}' not found"
         return templates.TemplateResponse("errors/404.html", context)
     material_id = note.get_material_id()
@@ -214,6 +234,8 @@ async def update_note_view(note_id: UUID, request: Request, success: bool | None
         "note_id": note.note_id,
         "title": note.title or "",
         "content": schemas.demark_note(note.content),
+        "link_id": note.link_id,
+        "note_tags": note.tags_str,
         "chapter": note.chapter,
         "page": note.page,
         "success": success,
@@ -242,7 +264,6 @@ async def update_note(note: schemas.UpdateNote = Depends()):
             tags=note.tags,
         )
 
-        await manticoresearch.update(note_id=note.note_id)
     except Exception as e:
         logger.error("Error updating note: %s", repr(e))
         success = False
@@ -254,30 +275,23 @@ async def update_note(note: schemas.UpdateNote = Depends()):
 
 
 @router.get("/is-deleted", response_model=schemas.IsNoteDeletedResponse)
-@cache(namespace="notes", coder=ORJSONEncoder, expire=3)
 async def is_note_deleted(note_id: UUID):
-    result = await db.is_deleted(note_id=str(note_id))
+    result = await cached.is_deleted(note_id)
 
     return {"is_deleted": result, "note_id": note_id}
 
 
 @router.delete("/delete", status_code=201)
 async def delete_note(note_id: UUID = Body(embed=True)):
-    async with asyncio.TaskGroup() as tg:
-        tg.create_task(db.delete_note(note_id=note_id))
-        tg.create_task(manticoresearch.delete(note_id=note_id))
+    await db.delete_note(note_id=note_id)
 
 
 @router.post("/restore", status_code=201)
 async def restore_note(note_id: UUID = Body(embed=True)):
-    # without task group because manticore could not insert
-    # deleted note, so first we should restore it in db
     await db.restore_note(note_id=note_id)
-    await manticoresearch.insert(note_id=note_id)
 
 
 @router.get("/links", response_class=HTMLResponse)
-@cache(namespace="notes", coder=PickleCoder, expire=5)
 async def get_note_graph(note_id: UUID):
     notes = {note.note_id: note for note in await db.get_notes()}
     graph = db.link_notes(note_id=note_id, notes=notes)
@@ -307,18 +321,17 @@ async def transcript_speech(data: bytes = Body()):
 
 
 @router.get("/graph", response_class=HTMLResponse)
-@cache(namespace="notes", coder=PickleCoder, expire=5)
 async def get_graph(request: Request, material_id: UUID | str | None = None):
     async with asyncio.TaskGroup() as tg:
         get_notes_task = tg.create_task(db.get_notes())
         get_titles_task = tg.create_task(db.get_material_titles())
         if material_id:
             get_material_notes_task = tg.create_task(
-                db.get_notes(material_id=material_id)
+                db.get_notes(material_id=material_id),
             )
         else:
             get_material_notes_task = tg.create_task(
-                asyncio.sleep(1 / 100_000, result=[])
+                asyncio.sleep(1 / 100_000, result=[]),
             )
 
     notes = get_notes_task.result()
@@ -328,7 +341,9 @@ async def get_graph(request: Request, material_id: UUID | str | None = None):
         material_notes = {note.note_id for note in get_material_notes_task.result()}
         # material_id might be an empty string only, if it's str
         graph = db.create_material_graph(
-            material_id=UUID(material_id), material_notes=material_notes, notes=notes_dict  # type: ignore
+            material_id=UUID(cast(str, material_id)),
+            material_notes=material_notes,
+            notes=notes_dict,
         )
     else:
         graph = db.link_all_notes(notes)
@@ -343,11 +358,18 @@ async def get_graph(request: Request, material_id: UUID | str | None = None):
 
 
 @router.get("/tags")
-@cache(namespace="notes", coder=PickleCoder, expire=5)
 async def get_tags(material_id: UUID):
     tags = await db.get_sorted_tags(material_id=material_id)
 
     return {"tags": tags}
+
+
+@router.post("/repeat-queue/insert")
+async def insert_to_repeat_queue(note_id: UUID):
+    if await cached.get_note(note_id):
+        await kafka.repeat_note(note_id)
+    else:
+        raise HTTPException(status_code=404, detail="Not found")
 
 
 @router.get("/autocompletion", response_model=schemas.AutocompletionResponse)

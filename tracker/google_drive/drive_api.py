@@ -5,10 +5,11 @@ from typing import Any
 import orjson
 from grpc.aio import insecure_channel as grpc_chan
 
-from tracker.common import settings, database
+from tracker.common import database, settings
 from tracker.common.logger import logger
 from tracker.google_drive import db
-from tracker.protos import backup_pb2_grpc, backup_pb2
+from tracker.google_drive.db import DBSnapshot
+from tracker.protos import backup_pb2, backup_pb2_grpc
 
 
 class GoogleDriveException(Exception):
@@ -39,11 +40,24 @@ async def restore(*, dump_path: Path | None = None) -> db.DBSnapshot:
         else:
             dump = await get_dump()
 
+        snapshot = DBSnapshot.from_dump(dump)
+
         await database.recreate_db()
-        snapshot = await db.restore_db(conn=ses, dump=dump)
+        await db.restore_db(conn=ses, snapshot=snapshot)
+        snapshot_dict = snapshot.to_dict()
+
+        logger.debug("Set notes sequence value")
+        await db.set_notes_seq_value(snapshot_dict["notes"], ses)
+
+        logger.debug("Set materials sequence value")
+        await db.set_materials_seq_value(snapshot_dict["materials"], ses)
+
+        logger.debug("Creating repeat notes material view")
+        await database.create_repeat_notes_matview(ses)
 
         logger.info(
-            "Restoring completed, %ss", round(time.perf_counter() - start_time, 2)
+            "Restoring completed, %ss",
+            round(time.perf_counter() - start_time, 2),
         )
 
     return snapshot
@@ -61,7 +75,7 @@ async def backup() -> str | None:
                 db_username=settings.DB_USERNAME,
                 db_password=settings.DB_PASSWORD,
                 db_name=settings.DB_NAME,
-            )
+            ),
         )
 
     file_id = response.file_id
@@ -75,7 +89,7 @@ async def get_dump() -> dict[str, Any]:
     async with grpc_chan(settings.BACKUP_TARGET) as channel:
         stub = backup_pb2_grpc.GoogleDriveStub(channel)
         response: backup_pb2.DownloadReply = await stub.DownloadLatestBackup(
-            backup_pb2.Empty()
+            backup_pb2.Empty(),
         )
 
     return orjson.loads(response.file_content)

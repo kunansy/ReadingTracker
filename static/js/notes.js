@@ -3,20 +3,16 @@ async function openNote(note_id, target_ = "_blank") {
 }
 
 async function addTag(tag, newLine = false) {
-    let content = document.getElementById('input-content');
-    let newContent = '';
+    let tags = document.getElementById('note-tags');
 
-    if (content.value.length === 0) {
-        newContent = tag;
-    } else if (newLine) {
-        newContent = content.value + '\n' + tag;
+    if (tags.value.length === 0) {
+        tags.value += tag;
     } else {
-        newContent = content.value + ' ' + tag;
+        tags.value += " " + tag;
     }
 
     // WTF: the f*cking shadow DOM
-    content.textContent = newContent;
-    content.value = newContent;
+    tags.textContent = tags.value;
 }
 
 const recordAudio = async () => {
@@ -132,4 +128,111 @@ if (document.getElementById("input_material_id")) {
             ul.append(li);
         }
     });
+}
+
+const links = document.querySelectorAll("p.link-ref");
+if (links) {
+    links.forEach((link) => {
+        link.addEventListener("mouseenter", async (e) => {
+            const link_id = e.target.textContent.replace("[[", "").replace("]]", "");
+
+            const cache = localStorage.getItem(`link-ref-${link_id}`);
+            if (cache) {
+                link.title = cache;
+            } else {
+                const note = await getNote(link_id);
+                const content = note["content"];
+
+                localStorage.setItem(`link-ref-${link_id}`, content);
+                link.title = content;
+            }
+        })
+    })
+}
+
+const sleep = async (seconds) => {
+    return new Promise(resolve => setTimeout(resolve, seconds));
+};
+
+const contentInput = document.getElementById("input-content");
+if (contentInput) {
+    contentInput.addEventListener("keyup", async (e) => {
+        await sleep(2);
+        const text = e.target.value;
+
+        const resp = await fetch(
+            `https://speller.yandex.net/services/spellservice.json/checkText?text=${text.replaceAll(" ", "+")}`,
+            {
+                method: "GET",
+                headers: {'Content-type': 'application/json'},
+            }
+        );
+
+        const errata = await resp.json();
+
+        if (errata.length === 0) {
+            document.getElementById("input-content-errata").innerHTML = '';
+        }
+        else {
+            const alert = document.getElementById("input-content-errata");
+            const image = document.createElement("img");
+
+            image.id = "input-content-errata-img";
+            image.src = "/static/errata-alert.png";
+
+            alert.title = "";
+
+            if (!alert.children.namedItem("input-content-errata-img")) {
+                alert.appendChild(image);
+            }
+
+            let isFirst = true;
+            for (let erratum of errata) {
+                if (!isFirst) {
+                    alert.title += '\n';
+                }
+                isFirst = false;
+                alert.title += `${erratum["word"]} – ${erratum["s"].join(", ")}`
+            }
+        }
+    })
+}
+
+
+const getPage = (location) => {
+    const urlParams = new URLSearchParams(location);
+    const page = urlParams.get('page');
+
+    return parseInt(page);
+};
+
+const pagination = document.querySelectorAll("div.pagination-item");
+if (pagination) {
+    pagination.forEach((item) => {
+        item.addEventListener("click", (e) => {
+            let page = item.textContent.trim();
+            let location = window.location.search;
+            let currentPage = getPage(location);
+
+            let toPage = 1;
+            if (parseInt(page))
+                toPage = page;
+            else if (page.includes("»"))
+                toPage = !isNaN(currentPage) ? currentPage + 1 : toPage + 1;
+            else if (page.includes("«"))
+                toPage = currentPage > 1 ? currentPage - 1 : 1;
+
+            if (!location.includes("?"))
+                location += "?"
+            else if (!location.includes("page") && !location.endsWith("&"))
+                location += "&"
+
+            if (!location.includes("page"))
+                location += `page=${toPage}`;
+            else
+                location = location.replace(/page=\d+/ig, `page=${toPage}`);
+
+            window.open(location, "_self");
+        })
+    })
 }

@@ -1,6 +1,10 @@
-from google.protobuf import descriptor as _descriptor
-from google.protobuf import message as _message
-from typing import ClassVar as _ClassVar, Optional as _Optional
+from typing import ClassVar as _ClassVar
+
+from google.protobuf import (
+    descriptor as _descriptor,
+    message as _message,
+)
+
 
 DESCRIPTOR: _descriptor.FileDescriptor
 
@@ -17,21 +21,26 @@ class DBRequest(_message.Message):
     db_username: str
     db_password: str
     db_name: str
-    def __init__(self, db_host: _Optional[str] = ..., db_port: _Optional[int] = ..., db_username: _Optional[str] = ..., db_password: _Optional[str] = ..., db_name: _Optional[str] = ...) -> None: ...
-
+    def __init__(
+        self,
+        db_host: str | None = ...,
+        db_port: int | None = ...,
+        db_username: str | None = ...,
+        db_password: str | None = ...,
+        db_name: str | None = ...,
+    ) -> None: ...
 
 class BackupReply(_message.Message):
     __slots__ = ["file_id"]
     FILE_ID_FIELD_NUMBER: _ClassVar[int]
     file_id: str
-    def __init__(self, file_id: _Optional[str] = ...) -> None: ...
-
+    def __init__(self, file_id: str | None = ...) -> None: ...
 
 class DownloadReply(_message.Message):
     __slots__ = ["file_content"]
     FILE_CONTENT_FIELD_NUMBER: _ClassVar[int]
     file_content: bytes
-    def __init__(self, file_content: _Optional[bytes] = ...) -> None: ...
+    def __init__(self, file_content: bytes | None = ...) -> None: ...
 
 
 class HealthcheckReply(_message.Message):

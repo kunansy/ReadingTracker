@@ -30,15 +30,18 @@
         <input class="input input-datalist" name="note_id" value="{{ note_id }}" title="ID of the note" placeholder="ID of the note">
         <input class="input" placeholder="Enter a title" name="title" value="{{ title }}" title="Title of the note">
         <textarea class="input altch" id="input-content" placeholder="Enter a content" name="content" title="Text of the note">{{ content }}</textarea>
+        <div id="input-content-errata"></div>
         {% set page_number = 'page number' %}
-        {% set chapter_number = 'chapter number' %}
+        {% set chapter_name = 'chapter' %}
         {% if material_type == 'lecture' %}
             {% set page_number = 'minute' %}
         {% elif material_type == 'course' %}
-            {% set chapter_number = 'block number' %}
+            {% set chapter_name = 'block' %}
             {% set page_number = 'lecture number' %}
         {% endif %}
-        <input class="input" type="number" placeholder="Enter a {{ chapter_number }}" name="chapter" value="{{ chapter }}" title="{{ chapter_number.capitalize() }} where the note might be found">
+        <input id="note-tags" class="input" placeholder="Enter tags" name="tags" value="{{ note_tags }}" title="Tags for the note">
+        <input id="note-link" class="input" placeholder="Enter a link" name="link_id" value="{{ link_id or "" }}" title="Link to the other note">
+        <input class="input" placeholder="Enter a {{ chapter_name }}" name="chapter" value="{{ chapter }}" title="{{ chapter_name.capitalize() }} where the note might be found">
         <input class="input" type="number" placeholder="Enter a {{ page_number }}" name="page" value="{{ page }}" title="{{ page_number.capitalize() }} where the not might be found">
         <button type="submit" class="submit-button"> Save </button>
     </fieldset>
