@@ -40,3 +40,15 @@ def test_recognize():
     best = speech_recognizer.get_best_result(result)
 
     assert best.model_dump() == {"transcript": "Этот файл записывается для теста и будет сохранён в test", "confidence": 88.91}
+
+
+def test_remove():
+    src = Path("tests/test_transcript_src.wav").read_bytes()
+    dst = Path("tests/test_remove.wav")
+
+    with dst.open("wb") as f:
+        f.write(src)
+
+    assert dst.exists()
+    speech_recognizer.remove(dst)
+    assert not dst.exists()
