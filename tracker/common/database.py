@@ -84,30 +84,10 @@ def _compile_drop_table(element, compiler, **kwargs) -> str:  # noqa: ANN001, AR
 
 
 async def create_repeat_notes_matview(conn: AsyncSession | AsyncConnection) -> None:
+    # repeat notes that were repeated the longest ago
     query = """
     CREATE MATERIALIZED VIEW IF NOT EXISTS mvw_repeat_notes AS
-        WITH repeated_notes_freq AS (
-            SELECT note_id, COUNT(1)
-            FROM note_repeats_history
-            GROUP BY note_id
-        ),
-        all_notes_freq AS (
-            SELECT
-                n.material_id,
-                n.note_id AS note_id,
-                COALESCE(s.count, 0) AS count,
-                COUNT(1) OVER () AS total
-            FROM notes n
-            LEFT JOIN repeated_notes_freq s USING(note_id)
-            WHERE NOT n.is_deleted
-        ),
-        min_freq AS (
-            SELECT count
-            FROM all_notes_freq
-            ORDER BY count
-            LIMIT 1
-        ),
-        sample_notes AS (
+        WITH sample_notes AS (
             SELECT
                 n.note_id,
                 n.material_id,
@@ -116,22 +96,38 @@ async def create_repeat_notes_matview(conn: AsyncSession | AsyncConnection) -> N
                 n.title,
                 n.content,
                 n.added_at,
-                f.total AS total_notes_count,
-                -- m.total AS total_freq_count,
-                m.count AS min_repeat_freq
-            FROM all_notes_freq f
-            JOIN min_freq m ON f.count = m.count
-            JOIN notes n ON f.note_id = n.note_id
+                COUNT(1) OVER () AS total_notes_count
+            FROM notes n
+            WHERE NOT n.is_deleted
         ),
-        last_repeat AS (
+        last_material_repeat AS (
             SELECT
-                m.material_id,
-                r.repeated_at,
-                COUNT(1) OVER (PARTITION BY r.material_id) AS repeats_count
-            FROM sample_notes n
-            JOIN materials m USING(material_id)
-            JOIN repeats r USING(material_id)
-            ORDER BY r.repeated_at DESC
+                r.material_id,
+                max(r.repeated_at) AS repeated_at,
+                COUNT(1) AS repeats_count
+            FROM repeats r
+            GROUP BY r.material_id
+        ),
+        last_note_repeat_date AS (
+            SELECT
+                max(rh.repeated_at::date) as date,
+                n.note_id
+            FROM
+                note_repeats_history rh
+            FULL OUTER JOIN
+                notes n ON n.note_id = rh.note_id
+            WHERE
+                n is null or not n.is_deleted
+            GROUP BY n.note_id
+        ), oldest_notes AS (
+            SELECT
+                DATE_TRUNC('month', lrd.date),
+                ARRAY_AGG(lrd.note_id) AS notes
+            FROM
+                last_note_repeat_date lrd
+            GROUP BY
+                DATE_TRUNC('month', lrd.date)
+            ORDER BY COUNT(1)
             LIMIT 1
         )
         SELECT
@@ -146,7 +142,7 @@ async def create_repeat_notes_matview(conn: AsyncSession | AsyncConnection) -> N
             n.page,
             m.pages AS material_pages,
             n.total_notes_count AS total_notes_count,
-            n.min_repeat_freq AS min_repeat_freq,
+            0 AS min_repeat_freq,
             CASE
                 -- in this case the note have no material
                 WHEN m IS NULL THEN 'completed'
@@ -158,9 +154,10 @@ async def create_repeat_notes_matview(conn: AsyncSession | AsyncConnection) -> N
             r.repeats_count
         FROM
             sample_notes n
+        JOIN oldest_notes ON n.note_id = ANY(oldest_notes.notes)
         LEFT JOIN materials m ON n.material_id = m.material_id
         LEFT JOIN statuses s ON s.material_id = m.material_id
-        LEFT JOIN last_repeat r ON r.material_id = s.material_id
+        LEFT JOIN last_material_repeat r ON r.material_id = s.material_id
     WITH NO DATA;
     """
 
