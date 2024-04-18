@@ -121,13 +121,14 @@ async def create_repeat_notes_matview(conn: AsyncSession | AsyncConnection) -> N
             GROUP BY n.note_id
         ), oldest_notes AS (
             SELECT
-                DATE_TRUNC('month', lrd.date),
+                DATE_TRUNC('month', lrd.date) as date,
                 ARRAY_AGG(lrd.note_id) AS notes
             FROM
                 last_note_repeat_date lrd
             GROUP BY
-                DATE_TRUNC('month', lrd.date)
-            ORDER BY COUNT(1)
+                date
+            ORDER BY
+                date NULLS FIRST, COUNT(1)
             LIMIT 1
         )
         SELECT
