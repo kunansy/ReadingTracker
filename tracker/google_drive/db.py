@@ -43,7 +43,7 @@ class DBSnapshot(NamedTuple):
                 {key: _convert_str_to_date(value) for key, value in row.items()}
                 for row in values
             ]
-            tables += [TableSnapshot(table_name=table_name, rows=rows)]
+            tables.append(TableSnapshot(table_name=table_name, rows=rows))
 
         return DBSnapshot(tables=tables)
 

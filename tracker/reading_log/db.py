@@ -145,7 +145,7 @@ async def data(
 
     log_records_dict: defaultdict[datetime.date, list[LogRecord]] = defaultdict(list)
     for log_record in log_records:
-        log_records_dict[log_record.date] += [log_record]
+        log_records_dict[log_record.date].append(log_record)
 
     # stack for materials
     materials: list[UUID] = []
@@ -183,12 +183,12 @@ async def data(
 
                 if not (materials and material_id in materials):
                     # new material started, the last one completed
-                    materials += [material_id]
+                    materials.append(material_id)
                 elif material_id != last_material_id:
                     # in this case several materials
                     # are being reading one by one
                     materials.remove(material_id)
-                    materials += [material_id]
+                    materials.append(material_id)
                     # if several materials have read in one day
                     last_material_id = material_id
 

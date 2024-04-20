@@ -29,8 +29,8 @@ async def _get_graphic_data(*, material_id: UUID, last_days: int) -> ReadingData
             continue
         total += info.count
 
-        counts += [total]
-        dates += [date]
+        counts.append(total)
+        dates.append(date)
 
     return ReadingData(counts[-last_days:], dates[-last_days:])
 

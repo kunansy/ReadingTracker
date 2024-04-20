@@ -599,14 +599,14 @@ async def estimate() -> list[MaterialEstimate]:
         # [start; stop]
         expected_duration += 1
 
-        forecasts += [
+        forecasts.append(
             MaterialEstimate(
                 material=material,
                 will_be_started=last_date,
                 will_be_completed=expected_end,
                 expected_duration=expected_duration,
             ),
-        ]
+        )
 
         last_date = expected_end + step
 
