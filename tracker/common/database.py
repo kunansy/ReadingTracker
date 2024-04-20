@@ -96,6 +96,7 @@ async def create_repeat_notes_matview(conn: AsyncSession | AsyncConnection) -> N
                 n.title,
                 n.content,
                 n.added_at,
+                n.tags,
                 COUNT(1) OVER () AS total_notes_count
             FROM notes n
             WHERE NOT n.is_deleted
@@ -141,6 +142,7 @@ async def create_repeat_notes_matview(conn: AsyncSession | AsyncConnection) -> N
             n.added_at,
             n.chapter,
             n.page,
+            n.tags,
             m.pages AS material_pages,
             n.total_notes_count AS total_notes_count,
             0 AS min_repeat_freq,
