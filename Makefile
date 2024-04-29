@@ -36,3 +36,6 @@ init:
 
 run:
 	PYTHONPATH=. uvicorn tracker.main:app --host 127.0.0.1 --port 9999 --reload --loop uvloop
+
+.PHONY: all
+all: lint test lint-format lint-mypy lint-ruff fmt patch minor cov cov-show init run
