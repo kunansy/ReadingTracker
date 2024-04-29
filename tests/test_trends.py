@@ -244,13 +244,13 @@ async def test_create_notes_graphic(size):
 @pytest.mark.parametrize("size", (1, 5, 7))
 def test_span_statistics_init_exception(size):
     with pytest.raises(trends.TrendException) as e:
-        trends.SpanStatistics([], span_size=size)
+        trends.SpanStatistics(data=[], span_size=size)
 
-    assert str(e.value) == f"A span should contains exactly {size} days, but {0} found"
+    assert str(e.value) == f"Wrong span size: expected={size}, found=0"
 
 
 def test_span_statistics_empty_start():
-    stat = trends.SpanStatistics([], span_size=0)
+    stat = trends.SpanStatistics(data=[], span_size=0)
     with pytest.raises(trends.TrendException) as e:
         stat.start  # noqa
 
@@ -258,7 +258,7 @@ def test_span_statistics_empty_start():
 
 
 def test_span_statistics_empty_stop():
-    stat = trends.SpanStatistics([], span_size=0)
+    stat = trends.SpanStatistics(data=[], span_size=0)
     with pytest.raises(trends.TrendException) as e:
         stat.stop  # noqa
 
@@ -267,14 +267,14 @@ def test_span_statistics_empty_stop():
 
 def test_time_span_negative_size():
     with pytest.raises(trends.TrendException) as e:
-        trends.TimeSpan(datetime.date.today(), datetime.date.today(), -1)
+        trends.TimeSpan(start=datetime.date.today(), stop=datetime.date.today(), span_size=-1)
 
-    assert str(e.value) == "Negative span size passed: -1"
+    assert str(e.value) == "Wrong span got: [2024-04-29; 2024-04-29; -1]"
 
 
 def test_time_span_start_better_stop():
     with pytest.raises(trends.TrendException) as e:
-        trends.TimeSpan(datetime.date(1970, 1, 2), datetime.date(1970, 1, 1), 2)
+        trends.TimeSpan(start=datetime.date(1970, 1, 2), stop=datetime.date(1970, 1, 1), span_size=1)
 
     assert str(e.value).startswith("Start is better than stop")
 
@@ -282,6 +282,6 @@ def test_time_span_start_better_stop():
 def test_time_span_wrong_span_size():
     today = datetime.date.today()
     with pytest.raises(trends.TrendException) as e:
-        trends.TimeSpan(today - datetime.timedelta(days=1), today, 1)
+        trends.TimeSpan(start=today - datetime.timedelta(days=1), stop=today, span_size=1)
 
     assert str(e.value).startswith("Wrong span got")
