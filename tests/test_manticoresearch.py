@@ -77,10 +77,10 @@ async def test_cursor_error():
 
 @pytest.mark.asyncio
 async def test_get_notes():
-    notes: list[manticoresearch.Note] = await manticoresearch._get_notes()
-    notes_all: list[notes_db.Note] = await notes_db.get_notes()
+    notes = await manticoresearch._get_notes()
+    notes_all = await notes_db.get_notes()
 
-    a_note: manticoresearch.Note = random.choice(notes)
+    a_note = random.choice(notes)
     right_note = [note for note in notes_all if note.note_id == a_note.note_id][0]
 
     assert len(notes) == len(notes_all)
@@ -91,9 +91,9 @@ async def test_get_notes():
 
 @pytest.mark.asyncio
 async def test_get_note():
-    notes_all: list[notes_db.Note] = await notes_db.get_notes()
+    notes_all = await notes_db.get_notes()
 
-    a_note: notes_db.Note = random.choice(notes_all)
+    a_note = random.choice(notes_all)
     note = await manticoresearch._get_note(note_id=a_note.note_id)
 
     assert a_note.note_id == note.note_id
