@@ -2,17 +2,18 @@ import asyncio
 import base64
 import datetime
 import statistics
-from collections.abc import Generator, Sequence
-from dataclasses import dataclass
+from collections.abc import Generator
 from decimal import Decimal
 from io import BytesIO
-from typing import Any, NamedTuple
+from typing import Any
 
 import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa
+from pydantic import NonNegativeInt, model_validator
 
 from tracker.common import database, settings
 from tracker.common.logger import logger
+from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
 from tracker.system import schemas
 
@@ -21,7 +22,7 @@ class TrendException(database.DatabaseException):
     pass
 
 
-class DayStatistics(NamedTuple):
+class DayStatistics(CustomBaseModel):
     date: datetime.date
     amount: int
 
@@ -32,23 +33,18 @@ class DayStatistics(NamedTuple):
         return f"{self.date.strftime(settings.DATE_FORMAT)}: {self.amount}"
 
 
-@dataclass
-class SpanStatistics:
+class SpanStatistics(CustomBaseModel):
     data: list[DayStatistics]
+    span_size: NonNegativeInt
 
-    def __init__(
-        self,
-        days: Sequence[tuple[datetime.date, int]],
-        *,
-        span_size: int,
-    ) -> None:
-        if len(days) != span_size:
+    @model_validator(mode="before")
+    @classmethod
+    def validate_span_size(cls, data: dict[str, Any]) -> dict[str, Any]:
+        if len(data["data"]) != (span_size := data["span_size"]):
             raise TrendException(
-                f"A span should contains exactly {span_size} days, but {len(days)} found",
+                f"Wrong span size: expected={span_size}, found={len(data['data'])}",
             )
-
-        self.data = [DayStatistics(date=date, amount=amount) for date, amount in days]
-        self.span_size = span_size
+        return data
 
     @property
     def start(self) -> datetime.date:
@@ -123,23 +119,28 @@ class SpanStatistics:
         return "\n".join(str(day) for day in self.data)
 
 
-@dataclass
-class TimeSpan:
+class TimeSpan(CustomBaseModel):
     start: datetime.date
     stop: datetime.date
+    span_size: NonNegativeInt
 
-    def __init__(self, start: datetime.date, stop: datetime.date, span_size: int) -> None:
-        if span_size < 0:
-            raise TrendException(f"Negative span size passed: {span_size}")
-        if start > stop:
-            raise TrendException(f"Start is better than stop: {start} > {stop}")
+    @model_validator(mode="before")
+    @classmethod
+    def validate_span_size_equality(cls, data: dict[str, Any]) -> dict[str, Any]:
+        start, stop = data["start"], data["stop"]
 
         # + 1 because the border is included to the range
-        if (stop - start).days + 1 != span_size:
-            raise TrendException(f"Wrong span got: [{start}; {stop}]")
+        if (stop - start).days + 1 != (span_size := data["span_size"]):
+            raise TrendException(f"Wrong span got: [{start}; {stop}; {span_size}]")
 
-        self.start = start
-        self.stop = stop
+        return data
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_start_stop_order(cls, data: dict[str, Any]) -> dict[str, Any]:
+        if (start := data["start"]) > (stop := data["stop"]):
+            raise TrendException(f"Start is better than stop: {start} > {stop}")
+        return data
 
     def format(self) -> str:
         return (
@@ -154,22 +155,19 @@ class TimeSpan:
         )
 
 
-@dataclass
-class _MaterialAnalytics:
+class _MaterialAnalytics(CustomBaseModel):
     """Analytics grouped by material type."""
 
     stats: dict[enums.MaterialTypesEnum, int]
     total: int
 
 
-@dataclass
-class _RepeatAnalytics:
+class _RepeatAnalytics(CustomBaseModel):
     repeats_count: int
     unique_materials_count: int
 
 
-@dataclass
-class SpanAnalysis:
+class SpanAnalysis(CustomBaseModel):
     reading: SpanStatistics
     notes: SpanStatistics
     materials_analytics: _MaterialAnalytics
@@ -274,7 +272,7 @@ def _get_span_statistics(
     ]
 
     logger.debug("Span statistics got")
-    return SpanStatistics(days=days, span_size=span_size)
+    return SpanStatistics(data=days, span_size=span_size)
 
 
 async def get_span_reading_statistics(*, span_size: int) -> SpanStatistics:
@@ -387,7 +385,7 @@ async def _get_repeats_count(span: TimeSpan) -> _RepeatAnalytics:
 
     if res:
         return _RepeatAnalytics(repeats_count=res.cnt, unique_materials_count=res.ucnt)
-    return _RepeatAnalytics(0, 0)
+    return _RepeatAnalytics(repeats_count=0, unique_materials_count=0)
 
 
 def _get_colors(
