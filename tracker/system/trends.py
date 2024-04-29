@@ -338,8 +338,8 @@ async def _materials_analytics(span: TimeSpan) -> _MaterialAnalytics:
             sa.func.count(models.Materials.c.material_id.distinct()).label("cnt"),
         )
         .join(models.Statuses)
-        .where(models.Statuses.c.completed_at >= span.start)
-        .where(models.Statuses.c.completed_at <= span.stop)
+        .where(sa.func.date(models.Statuses.c.completed_at) >= span.start)
+        .where(sa.func.date(models.Statuses.c.completed_at) <= span.stop)
         .group_by(models.Materials.c.material_type)
     )
 
