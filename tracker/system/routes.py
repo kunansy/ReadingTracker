@@ -51,6 +51,9 @@ async def graphic(
         completed_materials_trend_task = tg.create_task(
             trends.get_span_completed_materials_statistics(span_size=last_days),
         )
+        repeated_materials_trend_task = tg.create_task(
+            trends.get_span_repeated_materials_statistics(span_size=last_days),
+        )
         tracker_statistics_task = tg.create_task(db.get_tracker_statistics())
         completion_dates_task = tg.create_task(db.get_completion_dates())
         titles_task = tg.create_task(db.get_read_material_titles())
@@ -61,6 +64,7 @@ async def graphic(
     reading_trend = reading_trend_task.result()
     notes_trend = notes_trend_task.result()
     completed_materials_trend = completed_materials_trend_task.result()
+    repeated_materials_trend = repeated_materials_trend_task.result()
     completion_dates = completion_dates_task.result()
 
     notes_trend_graphic = trends.create_notes_graphic(notes_trend)
@@ -71,6 +75,9 @@ async def graphic(
     completed_materials_trend_graphic = trends.create_completed_materials_graphic(
         completed_materials_trend,
     )
+    repeated_materials_trend_graphic = trends.create_repeated_materials_graphic(
+        repeated_materials_trend,
+    )
 
     context |= {
         "material_id": material_id,
@@ -79,9 +86,11 @@ async def graphic(
         "reading_trend": reading_trend,
         "notes_trend": notes_trend,
         "completed_materials_trend": completed_materials_trend,
+        "repeated_materials_trend": repeated_materials_trend,
         "reading_trend_image": reading_trend_graphic,
         "notes_trend_image": notes_trend_graphic,
         "completed_materials_trend_image": completed_materials_trend_graphic,
+        "repeated_materials_trend_image": repeated_materials_trend_graphic,
         "tracker_statistics": tracker_statistics_task.result(),
         "titles": titles_task.result(),
     }
