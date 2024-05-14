@@ -87,4 +87,18 @@
             <p> Min: {{ completed_materials_trend.min }} </p>
         </div>
     </div>
+
+    <div class="graphic-image trend repeated-materials-trend">
+        <h3 class="header"> Repeated materials </h3>
+        <img src="data:image/svg+xml;base64,{{ completed_materials_trend_image }}">
+
+        <div class="statistics">
+            <p> Total: {{ repeated_materials_trend.total }} </p>
+            <p> Zero days: {{ repeated_materials_trend.zero_days }} </p>
+            <p> Mean: {{ repeated_materials_trend.mean }} </p>
+            <p> Median: {{ repeated_materials_trend.median }} </p>
+            <p> Max: {{ repeated_materials_trend.max }} </p>
+            <p> Min: {{ repeated_materials_trend.min }} </p>
+        </div>
+    </div>
 {% endblock main%}
