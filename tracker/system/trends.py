@@ -258,6 +258,29 @@ async def _calculate_span_completed_materials_statistics(
     return {row.date: row.cnt for row in rows}
 
 
+async def _calculate_span_repeated_materials_statistics(
+    span: TimeSpan,
+) -> dict[datetime.date, int]:
+    logger.debug("Calculating span repeated materials statistics")
+
+    stmt = (
+        sa.select(
+            sa.func.date(models.Repeats.c.repeated_at).label("date"),
+            sa.func.count(models.Repeats.c.material_id).label("cnt"),
+        )
+        .group_by(sa.func.date(models.Repeats.c.repeated_at))
+        .where(sa.func.date(models.Repeats.c.repeated_at) >= span.start)
+        .where(sa.func.date(models.Repeats.c.repeated_at) <= span.stop)
+    )
+
+    async with database.session() as ses:
+        rows = (await ses.execute(stmt)).all()
+
+    logger.debug("Span repeated materials statistics calculated")
+
+    return {row.date: row.cnt for row in rows}
+
+
 def _get_span_statistics(
     *,
     stat: dict[datetime.date, int],
@@ -292,6 +315,13 @@ async def get_span_notes_statistics(*, span_size: int) -> SpanStatistics:
 async def get_span_completed_materials_statistics(*, span_size: int) -> SpanStatistics:
     span = _get_span(span_size)
     stat = await _calculate_span_completed_materials_statistics(span=span)
+
+    return _get_span_statistics(stat=stat, span=span, span_size=span_size)
+
+
+async def get_span_repeated_materials_statistics(*, span_size: int) -> SpanStatistics:
+    span = _get_span(span_size)
+    stat = await _calculate_span_repeated_materials_statistics(span=span)
 
     return _get_span_statistics(stat=stat, span=span, span_size=span_size)
 
@@ -471,3 +501,11 @@ def create_completed_materials_graphic(
     logger.info("Creating completed materials graphic")
 
     return _create_graphic(stat=stat, title="Total materials completed")
+
+
+def create_repeated_materials_graphic(
+    stat: SpanStatistics,
+) -> str:
+    logger.info("Creating repeated materials graphic")
+
+    return _create_graphic(stat=stat, title="Total materials repeated")
