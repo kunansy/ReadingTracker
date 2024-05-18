@@ -1,5 +1,6 @@
 import asyncio
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException, RequestValidationError
@@ -18,12 +19,36 @@ from tracker.reading_log.routes import router as reading_log_router
 from tracker.system.routes import router as system_router
 
 
+async def _init_cache():
+    if not await redis_api.healthcheck():
+        raise ValueError("Redis is offline")
+
+    notes = await notes_db.get_notes()
+    await redis_api.set_notes(notes)
+
+
+async def startup():
+    logger.info("Init cache")
+    async with asyncio.timeout(10):
+        await _init_cache()
+    logger.info("Complete init")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    if not settings.DEBUG_MODE:
+        await startup()
+
+    yield
+
+
 app = FastAPI(
     title="Reading Tracker",
     description="Reading queue, logging the reading, keep some notes",
     version=settings.API_VERSION,
     debug=settings.API_DEBUG,
     default_response_class=ORJSONResponse,
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -46,21 +71,6 @@ app.include_router(notes_router)
 app.include_router(materials_router)
 app.include_router(cards_router)
 app.include_router(system_router)
-
-
-@app.on_event("startup")
-async def init_cache():
-    if settings.DEBUG_MODE:
-        return
-
-    logger.info("Init cache")
-    if not await redis_api.healthcheck():
-        raise ValueError("Redis is offline")
-
-    notes = await notes_db.get_notes()
-    await redis_api.set_notes(notes)
-
-    logger.info("Complete init")
 
 
 @app.exception_handler(database.DatabaseException)
