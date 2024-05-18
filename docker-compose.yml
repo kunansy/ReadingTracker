@@ -13,7 +13,7 @@ x-cache-img: &cache-img
   image: redis:7.2-alpine
 
 x-tracker-img: &tracker-img
-  image: kunansy/reading_tracker:2.25.8
+  image: kunansy/reading_tracker:2.25.9
 
 services:
   tracker-db:
