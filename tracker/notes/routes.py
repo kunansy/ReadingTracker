@@ -370,3 +370,10 @@ async def insert_to_repeat_queue(note_id: UUID):
         await kafka.repeat_note(note_id)
     else:
         raise HTTPException(status_code=404, detail="Not found")
+
+
+@router.get("/autocompletion", response_model=schemas.AutocompletionResponse)
+async def autocompletion(query: str, limit: int = 10):
+    autocompletions = await manticoresearch.autocompletion(query=query, limit=limit)
+
+    return {"autocompletions": autocompletions}
