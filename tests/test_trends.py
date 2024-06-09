@@ -9,7 +9,7 @@ from tracker.models import models
 from tracker.system import trends
 
 
-@pytest.mark.parametrize("size", (1, 6, 7, 34))
+@pytest.mark.parametrize("size", [1, 6, 7, 34])
 def test_get_span(size):
     span = trends._get_span(size)
     assert (span.stop - span.start).days + 1 == size
@@ -18,7 +18,7 @@ def test_get_span(size):
     assert span.start == span.stop - datetime.timedelta(days=size - 1)
 
 
-@pytest.mark.parametrize("size", (1, 6, 7, 34))
+@pytest.mark.parametrize("size", [1, 6, 7, 34])
 def test_span_methods(size):
     span = trends._get_span(size)
 
@@ -36,18 +36,18 @@ def test_span_methods(size):
 
 
 @pytest.mark.parametrize(
-    "start,size",
-    (
+    ("start", "size"),
+    [
         (datetime.date(2023, 1, 1), 10),
         (datetime.date(2023, 1, 1), 5),
         (datetime.date(2023, 1, 1), 1),
-    ),
+    ],
 )
 def test_iterate_over_span(start, size):
     stop = start + datetime.timedelta(days=size - 1)
     span = trends.TimeSpan(start=start, stop=stop, span_size=size)
 
-    result = [date for date in trends._iterate_over_span(span, size=size)]
+    result = list(trends._iterate_over_span(span, size=size))
 
     assert len(result) == size
     for index, day in enumerate(range(size)):
@@ -55,13 +55,13 @@ def test_iterate_over_span(start, size):
 
 
 @pytest.mark.parametrize(
-    "start,stop,size",
-    (
+    ("start", "stop", "size"),
+    [
         (datetime.date(2023, 1, 7), datetime.date(2023, 1, 7), 1),
         (datetime.date(2023, 1, 7), datetime.date(2023, 1, 10), 4),
         (datetime.date(2023, 1, 7), datetime.date(2023, 2, 7), 32),
         (datetime.date(2022, 8, 1), datetime.date(2022, 11, 1), 93),
-    ),
+    ],
 )
 async def test_calculate_span_reading_statistics(start, stop, size):
     span = trends.TimeSpan(start=start, stop=stop, span_size=size)
@@ -75,19 +75,19 @@ async def test_calculate_span_reading_statistics(start, stop, size):
     )
 
     async with database.session() as ses:
-        expected = {date: count for date, count in (await ses.execute(stmt)).all()}
+        expected = dict((await ses.execute(stmt)).all())
 
     assert result == expected
 
 
 @pytest.mark.parametrize(
-    "start,stop,size",
-    (
+    ("start", "stop", "size"),
+    [
         (datetime.date(2023, 1, 7), datetime.date(2023, 1, 7), 1),
         (datetime.date(2023, 1, 7), datetime.date(2023, 1, 10), 4),
         (datetime.date(2023, 1, 7), datetime.date(2023, 2, 7), 32),
         (datetime.date(2022, 8, 1), datetime.date(2022, 11, 1), 93),
-    ),
+    ],
 )
 async def test_calculate_span_notes_statistics(start, stop, size):
     span = trends.TimeSpan(start=start, stop=stop, span_size=size)
@@ -104,19 +104,19 @@ async def test_calculate_span_notes_statistics(start, stop, size):
     )
 
     async with database.session() as ses:
-        expected = {date: count for date, count in (await ses.execute(stmt)).all()}
+        expected = dict((await ses.execute(stmt)).all())
 
     assert result == expected
 
 
 @pytest.mark.parametrize(
-    "start,stop,size",
-    (
+    ("start", "stop", "size"),
+    [
         (datetime.date(2023, 1, 7), datetime.date(2023, 1, 7), 1),
         (datetime.date(2023, 1, 7), datetime.date(2023, 1, 10), 4),
         (datetime.date(2023, 1, 7), datetime.date(2023, 2, 7), 32),
         (datetime.date(2022, 8, 1), datetime.date(2022, 11, 1), 93),
-    ),
+    ],
 )
 async def test_get_span_statistics(start, stop, size):
     span = trends.TimeSpan(start=start, stop=stop, span_size=size)
@@ -163,7 +163,7 @@ async def test_get_span_statistics(start, stop, size):
     assert result.zero_days == (span.stop - span.start).days + 1 - len(stat)
 
 
-@pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
+@pytest.mark.parametrize("size", [1, 7, 14, 62, 180])
 async def test_get_span_reading_statistics(size):
     result = await trends.get_span_reading_statistics(span_size=size)
 
@@ -181,7 +181,7 @@ async def test_get_span_reading_statistics(size):
     assert result == expected
 
 
-@pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
+@pytest.mark.parametrize("size", [1, 7, 14, 62, 180])
 async def test_get_span_notes_statistics(size):
     result = await trends.get_span_notes_statistics(span_size=size)
 
@@ -199,7 +199,7 @@ async def test_get_span_notes_statistics(size):
     assert result == expected
 
 
-@pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
+@pytest.mark.parametrize("size", [1, 7, 14, 62, 180])
 async def test_get_span_completed_materials_statistics(size):
     result = await trends.get_span_completed_materials_statistics(span_size=size)
 
@@ -217,7 +217,7 @@ async def test_get_span_completed_materials_statistics(size):
     assert result == expected
 
 
-@pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
+@pytest.mark.parametrize("size", [1, 7, 14, 62, 180])
 async def test_create_reading_graphic(size):
     stat = await trends.get_span_reading_statistics(span_size=size)
     result = trends.create_reading_graphic(stat)
@@ -225,7 +225,7 @@ async def test_create_reading_graphic(size):
     assert result
 
 
-@pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
+@pytest.mark.parametrize("size", [1, 7, 14, 62, 180])
 async def test_create_notes_graphic(size):
     stat = await trends.get_span_notes_statistics(span_size=size)
     result = trends.create_notes_graphic(stat)
@@ -233,7 +233,7 @@ async def test_create_notes_graphic(size):
     assert result
 
 
-@pytest.mark.parametrize("size", (1, 5, 7))
+@pytest.mark.parametrize("size", [1, 5, 7])
 def test_span_statistics_init_exception(size):
     with pytest.raises(trends.TrendException) as e:
         trends.SpanStatistics(data=[], span_size=size)
@@ -267,7 +267,9 @@ def test_time_span_negative_size():
 
 def test_time_span_start_better_stop():
     with pytest.raises(trends.TrendException) as e:
-        trends.TimeSpan(start=datetime.date(1970, 1, 2), stop=datetime.date(1970, 1, 1), span_size=1)
+        trends.TimeSpan(
+            start=datetime.date(1970, 1, 2), stop=datetime.date(1970, 1, 1), span_size=1,
+        )
 
     assert str(e.value).startswith("Start is better than stop")
 

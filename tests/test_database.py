@@ -24,11 +24,11 @@ async def test_session_error():
 
 async def test_transaction():
     select_stmt = sa.select(models.Materials.c.authors).where(
-        models.Materials.c.authors.ilike("%Гёте%")
+        models.Materials.c.authors.ilike("%Гёте%"),
     )
 
     update_stmt = models.Materials.update().where(
-        models.Materials.c.authors.ilike("%Гёте%")
+        models.Materials.c.authors.ilike("%Гёте%"),
     )
 
     async with database.transaction() as trans:

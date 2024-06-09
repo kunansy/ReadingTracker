@@ -9,8 +9,10 @@ import sqlalchemy.sql as sa
 from tracker.common import database
 from tracker.materials import db as materials_db
 from tracker.models import models
-from tracker.reading_log import db
-from tracker.reading_log import statistics as st
+from tracker.reading_log import (
+    db,
+    statistics as st,
+)
 
 
 def mean(coll: Sequence[int | float | Decimal]) -> int | float | Decimal:
@@ -19,7 +21,7 @@ def mean(coll: Sequence[int | float | Decimal]) -> int | float | Decimal:
 
 @pytest.mark.parametrize(
     "material_id",
-    (
+    [
         # clear reading, Foer
         UUID("5c66e1ca-eb52-47e5-af50-c48b345c7e6c"),
         # 451, Bradbury, some material inside completed, some read
@@ -28,7 +30,7 @@ def mean(coll: Sequence[int | float | Decimal]) -> int | float | Decimal:
         UUID("dd89c273-3bbe-49f8-8049-239379a7fc65"),
         # Bulgakov
         UUID("fd569d08-240e-4f60-b39d-e37265fbfe24"),
-    ),
+    ],
 )
 async def test_calculate_materials_stat(material_id):
     records = await db.get_log_records()
@@ -106,10 +108,7 @@ async def test_get_means():
         for material in await materials_db.get_materials()
     }
     material_to_date = {
-        material_type: {
-            record.date: 0
-            for record in records
-        }
+        material_type: {record.date: 0 for record in records}
         for material_type in materials.values()
     }
     for record in records:
@@ -145,7 +144,7 @@ async def test_contains():
         [
             await st.contains(material_id=record.material_id)
             for record in random.sample(records, 10)
-        ]
+        ],
     )
 
     assert not await st.contains(material_id=uuid4())
@@ -153,10 +152,10 @@ async def test_contains():
 
 @pytest.mark.parametrize(
     "material_id",
-    (
+    [
         UUID("5c66e1ca-eb52-47e5-af50-c48b345c7e6c"),
         None,
-    ),
+    ],
 )
 async def test_get_min_record(material_id):
     min_record = await st._get_min_record(material_id=material_id)
@@ -173,10 +172,10 @@ async def test_get_min_record(material_id):
 
 @pytest.mark.parametrize(
     "material_id",
-    (
+    [
         UUID("5c66e1ca-eb52-47e5-af50-c48b345c7e6c"),
         None,
-    ),
+    ],
 )
 async def test_get_max_record(material_id):
     max_record = await st._get_max_record(material_id=material_id)

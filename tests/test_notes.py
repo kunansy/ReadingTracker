@@ -17,7 +17,7 @@ async def test_get_distinct_chapters():
     expected = {}
     for note in notes:
         expected[note.material_id] = expected.get(note.material_id, set()) | {
-            note.chapter
+            note.chapter,
         }
 
     assert result == expected
@@ -29,7 +29,7 @@ def test_get_distinct_chapters_empty():
 
 async def test_get_material_type():
     result = await db.get_material_type(
-        material_id="ab4d33f3-7602-4fde-afe8-d3fe5876867b"
+        material_id="ab4d33f3-7602-4fde-afe8-d3fe5876867b",
     )
 
     assert result == enums.MaterialTypesEnum.audiobook.name
@@ -37,7 +37,7 @@ async def test_get_material_type():
 
 async def test_get_material_type_not_found():
     result = await db.get_material_type(
-        material_id="4c753160-3363-47f5-b888-3574809592b0"
+        material_id="4c753160-3363-47f5-b888-3574809592b0",
     )
 
     assert result is None
@@ -79,10 +79,10 @@ async def test_get_material_with_notes_titles():
 
 @pytest.mark.parametrize(
     "material_id",
-    (
+    [
         UUID("5c66e1ca-eb52-47e5-af50-c48b345c7e6c"),
         None,
-    ),
+    ],
 )
 async def test_get_notes(material_id: UUID | None):
     notes = await db.get_notes(material_id=material_id)
@@ -136,7 +136,7 @@ async def test_delete_restore_note():
 
 @pytest.mark.parametrize(
     "note_id",
-    (
+    [
         "2febbe11-4513-40f4-b2a7-a3ca51f30a3d",
         "10bfed52-d5bb-4818-a315-c123e45b63c2",
         "27a05123-d89f-4383-973a-f1b3caf476f0",
@@ -144,7 +144,7 @@ async def test_delete_restore_note():
         "7e065063-9e46-498f-90a7-6be47e7833bc",
         "85b8ff0a-c671-454e-8c95-2375bdcdfed0",
         "12782f80-1d5d-4e97-889d-b78bedb33169",
-    ),
+    ],
 )
 async def test_link_notes(note_id):
     notes = {note.note_id: note for note in await db.get_notes()}
@@ -154,12 +154,22 @@ async def test_link_notes(note_id):
     assert len(result.nodes) == 10
     assert len(result.edges) == 9
 
-    assert set(result.edges) == {('c94e12cc-e773-4993-bf3d-7a1a1400ad3a', '27a05123-d89f-4383-973a-f1b3caf476f0'), ('10bfed52-d5bb-4818-a315-c123e45b63c2', '639e8583-73af-41b6-9002-29769957a139'), ('12782f80-1d5d-4e97-889d-b78bedb33169', '2febbe11-4513-40f4-b2a7-a3ca51f30a3d'), ('4f4dd5e9-e5de-46a7-865d-b0646e0878fd', '10bfed52-d5bb-4818-a315-c123e45b63c2'), ('85b8ff0a-c671-454e-8c95-2375bdcdfed0', '7e065063-9e46-498f-90a7-6be47e7833bc'), ('0eb77170-847b-4e3a-b90f-962012aba333', '85b8ff0a-c671-454e-8c95-2375bdcdfed0'), ('7e065063-9e46-498f-90a7-6be47e7833bc', 'c94e12cc-e773-4993-bf3d-7a1a1400ad3a'), ('639e8583-73af-41b6-9002-29769957a139', '2febbe11-4513-40f4-b2a7-a3ca51f30a3d'), ('27a05123-d89f-4383-973a-f1b3caf476f0', '4f4dd5e9-e5de-46a7-865d-b0646e0878fd')}
+    assert set(result.edges) == {
+        ("c94e12cc-e773-4993-bf3d-7a1a1400ad3a", "27a05123-d89f-4383-973a-f1b3caf476f0"),
+        ("10bfed52-d5bb-4818-a315-c123e45b63c2", "639e8583-73af-41b6-9002-29769957a139"),
+        ("12782f80-1d5d-4e97-889d-b78bedb33169", "2febbe11-4513-40f4-b2a7-a3ca51f30a3d"),
+        ("4f4dd5e9-e5de-46a7-865d-b0646e0878fd", "10bfed52-d5bb-4818-a315-c123e45b63c2"),
+        ("85b8ff0a-c671-454e-8c95-2375bdcdfed0", "7e065063-9e46-498f-90a7-6be47e7833bc"),
+        ("0eb77170-847b-4e3a-b90f-962012aba333", "85b8ff0a-c671-454e-8c95-2375bdcdfed0"),
+        ("7e065063-9e46-498f-90a7-6be47e7833bc", "c94e12cc-e773-4993-bf3d-7a1a1400ad3a"),
+        ("639e8583-73af-41b6-9002-29769957a139", "2febbe11-4513-40f4-b2a7-a3ca51f30a3d"),
+        ("27a05123-d89f-4383-973a-f1b3caf476f0", "4f4dd5e9-e5de-46a7-865d-b0646e0878fd"),
+    }
 
 
 @pytest.mark.parametrize(
     "note_id",
-    ("1ca65e74-d435-4de7-ad23-95cefba35bd1", "d6d27e4f-7748-41c9-90db-dd35f0189d36"),
+    ["1ca65e74-d435-4de7-ad23-95cefba35bd1", "d6d27e4f-7748-41c9-90db-dd35f0189d36"],
 )
 async def test_link_notes_without_links(note_id):
     notes = {note.note_id: note for note in await db.get_notes()}
@@ -172,12 +182,12 @@ async def test_link_notes_without_links(note_id):
 
 @pytest.mark.parametrize(
     "material_id",
-    (
+    [
         None,  # empty list
         "",  # all notes
         "539ef05c-1705-4ddb-9c4a-7e2f85ecc39f",  # notes for the material
         "62d6ab19-6431-4eb4-a526-07774a4bc2e4",  # notes for the material without links
-    ),
+    ],
 )
 async def test_link_all_notes(material_id: str | None):
     if material_id is None:
@@ -203,7 +213,7 @@ async def test_create_graphic():
     assert graphic_html.startswith("<html>")
 
 
-@pytest.mark.skip
+@pytest.mark.skip()
 async def test_get_sorted_tags():
     material_id = "38e13f37-9d28-4c68-80b2-2bfdf6567372"
     material_tags = await db._get_tags(material_id=material_id)
@@ -226,8 +236,8 @@ async def test_get_sorted_tags_without_material():
 
 
 @pytest.mark.parametrize(
-    "note_id,expected",
-    (
+    ("note_id", "expected"),
+    [
         (
             "3ad7a635-2057-4050-a874-471e001f86aa",
             [
@@ -240,7 +250,7 @@ async def test_get_sorted_tags_without_material():
             ["d205a2d6-f288-4eb9-8441-13b605371e92"],
         ),
         ("a5386aee-a186-4e6f-abaa-63853c75cce4", []),
-    ),
+    ],
 )
 async def test_get_links_from(note_id, expected):
     expected_notes = [await db.get_note(note_id=exp_note_id) for exp_note_id in expected]
@@ -250,7 +260,8 @@ async def test_get_links_from(note_id, expected):
 
 
 @pytest.mark.parametrize(
-    "lst, page, page_size, expected", (
+    ("lst", "page", "page_size", "expected"),
+    [
         (list(range(100)), 1, 10, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
         (list(range(100)), 2, 10, [10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
         (list(range(100)), 3, 10, [20, 21, 22, 23, 24, 25, 26, 27, 28, 29]),
@@ -260,7 +271,7 @@ async def test_get_links_from(note_id, expected):
         (list(range(5)), 1, 10, [0, 1, 2, 3, 4]),
         (list(range(5)), 2, 10, []),
         ([], 1, 10, []),
-    )
+    ],
 )
 def test_notes_limit(lst, page, page_size, expected):
     assert routes._limit_notes(lst, page=page, page_size=page_size) == expected

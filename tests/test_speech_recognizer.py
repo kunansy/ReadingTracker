@@ -1,17 +1,28 @@
 from pathlib import Path
 
-from tracker.notes import speech_recognizer
-
 import pytest
+
+from tracker.notes import speech_recognizer
 
 
 @pytest.mark.parametrize(
-    "results, expected", (
-        ({"alternative": [{"transcript": "Hello World", "confidence": 0.42}]},
-         {"transcript": "Hello world", "confidence": 42.0}),
-        ({"alternative": [{"transcript": "Hello World", "confidence": 0.42}, {"transcript": "Hello World2", "confidence": 0.52}, {"transcript": "Hello World3", "confidence": 0.3}]},
-         {"transcript": "Hello world2", "confidence": 52.0}),
-    )
+    ("results", "expected"),
+    [
+        (
+            {"alternative": [{"transcript": "Hello World", "confidence": 0.42}]},
+            {"transcript": "Hello world", "confidence": 42.0},
+        ),
+        (
+            {
+                "alternative": [
+                    {"transcript": "Hello World", "confidence": 0.42},
+                    {"transcript": "Hello World2", "confidence": 0.52},
+                    {"transcript": "Hello World3", "confidence": 0.3},
+                ],
+            },
+            {"transcript": "Hello world2", "confidence": 52.0},
+        ),
+    ],
 )
 def test_get_best_result(results, expected):
     assert speech_recognizer.get_best_result(results).model_dump() == expected
@@ -39,7 +50,10 @@ def test_recognize():
     result = speech_recognizer.recognize(audio)
     best = speech_recognizer.get_best_result(result)
 
-    assert best.model_dump() == {"transcript": "Этот файл записывается для теста и будет сохранён в test", "confidence": 88.91}
+    assert best.model_dump() == {
+        "transcript": "Этот файл записывается для теста и будет сохранён в test",
+        "confidence": 88.91,
+    }
 
 
 def test_remove():

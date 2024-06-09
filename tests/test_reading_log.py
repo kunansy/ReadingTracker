@@ -12,13 +12,13 @@ from tracker.reading_log import db
 
 
 @pytest.mark.parametrize(
-    "lst,index,default,value",
-    (
+    ("lst", "index", "default", "value"),
+    [
         ([], 1, -1, -1),
         ([1], 0, -1, 1),
         ([3, 4, 5], -1, -1, 5),
         ([1, 1, 1], 1, -1, 1),
-    ),
+    ],
 )
 def test_safe_list_get(lst, index, default, value):
     assert db._safe_list_get(lst, index, default) == value
@@ -35,7 +35,7 @@ async def test_get_mean_materials_read_pages():
     expected_stat = {}
     for material_id, count in result:
         count = Decimal(count)
-        expected_stat[material_id] = expected_stat.get(material_id, []) + [count]
+        expected_stat[material_id] = [*expected_stat.get(material_id, []), count]
 
     expected_result = {
         material_id: round(statistics.mean(counts), 2)
@@ -69,9 +69,7 @@ async def test_get_reading_material_titles():
     )
 
     async with database.session() as ses:
-        expected = {
-            material_id: title for material_id, title in (await ses.execute(stmt)).all()
-        }
+        expected = dict((await ses.execute(stmt)).all())
 
     titles = await db.get_reading_material_titles()
 
@@ -94,10 +92,7 @@ async def test_get_completion_dates():
     )
 
     async with database.session() as ses:
-        expected = {
-            material_id: completed_at
-            for material_id, completed_at in (await ses.execute(stmt)).all()
-        }
+        expected = dict((await ses.execute(stmt)).all())
 
     assert expected == dates
     assert all(expected.values())

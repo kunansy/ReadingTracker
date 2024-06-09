@@ -4,20 +4,22 @@ from uuid import UUID
 import pytest
 
 from tracker.materials import db as materials_db
-from tracker.reading_log import db as logs_db
-from tracker.reading_log import statistics
+from tracker.reading_log import (
+    db as logs_db,
+    statistics,
+)
 from tracker.system import db
 
 
 @pytest.mark.parametrize(
-    "material_id,last_days",
-    (
+    ("material_id", "last_days"),
+    [
         # clear reading, no materials inside
         ("a8297f04-6ded-459c-ae79-98c6a20e18c5", 7),
         ("a8297f04-6ded-459c-ae79-98c6a20e18c5", 14),
         ("236d5724-c0c6-431c-a3d1-a54e59dfd520", 14),
         ("533c3a90-2593-4d9a-8016-108a7b89f8ee", 14),
-    ),
+    ],
 )
 async def test_get_graphic_data_clear_reading(material_id, last_days):
     material_id = UUID(material_id)
@@ -39,11 +41,11 @@ async def test_get_graphic_data_clear_reading(material_id, last_days):
 
 
 @pytest.mark.parametrize(
-    "material_id,last_days",
-    (
+    ("material_id", "last_days"),
+    [
         # not clear reading, there are materials inside
         ("a4fec52b-ed43-48e8-a888-d393606ac010", 80),
-    ),
+    ],
 )
 async def test_get_graphic_data_unclear_reading(material_id, last_days):
     material_id = UUID(material_id)
@@ -83,17 +85,17 @@ async def test_get_material_reading_now():
 
 
 @pytest.mark.parametrize(
-    "material_id,last_days",
-    (
+    ("material_id", "last_days"),
+    [
         # completed material
         ("a8297f04-6ded-459c-ae79-98c6a20e18c5", 14),
         # not completed material
         ("a7f4e1dc-9274-46e7-a656-514bf1f312b5", 14),
-    ),
+    ],
 )
 async def test_create_reading_graphic(material_id, last_days):
     result = await db.create_reading_graphic(
-        material_id=UUID(material_id), last_days=last_days
+        material_id=UUID(material_id), last_days=last_days,
     )
 
     assert result
