@@ -258,10 +258,11 @@ def test_span_statistics_empty_stop():
 
 
 def test_time_span_negative_size():
+    today = datetime.date(year=2020, month=1, day=1)
     with pytest.raises(trends.TrendException) as e:
-        trends.TimeSpan(start=datetime.date.today(), stop=datetime.date.today(), span_size=-1)
+        trends.TimeSpan(start=today, stop=today, span_size=-1)
 
-    assert str(e.value) == "Wrong span got: [2024-04-29; 2024-04-29; -1]"
+    assert str(e.value) == "Wrong span got: [2020-01-01; 2020-01-01; -1]"
 
 
 def test_time_span_start_better_stop():
