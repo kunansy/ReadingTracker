@@ -17,7 +17,6 @@ def mean(coll: Sequence[int | float | Decimal]) -> int | float | Decimal:
     return sum(coll) / len(coll)
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "material_id",
     (
@@ -51,7 +50,6 @@ async def test_calculate_materials_stat(material_id):
     assert stat.max_record.count == max(records_count)
 
 
-@pytest.mark.asyncio
 async def test_get_start_date():
     records = await db.get_log_records()
     start_date = await st._get_start_date()
@@ -59,7 +57,6 @@ async def test_get_start_date():
     assert min(records, key=lambda record: record.date).date == start_date
 
 
-@pytest.mark.asyncio
 async def test_get_last_date():
     records = await db.get_log_records()
     last_date = await st._get_last_date()
@@ -67,7 +64,6 @@ async def test_get_last_date():
     assert max(records, key=lambda record: record.date).date == last_date
 
 
-@pytest.mark.asyncio
 async def test_get_log_duration():
     duration = await st._get_log_duration()
     records = await db.get_log_records()
@@ -80,7 +76,6 @@ async def test_get_log_duration():
     assert duration == expected_duration
 
 
-@pytest.mark.asyncio
 async def test_get_total_read_pages():
     total = await st._get_total_read_pages()
     records = await db.get_log_records()
@@ -88,7 +83,6 @@ async def test_get_total_read_pages():
     assert total == sum(record.count for record in records)
 
 
-@pytest.mark.asyncio
 async def test_get_lost_days():
     lost_days = await st._get_lost_days()
     records = await db.get_log_records()
@@ -101,7 +95,6 @@ async def test_get_lost_days():
     assert lost_days == expected_duration - len(records)
 
 
-@pytest.mark.asyncio
 async def test_get_means():
     means = await st.get_means()
     records = await db.get_log_records()
@@ -132,7 +125,6 @@ async def test_get_means():
         assert round(expected[material_type], 2) == mean_
 
 
-@pytest.mark.asyncio
 async def test_get_median_pages_read_per_day():
     median = await st._get_median_pages_read_per_day()
     records = await db.get_log_records()
@@ -146,7 +138,6 @@ async def test_get_median_pages_read_per_day():
     assert median == expected_median
 
 
-@pytest.mark.asyncio
 async def test_contains():
     records = await db.get_log_records()
 
@@ -160,7 +151,6 @@ async def test_contains():
     assert not await st.contains(material_id=uuid4())
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "material_id",
     (
@@ -181,7 +171,6 @@ async def test_get_min_record(material_id):
     assert min_record.date == expected.date
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "material_id",
     (
@@ -202,19 +191,16 @@ async def test_get_max_record(material_id):
     assert max_record.date == expected.date
 
 
-@pytest.mark.asyncio
 async def test_get_min_record_nof_found():
     result = await st._get_min_record(material_id=uuid4())
     assert result is None
 
 
-@pytest.mark.asyncio
 async def test_get_max_record_nof_found():
     result = await st._get_max_record(material_id=uuid4())
     assert result is None
 
 
-@pytest.mark.asyncio
 async def test_would_be_total():
     would_be_total = await st._would_be_total()
     records = await db.get_log_records()
@@ -231,7 +217,6 @@ async def test_would_be_total():
     assert would_be_total == round(expected)
 
 
-@pytest.mark.asyncio
 async def test_get_total_materials_completed():
     materials = await st._get_total_materials_completed()
 
@@ -243,7 +228,6 @@ async def test_get_total_materials_completed():
     assert materials == expected
 
 
-@pytest.mark.asyncio
 async def test_get_tracker_statistics():
     stat = await st.get_tracker_statistics()
 

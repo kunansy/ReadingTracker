@@ -24,7 +24,6 @@ def test_safe_list_get(lst, index, default, value):
     assert db._safe_list_get(lst, index, default) == value
 
 
-@pytest.mark.asyncio
 async def test_get_mean_materials_read_pages():
     stat = await db.get_mean_materials_read_pages()
 
@@ -48,7 +47,6 @@ async def test_get_mean_materials_read_pages():
     assert expected_result == stat
 
 
-@pytest.mark.asyncio
 async def test_get_log_records():
     stmt = sa.select(sa.func.count(1)).select_from(models.ReadingLog)
 
@@ -60,7 +58,6 @@ async def test_get_log_records():
     assert len(log_records) == expected_res_count
 
 
-@pytest.mark.asyncio
 async def test_get_reading_material_titles():
     stmt = (
         sa.select(models.Materials.c.material_id, models.Materials.c.title)
@@ -84,7 +81,6 @@ async def test_get_reading_material_titles():
     assert expected == titles
 
 
-@pytest.mark.asyncio
 async def test_get_completion_dates():
     dates = await db.get_completion_dates()
 
@@ -107,7 +103,6 @@ async def test_get_completion_dates():
     assert all(expected.values())
 
 
-@pytest.mark.asyncio
 async def test_is_log_empty():
     is_empty = await db.is_log_empty()
 
@@ -119,7 +114,6 @@ async def test_is_log_empty():
     assert is_empty is expected
 
 
-@pytest.mark.asyncio
 async def test_insert_log_record():
     reading_materials = list((await db.get_reading_material_titles()).keys())
 

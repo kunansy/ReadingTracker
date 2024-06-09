@@ -27,14 +27,12 @@ async def get_statuses() -> list[db.Status]:
         return [db.Status(**row) for row in (await ses.execute(stmt)).mappings().all()]
 
 
-@pytest.mark.asyncio
 async def test_get_means():
     from tracker.reading_log.statistics import get_means
 
     assert await db.get_means() == await get_means()
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("material_id", (None, "fd569d08-240e-4f60-b39d-e37265fbfe24"))
 async def test_get_material(material_id):
     if not material_id:
@@ -54,7 +52,6 @@ async def test_get_material(material_id):
     assert expected == material
 
 
-@pytest.mark.asyncio
 async def test_get_free_materials():
     free_materials = await db._get_free_materials()
 
@@ -86,7 +83,6 @@ def test_get_completed_materials_stmt():
     assert isinstance(stmt, sa.Select)
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("is_completed", (True, False))
 async def test_parse_material_status_response(is_completed):
     if is_completed:
@@ -98,7 +94,6 @@ async def test_parse_material_status_response(is_completed):
     assert result
 
 
-@pytest.mark.asyncio
 async def test_get_reading_materials():
     reading_materials = await db.get_reading_materials()
 
@@ -124,7 +119,6 @@ async def test_get_reading_materials():
     )
 
 
-@pytest.mark.asyncio
 async def test_get_completed_materials():
     completed_materials = await db._get_completed_materials()
 
@@ -150,7 +144,6 @@ async def test_get_completed_materials():
     )
 
 
-@pytest.mark.asyncio
 async def test_get_last_material_started():
     material_id = await db.get_last_material_started()
 
@@ -177,7 +170,6 @@ async def test_get_last_material_started():
     assert expected == material_id
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("material_status", ("completed", "started", "not started"))
 async def test_get_status(
     material_status: Literal["completed", "started", "not started"],
@@ -249,12 +241,10 @@ def test_get_total_reading_duration(start, finish, expected):
     )
 
 
-@pytest.mark.asyncio
 async def test_get_material_statistics():
     pass
 
 
-@pytest.mark.asyncio
 async def test_get_material_statistics_unread():
     materials = await db._get_free_materials()
     assert materials
@@ -294,7 +284,6 @@ async def test_get_material_statistics_unread():
     )
 
 
-@pytest.mark.asyncio
 async def test_completed_statistics():
     materials = [material for material in await db._get_completed_materials()]
     m_log_st = await statistics.calculate_materials_stat(
@@ -319,7 +308,6 @@ async def test_completed_statistics():
         assert st.max_record == log_st.max_record
 
 
-@pytest.mark.asyncio
 async def test_reading_statistics():
     log_exists = sa.func.exists(
         sa.select(1)
@@ -362,7 +350,6 @@ async def test_reading_statistics():
         assert st.max_record == log_st.max_record
 
 
-@pytest.mark.asyncio
 async def test_get_material_tags():
     tags = await db.get_material_tags()
     materials = await get_materials()
@@ -388,22 +375,18 @@ async def test_get_material_tags():
     )
 
 
-@pytest.mark.asyncio
 async def test_insert_material():
     pass
 
 
-@pytest.mark.asyncio
 async def test_update_material():
     pass
 
 
-@pytest.mark.asyncio
 async def test_start_material():
     pass
 
 
-@pytest.mark.asyncio
 async def test_start_material_invalid_date():
     material_id = uuid.UUID("44582686-ff27-4e4b-8d32-8bfdccc085b7")
     date = (database.utcnow() + datetime.timedelta(days=1)).date()
@@ -414,12 +397,10 @@ async def test_start_material_invalid_date():
     assert str(e.value) == "Start date must be less than today"
 
 
-@pytest.mark.asyncio
 async def test_complete_material():
     pass
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "material_status,exc",
     (
@@ -452,7 +433,6 @@ async def test_complete_material_invalid_materials(
     assert exc == str(e.value)
 
 
-@pytest.mark.asyncio
 async def test_complete_material_invalid_date():
     materials = {material.material_id: material for material in await get_materials()}
     statuses = {status.material_id: status for status in await get_statuses()}
@@ -473,22 +453,18 @@ async def test_complete_material_invalid_date():
     assert str(e.value) == "Completion date must be greater than start date"
 
 
-@pytest.mark.asyncio
 async def test_outline_material():
     pass
 
 
-@pytest.mark.asyncio
 async def test_repeat_material():
     pass
 
 
-@pytest.mark.asyncio
 async def test_end_of_reading():
     pass
 
 
-@pytest.mark.asyncio
 async def test_estimate():
     pass
 
@@ -526,7 +502,6 @@ def test_get_priority_days(field, expected):
     assert db._get_priority_days(field) == expected
 
 
-@pytest.mark.asyncio
 async def test_get_repeats_analytics_only_repeated():
     stmt = sa.select(
         models.Repeats.c.material_id,
@@ -555,12 +530,10 @@ async def test_get_repeats_analytics_only_repeated():
         )
 
 
-@pytest.mark.asyncio
 async def test_get_repeats_analytics_only_not_repeated():
     pass
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "material_id,expected",
     (

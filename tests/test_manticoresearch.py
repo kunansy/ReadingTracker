@@ -21,12 +21,10 @@ def test_get_search_query():
     """
 
 
-@pytest.mark.asyncio
 async def test_readiness():
     assert await manticoresearch.readiness() is True
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "query, expected", (
         ("", {}),
@@ -55,7 +53,6 @@ async def test_search(query, expected):
     assert await manticoresearch.search(query) == expected
 
 
-@pytest.mark.asyncio
 async def test_cursor():
     query = "select 1 + 1"
     async with manticoresearch._cursor() as cur:
@@ -65,7 +62,6 @@ async def test_cursor():
     assert result == 2
 
 
-@pytest.mark.asyncio
 async def test_cursor_error():
     query = "select * from not_exist"
     with pytest.raises(manticoresearch.ManticoreException) as e:
@@ -75,7 +71,6 @@ async def test_cursor_error():
     assert str(e.value) == '(1064, "unknown local table(s) \'not_exist\' in search request")'
 
 
-@pytest.mark.asyncio
 async def test_get_notes():
     notes = await manticoresearch._get_notes()
     notes_all = await notes_db.get_notes()
@@ -89,7 +84,6 @@ async def test_get_notes():
     assert a_note.added_at == right_note.added_at
 
 
-@pytest.mark.asyncio
 async def test_get_note():
     notes_all = await notes_db.get_notes()
 
@@ -101,7 +95,6 @@ async def test_get_note():
     assert a_note.added_at == note.added_at
 
 
-@pytest.mark.asyncio
 async def test_get_note_not_found():
     with pytest.raises(ValueError) as e:
         await manticoresearch._get_note(note_id=uuid.uuid4())
@@ -110,6 +103,5 @@ async def test_get_note_not_found():
     assert "not found" in str(e.value)
 
 
-@pytest.mark.asyncio
 async def test_create_table():
     await manticoresearch._create_table()

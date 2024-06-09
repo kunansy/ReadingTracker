@@ -5,7 +5,6 @@ from tracker.common import database
 from tracker.models import models
 
 
-@pytest.mark.asyncio
 async def test_session():
     stmt = sa.text("SELECT 1 + 1")
 
@@ -13,7 +12,6 @@ async def test_session():
         assert await ses.scalar(stmt) == 2
 
 
-@pytest.mark.asyncio
 async def test_session_error():
     stmt = sa.text("SELECT 1 / 0")
 
@@ -24,7 +22,6 @@ async def test_session_error():
     assert "division by zero" in str(e.value)
 
 
-@pytest.mark.asyncio
 async def test_transaction():
     select_stmt = sa.select(models.Materials.c.authors).where(
         models.Materials.c.authors.ilike("%Гёте%")
@@ -54,6 +51,5 @@ async def test_transaction():
         assert new_materials == materials
 
 
-@pytest.mark.asyncio
 async def test_readiness():
     assert await database.readiness()

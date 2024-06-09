@@ -54,7 +54,6 @@ def test_iterate_over_span(start, size):
         assert result[index] == start + datetime.timedelta(days=day)
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "start,stop,size",
     (
@@ -81,7 +80,6 @@ async def test_calculate_span_reading_statistics(start, stop, size):
     assert result == expected
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "start,stop,size",
     (
@@ -111,7 +109,6 @@ async def test_calculate_span_notes_statistics(start, stop, size):
     assert result == expected
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "start,stop,size",
     (
@@ -166,7 +163,6 @@ async def test_get_span_statistics(start, stop, size):
     assert result.zero_days == (span.stop - span.start).days + 1 - len(stat)
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
 async def test_get_span_reading_statistics(size):
     result = await trends.get_span_reading_statistics(span_size=size)
@@ -185,7 +181,6 @@ async def test_get_span_reading_statistics(size):
     assert result == expected
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
 async def test_get_span_notes_statistics(size):
     result = await trends.get_span_notes_statistics(span_size=size)
@@ -204,7 +199,6 @@ async def test_get_span_notes_statistics(size):
     assert result == expected
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
 async def test_get_span_completed_materials_statistics(size):
     result = await trends.get_span_completed_materials_statistics(span_size=size)
@@ -223,7 +217,6 @@ async def test_get_span_completed_materials_statistics(size):
     assert result == expected
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
 async def test_create_reading_graphic(size):
     stat = await trends.get_span_reading_statistics(span_size=size)
@@ -232,7 +225,6 @@ async def test_create_reading_graphic(size):
     assert result
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize("size", (1, 7, 14, 62, 180))
 async def test_create_notes_graphic(size):
     stat = await trends.get_span_notes_statistics(span_size=size)

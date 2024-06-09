@@ -9,7 +9,6 @@ from tracker.models import enums, models
 from tracker.notes import db, routes
 
 
-@pytest.mark.asyncio
 async def test_get_distinct_chapters():
     notes = await db.get_notes()
 
@@ -28,7 +27,6 @@ def test_get_distinct_chapters_empty():
     assert db.get_distinct_chapters([]) == {}
 
 
-@pytest.mark.asyncio
 async def test_get_material_type():
     result = await db.get_material_type(
         material_id="ab4d33f3-7602-4fde-afe8-d3fe5876867b"
@@ -37,7 +35,6 @@ async def test_get_material_type():
     assert result == enums.MaterialTypesEnum.audiobook.name
 
 
-@pytest.mark.asyncio
 async def test_get_material_type_not_found():
     result = await db.get_material_type(
         material_id="4c753160-3363-47f5-b888-3574809592b0"
@@ -46,7 +43,6 @@ async def test_get_material_type_not_found():
     assert result is None
 
 
-@pytest.mark.asyncio
 async def test_get_material_types():
     types = await db.get_material_types()
     type_values = set(types.values())
@@ -54,7 +50,6 @@ async def test_get_material_types():
     assert all(enums.MaterialTypesEnum(type_) for type_ in type_values)
 
 
-@pytest.mark.asyncio
 async def test_get_material_titles():
     material_titles = await db.get_material_titles()
 
@@ -66,7 +61,6 @@ async def test_get_material_titles():
     assert len(material_titles) == materials_count
 
 
-@pytest.mark.asyncio
 async def test_get_material_with_notes_titles():
     stmt = (
         sa.select(models.Materials.c.material_id)
@@ -83,7 +77,6 @@ async def test_get_material_with_notes_titles():
     assert set(titles.keys()) == expected
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "material_id",
     (
@@ -115,7 +108,6 @@ async def test_get_notes(material_id: UUID | None):
     assert len(notes) == notes_count, f"Some notes missed, {len(notes)} != {notes_count}"
 
 
-@pytest.mark.asyncio
 async def test_get_all_notes_count():
     notes = await db.get_notes()
     notes.sort(key=lambda note: note.material_id)
@@ -131,7 +123,6 @@ async def test_get_all_notes_count():
     assert len(notes) == sum(test_result.values())
 
 
-@pytest.mark.asyncio
 async def test_delete_restore_note():
     note_id = "40824c08-3e86-4fff-8ced-ee90ffee1e6c"
     assert await db.get_note(note_id=note_id) is not None
@@ -143,7 +134,6 @@ async def test_delete_restore_note():
     assert await db.get_note(note_id=note_id) is not None
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "note_id",
     (
@@ -174,7 +164,6 @@ async def test_link_notes(note_id):
     }
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "note_id",
     ("1ca65e74-d435-4de7-ad23-95cefba35bd1", "d6d27e4f-7748-41c9-90db-dd35f0189d36"),
@@ -188,7 +177,6 @@ async def test_link_notes_without_links(note_id):
     assert len(result.edges) == 0
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "material_id",
     (
@@ -212,7 +200,6 @@ async def test_link_all_notes(material_id: str | None):
     ), "Edges count is wrong"
 
 
-@pytest.mark.asyncio
 async def test_create_graphic():
     notes = await db.get_notes()
 
@@ -224,7 +211,6 @@ async def test_create_graphic():
 
 
 @pytest.mark.skip
-@pytest.mark.asyncio
 async def test_get_sorted_tags():
     material_id = "38e13f37-9d28-4c68-80b2-2bfdf6567372"
     material_tags = await db._get_tags(material_id=material_id)
@@ -238,7 +224,6 @@ async def test_get_sorted_tags():
     assert sorted(test_result[: len(material_tags)]) == sorted(material_tags)
 
 
-@pytest.mark.asyncio
 async def test_get_sorted_tags_without_material():
     tags = await db._get_tags()
 
@@ -247,7 +232,6 @@ async def test_get_sorted_tags_without_material():
     assert result == sorted(tags)
 
 
-@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "note_id,expected",
     (
