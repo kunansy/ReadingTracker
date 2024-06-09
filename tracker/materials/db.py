@@ -623,8 +623,8 @@ def _calculate_priority_months(field: datetime.timedelta | None) -> int:
     return days // 30
 
 
-def _get_priority_days(field: datetime.timedelta | None) -> int:
-    return getattr(field, "days", 0)
+def _get_priority_days(priority_days: datetime.timedelta | None) -> int:
+    return getattr(priority_days, "days", 0)
 
 
 async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
