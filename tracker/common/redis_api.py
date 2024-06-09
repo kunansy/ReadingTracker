@@ -1,6 +1,6 @@
 from collections.abc import Callable, Iterable
 from functools import wraps
-from typing import Any
+from typing import Any, TypeAlias
 from uuid import UUID
 
 import aiokeydb
@@ -11,7 +11,7 @@ from tracker.notes.db import Note
 
 _NOTES_STORAGE = 0
 
-DB = aiokeydb.AsyncKeyDB
+DB: TypeAlias = aiokeydb.AsyncKeyDB  # noqa: UP040
 FUNC_TYPE = Callable[[int], DB]
 
 
