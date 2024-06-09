@@ -151,17 +151,10 @@ async def test_link_notes(note_id):
 
     result = db.link_notes(note_id=UUID(note_id), notes=notes)
 
-    assert len(result.nodes) == 7
-    assert len(result.edges) == 6
+    assert len(result.nodes) == 10
+    assert len(result.edges) == 9
 
-    assert set(result.edges) == {
-        ("85b8ff0a-c671-454e-8c95-2375bdcdfed0", "27a05123-d89f-4383-973a-f1b3caf476f0"),
-        ("27a05123-d89f-4383-973a-f1b3caf476f0", "2febbe11-4513-40f4-b2a7-a3ca51f30a3d"),
-        ("10bfed52-d5bb-4818-a315-c123e45b63c2", "2febbe11-4513-40f4-b2a7-a3ca51f30a3d"),
-        ("c94e12cc-e773-4993-bf3d-7a1a1400ad3a", "27a05123-d89f-4383-973a-f1b3caf476f0"),
-        ("7e065063-9e46-498f-90a7-6be47e7833bc", "c94e12cc-e773-4993-bf3d-7a1a1400ad3a"),
-        ("12782f80-1d5d-4e97-889d-b78bedb33169", "2febbe11-4513-40f4-b2a7-a3ca51f30a3d"),
-    }
+    assert set(result.edges) == {('c94e12cc-e773-4993-bf3d-7a1a1400ad3a', '27a05123-d89f-4383-973a-f1b3caf476f0'), ('10bfed52-d5bb-4818-a315-c123e45b63c2', '639e8583-73af-41b6-9002-29769957a139'), ('12782f80-1d5d-4e97-889d-b78bedb33169', '2febbe11-4513-40f4-b2a7-a3ca51f30a3d'), ('4f4dd5e9-e5de-46a7-865d-b0646e0878fd', '10bfed52-d5bb-4818-a315-c123e45b63c2'), ('85b8ff0a-c671-454e-8c95-2375bdcdfed0', '7e065063-9e46-498f-90a7-6be47e7833bc'), ('0eb77170-847b-4e3a-b90f-962012aba333', '85b8ff0a-c671-454e-8c95-2375bdcdfed0'), ('7e065063-9e46-498f-90a7-6be47e7833bc', 'c94e12cc-e773-4993-bf3d-7a1a1400ad3a'), ('639e8583-73af-41b6-9002-29769957a139', '2febbe11-4513-40f4-b2a7-a3ca51f30a3d'), ('27a05123-d89f-4383-973a-f1b3caf476f0', '4f4dd5e9-e5de-46a7-865d-b0646e0878fd')}
 
 
 @pytest.mark.parametrize(
