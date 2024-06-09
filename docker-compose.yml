@@ -89,8 +89,6 @@ services:
       - "127.0.0.1:${CACHE_PORT}:6379"
     volumes:
       - cache-volume:/data
-    environment:
-      REDIS_PASSWORD: ${CACHE_PASSWORD}
     healthcheck:
       test: ["CMD-SHELL", "keydb-cli ping || exit 1"]
       interval: 5s
