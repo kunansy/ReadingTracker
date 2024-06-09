@@ -317,9 +317,11 @@ async def test_reading_statistics():
     )
     reading_materials_stmt = db._get_reading_materials_stmt().where(log_exists)
 
-    materials = list(await db._parse_material_status_response(
+    materials = list(
+        await db._parse_material_status_response(
             stmt=reading_materials_stmt,
-        ))
+        ),
+    )
     m_log_st = await statistics.calculate_materials_stat(
         material_ids={m.material_id for m in materials},
     )
@@ -406,7 +408,8 @@ async def test_complete_material():
     ],
 )
 async def test_complete_material_invalid_materials(
-    material_status: Literal["completed", "not started"], exc,
+    material_status: Literal["completed", "not started"],
+    exc,
 ):
     materials = {material.material_id: material for material in await get_materials()}
     statuses = {status.material_id: status for status in await get_statuses()}
@@ -467,23 +470,32 @@ async def test_estimate():
 
 
 @pytest.mark.parametrize(
-    ("field", "expected"),
+    ("priority_days", "repeats_count", "expected"),
     [
-        (None, 0),
-        (datetime.timedelta(days=29), 0),
-        (datetime.timedelta(days=30), 1),
+        (None, 0, 0),
+        (datetime.timedelta(days=29), 0, 0),
+        (datetime.timedelta(days=30), 0, 1),
         # 44 / 30 < 1.5 rounds to 1
-        (datetime.timedelta(days=44), 1),
+        (datetime.timedelta(days=44), 0, 1),
         # but when 45 / 30 = 1.5 rounds to 2
-        (datetime.timedelta(days=45), 1),
-        (datetime.timedelta(days=59), 1),
-        (datetime.timedelta(days=92), 3),
-        (datetime.timedelta(days=2), 0),
-        (datetime.timedelta(days=0), 0),
+        (datetime.timedelta(days=45), 0, 1),
+        (datetime.timedelta(days=59), 0, 1),
+        (datetime.timedelta(days=92), 0, 3),
+        (datetime.timedelta(days=2), 0, 0),
+        (datetime.timedelta(days=0), 0, 0),
+        (datetime.timedelta(days=2), 2, 0),
+        (datetime.timedelta(days=0), 3, 0),
+        (datetime.timedelta(days=180), 3, 3),
+        (datetime.timedelta(days=30), 1, 0),
+        (datetime.timedelta(days=80), 2, 0),
+        (datetime.timedelta(days=102), 2, 1),
     ],
 )
-def test_calculate_priority_months(field, expected):
-    assert db._calculate_priority_months(field) == expected, field
+def test_calculate_priority_months(priority_days, repeats_count, expected):
+    assert (
+        db._calculate_priority_months(priority_days, repeats_count=repeats_count)
+        == expected
+    ), priority_days
 
 
 @pytest.mark.parametrize(
