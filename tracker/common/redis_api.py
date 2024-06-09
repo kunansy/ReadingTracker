@@ -3,8 +3,7 @@ from functools import wraps
 from typing import Any
 from uuid import UUID
 
-import redis
-from redis import asyncio as aioredis
+import aiokeydb
 
 from tracker.common import settings
 from tracker.notes.db import Note
@@ -12,14 +11,15 @@ from tracker.notes.db import Note
 
 _NOTES_STORAGE = 0
 
-FUNC_TYPE = Callable[[int], aioredis.Redis]
+DB = aiokeydb.AsyncKeyDB
+FUNC_TYPE = Callable[[int], DB]
 
 
 def cache(func: FUNC_TYPE) -> FUNC_TYPE:
-    clients: dict[int, aioredis.Redis] = {}
+    clients: dict[int, DB] = {}
 
     @wraps(func)
-    def wrapped(db: int, *args: Any, **kwargs: Any) -> aioredis.Redis:
+    def wrapped(db: int, *args: Any, **kwargs: Any) -> DB:
         nonlocal clients
 
         if db not in clients:
@@ -31,14 +31,15 @@ def cache(func: FUNC_TYPE) -> FUNC_TYPE:
 
 
 @cache
-def client(db: int) -> aioredis.Redis:
-    return aioredis.from_url(
+def client(db: int) -> DB:
+    return aiokeydb.from_url(
         settings.CACHE_URL,
         password=settings.CACHE_PASSWORD,
         encoding="utf-8",
         decode_responses=True,
         db=db,
         protocol=3,
+        _is_async=True,
     )
 
 
@@ -70,7 +71,7 @@ async def healthcheck() -> bool:
 async def get_note(note_id: UUID | str, *fields: str) -> dict | None:
     try:
         result = await _get_dict(str(note_id), fields, db=_NOTES_STORAGE)
-    except redis.exceptions.ConnectionError:
+    except aiokeydb.exceptions.ConnectionError:
         return None
 
     if not any(result):
