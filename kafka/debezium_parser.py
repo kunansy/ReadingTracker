@@ -7,7 +7,7 @@ import orjson
 from aiokafka import AIOKafkaConsumer
 from pydantic import field_validator
 
-from tracker.common import kafka, manticoresearch, redis_api, settings
+from tracker.common import kafka, keydb_api, manticoresearch, settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.notes.db import Note
@@ -94,11 +94,11 @@ async def _to_notes_cache(payload: Record) -> None:
 
     if payload.is_delete():
         logger.info("Deleting the note")
-        await redis_api.delete_note(payload.note_id)
+        await keydb_api.delete_note(payload.note_id)
         return
 
     logger.info("Updating the note")
-    await redis_api.set_note(payload.dump_after())
+    await keydb_api.set_note(payload.dump_after())
 
 
 async def _to_notify(payload: Record) -> None:

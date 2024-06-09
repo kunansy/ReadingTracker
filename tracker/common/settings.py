@@ -30,7 +30,7 @@ TRACKER_URL = env(
 DEBUG_MODE = env.bool("DEBUG_MODE", False)
 
 with env.prefixed("CACHE_"):
-    _CACHE_URL = env("URL", "redis://tracker-cache")
+    _CACHE_URL = env("URL", "keydb://tracker-cache")
     _CACHE_PORT = env.int("PORT", 6379)
     CACHE_PASSWORD = env("PASSWORD")
 

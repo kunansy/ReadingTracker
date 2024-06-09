@@ -10,7 +10,7 @@ from fastapi.templating import Jinja2Templates
 from starlette_exporter import PrometheusMiddleware, handle_metrics
 
 from tracker.cards.routes import router as cards_router
-from tracker.common import database, manticoresearch, redis_api, settings
+from tracker.common import database, keydb_api, manticoresearch, settings
 from tracker.common.logger import logger
 from tracker.materials.routes import router as materials_router
 from tracker.notes import db as notes_db
@@ -20,11 +20,11 @@ from tracker.system.routes import router as system_router
 
 
 async def _init_cache():
-    if not await redis_api.healthcheck():
-        raise ValueError("Redis is offline")
+    if not await keydb_api.healthcheck():
+        raise ValueError("Keydb is offline")
 
     notes = await notes_db.get_notes()
-    await redis_api.set_notes(notes)
+    await keydb_api.set_notes(notes)
 
 
 async def startup():
@@ -145,7 +145,7 @@ async def readiness():
     async with asyncio.TaskGroup() as tg:
         db_readiness = tg.create_task(database.readiness())
         manticore_readiness = tg.create_task(manticoresearch.readiness())
-        cache_readiness = tg.create_task(redis_api.healthcheck())
+        cache_readiness = tg.create_task(keydb_api.healthcheck())
 
     if (
         db_readiness.result()
