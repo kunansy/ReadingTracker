@@ -26,6 +26,12 @@ def _dereplace_new_lines(string: str) -> str:
     return re.sub(r"<br/?>", "\n", string)
 
 
+def add_dot(string: str) -> str:
+    if not string or string.endswith((".", "?", "!")):
+        return string
+    return f"{string}."
+
+
 def _format_content(content: str, tags: set[str], link_id: UUID | None) -> str:
     content = _delete_link(content, link_id)
     content = _delete_tags(content, tags)
@@ -35,7 +41,7 @@ def _format_content(content: str, tags: set[str], link_id: UUID | None) -> str:
         end = content[-1]
         content = content.removesuffix(end).strip()
 
-    return schemas.add_dot(content)
+    return add_dot(content)
 
 
 async def get_all_notes() -> list[notes_db.Note]:

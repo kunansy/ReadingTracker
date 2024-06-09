@@ -70,7 +70,6 @@ def _dereplace_gt(string: str) -> str:
 
 NOTES_FORMATTERS = (
     _replace_quotes,
-    add_dot,
     _up_first_letter,
     _replace_punctuation,
     _replace_up_index,

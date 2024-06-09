@@ -41,22 +41,6 @@ def test_replace_quotes_error(string):
 @pytest.mark.parametrize(
     "string,expected",
     (
-        ("Hg", "Hg."),
-        ("Hg!", "Hg!"),
-        ("Hg?", "Hg?"),
-        ("Hg:", "Hg:."),
-        ("(Hg)", "(Hg)."),
-        ("Hg...", "Hg..."),
-        ("", ""),
-    ),
-)
-def test_add_dot(string, expected):
-    assert schemas.add_dot(string) == expected
-
-
-@pytest.mark.parametrize(
-    "string,expected",
-    (
         ("Hg", "Hg"),
         ("hg!", "Hg!"),
         ("a", "A"),
