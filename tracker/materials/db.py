@@ -622,11 +622,11 @@ def _calculate_priority_months(
     if not priority_days:
         return 0
 
-    priority_limit = repeats_count * 30 or 30
+    priority_limit = repeats_count * 30
     if (days := priority_days.days) < priority_limit:
         return 0
     # priority should decrease having repeats count increased
-    return days // priority_limit
+    return (days - priority_limit) // 30
 
 
 def _get_priority_days(priority_days: datetime.timedelta | None) -> int:
