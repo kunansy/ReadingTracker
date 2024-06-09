@@ -614,13 +614,19 @@ async def estimate() -> list[MaterialEstimate]:
     return forecasts
 
 
-def _calculate_priority_months(field: datetime.timedelta | None) -> int:
-    if not field:
+def _calculate_priority_months(
+    priority_days: datetime.timedelta | None,
+    *,
+    repeats_count: int,
+) -> int:
+    if not priority_days:
         return 0
-    if (days := field.days) < 30:  # noqa: PLR2004
+
+    priority_limit = repeats_count * 30 or 30
+    if (days := priority_days.days) < priority_limit:
         return 0
-    # it's expected to repeat materials every month
-    return days // 30
+    # priority should decrease having repeats count increased
+    return days // priority_limit
 
 
 def _get_priority_days(priority_days: datetime.timedelta | None) -> int:
@@ -656,7 +662,10 @@ async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
                 repeats_count=row.repeats_count,
                 last_repeated_at=row.last_repeated_at,
                 priority_days=_get_priority_days(row.priority_days),
-                priority_months=_calculate_priority_months(row.priority_days),
+                priority_months=_calculate_priority_months(
+                    row.priority_days,
+                    repeats_count=row.repeats_count or 0,
+                ),
             )
             for row in (await ses.execute(stmt)).all()
         }
