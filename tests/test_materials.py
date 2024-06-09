@@ -483,6 +483,12 @@ async def test_estimate():
         (datetime.timedelta(days=92), 0, 3),
         (datetime.timedelta(days=2), 0, 0),
         (datetime.timedelta(days=0), 0, 0),
+        (datetime.timedelta(days=2), 2, 0),
+        (datetime.timedelta(days=0), 3, 0),
+        (datetime.timedelta(days=180), 3, 3),
+        (datetime.timedelta(days=30), 1, 0),
+        (datetime.timedelta(days=80), 2, 0),
+        (datetime.timedelta(days=102), 2, 1),
     ],
 )
 def test_calculate_priority_months(priority_days, repeats_count, expected):
