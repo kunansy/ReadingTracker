@@ -470,23 +470,26 @@ async def test_estimate():
 
 
 @pytest.mark.parametrize(
-    ("field", "expected"),
+    ("priority_days", "repeats_count", "expected"),
     [
-        (None, 0),
-        (datetime.timedelta(days=29), 0),
-        (datetime.timedelta(days=30), 1),
+        (None, 0, 0),
+        (datetime.timedelta(days=29), 0, 0),
+        (datetime.timedelta(days=30), 0, 1),
         # 44 / 30 < 1.5 rounds to 1
-        (datetime.timedelta(days=44), 1),
+        (datetime.timedelta(days=44), 0, 1),
         # but when 45 / 30 = 1.5 rounds to 2
-        (datetime.timedelta(days=45), 1),
-        (datetime.timedelta(days=59), 1),
-        (datetime.timedelta(days=92), 3),
-        (datetime.timedelta(days=2), 0),
-        (datetime.timedelta(days=0), 0),
+        (datetime.timedelta(days=45), 0, 1),
+        (datetime.timedelta(days=59), 0, 1),
+        (datetime.timedelta(days=92), 0, 3),
+        (datetime.timedelta(days=2), 0, 0),
+        (datetime.timedelta(days=0), 0, 0),
     ],
 )
-def test_calculate_priority_months(field, expected):
-    assert db._calculate_priority_months(field) == expected, field
+def test_calculate_priority_months(priority_days, repeats_count, expected):
+    assert (
+        db._calculate_priority_months(priority_days, repeats_count=repeats_count)
+        == expected
+    ), priority_days
 
 
 @pytest.mark.parametrize(
