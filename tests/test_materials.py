@@ -317,9 +317,11 @@ async def test_reading_statistics():
     )
     reading_materials_stmt = db._get_reading_materials_stmt().where(log_exists)
 
-    materials = list(await db._parse_material_status_response(
+    materials = list(
+        await db._parse_material_status_response(
             stmt=reading_materials_stmt,
-        ))
+        ),
+    )
     m_log_st = await statistics.calculate_materials_stat(
         material_ids={m.material_id for m in materials},
     )
@@ -406,7 +408,8 @@ async def test_complete_material():
     ],
 )
 async def test_complete_material_invalid_materials(
-    material_status: Literal["completed", "not started"], exc,
+    material_status: Literal["completed", "not started"],
+    exc,
 ):
     materials = {material.material_id: material for material in await get_materials()}
     statuses = {status.material_id: status for status in await get_statuses()}
