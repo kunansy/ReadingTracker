@@ -76,6 +76,8 @@ suppress-none-returning = true
 [tool.mypy]
 python_version = 3.12
 ignore_missing_imports = true
+check_untyped_defs = true
+exclude = "tests/"
 
 [[tool.mypy.overrides]]
 module = "*.schemas.*"
