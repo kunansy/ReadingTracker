@@ -225,9 +225,7 @@ def _get_note_stmt(
     material_id: UUID | str | None = None,
     link_id: UUID | str | None = None,
 ) -> sa.Select:
-    links_count_query = (
-        "(select count(1) as links_count from notes where link_id = n.note_id)"
-    )
+    links_count_query = "(select count(1) as links_count from notes where link_id = n.note_id and not is_deleted)"  # noqa: E501
 
     notes_model = models.Notes.alias("n")
     stmt = (
