@@ -4,7 +4,7 @@ x-db-img: &db-img
   image: postgres:16-alpine
 
 x-search-img: &search-img
-  image: kunansy/tracker_search:6.2.12
+  image: kunansy/tracker_search:6.3.2
 
 x-backup-img: &backup-img
   image: kunansy/fast-backup:0.5.5
