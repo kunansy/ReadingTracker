@@ -231,7 +231,7 @@ async def test_get_tracker_statistics():
     stat = await st.get_tracker_statistics()
 
     assert stat
-    assert stat.lost_time_percent == round(stat.lost_time / stat.duration * 100)
+    assert stat.lost_time_percent == round(stat.lost_time / stat.duration * 100, 2)
     assert (
         stat.would_be_total_percent
         == round(stat.would_be_total / stat.total_pages_read, 2) * 100
