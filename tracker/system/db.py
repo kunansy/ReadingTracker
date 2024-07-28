@@ -59,7 +59,7 @@ async def create_reading_graphic(*, material_id: UUID, last_days: int) -> str:
     line = plt.axhline(y=material.pages, color="r", linestyle="-")
     line.set_label(f"Overall {material.pages} items")
 
-    bar = ax.bar(data.dates, data.counts, width=1, edgecolor="white")
+    bar = ax.bar(data.dates, data.counts, width=1, edgecolor="white")  # type: ignore[arg-type]
     ax.bar_label(bar)
 
     ax.set_title("Total items completed")
