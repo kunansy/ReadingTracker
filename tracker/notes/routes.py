@@ -1,4 +1,5 @@
 import asyncio
+import itertools
 from collections.abc import Iterable, Sequence
 from typing import Any, cast
 from uuid import UUID
@@ -70,6 +71,16 @@ def _limit_notes[T](notes: Sequence[T], *, page: int, page_size: int) -> Sequenc
     return notes[(page - 1) * page_size : page * page_size]
 
 
+def _sort_notes(notes: list[db.Note]) -> list[db.Note]:
+    # could not sort by jinja because sorting
+    # by page should be inside a chapter group
+    sorted_notes = sorted(notes, key=lambda note: note.chapter_int)
+    for _, chapter_notes in itertools.groupby(notes, key=lambda note: note.chapter):
+        sorted_notes.extend(sorted(chapter_notes, key=lambda note: note.page))
+
+    return sorted_notes
+
+
 @router.get("/", response_class=HTMLResponse)
 async def get_notes(
     request: Request,
@@ -95,6 +106,7 @@ async def get_notes(
         notes = _filter_notes(notes=notes, ids=search_results.keys())
         _highlight_snippets(notes, search_results)
 
+    notes[:] = _sort_notes(notes)
     chapters = db.get_distinct_chapters(notes)
 
     context: dict[str, Any] = {
