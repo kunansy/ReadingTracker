@@ -16,9 +16,8 @@ async def test_get_distinct_chapters():
 
     expected = {}
     for note in notes:
-        expected[note.material_id] = expected.get(note.material_id, set()) | {
-            note.chapter,
-        }
+        if note.chapter not in expected.get(note.material_id, []):
+            expected.setdefault(note.material_id, []).append(note.chapter)
 
     assert result == expected
 
