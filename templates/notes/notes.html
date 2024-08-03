@@ -50,7 +50,7 @@
             <details open class="chapters">
                 <summary> <a class="title-link" href="#material-{{ material_id }}"> «{{ titles.get(material_id, "Without material") }}» </a> </summary>
                 <div class="chapters">
-                    {% for chapter in chapters | sort %}
+                    {% for chapter in chapters %}
                         <a class="chapter-link" href="#material-{{ material_id }}-chapter-{{ chapter }}"> {{ chapter_name }} {{ chapter }} </a>
                     {% endfor %}
                 </div>
