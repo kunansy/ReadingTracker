@@ -135,14 +135,16 @@ class Note(CustomBaseModel):
         return self._mark_tags_with_ref(self.tags_str, self.tags)
 
 
-def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, set[str]]:
+def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, list[str]]:
     logger.debug("Getting distinct chapters")
 
     # chapters of the shown materials,
     #  it should help to create menu
-    chapters = defaultdict(set)
+    chapters = defaultdict(list)
     for note in notes:
-        chapters[note.material_id].add(note.chapter)
+        # the notes list is expected to be sorted
+        if (chapter := note.chapter) not in chapters[note.material_id]:
+            chapters[note.material_id].append(chapter)
 
     logger.debug("Distinct chapters got")
     return chapters
