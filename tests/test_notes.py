@@ -1,4 +1,5 @@
 from itertools import groupby
+from typing import NamedTuple
 from uuid import UUID
 
 import pytest
@@ -238,15 +239,15 @@ async def test_get_sorted_tags_without_material():
     ("note_id", "expected"),
     [
         (
-            "3ad7a635-2057-4050-a874-471e001f86aa",
-            [
-                "31e8bb75-70e2-4a5b-92fd-722837cf1f79",
-                "058f4c4d-c4af-4e73-a142-177e77afd51e",
-            ],
+                "3ad7a635-2057-4050-a874-471e001f86aa",
+                [
+                    "31e8bb75-70e2-4a5b-92fd-722837cf1f79",
+                    "058f4c4d-c4af-4e73-a142-177e77afd51e",
+                ],
         ),
         (
-            "ff05baa2-b73d-41fc-899e-7daa95b687c6",
-            ["d205a2d6-f288-4eb9-8441-13b605371e92"],
+                "ff05baa2-b73d-41fc-899e-7daa95b687c6",
+                ["d205a2d6-f288-4eb9-8441-13b605371e92"],
         ),
         ("a5386aee-a186-4e6f-abaa-63853c75cce4", []),
     ],
@@ -274,3 +275,48 @@ async def test_get_links_from(note_id, expected):
 )
 def test_notes_limit(lst, page, page_size, expected):
     assert routes._limit_notes(lst, page=page, page_size=page_size) == expected
+
+
+@pytest.mark.parametrize(
+    ("sample", "expected"),
+    [
+        ((
+                 (12, "1.2", 5), (12, "1.2", 2), (12, "1.2", 17), (12, "1.2", 0), (12, "1.2", 5),
+                 (4, "4", 5), (4, "4", 2), (4, "4", 17), (4, "4", 0), (4, "4", 5),
+                 (23, "2.3", 5), (23, "2.3", 2), (23, "2.3", 17), (23, "2.3", 0), (23, "2.3", 5),
+                 (10, "1.0", 5), (10, "1.0", 2), (10, "1.0", 17), (10, "1.0", 0), (10, "1.0", 5),
+                 (9, "9", 5), (9, "9", 2), (9, "9", 17), (9, "9", 0), (9, "9", 5),
+         ),
+         (
+                 (4, "4", 0), (4, "4", 2), (4, "4", 5), (4, "4", 5), (4, "4", 17),
+                 (9, "9", 0), (9, "9", 2), (9, "9", 5), (9, "9", 5), (9, "9", 17),
+                 (10, "1.0", 0), (10, "1.0", 2), (10, "1.0", 5), (10, "1.0", 5), (10, "1.0", 17),
+                 (12, "1.2", 0), (12, "1.2", 2), (12, "1.2", 5), (12, "1.2", 5), (12, "1.2", 17),
+                 (23, "2.3", 0), (23, "2.3", 2), (23, "2.3", 5), (23, "2.3", 5), (23, "2.3", 17),
+         ),)
+
+    ]
+)
+def test_sort_notes(sample, expected):
+    class Note(NamedTuple):
+        chapter_int: int
+        chapter: str
+        page: int
+
+    sample = [
+        Note(
+            chapter_int=chapter_int,
+            chapter=chapter,
+            page=page
+        )
+        for (chapter_int, chapter, page) in sample
+    ]
+    expected = [
+        Note(
+            chapter_int=chapter_int,
+            chapter=chapter,
+            page=page
+        )
+        for (chapter_int, chapter, page) in expected
+    ]
+    assert routes._sort_notes(sample) == expected
