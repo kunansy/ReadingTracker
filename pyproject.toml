@@ -120,7 +120,7 @@ starlette-exporter = "~0.23.0"
 beautifulsoup4 = "~4.12.2"
 lxml = "~5.2.0"
 aiokafka = "~0.11.0"
-aiohttp = "~3.9.3"
+aiohttp = "~3.10.0"
 aiokeydb = "~0.2.1"
 dill = "~0.3.8"
 
