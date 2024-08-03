@@ -74,7 +74,8 @@ def _limit_notes[T](notes: Sequence[T], *, page: int, page_size: int) -> Sequenc
 def _sort_notes(notes: list[db.Note]) -> list[db.Note]:
     # could not sort by jinja because sorting
     # by page should be inside a chapter group
-    sorted_notes = sorted(notes, key=lambda note: note.chapter_int)
+    notes = sorted(notes, key=lambda note: note.chapter_int)
+    sorted_notes = []
     for _, chapter_notes in itertools.groupby(notes, key=lambda note: note.chapter):
         sorted_notes.extend(sorted(chapter_notes, key=lambda note: note.page))
 
