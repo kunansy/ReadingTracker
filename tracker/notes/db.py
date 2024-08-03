@@ -83,7 +83,9 @@ class Note(CustomBaseModel):
 
     @property
     def chapter_int(self) -> int:
-        return int("".join(symb for symb in self.chapter if symb.isdigit()))
+        if chapter := self.chapter:
+            return int("".join(symb for symb in chapter if symb.isdigit()))
+        return 0
 
     def get_material_id(self) -> str:
         if self.material_id == UUID(int=0):
