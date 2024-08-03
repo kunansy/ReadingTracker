@@ -80,7 +80,7 @@
     {% set length = notes | length %}
     {% set index = namespace(value=1) %}
 
-    {% for material_id, notes_m in notes | sort(attribute='page') | groupby('material_id') %}
+    {% for material_id, notes_m in notes | groupby('material_id') %}
     {% if not loop.first %}
         <hr class="material_divider">
     {% endif %}
@@ -97,8 +97,8 @@
     <div class="group">
     {% set notes_count = material_notes.get(material_id, notes_m | length) %}
         <h3 class="material_title" id="material-{{material_id}}"> «{{ titles.get(material_id, "Without material") }}» ({{ notes_count }})</h3>
-
-        {% for chapter, note_c in notes_m | groupby('chapter') %}
+        {% for _, note_c in notes_m | groupby('chapter_int')  %}
+            {% set chapter = note_c[0].chapter %}
             <h4 class="chapter_number" id="material-{{material_id}}-chapter-{{chapter}}"> {{ chapter_name }}: {{ chapter }} </h4>
             {% for note in note_c %}
             <div class="note hover" id="{{ note.note_id }}">
