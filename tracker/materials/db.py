@@ -615,7 +615,7 @@ async def estimate() -> list[MaterialEstimate]:
 
 
 def _calculate_priority_months(
-    priority_days: datetime.timedelta | None,
+    priority_days: int | None,
     *,
     repeats_count: int,
 ) -> int:
@@ -623,7 +623,7 @@ def _calculate_priority_months(
         return 0
 
     priority_limit = repeats_count * 30
-    if (days := priority_days.days) < priority_limit:
+    if (days := priority_days) < priority_limit:
         return 0
     # priority should decrease having repeats count increased
     return (days - priority_limit) // 30
@@ -637,16 +637,17 @@ async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
     logger.debug("Getting repeat analytics")
 
     last_repeated_at = sa.func.max(models.Repeats.c.repeated_at).label("last_repeated_at")
-    repetition_or_completion_date = sa.func.coalesce(
+    repet_or_compl_date = sa.func.coalesce(
         last_repeated_at,
         sa.func.max(models.Statuses.c.completed_at),
     )
+    _dt = sa.func.date
     stmt = (
         sa.select(
             models.Statuses.c.material_id,
             sa.func.count(models.Repeats.c.repeat_id).label("repeats_count"),
             last_repeated_at,
-            (sa.func.now() - repetition_or_completion_date).label("priority_days"),
+            (_dt(sa.func.now()) - _dt(repet_or_compl_date)).label("priority_days"),
         )
         .join(
             models.Repeats,
@@ -661,7 +662,7 @@ async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
             row.material_id: RepeatAnalytics(
                 repeats_count=row.repeats_count,
                 last_repeated_at=row.last_repeated_at,
-                priority_days=_get_priority_days(row.priority_days),
+                priority_days=row.priority_days or 0,
                 priority_months=_calculate_priority_months(
                     row.priority_days,
                     repeats_count=row.repeats_count or 0,
