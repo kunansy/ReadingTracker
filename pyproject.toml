@@ -136,6 +136,8 @@ pytest-xdist = "~3.6.0"
 types-protobuf = "~5.27.0.20240626"
 types-orjson = "~3.6.2"
 types-setuptools = "~71.1.0.20240806"
+pytest-clarity = "~1.0.1"
+pytest-sugar = "~1.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
