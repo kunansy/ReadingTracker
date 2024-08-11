@@ -473,22 +473,22 @@ async def test_estimate():
     ("priority_days", "repeats_count", "expected"),
     [
         (None, 0, 0),
-        (datetime.timedelta(days=29), 0, 0),
-        (datetime.timedelta(days=30), 0, 1),
+        (29, 0, 0),
+        (30, 0, 1),
         # 44 / 30 < 1.5 rounds to 1
-        (datetime.timedelta(days=44), 0, 1),
+        (44, 0, 1),
         # but when 45 / 30 = 1.5 rounds to 2
-        (datetime.timedelta(days=45), 0, 1),
-        (datetime.timedelta(days=59), 0, 1),
-        (datetime.timedelta(days=92), 0, 3),
-        (datetime.timedelta(days=2), 0, 0),
-        (datetime.timedelta(days=0), 0, 0),
-        (datetime.timedelta(days=2), 2, 0),
-        (datetime.timedelta(days=0), 3, 0),
-        (datetime.timedelta(days=180), 3, 3),
-        (datetime.timedelta(days=30), 1, 0),
-        (datetime.timedelta(days=80), 2, 0),
-        (datetime.timedelta(days=102), 2, 1),
+        (45, 0, 1),
+        (59, 0, 1),
+        (92, 0, 3),
+        (2, 0, 0),
+        (0, 0, 0),
+        (2, 2, 0),
+        (0, 3, 0),
+        (180, 3, 3),
+        (30, 1, 0),
+        (80, 2, 0),
+        (102, 2, 1),
     ],
 )
 def test_calculate_priority_months(priority_days, repeats_count, expected):
@@ -533,10 +533,8 @@ async def test_get_repeats_analytics_only_repeated():
         assert repeat.repeats_count == valid_repeat.repeats_count
         assert repeat.last_repeated_at == valid_repeat.last_repeated_at
 
-        assert (
-            repeat.priority_days
-            == (database.utcnow() - valid_repeat.last_repeated_at).days
-        )
+        assert repeat.priority_days == (
+                database.utcnow().date() - valid_repeat.last_repeated_at.date()).days
 
 
 async def test_get_repeats_analytics_only_not_repeated():
