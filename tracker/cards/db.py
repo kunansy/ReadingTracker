@@ -90,7 +90,7 @@ async def get_cards_list() -> list[Card]:
 async def get_cards_count() -> int:
     logger.debug("Getting amount of cards")
 
-    stmt = sa.select(sa.func.count(1)).select_from(models.Cards)  # type: ignore[arg-type]
+    stmt = sa.select(sa.func.count(1)).select_from(models.Cards)
 
     async with database.session() as ses:
         return await ses.scalar(stmt) or 0
