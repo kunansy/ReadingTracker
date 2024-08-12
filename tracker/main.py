@@ -155,7 +155,12 @@ async def readiness():
     ):
         status_code = 200
 
-    return ORJSONResponse(content={}, status_code=status_code)
+    status = {
+        "is_db_ready": db_readiness.result(),
+        "is_manticore_ready": manticore_readiness.result(),
+        "is_cache_ready": cache_readiness.result(),
+    }
+    return ORJSONResponse(content=status, status_code=status_code)
 
 
 async def init() -> None:
