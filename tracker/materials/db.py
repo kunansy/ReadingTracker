@@ -897,19 +897,22 @@ async def get_html(link: str, *, timeout: int = 5) -> str:
         return await resp.text("utf-8")
 
 
+def _get_text(field: bs4.Tag | bs4.NavigableString | None) -> str:
+    if isinstance(field, bs4.Tag):
+        return field.get_text(strip=True)
+    return ""
+
+
 def parse_habr(html: str) -> dict[str, str]:
     soup = bs4.BeautifulSoup(html, "lxml")
 
-    title = soup.find("div", {"class": "tm-article-snippet"}).find(
-        "h1",
-        {"class": "tm-title"},
-    )
-    author = soup.find("div", {"class": "tm-article-snippet"}).find(
-        "a",
-        {"class": "tm-user-info__username"},
-    )
+    title = author = None
+    snippet = cast(bs4.Tag, soup.find("div", {"class": "tm-article-snippet"}))
+    if snippet:
+        title = snippet.find("h1", {"class": "tm-title"})
+        author = snippet.find("a", {"class": "tm-user-info__username"})
 
-    return {"title": title.get_text(), "author": author.get_text().strip()}
+    return {"title": _get_text(title), "author": _get_text(author)}
 
 
 def _parse_duration(duration: str) -> int:
