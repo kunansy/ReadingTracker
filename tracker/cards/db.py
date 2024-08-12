@@ -1,11 +1,28 @@
-from typing import Any
+import datetime
 from uuid import UUID
 
 import sqlalchemy.sql as sa
 
 from tracker.common import database
 from tracker.common.logger import logger
-from tracker.models import models
+from tracker.common.schemas import CustomBaseModel
+from tracker.models import enums, models
+
+
+class Card(CustomBaseModel):
+    card_id: UUID
+    note_id: UUID
+    material_id: UUID
+    question: str
+    answer: str | None
+    added_at: datetime.datetime
+    note_title: str | None
+    note_content: str
+    note_chapter: str
+    note_page: int
+    material_title: str
+    material_authors: str
+    material_type: enums.MaterialTypesEnum
 
 
 async def notes_with_cards() -> list[UUID]:
