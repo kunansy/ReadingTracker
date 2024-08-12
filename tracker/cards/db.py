@@ -60,37 +60,30 @@ async def add_card(
     logger.debug("Card added")
 
 
-async def get_cards_list() -> list[dict[str, Any]]:
+async def get_cards_list() -> list[Card]:
     logger.info("Getting all cards")
 
     stmt = (
-        sa.select(models.Cards, models.Notes, models.Materials.c.title)
+        sa.select(
+            models.Cards,
+            models.Notes.c.title.label("note_title"),
+            models.Notes.c.content.label("note_content"),
+            models.Notes.c.chapter.label("note_chapter"),
+            models.Notes.c.page.label("note_page"),
+            models.Materials.c.authors.label("material_authors"),
+            models.Materials.c.material_type,
+            models.Materials.c.title.label("material_title"),
+        )
         .join(models.Notes, models.Cards.c.note_id == models.Notes.c.note_id)
         .join(
             models.Materials,
             models.Notes.c.material_id == models.Materials.c.material_id,
         )
+        .order_by(models.Cards.c.added_at.desc())
     )
 
     async with database.session() as ses:
-        return [
-            {
-                "card": {
-                    "card_id": row.card_id,
-                    "question": row.question,
-                    "answer": row.answer,
-                    "added_at": row.added_at,
-                },
-                "note": {
-                    "note_id": row.note_id,
-                    "material_title": row.title,
-                    "content": row.content,
-                    "page": row.page,
-                    "chapter": row.chapter,
-                },
-            }
-            async for row in await ses.stream(stmt)
-        ]
+        return [Card(**row) for row in (await ses.execute(stmt)).mappings().all()]
 
 
 async def get_cards_count() -> int:
