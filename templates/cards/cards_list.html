@@ -2,6 +2,7 @@
 
 {%- block style -%}
 <link rel="stylesheet" href="{{ url_for('static', path='cards/cards_list.css') }}">
+<script src="{{ url_for('static', path='js/notes.js')}}"></script>
 {%- endblock style -%}
 
 {%- block header -%}
@@ -26,7 +27,7 @@
                 <p class="answer note-answer"> {{ card.note_content }} </p>
                 <p class="txt material-title"> «{{ card.material_title }}» </p>
                 <p class="txt material-page"> Page: {{ card.note_page }} </p>
-                <p class="txt note-id"> Note ID: {{ card.note_id }} </p>
+                <p class="txt note-id" onclick=openNote("{{ card.note_id }}","_blank")> Note ID: {{ card.note_id }} </p>
             </details>
         </div>
     {% endfor %}
