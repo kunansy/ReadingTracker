@@ -30,6 +30,9 @@
             </details>
         </div>
     {% endfor %}
+
+    {% from 'arrows.html' import arrows %}
+    {% call arrows() %} {% endcall %}
 {%- else -%}
     {% import 'errors/not_found.html' as not_found %}
     {% call not_found.not_found('cards') %} {% endcall %}
