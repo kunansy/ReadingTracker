@@ -22,6 +22,14 @@ fmt:
 patch:
 	@bumpversion --commit --tag version
 
+CURRENT_TAG := $(shell git describe --tags --abbrev=0)
+LAST_TAG := $(shell git describe --tags --abbrev=0 HEAD^)
+IMAGE_LINE := $(shell cat docker-compose.yml | grep -n "image: kunansy/reading_tracker" | cut -f1 -d:)
+
+deploy:
+	@echo "${LAST_TAG} -> ${CURRENT_TAG}"
+	@ssh tracker "cd tracker; sed -i '${IMAGE_LINE} s/${LAST_TAG}/${CURRENT_TAG}/' docker-compose.yml; docker-compose up -d --build --force-recreate tracker-app; sleep 2; docker ps --filter name=tracker-app --format json | jq '.Image,.State,.Status'"
+
 cov:
 	coverage run -m pytest .
 
