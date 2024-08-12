@@ -50,7 +50,7 @@
             <p> Priority: {{ repeat.priority_months }} </p>
 
             <form class="repeat" action="/materials/repeat/{{ repeat.material_id }}?is_outlined={{ is_outlined }}" METHOD="POST" title="Repeat the material" id="{{ repeat.material_id }}">
-                <button type="submit" class="submit-button celebrate-btn"> Repeat </button>
+                <button type="submit" class="submit-button celebrate-btn" onclick="event.stopPropagation();"> Repeat </button>
             </form>
         </div>
     {% endfor %}
