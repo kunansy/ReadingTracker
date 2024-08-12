@@ -24,7 +24,8 @@
                 <p class="answer">{{ card.answer }}</p>
                 {%- endif -%}
                 <p class="answer note-answer"> {{ card.note_content }} </p>
-                <p class="txt material-title"> «{{ card.material_title }}» </p>
+                <p class="txt material-title"> «{{ card.material_title }}»/{{ card.material_authors }}/{{ card.material_type.name }} </p>
+                <p class="txt material-page"> Chapter: {{ card.note_chapter }} </p>
                 <p class="txt material-page"> Page: {{ card.note_page }} </p>
                 <p class="txt note-id" onclick=openNote("{{ card.note_id }}","_blank")> Note ID: {{ card.note_id }} </p>
             </details>
