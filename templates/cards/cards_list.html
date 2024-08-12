@@ -13,20 +13,20 @@
 {% block main %}
 {%- if cards -%}
     <p class="total-cards"> Total {{ total }} cards </p>
-    {% for card in cards|sort(attribute="card.added_at",reverse=true) %}
-        <div class="card hover" id="card-{{ card.card.card_id }}">
-            <p class="question"> {{ card.card.question }} </p>
-            <p class="txt card-id"> Card ID: {{ card.card.card_id }} </p>
+    {% for card in cards %}
+        <div class="card hover" id="card-{{ card.card_id }}">
+            <p class="question"> {{ card.question }} </p>
+            <p class="txt card-id"> Card ID: {{ card.card_id }} </p>
             <hr class="question-divider"/>
             <details class="answer">
                 <summary class="answer"> Show answer </summary>
-                {%- if card.card.answer -%}
-                <p class="answer">{{ card.card.answer }}</p>
+                {%- if card.answer -%}
+                <p class="answer">{{ card.answer }}</p>
                 {%- endif -%}
-                <p class="answer note-answer"> {{ card.note.content }} </p>
-                <p class="txt material-title"> «{{ card.note.material_title }}» </p>
-                <p class="txt material-page"> Page: {{ card.note.page }} </p>
-                <p class="txt note-id"> Note ID: {{ card.note.note_id }} </p>
+                <p class="answer note-answer"> {{ card.note_content }} </p>
+                <p class="txt material-title"> «{{ card.material_title }}» </p>
+                <p class="txt material-page"> Page: {{ card.note_page }} </p>
+                <p class="txt note-id"> Note ID: {{ card.note_id }} </p>
             </details>
         </div>
     {% endfor %}
