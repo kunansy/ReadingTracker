@@ -1,8 +1,10 @@
+from uuid import UUID
+
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
-from tracker.cards import db
+from tracker.cards import db, schemas
 from tracker.common import settings
 
 
@@ -23,3 +25,14 @@ async def list_cards(request: Request):
         "total": total_cards_count,
     }
     return templates.TemplateResponse("cards/cards_list.html", context)
+
+
+@router.get("/has-cards", response_model=schemas.GetHasCards)
+async def has_cards(note_id: UUID):
+    cards_count = await db.get_cards_count(note_id=note_id)
+
+    return {
+        "note_id": note_id,
+        "has_cards": cards_count >= 1,
+        "cards_count": cards_count,
+    }
