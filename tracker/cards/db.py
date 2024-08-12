@@ -87,10 +87,12 @@ async def get_cards_list() -> list[Card]:
         return [Card(**row) for row in (await ses.execute(stmt)).mappings().all()]
 
 
-async def get_cards_count() -> int:
+async def get_cards_count(*, note_id: UUID | None = None) -> int:
     logger.debug("Getting amount of cards")
 
     stmt = sa.select(sa.func.count(1)).select_from(models.Cards)
+    if note_id:
+        stmt = stmt.where(models.Cards.c.note_id == str(note_id))
 
     async with database.session() as ses:
         return await ses.scalar(stmt) or 0
