@@ -397,10 +397,26 @@ const addNoteAlertContextMenuItems = (note) => {
     contextMenu.appendChild(addLinkBtn(note.id));
 }
 
+const editCardBtn = (card_id) => {
+    console.log(card_id);
+
+    return createContextMenuItem(
+        "Edit card",
+        () => {window.open('/cards/edit-view?card_id=' + card_id)}
+    );
+}
+
+const addCardContextMenuItems = (card) => {
+    let cardId = card.id.replaceAll("card-", "");
+
+    contextMenu.appendChild(editCardBtn(cardId));
+}
+
 addContextMenu('.material', addMaterialContextMenuItems);
 addContextMenu('.queue-item', addQueueItemContextMenuItems);
 addContextMenu('.note', addNoteContextMenuItems);
 addContextMenu('.add-note-alert', addNoteAlertContextMenuItems);
+addContextMenu('.card', addCardContextMenuItems);
 
 addCopyNoteIdListener();
 
