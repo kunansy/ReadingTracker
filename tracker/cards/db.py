@@ -43,7 +43,7 @@ async def add_card(
     note_id: UUID,
     question: str,
     answer: str | None = None,
-) -> None:
+) -> UUID:
     logger.debug("Adding new card")
 
     values = {
@@ -52,12 +52,13 @@ async def add_card(
         "question": question,
         "answer": answer,
     }
-    stmt = models.Cards.insert().values(values)
+    stmt = models.Cards.insert().values(values).returning(models.Cards.c.card_id)
 
     async with database.session() as ses:
-        await ses.execute(stmt)
+        card_id = await ses.execute(stmt)
 
-    logger.debug("Card added")
+    logger.debug("Card %r added", card_id)
+    return card_id  # type: ignore[return-value]
 
 
 async def get_cards_list() -> list[Card]:
