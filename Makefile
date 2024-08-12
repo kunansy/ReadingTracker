@@ -20,10 +20,7 @@ fmt:
 	@ruff check --fix
 
 patch:
-	@bumpversion --commit --tag patch
-
-minor:
-	@bumpversion --commit --tag minor
+	@bumpversion --commit --tag version
 
 cov:
 	coverage run -m pytest .
@@ -38,4 +35,4 @@ run:
 	PYTHONPATH=. uvicorn tracker.main:app --host 127.0.0.1 --port 9999 --reload --loop uvloop
 
 .PHONY: all
-all: lint test lint-format lint-mypy lint-ruff fmt patch minor cov cov-show init run
+all: lint test lint-format lint-mypy lint-ruff fmt patch cov cov-show init run
