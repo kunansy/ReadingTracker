@@ -155,10 +155,13 @@ async def outline_material(material_id: UUID):
 
 
 @router.post("/repeat/{material_id}")
-async def repeat_material(material_id: UUID):
+async def repeat_material(material_id: UUID, is_outlined: bool | None = None):
     await db.repeat_material(material_id=material_id)
 
-    redirect_url = router.url_path_for(get_repeat_view.__name__)
+    only_outlined = "on" if is_outlined else "off"
+
+    redirect_url = router.url_path_for(get_repeat_view.__name__).__str__()
+    redirect_url = f"{redirect_url}?only_outlined={only_outlined}"
     return RedirectResponse(redirect_url, status_code=302)
 
 
