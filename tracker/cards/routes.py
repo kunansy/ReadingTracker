@@ -44,7 +44,11 @@ async def has_cards(note_id: UUID):
 
 @router.get("/add-view", response_class=HTMLResponse)
 async def add_card_view(request: Request):
-    material_id = request.query_params.get("material_id") or ""
+    material_id = (
+        request.query_params.get("material_id")
+        or request.cookies.get("material_id")
+        or ""
+    )
 
     async with asyncio.TaskGroup() as tg:
         notes_task = tg.create_task(db.get_notes(material_id=material_id))
