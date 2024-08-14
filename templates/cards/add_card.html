@@ -39,17 +39,6 @@
 {%- endif -%}
 
     <div class="form">
-        <form action="/recall/add" method="GET">
-            <input class="input input-datalist" list="materials" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
-            <datalist id="materials">
-                {% for material_id, title in titles|dictsort %}
-                <option value="{{ material_id }}"> «{{ title }}»
-                    {% endfor %}
-            </datalist>
-
-            <button type="submit" class="submit-button"> Search </button>
-        </form>
-
         <form action="/cards/add" method="POST">
             <input class="input input-datalist" id="material_id" list="materials" placeholder="Choose a material" name="material_id" value="{{ material_id }}" title="ID of the material">
             <input class="input input-datalist" id="note_id" list="notes" placeholder="Choose a note" name="note_id" value="{{ note_id }}">
@@ -58,7 +47,11 @@
                     <option value="{{ note_id }}"> {{ note.content }}
                 {% endfor %}
             </datalist>
-
+            <datalist id="materials">
+                {% for material_id, title in titles|dictsort %}
+                    <option value="{{ material_id }}"> «{{ title }}»
+                {% endfor %}
+            </datalist>
             <textarea class="input altch" id="input-question" placeholder="Enter a question" name="question">{{ question }}</textarea>
             <textarea class="input altch" id="input-answer" placeholder="Enter an answer (optional)" name="answer" title="Text of the note">{{ answer }}</textarea>
             <button type="submit" class="submit-button"> Add </button>
