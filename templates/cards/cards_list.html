@@ -14,6 +14,9 @@
 {% block main %}
 {%- if cards -%}
     <p class="total-cards"> Total {{ total }} cards </p>
+
+    {# TODO: add search #}
+
     {% for card in cards %}
         <div class="card hover" id="card-{{ card.card_id }}">
             <p class="question"> {{ card.question }} </p>
