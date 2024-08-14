@@ -247,3 +247,8 @@ class AutocompletionResponse(CustomBaseModel):
             .replace("\r", "")
             for variant in autocompletions
         ]
+
+
+class GetMaterialNotes(CustomBaseModel):
+    notes: list[GetNoteJsonResponse]
+    material_id: UUID

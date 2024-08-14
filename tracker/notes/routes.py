@@ -169,6 +169,16 @@ async def get_note_json(note_id: UUID):
     raise HTTPException(status_code=404, detail=f"Note id={note_id} not found")
 
 
+@router.get("/material-notes", response_model=schemas.GetMaterialNotes)
+async def get_material_notes_json(material_id: UUID):
+    notes = await db.get_notes(material_id=material_id)
+
+    return {
+        "material_id": material_id,
+        "notes": notes,
+    }
+
+
 @router.get("/add-view", response_class=HTMLResponse)
 async def add_note_view(request: Request, material_id: str | None = None):
     material_id = material_id or request.cookies.get("material_id", "")
