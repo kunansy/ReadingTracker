@@ -340,12 +340,36 @@ const getNote = async (note_id) => {
     return await resp.json();
 }
 
+const hasCards = async (note_id) => {
+    let resp = await fetch(`/cards/has-cards?note_id=${note_id.trim()}`, {
+        method: 'GET',
+        headers: {'Content-type': 'application/json'},
+    });
+
+    return await resp.json();
+}
+
+const openCardsBtn = (note_id) => {
+    return createContextMenuItem(
+        "Open cards",
+        () => {window.open(`/cards/list?note_id=${note_id}`)}
+    );
+}
+
+const addCardBtn = (note_id, material_id) => {
+    return createContextMenuItem(
+        "Add card",
+        () => {window.open(`/cards/add-view?note_id=${note_id}&material_id=${material_id}`)}
+    );
+}
+
 const addNoteContextMenuItems = async (note) => {
     // ? on duplicate click don't add items again;
     if (contextMenu.children.length > 0) {
         return;
     }
     let note_json = await getNote(note.id);
+    let has_cards = await hasCards(note.id);
 
     contextMenu.appendChild(openNoteBtn(note.id));
     contextMenu.appendChild(editNoteBtn(note.id));
@@ -353,6 +377,11 @@ const addNoteContextMenuItems = async (note) => {
         contextMenu.appendChild(restoreNoteBtn(note.id));
     } else {
         contextMenu.appendChild(deleteNoteBtn(note.id));
+    }
+    if (has_cards.has_cards) {
+        contextMenu.appendChild(openCardsBtn(note.id));
+    } else {
+        contextMenu.appendChild(addCardBtn(note.id, note_json.material_id));
     }
     contextMenu.appendChild(insertToRepeatQueue(note.id));
 
