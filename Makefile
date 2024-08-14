@@ -35,7 +35,7 @@ IMAGE_LINE := $(shell cat docker-compose.yml | grep -n "image: kunansy/reading_t
 
 deploy:
 	@echo "${LAST_TAG} -> ${CURRENT_TAG}"
-	@ssh tracker "cd tracker; sed -i '${IMAGE_LINE} s/${LAST_TAG}/${CURRENT_TAG}/' docker-compose.yml; docker-compose up -d --build --force-recreate tracker-app; sleep 2; docker ps --filter name=tracker-app --format json | jq '.Image,.State,.Status'"
+	@ssh tracker "cd tracker; sed -i -E '${IMAGE_LINE} s/:[0-9]+/:${CURRENT_TAG}/' docker-compose.yml; docker-compose up -d --build --force-recreate tracker-app; sleep 2; docker ps --filter name=tracker-app --format json | jq '.Image,.State,.Status'"
 
 cov:
 	coverage run -m pytest .
