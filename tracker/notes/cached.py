@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from tracker.common import keydb_api, settings
+from tracker.common import keydb_api
 from tracker.notes import db
 
 
@@ -15,17 +15,12 @@ async def is_deleted(note_id: UUID | str) -> bool:
     return await db.is_deleted(note_id=str(note_id))
 
 
-async def get_note_json(note_id: UUID | str) -> dict | None:
+async def get_note_json(note_id: UUID | str) -> db.Note | None:
     if note_ := await keydb_api.get_note(note_id, *_ALL_NOTE_FIELDS):
-        note = db.Note(**note_)
-    elif note_ := await db.get_note(note_id=note_id):  # type: ignore[assignment]
-        note = note_
-    else:
-        return None
-
-    return note.model_dump() | {
-        "added_at": note.added_at.strftime(settings.DATETIME_FORMAT),
-    }
+        return db.Note(**note_)
+    if note := await db.get_note(note_id=note_id):
+        return note
+    return None
 
 
 async def get_note(note_id: UUID | str) -> db.Note | None:
