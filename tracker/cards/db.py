@@ -7,6 +7,7 @@ from tracker.common import database
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
+from tracker.notes import db as notes_db
 
 
 class Card(CustomBaseModel):
@@ -96,3 +97,7 @@ async def get_cards_count(*, note_id: UUID | None = None) -> int:
 
     async with database.session() as ses:
         return await ses.scalar(stmt) or 0
+
+
+get_material_titles = notes_db.get_material_titles
+get_notes = notes_db.get_notes
