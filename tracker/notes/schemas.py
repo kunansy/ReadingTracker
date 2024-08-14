@@ -1,10 +1,12 @@
+import datetime
 import re
 from typing import Any
 from uuid import UUID
 
 from fastapi import Form
-from pydantic import conint, constr, field_validator, model_validator
+from pydantic import conint, constr, field_serializer, field_validator, model_validator
 
+from tracker.common import settings
 from tracker.common.schemas import CustomBaseModel
 
 
@@ -216,13 +218,17 @@ class GetNoteJsonResponse(CustomBaseModel):
     material_id: UUID
     title: str | None
     content: str
-    added_at: str
+    added_at: datetime.datetime
     chapter: str
     page: int
     tags: set[str]
     is_deleted: bool
     note_number: int
     links_count: int | None
+
+    @field_serializer("added_at")
+    def serialize_added_at(self, added_at: datetime.datetime) -> str:
+        return added_at.strftime(settings.DATETIME_FORMAT)
 
 
 class AutocompletionResponse(CustomBaseModel):
