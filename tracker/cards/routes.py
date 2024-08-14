@@ -2,7 +2,7 @@ import asyncio
 from uuid import UUID
 
 from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from tracker.cards import db, schemas
@@ -40,3 +40,48 @@ async def has_cards(note_id: UUID):
         "has_cards": cards_count >= 1,
         "cards_count": cards_count,
     }
+
+
+@router.get("/add-view", response_class=HTMLResponse)
+async def add_card_view(request: Request):
+    material_id = request.query_params.get("material_id") or ""
+
+    async with asyncio.TaskGroup() as tg:
+        notes_task = tg.create_task(db.get_notes(material_id=material_id))
+        titles_task = tg.create_task(db.get_material_titles())
+
+    notes = {note.note_id: note for note in notes_task.result()}
+
+    context = {
+        "request": request,
+        "material_id": material_id,
+        "note_id": request.cookies.get("note_id", ""),
+        "question": request.cookies.get("question", ""),
+        "answer": request.cookies.get("answer", ""),
+        "chapter": request.cookies.get("chapter", ""),
+        "titles": titles_task.result(),
+        "notes": notes,
+        "notes_with_cards": [],
+    }
+    return templates.TemplateResponse("cards/add_card.html", context)
+
+
+@router.post("/add")
+async def add_card(card: schemas.Card):
+    await db.add_card(
+        material_id=card.material_id,
+        note_id=card.note_id,
+        question=card.question,
+        answer=card.answer,
+    )
+
+    url = router.url_path_for(add_card_view.__name__)
+    response = RedirectResponse(url)
+
+    for key, value in card.model_dump(
+        exclude={"question", "note_id"},
+        exclude_none=True,
+    ).items():
+        response.set_cookie(key, value, expires=60)
+
+    return response
