@@ -14,9 +14,13 @@ templates = Jinja2Templates(directory="templates")
 
 
 @router.get("/list", response_class=HTMLResponse)
-async def list_cards(request: Request):
+async def list_cards(
+    request: Request, note_id: UUID | None = None, material_id: UUID | None = None,
+):
     async with asyncio.TaskGroup() as tg:
-        cards_list_task = tg.create_task(db.get_cards_list())
+        cards_list_task = tg.create_task(
+            db.get_cards_list(note_id=note_id, material_id=material_id),
+        )
         total_cards_count_task = tg.create_task(db.get_cards_count())
 
     # TODO: menu with materials and titles

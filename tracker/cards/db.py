@@ -62,7 +62,7 @@ async def add_card(
     return card_id  # type: ignore[return-value]
 
 
-async def get_cards_list() -> list[Card]:
+async def get_cards_list(*, note_id: UUID | None, material_id: UUID | None) -> list[Card]:
     logger.info("Getting all cards")
 
     stmt = (
@@ -83,6 +83,10 @@ async def get_cards_list() -> list[Card]:
         )
         .order_by(models.Cards.c.added_at.desc())
     )
+    if note_id:
+        stmt = stmt.where(models.Cards.c.note_id == str(note_id))
+    if material_id:
+        stmt = stmt.where(models.Cards.c.material_id == str(material_id))
 
     async with database.session() as ses:
         return [Card(**row) for row in (await ses.execute(stmt)).mappings().all()]
