@@ -1,3 +1,4 @@
+import asyncio
 from uuid import UUID
 
 from fastapi import APIRouter, Request
@@ -14,15 +15,18 @@ templates = Jinja2Templates(directory="templates")
 
 @router.get("/list", response_class=HTMLResponse)
 async def list_cards(request: Request):
-    cards_list = await db.get_cards_list()
-    total_cards_count = await db.get_cards_count()
+    async with asyncio.TaskGroup() as tg:
+        cards_list_task = tg.create_task(db.get_cards_list())
+        total_cards_count_task = tg.create_task(db.get_cards_count())
+
+    cards = cards_list_task.result()
 
     # TODO: menu with materials and titles
     context = {
         "request": request,
-        "cards": cards_list,
+        "cards": cards,
         "DATE_FORMAT": settings.DATE_FORMAT,
-        "total": total_cards_count,
+        "total": total_cards_count_task.result(),
     }
     return templates.TemplateResponse("cards/cards_list.html", context)
 
