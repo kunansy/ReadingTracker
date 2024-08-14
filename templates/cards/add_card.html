@@ -2,7 +2,6 @@
 
 {% block style %}
 <link rel="stylesheet" href="{{ url_for('static', path='cards/add_card.css') }}">
-<script src="{{ url_for('static', path='js/add_card.js') }}"> </script>
 {% endblock style %}
 
 {% block header %}
@@ -18,7 +17,7 @@
         {% if material_id %}
             <h3 class="material-title"> «{{ titles[material_id] }}» </h3>
         {% endif %}
-        <ul class="notes">
+        <ul class="notes" id="notes-list">
             {% for note_id, note in notes|dictsort %}
 
             {% if note_id in notes_with_cards %}
@@ -65,4 +64,5 @@
             <button type="submit" class="submit-button"> Add </button>
         </form>
     </div>
+    <script src="{{ url_for('static', path='js/add_card.js') }}"> </script>
 {% endblock main %}
