@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Request
@@ -15,7 +16,9 @@ templates = Jinja2Templates(directory="templates")
 
 @router.get("/list", response_class=HTMLResponse)
 async def list_cards(
-    request: Request, note_id: UUID | None = None, material_id: UUID | None = None,
+    request: Request,
+    note_id: UUID | None = None,
+    material_id: UUID | None = None,
 ):
     async with asyncio.TaskGroup() as tg:
         cards_list_task = tg.create_task(
@@ -46,9 +49,11 @@ async def has_cards(note_id: UUID):
 
 @router.get("/add-view", response_class=HTMLResponse)
 async def add_card_view(
-    request: Request, material_id: UUID | None = None, note_id: UUID | None = None,
+    request: Request,
+    material_id: UUID | None = None,
+    note_id: UUID | None = None,
 ):
-    material_id = material_id or request.cookies.get("material_id") or ""
+    material_id = material_id or request.cookies.get("material_id") or ""  # type: ignore[assignment]
 
     async with asyncio.TaskGroup() as tg:
         notes_task = tg.create_task(db.get_notes(material_id=material_id))
@@ -56,7 +61,7 @@ async def add_card_view(
 
     notes = {note.note_id: note for note in notes_task.result()}
 
-    context = {
+    context: dict[str, Any] = {
         "request": request,
         "material_id": material_id,
         "note_id": note_id or request.cookies.get("note_id", ""),
