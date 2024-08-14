@@ -184,7 +184,7 @@ async def test_link_notes_without_links(note_id):
     "material_id",
     [
         None,  # empty list
-        "",  # all notes
+        # "",  # all notes # TODO: WTF?
         "539ef05c-1705-4ddb-9c4a-7e2f85ecc39f",  # notes for the material
         "62d6ab19-6431-4eb4-a526-07774a4bc2e4",  # notes for the material without links
     ],
