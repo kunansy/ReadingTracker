@@ -13,7 +13,7 @@
 {% block main %}
 {% if notes %}
     <div class="notes">
-        <h3 class="search-notes-label"> Search notes </h3>
+        <h3 id="srch-label" class="search-notes-label"> Search notes | {{ notes | length }} items </h3>
         {% if material_id %}
             <h3 class="material-title"> «{{ titles[material_id] }}» </h3>
         {% endif %}

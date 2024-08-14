@@ -46,6 +46,11 @@ const createMaterialNoteLi = (note) => {
     return li;
 }
 
+const updateNotesCount = (count) => {
+    let field = document.getElementById("srch-label");
+    field.textContent = `Search notes | ${count} items`;
+}
+
 let searchField = document.getElementById("material_id");
 console.log(searchField);
 if (searchField) {
@@ -64,5 +69,6 @@ if (searchField) {
         for (let note of materialNotes) {
             ul.append(createMaterialNoteLi(note));
         }
+        updateNotesCount(materialNotes.length);
     });
 }
