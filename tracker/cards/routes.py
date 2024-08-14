@@ -19,12 +19,10 @@ async def list_cards(request: Request):
         cards_list_task = tg.create_task(db.get_cards_list())
         total_cards_count_task = tg.create_task(db.get_cards_count())
 
-    cards = cards_list_task.result()
-
     # TODO: menu with materials and titles
     context = {
         "request": request,
-        "cards": cards,
+        "cards": cards_list_task.result(),
         "DATE_FORMAT": settings.DATE_FORMAT,
         "total": total_cards_count_task.result(),
     }
