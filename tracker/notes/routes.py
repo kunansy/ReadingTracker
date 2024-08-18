@@ -1,6 +1,6 @@
 import asyncio
 import itertools
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable
 from typing import Any, cast
 from uuid import UUID
 
@@ -63,7 +63,7 @@ async def get_note_links(note: db.Note) -> dict[str, Any]:
     return {"from": get_links_from_task.result(), "to": get_link_to_task.result()}
 
 
-def _limit_notes[T](notes: Sequence[T], *, page: int, page_size: int) -> Sequence[T]:  # type: ignore[valid-type, name-defined]
+def _limit_notes(notes: list[db.Note], *, page: int, page_size: int) -> list[db.Note]:
     page = max(page, 1)
     page_size = max(page_size, 0)
     return notes[(page - 1) * page_size : page * page_size]
