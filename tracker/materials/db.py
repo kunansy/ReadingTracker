@@ -888,9 +888,9 @@ async def is_reading(*, material_id: UUID) -> bool:
         return await ses.scalar(stmt) or False
 
 
-async def get_html(link: str, *, timeout: int = 5) -> str:
-    timeout_value = aiohttp.ClientTimeout(timeout)
-    async with aiohttp.ClientSession(timeout=timeout_value) as ses:
+async def get_html(link: str, *, http_timeout: int = 5) -> str:
+    timeout = aiohttp.ClientTimeout(http_timeout)
+    async with aiohttp.ClientSession(timeout=timeout) as ses:
         resp = await ses.get(str(link))
         resp.raise_for_status()
 
@@ -935,15 +935,15 @@ def _parse_duration(duration: str) -> int:
     return total
 
 
-async def parse_youtube(video_id: str, *, timeout: int = 5) -> dict[str, str | int]:
+async def parse_youtube(video_id: str, *, http_timeout: int = 5) -> dict[str, str | int]:
     params = {
         "part": "snippet,contentDetails",
         "id": video_id,
         "key": settings.YOUTUBE_API_KEY,
     }
 
-    timeout_value = aiohttp.ClientTimeout(timeout)
-    async with aiohttp.ClientSession(timeout=timeout_value) as ses:
+    timeout = aiohttp.ClientTimeout(http_timeout)
+    async with aiohttp.ClientSession(timeout=timeout) as ses:
         resp = await ses.get(settings.YOUTUBE_API_URL.geturl(), params=params)
 
         resp_json = await resp.json()
