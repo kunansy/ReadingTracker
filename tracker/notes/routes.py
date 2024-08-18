@@ -205,6 +205,7 @@ async def add_note_view(request: Request, material_id: str | None = None):
 @router.post("/add", response_class=RedirectResponse)
 async def add_note(note: schemas.Note = Depends()):
     redirect_url = router.url_path_for(add_note_view.__name__)
+    # each redirect from POST to GET should have 302 status code
     response = RedirectResponse(redirect_url, status_code=302)
 
     for key, value in note.model_dump(
