@@ -2,7 +2,7 @@ import asyncio
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -76,7 +76,7 @@ async def add_card_view(
 
 
 @router.post("/add")
-async def add_card(card: schemas.Card):
+async def add_card(card: schemas.Card = Depends()):
     await db.add_card(
         material_id=card.material_id,
         note_id=card.note_id,
