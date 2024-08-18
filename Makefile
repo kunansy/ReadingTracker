@@ -22,6 +22,7 @@ fmt:
 patch:
 	@bumpversion --commit --tag version
 
+# TODO: check workflow name .name
 build-status:
 	@curl -L \
 		-H "Accept: application/vnd.github+json" \
