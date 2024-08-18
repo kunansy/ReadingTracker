@@ -64,10 +64,8 @@ async def get_note_links(note: db.Note) -> dict[str, Any]:
 
 
 def _limit_notes[T](notes: Sequence[T], *, page: int, page_size: int) -> Sequence[T]:  # type: ignore[valid-type, name-defined]
-    if page < 1:
-        page = 1
-    if page_size < 0:
-        page_size = 0
+    page = max(page, 1)
+    page_size = max(page_size, 0)
     return notes[(page - 1) * page_size : page * page_size]
 
 
