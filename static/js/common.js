@@ -1,5 +1,9 @@
-async function openNotes(material_id) {
-    await window.open('/notes?material_id=' + material_id);
+async function openNotes(material_id, page_size = null) {
+    let url = `/notes?material_id=${material_id}`;
+    if (page_size !== null) {
+        url += `&page_size=${page_size}`
+    }
+    await window.open(url);
 }
 
 const surroundSelection = (field, prefix, siffux) => {
