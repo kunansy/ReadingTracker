@@ -353,9 +353,9 @@ const hasCards = async (note_id) => {
     return await resp.json();
 }
 
-const openCardsBtn = (note_id) => {
+const openCardsBtn = (note_id, cards_count) => {
     return createContextMenuItem(
-        "Open cards",
+        `Open cards (${cards_count})`,
         () => {window.open(`/cards/list?note_id=${note_id}`)}
     );
 }
@@ -383,7 +383,7 @@ const addNoteContextMenuItems = async (note) => {
         contextMenu.appendChild(deleteNoteBtn(note.id));
     }
     if (has_cards.has_cards) {
-        contextMenu.appendChild(openCardsBtn(note.id));
+        contextMenu.appendChild(openCardsBtn(note.id,has_cards.cards_count));
     } else {
         contextMenu.appendChild(addCardBtn(note.id, note_json.material_id));
     }
