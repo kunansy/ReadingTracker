@@ -6,12 +6,12 @@ async function openNotes(material_id, page_size = null) {
     await window.open(url);
 }
 
-const surroundSelection = (field, prefix, siffux) => {
+const surroundSelection = (field, prefix, suffix) => {
     const before = field.value.substring(0, field.selectionStart);
     const sel = field.value.substring(field.selectionStart, field.selectionEnd);
     const after = field.value.substring(field.selectionEnd);
 
-    field.value = `${before}${prefix}${sel}${siffux}${after}`;
+    field.value = `${before}${prefix}${sel}${suffix}${after}`;
 };
 
 const isUuid = (value) => {
