@@ -15,7 +15,8 @@
 {% if status == 'ok' %}
     <div class="alert success status">
         <p> Success! Backup was created successfully.
-            ({{ materials_count }} materials, {{ logs_count }} logs, {{ statuses_count }} statuses, {{ notes_count }} notes)
+            ({{ materials_count }} materials, {{ logs_count }} logs, {{ statuses_count }} statuses, {{ notes_count }} notes,
+            {{ cards_count }} cards, {{ repeats_count }} repeats, {{ repeats_history_count }} note repeats)
         </p>
     </div>
 {% elif status == 'backup-failed' %}

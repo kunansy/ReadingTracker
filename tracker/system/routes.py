@@ -110,6 +110,9 @@ async def backup(request: Request):
         context["logs_count"] = stat["reading_log"]
         context["statuses_count"] = stat["statuses"]
         context["notes_count"] = stat["notes"]
+        context["cards_count"] = stat["cards"]
+        context["repeats_count"] = stat["repeats"]
+        context["repeats_history_count"] = stat["note_repeats_history"]
 
     return templates.TemplateResponse("system/backup.html", context)
 
