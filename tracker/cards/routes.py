@@ -22,7 +22,7 @@ async def list_cards(
 ):
     async with asyncio.TaskGroup() as tg:
         cards_list_task = tg.create_task(
-            db.get_cards_list(note_id=note_id, material_id=material_id),
+            db.get_cards(note_id=note_id, material_id=material_id),
         )
         total_cards_count_task = tg.create_task(db.get_cards_count())
 

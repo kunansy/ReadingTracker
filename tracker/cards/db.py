@@ -62,7 +62,7 @@ async def add_card(
     return card_id  # type: ignore[return-value]
 
 
-async def get_cards_list(
+async def get_cards(
     *, note_id: UUID | None = None, material_id: UUID | None = None,
 ) -> list[Card]:
     logger.info("Getting all cards")
