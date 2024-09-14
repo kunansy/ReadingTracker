@@ -26,16 +26,15 @@ class Card(CustomBaseModel):
     material_type: enums.MaterialTypesEnum
 
 
-async def notes_with_cards() -> list[UUID]:
-    logger.info("Getting notes with a card")
+async def get_notes_with_cards() -> set[UUID]:
+    logger.info("Getting notes with cards")
 
-    stmt = sa.select(models.Notes.c.note_id).join(
-        models.Cards,
-        models.Cards.c.note_id == models.Notes.c.note_id,
-    )
+    stmt = sa.select(models.Cards.c.note_id.distinct())
 
     async with database.session() as ses:
-        return await ses.scalars(stmt)  # type: ignore[return-value]
+        note_ids = await ses.scalars(stmt)
+
+    return set(note_ids)
 
 
 async def add_card(
