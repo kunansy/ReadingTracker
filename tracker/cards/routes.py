@@ -58,6 +58,7 @@ async def add_card_view(
     async with asyncio.TaskGroup() as tg:
         notes_task = tg.create_task(db.get_notes(material_id=material_id))
         titles_task = tg.create_task(db.get_material_titles())
+        notes_with_cards_task = tg.create_task(db.get_notes_with_cards())
 
     notes = {note.note_id: note for note in notes_task.result()}
 
@@ -70,7 +71,7 @@ async def add_card_view(
         "chapter": request.cookies.get("chapter", ""),
         "titles": titles_task.result(),
         "notes": notes,
-        "notes_with_cards": [],
+        "notes_with_cards": notes_with_cards_task.result(),
     }
     return templates.TemplateResponse("cards/add_card.html", context)
 
