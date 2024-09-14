@@ -493,7 +493,7 @@ async def test_estimate():
 )
 def test_calculate_priority_months(priority_days, repeats_count, expected):
     assert (
-        db._calculate_priority_months(priority_days, repeats_count=repeats_count)
+        int(db._calculate_priority_months(priority_days, repeats_count=repeats_count))
         == expected
     ), priority_days
 
