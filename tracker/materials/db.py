@@ -81,7 +81,7 @@ class RepeatAnalytics(CustomBaseModel):
     last_repeated_at: datetime.datetime | None
     # total days since last seen
     priority_days: int
-    priority_months: int
+    priority_months: float
 
 
 class RepeatingQueue(CustomBaseModel):
@@ -95,7 +95,7 @@ class RepeatingQueue(CustomBaseModel):
     completed_at: datetime.datetime | None
     last_repeated_at: datetime.datetime | None
     priority_days: int
-    priority_months: int
+    priority_months: float
 
 
 async def get_means() -> enums.MEANS:
@@ -618,7 +618,7 @@ def _calculate_priority_months(
     priority_days: int | None,
     *,
     repeats_count: int,
-) -> int:
+) -> float:
     if not priority_days:
         return 0
 
@@ -626,7 +626,7 @@ def _calculate_priority_months(
     if (days := priority_days) < priority_limit:
         return 0
     # priority should decrease having repeats count increased
-    return (days - priority_limit) // 30
+    return (days - priority_limit) / 30
 
 
 def _get_priority_days(priority_days: datetime.timedelta | None) -> int:
@@ -716,7 +716,7 @@ async def get_repeating_queue(*, is_outlined: bool) -> list[RepeatingQueue]:
             priority_months=repeat_analytics[material_status.material_id].priority_months,
         )
         for material_status in completed_materials
-        if repeat_analytics[material_status.material_id].priority_months > 0
+        if repeat_analytics[material_status.material_id].priority_months >= 1.
     ]
 
     logger.debug("Repeating queue got, %s materials found", len(queue))
