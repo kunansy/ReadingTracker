@@ -125,11 +125,13 @@ async def _get_total_read_pages() -> int:
 
 
 async def _get_lost_days() -> int:
-    query = "max(date) - min(date) - count(1) + 1"
-    stmt = sa.select(sa.text(query)).select_from(models.ReadingLog)
+    _dt = models.ReadingLog.c.date
+    stmt = sa.select(
+        sa.func.max(_dt) - sa.func.min(_dt) - sa.func.count(_dt.distinct()) + 1,
+    )
 
     async with database.session() as ses:
-        return await ses.scalar(stmt)
+        return await ses.scalar(stmt) or 0
 
 
 async def get_means() -> enums.MEANS:
