@@ -13,7 +13,7 @@ x-cache-img: &cache-img
   image: eqalpha/keydb:arm64_v6.3.4
 
 x-tracker-img: &tracker-img
-  image: kunansy/reading_tracker:197
+  image: kunansy/reading_tracker:198
 
 services:
   tracker-db:
