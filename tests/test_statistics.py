@@ -87,14 +87,17 @@ async def test_get_total_read_pages():
 
 async def test_get_lost_days():
     lost_days = await st._get_lost_days()
-    records = await db.get_log_records()
+    _dt = models.ReadingLog.c.date
+    expected_duration_stmt = sa.select(
+        sa.func.max(_dt) - sa.func.min(_dt) + 1
+    )
+    filled_days_count_stmt = sa.select(sa.func.count(_dt.distinct()))
 
-    expected_duration = (
-        max(records, key=lambda record: record.date).date
-        - min(records, key=lambda record: record.date).date
-    ).days + 1
+    async with database.session() as ses:
+        expected_duration = await ses.scalar(expected_duration_stmt)
+        filled_days_count = await ses.scalar(filled_days_count_stmt)
 
-    assert lost_days == expected_duration - len(records)
+    assert lost_days == expected_duration - filled_days_count
 
 
 async def test_get_means():
