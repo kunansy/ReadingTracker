@@ -1,7 +1,7 @@
 from uuid import UUID
 
 from fastapi import Form
-from pydantic import NonNegativeInt
+from pydantic import NonNegativeInt, constr
 
 from tracker.common.schemas import CustomBaseModel
 
@@ -15,8 +15,8 @@ class GetHasCards(CustomBaseModel):
 class Card(CustomBaseModel):
     material_id: UUID
     note_id: UUID
-    question: str
-    answer: str | None
+    question: constr(strip_whitespace=True)
+    answer: constr(strip_whitespace=True) | None
 
     def __init__(
         self,
