@@ -201,7 +201,7 @@ async def autocompletion(*, query: str, limit: int = 5) -> list[str]:
     SELECT
        HIGHLIGHT({{snippet_separator='',before_match='**',after_match='**'}})
        FROM notes WHERE MATCH('@content {query}* ') ORDER BY WEIGHT() DESC LIMIT %s
-   """
+   """  # noqa: S608
 
     async with _cursor() as cur:
         await cur.execute(db_query, limit)
