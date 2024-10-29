@@ -344,8 +344,17 @@ const getNote = async (note_id) => {
     return await resp.json();
 }
 
-const hasCards = async (note_id) => {
-    let resp = await fetch(`/cards/has-cards?note_id=${note_id.trim()}`, {
+const hasCards = async (id) => {
+    let url = "/cards/has-cards";
+    if (id.note_id) {
+        url += `?note_id=${id.note_id.trim()}`
+    } else if (id.material_id) {
+        url += `?material_id=${id.material_id.trim()}`
+    } else {
+        console.error("Invalid id passed", id)
+    }
+
+    let resp = await fetch(url, {
         method: 'GET',
         headers: {'Content-type': 'application/json'},
     });
@@ -353,10 +362,18 @@ const hasCards = async (note_id) => {
     return await resp.json();
 }
 
-const openCardsBtn = (note_id, cards_count) => {
+const openCardsBtn = (id, cards_count) => {
+    let url = "/cards/list";
+    if (id.note_id) {
+        url += `?note_id=${id.note_id}`
+    } else if (id.material_id) {
+        url += `?material_id=${id.material_id}`
+    } else {
+        console.error("Invalid id passed", id)
+    }
     return createContextMenuItem(
         `Open cards (${cards_count})`,
-        () => {window.open(`/cards/list?note_id=${note_id}`)}
+        () => {window.open(url)}
     );
 }
 
@@ -373,7 +390,7 @@ const addNoteContextMenuItems = async (note) => {
         return;
     }
     let note_json = await getNote(note.id);
-    let has_cards = await hasCards(note.id);
+    let has_cards = await hasCards({note_id: note.id});
 
     contextMenu.appendChild(openNoteBtn(note.id));
     contextMenu.appendChild(editNoteBtn(note.id));
@@ -383,7 +400,7 @@ const addNoteContextMenuItems = async (note) => {
         contextMenu.appendChild(deleteNoteBtn(note.id));
     }
     if (has_cards.has_cards) {
-        contextMenu.appendChild(openCardsBtn(note.id,has_cards.cards_count));
+        contextMenu.appendChild(openCardsBtn({note_id: note.id},has_cards.cards_count));
     } else {
         contextMenu.appendChild(addCardBtn(note.id, note_json.material_id));
     }
