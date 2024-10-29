@@ -64,7 +64,7 @@ async def add_card(
 async def get_cards(
     *,
     note_id: UUID | None = None,
-    material_id: UUID | None = None,
+    material_id: UUID | str | None = None,
 ) -> list[Card]:
     logger.info("Getting all cards")
 
