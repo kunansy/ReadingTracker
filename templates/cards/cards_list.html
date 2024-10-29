@@ -26,7 +26,7 @@
     </div>
 
 {%- if cards -%}
-    <p class="total-cards"> Total {{ total }} cards </p>
+    <p class="total-cards"> Total {{ cards | length }} cards found </p>
 
     {% for card in cards %}
         <div class="card hover" id="card-{{ card.card_id }}">
