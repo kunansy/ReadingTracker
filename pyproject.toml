@@ -85,6 +85,9 @@ ignore_errors = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::DeprecationWarning"
+]
 
 [tool.poetry]
 name = "readingtracker"
