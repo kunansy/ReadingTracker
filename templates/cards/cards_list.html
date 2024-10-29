@@ -12,10 +12,21 @@
 {%- endblock header -%}
 
 {% block main %}
+
+    <div class="form">
+        <form id="search-notes-form" action="/cards/list" method="GET">
+            <input class="input" list="books" name="material_id" value="{{ material_id or '' }}" placeholder="Choose a material">
+            <datalist id="books">
+                {% for material_id, title in titles | dictsort(by='value') %}
+                    <option value="{{ material_id }}"> «{{ title }}»
+                {% endfor %}
+            </datalist>
+            <button type="submit" class="submit-button"> Search </button>
+        </form>
+    </div>
+
 {%- if cards -%}
     <p class="total-cards"> Total {{ total }} cards </p>
-
-    {# TODO: add search #}
 
     {% for card in cards %}
         <div class="card hover" id="card-{{ card.card_id }}">
