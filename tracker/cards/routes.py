@@ -2,7 +2,7 @@ import asyncio
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
@@ -38,11 +38,15 @@ async def list_cards(
 
 
 @router.get("/has-cards", response_model=schemas.GetHasCards)
-async def has_cards(note_id: UUID):
-    cards_count = await db.get_cards_count(note_id=note_id)
+async def has_cards(note_id: UUID | None = None, material_id: UUID | None = None):
+    if note_id is material_id is None:
+        raise HTTPException(status_code=400)
+
+    cards_count = await db.get_cards_count(note_id=note_id, material_id=material_id)
 
     return {
         "note_id": note_id,
+        "material_id": material_id,
         "has_cards": cards_count >= 1,
         "cards_count": cards_count,
     }
