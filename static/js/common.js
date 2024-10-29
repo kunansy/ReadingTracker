@@ -465,11 +465,23 @@ const addCardContextMenuItems = (card) => {
     contextMenu.appendChild(editCardBtn(cardId));
 }
 
+const addRepeatContextMenuItems = async (repeat) => {
+    let material_id = repeat.id;
+    let has_cards = await hasCards({material_id: material_id});
+
+    if (has_cards.has_cards) {
+        contextMenu.appendChild(openCardsBtn({material_id: material_id}, has_cards.cards_count));
+    } else {
+        return false;
+    }
+}
+
 addContextMenu('.material', addMaterialContextMenuItems);
 addContextMenu('.queue-item', addQueueItemContextMenuItems);
 addContextMenu('.note', addNoteContextMenuItems);
 addContextMenu('.add-note-alert', addNoteAlertContextMenuItems);
 addContextMenu('.card', addCardContextMenuItems);
+addContextMenu('.repeat', addRepeatContextMenuItems);
 
 addCopyNoteIdListener();
 

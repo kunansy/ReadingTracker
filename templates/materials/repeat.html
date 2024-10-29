@@ -31,7 +31,7 @@
         {%- if repeat.last_repeated_at -%}
             {% set last_repeated_at = repeat.last_repeated_at.strftime(DATE_FORMAT) %}
         {%- endif -%}
-        <div class="repeat hover" onclick=openNotes("{{ repeat.material_id }}",{{ repeat.notes_count }}) title="Click to see notes">
+        <div class="repeat hover" onclick=openNotes("{{ repeat.material_id }}",{{ repeat.notes_count }}) title="Click to see notes" id="{{ repeat.material_id }}">
             <p class="little-text"> {{ loop.index }} / {{ loop.length }}</p>
             <p> Title: «{{ repeat.title }}» </p>
             {% set items = 'Pages' %}
