@@ -105,7 +105,10 @@ const addContextMenu = (selector, addContextMenuItemsFn) => {
             if (!item.contains(event.target)) {
                 return;
             }
-            addContextMenuItemsFn(item);
+            let is_ok = addContextMenuItemsFn(item);
+            if (is_ok === false) {
+                return;
+            }
 
             event.preventDefault();
 
