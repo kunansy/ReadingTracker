@@ -96,6 +96,14 @@ description = "Reading queue, logging the reading, keep some notes"
 authors = ["kunansy <k@kunansy.ru>"]
 license = "MIT"
 
+[project]
+name = "tracker"
+version = "2.19.7"
+description = "Reading queue, logging the reading, keep some notes"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = []
+
 [tool.poetry.dependencies]
 python = "^3.12"
 SQLAlchemy = "~2.0.0"
