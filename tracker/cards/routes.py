@@ -1,5 +1,5 @@
 import asyncio
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -82,7 +82,7 @@ async def add_card_view(
 
 
 @router.post("/add")
-async def add_card(card: schemas.Card = Depends()):
+async def add_card(card: Annotated[schemas.Card, Depends()]):
     await db.add_card(
         material_id=card.material_id,
         note_id=card.note_id,

@@ -1,4 +1,4 @@
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -51,7 +51,7 @@ async def insert_material_view(request: Request):
 
 
 @router.post("/add", response_class=HTMLResponse)
-async def insert_material(material: schemas.Material = Depends()):
+async def insert_material(material: Annotated[schemas.Material, Depends()]):
     """Insert a material to the queue."""
     await db.insert_material(
         title=material.title,
@@ -101,7 +101,7 @@ async def update_material_view(
 
 
 @router.post("/update", response_class=RedirectResponse)
-async def update_material(material: schemas.UpdateMaterial = Depends()):
+async def update_material(material: Annotated[schemas.UpdateMaterial, Depends()]):
     success = True
     try:
         await db.update_material(

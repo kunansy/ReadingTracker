@@ -1,7 +1,7 @@
 import asyncio
 import itertools
 from collections.abc import Iterable
-from typing import Any, cast
+from typing import Annotated, Any, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, HTTPException, Request
@@ -83,9 +83,9 @@ def _sort_notes(notes: list[db.Note]) -> list[db.Note]:
 @router.get("/", response_class=HTMLResponse)
 async def get_notes(
     request: Request,
+    search: Annotated[schemas.SearchParams, Depends()],
     page: NonNegativeInt = 1,
     page_size: NonNegativeInt = 10,
-    search: schemas.SearchParams = Depends(),
 ):
     material_id = search.material_id
     async with asyncio.TaskGroup() as tg:
@@ -203,7 +203,7 @@ async def add_note_view(request: Request, material_id: str | None = None):
 
 
 @router.post("/add", response_class=RedirectResponse)
-async def add_note(note: schemas.Note = Depends()):
+async def add_note(note: Annotated[schemas.Note, Depends()]):
     redirect_url = router.url_path_for(add_note_view.__name__)
     # each redirect from POST to GET should have 302 status code
     response = RedirectResponse(redirect_url, status_code=302)
@@ -271,7 +271,7 @@ async def update_note_view(note_id: UUID, request: Request, success: bool | None
 
 
 @router.post("/update", response_class=RedirectResponse)
-async def update_note(note: schemas.UpdateNote = Depends()):
+async def update_note(note: Annotated[schemas.UpdateNote, Depends()]):
     success = True
 
     try:
@@ -304,12 +304,12 @@ async def is_note_deleted(note_id: UUID):
 
 
 @router.delete("/delete", status_code=201)
-async def delete_note(note_id: UUID = Body(embed=True)):
+async def delete_note(note_id: Annotated[UUID, Body(embed=True)]):
     await db.delete_note(note_id=note_id)
 
 
 @router.post("/restore", status_code=201)
-async def restore_note(note_id: UUID = Body(embed=True)):
+async def restore_note(note_id: Annotated[UUID, Body(embed=True)]):
     await db.restore_note(note_id=note_id)
 
 
@@ -321,7 +321,7 @@ async def get_note_graph(note_id: UUID):
 
 
 @router.post("/transcript", response_model=schemas.TranscriptTextResponse)
-async def transcript_speech(data: bytes = Body()):
+async def transcript_speech(data: Annotated[bytes, Body()]):
     file = recognizer.get_file_content(data)
     path = recognizer.dump(file)
     recognizer.fix_file_format(path)

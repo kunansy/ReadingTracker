@@ -1,5 +1,5 @@
 import asyncio
-from typing import cast
+from typing import Annotated, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Request
@@ -67,7 +67,7 @@ async def add_log_record_view(request: Request, material_id: UUID | None = None)
 
 
 @router.post("/add")
-async def add_log_record(record: schemas.LogRecord = Depends()):
+async def add_log_record(record: Annotated[schemas.LogRecord, Depends()]):
     if not await db.is_record_correct(**record.model_dump()):
         raise HTTPException(status_code=400, detail="Invalid record")
 

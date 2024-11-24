@@ -279,7 +279,7 @@ async def is_record_correct(
     material = materials[0]
 
     st = material.status
-    if date < st.started_at.date() or st.completed_at and date > st.completed_at.date():
+    if date < st.started_at.date() or (st.completed_at and date > st.completed_at.date()):
         logger.warning(
             "Date is not inside the range %s not in [%s; %s]",
             date,

@@ -326,10 +326,10 @@ async def get_span_repeated_materials_statistics(*, span_size: int) -> SpanStati
     return _get_span_statistics(stat=stat, span=span, span_size=span_size)
 
 
-async def get_span_analytics(__span: schemas.GetSpanReportRequest) -> SpanAnalysis:
+async def get_span_analytics(_span: schemas.GetSpanReportRequest) -> SpanAnalysis:
     """Calculate both reading and notes statistics."""
-    size = __span.size
-    span = TimeSpan(start=__span.start, stop=__span.stop, span_size=size)
+    size = _span.size
+    span = TimeSpan(start=_span.start, stop=_span.stop, span_size=size)
 
     async with asyncio.TaskGroup() as tg:
         reading_stats_task = tg.create_task(_calculate_span_reading_statistics(span))
