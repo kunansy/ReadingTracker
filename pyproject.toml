@@ -11,8 +11,8 @@ cache-dir = "/tmp/ruff-cache/"
 # "E265", "E261", "E262", in preview
 select = ["ALL"]
 ignore = [
-    # typing kwargs/self/cls
-    "ANN003", "ANN101", "ANN102",
+    # typing kwargs annotation
+    "ANN003",
     # catch Exception, docstr, lint/format conflicts
     "BLE001", "D1", "D203", "D212", "D213",
     # literal str in exc, f-str in exc, todo without issue, exc name
