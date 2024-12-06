@@ -5,6 +5,7 @@ from uuid import UUID
 import pytest
 import sqlalchemy.sql as sa
 
+from tests.conftest import mock_trans
 from tracker.common import database
 from tracker.models import enums, models
 from tracker.notes import db, routes
@@ -320,3 +321,111 @@ def test_sort_notes(sample, expected):
         for (chapter_int, chapter, page) in expected
     ]
     assert routes._sort_notes(sample) == expected
+
+
+@pytest.mark.parametrize(
+    "material_id, link_id, title, content, chapter, page, tags", (
+        (
+            None,
+            None,
+            "t",
+            "ststst",
+            "32 chapter",
+            42,
+            ["1", "2", "3"]
+        ),
+        (
+            UUID("888b717e-4559-4861-8013-ca581cbf0524"),
+            None,
+            "t",
+            "ststst",
+            "32 chapter",
+            42,
+            ["1", "2", "3"]
+        ),
+        (
+            UUID("888b717e-4559-4861-8013-ca581cbf0524"),
+            UUID("1edc3d70-2607-63cf-8b05-a63a662bdf9f"),
+            "t",
+            "ststst",
+            "32 chapter",
+            42,
+            ["1", "2", "3"]
+        ),
+        (
+            None,
+            UUID("1edc3d70-2607-63cf-8b05-a63a662bdf9f"),
+            "t",
+            "ststst",
+            "32 chapter",
+            42,
+            ["1", "2", "3"]
+        ),
+        (
+            None,
+            None,
+            "t",
+            "asdasd",
+            "32 chapter",
+            42,
+            ["1", "2", "3"]
+        ),
+        (
+            None,
+            None,
+            None,
+            "asdfadsf",
+            "32 chapter",
+            42,
+            []
+        ),
+        (
+            None,
+            None,
+            None,
+            "dfsadfsd",
+            "32 chapter",
+            42,
+            None,
+        ),
+        (
+            None,
+            None,
+            "1",
+            "asdfadsf",
+            "32 chapter",
+            42,
+            ["1"],
+        ),
+        (
+            None,
+            None,
+            "1",
+            "asdfadsf",
+            "",
+            0,
+            ["1"],
+        ),
+    )
+)
+async def test_insert_note(mocker, material_id, link_id, title, content, chapter, page, tags):
+    old_notes_count = await db.get_all_notes_count()
+
+    mocker.patch(
+        "tracker.notes.db.database.session",
+        mock_trans
+    )
+
+    note_id = await db.add_note(
+        material_id=material_id,
+        link_id=link_id,
+        title=title,
+        content=content,
+        chapter=chapter,
+        page=page,
+        tags=tags
+    )
+
+    UUID(note_id)
+
+    assert old_notes_count == await db.get_all_notes_count()
