@@ -37,7 +37,7 @@ const createMaterialNoteLi = (note) => {
     const li = document.createElement("li");
     li.className = "note hover";
     li.title = "Click to choose this note";
-    li.onclick = () => {chooseNote(note.note_id, note.material_id)};
+    li.onclick = async () => {await chooseNote(note.note_id, note.material_id)};
 
     li.appendChild(createMaterialNoteContent(note));
     li.appendChild(createMaterialNotePage(note));
