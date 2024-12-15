@@ -7,7 +7,7 @@ from uuid import UUID
 import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa
 
-from tracker.common import database
+from tracker.common import database, settings
 from tracker.materials import db as materials_db
 from tracker.models import models
 from tracker.reading_log import (
@@ -54,6 +54,8 @@ async def create_reading_graphic(*, material_id: UUID, last_days: int) -> str:
     total_pages_read = data.counts[-1]
     material_pages = material.pages
 
+    if datetime.datetime.now(tz=datetime.UTC).time() >= settings.EX_DARKMODE_ENABLE:
+        plt.style.use("dark_background")
     fig, ax = plt.subplots(figsize=(12, 10))
 
     line = plt.axhline(y=material.pages, color="r", linestyle="-")

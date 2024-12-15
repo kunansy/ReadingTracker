@@ -97,6 +97,7 @@ with env.prefixed("KAFKA_"):
 # experiment funcs
 with env.prefixed("EX_"):
     EX_ENABLE_KAFKA_TO_NOTIFY = env.bool("ENABLE_KAFKA_TO_NOTIFY", False)
+    EX_DARKMODE_ENABLE = env.time("DARKMODE_ENABLE", "15:00")
 
 path = os.environ.get("PATH")
 metrics_dir = os.environ.get("PROMETHEUS_MULTIPROC_DIR")
