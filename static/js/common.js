@@ -507,26 +507,12 @@ if (parseBtn) {
 
         let respJson = await resp.json();
 
-        let titleField = document.getElementById("input-title");
-        let authorsField = document.getElementById("input-authors");
-        let durationField = document.getElementById("input-duration");
-        let linkField = document.getElementById("input-link");
-        let typeField = document.getElementById("input-type");
+        for (const [fieldName, value] of Object.entries(respJson)) {
+            let field = document.getElementById(`input-${fieldName}`);
 
-        titleField.textContent = respJson["title"];
-        titleField.value = respJson["title"];
-
-        authorsField.textContent = respJson["author"];
-        authorsField.value = respJson["author"];
-
-        durationField.textContent = respJson["duration"];
-        durationField.value = respJson["duration"];
-
-        typeField.textContent = respJson["type"];
-        typeField.value = respJson["type"];
-
-        linkField.textContent = respJson["link"];
-        linkField.value = respJson["link"];
+            field.textContent = value;
+            field.value = value;
+        }
     };
 }
 
