@@ -100,6 +100,7 @@ async def graphic(
 
 @router.get("/backup")
 async def backup(request: Request):
+    # TODO: try to call backup in JS to fix duplicate backups
     async with asyncio.TaskGroup() as tg:
         tg.create_task(drive_api.backup())
         get_stat_task = tg.create_task(get_tables_analytics())
