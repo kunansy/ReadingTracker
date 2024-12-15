@@ -85,7 +85,7 @@ async def get_cards(
             models.Materials,
             models.Notes.c.material_id == models.Materials.c.material_id,
         )
-        .order_by(models.Cards.c.added_at.desc())
+        .order_by(models.Notes.c.note_number)
     )
     if note_id:
         stmt = stmt.where(models.Cards.c.note_id == str(note_id))
