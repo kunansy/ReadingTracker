@@ -214,8 +214,12 @@ async def autocompletion(*, query: str, limit: int = 5) -> list[str]:
 async def readiness() -> bool:
     query = "SHOW STATUS like 'uptime'"
 
-    async with _cursor() as cur:
-        await cur.execute(query)
-        _, uptime = await cur.fetchone()
-
-    return uptime.isdigit() and int(uptime) >= 5  # noqa: PLR2004
+    try:
+        async with _cursor() as cur:
+            await cur.execute(query)
+            _, uptime = await cur.fetchone()
+    except Exception as e:
+        logger.warning("Fail checking ManticoreSearch readiness: %r", e)
+        return False
+    else:
+        return uptime.isdigit() and int(uptime) >= 5  # noqa: PLR2004

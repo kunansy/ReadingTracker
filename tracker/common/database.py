@@ -74,8 +74,12 @@ async def readiness() -> bool:
     logger.log(5, "Checking the database is alive")
 
     stmt = sa.text("SELECT 1 + 1 = 2")
-    async with session() as ses:
-        return await ses.scalar(stmt)
+    try:
+        async with session() as ses:
+            return await ses.scalar(stmt)
+    except Exception as e:
+        logger.warning("Fail checking PostgreSQL readiness: %r", e)
+        return False
 
 
 @compiles(DropTable, "postgresql")

@@ -5,7 +5,7 @@ from uuid import UUID
 
 import aiokeydb
 
-from tracker.common import settings
+from tracker.common import logger, settings
 from tracker.notes.db import Note
 
 
@@ -65,7 +65,11 @@ async def set_notes(notes: list[Note]) -> None:
 
 
 async def healthcheck() -> bool:
-    return await client(_NOTES_STORAGE).ping()
+    try:
+        return await client(_NOTES_STORAGE).ping()
+    except Exception as e:
+        logger.warning("Fail checking KeyDB readiness: %r", e)
+        return False
 
 
 async def get_note(note_id: UUID | str, *fields: str) -> dict | None:
