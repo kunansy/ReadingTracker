@@ -20,3 +20,17 @@ logger.setLevel(settings.LOGGER_LEVEL)
 
 logger.addHandler(stream_handler)
 logger.info("Logger configured with level=%s", logger.level)
+
+
+class MetricsFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.getMessage().find("/metrics") == -1
+
+
+class ReadinessFilter(logging.Filter):
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.getMessage().find("/readiness") == -1
+
+
+logging.getLogger("uvicorn.access").addFilter(MetricsFilter())
+logging.getLogger("uvicorn.access").addFilter(ReadinessFilter())
