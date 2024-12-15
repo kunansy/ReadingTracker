@@ -22,15 +22,14 @@ logger.addHandler(stream_handler)
 logger.info("Logger configured with level=%s", logger.level)
 
 
-class MetricsFilter(logging.Filter):
+class EndpointLogsFilter(logging.Filter):
+    def __init__(self, endpoint: str, *args, **kwargs):  # noqa: ANN002
+        super().__init__(*args, **kwargs)
+        self._path = endpoint
+
     def filter(self, record: logging.LogRecord) -> bool:
-        return record.getMessage().find("/metrics") == -1
+        return record.getMessage().find(self._path) == -1
 
 
-class ReadinessFilter(logging.Filter):
-    def filter(self, record: logging.LogRecord) -> bool:
-        return record.getMessage().find("/readiness") == -1
-
-
-logging.getLogger("uvicorn.access").addFilter(MetricsFilter())
-logging.getLogger("uvicorn.access").addFilter(ReadinessFilter())
+logging.getLogger("uvicorn.access").addFilter(EndpointLogsFilter(endpoint="/metrics"))
+logging.getLogger("uvicorn.access").addFilter(EndpointLogsFilter(endpoint="/readiness"))
