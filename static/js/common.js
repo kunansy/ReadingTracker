@@ -531,6 +531,6 @@ if (parseBtn) {
 }
 
 
-document.querySelectorAll("p.note-content").forEach((e) => {
+document.querySelectorAll("p.note-content, p.note-answer, p.question").forEach((e) => {
     e.innerHTML = marked.parse(e.innerHTML.replaceAll("<br>", "\n"));
 });
