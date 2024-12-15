@@ -906,13 +906,13 @@ def _get_text(field: bs4.Tag | bs4.NavigableString | None) -> str:
 def parse_habr(html: str) -> dict[str, str]:
     soup = bs4.BeautifulSoup(html, "lxml")
 
-    title = author = None
+    title = authors = None
     snippet = cast(bs4.Tag, soup.find("div", {"class": "tm-article-snippet"}))
     if snippet:
         title = snippet.find("h1", {"class": "tm-title"})
-        author = snippet.find("a", {"class": "tm-user-info__username"})
+        authors = snippet.find("a", {"class": "tm-user-info__username"})
 
-    return {"title": _get_text(title), "author": _get_text(author)}
+    return {"title": _get_text(title), "authors": _get_text(authors)}
 
 
 def _parse_duration(duration: str) -> int:
@@ -951,7 +951,7 @@ async def parse_youtube(video_id: str, *, http_timeout: int = 5) -> dict[str, st
 
     item = resp_json["items"][0]
     title = item["snippet"]["title"]
-    author = item["snippet"]["channelTitle"]
+    authors = item["snippet"]["channelTitle"]
     duration = item["contentDetails"]["duration"]
 
-    return {"title": title, "author": author, "duration": _parse_duration(duration)}
+    return {"title": title, "authors": authors, "duration": _parse_duration(duration)}

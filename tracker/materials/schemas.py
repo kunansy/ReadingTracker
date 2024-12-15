@@ -66,7 +66,7 @@ class UpdateMaterial(Material):
 
 
 class ParsedMaterial(CustomBaseModel):
-    author: str
+    authors: str
     title: str
     type: str
     link: str
