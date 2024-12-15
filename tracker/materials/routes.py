@@ -257,7 +257,11 @@ async def parse_habr_article(link: HttpUrl):
     return {"link": str(link), "type": "article", **article_info}
 
 
-@router.post("/parse/youtube")
+@router.post(
+    "/parse/youtube",
+    response_model=schemas.ParsedMaterial,
+    response_model_exclude_unset=True,
+)
 async def parse_youtube_video(link: HttpUrl):
     if not (host := link.host):
         return HTTPException(detail="Invalid youtube url", status_code=400)
