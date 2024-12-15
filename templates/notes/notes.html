@@ -94,7 +94,7 @@
 
     <div class="group">
     {% set notes_count = material_notes.get(material_id, notes_m | length) %}
-        <h3 class="material_title" id="material-{{material_id}}"> «{{ titles.get(material_id, "Without material") }}» ({{ notes_count }})</h3>
+        <h3 class="material_title" id="material-{{material_id}}" onclick="openMaterial('{{material_id }}')" title="Click to open the material"> «{{ titles.get(material_id, "Without material") }}» ({{ notes_count }})</h3>
         {% for _, note_c in notes_m | groupby('chapter_int')  %}
             {% set chapter = note_c[0].chapter %}
             <h4 class="chapter_number" id="material-{{material_id}}-chapter-{{chapter}}"> {{ chapter_name }}: {{ chapter }} </h4>

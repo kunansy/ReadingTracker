@@ -516,6 +516,11 @@ if (parseBtn) {
     };
 }
 
+const openMaterial = async (material_id, target_ = "_blank") => {
+    let url = `/materials/completed#${material_id}`;
+    await window.open(url, target=target_);
+}
+
 
 document.querySelectorAll("p.note-content, p.note-answer, p.question").forEach((e) => {
     e.innerHTML = marked.parse(e.innerHTML.replaceAll("<br>", "\n"));
