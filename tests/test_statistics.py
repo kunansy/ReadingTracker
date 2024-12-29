@@ -218,7 +218,8 @@ async def test_would_be_total():
     expected = total_pages + overall_mean * lost_time
 
     assert would_be_total == expected
-    # TODO: check percent relation
+    # TODO: wtf?
+    # assert total_pages / would_be_total == duration / lost_time
 
 
 async def test_get_total_materials_completed():
