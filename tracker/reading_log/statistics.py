@@ -229,14 +229,10 @@ async def _get_max_record(*, material_id: UUID | None = None) -> database.MinMax
     return None
 
 
-async def _would_be_total() -> int:
-    query = "sum(count) + avg(count) * (max(date) - min(date) - count(1) + 1)"
-    stmt = sa.select(sa.text(query)).select_from(models.ReadingLog)
+def _would_be_total(*, means: enums.MEANS, total_read_pages: int, lost_time: int) -> int:
+    overall_mean = round(sum(means.values()) / len(means))
 
-    async with database.session() as ses:
-        value = await ses.scalar(stmt)
-
-    return round(value)
+    return total_read_pages + overall_mean * lost_time
 
 
 async def _get_total_materials_completed() -> int:
@@ -256,11 +252,16 @@ async def get_tracker_statistics() -> TrackerStatistics:
         median_task = tg.create_task(_get_median_pages_read_per_day())
         total_pages_task = tg.create_task(_get_total_read_pages())
         total_materials_task = tg.create_task(_get_total_materials_completed())
-        would_be_total_task = tg.create_task(_would_be_total())
         min_log_record_task = tg.create_task(_get_min_record())
         max_log_record_task = tg.create_task(_get_max_record())
 
-    mean = mean_task.result().get(enums.MaterialTypesEnum.book, Decimal(1))
+    means: enums.MEANS = mean_task.result()
+    mean = means.get(enums.MaterialTypesEnum.book, Decimal(1))
+    would_be_total = _would_be_total(
+        means=means,
+        total_read_pages=total_pages_task.result(),
+        lost_time=lost_time_task.result(),
+    )
 
     return TrackerStatistics(
         started_at=started_at_task.result(),
@@ -271,7 +272,7 @@ async def get_tracker_statistics() -> TrackerStatistics:
         median=median_task.result(),
         total_pages_read=total_pages_task.result(),
         total_materials_completed=total_materials_task.result(),
-        would_be_total=would_be_total_task.result(),
+        would_be_total=would_be_total,
         min_log_record=min_log_record_task.result(),
         max_log_record=max_log_record_task.result(),
     )
