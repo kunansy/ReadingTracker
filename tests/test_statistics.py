@@ -204,19 +204,21 @@ async def test_get_max_record_nof_found():
 
 
 async def test_would_be_total():
-    would_be_total = await st._would_be_total()
-    records = await db.get_log_records()
+    mean_dict = await st.get_means()
+    total_pages = await st._get_total_read_pages()
+    lost_time = await st._get_lost_days()
 
-    counts = [record.count for record in records]
-    duration = (
-        max(records, key=lambda record: record.date).date
-        - min(records, key=lambda record: record.date).date
-    ).days + 1
+    would_be_total = st._would_be_total(
+        means=mean_dict,
+        total_read_pages=total_pages,
+        lost_time=lost_time
+    )
 
-    expected = sum(counts)
-    expected += mean(counts) * (duration - len(records))
+    overall_mean = round(sum(mean_dict.values()) / len(mean_dict))
+    expected = total_pages + overall_mean * lost_time
 
-    assert would_be_total == round(expected)
+    assert would_be_total == expected
+    # TODO: check percent relation
 
 
 async def test_get_total_materials_completed():
