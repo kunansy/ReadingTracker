@@ -136,7 +136,7 @@ aiokeydb = "~0.2.1"
 dill = "~0.3.8"
 
 [tool.poetry.group.dev.dependencies]
-mypy = "~1.13.0"
+mypy = "~1.14.0"
 bumpversion = "~0.6.0"
 greenlet = "~3.0.1"
 ruff = "~0.8.0"
