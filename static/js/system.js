@@ -16,9 +16,18 @@ const showSuccess = (json) => {
     }
 };
 
+const showError = () => {
+    let err = document.getElementById("backup-failed");
+    err.removeAttribute("hidden");
+};
+
 const hideSuccess = () => {
     let success = document.getElementById("backup-success");
     success.setAttribute("hidden", "hidden");
+};
+const hideError = () => {
+    let err = document.getElementById("backup-failed");
+    err.setAttribute("hidden", "hidden");
 };
 
 document.querySelectorAll(".backup-nav").forEach((btn) => {
