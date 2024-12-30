@@ -98,24 +98,24 @@ async def graphic(
     return templates.TemplateResponse("system/graphic.html", context)
 
 
-@router.get("/backup")
-async def backup(request: Request):
-    # TODO: try to call backup in JS to fix duplicate backups
+@router.get("/backup", response_class=ORJSONResponse)
+async def backup():
     async with asyncio.TaskGroup() as tg:
         tg.create_task(drive_api.backup())
         get_stat_task = tg.create_task(get_tables_analytics())
 
-    context: dict[str, Any] = {"request": request, "status": "ok"}
     if stat := get_stat_task.result():
-        context["materials_count"] = stat["materials"]
-        context["logs_count"] = stat["reading_log"]
-        context["statuses_count"] = stat["statuses"]
-        context["notes_count"] = stat["notes"]
-        context["cards_count"] = stat["cards"]
-        context["repeats_count"] = stat["repeats"]
-        context["repeats_history_count"] = stat["note_repeats_history"]
+        return {
+            "materials_count": stat["materials"],
+            "logs_count": stat["reading_log"],
+            "statuses_count": stat["statuses"],
+            "notes_count": stat["notes"],
+            "cards_count": stat["cards"],
+            "repeats_count": stat["repeats"],
+            "repeats_history_count": stat["note_repeats_history"],
+        }
 
-    return templates.TemplateResponse("system/backup.html", context)
+    return {}
 
 
 @router.get("/restore")

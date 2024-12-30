@@ -12,6 +12,16 @@
 
 {% block main %}
 
+<div class="alert success status" id="backup-success" hidden="hidden">
+    <p> Success! Backup was created successfully.
+        ({materials_count} materials, {logs_count} logs, {statuses_count} statuses, {notes_count} notes,
+        {cards_count} cards, {repeats_count} repeats, {repeats_history_count} note repeats)
+    </p>
+</div>
+<div class="alert error status" id="backup-failed" hidden="hidden">
+    <p> Error! Backup failed. </p>
+</div>
+
     <div class="form">
         <form action="/system/graphics" method="GET">
             <input class="input" list="reading_materials" name="material_id" value="{{ material_id }}" placeholder="Choose a material">
@@ -101,4 +111,6 @@
             <p> Min: {{ repeated_materials_trend.min }} </p>
         </div>
     </div>
+
+    <script src="{{ url_for('static', path='js/system.js')}}"></script>
 {% endblock main%}
