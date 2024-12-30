@@ -41,8 +41,12 @@ document.querySelectorAll(".backup-nav").forEach((btn) => {
     btn.addEventListener("click", async (e) => {
         e.preventDefault();
 
-        let details = await backup();
-        showSuccess(details);
-        setTimeout(hideSuccess, 5000);
+        backup().then((details) => {
+            showSuccess(details);
+            setTimeout(hideSuccess, 5000);
+        }).catch((err) => {
+            showError();
+            setTimeout(hideError, 5000);
+        })
     });
 });
