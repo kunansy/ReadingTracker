@@ -98,24 +98,17 @@ async def graphic(
     return templates.TemplateResponse("system/graphic.html", context)
 
 
-@router.get("/backup", response_class=ORJSONResponse)
+@router.get(
+    "/backup",
+    response_class=ORJSONResponse,
+    response_model=schemas.BackupResponse,
+)
 async def backup():
     async with asyncio.TaskGroup() as tg:
         tg.create_task(drive_api.backup())
         get_stat_task = tg.create_task(get_tables_analytics())
 
-    if stat := get_stat_task.result():
-        return {
-            "materials_count": stat["materials"],
-            "logs_count": stat["reading_log"],
-            "statuses_count": stat["statuses"],
-            "notes_count": stat["notes"],
-            "cards_count": stat["cards"],
-            "repeats_count": stat["repeats"],
-            "repeats_history_count": stat["note_repeats_history"],
-        }
-
-    return {}
+    return get_stat_task.result()
 
 
 @router.get("/restore")
