@@ -1,7 +1,7 @@
 import datetime
 
 from fastapi import Form
-from pydantic import field_validator
+from pydantic import NonNegativeInt, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from tracker.common.schemas import CustomBaseModel
@@ -67,3 +67,13 @@ class GetSpanReportResponse(CustomBaseModel):
 
     repeats_total: int
     repeat_materials_count: int
+
+
+class BackupResponse(CustomBaseModel):
+    materials_count: NonNegativeInt
+    reading_log_count: NonNegativeInt
+    statuses_count: NonNegativeInt
+    notes_count: NonNegativeInt
+    cards_count: NonNegativeInt
+    repeats_count: NonNegativeInt
+    note_repeats_history_count: NonNegativeInt
