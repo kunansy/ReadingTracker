@@ -1,8 +1,3 @@
-let collection = document.getElementsByClassName("backup-nav");
-
-let subnavbar = collection[0];
-subnavbar.href = "";
-
 const backup = async () => {
     let resp = await fetch("/system/backup", {
         method: 'GET',
@@ -26,11 +21,12 @@ const hideSuccess = () => {
     success.setAttribute("hidden", "hidden");
 };
 
-subnavbar.onclick = async () => {
-    let details = await backup();
-    console.log(details);
+document.querySelectorAll(".backup-nav").forEach((btn) => {
+    btn.addEventListener("click", async (e) => {
+        e.preventDefault();
 
-    showSuccess(details);
-};
-
-console.log(subnavbar);
+        let details = await backup();
+        showSuccess(details);
+        setTimeout(hideSuccess, 5000);
+    });
+});
