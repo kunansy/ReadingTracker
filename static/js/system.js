@@ -7,13 +7,20 @@ const backup = async () => {
     return await resp.json();
 };
 
+const successTemplate = "Success! Backup was created successfully.\n" +
+    "        ({materials_count} materials, {logs_count} logs, {statuses_count} statuses, {notes_count} notes,\n" +
+    "        {cards_count} cards, {repeats_count} repeats, {repeats_history_count} note repeats)";
+
 const showSuccess = (json) => {
     let success = document.getElementById("backup-success");
+    let successText = successTemplate;
+
     success.removeAttribute("hidden");
 
     for (let [key, value] of Object.entries(json)) {
-        success.textContent = success.textContent.replace(`\{${key}\}`, value);
+        successText = successText.replace(`\{${key}\}`, value);
     }
+    success.textContent = successText;
 };
 
 const showError = () => {
