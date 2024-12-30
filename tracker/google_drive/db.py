@@ -134,10 +134,13 @@ async def get_tables_analytics() -> dict[str, int]:
 
     query = (
         [
-            f"SELECT '{table}' AS name, COUNT(1) AS cnt FROM {table} UNION"  # noqa: S608
+            f"SELECT '{table}_count' AS name, COUNT(1) AS cnt FROM {table} UNION"  # noqa: S608
             for table in table_names[:-1]
         ]
-        + [f"SELECT '{table_names[-1]}' AS name, COUNT(1) AS cnt FROM {table_names[-1]}"]  # noqa: S608
+        + [
+            f"SELECT '{table_names[-1]}_count' AS name, "  # noqa: S608
+            f"COUNT(1) AS cnt FROM {table_names[-1]}",
+        ]
     )
 
     query_str = "\n".join(query)
