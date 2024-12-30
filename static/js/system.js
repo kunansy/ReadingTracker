@@ -16,8 +16,9 @@ const showSuccess = (json) => {
     let success = document.getElementById("backup-success");
     success.removeAttribute("hidden");
 
-    success.content = "HH";
-    success.textContent = "HH";
+    for (let [key, value] of Object.entries(json)) {
+        success.textContent = success.textContent.replace(`\{${key}\}`, value);
+    }
 };
 
 subnavbar.onclick = async () => {
