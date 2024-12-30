@@ -46,6 +46,13 @@ async def get_read_material_titles() -> dict[UUID, str]:
         }
 
 
+def _set_plot_style() -> None:
+    if datetime.datetime.now(tz=datetime.UTC).time() >= settings.EX_DARKMODE_ENABLE:
+        plt.style.use("dark_background")
+    else:
+        plt.style.use("default")
+
+
 async def create_reading_graphic(*, material_id: UUID, last_days: int) -> str:
     if not (material := await materials_db.get_material(material_id=material_id)):
         raise ValueError(f"'{material_id=}' not found")
@@ -54,8 +61,7 @@ async def create_reading_graphic(*, material_id: UUID, last_days: int) -> str:
     total_pages_read = data.counts[-1]
     material_pages = material.pages
 
-    if datetime.datetime.now(tz=datetime.UTC).time() >= settings.EX_DARKMODE_ENABLE:
-        plt.style.use("dark_background")
+    _set_plot_style()
     fig, ax = plt.subplots(figsize=(12, 10))
 
     line = plt.axhline(y=material.pages, color="r", linestyle="-")
