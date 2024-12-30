@@ -21,6 +21,11 @@ const showSuccess = (json) => {
     }
 };
 
+const hideSuccess = () => {
+    let success = document.getElementById("backup-success");
+    success.setAttribute("hidden", "hidden");
+};
+
 subnavbar.onclick = async () => {
     let details = await backup();
     console.log(details);
