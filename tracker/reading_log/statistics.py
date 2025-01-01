@@ -161,12 +161,18 @@ async def get_means() -> enums.MEANS:
 
 
 async def _get_median_pages_read_per_day() -> float:
+    group = (
+        sa.select(
+            sa.func.sum(models.ReadingLog.c.count).label("sum"),
+        ).group_by(models.ReadingLog.c.date)
+    ).cte("by_date")
+
     stmt = sa.select(
-        sa.text("PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY count) AS median"),
-    ).select_from(models.ReadingLog)
+        sa.text("PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY by_date.sum) AS median"),
+    ).select_from(group)
 
     async with database.session() as ses:
-        median = await ses.scalar(stmt)
+        median = await ses.scalar(stmt) or 0
 
     return round(float(median), 2)
 
