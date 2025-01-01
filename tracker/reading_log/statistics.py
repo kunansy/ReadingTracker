@@ -1,6 +1,5 @@
 import asyncio
 import datetime
-from decimal import Decimal
 from typing import cast
 from uuid import UUID
 
@@ -242,6 +241,24 @@ async def _get_total_materials_completed() -> int:
         return await ses.scalar(stmt) or 0
 
 
+def _tracker_mean(means: enums.MEANS) -> float:
+    # to avoid changing source dict we should
+    # escape the ignored material type
+    total = float(sum(
+        count
+        for material_type, count in means.items()
+        if material_type != enums.MaterialTypesEnum.course
+    ))
+    count = sum(
+        1 for material_type in means if material_type != enums.MaterialTypesEnum.course
+    )
+
+    try:
+        return round(total / count, 2)
+    except ZeroDivisionError:
+        return 0.0
+
+
 async def get_tracker_statistics() -> TrackerStatistics:
     async with asyncio.TaskGroup() as tg:
         started_at_task = tg.create_task(_get_start_date())
@@ -256,7 +273,6 @@ async def get_tracker_statistics() -> TrackerStatistics:
         max_log_record_task = tg.create_task(_get_max_record())
 
     means: enums.MEANS = mean_task.result()
-    mean = means.get(enums.MaterialTypesEnum.book, Decimal(1))
     would_be_total = _would_be_total(
         means=means,
         total_read_pages=total_pages_task.result(),
@@ -268,7 +284,7 @@ async def get_tracker_statistics() -> TrackerStatistics:
         finished_at=finished_at_task.result(),
         duration=duration_task.result(),
         lost_time=lost_time_task.result(),
-        mean=float(mean),
+        mean=_tracker_mean(means),
         median=median_task.result(),
         total_pages_read=total_pages_task.result(),
         total_materials_completed=total_materials_task.result(),
