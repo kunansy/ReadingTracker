@@ -250,11 +250,13 @@ async def _get_total_materials_completed() -> int:
 def _tracker_mean(means: enums.MEANS) -> float:
     # to avoid changing source dict we should
     # escape the ignored material type
-    total = float(sum(
-        count
-        for material_type, count in means.items()
-        if material_type != enums.MaterialTypesEnum.course
-    ))
+    total = float(
+        sum(
+            count
+            for material_type, count in means.items()
+            if material_type != enums.MaterialTypesEnum.course
+        ),
+    )
     count = sum(
         1 for material_type in means if material_type != enums.MaterialTypesEnum.course
     )
