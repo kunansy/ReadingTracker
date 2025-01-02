@@ -526,7 +526,7 @@ async def test_get_repeats_analytics_only_repeated():
         for material_id, r in (await db.get_repeats_analytics()).items()
         if r.last_repeated_at
     }
-    assert len(result) == len(repeats)
+    assert len(result) == len(repeats) != 0
 
     for material_id, repeat in result.items():
         valid_repeat = repeats[material_id]
