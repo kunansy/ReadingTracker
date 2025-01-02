@@ -201,13 +201,7 @@ async def _get_min_record(*, material_id: UUID | None = None) -> database.MinMax
 
     async with database.session() as ses:
         if minmax := (await ses.execute(stmt)).first():
-            return database.MinMax(
-                material_id=minmax.material_id,
-                log_id=minmax.log_id,
-                count=cast(int, minmax.count),
-                date=minmax.date,
-                material_title=minmax.title,
-            )
+            return database.MinMax.model_validate(minmax, from_attributes=True)
     return None
 
 
@@ -224,13 +218,7 @@ async def _get_max_record(*, material_id: UUID | None = None) -> database.MinMax
 
     async with database.session() as ses:
         if minmax := (await ses.execute(stmt)).first():
-            return database.MinMax(
-                material_id=minmax.material_id,
-                log_id=minmax.log_id,
-                count=cast(int, minmax.count),
-                date=minmax.date,
-                material_title=minmax.title,
-            )
+            return database.MinMax.model_validate(minmax, from_attributes=True)
     return None
 
 

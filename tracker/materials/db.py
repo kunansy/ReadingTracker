@@ -111,9 +111,9 @@ async def get_material(*, material_id: UUID) -> Material | None:
     )
 
     async with database.session() as ses:
-        if material := (await ses.execute(stmt)).mappings().one_or_none():
+        if material := (await ses.execute(stmt)).one_or_none():
             logger.debug("Material got")
-            return Material(**material)
+            return Material.model_validate(material, from_attributes=True)
 
     logger.warning("Material id=%s not found", material_id)
     return None
@@ -124,8 +124,8 @@ async def get_materials() -> list[Material]:
 
     async with database.session() as ses:
         return [
-            Material(**material)
-            for material in (await ses.execute(stmt)).mappings().all()
+            Material.model_validate(material, from_attributes=True)
+            for material in (await ses.execute(stmt)).all()
         ]
 
 
@@ -146,7 +146,8 @@ async def _get_free_materials() -> list[Material]:
 
     async with database.session() as ses:
         materials = [
-            Material(**row) for row in (await ses.execute(stmt)).mappings().all()
+            Material.model_validate(row, from_attributes=True)
+            for row in (await ses.execute(stmt)).all()
         ]
 
     logger.debug("%s free materials got", len(materials))
@@ -255,9 +256,9 @@ async def _get_status(*, material_id: UUID) -> Status | None:
     stmt = sa.select(models.Statuses).where(models.Statuses.c.material_id == material_id)
 
     async with database.session() as ses:
-        if status := (await ses.execute(stmt)).mappings().one_or_none():
+        if status := (await ses.execute(stmt)).one_or_none():
             logger.debug("Status got")
-            return Status(**status)
+            return Status.model_validate(status, from_attributes=True)
 
     logger.debug("Status not found")
     return None

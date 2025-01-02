@@ -258,7 +258,10 @@ async def get_notes(*, material_id: UUID | str | None = None) -> list[Note]:
     stmt = _get_note_stmt(material_id=material_id)
 
     async with database.session() as ses:
-        notes = [Note(**row) for row in (await ses.execute(stmt)).mappings().all()]
+        notes = [
+            Note.model_validate(row, from_attributes=True)
+            for row in (await ses.execute(stmt)).all()
+        ]
     logger.debug("%s notes got", len(notes))
     return notes
 
@@ -269,9 +272,9 @@ async def get_note(*, note_id: UUID | str) -> Note | None:
     stmt = _get_note_stmt(note_id=note_id)
 
     async with database.session() as ses:
-        if note := (await ses.execute(stmt)).mappings().one_or_none():
+        if note := (await ses.execute(stmt)).one_or_none():
             logger.debug("Note got")
-            return Note(**note)
+            return Note.model_validate(note, from_attributes=True)
 
     logger.debug("Note_id='%s' not found", note_id)
     return None
@@ -432,7 +435,10 @@ async def get_possible_links(note: Note) -> list[Note]:
     )
 
     async with database.session() as ses:
-        links = [Note(**link) for link in (await ses.execute(stmt)).mappings().all()]
+        links = [
+            Note.model_validate(link, from_attributes=True)
+            for link in (await ses.execute(stmt)).all()
+        ]
 
     # most possible first
     links.sort(key=lambda link: len(link.tags & note.tags), reverse=True)
@@ -644,7 +650,10 @@ async def get_links_from(*, note_id: UUID | str) -> list[Note]:
     stmt = _get_note_stmt(link_id=note_id)
 
     async with database.session() as ses:
-        return [Note(**row) for row in (await ses.execute(stmt)).mappings().all()]
+        return [
+            Note.model_validate(row, from_attributes=True)
+            for row in (await ses.execute(stmt)).all()
+        ]
 
 
 async def is_deleted(note_id: str) -> bool:

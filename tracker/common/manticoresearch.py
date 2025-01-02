@@ -73,7 +73,10 @@ async def _get_notes() -> list[Note]:
     stmt = _get_note_stmt()
 
     async with database.session() as ses:
-        notes = [Note(**row) for row in (await ses.execute(stmt)).mappings().all()]
+        notes = [
+            Note.model_validate(row, from_attributes=True)
+            for row in (await ses.execute(stmt)).all()
+        ]
 
     logger.debug("%s notes got", len(notes))
     return notes
@@ -85,9 +88,9 @@ async def _get_note(*, note_id: UUID) -> Note:
     stmt = _get_note_stmt().where(models.Notes.c.note_id == note_id)
 
     async with database.session() as ses:
-        if note := (await ses.execute(stmt)).mappings().one_or_none():
+        if note := (await ses.execute(stmt)).one_or_none():
             logger.debug("Note got")
-            return Note(**note)
+            return Note.model_validate(note, from_attributes=True)
 
     logger.exception("Note=%s not found", note_id)
     raise ValueError(f"Note {note_id} not found")

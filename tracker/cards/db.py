@@ -93,7 +93,10 @@ async def get_cards(
         stmt = stmt.where(models.Cards.c.material_id == str(material_id))
 
     async with database.session() as ses:
-        return [Card(**row) for row in (await ses.execute(stmt)).mappings().all()]
+        return [
+            Card.model_validate(row, from_attributes=True)
+            for row in (await ses.execute(stmt)).all()
+        ]
 
 
 async def get_cards_count(

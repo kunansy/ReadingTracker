@@ -63,12 +63,7 @@ async def get_log_records(*, material_id: str | UUID | None = None) -> list[LogR
 
     async with database.session() as ses:
         records = [
-            LogRecord(
-                date=row.date,
-                count=cast(int, row.count),
-                material_id=row.material_id,
-                material_title=row.material_title,
-            )
+            LogRecord.model_validate(row, from_attributes=True)
             for row in (await ses.execute(stmt)).all()
         ]
 
