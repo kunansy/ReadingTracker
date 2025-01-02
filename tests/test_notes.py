@@ -1,3 +1,5 @@
+import random
+import uuid
 from itertools import groupby
 from typing import NamedTuple
 from uuid import UUID
@@ -429,3 +431,37 @@ async def test_insert_note(mocker, material_id, link_id, title, content, chapter
     UUID(note_id)
 
     assert old_notes_count == await db.get_all_notes_count()
+
+
+async def test_is_deleted_false():
+    notes = await db.get_notes()
+    assert len(notes) > 0
+
+    note = random.choice(notes)
+
+    is_deleted = await db.is_deleted(note.note_id)
+    assert not is_deleted
+
+
+async def test_is_deleted_true():
+    deleted_notes_stmt = (sa.select(models.Notes.c.note_id)
+                     .where(models.Notes.c.is_deleted))
+
+    async with database.session() as ses:
+        deleted_notes = (await ses.execute(deleted_notes_stmt)).all()
+
+    assert len(deleted_notes) > 0
+    note_id, = random.choice(deleted_notes)
+
+    is_deleted = await db.is_deleted(note_id)
+    assert is_deleted
+
+
+async def test_is_deleted_not_found():
+    id = str(uuid.uuid4())
+
+    with pytest.raises(database.DatabaseException) as e:
+        await db.is_deleted(id)
+
+    assert e.type is database.DatabaseException
+    assert str(e.value) == f"Note id={id} not found"
