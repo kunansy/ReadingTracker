@@ -4,6 +4,7 @@ from typing import cast
 from uuid import UUID
 
 import sqlalchemy.sql as sa
+from pydantic import computed_field
 
 from tracker.common import database
 from tracker.common.schemas import CustomBaseModel
@@ -22,13 +23,14 @@ class LogStatistics(CustomBaseModel):
     min_record: database.MinMax | None = None
     max_record: database.MinMax | None = None
 
-    @property
+    @computed_field
     def mean(self) -> int:
         return round(self.total / (self.duration or 1))
 
 
 class TrackerStatistics(CustomBaseModel):
     # total tracker statistics
+    # TODO: some fields should be computed inside the model
     started_at: datetime.date
     finished_at: datetime.date
     duration: int
@@ -41,19 +43,19 @@ class TrackerStatistics(CustomBaseModel):
     min_log_record: database.MinMax | None
     max_log_record: database.MinMax | None
 
-    @property
+    @computed_field
     def duration_period(self) -> str:
         return _convert_duration_to_period(self.duration)
 
-    @property
+    @computed_field
     def lost_time_period(self) -> str:
         return _convert_duration_to_period(self.lost_time)
 
-    @property
+    @computed_field
     def lost_time_percent(self) -> float:
         return round(self.lost_time / self.duration * 100, 2)
 
-    @property
+    @computed_field
     def would_be_total_percent(self) -> float:
         """How much would be total more than the current total pages count in percent."""
         return round(self.would_be_total / self.total_pages_read, 2) * 100

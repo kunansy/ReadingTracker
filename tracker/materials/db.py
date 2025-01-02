@@ -8,6 +8,7 @@ from uuid import UUID
 import aiohttp
 import bs4
 import sqlalchemy.sql as sa
+from pydantic import field_validator, computed_field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracker.common import database, settings
@@ -81,7 +82,15 @@ class RepeatAnalytics(CustomBaseModel):
     last_repeated_at: datetime.datetime | None
     # total days since last seen
     priority_days: int
-    priority_months: float
+
+    @field_validator("priority_days", mode="before")
+    def replace_none(cls, v: int | None) -> int:
+        return v or 0
+
+    @computed_field
+    def priority_months(self) -> float:
+        return _calculate_priority_months(
+            self.priority_days, repeats_count=self.repeats_count)
 
 
 class RepeatingQueue(CustomBaseModel):
@@ -660,15 +669,7 @@ async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
 
     async with database.session() as ses:
         analytics = {
-            row.material_id: RepeatAnalytics(
-                repeats_count=row.repeats_count,
-                last_repeated_at=row.last_repeated_at,
-                priority_days=row.priority_days or 0,
-                priority_months=_calculate_priority_months(
-                    row.priority_days,
-                    repeats_count=row.repeats_count or 0,
-                ),
-            )
+            row.material_id: RepeatAnalytics.model_validate(row, from_attributes=True)
             for row in (await ses.execute(stmt)).all()
         }
 
