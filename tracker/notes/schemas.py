@@ -4,7 +4,7 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import Form
-from pydantic import conint, constr, field_serializer, field_validator, model_validator
+from pydantic import conint, field_serializer, field_validator, model_validator
 
 from tracker.common import settings
 from tracker.common.schemas import CustomBaseModel
@@ -94,10 +94,10 @@ def demark_note(string: str) -> str:
 class Note(CustomBaseModel):
     material_id: UUID | None
     title: str | None = None
-    content: constr(strip_whitespace=True)
+    content: str
     tags: list[str] | None = None
     link_id: UUID | None = None
-    chapter: constr(strip_whitespace=True) = ""
+    chapter: str = ""
     page: conint(ge=0) = 0
 
     def __init__(
@@ -184,8 +184,8 @@ class UpdateNote(Note):
 
 class SearchParams(CustomBaseModel):
     material_id: UUID | str | None = None
-    query: constr(strip_whitespace=True) | None = None
-    tags_query: constr(strip_whitespace=True) | None = None
+    query: str | None = None
+    tags_query: str | None = None
 
     def requested_tags(self) -> set[str]:
         if not (tags_query := self.tags_query):
@@ -233,10 +233,6 @@ class GetNoteJsonResponse(CustomBaseModel):
 
 class AutocompletionResponse(CustomBaseModel):
     autocompletions: list[str]
-
-    @field_validator("autocompletions")
-    def strip_variants(cls, autocompletions: list[str]) -> list[str]:
-        return [variant.strip() for variant in autocompletions]
 
     @field_validator("autocompletions")
     def remove_new_lines(cls, autocompletions: list[str]) -> list[str]:
