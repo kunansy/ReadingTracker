@@ -8,7 +8,7 @@ from uuid import UUID
 import aiohttp
 import bs4
 import sqlalchemy.sql as sa
-from pydantic import field_validator, computed_field
+from pydantic import computed_field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracker.common import database, settings
@@ -90,7 +90,9 @@ class RepeatAnalytics(CustomBaseModel):
     @computed_field
     def priority_months(self) -> float:
         return _calculate_priority_months(
-            self.priority_days, repeats_count=self.repeats_count)
+            self.priority_days,
+            repeats_count=self.repeats_count,
+        )
 
 
 class RepeatingQueue(CustomBaseModel):
@@ -715,10 +717,12 @@ async def get_repeating_queue(*, is_outlined: bool) -> list[RepeatingQueue]:
                 material_status.material_id
             ].last_repeated_at,
             priority_days=repeat_analytics[material_status.material_id].priority_days,
-            priority_months=repeat_analytics[material_status.material_id].priority_months,
+            priority_months=repeat_analytics[
+                material_status.material_id
+            ].priority_months(),
         )
         for material_status in completed_materials
-        if repeat_analytics[material_status.material_id].priority_months >= 1.0
+        if repeat_analytics[material_status.material_id].priority_months() >= 1.0
     ]
 
     logger.debug("Repeating queue got, %s materials found", len(queue))

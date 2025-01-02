@@ -1,6 +1,5 @@
 import asyncio
 import datetime
-from typing import cast
 from uuid import UUID
 
 import sqlalchemy.sql as sa
