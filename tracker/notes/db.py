@@ -657,7 +657,7 @@ async def get_links_from(*, note_id: UUID | str) -> list[Note]:
 
 
 async def is_deleted(note_id: str) -> bool:
-    stmt = sa.select(models.Notes.c.is_deleted == True).where(
+    stmt = sa.select(models.Notes.c.is_deleted).where(
         models.Notes.c.note_id == note_id,
     )
 
