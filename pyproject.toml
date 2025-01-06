@@ -92,7 +92,9 @@ filterwarnings = [
 [project]
 name = "tracker"
 version = "2.19.7"
-authors = ["kunansy <k@kunansy.ru>"]
+authors = [
+    { name = "kunansy ", email = "k@kunansy.ru" }
+]
 license = "MIT"
 description = "Reading queue, logging the reading, keep some notes"
 readme = "README.md"
