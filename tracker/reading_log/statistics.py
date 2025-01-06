@@ -191,7 +191,7 @@ async def contains(*, material_id: UUID) -> bool:
 
 async def _get_min_record(*, material_id: UUID | None = None) -> database.MinMax | None:
     stmt = (
-        sa.select(models.ReadingLog, models.Materials.c.title)
+        sa.select(models.ReadingLog, models.Materials.c.title.label("material_title"))
         .join(models.Materials)
         .order_by(models.ReadingLog.c.count)
         .limit(1)
@@ -208,7 +208,7 @@ async def _get_min_record(*, material_id: UUID | None = None) -> database.MinMax
 
 async def _get_max_record(*, material_id: UUID | None = None) -> database.MinMax | None:
     stmt = (
-        sa.select(models.ReadingLog, models.Materials.c.title)
+        sa.select(models.ReadingLog, models.Materials.c.title.label("material_title"))
         .join(models.Materials)
         .order_by(models.ReadingLog.c.count.desc())
         .limit(1)
