@@ -165,6 +165,8 @@ async def test_contains():
 async def test_get_min_record(material_id):
     min_record = await st._get_min_record(material_id=material_id)
     records = await db.get_log_records()
+    material = await materials_db.get_material(material_id=material_id)
+
     if material_id:
         records = [record for record in records if record.material_id == material_id]
 
@@ -173,6 +175,9 @@ async def test_get_min_record(material_id):
     assert min_record.material_id == expected.material_id
     assert min_record.count == expected.count
     assert min_record.date == expected.date
+
+    if material_id:
+        assert min_record.material_title == material.title
 
 
 @pytest.mark.parametrize(
@@ -185,6 +190,8 @@ async def test_get_min_record(material_id):
 async def test_get_max_record(material_id):
     max_record = await st._get_max_record(material_id=material_id)
     records = await db.get_log_records()
+    material = await materials_db.get_material(material_id=material_id)
+
     if material_id:
         records = [record for record in records if record.material_id == material_id]
 
@@ -193,6 +200,9 @@ async def test_get_max_record(material_id):
     assert max_record.material_id == expected.material_id
     assert max_record.count == expected.count
     assert max_record.date == expected.date
+
+    if material_id:
+        assert max_record.material_title == material.title
 
 
 async def test_get_min_record_nof_found():
