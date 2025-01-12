@@ -1,9 +1,8 @@
 import contextlib
-import urllib
 from collections.abc import Callable, Iterable
 from functools import wraps
 from typing import Any, cast
-from urllib.parse import ParseResult, unquote, urlparse
+from urllib.parse import ParseResult, parse_qs, unquote, urlparse
 from uuid import UUID
 
 import redis.asyncio as redis
@@ -26,11 +25,11 @@ def _parse_url(url: str) -> ConnectKwargs:  # noqa: C901
     parsed: ParseResult = urlparse(url)
     kwargs: ConnectKwargs = cast(ConnectKwargs, {})
 
-    for name, value_list in urllib.parse.parse_qs(parsed.query).items():
+    for name, value_list in parse_qs(parsed.query).items():
         if not (value_list and len(value_list) > 0):
             continue
 
-        value = urllib.parse.unquote(value_list[0])
+        value = unquote(value_list[0])
         if not (parser := URL_QUERY_ARGUMENT_PARSERS.get(name)):
             kwargs[name] = value  # type: ignore[literal-required]
             continue
