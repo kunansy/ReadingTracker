@@ -103,7 +103,7 @@ requires-python = ">=3.11"
 [tool.poetry.dependencies]
 python = "^3.12"
 SQLAlchemy = "~2.0.0"
-pydantic = "~2.9.0"
+pydantic = "~2.10.5"
 environs = "~14.1.0"
 asyncpg = "~0.30.0"
 fastapi = "~0.110.0"
