@@ -23,7 +23,7 @@ type FUNC_TYPE = Callable[[int], DB]
 
 def _parse_url(url: str) -> ConnectKwargs:  # noqa: C901
     parsed: ParseResult = urlparse(url)
-    kwargs: ConnectKwargs = cast(ConnectKwargs, {})
+    kwargs: dict[str, Any] = {}
 
     for name, value_list in parse_qs(parsed.query).items():
         if not (value_list and len(value_list) > 0):
@@ -31,11 +31,11 @@ def _parse_url(url: str) -> ConnectKwargs:  # noqa: C901
 
         value = unquote(value_list[0])
         if not (parser := URL_QUERY_ARGUMENT_PARSERS.get(name)):
-            kwargs[name] = value  # type: ignore[literal-required]
+            kwargs[name] = value
             continue
 
         try:
-            kwargs[name] = parser(value)  # type: ignore[literal-required]
+            kwargs[name] = parser(value)
         except (TypeError, ValueError):
             raise ValueError(
                 f"Invalid value for `{name}` in connection URL.",
@@ -60,7 +60,7 @@ def _parse_url(url: str) -> ConnectKwargs:  # noqa: C901
         with contextlib.suppress(AttributeError, ValueError):
             kwargs["db"] = int(unquote(parsed.path).replace("/", ""))
 
-    return kwargs
+    return cast(ConnectKwargs, kwargs)
 
 
 def cache(func: FUNC_TYPE) -> FUNC_TYPE:
