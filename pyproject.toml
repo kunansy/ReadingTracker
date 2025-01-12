@@ -21,8 +21,8 @@ ignore = [
     "PLR0913", "RUF017", "TD002", "TD003",
     # todo colon/text, exc msg, any in kw/args
     "TD004", "TD005", "TRY003", "ANN401",
-    # ternary op, setattr with const
-    "SIM108", "B010"
+    # ternary op, setattr with const, "std shadowing"
+    "SIM108", "B010", "A005"
 ]
 
 
