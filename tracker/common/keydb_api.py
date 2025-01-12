@@ -1,9 +1,15 @@
+import contextlib
 from collections.abc import Callable, Iterable
 from functools import wraps
-from typing import Any
+from typing import Any, cast
+from urllib.parse import ParseResult, parse_qs, unquote, urlparse
 from uuid import UUID
 
-import aiokeydb
+import redis.asyncio as redis
+from redis.asyncio.connection import (
+    URL_QUERY_ARGUMENT_PARSERS,
+    ConnectKwargs,
+)
 
 from tracker.common import logger, settings
 from tracker.notes.db import Note
@@ -11,8 +17,50 @@ from tracker.notes.db import Note
 
 _NOTES_STORAGE = 0
 
-type DB = aiokeydb.AsyncKeyDB
+type DB = redis.Redis
 type FUNC_TYPE = Callable[[int], DB]
+
+
+def _parse_url(url: str) -> ConnectKwargs:  # noqa: C901
+    parsed: ParseResult = urlparse(url)
+    kwargs: dict[str, Any] = {}
+
+    for name, value_list in parse_qs(parsed.query).items():
+        if not (value_list and len(value_list) > 0):
+            continue
+
+        value = unquote(value_list[0])
+        if not (parser := URL_QUERY_ARGUMENT_PARSERS.get(name)):
+            kwargs[name] = value
+            continue
+
+        try:
+            kwargs[name] = parser(value)
+        except (TypeError, ValueError):
+            raise ValueError(
+                f"Invalid value for `{name}` in connection URL.",
+            ) from None
+
+    if parsed.username:
+        kwargs["username"] = unquote(parsed.username)
+    if parsed.password:
+        kwargs["password"] = unquote(parsed.password)
+
+    if parsed.scheme != "keydb":
+        raise ValueError("KeyDB URL must specify only the keydb schema")
+
+    if hostname := parsed.hostname:
+        kwargs["host"] = unquote(hostname)
+    if port := parsed.port:
+        kwargs["port"] = int(port)
+
+    # If there's a path argument, use it as the db argument if a
+    # querystring value wasn't specified
+    if parsed.path and "db" not in kwargs:
+        with contextlib.suppress(AttributeError, ValueError):
+            kwargs["db"] = int(unquote(parsed.path).replace("/", ""))
+
+    return cast(ConnectKwargs, kwargs)
 
 
 def cache(func: FUNC_TYPE) -> FUNC_TYPE:
@@ -30,16 +78,17 @@ def cache(func: FUNC_TYPE) -> FUNC_TYPE:
     return wrapped
 
 
+redis.connection.parse_url = _parse_url
+
+
 @cache
 def client(db: int) -> DB:
-    return aiokeydb.from_url(
+    return redis.Redis.from_url(
         settings.CACHE_URL,
         password=settings.CACHE_PASSWORD,
         encoding="utf-8",
         decode_responses=True,
         db=db,
-        protocol=3,
-        _is_async=True,
     )
 
 
@@ -75,7 +124,7 @@ async def healthcheck() -> bool:
 async def get_note(note_id: UUID | str, *fields: str) -> dict | None:
     try:
         result = await _get_dict(str(note_id), fields, db=_NOTES_STORAGE)
-    except aiokeydb.exceptions.ConnectionError:
+    except redis.ConnectionError:
         return None
 
     if not any(result):
