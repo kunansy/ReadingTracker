@@ -3,15 +3,14 @@ from functools import wraps
 from typing import Any
 from uuid import UUID
 
-import aiokeydb
-
+import redis.asyncio as redis
 from tracker.common import logger, settings
 from tracker.notes.db import Note
 
 
 _NOTES_STORAGE = 0
 
-type DB = aiokeydb.AsyncKeyDB
+type DB = redis.Redis
 type FUNC_TYPE = Callable[[int], DB]
 
 
@@ -32,14 +31,12 @@ def cache(func: FUNC_TYPE) -> FUNC_TYPE:
 
 @cache
 def client(db: int) -> DB:
-    return aiokeydb.from_url(
+    return redis.Redis.from_url(
         settings.CACHE_URL,
         password=settings.CACHE_PASSWORD,
         encoding="utf-8",
         decode_responses=True,
         db=db,
-        protocol=3,
-        _is_async=True,
     )
 
 
@@ -75,7 +72,7 @@ async def healthcheck() -> bool:
 async def get_note(note_id: UUID | str, *fields: str) -> dict | None:
     try:
         result = await _get_dict(str(note_id), fields, db=_NOTES_STORAGE)
-    except aiokeydb.exceptions.ConnectionError:
+    except redis.ConnectionError:
         return None
 
     if not any(result):
