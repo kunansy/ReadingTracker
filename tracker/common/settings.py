@@ -1,3 +1,5 @@
+import datetime
+import logging
 import os
 from pathlib import Path
 
@@ -66,7 +68,7 @@ DB_URI = DSN_TEMPLATE.format(
 
 with env.prefixed("LOGGER_"):
     LOGGER_NAME = env("NAME", "ReadingTracker")
-    LOGGER_LEVEL = env.log_level("LEVEL", "debug")
+    LOGGER_LEVEL = env.log_level("LEVEL", logging.DEBUG)
 
 with env.prefixed("DRIVE_"):
     DRIVE_CREDS = orjson.loads(env("CREDS"))
@@ -83,7 +85,7 @@ with env.prefixed("BACKUP_"):
 
 
 with env.prefixed("YOUTUBE_API_"):
-    YOUTUBE_API_URL = env.url("URL", "https://youtube.googleapis.com/youtube/v3/videos")
+    YOUTUBE_API_URL = env("URL", "https://youtube.googleapis.com/youtube/v3/videos")
     YOUTUBE_API_KEY = env("KEY")
 
 with env.prefixed("KAFKA_"):
@@ -97,7 +99,7 @@ with env.prefixed("KAFKA_"):
 # experiment funcs
 with env.prefixed("EX_"):
     EX_ENABLE_KAFKA_TO_NOTIFY = env.bool("ENABLE_KAFKA_TO_NOTIFY", False)
-    EX_DARKMODE_ENABLE = env.time("DARKMODE_ENABLE", "15:00")
+    EX_DARKMODE_ENABLE = env.time("DARKMODE_ENABLE", datetime.time(hour=15))
 
 path = os.environ.get("PATH")
 metrics_dir = os.environ.get("PROMETHEUS_MULTIPROC_DIR")
