@@ -949,7 +949,7 @@ async def parse_youtube(video_id: str, *, http_timeout: int = 5) -> dict[str, st
 
     timeout = aiohttp.ClientTimeout(http_timeout)
     async with aiohttp.ClientSession(timeout=timeout) as ses:
-        resp = await ses.get(settings.YOUTUBE_API_URL.geturl(), params=params)
+        resp = await ses.get(settings.YOUTUBE_API_URL, params=params)
 
         resp_json = await resp.json()
         resp.raise_for_status()
