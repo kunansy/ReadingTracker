@@ -99,6 +99,16 @@ async def get_cards(
         ]
 
 
+async def get_all_cards_count() -> dict[UUID, int]:
+    stmt = sa.select(
+        models.Cards.c.material_id.label("material"),
+        sa.func.count(1).label("cnt"),
+    ).group_by(models.Cards.c.material_id)
+
+    async with database.session() as ses:
+        return {row.material: row.cnt for row in (await ses.execute(stmt)).all()}
+
+
 async def get_cards_count(
     *,
     note_id: UUID | None = None,
