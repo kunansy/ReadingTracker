@@ -11,6 +11,7 @@ import sqlalchemy.sql as sa
 from pydantic import computed_field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from tracker.cards import db as cards_db
 from tracker.common import database, settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
@@ -103,6 +104,7 @@ class RepeatingQueue(CustomBaseModel):
     material_type: enums.MaterialTypesEnum
     is_outlined: bool
     notes_count: int
+    cards_count: int
     repeats_count: int
     completed_at: datetime.datetime | None
     last_repeated_at: datetime.datetime | None
@@ -686,9 +688,11 @@ async def get_repeating_queue(*, is_outlined: bool) -> list[RepeatingQueue]:
     async with asyncio.TaskGroup() as tg:
         completed_materials_task = tg.create_task(_get_completed_materials())
         notes_count_task = tg.create_task(notes_db.get_all_notes_count())
+        cards_count_task = tg.create_task(cards_db.get_all_cards_count())
         repeat_analytics_task = tg.create_task(get_repeats_analytics())
 
     notes_count = notes_count_task.result()
+    cards_count = cards_count_task.result()
     repeat_analytics = repeat_analytics_task.result()
 
     completed_materials = (
@@ -713,6 +717,7 @@ async def get_repeating_queue(*, is_outlined: bool) -> list[RepeatingQueue]:
             is_outlined=material_status.material.is_outlined,
             completed_at=material_status.status.completed_at,
             notes_count=notes_count.get(material_status.material_id, 0),
+            cards_count=cards_count.get(material_status.material_id, 0),
             repeats_count=repeat_analytics[material_status.material_id].repeats_count,
             last_repeated_at=repeat_analytics[
                 material_status.material_id
