@@ -64,13 +64,9 @@ def format_content(note: notes_db.Note) -> str:
 
 
 async def update_note(note: notes_db.Note) -> None:
-    material_id = None
-    if note.material_id != UUID(int=0):
-        material_id = str(note.material_id)
-
     await notes_db.update_note(
         note_id=note.note_id,
-        material_id=material_id,
+        material_id=str(note.material_id),
         link_id=note.link_id,
         title=note.title,
         content=format_content(note),

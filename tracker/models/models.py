@@ -109,7 +109,7 @@ Notes = Table(
     metadata,
     PrimaryKey("note_id"),
     Column("note_number", Serial),
-    Column("material_id", ForeignKey("materials.material_id"), index=True, nullable=True),
+    Column("material_id", ForeignKey("materials.material_id"), index=True),
     Column(
         "link_id",
         ForeignKey("notes.note_id"),

@@ -92,7 +92,7 @@ def demark_note(string: str) -> str:
 
 
 class Note(CustomBaseModel):
-    material_id: UUID | None
+    material_id: UUID
     title: str | None = None
     content: str
     tags: list[str] | None = None
@@ -102,7 +102,7 @@ class Note(CustomBaseModel):
 
     def __init__(
         self,
-        material_id: UUID = Form(None),
+        material_id: UUID = Form(...),
         title: str | None = Form(None),
         content: str = Form(...),
         tags: str | None = Form(None),
@@ -156,7 +156,7 @@ class UpdateNote(Note):
 
     def __init__(
         self,
-        material_id: UUID | None = Form(None),
+        material_id: UUID = Form(...),
         note_id: UUID = Form(...),
         title: str | None = Form(None),
         content: str = Form(...),
@@ -176,9 +176,7 @@ class UpdateNote(Note):
             page=page,
         )
 
-    def get_material_id(self) -> str | None:
-        if self.material_id in (UUID(int=0), None):
-            return None
+    def get_material_id(self) -> str:
         return str(self.material_id)
 
 

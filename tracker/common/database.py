@@ -13,7 +13,7 @@ from sqlalchemy.sql.ddl import DropTable
 from tracker.common import settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
-from tracker.models import models
+from tracker.models import enums, models
 
 
 class DatabaseException(Exception):
@@ -171,11 +171,48 @@ async def create_repeat_notes_matview(conn: AsyncSession | AsyncConnection) -> N
     await conn.execute(sa.text(query))
 
 
+async def _create_zero_material(
+    conn: AsyncConnection,
+    *,
+    started_at: datetime.date | None = None,
+    completed_at: datetime.date | None = None,
+) -> None:
+    material_id = str(UUID(int=0))
+    material = {
+        "material_id": material_id,
+        "title": "Without material",
+        "authors": "",
+        "pages": 0,
+        "material_type": enums.MaterialTypesEnum.book,
+        "is_outlined": True,
+    }
+    insert_material_stmt = models.Materials.insert().values(material)
+
+    status = {
+        "material_id": material_id,
+        "started_at": started_at or utcnow().date(),
+        "completed_at": completed_at or utcnow().date(),
+    }
+    insert_status_stmt = models.Statuses.insert().values(status)
+
+    reading_log = {
+        "material_id": material_id,
+        "count": 0,
+        "date": started_at or completed_at or utcnow().date(),
+    }
+    insert_reading_log_stmt = models.ReadingLog.insert().values(reading_log)
+
+    await conn.execute(insert_material_stmt)
+    await conn.execute(insert_status_stmt)
+    await conn.execute(insert_reading_log_stmt)
+
+
 async def recreate_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(models.metadata.drop_all)
         await conn.run_sync(models.metadata.create_all)
         await create_repeat_notes_matview(conn)
+        await _create_zero_material(conn)
 
 
 async def create_db() -> None:
