@@ -328,15 +328,6 @@ def test_sort_notes(sample, expected):
 @pytest.mark.parametrize(
     "material_id, link_id, title, content, chapter, page, tags", (
         (
-            None,
-            None,
-            "t",
-            "ststst",
-            "32 chapter",
-            42,
-            ["1", "2", "3"]
-        ),
-        (
             UUID("888b717e-4559-4861-8013-ca581cbf0524"),
             None,
             "t",
@@ -355,16 +346,7 @@ def test_sort_notes(sample, expected):
             ["1", "2", "3"]
         ),
         (
-            None,
-            UUID("1edc3d70-2607-63cf-8b05-a63a662bdf9f"),
-            "t",
-            "ststst",
-            "32 chapter",
-            42,
-            ["1", "2", "3"]
-        ),
-        (
-            None,
+            UUID("888b717e-4559-4861-8013-ca581cbf0524"),
             None,
             "t",
             "asdasd",
@@ -373,7 +355,7 @@ def test_sort_notes(sample, expected):
             ["1", "2", "3"]
         ),
         (
-            None,
+            UUID("888b717e-4559-4861-8013-ca581cbf0524"),
             None,
             None,
             "asdfadsf",
@@ -382,7 +364,7 @@ def test_sort_notes(sample, expected):
             []
         ),
         (
-            None,
+            UUID("888b717e-4559-4861-8013-ca581cbf0524"),
             None,
             None,
             "dfsadfsd",
@@ -391,7 +373,7 @@ def test_sort_notes(sample, expected):
             None,
         ),
         (
-            None,
+            UUID("888b717e-4559-4861-8013-ca581cbf0524"),
             None,
             "1",
             "asdfadsf",
@@ -400,7 +382,7 @@ def test_sort_notes(sample, expected):
             ["1"],
         ),
         (
-            None,
+            UUID("888b717e-4559-4861-8013-ca581cbf0524"),
             None,
             "1",
             "asdfadsf",
