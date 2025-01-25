@@ -183,7 +183,6 @@ async def _create_zero_material(
         "title": "Without material",
         "authors": "",
         "pages": 0,
-        "tags": "",
         "material_type": enums.MaterialTypesEnum.book,
         "is_outlined": True,
     }
