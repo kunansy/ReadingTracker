@@ -225,9 +225,7 @@ async def add_note(note: Annotated[schemas.Note, Depends()]):
     )
 
     response.set_cookie("note_id", note_id, expires=5)
-    if (material_id := note.material_id) and (
-        material_type := await db.get_material_type(material_id=material_id)
-    ):
+    if material_type := await db.get_material_type(material_id=note.material_id):
         response.set_cookie("material_type", material_type, expires=5)
 
     return response

@@ -38,12 +38,6 @@ class Note(CustomBaseModel):
     # only for listing/one-page view
     links_count: int | None = None
 
-    @field_validator("material_id", mode="before")
-    def replace_null_material_id(cls, material_id: UUID | None) -> UUID:
-        # Some notes don't have a material, so to work
-        # with them set material_id to zero uuid
-        return material_id or UUID(int=0)
-
     @field_validator("tags", mode="before")
     def load_tags(cls, tags: set[str] | str) -> set[str]:
         if isinstance(tags, str):
@@ -88,8 +82,6 @@ class Note(CustomBaseModel):
         return 0
 
     def get_material_id(self) -> str:
-        if self.material_id == UUID(int=0):
-            return ""
         return str(self.material_id)
 
     def highlight(self, from_: str, to: str) -> None:
@@ -296,14 +288,14 @@ async def get_all_notes_count() -> dict[UUID, int]:
 
     async with database.session() as ses:
         return {
-            material_id or UUID(int=0): count
+            material_id: count
             for material_id, count in (await ses.execute(stmt)).all()
         }
 
 
 async def add_note(
     *,
-    material_id: UUID | None,
+    material_id: UUID,
     link_id: UUID | None,
     title: str | None,
     content: str,
@@ -314,7 +306,7 @@ async def add_note(
     logger.debug("Adding note for material_id='%s'", material_id)
 
     values = {
-        "material_id": str(material_id) if material_id else None,
+        "material_id": str(material_id),
         "title": title,
         "content": content,
         "chapter": chapter,
@@ -335,7 +327,7 @@ async def add_note(
 async def update_note(
     *,
     note_id: UUID,
-    material_id: str | None,
+    material_id: str,
     link_id: UUID | None,
     title: str | None,
     content: str,
