@@ -198,6 +198,7 @@ async def _create_zero_material(
     reading_log = {
         "material_id": material_id,
         "count": 0,
+        "date": started_at or completed_at or utcnow().date(),
     }
     insert_reading_log_stmt = models.ReadingLog.insert().values(reading_log)
 
