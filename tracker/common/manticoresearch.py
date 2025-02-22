@@ -180,7 +180,7 @@ def _get_search_query() -> str:
 
 
 async def search(query: str) -> dict[UUID, SearchResult]:
-    logger.debug("Searching notes like: '%s'", query)
+    logger.debug("Searching notes like: %r", query)
     if not query:
         return {}
 
@@ -189,8 +189,8 @@ async def search(query: str) -> dict[UUID, SearchResult]:
     async with _cursor() as cur:
         await cur.execute(db_query, query)
         results = {
-            UUID(row[0]): SearchResult(replace_substring=row[1], snippet=row[2])
-            for row in await cur.fetchall()
+            UUID(uid): SearchResult(replace_substring=repl, snippet=snippet)
+            for uid, repl, snippet in await cur.fetchall()
         }
 
     logger.debug("%s match notes found", len(results))

@@ -8,7 +8,7 @@ from uuid import UUID
 import aiohttp
 import bs4
 import sqlalchemy.sql as sa
-from pydantic import computed_field, field_validator
+from pydantic import ConfigDict, computed_field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracker.cards import db as cards_db
@@ -20,6 +20,8 @@ from tracker.notes import db as notes_db
 
 
 class Material(CustomBaseModel):
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
     material_id: UUID
     index: int
     title: str
@@ -33,6 +35,8 @@ class Material(CustomBaseModel):
 
 
 class Status(CustomBaseModel):
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+
     status_id: UUID
     material_id: UUID
     started_at: datetime.datetime
@@ -200,24 +204,8 @@ async def _parse_material_status_response(*, stmt: sa.Select) -> list[MaterialSt
     async with database.session() as ses:
         return [
             MaterialStatus(
-                material=Material(
-                    material_id=row.material_id,
-                    title=row.title,
-                    authors=row.authors,
-                    pages=row.pages,
-                    material_type=row.material_type,
-                    tags=row.tags,
-                    link=row.link,
-                    added_at=row.added_at,
-                    is_outlined=row.is_outlined,
-                    index=row.index,
-                ),
-                status=Status(
-                    status_id=row.status_id,
-                    material_id=row.material_id,
-                    started_at=row.started_at,
-                    completed_at=row.completed_at,
-                ),
+                material=Material.model_validate(row, from_attributes=True),
+                status=Status.model_validate(row, from_attributes=True),
             )
             for row in (await ses.execute(stmt)).mappings().all()
         ]
@@ -256,7 +244,7 @@ async def get_last_material_started() -> UUID | None:
     )
 
     async with database.session() as ses:
-        if material := (await ses.execute(stmt)).mappings().first():
+        if material := (await ses.execute(stmt)).first():
             logger.debug("The last material started='%s'", material.material_id)
             return material.material_id
 
