@@ -2,7 +2,7 @@
 
 import asyncio
 import datetime
-from typing import Any, Self
+from typing import Any, Self, cast
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -18,11 +18,22 @@ from tracker.models import models
 class Completion(CustomBaseModel):
     title: str
     started_at: datetime.date
-    completed_at: datetime.date
+    completed_at: datetime.date | None = None
     pages: list[PositiveInt]
+
+    @model_validator(mode="before")
+    @classmethod
+    def replace_completed_at(cls, data: dict[str, Any]) -> dict[str, Any]:
+        if data.get("completed_at"):
+            return data
+
+        data["completed_at"] = data["started_at"]
+        return data
 
     @model_validator(mode="after")
     def validate_dates_relation(self) -> Self:
+        self.completed_at: datetime.date = cast(datetime.date, self.completed_at)
+
         if self.started_at > self.completed_at:
             raise ValueError("Finish date must be greater than start")
 
@@ -30,6 +41,8 @@ class Completion(CustomBaseModel):
 
     @model_validator(mode="after")
     def validate_pages_size(self) -> Self:
+        self.completed_at: datetime.date = cast(datetime.date, self.completed_at)
+
         duration = (self.completed_at - self.started_at).days + 1
         if len(self.pages) != duration:
             raise ValueError("Pages list size don't mathc with the duration")
