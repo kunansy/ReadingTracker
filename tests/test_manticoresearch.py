@@ -43,6 +43,8 @@ async def test_readiness():
                     replace_substring=" вызывать `module::func()`, не создавая иллюзии определённости функции в локальном crate.",
                     snippet=" вызывать `module::func()`, не создавая **иллюзии** определённости функции в локальном crate.",
                 ),
+                UUID('0194eb0d-bbad-7e1a-84b4-40704afa72ae'):
+                    SearchResult(replace_substring='что выборки примерно равны, парадокс — иллюзия.', snippet='что выборки примерно равны, парадокс — **иллюзия**.'),
             },
         ),
         (
