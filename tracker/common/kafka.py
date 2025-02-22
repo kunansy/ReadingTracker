@@ -1,32 +1,45 @@
+import asyncio
 import uuid
+from collections.abc import AsyncIterator
+from contextlib import asynccontextmanager
 
 from aiokafka import AIOKafkaProducer, errors
 
 from tracker.common import logger, settings
 
 
-async def _send_one(key: str, value: str, *, topic: str) -> None:
-    # TODO: create one in the context manager
+@asynccontextmanager
+async def _kafka_producer() -> AsyncIterator[AIOKafkaProducer]:
     producer = AIOKafkaProducer(
         bootstrap_servers=settings.KAFKA_URL,
         enable_idempotence=True,
     )
-    await producer.start()
+    async with asyncio.timeout(settings.KAFKA_CONNECT_TIMEOUT):
+        await producer.start()
 
     try:
-        logger.debug(
-            "Sending a message: key=%s, value=%s, to %s",
-            key,
-            value,
-            topic,
-        )
-        await producer.send_and_wait(topic, key=key.encode(), value=value.encode())
+        yield producer
     except errors.KafkaError:
-        logger.exception("Could not send message")
-    else:
-        logger.debug("Message sent")
+        logger.exception("Error with kafka producer")
     finally:
-        await producer.stop()
+        async with asyncio.timeout(settings.KAFKA_CONNECT_TIMEOUT):
+            await producer.stop()
+
+
+async def _send_one(key: str, value: str, *, topic: str) -> None:
+    async with _kafka_producer() as producer:
+        try:
+            logger.debug(
+                "Sending a message: key=%s, value=%s, to %s",
+                key,
+                value,
+                topic,
+            )
+            await producer.send_and_wait(topic, key=key.encode(), value=value.encode())
+        except errors.KafkaError:
+            logger.exception("Could not send message")
+        else:
+            logger.debug("Message sent")
 
 
 async def repeat_note(note_id: uuid.UUID | str) -> None:
