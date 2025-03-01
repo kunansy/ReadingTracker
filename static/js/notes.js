@@ -41,7 +41,7 @@ const recordAudio = async () => {
         loader.classList.add("loader");
 
         fetch(
-            '/notes/transcript',
+            'https://kunansy.ru/transcript',
             {
                 method: 'POST',
                 body: fd,
