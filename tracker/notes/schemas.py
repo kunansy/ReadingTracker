@@ -192,19 +192,6 @@ class SearchParams(CustomBaseModel):
         return {tag.strip() for tag in tags_query.split() if tag.strip()}
 
 
-class TranscriptTextResponse(CustomBaseModel):
-    transcript: str
-    confidence: float
-
-    @field_validator("transcript")
-    def capitalize_transcript(cls, transcript: str) -> str:
-        return transcript.capitalize()
-
-    @field_validator("confidence")
-    def convert_to_percent(cls, value: float) -> float:
-        return round(value * 100, 2)
-
-
 class IsNoteDeletedResponse(CustomBaseModel):
     note_id: UUID
     is_deleted: bool
