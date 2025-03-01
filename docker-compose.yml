@@ -15,6 +15,9 @@ x-cache-img: &cache-img
 x-tracker-img: &tracker-img
   image: kunansy/reading_tracker:226
 
+x-speech-recognizer-img: &speech-recognizer
+  image: kunansy/tracker_speech_recognizer:2
+
 services:
   tracker-db:
     <<: *db-img
@@ -114,6 +117,24 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:8000/readiness || exit 1"]
       interval: 10s
+      timeout: 5s
+      retries: 3
+
+  tracker-speech-recognizer:
+    <<: *speech-recognizer
+    restart: always
+    container_name: tracker-speech-recognizer
+    ports:
+      - "127.0.0.1:8080:8080"
+    entrypoint: ["gunicorn", "speech_recognizer.main:app", "--bind", "0.0.0.0:8080", "--workers",
+                 "${API_ASGI_WORKERS}", "--worker-class", "uvicorn.workers.UvicornWorker",
+                 "--access-logfile", "-", "--error-logfile", "-", "--log-level", "${LOGGER_LEVEL}",
+                 "--forwarded-allow-ips", "*"]
+    networks:
+      - tracker-net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/readiness || exit 1"]
+      interval: 20s
       timeout: 5s
       retries: 3
 
