@@ -32,4 +32,4 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/reading_tracker:226
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/reading_tracker:227
