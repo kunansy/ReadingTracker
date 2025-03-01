@@ -79,10 +79,10 @@ async def test_get_log_duration():
 
 
 async def test_get_total_read_pages():
-    total = await st._get_total_read_pages()
+    total = await st._get_read_pages()
     records = await db.get_log_records()
 
-    assert total == sum(record.count for record in records)
+    assert sum(total.values()) == sum(record.count for record in records)
 
 
 async def test_get_lost_days():
@@ -219,17 +219,17 @@ async def test_get_max_record_nof_found():
 
 async def test_would_be_total():
     mean_dict = await st.get_means()
-    total_pages = await st._get_total_read_pages()
+    total_pages = await st._get_read_pages()
     lost_time = await st._get_lost_days()
 
     would_be_total = st._would_be_total(
         means=mean_dict,
-        total_read_pages=total_pages,
+        total_read_pages=sum(total_pages.values()),
         lost_time=lost_time
     )
 
     overall_mean = round(sum(mean_dict.values()) / len(mean_dict))
-    expected = total_pages + overall_mean * lost_time
+    expected = sum(total_pages.values()) + overall_mean * lost_time
 
     assert would_be_total == expected
     # TODO: wtf?
@@ -267,5 +267,5 @@ async def test_get_tracker_statistics():
     assert stat.lost_time_percent == 23
 
     stat.would_be_total = 142
-    stat.total_pages_read = 71
+    stat.pages_read = {"book": 71}
     assert stat.would_be_total_percent == 200.0

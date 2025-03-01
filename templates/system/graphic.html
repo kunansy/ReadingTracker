@@ -45,6 +45,13 @@
         <p> Median: {{ stat.median }} </p>
         <p> Total materials completed: {{ stat.total_materials_completed }} </p>
         <p> Total pages read: {{ stat.total_pages_read }} </p>
+        <ul class="tab-text">
+            <li> Book : {{ "{:,}".format(stat.pages_read.get("book", 0)) }} pages </li>
+            <li> Article: {{ "{:,}".format(stat.pages_read.get("article", 0)) }} pages </li>
+            <li> Course: {{ "{:,}".format(stat.pages_read.get("course", 0)) }} lectures </li>
+            <li> Lecture: {{ "{:,}".format(stat.pages_read.get("lecture", 0)) }} minutes </li>
+            <li> Audiobook: {{ "{:,}".format(stat.pages_read.get("audiobook", 0)) }} minutes </li>
+        </ul>
         <p> Would be total: {{ stat.would_be_total }} </p>
         <p> Max: {{ stat.max_log_record.count }}, {{ stat.max_log_record.date }}, «{{ stat.max_log_record.material_title }}» </p>
         <p> Min: {{ stat.min_log_record.count }}, {{ stat.min_log_record.date }}, «{{ stat.min_log_record.material_title }}» </p>

@@ -36,7 +36,7 @@ class TrackerStatistics(CustomBaseModel):
     lost_time: int
     mean: float
     median: float
-    total_pages_read: int
+    pages_read: dict[enums.MaterialTypesEnum, int]
     total_materials_completed: int
     would_be_total: int
     min_log_record: database.MinMax | None
@@ -45,6 +45,10 @@ class TrackerStatistics(CustomBaseModel):
     @computed_field
     def duration_period(self) -> str:
         return _convert_duration_to_period(self.duration)
+
+    @computed_field
+    def total_pages_read(self) -> int:
+        return sum(self.pages_read.values())
 
     @computed_field
     def lost_time_period(self) -> str:
@@ -57,7 +61,7 @@ class TrackerStatistics(CustomBaseModel):
     @computed_field
     def would_be_total_percent(self) -> float:
         """How much would be total more than the current total pages count in percent."""
-        return round(self.would_be_total / self.total_pages_read, 2) * 100
+        return round(self.would_be_total / self.total_pages_read, 2) * 100  # type: ignore[operator]
 
 
 async def calculate_materials_stat(material_ids: set[UUID]) -> dict[UUID, LogStatistics]:
@@ -117,11 +121,21 @@ async def _get_log_duration() -> int:
         return await ses.scalar(stmt)
 
 
-async def _get_total_read_pages() -> int:
-    stmt = sa.select(sa.func.sum(models.ReadingLog.c.count))
+async def _get_read_pages() -> dict[enums.MaterialTypesEnum, int]:
+    stmt = (
+        sa.select(
+            models.Materials.c.material_type,
+            sa.func.sum(models.ReadingLog.c.count).label("cnt"),
+        )
+        .join(
+            models.Materials,
+            models.Materials.c.material_id == models.ReadingLog.c.material_id,
+        )
+        .group_by(models.Materials.c.material_type)
+    )
 
     async with database.session() as ses:
-        return await ses.scalar(stmt) or 0
+        return dict((await ses.execute(stmt)).all())  # type: ignore[arg-type]
 
 
 async def _get_lost_days() -> int:
@@ -264,15 +278,16 @@ async def get_tracker_statistics() -> TrackerStatistics:
         lost_time_task = tg.create_task(_get_lost_days())
         mean_task = tg.create_task(get_means())
         median_task = tg.create_task(_get_median_pages_read_per_day())
-        total_pages_task = tg.create_task(_get_total_read_pages())
+        read_pages_task = tg.create_task(_get_read_pages())
         total_materials_task = tg.create_task(_get_total_materials_completed())
         min_log_record_task = tg.create_task(_get_min_record())
         max_log_record_task = tg.create_task(_get_max_record())
 
+    read_pages = read_pages_task.result()
     means: enums.MEANS = mean_task.result()
     would_be_total = _would_be_total(
         means=means,
-        total_read_pages=total_pages_task.result(),
+        total_read_pages=sum(read_pages.values()),
         lost_time=lost_time_task.result(),
     )
 
@@ -283,7 +298,7 @@ async def get_tracker_statistics() -> TrackerStatistics:
         lost_time=lost_time_task.result(),
         mean=_tracker_mean(means),
         median=median_task.result(),
-        total_pages_read=total_pages_task.result(),
+        pages_read=read_pages,
         total_materials_completed=total_materials_task.result(),
         would_be_total=would_be_total,
         min_log_record=min_log_record_task.result(),

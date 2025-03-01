@@ -241,6 +241,10 @@ celebrate {
     cursor: pointer;
 }
 
+.tab-text {
+    padding-left: 4vw;
+}
+
 .loader {
     border: 6px solid #f3f3f3;
     border-top: 6px solid black;
