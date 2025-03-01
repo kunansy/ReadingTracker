@@ -17,7 +17,6 @@ from tracker.notes import (
     cached,
     db,
     schemas,
-    speech_recognizer as recognizer,
 )
 
 
@@ -316,28 +315,6 @@ async def get_note_graph(note_id: UUID):
     notes = {note.note_id: note for note in await db.get_notes()}
     graph = db.link_notes(note_id=note_id, notes=notes)
     return db.create_graphic(graph)
-
-
-@router.post("/transcript", response_model=schemas.TranscriptTextResponse)
-async def transcript_speech(data: Annotated[bytes, Body()]):
-    file = recognizer.get_file_content(data)
-    path = recognizer.dump(file)
-    recognizer.fix_file_format(path)
-
-    logger.info("Start reading file")
-    audio = recognizer.read_file(path)
-    recognizer.remove(path)
-
-    logger.info("File read, start recognition")
-    if not (result := recognizer.recognize(audio)):
-        raise HTTPException(status_code=400, detail="Could not recognize speech")
-
-    logger.debug("Result got: %s", result)
-    best = recognizer.get_best_result(result)
-
-    logger.info("Transcript got: %s", best)
-
-    return best
 
 
 @router.get("/graph", response_class=HTMLResponse)
