@@ -53,7 +53,7 @@ async def add_log_record_view(request: Request, material_id: UUID | None = None)
 
     completion_info = await _completion_info(log_material_id)
     # here material must exist
-    completion_info = cast(schemas.CompletionInfoSchema, completion_info)
+    completion_info = cast("schemas.CompletionInfoSchema", completion_info)
 
     context = {
         "request": request,

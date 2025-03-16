@@ -165,7 +165,7 @@ async def data(
 
         if not (log_records_ := log_records_dict.get(iter_over_dates)):
             log_record = LogRecord(
-                material_id=cast(UUID, last_material_id),
+                material_id=cast("UUID", last_material_id),
                 count=0,
                 date=iter_over_dates,
             )

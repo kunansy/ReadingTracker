@@ -60,7 +60,7 @@ def _parse_url(url: str) -> ConnectKwargs:  # noqa: C901
         with contextlib.suppress(AttributeError, ValueError):
             kwargs["db"] = int(unquote(parsed.path).replace("/", ""))
 
-    return cast(ConnectKwargs, kwargs)
+    return cast("ConnectKwargs", kwargs)
 
 
 def cache(func: FUNC_TYPE) -> FUNC_TYPE:

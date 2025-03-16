@@ -32,7 +32,7 @@ class Completion(CustomBaseModel):
 
     @model_validator(mode="after")
     def validate_dates_relation(self) -> Self:
-        self.completed_at: datetime.date = cast(datetime.date, self.completed_at)
+        self.completed_at: datetime.date = cast("datetime.date", self.completed_at)
 
         if self.started_at > self.completed_at:
             raise ValueError("Finish date must be greater than start")
@@ -41,7 +41,7 @@ class Completion(CustomBaseModel):
 
     @model_validator(mode="after")
     def validate_pages_size(self) -> Self:
-        self.completed_at: datetime.date = cast(datetime.date, self.completed_at)
+        self.completed_at: datetime.date = cast("datetime.date", self.completed_at)
 
         duration = (self.completed_at - self.started_at).days + 1
         if len(self.pages) != duration:

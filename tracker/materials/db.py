@@ -760,7 +760,7 @@ def _get_material_index_uniqueness_constraint_name() -> str:
             if constraint.deferrable and constraint.contains_column(  # type: ignore[attr-defined]
                 models.Materials.c.index,
             ):
-                name = cast(str, constraint.name)
+                name = cast("str", constraint.name)
                 return name
 
         raise ValueError("Deferrable material index constraint not found")
@@ -905,7 +905,7 @@ def parse_habr(html: str) -> dict[str, str]:
     soup = bs4.BeautifulSoup(html, "lxml")
 
     title = authors = None
-    snippet = cast(bs4.Tag, soup.find("div", {"class": "tm-article-snippet"}))
+    snippet = cast("bs4.Tag", soup.find("div", {"class": "tm-article-snippet"}))
     if snippet:
         title = snippet.find("h1", {"class": "tm-title"})
         authors = snippet.find("a", {"class": "tm-user-info__username"})

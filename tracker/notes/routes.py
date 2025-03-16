@@ -338,7 +338,7 @@ async def get_graph(request: Request, material_id: UUID | str | None = None):
         material_notes = {note.note_id for note in get_material_notes_task.result()}
         # material_id might be an empty string only, if it's str
         graph = db.create_material_graph(
-            material_id=UUID(cast(str, material_id)),
+            material_id=UUID(cast("str", material_id)),
             material_notes=material_notes,
             notes=notes_dict,
         )

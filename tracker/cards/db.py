@@ -59,7 +59,7 @@ async def add_card(
         card_id = await ses.execute(stmt)
 
     logger.debug("Card %r added", card_id)
-    return cast(UUID, card_id)
+    return cast("UUID", card_id)
 
 
 async def get_cards(
