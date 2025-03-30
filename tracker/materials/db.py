@@ -193,9 +193,9 @@ def _get_reading_materials_stmt() -> sa.Select:
 
 def _get_completed_materials_stmt(
     *,
-    material_type: enums.MaterialTypesEnum | None,
-    is_outlined: bool | None,
-    tags: set[str] | None,
+    material_type: enums.MaterialTypesEnum | None = None,
+    is_outlined: bool | None = None,
+    tags: set[str] | None = None,
 ) -> sa.Select:
     stmt = (
         sa.select(models.Materials, models.Statuses)
