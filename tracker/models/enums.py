@@ -1,13 +1,13 @@
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum, auto
 
 
-class MaterialTypesEnum(str, Enum):
-    book = "book"
-    article = "article"
-    course = "course"
-    lecture = "lecture"
-    audiobook = "audiobook"
+class MaterialTypesEnum(StrEnum):
+    book = auto()
+    article = auto()
+    course = auto()
+    lecture = auto()
+    audiobook = auto()
 
 
 type MEANS = dict[MaterialTypesEnum, Decimal]
