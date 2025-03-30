@@ -9,6 +9,16 @@ div.material p {
     word-wrap: break-word;
 }
 
+div.outlined-checkbox {
+    display: flex;
+    align-items: center;
+    margin: auto auto 2vh;
+}
+
+div.outlined-checkbox > input {
+    margin-left: 2vw;
+}
+
 hr {
     color: black;
     size: 10px;

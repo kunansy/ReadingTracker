@@ -191,13 +191,30 @@ def _get_reading_materials_stmt() -> sa.Select:
     )
 
 
-def _get_completed_materials_stmt() -> sa.Select:
-    return (
+def _get_completed_materials_stmt(
+    *,
+    material_type: enums.MaterialTypesEnum | None,
+    is_outlined: bool | None,
+    tags: set[str] | None,
+) -> sa.Select:
+    stmt = (
         sa.select(models.Materials, models.Statuses)
         .join(models.Statuses)
         .where(models.Statuses.c.completed_at != None)
         .order_by(models.Statuses.c.completed_at)
     )
+    if material_type:
+        stmt = stmt.where(models.Materials.c.material_type == material_type)
+    if is_outlined is not None:
+        stmt = stmt.where(models.Materials.c.is_outlined == is_outlined)
+    if tags:
+        tags_str = (f"'{tag}'" for tag in tags)
+        stmt = stmt.where(
+            sa.text(
+                f"string_to_array(tags, ', ') @> array[{','.join(tags_str)}]",
+            )
+        )
+    return stmt
 
 
 async def _parse_material_status_response(*, stmt: sa.Select) -> list[MaterialStatus]:
@@ -221,10 +238,19 @@ async def get_reading_materials() -> list[MaterialStatus]:
     return reading_materials
 
 
-async def _get_completed_materials() -> list[MaterialStatus]:
+async def _get_completed_materials(
+    *,
+    material_type: enums.MaterialTypesEnum | None = None,
+    is_outlined: bool | None = None,
+    tags: set[str] | None = None,
+) -> list[MaterialStatus]:
     logger.info("Getting completed materials")
 
-    completed_materials_stmt = _get_completed_materials_stmt()
+    completed_materials_stmt = _get_completed_materials_stmt(
+        material_type=material_type,
+        is_outlined=is_outlined,
+        tags=tags,
+    )
     completed_materials = await _parse_material_status_response(
         stmt=completed_materials_stmt,
     )
@@ -350,14 +376,25 @@ def _get_material_statistics(
     )
 
 
-async def completed_statistics() -> list[MaterialStatistics]:
+async def completed_statistics(
+    *,
+    material_type: enums.MaterialTypesEnum | None = None,
+    is_outlined: bool | None = None,
+    tags: set[str] | None = None,
+) -> list[MaterialStatistics]:
     from tracker.reading_log.statistics import calculate_materials_stat
 
     logger.info("Calculating completed materials statistics")
     start = time.perf_counter()
 
     async with asyncio.TaskGroup() as tg:
-        completed_materials_task = tg.create_task(_get_completed_materials())
+        completed_materials_task = tg.create_task(
+            _get_completed_materials(
+                material_type=material_type,
+                is_outlined=is_outlined,
+                tags=tags,
+            ),
+        )
         mean_read_pages_task = tg.create_task(get_means())
         all_notes_count_task = tg.create_task(notes_db.get_all_notes_count())
 

@@ -1,3 +1,4 @@
+import asyncio
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
@@ -178,12 +179,28 @@ async def get_reading_materials(request: Request):
 
 
 @router.get("/completed", response_class=HTMLResponse)
-async def get_completed_materials(request: Request):
-    statistics = await db.completed_statistics()
+async def get_completed_materials(
+    request: Request,
+    search: Annotated[schemas.SearchParams, Depends()],
+):
+    async with asyncio.TaskGroup() as tg:
+        get_statistics_task = tg.create_task(
+            db.completed_statistics(
+                material_type=search.material_type,
+                is_outlined=search.is_outlined,
+                tags=search.requested_tags(),
+            ),
+        )
+        get_material_tags_task = tg.create_task(db.get_material_tags())
 
     context = {
         "request": request,
-        "statistics": statistics,
+        "statistics": get_statistics_task.result(),
+        "tags": get_material_tags_task.result(),
+        "material_tags": search.tags_query,
+        "material_types": [item.value for item in enums.MaterialTypesEnum],
+        "material_type": search.material_type,
+        "outlined": search.outlined,
         "DATE_FORMAT": settings.DATE_FORMAT,
     }
     return templates.TemplateResponse("materials/completed.html", context)

@@ -11,6 +11,34 @@
 {%- endblock header -%}
 
 {% block main %}
+    <form id="search-materials-form" action="/materials/completed" method="GET">
+        <input class="input" list="material_types" name="material_type" value="{{ material_type or '' }}" placeholder="Choose a material type">
+        <input class="input" list="tags" name="tags_query" value="{{ material_tags or '' }}" placeholder="Choose material tags">
+
+        <div class="outlined-checkbox">
+            <input type="radio" id="outlined" name="outlined" value="outlined" {% if outlined == "outlined" %} checked {% endif %}>
+            <label for="outlined"> Outlined only </label><br>
+            <input type="radio" id="not_outlined" name="outlined" value="not_outlined" {% if outlined == "not_outlined" %} checked {% endif %}>
+            <label for="not_outlined"> Not outlined only </label><br>
+            <input type="radio" id="all" name="outlined" value="all" {% if outlined == "all" %} checked {% endif %}>
+            <label for="all"> All </label>
+        </div>
+        <datalist id="tags">
+            {% for tag in tags %}
+                <option value="{{ tag }}"> #{{ tag }}
+            {% endfor %}
+        </datalist>
+        <datalist id="material_types">
+            {% for type in material_types %}
+                <option value="{{ type }}"> {{ type }}
+            {% endfor %}
+        </datalist>
+      <button type="submit" class="submit-button"> Search </button>
+    </form>
+
+{#    {% from 'materials/search.html' import search %}#}
+{#    {% call search("/materials/completed", material_types, material_type) %}#}
+{#    {% endcall %}#}
 {% if statistics %}
     {% for ms in statistics | sort(attribute='completed') %}
     {% set material = ms.material %}
