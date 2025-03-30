@@ -95,3 +95,8 @@ class SearchParams(CustomBaseModel):
             return set()
 
         return {tag.strip() for tag in tags_query.split() if tag.strip()}
+
+    def get_material_type(self) -> enums.MaterialTypesEnum | None:
+        if isinstance(self.material_type, enums.MaterialTypesEnum):
+            return self.material_type
+        return None

@@ -212,7 +212,7 @@ def _get_completed_materials_stmt(
         stmt = stmt.where(
             sa.text(
                 f"string_to_array(tags, ', ') @> array[{','.join(tags_str)}]",
-            )
+            ),
         )
     return stmt
 

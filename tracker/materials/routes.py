@@ -186,7 +186,7 @@ async def get_completed_materials(
     async with asyncio.TaskGroup() as tg:
         get_statistics_task = tg.create_task(
             db.completed_statistics(
-                material_type=search.material_type,
+                material_type=search.get_material_type(),
                 is_outlined=search.is_outlined,
                 tags=search.requested_tags(),
             ),
