@@ -85,7 +85,7 @@ class SearchParams(CustomBaseModel):
             return True
         if self.outlined == "not_outlined":
             return False
-        if self.outlined == "all":
+        if self.outlined in ("all", None):
             return None
 
         raise ValueError(f"Invalid outline: {self.outlined!r}")
