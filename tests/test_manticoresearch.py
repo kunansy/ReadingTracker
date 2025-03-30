@@ -45,6 +45,8 @@ async def test_readiness():
                 ),
                 UUID('0194eb0d-bbad-7e1a-84b4-40704afa72ae'):
                     SearchResult(replace_substring='что выборки примерно равны, парадокс — иллюзия.', snippet='что выборки примерно равны, парадокс — **иллюзия**.'),
+                UUID('1eece7f2-ceea-6b85-89ff-7e8eafb54eaa'):
+                  SearchResult(replace_substring='»\r\n* «Приключения Сары Джейн Смит»\r\n* «Такси»\r\n* «Иллюзия обмана»', snippet='»\r\n* «Приключения Сары Джейн Смит»\r\n* «Такси»\r\n* «**Иллюзия** обмана»'),
             },
         ),
         (
