@@ -5,11 +5,13 @@ from typing import NamedTuple
 from uuid import UUID
 
 import matplotlib.pyplot as plt
+import matplotlib.ticker as mtick
+import numpy as np
 import sqlalchemy.sql as sa
 
 from tracker.common import database, settings
 from tracker.materials import db as materials_db
-from tracker.models import models
+from tracker.models import enums, models
 from tracker.reading_log import (
     db as logs_db,
     statistics,
@@ -88,6 +90,80 @@ async def create_reading_graphic(*, material_id: UUID, last_days: int) -> str:
         )
 
     ax.set(ylim=(0, material_pages + material_pages * 0.1))
+    ax.legend()
+
+    buff = BytesIO()
+    fig.savefig(buff, format="svg")
+    return base64.b64encode(buff.getvalue()).decode("utf-8")
+
+
+async def _calculate_outline_percentage() -> (
+    dict[enums.MaterialTypesEnum, dict[bool, int]]
+):
+    stmt = sa.select(
+        models.Materials.c.material_type,
+        models.Materials.c.is_outlined,
+        sa.func.count(1),
+    ).group_by(models.Materials.c.material_type, models.Materials.c.is_outlined)
+
+    outline_percentage: dict[enums.MaterialTypesEnum, dict[bool, int]] = {}
+    async with database.session() as ses:
+        for material_type, is_outlined, count in (await ses.execute(stmt)).all():
+            outline_percentage.setdefault(material_type, {}).setdefault(
+                is_outlined,
+                count,
+            )
+
+    return outline_percentage
+
+
+async def create_outline_percentage_graphic() -> str:
+    stat = await _calculate_outline_percentage()
+    stat = dict(sorted(stat.items()))
+    species = sorted(item.value for item in enums.MaterialTypesEnum)
+
+    for lhs, rhs in zip(species, stat.keys(), strict=False):
+        assert lhs == rhs, f"{lhs!r} != {rhs!r}"  # noqa: S101
+
+    width = 0.6
+
+    fig, ax = plt.subplots(figsize=(12, 10))
+    bottom = np.zeros(len(species))
+    _set_plot_style()
+
+    outlined = [
+        count
+        for stat in stat.values()
+        for is_outlined, count in stat.items()
+        if is_outlined
+    ]
+    not_outlined = [
+        count
+        for stat in stat.values()
+        for is_outlined, count in stat.items()
+        if not is_outlined
+    ]
+    percents = [
+        round(o / (o + no), 2) * 100
+        for o, no in zip(outlined, not_outlined, strict=False)
+    ]
+
+    outlined[::] = percents  # type: ignore[assignment]
+    not_outlined[::] = [100 - v for v in percents]  # type: ignore[misc]
+
+    outlines = {
+        "outlined": outlined,
+        "not_outlined": not_outlined,
+    }
+
+    for material_type, counts in outlines.items():
+        p = ax.bar(species, counts, width, label=material_type, bottom=bottom)
+        bottom += counts
+
+        ax.bar_label(p, label_type="center")
+
+    ax.set_title("Outline percentage")
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter())
     ax.legend()
 
     buff = BytesIO()

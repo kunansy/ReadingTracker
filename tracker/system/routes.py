@@ -60,6 +60,9 @@ async def graphic(
         graphic_image_task = tg.create_task(
             db.create_reading_graphic(material_id=material_id, last_days=last_days),
         )
+        outline_percentage_image_task = tg.create_task(
+            db.create_outline_percentage_graphic(),
+        )
 
     reading_trend = reading_trend_task.result()
     notes_trend = notes_trend_task.result()
@@ -83,6 +86,7 @@ async def graphic(
         "material_id": material_id,
         "last_days": last_days,
         "graphic_image": graphic_image_task.result(),
+        "outline_percentage_image": outline_percentage_image_task.result(),
         "reading_trend": reading_trend,
         "notes_trend": notes_trend,
         "completed_materials_trend": completed_materials_trend,
