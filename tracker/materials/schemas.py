@@ -75,8 +75,8 @@ class ParsedMaterial(CustomBaseModel):
 
 
 class SearchParams(CustomBaseModel):
-    material_type: enums.MaterialTypesEnum | None | Literal[''] = None
-    outlined: Literal["outlined", "not_outlined", "all"] | None = None
+    material_type: enums.MaterialTypesEnum | None | Literal[""] = None
+    outlined: Literal["outlined", "not_outlined", "all", None] = None
     tags_query: str | None = None
 
     @property
