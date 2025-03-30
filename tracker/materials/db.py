@@ -561,15 +561,28 @@ async def complete_material(
     material_id: UUID,
     completion_date: datetime.date | None = None,
 ) -> None:
+    from tracker.reading_log.db import get_log_records
+
+    async with asyncio.TaskGroup() as tg:
+        get_status_task = tg.create_task(_get_status(material_id=material_id))
+        get_logs_task = tg.create_task(get_log_records(material_id=material_id))
+        get_material_task = tg.create_task(get_material(material_id=material_id))
+
     logger.debug("Completing material_id=%s", material_id)
     completion_date = completion_date or database.utcnow().date()
 
-    if (status := await _get_status(material_id=material_id)) is None:
+    if not (material := get_material_task.result()):
+        raise ValueError(f"{material_id=!r} not found")
+    if not (status := get_status_task.result()):
         raise ValueError("Material is not started")
     if status.completed_at is not None:
         raise ValueError("Material is already completed")
     if status.started_at.date() > completion_date:
         raise ValueError("Completion date must be greater than start date")
+    if not (reading_logs := get_logs_task.result()):
+        raise ValueError("Reading logs not found")
+    if sum(log.count for log in reading_logs) != material.pages:
+        raise ValueError("Invalid pages count, something is unread")
 
     values = {"completed_at": completion_date}
     stmt = (
