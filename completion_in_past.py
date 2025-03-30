@@ -74,7 +74,7 @@ def _build_insert_statuses_query(completion: Completion, material_id: UUID | str
         VALUES
             ('{uuid6.uuid7()}', '{material_id}',
             '{completion.started_at}', '{completion.completed_at}')
-    """
+    """  # noqa: S608
 
 
 def _build_insert_reading_log(completion: Completion, material_id: UUID | str) -> str:
@@ -89,7 +89,7 @@ def _build_insert_reading_log(completion: Completion, material_id: UUID | str) -
             reading_log (log_id, material_id, date, count)
         VALUES
             {values}
-    """
+    """  # noqa: S608
 
 
 async def _insert(transaction: AsyncSession, query: str) -> None:
