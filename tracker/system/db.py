@@ -97,9 +97,9 @@ async def create_reading_graphic(*, material_id: UUID, last_days: int) -> str:
     return base64.b64encode(buff.getvalue()).decode("utf-8")
 
 
-async def _calculate_outline_percentage() -> (
-    dict[enums.MaterialTypesEnum, dict[bool, int]]
-):
+async def _calculate_outline_percentage() -> dict[
+    enums.MaterialTypesEnum, dict[bool, int],
+]:
     stmt = sa.select(
         models.Materials.c.material_type,
         models.Materials.c.is_outlined,
