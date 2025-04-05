@@ -119,5 +119,19 @@
         </div>
     </div>
 
+    <div class="graphic-image trend outlined-materials-trend">
+        <h3 class="header"> Outlined materials </h3>
+        <img src="data:image/svg+xml;base64,{{ outlined_materials_trend_image }}">
+
+        <div class="statistics">
+            <p> Total: {{ outlined_materials_trend.total }} </p>
+            <p> Zero days: {{ outlined_materials_trend.zero_days }} </p>
+            <p> Mean: {{ outlined_materials_trend.mean }} </p>
+            <p> Median: {{ outlined_materials_trend.median }} </p>
+            <p> Max: {{ outlined_materials_trend.max }} </p>
+            <p> Min: {{ outlined_materials_trend.min }} </p>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', path='js/system.js')}}"></script>
 {% endblock main%}

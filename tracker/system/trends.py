@@ -281,6 +281,43 @@ async def _calculate_span_repeated_materials_statistics(
     return {row.date: row.cnt for row in rows}
 
 
+async def _calculate_span_outlined_materials_statistics(
+    span: TimeSpan,
+) -> dict[datetime.date, int]:
+    logger.debug("Calculating span outlined materials statistics")
+
+    last_inserted_notes_stmt = (
+        sa.select(
+            sa.func.max(models.Notes.c.added_at).label("date"),
+            models.Notes.c.material_id,
+        )
+        .group_by(models.Notes.c.material_id)
+        .where(sa.func.date(models.Notes.c.added_at) >= span.start)
+        .where(sa.func.date(models.Notes.c.added_at) <= span.stop)
+    ).cte("last_inserted_notes")
+
+    stmt = (
+        sa.select(
+            sa.func.date(last_inserted_notes_stmt.c.date).label("date"),
+            sa.func.count(1).label("cnt"),
+        )
+        .select_from(models.Materials)
+        .join(
+            last_inserted_notes_stmt,
+            last_inserted_notes_stmt.c.material_id == models.Materials.c.material_id,
+        )
+        .where(models.Materials.c.is_outlined)
+        .group_by(sa.func.date(last_inserted_notes_stmt.c.date))
+    )
+
+    async with database.session() as ses:
+        rows = (await ses.execute(stmt)).all()
+
+    logger.debug("Span outlined materials statistics calculated")
+
+    return {row.date: row.cnt for row in rows}
+
+
 def _get_span_statistics(
     *,
     stat: dict[datetime.date, int],
@@ -322,6 +359,13 @@ async def get_span_completed_materials_statistics(*, span_size: int) -> SpanStat
 async def get_span_repeated_materials_statistics(*, span_size: int) -> SpanStatistics:
     span = _get_span(span_size)
     stat = await _calculate_span_repeated_materials_statistics(span=span)
+
+    return _get_span_statistics(stat=stat, span=span, span_size=span_size)
+
+
+async def get_span_outlined_materials_statistics(*, span_size: int) -> SpanStatistics:
+    span = _get_span(span_size)
+    stat = await _calculate_span_outlined_materials_statistics(span=span)
 
     return _get_span_statistics(stat=stat, span=span, span_size=span_size)
 
@@ -509,3 +553,11 @@ def create_repeated_materials_graphic(
     logger.info("Creating repeated materials graphic")
 
     return _create_graphic(stat=stat, title="Total materials repeated")
+
+
+def create_outlined_materials_graphic(
+    stat: SpanStatistics,
+) -> str:
+    logger.info("Creating outlined materials graphic")
+
+    return _create_graphic(stat=stat, title="Total materials outlined")
