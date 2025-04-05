@@ -42,11 +42,15 @@ async def get_queue(request: Request):
 @router.get("/add-view", response_class=HTMLResponse)
 async def insert_material_view(request: Request):
     """Insert a material to the queue."""
-    tags = await db.get_material_tags()
+    async with asyncio.TaskGroup() as tg:
+        get_tags_task = tg.create_task(db.get_material_tags())
+        get_authors_task = tg.create_task(db.get_authors())
+
     context = {
         "request": request,
-        "tags_list": tags,
+        "tags_list": get_tags_task.result(),
         "material_types": enums.MaterialTypesEnum,
+        "material_authors": get_authors_task.result(),
     }
     return templates.TemplateResponse("materials/add_material.html", context)
 

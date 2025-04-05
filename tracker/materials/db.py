@@ -476,6 +476,19 @@ async def get_material_tags() -> set[str]:
     return tags
 
 
+async def get_authors() -> tuple[str]:
+    logger.info("Getting material authors")
+
+    stmt = sa.select(models.Materials.c.authors.distinct())
+
+    async with database.session() as ses:
+        authors = tuple(await ses.scalars(stmt))
+
+    logger.info("%s authors got", len(authors))
+
+    return authors
+
+
 async def insert_material(
     *,
     title: str,
