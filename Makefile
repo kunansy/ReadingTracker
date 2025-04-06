@@ -4,7 +4,7 @@ lint:
 	@$(MAKE) lint-mypy
 
 test:
-	pytest -vvv -n 7
+	pytest -vvvv
 
 lint-mypy:
 	@mypy .
