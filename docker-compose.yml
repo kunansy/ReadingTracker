@@ -13,7 +13,7 @@ x-cache-img: &cache-img
   image: eqalpha/keydb:arm64_v6.3.4
 
 x-tracker-img: &tracker-img
-  image: kunansy/reading_tracker:229
+  image: kunansy/reading_tracker:230
 
 x-speech-recognizer-img: &speech-recognizer
   image: kunansy/tracker_speech_recognizer:2
