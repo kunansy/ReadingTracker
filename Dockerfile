@@ -11,7 +11,7 @@ COPY poetry.lock pyproject.toml entrypoint.sh /
 
 RUN apt-get update \
     && apt-get -y install gcc curl g++ libffi-dev build-essential cargo pkg-config \
-    && pip install -U pip poetry==2.0.0 --no-cache-dir \
+    && pip install -U pip poetry~=2.1.0 --no-cache-dir \
     && poetry config virtualenvs.create false \
     && poetry install --only main -n --no-root \
     && ./entrypoint.sh \
