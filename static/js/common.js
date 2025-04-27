@@ -481,7 +481,6 @@ addContextMenu('.queue-item', addQueueItemContextMenuItems);
 addContextMenu('.note', addNoteContextMenuItems);
 addContextMenu('.add-note-alert', addNoteAlertContextMenuItems);
 addContextMenu('.card', addCardContextMenuItems);
-addContextMenu('.repeat', addRepeatContextMenuItems);
 
 addCopyNoteIdListener();
 
