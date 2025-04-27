@@ -145,7 +145,7 @@ async def create_outline_percentage_graphic() -> str:
         if not is_outlined
     ]
     percents = [
-        round(o / (o + no), 2) * 100
+        round(o / (o + no), 4) * 100
         for o, no in zip(outlined, not_outlined, strict=False)
     ]
 
