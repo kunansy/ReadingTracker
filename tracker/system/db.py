@@ -128,9 +128,9 @@ async def create_outline_percentage_graphic() -> str:
 
     width = 0.6
 
+    _set_plot_style()
     fig, ax = plt.subplots(figsize=(12, 10))
     bottom = np.zeros(len(species))
-    _set_plot_style()
 
     outlined = [
         count
