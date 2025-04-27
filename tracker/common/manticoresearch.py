@@ -40,7 +40,7 @@ CREATE_TABLE_QUERY = """CREATE TABLE IF NOT EXISTS notes (
 
 
 @asynccontextmanager
-async def _cursor() -> AsyncGenerator[MysqlCursor, None]:
+async def _cursor() -> AsyncGenerator[MysqlCursor]:
     new_session = await aiomysql.connect(
         host=settings.MANTICORE_MYSQL_HOST,
         port=settings.MANTICORE_MYSQL_PORT,

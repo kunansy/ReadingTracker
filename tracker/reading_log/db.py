@@ -127,7 +127,7 @@ async def data(
     *,
     log_records: list[LogRecord] | None = None,
     completion_dates: dict[UUID | None, datetime.datetime] | None = None,
-) -> AsyncGenerator[tuple[datetime.date, LogRecord], None]:
+) -> AsyncGenerator[tuple[datetime.date, LogRecord]]:
     """Get pairs: (date, info) of all days from start to stop.
 
     If the day is empty, material_id is supposed
