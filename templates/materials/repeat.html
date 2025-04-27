@@ -50,9 +50,17 @@
             <p> Last repeated at: {{ last_repeated_at }} </p>
             <p> Priority: {{ repeat.priority_months | round(precision=1) }} </p>
 
+        <div class="repeat-btns">
             <form class="repeat" action="/materials/repeat/{{ repeat.material_id }}?is_outlined={{ is_outlined }}" METHOD="POST" title="Repeat the material" id="{{ repeat.material_id }}">
                 <button type="submit" class="submit-button celebrate-btn" onclick="event.stopPropagation();"> Repeat </button>
             </form>
+            {%- if repeat.cards_count > 0 -%}
+                <form class="open-cards" action="/cards/list" title="Open material cards" id="{{ repeat.material_id }}">
+                     <input type="hidden" name="material_id" value="{{ repeat.material_id }}">
+                    <button type="submit" class="submit-button celebrate-btn" onclick="event.stopPropagation();"> Open cards ({{ repeat.cards_count }}) </button>
+                </form>
+            {%- endif -%}
+        </div>
         </div>
     {% endfor %}
 
