@@ -186,7 +186,7 @@ def _iterate_over_span(
     span: TimeSpan,
     *,
     size: int,
-) -> Generator[datetime.date, None, None]:
+) -> Generator[datetime.date]:
     start = span.start
     for day in range(size):
         yield start + datetime.timedelta(days=day)

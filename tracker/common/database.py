@@ -50,7 +50,7 @@ def utcnow() -> datetime.datetime:
 
 
 @asynccontextmanager
-async def session(**kwargs) -> AsyncGenerator[AsyncSession, None]:
+async def session(**kwargs) -> AsyncGenerator[AsyncSession]:
     new_session = AsyncSession(**kwargs, bind=engine)
     try:
         yield new_session
@@ -65,7 +65,7 @@ async def session(**kwargs) -> AsyncGenerator[AsyncSession, None]:
 
 
 @asynccontextmanager
-async def transaction(**kwargs) -> AsyncGenerator[AsyncSession, None]:
+async def transaction(**kwargs) -> AsyncGenerator[AsyncSession]:
     async with session(**kwargs) as ses, ses.begin():
         yield ses
 
