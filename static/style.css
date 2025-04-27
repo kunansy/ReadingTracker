@@ -245,6 +245,11 @@ celebrate {
     padding-left: 4vw;
 }
 
+div.repeat-btns {
+    display: flex;
+    margin: auto;
+}
+
 .loader {
     border: 6px solid #f3f3f3;
     border-top: 6px solid black;
