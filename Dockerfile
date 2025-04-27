@@ -1,4 +1,4 @@
-FROM python:3.12-slim-bullseye
+FROM python:3.13-slim-bullseye
 
 LABEL maintainer="<k@kunansy.ru>"
 ENV PYTHONUNBUFFERED=1
