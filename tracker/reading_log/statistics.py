@@ -37,6 +37,7 @@ class TrackerStatistics(CustomBaseModel):
     mean: float
     median: float
     pages_read: dict[enums.MaterialTypesEnum, int]
+    materials_completed: dict[enums.MaterialTypesEnum, int]
     total_materials_completed: int
     would_be_total: int
     min_log_record: database.MinMax | None
@@ -250,6 +251,21 @@ async def _get_total_materials_completed() -> int:
         return await ses.scalar(stmt) or 0
 
 
+async def _get_materials_completed() -> dict[enums.MaterialTypesEnum, int]:
+    stmt = (
+        sa.select(models.Materials.c.material_type, sa.func.count(1).label("cnt"))
+        .join(
+            models.Statuses,
+            models.Materials.c.material_id == models.Statuses.c.material_id,
+        )
+        .where(models.Statuses.c.completed_at != None)
+        .group_by(models.Materials.c.material_type)
+    )  # type: ignore[arg-type]
+
+    async with database.session() as ses:
+        return {row.material_type: row.cnt for row in (await ses.execute(stmt)).all()}
+
+
 def _tracker_mean(means: enums.MEANS) -> float:
     # to avoid changing source dict we should
     # escape the ignored material type
@@ -282,6 +298,7 @@ async def get_tracker_statistics() -> TrackerStatistics:
         total_materials_task = tg.create_task(_get_total_materials_completed())
         min_log_record_task = tg.create_task(_get_min_record())
         max_log_record_task = tg.create_task(_get_max_record())
+        materials_completed_task = tg.create_task(_get_materials_completed())
 
     read_pages = read_pages_task.result()
     means: enums.MEANS = mean_task.result()
@@ -300,6 +317,7 @@ async def get_tracker_statistics() -> TrackerStatistics:
         median=median_task.result(),
         pages_read=read_pages,
         total_materials_completed=total_materials_task.result(),
+        materials_completed=materials_completed_task.result(),
         would_be_total=would_be_total,
         min_log_record=min_log_record_task.result(),
         max_log_record=max_log_record_task.result(),
