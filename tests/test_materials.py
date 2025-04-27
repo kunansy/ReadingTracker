@@ -353,8 +353,9 @@ async def test_get_material_tags():
     tags = await db.get_material_tags()
     materials = await get_materials()
 
-    assert all(tag.islower() for tag in tags)
-    assert not any(tag.startswith(" ") or tag.endswith(" ") for tag in tags)
+    for tag in tags:
+        assert tag.islower(), repr(tag)
+        assert not (tag.startswith(" ") or tag.endswith(" ")), repr(tag)
 
     stmt = sa.select(models.Materials.c.tags).where(models.Materials.c.tags != None)
 
