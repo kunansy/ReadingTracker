@@ -4,7 +4,7 @@ from collections.abc import Iterable
 from typing import Annotated, Any, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Body, Depends, HTTPException, Request
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import NonNegativeInt
@@ -202,7 +202,7 @@ async def add_note_view(request: Request, material_id: str | None = None):
 
 
 @router.post("/add", response_class=RedirectResponse)
-async def add_note(note: Annotated[schemas.Note, Depends()]):
+async def add_note(note: Annotated[schemas.Note, Form()]):
     redirect_url = router.url_path_for(add_note_view.__name__)
     # each redirect from POST to GET should have 302 status code
     response = RedirectResponse(redirect_url, status_code=302)
