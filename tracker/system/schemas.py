@@ -1,6 +1,6 @@
 import datetime
 
-from pydantic import NonNegativeInt, field_validator, Field
+from pydantic import Field, NonNegativeInt, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from tracker.common.schemas import CustomBaseModel
