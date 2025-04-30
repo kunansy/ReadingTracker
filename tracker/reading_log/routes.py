@@ -2,7 +2,7 @@ import asyncio
 from typing import Annotated, cast
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Request, Form
+from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, ORJSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 

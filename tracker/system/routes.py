@@ -1,8 +1,8 @@
 import asyncio
-from typing import Any, Annotated
+from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Request, Form
+from fastapi import APIRouter, Form, Request
 from fastapi.responses import HTMLResponse, ORJSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import conint

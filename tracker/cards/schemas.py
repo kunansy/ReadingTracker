@@ -1,7 +1,6 @@
 from typing import Self
 from uuid import UUID
 
-from fastapi import Form
 from pydantic import NonNegativeInt, model_validator
 
 from tracker.common.schemas import CustomBaseModel

@@ -15,4 +15,3 @@ def str_to_uuid(v: Literal[""] | UUID | None) -> UUID | None:
 
 
 DEFAULT_UUID = Annotated[UUID | None, BeforeValidator(str_to_uuid)]
-
