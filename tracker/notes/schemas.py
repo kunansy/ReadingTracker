@@ -1,12 +1,18 @@
 import datetime
 import re
-from typing import Any
+from typing import Annotated, Any
 from uuid import UUID
 
-from pydantic import conint, field_serializer, field_validator, model_validator
+from pydantic import (
+    BeforeValidator,
+    conint,
+    field_serializer,
+    field_validator,
+    model_validator,
+)
 
 from tracker.common import settings
-from tracker.common.schemas import DEFAULT_UUID, CustomBaseModel
+from tracker.common.schemas import CustomBaseModel, skip_empty_value
 
 
 PUNCTUATION_MAPPING = {
@@ -95,7 +101,7 @@ class Note(CustomBaseModel):
     title: str | None = None
     content: str
     tags: list[str] | None = None
-    link_id: DEFAULT_UUID = None
+    link_id: Annotated[UUID | None, BeforeValidator(skip_empty_value)] = None
     chapter: str = ""
     page: conint(ge=0) = 0
 
