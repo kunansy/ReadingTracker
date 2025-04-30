@@ -106,7 +106,7 @@ async def update_material_view(
 
 
 @router.post("/update", response_class=RedirectResponse)
-async def update_material(material: Annotated[schemas.UpdateMaterial, Depends()]):
+async def update_material(material: Annotated[schemas.UpdateMaterial, Form()]):
     success = True
     try:
         await db.update_material(
