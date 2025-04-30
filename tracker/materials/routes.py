@@ -2,7 +2,7 @@ import asyncio
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Form
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import HttpUrl
@@ -56,7 +56,7 @@ async def insert_material_view(request: Request):
 
 
 @router.post("/add", response_class=HTMLResponse)
-async def insert_material(material: Annotated[schemas.Material, Depends()]):
+async def insert_material(material: Annotated[schemas.Material, Form()]):
     """Insert a material to the queue."""
     await db.insert_material(
         title=material.title,
