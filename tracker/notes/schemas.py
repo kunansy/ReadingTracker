@@ -7,7 +7,7 @@ from fastapi import Form
 from pydantic import conint, field_serializer, field_validator, model_validator
 
 from tracker.common import settings
-from tracker.common.schemas import CustomBaseModel
+from tracker.common.schemas import DEFAULT_UUID, CustomBaseModel
 
 
 PUNCTUATION_MAPPING = {
@@ -96,31 +96,9 @@ class Note(CustomBaseModel):
     title: str | None = None
     content: str
     tags: list[str] | None = None
-    link_id: UUID | None = None
+    link_id: DEFAULT_UUID = None
     chapter: str = ""
     page: conint(ge=0) = 0
-
-    def __init__(
-        self,
-        material_id: UUID = Form(...),
-        title: str | None = Form(None),
-        content: str = Form(...),
-        tags: str | None = Form(None),
-        link_id: UUID | None = Form(None),
-        chapter: str = Form(""),
-        page: int = Form(0),
-        **kwargs,
-    ):
-        super().__init__(
-            material_id=material_id,
-            title=title,
-            content=content,
-            tags=tags,
-            link_id=link_id,
-            chapter=chapter,
-            page=page,
-            **kwargs,
-        )
 
     @field_validator("content")
     def format_content(cls, content: str) -> str:
@@ -135,7 +113,9 @@ class Note(CustomBaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_tags(cls, data: Any) -> Any:
-        if tags := data.get("tags"):
+        if tags := data.pop("tags", None):
+            if isinstance(tags, list) and len(tags) == 1:
+                tags = tags[0]
             # fmt: off
             tags = {
                 tag.strip()
