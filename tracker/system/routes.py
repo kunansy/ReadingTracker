@@ -1,8 +1,8 @@
 import asyncio
-from typing import Any
+from typing import Any, Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Request, Form
 from fastapi.responses import HTMLResponse, ORJSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import conint
@@ -149,7 +149,7 @@ async def restore(request: Request):
     response_model=schemas.GetSpanReportResponse,
     response_class=ORJSONResponse,
 )
-async def get_span_report(span: schemas.GetSpanReportRequest):
+async def get_span_report(span: Annotated[schemas.GetSpanReportRequest, Form()]):
     """Get analytics for the span: analyze materials, read items and inserted notes."""
     span_analysis = await trends.get_span_analytics(span)
 

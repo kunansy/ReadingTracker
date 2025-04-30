@@ -1,27 +1,19 @@
 import datetime
 
-from fastapi import Form
-from pydantic import NonNegativeInt, field_validator
+from pydantic import NonNegativeInt, field_validator, Field
 from pydantic_core.core_schema import ValidationInfo
 
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums
 
 
+def _now() -> datetime.date:
+    return datetime.datetime.now(tz=datetime.UTC).replace(tzinfo=None).date()
+
+
 class GetSpanReportRequest(CustomBaseModel):
     start: datetime.date
-    stop: datetime.date
-
-    def __init__(
-        self,
-        start: datetime.date = Form(...),
-        stop: datetime.date | None = Form(None),
-    ) -> None:
-        # way to check Form value is None
-        if not isinstance(stop, str):
-            stop = datetime.datetime.now(tz=datetime.UTC).replace(tzinfo=None).date()
-
-        super().__init__(start=start, stop=stop)
+    stop: datetime.date = Field(default_factory=_now)
 
     @field_validator("stop")
     def validate_start_less_than_stop(
