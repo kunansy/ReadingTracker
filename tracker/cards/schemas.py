@@ -1,9 +1,9 @@
-from typing import Self
+from typing import Annotated, Self
 from uuid import UUID
 
-from pydantic import NonNegativeInt, model_validator
+from pydantic import BeforeValidator, NonNegativeInt, model_validator
 
-from tracker.common.schemas import CustomBaseModel
+from tracker.common.schemas import CustomBaseModel, skip_empty_value
 
 
 class GetHasCards(CustomBaseModel):
@@ -22,4 +22,4 @@ class Card(CustomBaseModel):
     material_id: UUID
     note_id: UUID
     question: str
-    answer: str | None
+    answer: Annotated[str | None, BeforeValidator(skip_empty_value)] = None
