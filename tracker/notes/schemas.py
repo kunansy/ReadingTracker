@@ -3,7 +3,6 @@ import re
 from typing import Any
 from uuid import UUID
 
-from fastapi import Form
 from pydantic import conint, field_serializer, field_validator, model_validator
 
 from tracker.common import settings
@@ -133,28 +132,6 @@ class Note(CustomBaseModel):
 
 class UpdateNote(Note):
     note_id: UUID
-
-    def __init__(
-        self,
-        material_id: UUID = Form(...),
-        note_id: UUID = Form(...),
-        title: str | None = Form(None),
-        content: str = Form(...),
-        tags: str | None = Form(None),
-        link_id: UUID | None = Form(None),
-        chapter: str = Form(""),
-        page: int = Form(0),
-    ):
-        super().__init__(
-            material_id=material_id,
-            note_id=note_id,
-            title=title,
-            content=content,
-            tags=tags,
-            link_id=link_id,
-            chapter=chapter,
-            page=page,
-        )
 
     def get_material_id(self) -> str:
         return str(self.material_id)
