@@ -1,17 +1,15 @@
-from typing import Annotated, Literal
+from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, BeforeValidator, ConfigDict
+from pydantic import BaseModel, ConfigDict
 
 
 class CustomBaseModel(BaseModel):
     model_config = ConfigDict(extra="forbid", str_strip_whitespace=True)
 
 
-def str_to_uuid(v: Literal[""] | UUID | None) -> UUID | None:
+def skip_empty_value(v: Literal[""] | UUID | None) -> UUID | None:
+    """Needed to work with html forms, that sends empty string as default."""
     if not v:
         return None
     return v
-
-
-DEFAULT_UUID = Annotated[UUID | None, BeforeValidator(str_to_uuid)]

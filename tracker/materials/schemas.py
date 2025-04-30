@@ -1,9 +1,9 @@
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import HttpUrl, conint
+from pydantic import BeforeValidator, HttpUrl, conint
 
-from tracker.common.schemas import CustomBaseModel
+from tracker.common.schemas import CustomBaseModel, skip_empty_value
 from tracker.models import enums
 
 
@@ -12,8 +12,8 @@ class Material(CustomBaseModel):
     authors: str
     pages: conint(ge=1)
     material_type: enums.MaterialTypesEnum
-    tags: str | None = None
-    link: HttpUrl | None = None
+    tags: Annotated[str | None, BeforeValidator(skip_empty_value)] = None
+    link: Annotated[HttpUrl | None, BeforeValidator(skip_empty_value)] = None
 
     def get_link(self) -> str | None:
         if link := self.link:
