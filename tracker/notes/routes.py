@@ -268,7 +268,7 @@ async def update_note_view(note_id: UUID, request: Request, success: bool | None
 
 
 @router.post("/update", response_class=RedirectResponse)
-async def update_note(note: Annotated[schemas.UpdateNote, Depends()]):
+async def update_note(note: Annotated[schemas.UpdateNote, Form()]):
     success = True
 
     try:
