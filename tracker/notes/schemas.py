@@ -98,7 +98,7 @@ def demark_note(string: str) -> str:
 
 class Note(CustomBaseModel):
     material_id: UUID
-    title: str | None = None
+    title: Annotated[str | None, BeforeValidator(skip_empty_value)] = None
     content: str
     tags: list[str] | None = None
     link_id: Annotated[UUID | None, BeforeValidator(skip_empty_value)] = None
