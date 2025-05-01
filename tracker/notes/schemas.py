@@ -135,6 +135,15 @@ class Note(CustomBaseModel):
             data["tags"] = sorted(tags)
         return data
 
+    @model_validator(mode="before")
+    @classmethod
+    def validate_page(cls, data: Any) -> Any:
+        if page := data.pop("page", None):
+            if page == "":
+                page = 0
+            data["page"] = int(page)
+        return data
+
 
 class UpdateNote(Note):
     note_id: UUID
