@@ -101,11 +101,19 @@ async def _calculate_outline_percentage() -> dict[
     enums.MaterialTypesEnum,
     dict[bool, int],
 ]:
-    stmt = sa.select(
-        models.Materials.c.material_type,
-        models.Materials.c.is_outlined,
-        sa.func.count(1),
-    ).group_by(models.Materials.c.material_type, models.Materials.c.is_outlined)
+    stmt = (
+        sa.select(
+            models.Materials.c.material_type,
+            models.Materials.c.is_outlined,
+            sa.func.count(1),
+        )
+        .join(
+            models.Statuses,
+            models.Statuses.c.material_id == models.Materials.c.material_id,
+        )
+        .where(models.Statuses.c.completed_at != None)
+        .group_by(models.Materials.c.material_type, models.Materials.c.is_outlined)
+    )
 
     outline_percentage: dict[enums.MaterialTypesEnum, dict[bool, int]] = {}
     async with database.session() as ses:
