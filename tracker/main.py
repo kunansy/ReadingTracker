@@ -56,7 +56,7 @@ app.add_middleware(
     app_name="tracker",
     prefix="tracker",
     labels={
-        "server_name": os.getenv("HOSTNAME"),
+        "server_name": os.getenv("HOSTNAME"),  # type: ignore[dict-item]
     },
     group_paths=True,
     skip_paths=["/readiness", "/liveness"],
