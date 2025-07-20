@@ -21,8 +21,8 @@ ignore = [
     "PLR0913", "RUF017", "TD002", "TD003",
     # todo colon/text, exc msg, any in kw/args
     "TD004", "TD005", "TRY003", "ANN401",
-    # ternary op, setattr with const, "std shadowing"
-    "SIM108", "B010", "A005"
+    # ternary op, setattr with const, "std shadowing", imports not on top level
+    "SIM108", "B010", "A005", "PLC0415"
 ]
 
 
@@ -106,13 +106,13 @@ SQLAlchemy = "~2.0.0"
 pydantic = "~2.11.1"
 environs = "~14.2.0"
 asyncpg = "~0.30.0"
-fastapi = "~0.115.0"
-uvicorn = "~0.34.0"
+fastapi = "~0.116.0"
+uvicorn = "~0.35.0"
 Jinja2 = "~3.1.1"
 uvloop = "~0.21.0"
 python-multipart = "~0.0.6"
 matplotlib = "~3.10.0"
-orjson = "~3.10.0"
+orjson = "~3.11.0"
 gunicorn = "~23.0.0"
 aiomysql = "~0.2.0"
 networkx = "~3.5"
@@ -128,10 +128,10 @@ aiohttp = "~3.12.0"
 redis = "~5.2.1"
 
 [tool.poetry.group.dev.dependencies]
-mypy = "~1.16.0"
+mypy = "~1.17.0"
 bumpversion = "~0.6.0"
 greenlet = "~3.2.0"
-ruff = "~0.11.0"
+ruff = "~0.12.0"
 pytest = "~8.4.0"
 pytest-asyncio = "~0.26.0"
 coverage = "~7.8.0"
