@@ -376,7 +376,7 @@ const openCardsBtn = (id, cards_count) => {
     }
     return createContextMenuItem(
         `Open cards (${cards_count})`,
-        () => {window.open(url)}
+        () => {window.open(url, target="_blank")}
     );
 }
 
