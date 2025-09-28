@@ -75,7 +75,7 @@ async def insert_material(material: Annotated[schemas.Material, Form()]):
 async def update_material_view(
     request: Request,
     material_id: UUID,
-    success: bool | None = None,
+    success: bool | None = None,  # noqa: FBT001
 ):
     context: dict[str, Any] = {
         "request": request,
@@ -160,7 +160,7 @@ async def outline_material(material_id: UUID):
 
 
 @router.post("/repeat/{material_id}")
-async def repeat_material(material_id: UUID, is_outlined: bool | None = None):
+async def repeat_material(material_id: UUID, is_outlined: bool | None = None):  # noqa: FBT001
     await db.repeat_material(material_id=material_id)
 
     only_outlined = "on" if is_outlined else "off"

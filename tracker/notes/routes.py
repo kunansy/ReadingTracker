@@ -231,7 +231,7 @@ async def add_note(note: Annotated[schemas.Note, Form()]):
 
 
 @router.get("/update-view", response_class=HTMLResponse)
-async def update_note_view(note_id: UUID, request: Request, success: bool | None = None):
+async def update_note_view(note_id: UUID, request: Request, success: bool | None = None):  # noqa: FBT001
     context: dict[str, Any] = {
         "request": request,
     }
