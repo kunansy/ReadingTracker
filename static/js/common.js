@@ -402,10 +402,10 @@ const addNoteContextMenuItems = async (note) => {
     } else {
         contextMenu.appendChild(deleteNoteBtn(note.id));
     }
+    // allow to add a card in any case, even if cards exist
+    contextMenu.appendChild(addCardBtn(note.id, note_json.material_id));
     if (has_cards.has_cards) {
         contextMenu.appendChild(openCardsBtn({note_id: note.id},has_cards.cards_count));
-    } else {
-        contextMenu.appendChild(addCardBtn(note.id, note_json.material_id));
     }
     contextMenu.appendChild(insertToRepeatQueue(note.id));
 
