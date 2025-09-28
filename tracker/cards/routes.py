@@ -94,7 +94,7 @@ async def add_card(card: Annotated[schemas.Card, Form()]):
     response = RedirectResponse(f"{url}?material_id={card.material_id}", status_code=302)
 
     for key, value in card.model_dump(
-        exclude={"question", "note_id"},
+        exclude={"question", "note_id", "answer"},
         exclude_none=True,
     ).items():
         response.set_cookie(key, value, expires=60)
