@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
@@ -143,8 +144,8 @@ async def start_material(material_id: UUID):
 
 
 @router.post("/complete/{material_id}")
-async def complete_material(material_id: UUID):
-    await db.complete_material(material_id=material_id)
+async def complete_material(material_id: UUID, completed_at: datetime.date | None = None):
+    await db.complete_material(material_id=material_id, completed_at=completed_at)
 
     redirect_url = router.url_path_for(get_completed_materials.__name__)
     return RedirectResponse(redirect_url, status_code=302)

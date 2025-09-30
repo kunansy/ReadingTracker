@@ -572,7 +572,7 @@ async def start_material(
 async def complete_material(
     *,
     material_id: UUID,
-    completion_date: datetime.date | None = None,
+    completed_at: datetime.date | None = None,
 ) -> None:
     from tracker.reading_log.db import get_log_records
 
@@ -582,7 +582,7 @@ async def complete_material(
         get_material_task = tg.create_task(get_material(material_id=material_id))
 
     logger.debug("Completing material_id=%s", material_id)
-    completion_date = completion_date or database.utcnow().date()
+    completed_at = completed_at or database.utcnow().date()
 
     if not (material := get_material_task.result()):
         raise ValueError(f"{material_id=!r} not found")
@@ -590,14 +590,14 @@ async def complete_material(
         raise ValueError("Material is not started")
     if status.completed_at is not None:
         raise ValueError("Material is already completed")
-    if status.started_at.date() > completion_date:
+    if status.started_at.date() > completed_at:
         raise ValueError("Completion date must be greater than start date")
     if not (reading_logs := get_logs_task.result()):
         raise ValueError("Reading logs not found")
     if sum(log.count for log in reading_logs) != material.pages:
         raise ValueError("Invalid pages count, something is unread")
 
-    values = {"completed_at": completion_date}
+    values = {"completed_at": completed_at}
     stmt = (
         models.Statuses.update()
         .values(values)
@@ -607,7 +607,7 @@ async def complete_material(
     async with database.session() as ses:
         await ses.execute(stmt)
 
-    logger.debug("Material completed at %s", completion_date)
+    logger.debug("Material completed at %s", completed_at)
 
 
 async def outline_material(*, material_id: UUID) -> None:
