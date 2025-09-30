@@ -130,14 +130,14 @@ async def update_material(material: Annotated[schemas.UpdateMaterial, Form()]):
 
 
 @router.post("/start/{material_id}")
-async def start_material(material_id: UUID):
+async def start_material(material_id: UUID, started_at: datetime.date | None = None):
     if not (material := await db.get_material(material_id=material_id)):
         raise HTTPException(status_code=404, detail=f"Material {material_id} not found")
     # don't shift queue if the material is the first item
     if material.index != (queue_start := await db.get_queue_start()):
         await db.swap_order(material_id, queue_start)
 
-    await db.start_material(material_id=material_id)
+    await db.start_material(material_id=material_id, started_at=started_at)
 
     redirect_url = router.url_path_for(get_reading_materials.__name__)
     return RedirectResponse(redirect_url, status_code=302)

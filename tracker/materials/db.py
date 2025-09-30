@@ -552,15 +552,15 @@ async def update_material(
 async def start_material(
     *,
     material_id: UUID,
-    start_date: datetime.date | None = None,
+    started_at: datetime.date | None = None,
 ) -> None:
-    start_date = start_date or database.utcnow().date()
+    started_at = started_at or database.utcnow().date()
     logger.debug("Starting material_id=%s", material_id)
 
-    if start_date > database.utcnow().date():
+    if started_at > database.utcnow().date():
         raise ValueError("Start date must be less than today")
 
-    values = {"material_id": material_id, "started_at": start_date}
+    values = {"material_id": material_id, "started_at": started_at}
     stmt = models.Statuses.insert().values(values)
 
     async with database.session() as ses:
