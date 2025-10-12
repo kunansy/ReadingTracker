@@ -123,10 +123,13 @@ async def restore_db(*, snapshot: DBSnapshot, conn: AsyncSession) -> None:
             continue
 
         values = table_dict.rows
-        stmt = table.insert().values(values)
-        await conn.execute(stmt)
+        for shift in range(0, len(values) // 1000 + 1):
+            objects = values[shift * 1000: (shift + 1) * 1000]
 
-        logger.info("%s: %s rows inserted", table.name, len(values))
+            stmt = table.insert().values(objects)
+            await conn.execute(stmt)
+
+            logger.info("%s: %s rows inserted", table.name, len(objects))
 
 
 async def get_tables_analytics() -> dict[str, int]:
