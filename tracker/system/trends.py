@@ -9,6 +9,7 @@ from typing import Any
 
 import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa
+from matplotlib import ticker
 from pydantic import NonNegativeInt, model_validator
 
 from tracker.common import database, settings
@@ -318,6 +319,40 @@ async def _calculate_span_outlined_materials_statistics(
     return {row.date: row.cnt for row in rows}
 
 
+async def _calculate_span_total_read(
+    *,
+    span: TimeSpan,
+) -> dict[datetime.date, int]:
+    logger.debug("Calculating span total read statistics")
+
+    total_read = (
+        sa.select(
+            models.ReadingLog.c.date,
+            sa.func.sum(models.ReadingLog.c.count)
+            .over(order_by=models.ReadingLog.c.date)
+            .label("sum"),
+        ).order_by(models.ReadingLog.c.date.desc())
+    ).cte("total_read")
+
+    stmt = (
+        sa.select(
+            total_read.c.date,
+            sa.func.max(total_read.c.sum).label("total"),
+        )
+        .select_from(total_read)
+        .where(sa.func.date(total_read.c.date) >= span.start)
+        .where(sa.func.date(total_read.c.date) <= span.stop)
+        .group_by(total_read.c.date)
+    )
+
+    async with database.session() as ses:
+        rows = (await ses.execute(stmt)).all()
+
+    logger.debug("Span total read statistics calculated")
+
+    return {row.date: row.total for row in rows}
+
+
 def _get_span_statistics(
     *,
     stat: dict[datetime.date, int],
@@ -368,6 +403,11 @@ async def get_span_outlined_materials_statistics(*, span_size: int) -> SpanStati
     stat = await _calculate_span_outlined_materials_statistics(span=span)
 
     return _get_span_statistics(stat=stat, span=span, span_size=span_size)
+
+
+async def get_span_total_read_statistics(*, span_size: int) -> dict[datetime.date, int]:
+    span = _get_span(span_size)
+    return await _calculate_span_total_read(span=span)
 
 
 async def get_span_analytics(_span: schemas.GetSpanReportRequest) -> SpanAnalysis:
@@ -561,3 +601,29 @@ def create_outlined_materials_graphic(
     logger.info("Creating outlined materials graphic")
 
     return _create_graphic(stat=stat, title="Total materials outlined")
+
+
+def create_total_read_graphic(
+    stat: dict[datetime.date, int],
+) -> str:
+    logger.info("Creating total pages read graphic")
+
+    keys = [d.strftime(settings.DATE_FORMAT) for d in stat]
+    fig, ax = plt.subplots(figsize=(12, 10))
+    ax.plot(keys, list(stat.values()))
+    ax.set_yscale("log")
+
+    ax.yaxis.set_major_formatter(ticker.FuncFormatter(lambda x, _: f"{int(x)}"))
+
+    for i, v in enumerate(stat.values()):
+        ax.text(i, v + 10, str(v), ha="center")
+
+    ax.legend()
+
+    tmpbuf = BytesIO()
+    fig.savefig(tmpbuf, format="svg")
+
+    image = base64.b64encode(tmpbuf.getvalue()).decode("utf-8")
+
+    logger.debug("Creating graphic completed")
+    return image

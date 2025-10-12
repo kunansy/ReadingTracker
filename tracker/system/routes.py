@@ -57,6 +57,9 @@ async def graphic(
         outlined_materials_trend_task = tg.create_task(
             trends.get_span_outlined_materials_statistics(span_size=last_days),
         )
+        total_read_trend_task = tg.create_task(
+            trends.get_span_total_read_statistics(span_size=last_days),
+        )
         tracker_statistics_task = tg.create_task(db.get_tracker_statistics())
         completion_dates_task = tg.create_task(db.get_completion_dates())
         titles_task = tg.create_task(db.get_read_material_titles())
@@ -88,6 +91,9 @@ async def graphic(
     outlined_materials_trend_graphic = trends.create_outlined_materials_graphic(
         outlined_materials_trend,
     )
+    total_read_graphic = trends.create_total_read_graphic(
+        total_read_trend_task.result(),
+    )
 
     context |= {
         "material_id": material_id,
@@ -104,6 +110,7 @@ async def graphic(
         "completed_materials_trend_image": completed_materials_trend_graphic,
         "repeated_materials_trend_image": repeated_materials_trend_graphic,
         "outlined_materials_trend_image": outlined_materials_trend_graphic,
+        "total_read_graphic_image": total_read_graphic,
         "tracker_statistics": tracker_statistics_task.result(),
         "titles": titles_task.result(),
     }
