@@ -392,7 +392,7 @@ async def test_start_material_invalid_date():
     date = (database.utcnow() + datetime.timedelta(days=1)).date()
 
     with pytest.raises(ValueError) as e:
-        await db.start_material(material_id=material_id, start_date=date)
+        await db.start_material(material_id=material_id, started_at=date)
 
     assert str(e.value) == "Start date must be less than today"
 
@@ -449,7 +449,7 @@ async def test_complete_material_invalid_date():
     date = (statuses[material_id].started_at - datetime.timedelta(days=1)).date()
 
     with pytest.raises(ValueError) as e:
-        await db.complete_material(material_id=material_id, completion_date=date)
+        await db.complete_material(material_id=material_id, completed_at=date)
 
     assert str(e.value) == "Completion date must be greater than start date"
 
