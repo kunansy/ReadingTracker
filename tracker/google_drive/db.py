@@ -124,8 +124,8 @@ async def restore_db(*, snapshot: DBSnapshot, conn: AsyncSession) -> None:
             continue
 
         values = table_dict.rows
-        for shift in range(0, len(values) // 1000 + 1):
-            objects = values[shift * 1000: (shift + 1) * 1000]
+        for shift in range(len(values) // 1000 + 1):
+            objects = values[shift * 1000 : (shift + 1) * 1000]
 
             stmt = table.insert().values(objects)
             await conn.execute(stmt)

@@ -13,7 +13,7 @@ from sqlalchemy.sql.ddl import DropTable
 from tracker.common import settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
-from tracker.models import enums, models
+from tracker.models import models
 
 
 class DatabaseException(Exception):
