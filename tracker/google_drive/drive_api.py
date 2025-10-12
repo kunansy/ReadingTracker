@@ -86,7 +86,13 @@ async def backup() -> str | None:
 
 
 async def get_dump() -> dict[str, Any]:
-    async with grpc_chan(settings.BACKUP_TARGET) as channel:
+    async with grpc_chan(
+        settings.BACKUP_TARGET,
+        options=[
+            ("grpc.max_send_message_length", 2**30),
+            ("grpc.max_receive_message_length", 2**30),
+        ],
+    ) as channel:
         stub = backup_pb2_grpc.GoogleDriveStub(channel)
         response: backup_pb2.DownloadReply = await stub.DownloadLatestBackup(
             backup_pb2.Empty(),
