@@ -2,7 +2,7 @@ import asyncio
 import base64
 import datetime
 import statistics
-from collections.abc import Generator
+from collections.abc import Generator, Iterator
 from decimal import Decimal
 from io import BytesIO
 from typing import Any
@@ -148,6 +148,10 @@ class TimeSpan(CustomBaseModel):
             f"{self.start.strftime(settings.DATE_FORMAT)}_"
             f"{self.stop.strftime(settings.DATE_FORMAT)}"
         )
+
+    def iter(self) -> Iterator[datetime.date]:
+        for days in range(self.span_size):
+            yield self.start + datetime.timedelta(days=days)
 
     def __str__(self) -> str:
         return (
@@ -350,7 +354,17 @@ async def _calculate_span_total_read(
 
     logger.debug("Span total read statistics calculated")
 
-    return {row.date: row.total for row in rows}
+    if not rows:
+        return {}
+    rows_stat = {row.date: row.total for row in rows}
+    last = next(iter(rows_stat.values()))
+    res = {}
+    for date in span.iter():
+        if value := rows_stat.get(date):
+            last = value
+        res[date] = last
+
+    return res
 
 
 def _get_span_statistics(
