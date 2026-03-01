@@ -45,6 +45,14 @@ class Record(CustomBaseModel):
         after["added_at"] //= 1_000
         return after
 
+    @field_validator("before", mode="before")
+    def validate_before(cls, before: dict | None) -> dict | None:
+        if not before:
+            return None
+        # TODO: compare value and divide depends on it
+        before["added_at"] //= 1_000
+        return before
+
     def is_insert(self) -> bool:
         return self.after is not None and self.before is None
 
