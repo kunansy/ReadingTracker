@@ -13,7 +13,6 @@ from tracker.cards.routes import router as cards_router
 from tracker.common import database, keydb_api, manticoresearch, settings
 from tracker.common.logger import logger
 from tracker.materials.routes import router as materials_router
-from tracker.notes import db as notes_db
 from tracker.notes.routes import router as notes_router
 from tracker.reading_log.routes import router as reading_log_router
 from tracker.system.routes import router as system_router
@@ -21,10 +20,9 @@ from tracker.system.routes import router as system_router
 
 async def _init_cache():
     if not await keydb_api.healthcheck():
-        raise ValueError("Keydb is offline")
+        logger.info("Keydb is offline")
 
-    notes = await notes_db.get_notes()
-    await keydb_api.set_notes(notes)
+    # TODO: remove keydb integration
 
 
 async def startup():
