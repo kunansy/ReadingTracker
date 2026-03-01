@@ -3,7 +3,7 @@ import datetime
 from collections import defaultdict
 from collections.abc import AsyncGenerator
 from decimal import Decimal
-from typing import TypeVar, cast
+from typing import cast
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -22,10 +22,7 @@ class LogRecord(CustomBaseModel):
     material_title: str | None = None
 
 
-T = TypeVar("T")
-
-
-def _safe_list_get(lst: list[T], index: int, default: T | None = None) -> T | None:
+def _safe_list_get[T](lst: list[T], index: int, default: T | None = None) -> T | None:
     try:
         return lst[index]
     except IndexError:
