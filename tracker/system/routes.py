@@ -39,7 +39,7 @@ async def graphic(
 
     if material_id is None:
         context["what"] = "No material found to show"
-        return templates.TemplateResponse("errors/404.html", context)
+        return templates.TemplateResponse(request, "errors/404.html", context)
 
     async with asyncio.TaskGroup() as tg:
         reading_trend_task = tg.create_task(
@@ -115,7 +115,7 @@ async def graphic(
         "titles": titles_task.result(),
     }
 
-    return templates.TemplateResponse("system/graphic.html", context)
+    return templates.TemplateResponse(request, "system/graphic.html", context)
 
 
 @router.get(
@@ -148,7 +148,7 @@ async def restore(request: Request):
         context["statuses_count"] = snapshot_dict["statuses"].counter
         context["notes_count"] = snapshot_dict["notes"].counter
 
-    return templates.TemplateResponse("system/restore.html", context)
+    return templates.TemplateResponse(request, "system/restore.html", context)
 
 
 @router.post(

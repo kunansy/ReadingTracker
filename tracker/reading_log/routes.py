@@ -1,5 +1,5 @@
 import asyncio
-from typing import Annotated, cast
+from typing import Annotated, Any, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Form, HTTPException, Request
@@ -34,7 +34,7 @@ async def get_reading_log(request: Request, material_id: str | None = None):
         "material_id": material_id or "",
         "DATE_FORMAT": settings.DATE_FORMAT,
     }
-    return templates.TemplateResponse("reading_log/reading_log.html", context)
+    return templates.TemplateResponse(request, "reading_log/reading_log.html", context)
 
 
 @router.get("/add-view")
@@ -53,7 +53,7 @@ async def add_log_record_view(request: Request, material_id: UUID | None = None)
 
     completion_info = await _completion_info(log_material_id)
 
-    context = {
+    context: dict[str, Any] = {
         "request": request,
         "material_id": log_material_id,
         "titles": get_titles.result(),
@@ -65,7 +65,7 @@ async def add_log_record_view(request: Request, material_id: UUID | None = None)
         context["pages_read"] = completion_info.pages_read
         context["material_pages"] = completion_info.material_pages
 
-    return templates.TemplateResponse("reading_log/add_log_record.html", context)
+    return templates.TemplateResponse(request, "reading_log/add_log_record.html", context)
 
 
 @router.post("/add")
