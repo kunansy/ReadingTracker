@@ -41,8 +41,7 @@ ReadingTracker helps you manage your reading workflow:
 1. Clone the repo: `git clone https://github.com/kunansy/ReadingTracker`
 2. Create the `.env` file: `cp env.template .env`
 3. Create the Docker network (required by `docker-compose.yml`): `docker network create tracker-net`
-4. Start the services: `docker compose up -d`
-5. Initialize storage (creates DB objects and search indexes): `docker exec -it tracker-app python3 /app/tracker/main.py`
+4. Initialize storage (creates DB objects and search indexes): `docker exec -it tracker-app python3 /app/tracker/main.py`
 
 ### Optional: Google Drive backup/restore
 If you want to use Google Drive backup/restore, create a Google Drive service account and put its JSON credentials into `DRIVE_CREDS` in your `.env`.
