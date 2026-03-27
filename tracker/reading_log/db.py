@@ -53,7 +53,10 @@ async def get_log_records(*, material_id: str | UUID | None = None) -> list[LogR
     stmt = sa.select(
         models.ReadingLog,
         models.Materials.c.title.label("material_title"),
-    ).join(models.Materials, models.ReadingLog.c.material_id == models.Materials.c.material_id)
+    ).join(
+        models.Materials,
+        models.ReadingLog.c.material_id == models.Materials.c.material_id,
+    )
 
     if material_id:
         stmt = stmt.where(models.Materials.c.material_id == str(material_id))
@@ -73,7 +76,10 @@ async def get_reading_material_titles() -> dict[UUID, str]:
 
     stmt = (
         sa.select(models.Materials.c.material_id, models.Materials.c.title)
-        .join(models.Statuses, models.Materials.c.material_id == models.Statuses.c.material_id)
+        .join(
+            models.Statuses,
+            models.Materials.c.material_id == models.Statuses.c.material_id,
+        )
         .where(models.Statuses.c.completed_at == None)
     )
 
@@ -88,9 +94,9 @@ async def get_titles() -> dict[UUID, str]:
     """Get titles for materials even been read."""
     logger.debug("Getting reading material titles")
 
-    stmt = (
-        sa.select(models.Materials.c.material_id, models.Materials.c.title)
-        .join(models.Statuses, models.Materials.c.material_id == models.Statuses.c.material_id)
+    stmt = sa.select(models.Materials.c.material_id, models.Materials.c.title).join(
+        models.Statuses,
+        models.Materials.c.material_id == models.Statuses.c.material_id,
     )
 
     async with database.session() as ses:
@@ -107,7 +113,10 @@ async def get_completion_dates() -> dict[UUID | None, datetime.datetime]:
 
     stmt = (
         sa.select(models.Materials.c.material_id, models.Statuses.c.completed_at)
-        .join(models.Statuses, models.Materials.c.material_id == models.Statuses.c.material_id)
+        .join(
+            models.Statuses,
+            models.Materials.c.material_id == models.Statuses.c.material_id,
+        )
         .where(models.Statuses.c.completed_at != None)
     )
 
