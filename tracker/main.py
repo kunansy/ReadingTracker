@@ -143,20 +143,13 @@ async def readiness():
     async with asyncio.TaskGroup() as tg:
         db_readiness = tg.create_task(database.readiness())
         manticore_readiness = tg.create_task(manticoresearch.readiness())
-        cache_readiness = tg.create_task(keydb_api.healthcheck())
 
-    if (
-        db_readiness.result()
-        is manticore_readiness.result()
-        is cache_readiness.result()
-        is True
-    ):
+    if db_readiness.result() is manticore_readiness.result() is True:
         status_code = 200
 
     status = {
         "is_db_ready": db_readiness.result(),
         "is_manticore_ready": manticore_readiness.result(),
-        "is_cache_ready": cache_readiness.result(),
     }
     return ORJSONResponse(content=status, status_code=status_code)
 
