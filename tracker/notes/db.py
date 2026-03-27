@@ -160,7 +160,7 @@ async def get_material_type(*, material_id: UUID | str) -> str | None:
     async with database.session() as ses:
         if material_type := await ses.scalar(stmt):
             logger.debug("Material type got: %s", material_type)
-            return material_type.name
+            return material_type
 
     logger.debug("Material=%s has no type", material_id)
     return None
