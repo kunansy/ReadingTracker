@@ -970,8 +970,14 @@ def parse_habr(html: str) -> dict[str, str]:
     title = authors = None
     snippet = cast("bs4.Tag", soup.find("div", {"class": "tm-article-presenter__header"}))
     if snippet:
+        logger.info("snippet found, parsing")
         title = snippet.find("h1", {"class": "tm-title"})
         authors = snippet.find("a", {"class": "tm-user-info__username"})
+    else:
+        logger.warning(
+            "snippet not found, could not find article title and authors, snippet=%r",
+            snippet,
+        )
 
     return {"title": _get_text(title), "authors": _get_text(authors)}
 
