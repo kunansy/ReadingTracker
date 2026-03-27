@@ -84,7 +84,7 @@ async def database_exception_handler(request: Request, exc: database.DatabaseExc
         },
     }
 
-    return templates.TemplateResponse("errors/500.html", context)
+    return templates.TemplateResponse(request, "errors/500.html", context)
 
 
 @app.exception_handler(manticoresearch.ManticoreException)
@@ -107,7 +107,7 @@ async def manticore_exception_handler(
         },
     }
 
-    return templates.TemplateResponse("errors/500.html", context)
+    return templates.TemplateResponse(request, "errors/500.html", context)
 
 
 @app.exception_handler(RequestValidationError)
@@ -119,7 +119,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
         "error": {"type": exc.__class__.__name__, "args": exc.args, "json": repr(exc)},
     }
 
-    return templates.TemplateResponse("errors/500.html", context)
+    return templates.TemplateResponse(request, "errors/500.html", context)
 
 
 @app.exception_handler(HTTPException)
@@ -128,7 +128,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
     context = {"request": request, "what": repr(exc)}
 
-    return templates.TemplateResponse("errors/404.html", context)
+    return templates.TemplateResponse(request, "errors/404.html", context)
 
 
 @app.get("/liveness", include_in_schema=False)

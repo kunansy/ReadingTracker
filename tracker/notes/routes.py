@@ -124,7 +124,7 @@ async def get_notes(
     if material_id:
         context["material_id"] = material_id
 
-    return templates.TemplateResponse("notes/notes.html", context)
+    return templates.TemplateResponse(request, "notes/notes.html", context)
 
 
 @router.get("/note", response_class=HTMLResponse)
@@ -155,7 +155,7 @@ async def get_note(request: Request, note_id: UUID):
             "material_is_outlined": material.is_outlined,
         }
 
-    return templates.TemplateResponse("notes/note.html", context)
+    return templates.TemplateResponse(request, "notes/note.html", context)
 
 
 @router.get("/note-json", response_model=schemas.GetNoteJsonResponse)
@@ -198,7 +198,7 @@ async def add_note_view(request: Request, material_id: str | None = None):
         "titles": get_titles_task.result(),
         "tags": get_tags_task.result(),
     }
-    return templates.TemplateResponse("notes/add_note.html", context)
+    return templates.TemplateResponse(request, "notes/add_note.html", context)
 
 
 @router.post("/add", response_class=RedirectResponse)
@@ -238,7 +238,7 @@ async def update_note_view(note_id: UUID, request: Request, success: bool | None
 
     if not (note := await cached.get_note(note_id)):
         context["what"] = f"Note id='{note_id}' not found"
-        return templates.TemplateResponse("errors/404.html", context)
+        return templates.TemplateResponse(request, "errors/404.html", context)
     material_id = note.get_material_id()
 
     async with asyncio.TaskGroup() as tg:
@@ -264,7 +264,7 @@ async def update_note_view(note_id: UUID, request: Request, success: bool | None
     if not note.link_id:
         context["possible_links"] = get_possible_links_task.result()
 
-    return templates.TemplateResponse("notes/update_note.html", context)
+    return templates.TemplateResponse(request, "notes/update_note.html", context)
 
 
 @router.post("/update", response_class=RedirectResponse)
@@ -351,7 +351,7 @@ async def get_graph(request: Request, material_id: UUID | str | None = None):
         "titles": get_titles_task.result(),
         "material_id": material_id,
     }
-    return templates.TemplateResponse("notes/graph.html", context)
+    return templates.TemplateResponse(request, "notes/graph.html", context)
 
 
 @router.get("/tags")

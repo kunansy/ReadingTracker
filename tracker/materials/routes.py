@@ -37,7 +37,7 @@ async def get_queue(request: Request):
         "mean": mean,
         "DATE_FORMAT": settings.DATE_FORMAT,
     }
-    return templates.TemplateResponse("materials/queue.html", context)
+    return templates.TemplateResponse(request, "materials/queue.html", context)
 
 
 @router.get("/add-view", response_class=HTMLResponse)
@@ -53,7 +53,7 @@ async def insert_material_view(request: Request):
         "material_types": enums.MaterialTypesEnum,
         "material_authors": get_authors_task.result(),
     }
-    return templates.TemplateResponse("materials/add_material.html", context)
+    return templates.TemplateResponse(request, "materials/add_material.html", context)
 
 
 @router.post("/add", response_class=HTMLResponse)
@@ -84,7 +84,7 @@ async def update_material_view(
 
     if not (material := await db.get_material(material_id=material_id)):
         context["what"] = f"'{material_id=}' not found"
-        return templates.TemplateResponse("errors/404.html", context)
+        return templates.TemplateResponse(request, "errors/404.html", context)
 
     tags = await db.get_material_tags()
     context = {
@@ -103,7 +103,7 @@ async def update_material_view(
     if material.tags:
         context["tags"] = material.tags
 
-    return templates.TemplateResponse("materials/update_material.html", context)
+    return templates.TemplateResponse(request, "materials/update_material.html", context)
 
 
 @router.post("/update", response_class=RedirectResponse)
@@ -180,7 +180,7 @@ async def get_reading_materials(request: Request):
         "statistics": statistics,
         "DATE_FORMAT": settings.DATE_FORMAT,
     }
-    return templates.TemplateResponse("materials/reading.html", context)
+    return templates.TemplateResponse(request, "materials/reading.html", context)
 
 
 @router.get("/completed", response_class=HTMLResponse)
@@ -208,7 +208,7 @@ async def get_completed_materials(
         "outlined": search.outlined,
         "DATE_FORMAT": settings.DATE_FORMAT,
     }
-    return templates.TemplateResponse("materials/completed.html", context)
+    return templates.TemplateResponse(request, "materials/completed.html", context)
 
 
 @router.get("/repeat-view", response_class=HTMLResponse)
@@ -222,7 +222,7 @@ async def get_repeat_view(request: Request, only_outlined: Literal["on", "off"] 
         "DATE_FORMAT": settings.DATE_FORMAT,
         "is_outlined": is_outlined,
     }
-    return templates.TemplateResponse("materials/repeat.html", context)
+    return templates.TemplateResponse(request, "materials/repeat.html", context)
 
 
 @router.get("/repeat-queue", response_model=list[db.RepeatingQueue])

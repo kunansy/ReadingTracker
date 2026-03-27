@@ -34,7 +34,7 @@ async def list_cards(
         "titles": titles_task.result(),
         "material_id": material_id or "",
     }
-    return templates.TemplateResponse("cards/cards_list.html", context)
+    return templates.TemplateResponse(request, "cards/cards_list.html", context)
 
 
 @router.get("/has-cards", response_model=schemas.GetHasCards)
@@ -78,7 +78,7 @@ async def add_card_view(
         "notes": notes,
         "notes_with_cards": notes_with_cards_task.result(),
     }
-    return templates.TemplateResponse("cards/add_card.html", context)
+    return templates.TemplateResponse(request, "cards/add_card.html", context)
 
 
 @router.post("/add")
