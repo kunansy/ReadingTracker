@@ -4,8 +4,8 @@
 ![Stable Version](https://img.shields.io/github/v/tag/kunansy/ReadingTracker)
 ![Latest Release](https://img.shields.io/github/v/release/kunansy/ReadingTracker?color=%233D9970)
 
-## Content
-- [What is that](#what-is-that)
+## Contents
+- [What is this?](#what-is-this)
 - [Installation](#installation)
 - [Structure](#structure)
   - [Queue](#queue)
@@ -24,105 +24,114 @@
     - [Read pages statistics](#read-pages-statistics)
     - [Inserted notes statistics](#inserted-notes-statistics)
 
-## What is that?
-The project is expected to help you to read books:
-1. Keep a list of books you want to read;
-2. Keep a list of reading and completed materials;
-3. Calculate statistics;
-4. Track the reading log;
-5. Take notes to help you remember some important points from the material.
+## What is this?
+ReadingTracker helps you manage your reading workflow:
+1. Keep a queue of books/articles/courses you want to read.
+2. Track what you’re currently reading and what you’ve finished.
+3. Collect reading statistics (pages, streaks, etc.).
+4. Maintain a reading log.
+5. Take notes and connect them with tags and links (Zettelkasten-style).
 
 ## Installation
-1. Clone the repo: `git clone https://github.com/kunansy/ReadingTracker`.
-2. Create the Google Drive service account: https://labnol.org/google-api-service-account-220404, first 4 steps.
-3. Create env file and fill it: `cp env.template .env`.
-4. Run docker container: `docker compose up -d --build --force-recreate`
-5. Migrate the database: `docker exec -i -t tracker-app python3 /app/tracker/main.py`
+### Prerequisites
+- Docker + Docker Compose (`docker compose`).
+- A Google Drive service account is optional (only needed for Drive backup/restore).
+
+### Steps
+1. Clone the repo: `git clone https://github.com/kunansy/ReadingTracker`
+2. Create the `.env` file: `cp env.template .env`
+3. Create the Docker network (required by `docker-compose.yml`): `docker network create tracker-net`
+4. Start the services: `docker compose up -d`
+5. Initialize storage (creates DB objects and search indexes): `docker exec -it tracker-app python3 /app/tracker/main.py`
+
+### Optional: Google Drive backup/restore
+If you want to use Google Drive backup/restore, create a Google Drive service account and put its JSON credentials into `DRIVE_CREDS` in your `.env`.
+The guide below is a good starting point (use the first steps about service accounts):
+`https://labnol.org/google-api-service-account-220404`
 
 ## Structure
 ### Queue
-Here there are the books, articles, courses etc. to read with some analytics, 
-the expected reading time according to the mean pages read.
+This page contains books/articles/courses you plan to read, with basic analytics (for example,
+an estimated reading time based on your average pace).
 ![Queue](docs/queue.png)
 
 ## Reading
-Here there are the materials you are currently reading.
+This page contains materials you are currently reading.
 ![Reading](docs/reading.png)
 
 ## Completed
-Here there are the materials that have been read.
+This page contains materials you’ve finished.
 ![Completed](docs/completed.png)
 
 ## Repeat
-Here there are the materials that have been read and need to be read again, repeated after a month or more.
-The priority is equal to the number of months since the material was last read or repeated.
+This page contains materials you want to reread (typically a month later or more).
+The priority equals the number of months since the material was last read/repeated.
 ![Repeat](docs/repeat.png)
 
 ## Reading log
-Here there is the reading log of the materials. The day is red if 
-there are less than average pages, green if there are more.
+This page shows your reading log. A day is red if you read fewer pages than your average,
+and green if you read more.
 ![Reading log](docs/reading_log.png)
 
 ## Notes
-Here there are notes, the most important info from the materials. 
-The user can search a note with Manticoresearch by any text query, 
-filter notes by materials or tags.
+This page contains your notes (key ideas from what you read).
+You can full-text search via Manticoresearch and filter notes by material or tags.
 ![Notes](docs/notes.png)
 
-You should:
+Guidelines:
 * Create small notes with one idea in each note.
-* Add _tags_ that helps to link some ideas into topic groups: `#health`, `#history`, `#linguistics` etc.
+* Add _tags_ to group related ideas: `#health`, `#history`, `#linguistics`, etc.
 * Add _links_ to help connect notes together using [Zettelkasten method](https://writingcooperative.com/zettelkasten-how-one-german-scholar-was-so-freakishly-productive-997e4e0ca125).
-* Each note should be linked to a note that is directed linked to it, as follows: `[[c2ed0ac7-fe4f-4a23-a00c-8f61d16398ea]]`
+* Link notes together using the note ID format: `[[c2ed0ac7-fe4f-4a23-a00c-8f61d16398ea]]`
 
 ### Notes graph
-Also, here there is a graph with all notes.
+This section shows a graph of all notes.
 ![Notes graph](docs/all_notes_graph.png)
 
-Or graph for selected material.
+There is also a graph for a selected material.
 ![Notes graph](docs/material_notes_graph.png)
 
 ### Note context menu
-The user can open a note with context menu, edit it or delete.
+You can open a note from the context menu, edit it, or delete it.
 ![Note context menu](docs/note_context_menu.png)
 
 ### Show the note
-Using these arrows user can iter over all note links.
+Use the arrows to iterate through linked notes.
 ![Open note](docs/open_note.png)
 
-Here is a graph with the current note links.
+This graph shows links for the current note.
 ![Note links](docs/note_links.png)
 
 ### Edit the note
-When edit the note the user can:
+When editing a note you can:
 * Use speech recognition and enter text using a voice (buttons `Start`, `Stop`);
-* Choose some compatible tags (tags are sorted so that the ones used in notes for this material come first);
-* Choose the link to another note: there are only notes with the same tags ordered by tags intersection.
+* Select suggested tags (sorted so tags used in this material’s notes come first);
+* Add a link to another note (candidates are notes with similar tags, ordered by tag overlap).
 
-Tags and links lists might be scrolled left/right.
+Tag and link lists can be scrolled left/right.
 ![Edit note](docs/edit_note.png)
 
 ## System
-Here there are reading graphic, backuping and restoring from the Google Drive.
+This page includes charts and system tools (including backup/restore to Google Drive).
 
-All graphic shows statistics for chosen time span (a week by default).
+All charts show statistics for the selected time span (a week by default).
 ![System](docs/system.png)
 
 ### Material reading graphic
-How the material was being reading:
+How the material was read over time:
 ![Reading material graphic](docs/reading_material.png)
 
 ### Tracker statistics
 ![Tracker statistics](docs/tracker_statistics.png)
 
 ### Read pages statistics
-Statistics of read pages for the time span.
+Read pages statistics for the selected time span.
 
 * `Would be total` — how many pages would be read if there were no empty days;
 * A day when a material was completed is marked in green.
 ![Read pages](docs/read_pages.png)
 
 ### Inserted notes statistics
-Statistics of inserted notes for the time span.
+Inserted notes statistics for the selected time span.
 
 ![Inserted notes](docs/inserted_notes.png)
