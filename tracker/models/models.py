@@ -141,6 +141,6 @@ NoteRepeatsHistory = Table(
     metadata,
     PrimaryKey("repeat_id"),
     Column("note_id", UUID, index=True),
-    Column("user_id", BigInteger, index=True, comment="Telegram user id"),
+    Column("user_id", BigInteger, comment="Telegram user id"),
     Column("repeated_at", DateTime, default=_utc_now),
 )
