@@ -26,14 +26,6 @@ def Column(*args, **kwargs) -> sqlalchemy.Column:
     return sqlalchemy.Column(*args, **kwargs)
 
 
-def ForeignKey(*args, **kwargs) -> sqlalchemy.ForeignKey:
-    """Make foreign keys onupdate = 'CASCADE' ondelete = 'RESTRICT' by default."""
-    kwargs["onupdate"] = kwargs.get("onupdate", "CASCADE")
-    kwargs["ondelete"] = kwargs.get("ondelete", "RESTRICT")
-
-    return sqlalchemy.ForeignKey(*args, **kwargs)
-
-
 def PrimaryKey(*args, **kwargs) -> sqlalchemy.Column:
     if len(args) == 1:
         args = *args, UUID
@@ -89,7 +81,7 @@ ReadingLog = Table(
     "reading_log",
     metadata,
     PrimaryKey("log_id"),
-    Column("material_id", ForeignKey("materials.material_id"), index=True),
+    Column("material_id", UUID, index=True),
     Column("count", Integer),
     Column("date", Date, default=_utc_now),
     UniqueConstraint("material_id", "date", name="uix_reading_log"),
@@ -99,7 +91,7 @@ Statuses = Table(
     "statuses",
     metadata,
     PrimaryKey("status_id"),
-    Column("material_id", ForeignKey("materials.material_id"), unique=True, index=True),
+    Column("material_id", UUID, unique=True, index=True),
     Column("started_at", DateTime),
     Column("completed_at", DateTime, nullable=True),
 )
@@ -109,10 +101,10 @@ Notes = Table(
     metadata,
     PrimaryKey("note_id"),
     Column("note_number", Serial),
-    Column("material_id", ForeignKey("materials.material_id"), index=True),
+    Column("material_id", UUID, index=True),
     Column(
         "link_id",
-        ForeignKey("notes.note_id"),
+        UUID,
         nullable=True,
         comment="By Zettelkasten method",
     ),
@@ -130,8 +122,8 @@ Cards = Table(
     "cards",
     metadata,
     PrimaryKey("card_id"),
-    Column("material_id", ForeignKey("materials.material_id"), index=True),
-    Column("note_id", ForeignKey("notes.note_id"), index=True),
+    Column("material_id", UUID, index=True),
+    Column("note_id", UUID, index=True),
     Column("question", Unicode),
     Column("answer", Unicode, nullable=True),
     Column("added_at", DateTime, default=_utc_now),
@@ -141,7 +133,7 @@ Repeats = Table(
     "repeats",
     metadata,
     PrimaryKey("repeat_id"),
-    Column("material_id", ForeignKey("materials.material_id"), index=True),
+    Column("material_id", UUID, index=True),
     Column("repeated_at", DateTime, default=_utc_now),
 )
 
@@ -149,7 +141,7 @@ NoteRepeatsHistory = Table(
     "note_repeats_history",
     metadata,
     PrimaryKey("repeat_id"),
-    Column("note_id", ForeignKey("notes.note_id"), index=True),
+    Column("note_id", UUID, index=True),
     Column("user_id", BigInteger, index=True, comment="Telegram user id"),
     Column("repeated_at", DateTime, default=_utc_now),
 )
