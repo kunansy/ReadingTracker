@@ -34,14 +34,13 @@ async def restore(*, dump_path: Path | None = None) -> db.DBSnapshot:
     logger.info("Restoring started")
     start_time = time.perf_counter()
 
+    if dump_path:
+        dump = _read_local_dump(dump_path)
+    else:
+        dump = await get_dump()
+
+    snapshot = DBSnapshot.from_dump(dump)
     async with database.transaction() as ses:
-        if dump_path:
-            dump = _read_local_dump(dump_path)
-        else:
-            dump = await get_dump()
-
-        snapshot = DBSnapshot.from_dump(dump)
-
         await database.recreate_db()
         await db.restore_db(conn=ses, snapshot=snapshot)
         snapshot_dict = snapshot.to_dict()
