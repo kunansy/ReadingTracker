@@ -15,14 +15,6 @@ x-cache-img: &cache-img
 x-tracker-img: &tracker-img
   image: kunansy/reading_tracker:246
 
-x-logging: &log
-  logging:
-    driver: json-file
-    options:
-      max-size: "1m"
-      max-file: "3"
-      compress: "true"
-
 services:
   tracker-db:
     <<: *db-img
@@ -43,7 +35,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-    <<: *log
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "3"
+        compress: "true"
 
   tracker-search:
     <<: *search-img
@@ -68,7 +65,12 @@ services:
     environment:
       - MCL=1
       - TELEMETRY=0
-    <<: *log
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "3"
+        compress: "true"
 
   tracker-backup:
     <<: *backup-img
@@ -84,7 +86,12 @@ services:
       - tracker-net
     healthcheck:
       test: exit 0
-    <<: *log
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "3"
+        compress: "true"
 
 #  tracker-cache:
 #    <<: *cache-img
@@ -105,7 +112,12 @@ services:
 #      interval: 5s
 #      timeout: 3s
 #      retries: 3
-#    <<: *log
+#    logging:
+#      driver: json-file
+#      options:
+#        max-size: "1m"
+#        max-file: "3"
+#        compress: "true"
 
   tracker-app:
     <<: *tracker-img
@@ -128,7 +140,12 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-    <<: *log
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "3"
+        compress: "true"
 
   tracker-matview-refresher:
     <<: *tracker-img
@@ -140,7 +157,12 @@ services:
       - tracker-net
     healthcheck:
       test: "exit 0"
-    <<: *log
+    logging:
+      driver: json-file
+      options:
+        max-size: "1m"
+        max-file: "3"
+        compress: "true"
 
 volumes:
   database-volume:
