@@ -7,7 +7,6 @@ from sqlalchemy import (
     Boolean,
     Date,
     DateTime,
-    Enum,
     Integer,
     MetaData,
     Table,
@@ -64,7 +63,7 @@ Materials = Table(
     Column("pages", Integer),
     Column(
         "material_type",
-        Enum(enums.MaterialTypesEnum),
+        Unicode(50),
         default=enums.MaterialTypesEnum.book,
     ),
     Column("tags", Unicode(256), nullable=True),
