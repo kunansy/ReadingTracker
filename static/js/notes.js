@@ -15,87 +15,6 @@ async function addTag(tag, newLine = false) {
     tags.textContent = tags.value;
 }
 
-const recordAudio = async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-    const mediaRecorder = new MediaRecorder(stream);
-    const loader = document.getElementById("loader");
-    let audioChunks = [];
-
-    mediaRecorder.addEventListener("dataavailable", event => {
-        audioChunks.push(event.data);
-    });
-
-    document.getElementById("start").addEventListener("click", () => {
-        console.log("Listening started");
-        audioChunks = [];
-        mediaRecorder.start();
-    });
-    document.getElementById("stop").addEventListener("click", async () => {
-        console.log("Listening stopped");
-        const audio = await stop();
-        console.log("Result audio ", audio.audioBlob.size);
-        let fd = new FormData();
-        fd.append("data", audio.audioBlob, "tmp.wav");
-
-        document.body.classList.add("loader-background");
-        loader.classList.add("loader");
-
-        fetch(
-            'https://kunansy.ru/transcript',
-            {
-                method: 'POST',
-                body: fd,
-                headers: {'Content-Type': 'multipart/form-data'}
-            }
-        ).then(async (resp) => {
-            let json = await resp.json();
-            let noteContent = document.getElementById('input-content');
-            let newContent = '';
-
-            if (noteContent.value.length === 0) {
-                newContent = json['transcript'];
-            } else {
-                newContent = noteContent.value + ' ' + json['transcript'];
-            }
-
-            noteContent.textContent = newContent;
-            noteContent.value = newContent;
-        }).catch((error) => {
-            console.log(`Server error: ${error}`);
-        }).finally(() => {
-            audioChunks = [];
-            loader.classList.remove("loader");
-            document.body.classList.remove("loader-background");
-        });
-    })
-
-    const stop = () =>
-        new Promise(resolve => {
-            mediaRecorder.addEventListener("stop", () => {
-                const audioBlob = new Blob(audioChunks, { type: "audio/mpeg" });
-                resolve({ audioBlob });
-            });
-
-            mediaRecorder.stop();
-        });
-    return mediaRecorder;
-};
-
-let isStarted = false;
-
-if (document.getElementById("start")) {
-    document.getElementById('start').addEventListener("click", async () => {
-        if (isStarted) {
-            return;
-        }
-
-        isStarted = true;
-        const recorder = await recordAudio();
-        console.log("Listening started");
-        recorder.start();
-    });
-}
-
 const getTags = async (material_id) => {
     let resp = await fetch(`/notes/tags?material_id=${material_id}`, {
         method: 'GET',
@@ -157,6 +76,7 @@ const sleep = async (seconds) => {
 const contentInput = document.getElementById("input-content");
 if (contentInput) {
     contentInput.addEventListener("keyup", async (e) => {
+        // todo
         await sleep(2);
         const text = e.target.value;
 
