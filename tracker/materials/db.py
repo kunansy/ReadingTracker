@@ -968,7 +968,7 @@ def parse_habr(html: str) -> dict[str, str]:
     soup = bs4.BeautifulSoup(html, "lxml")
 
     title = authors = None
-    snippet = cast("bs4.Tag", soup.find("div", {"class": "tm-article-snippet"}))
+    snippet = cast("bs4.Tag", soup.find("div", {"class": "tm-article-presenter__header"}))
     if snippet:
         title = snippet.find("h1", {"class": "tm-title"})
         authors = snippet.find("a", {"class": "tm-user-info__username"})
