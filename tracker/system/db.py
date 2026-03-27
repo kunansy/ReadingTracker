@@ -40,6 +40,7 @@ async def _get_graphic_data(*, material_id: UUID, last_days: int) -> ReadingData
 async def get_read_material_titles() -> dict[UUID, str]:
     stmt = sa.select(models.Materials.c.material_id, models.Materials.c.title).join(
         models.Statuses,
+        models.Materials.c.material_id == models.Statuses.c.material_id,
     )
 
     async with database.session() as ses:
