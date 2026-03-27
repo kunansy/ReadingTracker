@@ -52,17 +52,19 @@ async def add_log_record_view(request: Request, material_id: UUID | None = None)
         log_material_id = get_reading_material_id.result()
 
     completion_info = await _completion_info(log_material_id)
-    # here material must exist
-    completion_info = cast("schemas.CompletionInfoSchema", completion_info)
 
     context = {
         "request": request,
         "material_id": log_material_id,
         "titles": get_titles.result(),
         "date": database.utcnow(),
-        "pages_read": completion_info.pages_read,
-        "material_pages": completion_info.material_pages,
     }
+
+    if completion_info:
+        completion_info = cast("schemas.CompletionInfoSchema", completion_info)
+        context["pages_read"] = completion_info.pages_read
+        context["material_pages"] = completion_info.material_pages
+
     return templates.TemplateResponse("reading_log/add_log_record.html", context)
 
 
