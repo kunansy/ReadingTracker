@@ -36,7 +36,7 @@ class DBSnapshot(NamedTuple):
         }
 
     @classmethod
-    def from_dump(cls, dump_data: DUMP_TYPE) -> "DBSnapshot":
+    def from_dump(cls, dump_data: DUMP_TYPE) -> DBSnapshot:
         tables = []
         for table_name, values in dump_data.items():
             rows = [

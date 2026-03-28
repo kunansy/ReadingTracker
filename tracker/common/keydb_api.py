@@ -36,7 +36,7 @@ def _parse_url(url: str) -> ConnectKwargs:  # noqa: C901
 
         try:
             kwargs[name] = parser(value)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             raise ValueError(
                 f"Invalid value for `{name}` in connection URL.",
             ) from None
