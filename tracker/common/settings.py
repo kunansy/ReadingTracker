@@ -31,6 +31,14 @@ TRACKER_URL = env(
 
 DEBUG_MODE = env.bool("DEBUG_MODE", False)
 
+# When True, GET /materials/* and /notes/* serve the unified React SPA (one Vite bundle).
+# Legacy env vars MATERIALS_SPA_ENABLED / NOTES_SPA_ENABLED are OR'd in for compatibility.
+APP_SPA_ENABLED = (
+    env.bool("APP_SPA_ENABLED", False)
+    or env.bool("MATERIALS_SPA_ENABLED", False)
+    or env.bool("NOTES_SPA_ENABLED", False)
+)
+
 with env.prefixed("CACHE_"):
     _CACHE_URL = env("URL", "keydb://tracker-cache")
     _CACHE_PORT = env.int("PORT", 6379)
