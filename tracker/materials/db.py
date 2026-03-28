@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import re
 import time
 from decimal import Decimal
 from typing import Any, cast
@@ -1008,24 +1009,27 @@ def parse_habr(html: str) -> HabrArticle:
     return HabrArticle(title=cast("str", title), authors=cast("str", authors))
 
 
+_YOUTUBE_ISO_DURATION = re.compile(
+    r"^PT(?:(?P<h>\d+)H)?(?:(?P<m>\d+)M)?(?:(?P<s>\d+)S)?$",
+)
+
+
 def _parse_duration(duration: str) -> int:
-    duration = (
-        duration.replace("PT", "").replace("H", " ").replace("M", " ").replace("S", "")
-    )
+    stripped = duration.strip()
+    if not stripped:
+        return 0
+    match = _YOUTUBE_ISO_DURATION.fullmatch(stripped)
+    if not match:
+        msg = f"unsupported duration format: {duration!r}"
+        raise ValueError(msg)
+    h = int(match.group("h") or 0)
+    minutes = int(match.group("m") or 0)
+    s = int(match.group("s") or 0)
+    total_seconds = h * 3600 + minutes * 60 + s
+    return round(total_seconds / 60)
 
-    parts = duration.split()
-    total = 0
 
-    if len(parts) == 3:  # noqa: PLR2004
-        total += int(parts[0]) * 60
-        parts.pop(0)
-    if len(parts) == 2:  # noqa: PLR2004
-        total += int(parts[0])
-        parts.pop(0)
-    if len(parts) == 1:
-        total += round(int(parts[0]) / 60)
 
-    return total
 
 
 async def parse_youtube(video_id: str, *, http_timeout: int = 5) -> dict[str, str | int]:
