@@ -50,17 +50,27 @@
             <p> Min: {{ ms.min_record.count }} {{ items.lower() }}, {{ ms.min_record.date.strftime(DATE_FORMAT) }} </p>
         {%- endif -%}
 
-        <form class="complete" action="/materials/complete/{{ material.material_id }}" METHOD="POST" title="Complete the material id={{ material.material_id }}">
-            <button type="submit" class="submit-button celebrate-btn" > Complete </button>
-        </form>
+        <div class="complete" title="Complete the material id={{ material.material_id }}">
+            <button type="button" class="submit-button celebrate-btn complete-material-open" data-material-id="{{ material.material_id }}"> Complete </button>
+        </div>
     </div>
     {% endfor %}
+
+    <dialog id="complete-material-dialog" class="complete-material-dialog">
+        <p class="complete-material-dialog__title">Completion date</p>
+        <p><label class="complete-material-dialog__label">Date <input type="date" id="complete-material-date" class="complete-material-dialog__date" required></label></p>
+        <div class="complete-material-dialog__actions">
+            <button type="button" id="complete-material-cancel" class="btn btn-secondary">Cancel</button>
+            <button type="button" id="complete-material-confirm" class="submit-button celebrate-btn">Complete</button>
+        </div>
+    </dialog>
 
     {% from 'arrows.html' import arrows %}
     {% call arrows() %}
     {% endcall %}
 
     <script src="{{ url_for('static', path='js/celebrate.js')}}"></script>
+    <script src="{{ url_for('static', path='js/complete-reading.js')}}"></script>
 {%- else -%}
     {% import 'errors/not_found.html' as not_found %}
     {% call not_found.not_found('reading materials') %} {% endcall %}
