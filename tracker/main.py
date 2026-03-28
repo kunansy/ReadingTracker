@@ -10,13 +10,19 @@ from fastapi.templating import Jinja2Templates
 from starlette_exporter import PrometheusMiddleware, handle_metrics
 
 from tracker.api.v1.materials import router as api_v1_materials_router
+from tracker.api.v1.notes import router as api_v1_notes_router
 from tracker.cards.routes import router as cards_router
 from tracker.common import database, keydb_api, manticoresearch, settings
 from tracker.common.logger import logger
 from tracker.materials.action_routes import router as materials_action_router
 from tracker.materials.html_routes import router as materials_html_router
 from tracker.materials.spa import router as materials_spa_router
-from tracker.notes.routes import router as notes_router
+from tracker.notes.action_routes import router as notes_action_router
+from tracker.notes.html_routes import (
+    note_detail_router as notes_note_detail_router,
+    router as notes_html_router,
+)
+from tracker.notes.spa import router as notes_spa_router
 from tracker.reading_log.routes import router as reading_log_router
 from tracker.system.routes import router as system_router
 
@@ -68,12 +74,17 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 app.include_router(api_v1_materials_router, prefix="/api/v1")
+app.include_router(api_v1_notes_router, prefix="/api/v1")
 app.include_router(reading_log_router)
-app.include_router(notes_router)
+app.include_router(notes_action_router)
 app.include_router(materials_action_router)
-if settings.MATERIALS_SPA_ENABLED:
+if settings.APP_SPA_ENABLED:
+    app.include_router(notes_spa_router)
     app.include_router(materials_spa_router)
+    # Single-note and update pages are still server-rendered (not in React yet).
+    app.include_router(notes_note_detail_router, prefix="/notes")
 else:
+    app.include_router(notes_html_router)
     app.include_router(materials_html_router)
 app.include_router(cards_router)
 app.include_router(system_router)

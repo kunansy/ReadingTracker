@@ -38,7 +38,7 @@ WORKDIR /app
 
 COPY /templates ./templates
 COPY /static ./static
-COPY --from=spa /app/static/materials-spa ./static/materials-spa
+COPY --from=spa /app/static/app-spa ./static/app-spa
 COPY /kafka ./kafka
 COPY /tracker ./tracker
 COPY VERSION ./VERSION

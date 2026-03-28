@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 
-import { apiFetch } from "../api";
+import { apiFetch } from "../api/materials";
 import { useAltchHotkeys } from "../hooks/useAltchHotkeys";
 import type { MaterialType } from "../types";
 

@@ -3,9 +3,9 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   plugins: [react()],
-  base: "/static/materials-spa/",
+  base: "/static/app-spa/",
   build: {
-    outDir: "../static/materials-spa",
+    outDir: "../static/app-spa",
     emptyOutDir: true,
   },
   server: {

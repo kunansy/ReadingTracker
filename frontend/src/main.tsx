@@ -10,6 +10,8 @@ import "../../static/materials/reading.css";
 import "../../static/materials/completed.css";
 import "../../static/materials/repeating_queue.css";
 import "../../static/materials/add_material.css";
+import "../../static/notes/notes.css";
+import "../../static/notes/add_note.css";
 
 const rootEl = document.getElementById("root");
 if (!rootEl) {
@@ -18,7 +20,7 @@ if (!rootEl) {
 
 createRoot(rootEl).render(
   <StrictMode>
-    <BrowserRouter basename="/materials">
+    <BrowserRouter>
       <App />
     </BrowserRouter>
   </StrictMode>,

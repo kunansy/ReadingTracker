@@ -40,6 +40,11 @@ ignore = [
 "tracker/materials/html_routes.py" = ["ANN201"]
 "tracker/materials/action_routes.py" = ["ANN201"]
 "tracker/materials/spa.py" = ["ANN201"]
+"tracker/notes/html_routes.py" = ["ANN201"]
+"tracker/notes/action_routes.py" = ["ANN201"]
+"tracker/notes/spa.py" = ["ANN201"]
+"tracker/notes/listing.py" = ["ANN201"]
+"tracker/notes/links.py" = ["ANN201"]
 "tracker/main.py" = ["ANN201"]
 # == True for sql
 "tracker/*/db.py" = ["E711", "E712"]
