@@ -2,7 +2,7 @@
 unsafe-fixes = true
 line-length = 90
 indent-width = 4
-target-version = "py313"
+target-version = "py314"
 exclude = ["backup_pb2_grpc.py", "backup_pb2.pyi"]
 extend-exclude = ["tests"]
 cache-dir = "/tmp/ruff-cache/"
@@ -74,7 +74,7 @@ lines-after-imports = 2
 suppress-none-returning = true
 
 [tool.mypy]
-python_version = 3.13
+python_version = 3.14
 ignore_missing_imports = true
 check_untyped_defs = true
 exclude = "tests/"
@@ -101,7 +101,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 
 [tool.poetry.dependencies]
-python = "^3.13"
+python = "^3.14"
 SQLAlchemy = "~2.0.0"
 pydantic = "~2.12.0"
 environs = "~14.6.0"
