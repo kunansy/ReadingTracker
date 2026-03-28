@@ -54,21 +54,23 @@ async def test_calculate_materials_stat(material_id):
 
 async def test_get_start_date():
     records = await db.get_log_records()
-    start_date = await st._get_start_date()
+    start_date = st._calc_started_at(records)
 
     assert min(records, key=lambda record: record.date).date == start_date
 
 
 async def test_get_last_date():
     records = await db.get_log_records()
-    last_date = await st._get_last_date()
+    last_date = st._calc_finished_at(records)
 
     assert max(records, key=lambda record: record.date).date == last_date
 
 
 async def test_get_log_duration():
-    duration = await st._get_log_duration()
     records = await db.get_log_records()
+    start_date = st._calc_started_at(records)
+    last_date = st._calc_finished_at(records)
+    duration = st._calc_log_duration(start_date, last_date)
 
     expected_duration = (
         max(records, key=lambda record: record.date).date
@@ -86,7 +88,12 @@ async def test_get_total_read_pages():
 
 
 async def test_get_lost_days():
-    lost_days = await st._get_lost_days()
+    records = await db.get_log_records()
+    start_date = st._calc_started_at(records)
+    last_date = st._calc_finished_at(records)
+    duration = st._calc_log_duration(start_date, last_date)
+    lost_days = st._calc_lost_days(duration, records)
+
     _dt = models.ReadingLog.c.date
     expected_duration_stmt = sa.select(
         sa.func.max(_dt) - sa.func.min(_dt) + 1
@@ -129,11 +136,9 @@ async def test_get_means():
         assert round(expected[material_type], 2) == mean_
 
 
-@pytest.mark.skip
 async def test_get_median_pages_read_per_day():
-    # TODO: group by date
-    median = await st._get_median_pages_read_per_day()
     records = await db.get_log_records()
+    median = st._calc_median_pages_read_per_day(records)
 
     counts = sorted(record.count for record in records)
     if (length := len(counts)) % 2:
@@ -218,9 +223,14 @@ async def test_get_max_record_nof_found():
 
 
 async def test_would_be_total():
+    logs = await db.get_log_records()
+    started_at = st._calc_started_at(logs)
+    finished_at = st._calc_finished_at(logs)
+    duration = st._calc_log_duration(started_at, finished_at)
+
     mean_dict = await st.get_means()
     total_pages = await st._get_read_pages()
-    lost_time = await st._get_lost_days()
+    lost_time = st._calc_lost_days(duration, logs)
 
     would_be_total = st._would_be_total(
         means=mean_dict,
