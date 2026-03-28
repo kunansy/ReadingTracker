@@ -300,4 +300,10 @@ async def parse_youtube_video(link: HttpUrl):
     video_id = link.query_params()[0][1]
     video_info = await db.parse_youtube(video_id)
 
-    return {"link": str(link), "type": "lecture", **video_info}
+    return schemas.ParsedMaterial(
+        title=video_info.title,
+        authors=video_info.authors,
+        duration=video_info.duration,
+        type=enums.MaterialTypesEnum.lecture,
+        link=str(link),
+    )

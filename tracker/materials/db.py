@@ -1029,10 +1029,13 @@ def _parse_duration(duration: str) -> int:
     return round(total_seconds / 60)
 
 
+class YoutubeVideo(schemas.CustomBaseModel):
+    title: str
+    authors: str
+    duration: int
 
 
-
-async def parse_youtube(video_id: str, *, http_timeout: int = 5) -> dict[str, str | int]:
+async def parse_youtube(video_id: str, *, http_timeout: int = 5) -> YoutubeVideo:
     params = {
         "part": "snippet,contentDetails",
         "id": video_id,
@@ -1050,5 +1053,8 @@ async def parse_youtube(video_id: str, *, http_timeout: int = 5) -> dict[str, st
     title = item["snippet"]["title"]
     authors = item["snippet"]["channelTitle"]
     duration = item["contentDetails"]["duration"]
+    parsed_duration = _parse_duration(duration)
 
-    return {"title": title, "authors": authors, "duration": _parse_duration(duration)}
+    return YoutubeVideo(
+        title=title, authors=authors, duration=parsed_duration
+    )
