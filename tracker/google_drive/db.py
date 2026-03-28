@@ -1,14 +1,18 @@
 import datetime
-from pathlib import Path
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 from uuid import UUID
 
 import sqlalchemy.sql as sa
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracker.common import database, settings
 from tracker.common.logger import logger
 from tracker.models import models
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
+
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 JSON_FIELD_TYPES = str | int
@@ -36,7 +40,7 @@ class DBSnapshot(NamedTuple):
         }
 
     @classmethod
-    def from_dump(cls, dump_data: DUMP_TYPE) -> "DBSnapshot":
+    def from_dump(cls, dump_data: DUMP_TYPE) -> DBSnapshot:
         tables = []
         for table_name, values in dump_data.items():
             rows = [

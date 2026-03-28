@@ -1,11 +1,15 @@
 import asyncio
-import uuid
-from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
 
 from aiokafka import AIOKafkaProducer, errors
 
 from tracker.common import logger, settings
+
+
+if TYPE_CHECKING:
+    import uuid
+    from collections.abc import AsyncIterator
 
 
 @asynccontextmanager

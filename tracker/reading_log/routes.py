@@ -1,6 +1,5 @@
 import asyncio
-from typing import Annotated, Any, cast
-from uuid import UUID
+from typing import TYPE_CHECKING, Annotated, Any, cast
 
 from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, ORJSONResponse, RedirectResponse
@@ -9,6 +8,10 @@ from fastapi.templating import Jinja2Templates
 from tracker.common import database, settings
 from tracker.materials import db as materials_db
 from tracker.reading_log import db, schemas
+
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 
 router = APIRouter(

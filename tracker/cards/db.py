@@ -1,6 +1,4 @@
-import datetime
-from typing import cast
-from uuid import UUID
+from typing import TYPE_CHECKING, cast
 
 import sqlalchemy.sql as sa
 
@@ -9,6 +7,11 @@ from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
 from tracker.notes import db as notes_db
+
+
+if TYPE_CHECKING:
+    import datetime
+    from uuid import UUID
 
 
 class Card(CustomBaseModel):

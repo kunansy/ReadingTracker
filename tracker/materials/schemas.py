@@ -1,10 +1,13 @@
-from typing import Annotated, Literal
-from uuid import UUID
+from typing import TYPE_CHECKING, Annotated, Literal
 
 from pydantic import BeforeValidator, HttpUrl, conint
 
 from tracker.common.schemas import CustomBaseModel, skip_empty_value
 from tracker.models import enums
+
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 
 class Material(CustomBaseModel):

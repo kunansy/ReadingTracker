@@ -2,10 +2,9 @@ import asyncio
 import base64
 import datetime
 import statistics
-from collections.abc import Generator, Iterator
 from decimal import Decimal
 from io import BytesIO
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa
@@ -16,7 +15,12 @@ from tracker.common import database, settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
-from tracker.system import schemas
+
+
+if TYPE_CHECKING:
+    from collections.abc import Generator, Iterator
+
+    from tracker.system import schemas
 
 
 class TrendException(database.DatabaseException):

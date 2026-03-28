@@ -1,7 +1,6 @@
 import asyncio
-import datetime
 import statistics
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 import sqlalchemy.sql as sa
 from pydantic import computed_field
@@ -11,6 +10,11 @@ from tracker.common.schemas import CustomBaseModel
 from tracker.materials.db import _convert_duration_to_period
 from tracker.models import enums, models
 from tracker.reading_log import db
+
+
+if TYPE_CHECKING:
+    import datetime
+    from uuid import UUID
 
 
 class LogStatistics(CustomBaseModel):

@@ -1,8 +1,6 @@
 import datetime
-from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Any
 
 import orjson
 import sqlalchemy.sql as sa
@@ -14,6 +12,11 @@ from tracker.common import settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import models
+
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+    from uuid import UUID
 
 
 class DatabaseException(Exception):

@@ -1,13 +1,11 @@
 import asyncio
 import itertools
-from collections.abc import Iterable
-from typing import Annotated, Any, cast
+from typing import TYPE_CHECKING, Annotated, Any, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
-from pydantic import NonNegativeInt
 
 from tracker.common import kafka, manticoresearch, settings
 from tracker.common.logger import logger
@@ -18,6 +16,12 @@ from tracker.notes import (
     db,
     schemas,
 )
+
+
+if TYPE_CHECKING:
+    from collections.abc import Iterable
+
+    from pydantic import NonNegativeInt
 
 
 router = APIRouter(

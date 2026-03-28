@@ -1,6 +1,5 @@
 import time
-from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import orjson
 from grpc.aio import insecure_channel as grpc_chan
@@ -10,6 +9,10 @@ from tracker.common.logger import logger
 from tracker.google_drive import db
 from tracker.google_drive.db import DBSnapshot
 from tracker.protos import backup_pb2, backup_pb2_grpc
+
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 class GoogleDriveException(Exception):

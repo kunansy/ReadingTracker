@@ -1,12 +1,16 @@
 import asyncio
 import re
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 from tracker.common.logger import logger
 from tracker.notes import (
     db as notes_db,
     schemas,
 )
+
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 
 def _delete_tags(text: str, tags: set[str]) -> str:

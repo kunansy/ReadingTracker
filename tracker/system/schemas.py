@@ -1,10 +1,15 @@
 import datetime
+from typing import TYPE_CHECKING
 
 from pydantic import Field, NonNegativeInt, field_validator
-from pydantic_core.core_schema import ValidationInfo
 
 from tracker.common.schemas import CustomBaseModel
-from tracker.models import enums
+
+
+if TYPE_CHECKING:
+    from pydantic_core.core_schema import ValidationInfo
+
+    from tracker.models import enums
 
 
 def _now() -> datetime.date:
@@ -30,7 +35,7 @@ class GetSpanReportRequest(CustomBaseModel):
     def size(self) -> int:
         return (self.stop - self.start).days + 1
 
-    def create_span_ago(self, ago: int) -> "GetSpanReportRequest":
+    def create_span_ago(self, ago: int) -> GetSpanReportRequest:
         if ago <= 0:
             raise ValueError(f"Ago must be > 0, {ago!r} found")
 
