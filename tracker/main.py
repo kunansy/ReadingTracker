@@ -9,10 +9,13 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette_exporter import PrometheusMiddleware, handle_metrics
 
+from tracker.api.v1.materials import router as api_v1_materials_router
 from tracker.cards.routes import router as cards_router
 from tracker.common import database, keydb_api, manticoresearch, settings
 from tracker.common.logger import logger
-from tracker.materials.routes import router as materials_router
+from tracker.materials.action_routes import router as materials_action_router
+from tracker.materials.html_routes import router as materials_html_router
+from tracker.materials.spa import router as materials_spa_router
 from tracker.notes.routes import router as notes_router
 from tracker.reading_log.routes import router as reading_log_router
 from tracker.system.routes import router as system_router
@@ -64,16 +67,43 @@ app.add_route("/metrics", handle_metrics)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
+app.include_router(api_v1_materials_router, prefix="/api/v1")
 app.include_router(reading_log_router)
 app.include_router(notes_router)
-app.include_router(materials_router)
+app.include_router(materials_action_router)
+if settings.MATERIALS_SPA_ENABLED:
+    app.include_router(materials_spa_router)
+else:
+    app.include_router(materials_html_router)
 app.include_router(cards_router)
 app.include_router(system_router)
+
+
+def _api_v1_json_detail(exc: HTTPException) -> str:
+    detail = exc.detail
+    if isinstance(detail, str):
+        return detail
+    return str(detail)
+
+
+def _api_v1_validation_detail(exc: RequestValidationError) -> str:
+    parts = []
+    for err in exc.errors():
+        loc = ".".join(str(x) for x in err.get("loc", ()))
+        msg = err.get("msg", "")
+        parts.append(f"{loc}: {msg}")
+    return "; ".join(parts) if parts else repr(exc)
 
 
 @app.exception_handler(database.DatabaseException)
 async def database_exception_handler(request: Request, exc: database.DatabaseException):
     logger.exception("Database exception occurred, (%s), %s", request.url, str(exc))
+
+    if request.url.path.startswith("/api/v1"):
+        return ORJSONResponse(
+            status_code=500,
+            content={"detail": f"Database error: {exc}"},
+        )
 
     context = {
         "request": request,
@@ -98,6 +128,12 @@ async def manticore_exception_handler(
         str(exc),
     )
 
+    if request.url.path.startswith("/api/v1"):
+        return ORJSONResponse(
+            status_code=500,
+            content={"detail": f"Manticoresearch error: {exc}"},
+        )
+
     context = {
         "request": request,
         "error": {
@@ -114,6 +150,12 @@ async def manticore_exception_handler(
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     logger.exception("Validation error occurred, (%s), %s", request.url, str(exc))
 
+    if request.url.path.startswith("/api/v1"):
+        return ORJSONResponse(
+            status_code=422,
+            content={"detail": _api_v1_validation_detail(exc)},
+        )
+
     context = {
         "request": request,
         "error": {"type": exc.__class__.__name__, "args": exc.args, "json": repr(exc)},
@@ -125,6 +167,12 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     logger.exception("HTTP exception occurred, (%s), %s", request.url, str(exc))
+
+    if request.url.path.startswith("/api/v1"):
+        return ORJSONResponse(
+            status_code=exc.status_code,
+            content={"detail": _api_v1_json_detail(exc)},
+        )
 
     context = {"request": request, "what": repr(exc)}
 
