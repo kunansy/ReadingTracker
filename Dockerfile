@@ -1,3 +1,13 @@
+FROM node:22-alpine AS spa
+
+WORKDIR /app/frontend
+COPY frontend/package.json ./
+RUN npm install
+
+COPY frontend/ ./
+COPY static /app/static
+RUN npm run build
+
 FROM python:3.14-slim-bookworm
 
 LABEL maintainer="<k@kunansy.ru>"
@@ -28,6 +38,7 @@ WORKDIR /app
 
 COPY /templates ./templates
 COPY /static ./static
+COPY --from=spa /app/static/materials-spa ./static/materials-spa
 COPY /kafka ./kafka
 COPY /tracker ./tracker
 COPY VERSION ./VERSION

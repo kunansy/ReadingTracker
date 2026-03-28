@@ -31,6 +31,10 @@ TRACKER_URL = env(
 
 DEBUG_MODE = env.bool("DEBUG_MODE", False)
 
+# When True, GET /materials/* serves the React SPA; legacy Jinja routes stay available
+# when this flag is False. JSON API is always at /api/v1/materials/.
+MATERIALS_SPA_ENABLED = env.bool("MATERIALS_SPA_ENABLED", False)
+
 with env.prefixed("CACHE_"):
     _CACHE_URL = env("URL", "keydb://tracker-cache")
     _CACHE_PORT = env.int("PORT", 6379)
