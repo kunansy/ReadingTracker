@@ -1,11 +1,7 @@
-from typing import TYPE_CHECKING
+from uuid import UUID
 
 from tracker.common import keydb_api
 from tracker.notes import db
-
-
-if TYPE_CHECKING:
-    from uuid import UUID
 
 
 _ALL_NOTE_FIELDS = db.Note.model_fields.keys()

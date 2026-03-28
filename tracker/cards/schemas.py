@@ -1,12 +1,9 @@
-from typing import TYPE_CHECKING, Annotated, Self
+from typing import Annotated, Self
+from uuid import UUID
 
 from pydantic import BeforeValidator, NonNegativeInt, model_validator
 
 from tracker.common.schemas import CustomBaseModel, skip_empty_value
-
-
-if TYPE_CHECKING:
-    from uuid import UUID
 
 
 class GetHasCards(CustomBaseModel):

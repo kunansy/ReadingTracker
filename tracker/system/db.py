@@ -1,7 +1,8 @@
 import base64
 import datetime
 from io import BytesIO
-from typing import TYPE_CHECKING, NamedTuple
+from typing import NamedTuple
+from uuid import UUID
 
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mtick
@@ -15,10 +16,6 @@ from tracker.reading_log import (
     db as logs_db,
     statistics,
 )
-
-
-if TYPE_CHECKING:
-    from uuid import UUID
 
 
 class ReadingData(NamedTuple):

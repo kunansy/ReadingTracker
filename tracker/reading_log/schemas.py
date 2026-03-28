@@ -1,15 +1,10 @@
-from typing import TYPE_CHECKING
+import datetime
+from uuid import UUID
+
+from pydantic import NonNegativeInt, conint
 
 from tracker.common.schemas import CustomBaseModel
-
-
-if TYPE_CHECKING:
-    import datetime
-    from uuid import UUID
-
-    from pydantic import NonNegativeInt, conint
-
-    from tracker.models import enums
+from tracker.models import enums
 
 
 class LogRecord(CustomBaseModel):

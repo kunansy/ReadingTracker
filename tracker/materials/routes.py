@@ -1,21 +1,17 @@
 import asyncio
-from typing import TYPE_CHECKING, Annotated, Any, Literal
+import datetime
+from typing import Annotated, Any, Literal
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from pydantic import HttpUrl
 
 from tracker.common import settings
 from tracker.common.logger import logger
 from tracker.materials import db, schemas
 from tracker.models import enums
-
-
-if TYPE_CHECKING:
-    import datetime
-    from uuid import UUID
-
-    from pydantic import HttpUrl
 
 
 router = APIRouter(prefix="/materials", tags=["materials"])

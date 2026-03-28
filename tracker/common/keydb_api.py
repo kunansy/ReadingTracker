@@ -1,8 +1,9 @@
 import contextlib
 from collections.abc import Callable, Iterable
 from functools import wraps
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
 from urllib.parse import ParseResult, parse_qs, unquote, urlparse
+from uuid import UUID
 
 import redis.asyncio as redis
 from redis.asyncio.connection import (
@@ -12,10 +13,6 @@ from redis.asyncio.connection import (
 
 from tracker.common import logger, settings
 from tracker.notes.db import Note
-
-
-if TYPE_CHECKING:
-    from uuid import UUID
 
 
 _NOTES_STORAGE = 0
@@ -39,7 +36,7 @@ def _parse_url(url: str) -> ConnectKwargs:  # noqa: C901
 
         try:
             kwargs[name] = parser(value)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             raise ValueError(
                 f"Invalid value for `{name}` in connection URL.",
             ) from None

@@ -1,5 +1,6 @@
 import asyncio
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import Annotated, Any
+from uuid import UUID
 
 from fastapi import APIRouter, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -7,10 +8,6 @@ from fastapi.templating import Jinja2Templates
 
 from tracker.cards import db, schemas
 from tracker.common import settings
-
-
-if TYPE_CHECKING:
-    from uuid import UUID
 
 
 router = APIRouter(prefix="/cards", tags=["cards"])

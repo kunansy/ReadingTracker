@@ -3,12 +3,14 @@ import datetime
 import re
 import time
 from decimal import Decimal
-from typing import TYPE_CHECKING, Any, cast
+from typing import Any, cast
+from uuid import UUID
 
 import aiohttp
 import bs4
 import sqlalchemy.sql as sa
 from pydantic import ConfigDict, computed_field, field_validator
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracker.cards import db as cards_db
 from tracker.common import database, schemas, settings
@@ -16,12 +18,6 @@ from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
 from tracker.notes import db as notes_db
-
-
-if TYPE_CHECKING:
-    from uuid import UUID
-
-    from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class Material(CustomBaseModel):
