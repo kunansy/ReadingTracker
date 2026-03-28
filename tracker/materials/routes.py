@@ -147,9 +147,6 @@ async def start_material(material_id: UUID, started_at: datetime.date | None = N
 async def complete_material(material_id: UUID, completed_at: datetime.date | None = None):
     await db.complete_material(material_id=material_id, completed_at=completed_at)
 
-    redirect_url = router.url_path_for(get_completed_materials.__name__)
-    return RedirectResponse(redirect_url, status_code=302)
-
 
 @router.post("/outline/{material_id}")
 async def outline_material(material_id: UUID):
