@@ -276,7 +276,13 @@ async def parse_habr_article(link: HttpUrl):
     html = await db.get_html(str(link))
     article_info = db.parse_habr(html)
 
-    return {"link": str(link), "type": "article", **article_info}
+    return schemas.ParsedMaterial(
+        title=article_info.title,
+        authors=article_info.authors,
+        type=enums.MaterialTypesEnum.article,
+        link=str(link),
+        duration=None,
+    )
 
 
 @router.post(

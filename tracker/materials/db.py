@@ -12,7 +12,7 @@ from pydantic import ConfigDict, computed_field, field_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracker.cards import db as cards_db
-from tracker.common import database, settings
+from tracker.common import database, schemas, settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
@@ -982,22 +982,30 @@ def _get_text(field: bs4.Tag | bs4.NavigableString | None) -> str:
     return ""
 
 
-def parse_habr(html: str) -> dict[str, str]:
+class HabrArticle(schemas.CustomBaseModel):
+    title: str
+    authors: str
+
+
+def parse_habr(html: str) -> HabrArticle:
     soup = bs4.BeautifulSoup(html, "lxml")
 
     title = authors = None
     snippet = cast("bs4.Tag", soup.find("div", {"class": "tm-article-presenter__header"}))
     if snippet:
         logger.info("snippet found, parsing")
-        title = snippet.find("h1", {"class": "tm-title"})
-        authors = snippet.find("a", {"class": "tm-user-info__username"})
+        title = _get_text(snippet.find("h1", {"class": "tm-title"}))
+        authors = _get_text(snippet.find("a", {"class": "tm-user-info__username"}))
     else:
         logger.warning(
             "snippet not found, could not find article title and authors, snippet=%r",
             snippet,
         )
 
-    return {"title": _get_text(title), "authors": _get_text(authors)}
+    if not (title or authors):
+        raise ValueError("Title or authors not found")
+
+    return HabrArticle(title=cast("str", title), authors=cast("str", authors))
 
 
 def _parse_duration(duration: str) -> int:

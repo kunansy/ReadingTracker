@@ -7,7 +7,7 @@ def test_parse_habr_emulated_html():
     html = """
     <html>
       <body>
-        <div class="tm-article-snippet">
+        <div class="tm-article-presenter__header">
           <h1 class="tm-title">  Some title  </h1>
           <a class="tm-user-info__username">  author_name </a>
         </div>
@@ -16,7 +16,8 @@ def test_parse_habr_emulated_html():
     """
 
     result = materials_db.parse_habr(html)
-    assert result == {"title": "Some title", "authors": "author_name"}
+    assert result.title == "Some title"
+    assert result.authors == "author_name"
 
 
 @pytest.mark.integration
@@ -31,9 +32,6 @@ async def test_parse_habr_real_article_opt_in():
     html = await materials_db.get_html(url, http_timeout=15)
     parsed = materials_db.parse_habr(html)
 
-    assert isinstance(parsed["title"], str) and parsed["title"]
-    assert isinstance(parsed["authors"], str) and parsed["authors"]
-
-    assert parsed["title"] == "Главная проблема vibe coding — не vibe debugging"
-    assert parsed["authors"] == "psycura"
+    assert parsed.title == "Главная проблема vibe coding — не vibe debugging"
+    assert parsed.authors == "psycura"
 
