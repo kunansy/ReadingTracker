@@ -1,7 +1,5 @@
 import asyncio
-import datetime
-from collections.abc import AsyncIterable
-from uuid import UUID
+from typing import TYPE_CHECKING
 
 import orjson
 from aiokafka import AIOKafkaConsumer
@@ -10,7 +8,14 @@ from pydantic import field_validator
 from tracker.common import kafka, keydb_api, manticoresearch, settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
-from tracker.notes.db import Note
+
+
+if TYPE_CHECKING:
+    import datetime
+    from collections.abc import AsyncIterable
+    from uuid import UUID
+
+    from tracker.notes.db import Note
 
 
 class Record(CustomBaseModel):

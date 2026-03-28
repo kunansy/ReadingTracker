@@ -1,7 +1,5 @@
-import datetime
 import re
-from typing import Annotated, Any
-from uuid import UUID
+from typing import TYPE_CHECKING, Annotated, Any
 
 from pydantic import (
     BeforeValidator,
@@ -13,6 +11,11 @@ from pydantic import (
 
 from tracker.common import settings
 from tracker.common.schemas import CustomBaseModel, skip_empty_value
+
+
+if TYPE_CHECKING:
+    import datetime
+    from uuid import UUID
 
 
 PUNCTUATION_MAPPING = {

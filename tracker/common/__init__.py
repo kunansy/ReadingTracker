@@ -1,8 +1,11 @@
 import functools
-from collections.abc import Callable, Coroutine
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from tracker.common.logger import logger
+
+
+if TYPE_CHECKING:
+    from collections.abc import Callable, Coroutine
 
 
 def deprecated[T](func: Callable[[Any], T]) -> Callable[[Any], T]:

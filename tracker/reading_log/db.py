@@ -1,10 +1,7 @@
 import asyncio
 import datetime
 from collections import defaultdict
-from collections.abc import AsyncGenerator
-from decimal import Decimal
-from typing import cast
-from uuid import UUID
+from typing import TYPE_CHECKING, cast
 
 import sqlalchemy.sql as sa
 
@@ -13,6 +10,12 @@ from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.materials import db as materials_db
 from tracker.models import models
+
+
+if TYPE_CHECKING:
+    from collections.abc import AsyncGenerator
+    from decimal import Decimal
+    from uuid import UUID
 
 
 class LogRecord(CustomBaseModel):

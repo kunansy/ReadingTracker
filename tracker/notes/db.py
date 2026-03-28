@@ -1,9 +1,7 @@
 import asyncio
-import datetime
 import re
 from collections import Counter, defaultdict
-from collections.abc import Iterable
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
 import networkx as nx
@@ -18,6 +16,11 @@ from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
 from tracker.notes import schemas
+
+
+if TYPE_CHECKING:
+    import datetime
+    from collections.abc import Iterable
 
 
 _TAG_PATTERN = r"(\B)#({tag})(\b)"

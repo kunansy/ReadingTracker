@@ -1,16 +1,21 @@
-import datetime
-from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 import aiomysql
 import sqlalchemy.sql as sa
-from aiomysql.cursors import Cursor as MysqlCursor
 
 from tracker.common import database, settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import models
+
+
+if TYPE_CHECKING:
+    import datetime
+    from collections.abc import AsyncGenerator
+
+    from aiomysql.cursors import Cursor as MysqlCursor
 
 
 class ManticoreException(Exception):
