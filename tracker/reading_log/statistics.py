@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import statistics
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -96,30 +97,24 @@ async def calculate_materials_stat(material_ids: set[UUID]) -> dict[UUID, LogSta
     return stat
 
 
-async def _get_start_date() -> datetime.date:
-    stmt = sa.select(sa.func.min(models.ReadingLog.c.date))
+def _calc_started_at(logs: list[db.LogRecord]) -> datetime.date:
+    if not logs:
+        raise ValueError("Could not find start date, no records found")
 
-    async with database.session() as ses:
-        if res := await ses.scalar(stmt):
-            return res
-        raise ValueError(f"Table is empty, value is none: {res!r}")
-
-
-async def _get_last_date() -> datetime.date:
-    stmt = sa.select(sa.func.max(models.ReadingLog.c.date))
-
-    async with database.session() as ses:
-        if res := await ses.scalar(stmt):
-            return res
-        raise ValueError(f"Table is empty, value is none: {res!r}")
+    first_record = min(logs, key=lambda log: log.date)
+    return first_record.date
 
 
-async def _get_log_duration() -> int:
-    query = "max(date) - min(date) + 1"
-    stmt = sa.select(sa.text(query)).select_from(models.ReadingLog)
+def _calc_finished_at(logs: list[db.LogRecord]) -> datetime.date:
+    if not logs:
+        raise ValueError("Could not find last date, no records found")
 
-    async with database.session() as ses:
-        return await ses.scalar(stmt)
+    last_record = max(logs, key=lambda log: log.date)
+    return last_record.date
+
+
+def _calc_log_duration(started_at: datetime.date, finished_at: datetime.date) -> int:
+    return (finished_at - started_at).days + 1
 
 
 async def _get_read_pages() -> dict[enums.MaterialTypesEnum, int]:
@@ -139,14 +134,9 @@ async def _get_read_pages() -> dict[enums.MaterialTypesEnum, int]:
         return dict((await ses.execute(stmt)).all())  # type: ignore[arg-type]
 
 
-async def _get_lost_days() -> int:
-    _dt = models.ReadingLog.c.date
-    stmt = sa.select(
-        sa.func.max(_dt) - sa.func.min(_dt) - sa.func.count(_dt.distinct()) + 1,
-    )
-
-    async with database.session() as ses:
-        return await ses.scalar(stmt) or 0
+def _calc_lost_days(duration: int, logs: list[db.LogRecord]) -> int:
+    uniq_records = {r.date for r in logs}
+    return duration - len(uniq_records)
 
 
 async def get_means() -> enums.MEANS:
@@ -176,21 +166,8 @@ async def get_means() -> enums.MEANS:
         }
 
 
-async def _get_median_pages_read_per_day() -> float:
-    group = (
-        sa.select(
-            sa.func.sum(models.ReadingLog.c.count).label("sum"),
-        ).group_by(models.ReadingLog.c.date)
-    ).cte("by_date")
-
-    stmt = sa.select(
-        sa.text("PERCENTILE_CONT(0.5) WITHIN GROUP(ORDER BY by_date.sum) AS median"),
-    ).select_from(group)
-
-    async with database.session() as ses:
-        median = await ses.scalar(stmt) or 0
-
-    return round(float(median), 2)
+def _calc_median_pages_read_per_day(logs: list[db.LogRecord]) -> float:
+    return round(statistics.median(r.count for r in logs), 2)
 
 
 async def contains(*, material_id: UUID) -> bool:
@@ -294,35 +271,40 @@ def _tracker_mean(means: enums.MEANS) -> float:
 
 async def get_tracker_statistics() -> TrackerStatistics:
     async with asyncio.TaskGroup() as tg:
-        started_at_task = tg.create_task(_get_start_date())
-        finished_at_task = tg.create_task(_get_last_date())
-        duration_task = tg.create_task(_get_log_duration())
-        lost_time_task = tg.create_task(_get_lost_days())
+        log_records_task = tg.create_task(db.get_log_records())
         mean_task = tg.create_task(get_means())
-        median_task = tg.create_task(_get_median_pages_read_per_day())
         read_pages_task = tg.create_task(_get_read_pages())
-        total_materials_task = tg.create_task(_get_total_materials_completed())
         min_log_record_task = tg.create_task(_get_min_record())
         max_log_record_task = tg.create_task(_get_max_record())
         materials_completed_task = tg.create_task(_get_materials_completed())
+
+    log_records = log_records_task.result()
+
+    started_at = _calc_started_at(log_records)
+    finished_at = _calc_finished_at(log_records)
+    duration = _calc_log_duration(started_at, finished_at)
+    median = _calc_median_pages_read_per_day(log_records)
+    lost_time = _calc_lost_days(duration, log_records)
+
+    total_materials_completed = sum(materials_completed_task.result().values())
 
     read_pages = read_pages_task.result()
     means: enums.MEANS = mean_task.result()
     would_be_total = _would_be_total(
         means=means,
         total_read_pages=sum(read_pages.values()),
-        lost_time=lost_time_task.result(),
+        lost_time=lost_time,
     )
 
     return TrackerStatistics(
-        started_at=started_at_task.result(),
-        finished_at=finished_at_task.result(),
-        duration=duration_task.result(),
-        lost_time=lost_time_task.result(),
+        started_at=started_at,
+        finished_at=finished_at,
+        duration=duration,
+        lost_time=lost_time,
         mean=_tracker_mean(means),
-        median=median_task.result(),
+        median=median,
         pages_read=read_pages,
-        total_materials_completed=total_materials_task.result(),
+        total_materials_completed=total_materials_completed,
         materials_completed=materials_completed_task.result(),
         would_be_total=would_be_total,
         min_log_record=min_log_record_task.result(),
