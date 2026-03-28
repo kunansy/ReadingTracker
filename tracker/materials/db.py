@@ -1055,6 +1055,4 @@ async def parse_youtube(video_id: str, *, http_timeout: int = 5) -> YoutubeVideo
     duration = item["contentDetails"]["duration"]
     parsed_duration = _parse_duration(duration)
 
-    return YoutubeVideo(
-        title=title, authors=authors, duration=parsed_duration
-    )
+    return YoutubeVideo(title=title, authors=authors, duration=parsed_duration)
