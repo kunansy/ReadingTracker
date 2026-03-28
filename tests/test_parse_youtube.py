@@ -71,11 +71,9 @@ async def test_parse_youtube_success(monkeypatch, video_id, duration, expected_m
 
     result = await materials_db.parse_youtube(video_id)
 
-    assert result == {
-        "title": f"title-{video_id}",
-        "authors": "channel-1",
-        "duration": expected_minutes,
-    }
+    assert result.title == f"title-{video_id}", result.title
+    assert result.authors == "channel-1", result.authors
+    assert result.duration == expected_minutes, result.duration
 
     assert len(session.get_calls) == 1
     url, params = session.get_calls[0]
@@ -143,6 +141,6 @@ async def test_parse_youtube_invalid_payload_raises(monkeypatch, payload):
 async def test_parse_youtube_real_api_opt_in(monkeypatch, video_id, expected_title, expected_author, expected_duration):
     result = await materials_db.parse_youtube(video_id, http_timeout=10)
 
-    assert isinstance(result["title"], str) and result["title"] == expected_title, result["title"]
-    assert isinstance(result["authors"], str) and result["authors"] == expected_author, result["authors"]
-    assert isinstance(result["duration"], int) and result["duration"] == expected_duration, result["duration"]
+    assert result.title == expected_title, result.title
+    assert result.authors == expected_author, result.authors
+    assert result.duration == expected_duration, result.duration
