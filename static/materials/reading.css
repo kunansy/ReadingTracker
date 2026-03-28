@@ -13,11 +13,46 @@ hr {
     color: black;
 }
 
-form.complete {
+div.complete {
     display: flex;
+    margin: auto;
 }
 .submit-button {
     margin: auto;
     height: 7vh;
     width: 15vw;
+}
+
+.complete-material-dialog {
+    border: black 0.25vh solid;
+    border-radius: 2vh;
+    padding: 3vh 4vw;
+    max-width: 90vw;
+}
+
+.complete-material-dialog::backdrop {
+    background: rgba(0, 0, 0, 0.35);
+}
+
+.complete-material-dialog__title {
+    margin: 0 0 2vh;
+    font-weight: 600;
+}
+
+.complete-material-dialog__label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5vh;
+}
+
+.complete-material-dialog__date {
+    font: inherit;
+    padding: 0.5vh 0.75vw;
+}
+
+.complete-material-dialog__actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 2vw;
+    margin-top: 2vh;
 }
