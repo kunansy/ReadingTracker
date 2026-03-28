@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from fastapi.responses import FileResponse
 
 
-SPA_INDEX = Path("static/materials-spa/index.html")
+SPA_INDEX = Path("static/app-spa/index.html")
 
 router = APIRouter(prefix="/materials", tags=["materials-spa"])
 

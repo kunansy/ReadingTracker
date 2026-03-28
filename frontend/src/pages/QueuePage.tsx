@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
-import { apiFetch } from "../api";
+import { apiFetch } from "../api/materials";
 import { NotFoundMaterials } from "../components/NotFoundMaterials";
 import { useContextMenu } from "../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../materials/format";

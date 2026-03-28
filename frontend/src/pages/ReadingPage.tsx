@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { apiFetch } from "../api";
+import { apiFetch } from "../api/materials";
 import { CelebrateButton } from "../components/CelebrateButton";
 import { NotFoundMaterials } from "../components/NotFoundMaterials";
 import { useContextMenu } from "../contexts/ContextMenuContext";

@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { apiFetch } from "../api";
+import { apiFetch } from "../api/materials";
 import { useAltchHotkeys } from "../hooks/useAltchHotkeys";
 import type { MaterialJson, MaterialType } from "../types";
 

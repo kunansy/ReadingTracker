@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { apiFetch, buildQuery } from "../api";
+import { apiFetch, buildQuery } from "../api/materials";
 import { CelebrateButton } from "../components/CelebrateButton";
 import { NotFoundMaterials } from "../components/NotFoundMaterials";
 import { useContextMenu } from "../contexts/ContextMenuContext";
