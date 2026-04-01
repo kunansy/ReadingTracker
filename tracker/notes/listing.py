@@ -14,11 +14,7 @@ def filter_notes(*, notes: list[db.Note], ids: Iterable[UUID]) -> list[db.Note]:
 
 
 def find_tags_intersection(notes: list[db.Note], tags: set[str]) -> set[UUID]:
-    return {
-        note.note_id
-        for note in notes
-        if note.tags and note.tags >= tags
-    }
+    return {note.note_id for note in notes if note.tags and note.tags >= tags}
 
 
 def highlight_snippets(
