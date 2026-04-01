@@ -9,6 +9,8 @@ on:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    env:
+      VITE_API_BASE_URL: ${{ secrets.VITE_API_BASE_URL }}
     steps:
       -
         name: Checkout
@@ -33,3 +35,5 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/reading_tracker:252
+          build-args: |
+            VITE_API_BASE_URL=${{ env.VITE_API_BASE_URL }}
