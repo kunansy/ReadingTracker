@@ -41,7 +41,7 @@ def _serialize_titles(titles: dict[UUID, str]) -> dict[str, str]:
 def _serialize_material_types(
     types_: dict[str, enums.MaterialTypesEnum],
 ) -> dict[str, str]:
-    return {k: v for k, v in types_.items()}
+    return dict(types_.items())
 
 
 def _serialize_material_notes(counts: dict[UUID, int]) -> dict[str, int]:
