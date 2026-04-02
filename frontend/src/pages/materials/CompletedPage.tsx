@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 import { apiFetch, buildQuery } from "../../api/materials";
 import { CelebrateButton } from "../../components/CelebrateButton";
@@ -22,6 +22,7 @@ export function CompletedPage() {
   const qc = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const { open, close } = useContextMenu();
+  const navigate = useNavigate();
 
   const queryString = useMemo(() => {
     const material_type = searchParams.get("material_type") ?? "";
@@ -55,19 +56,19 @@ export function CompletedPage() {
         {
           label: "Edit",
           action: async () => {
-            window.open(`/materials/update-view?material_id=${materialId}`);
+            navigate(`/materials/update-view?material_id=${materialId}`);
           },
         },
         {
           label: "Open notes",
           action: async () => {
-            window.open(`/notes?material_id=${materialId}`);
+            navigate(`/notes?material_id=${materialId}`);
           },
         },
         {
           label: "Add note",
           action: async () => {
-            window.open(`/notes/add-view?material_id=${materialId}`);
+            navigate(`/notes/add-view?material_id=${materialId}`);
           },
         },
       ]);
