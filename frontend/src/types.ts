@@ -1,9 +1,12 @@
-export type MaterialType =
-  | "book"
-  | "article"
-  | "course"
-  | "lecture"
-  | "audiobook";
+export enum MaterialType {
+  book = "book",
+  article = "article",
+  course = "course",
+  lecture = "lecture",
+  audiobook = "audiobook"
+}
+
+export const MaterialTypes = Object.values(MaterialType);
 
 export type MaterialJson = {
   material_id: string;

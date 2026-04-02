@@ -7,12 +7,11 @@ import { CelebrateButton } from "../../components/CelebrateButton";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
-import type { MaterialStatisticsJson } from "../../types";
+import {MaterialStatisticsJson, MaterialTypes} from "../../types";
 
 type CompletedResponse = {
   statistics: MaterialStatisticsJson[];
   tags: string[];
-  material_types: string[];
   material_type: string | null;
   tags_query: string | null;
   outlined: string | null;
@@ -158,7 +157,7 @@ export function CompletedPage() {
           ))}
         </datalist>
         <datalist id="material_types">
-          {(data?.material_types ?? []).map((t) => (
+          {(MaterialTypes ?? []).map((t) => (
             <option key={t} value={t}>
               {t}
             </option>
