@@ -144,7 +144,7 @@ async def parse_habr_article(link: HttpUrl):
         title=article_info.title,
         authors=article_info.authors,
         type=enums.MaterialTypesEnum.article,
-        link=str(link),
+        link=link,
         duration=None,
     )
 
@@ -169,5 +169,5 @@ async def parse_youtube_video(link: HttpUrl):
         authors=video_info.authors,
         duration=video_info.duration,
         type=enums.MaterialTypesEnum.lecture,
-        link=str(link),
+        link=link,
     )

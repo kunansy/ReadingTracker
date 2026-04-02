@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from pydantic import NonNegativeInt
 
 from tracker.common import manticoresearch
+from tracker.models import enums
 from tracker.notes import cached, db, schemas
 from tracker.notes.listing import build_notes_search_result
 
