@@ -1,12 +1,12 @@
-import asyncio
 import datetime
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, HTTPException
-from pydantic import BaseModel, HttpUrl
+from pydantic import HttpUrl
 
 from tracker.common.logger import logger
+from tracker.common.schemas import CustomBaseModel
 from tracker.materials import db, schemas
 from tracker.models import enums
 
@@ -28,20 +28,20 @@ def _material_type_query_public(
     return str(mt)
 
 
-class SwapOrderRequest(BaseModel):
+class SwapOrderRequest(CustomBaseModel):
     material_id: UUID
     index: int
 
 
-class OptionalStartBody(BaseModel):
+class OptionalStartBody(CustomBaseModel):
     started_at: datetime.date | None = None
 
 
-class OptionalCompleteBody(BaseModel):
+class OptionalCompleteBody(CustomBaseModel):
     completed_at: datetime.date | None = None
 
 
-class ParseLinkBody(BaseModel):
+class ParseLinkBody(CustomBaseModel):
     link: HttpUrl
 
 
@@ -71,9 +71,7 @@ async def get_completed_json(search: Annotated[schemas.SearchParams, Depends()])
         tags=search.requested_tags(),
     )
 
-    return {
-        "statistics": get_statistics
-    }
+    return {"statistics": get_statistics}
 
 
 @router.get("/repeat")
@@ -92,6 +90,7 @@ async def get_authors():
     return {
         "authorsList": authors,
     }
+
 
 @router.get("/tags")
 async def get_tags():
