@@ -45,7 +45,7 @@ export function ReadingPage() {
         {
           label: "Edit",
           action: async () => {
-            navigate(`/materials/update-view?material_id=${materialId}`);
+            navigate(`/materials/update?material_id=${materialId}`);
           },
         },
         {
@@ -63,7 +63,7 @@ export function ReadingPage() {
         {
           label: "Add note",
           action: async () => {
-            navigate(`/notes/add-view?material_id=${materialId}`);
+            navigate(`/notes/add?material_id=${materialId}`);
           },
         },
         {

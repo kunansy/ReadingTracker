@@ -59,7 +59,7 @@ export function QueuePage() {
         {
           label: "Edit",
           action: async () => {
-            navigate(`/materials/update-view?material_id=${materialId}`);
+            navigate(`/materials/update?material_id=${materialId}`);
           },
         },
       ];

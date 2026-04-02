@@ -14,7 +14,7 @@ export function NotesSubnav() {
       <NavLink to="." end className="search notes-nav">
         Search notes
       </NavLink>
-      <NavLink to="add-view" className="add note-nav">
+      <NavLink to="add" className="add note-nav">
         Add note
       </NavLink>
       <NavLink to={graphTo} className="graph-nav">
