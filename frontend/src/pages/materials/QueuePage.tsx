@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { apiFetch } from "../../api/materials";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
@@ -15,6 +16,7 @@ type QueueResponse = {
 export function QueuePage() {
   const qc = useQueryClient();
   const { open, close } = useContextMenu();
+  const navigate = useNavigate();
 
   const q = useQuery({
     queryKey: ["materials", "queue"],
@@ -57,7 +59,7 @@ export function QueuePage() {
         {
           label: "Edit",
           action: async () => {
-            window.open(`/materials/update-view?material_id=${materialId}`);
+            navigate(`/materials/update-view?material_id=${materialId}`);
           },
         },
       ];

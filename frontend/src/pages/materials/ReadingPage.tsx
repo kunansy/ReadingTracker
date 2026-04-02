@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { apiFetch } from "../../api/materials";
 import { CelebrateButton } from "../../components/CelebrateButton";
@@ -18,6 +19,7 @@ export function ReadingPage() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [completeId, setCompleteId] = useState<string | null>(null);
   const [dateStr, setDateStr] = useState("");
+  const navigate = useNavigate();
 
   const q = useQuery({
     queryKey: ["materials", "reading"],
@@ -43,13 +45,13 @@ export function ReadingPage() {
         {
           label: "Edit",
           action: async () => {
-            window.open(`/materials/update-view?material_id=${materialId}`);
+            navigate(`/materials/update-view?material_id=${materialId}`);
           },
         },
         {
           label: "Open notes",
           action: async () => {
-            window.open(`/notes?material_id=${materialId}`);
+            navigate(`/notes?material_id=${materialId}`);
           },
         },
         {
@@ -61,7 +63,7 @@ export function ReadingPage() {
         {
           label: "Add note",
           action: async () => {
-            window.open(`/notes/add-view?material_id=${materialId}`);
+            navigate(`/notes/add-view?material_id=${materialId}`);
           },
         },
         {

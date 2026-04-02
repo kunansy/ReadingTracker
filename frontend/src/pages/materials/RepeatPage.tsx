@@ -29,6 +29,7 @@ async function fetchHasCards(materialId: string) {
 
 function openNotes(materialId: string, notesCount: number) {
   const url = `/notes?material_id=${materialId}&page_size=${notesCount}`;
+  // todo
   void window.open(url);
 }
 
