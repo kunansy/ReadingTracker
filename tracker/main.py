@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException, RequestValidationError
-from fastapi.responses import ORJSONResponse
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from starlette_exporter import PrometheusMiddleware, handle_metrics
@@ -54,7 +54,6 @@ app = FastAPI(
     description="Reading queue, logging the reading, keep some notes",
     version=settings.API_VERSION,
     debug=settings.API_DEBUG,
-    default_response_class=ORJSONResponse,
     lifespan=lifespan,
 )
 
@@ -111,7 +110,7 @@ async def database_exception_handler(request: Request, exc: database.DatabaseExc
     logger.exception("Database exception occurred, (%s), %s", request.url, str(exc))
 
     if request.url.path.startswith("/api/v1"):
-        return ORJSONResponse(
+        return JSONResponse(
             status_code=500,
             content={"detail": f"Database error: {exc}"},
         )
@@ -140,7 +139,7 @@ async def manticore_exception_handler(
     )
 
     if request.url.path.startswith("/api/v1"):
-        return ORJSONResponse(
+        return JSONResponse(
             status_code=500,
             content={"detail": f"Manticoresearch error: {exc}"},
         )
@@ -162,7 +161,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     logger.exception("Validation error occurred, (%s), %s", request.url, str(exc))
 
     if request.url.path.startswith("/api/v1"):
-        return ORJSONResponse(
+        return JSONResponse(
             status_code=422,
             content={"detail": _api_v1_validation_detail(exc)},
         )
@@ -180,7 +179,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
     logger.exception("HTTP exception occurred, (%s), %s", request.url, str(exc))
 
     if request.url.path.startswith("/api/v1"):
-        return ORJSONResponse(
+        return JSONResponse(
             status_code=exc.status_code,
             content={"detail": _api_v1_json_detail(exc)},
         )
@@ -192,7 +191,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.get("/liveness", include_in_schema=False)
 async def liveness():
-    return ORJSONResponse(content={"status": "ok"})
+    return {"status": "ok"}
 
 
 @app.get("/readiness", include_in_schema=False)
@@ -210,7 +209,7 @@ async def readiness():
         "is_db_ready": db_readiness.result(),
         "is_manticore_ready": manticore_readiness.result(),
     }
-    return ORJSONResponse(content=status, status_code=status_code)
+    return JSONResponse(content=status, status_code=status_code)
 
 
 async def init() -> None:

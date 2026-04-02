@@ -3,7 +3,7 @@ from typing import Annotated, Any, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Form, HTTPException, Request
-from fastapi.responses import HTMLResponse, ORJSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from tracker.common import database, settings
@@ -83,11 +83,7 @@ async def add_log_record(record: Annotated[schemas.LogRecord, Form()]):
     return RedirectResponse(redirect_url, status_code=302)
 
 
-@router.get(
-    "/completion-info",
-    response_model=schemas.CompletionInfoSchema,
-    response_class=ORJSONResponse,
-)
+@router.get("/completion-info", response_model=schemas.CompletionInfoSchema)
 async def get_completion_info(material_id: UUID):
     if completion_info := await _completion_info(material_id):
         return completion_info
