@@ -95,13 +95,12 @@ async def get_repeat_json(*, only_outlined: bool = False):
     }
 
 
-@router.get("/meta")
-async def get_meta_json():
-    async with asyncio.TaskGroup() as tg:
-        authors_task = tg.create_task(db.get_authors())
+@router.get("/authors")
+async def get_authors():
+    authors = await db.get_authors()
 
     return {
-        "material_authors": authors_task.result(),
+        "authorsList": authors,
     }
 
 @router.get("/tags")
