@@ -80,7 +80,6 @@ async def get_completed_json(search: Annotated[schemas.SearchParams, Depends()])
     return {
         "statistics": [s.model_dump(mode="json") for s in statistics],
         "tags": tags,
-        "material_types": [item.value for item in enums.MaterialTypesEnum],
         "material_type": _material_type_query_public(search.material_type),
         "tags_query": search.tags_query,
         "outlined": search.outlined,
