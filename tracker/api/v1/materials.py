@@ -65,21 +65,14 @@ async def get_reading_json():
 
 @router.get("/completed")
 async def get_completed_json(search: Annotated[schemas.SearchParams, Depends()]):
-    async with asyncio.TaskGroup() as tg:
-        get_statistics_task = tg.create_task(
-            db.completed_statistics(
-                material_type=search.get_material_type(),
-                is_outlined=search.is_outlined,
-                tags=search.requested_tags(),
-            ),
-        )
-        get_material_tags_task = tg.create_task(db.get_material_tags())
+    get_statistics = await db.completed_statistics(
+        material_type=search.get_material_type(),
+        is_outlined=search.is_outlined,
+        tags=search.requested_tags(),
+    )
 
-    statistics = get_statistics_task.result()
-    tags = get_material_tags_task.result()
     return {
-        "statistics": statistics,
-        "tags": tags,
+        "statistics": get_statistics
     }
 
 

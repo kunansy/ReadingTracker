@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
 import { apiFetch, buildQuery } from "../../api/materials";
@@ -11,7 +11,10 @@ import {MaterialStatisticsJson, MaterialTypes} from "../../types";
 
 type CompletedResponse = {
   statistics: MaterialStatisticsJson[];
-  tags: string[];
+};
+
+type TagsResponse = {
+  tagsList: string[];
 };
 
 export function CompletedPage() {
@@ -19,6 +22,14 @@ export function CompletedPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { open, close } = useContextMenu();
   const navigate = useNavigate();
+  const [materialTags, setMaterialTags] = useState<TagsResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    void apiFetch<TagsResponse>("/tags").then(setMaterialTags).catch(() => {
+      setError("Failed to load material tags");
+    });
+  }, []);
 
   const material_type = searchParams.get("material_type") ?? "";
   const tags_query = searchParams.get("tags_query") ?? "";
@@ -99,11 +110,11 @@ export function CompletedPage() {
     return <p className="error">{(q.error as Error).message}</p>;
   }
 
-  const data = q.data;
-  const stats = data?.statistics ?? [];
+  const stats = q.data?.statistics ?? [];
 
   return (
     <>
+      {error ? <div className="alert error">{error}</div> : null}
       <form id="search-materials-form" onSubmit={onSearchSubmit}>
         <input
           className="input"
@@ -190,7 +201,7 @@ export function CompletedPage() {
           <label htmlFor="all"> All </label>
         </div>
         <datalist id="tags">
-          {(data?.tags ?? []).map((tag) => (
+          {(materialTags?.tagsList ?? []).map((tag) => (
             <option key={tag} value={tag}>
               #{tag}
             </option>
@@ -282,6 +293,7 @@ export function CompletedPage() {
             );
           })
       )}
+      {error ? <p className="error">{error}</p> : null}
     </>
   );
 }
