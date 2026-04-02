@@ -12,9 +12,6 @@ import {MaterialStatisticsJson, MaterialTypes} from "../../types";
 type CompletedResponse = {
   statistics: MaterialStatisticsJson[];
   tags: string[];
-  material_type: string | null;
-  tags_query: string | null;
-  outlined: string | null;
 };
 
 export function CompletedPage() {
@@ -23,10 +20,11 @@ export function CompletedPage() {
   const { open, close } = useContextMenu();
   const navigate = useNavigate();
 
+  const material_type = searchParams.get("material_type") ?? "";
+  const tags_query = searchParams.get("tags_query") ?? "";
+  const outlined = searchParams.get("outlined") ?? "all";
+
   const queryString = useMemo(() => {
-    const material_type = searchParams.get("material_type") ?? "";
-    const tags_query = searchParams.get("tags_query") ?? "";
-    const outlined = searchParams.get("outlined") ?? "all";
     return buildQuery({
       material_type: material_type || undefined,
       tags_query: tags_query || undefined,
@@ -111,14 +109,36 @@ export function CompletedPage() {
           className="input"
           list="material_types"
           name="material_type"
-          defaultValue={data?.material_type ?? ""}
+          value={material_type}
+          onChange={(e) =>
+              setSearchParams((prev) => {
+                const next = new URLSearchParams(prev);
+                if (e.target.value) {
+                  next.set("material_type", e.target.value);
+                } else {
+                  next.delete("material_type");
+                }
+                return next;
+              })
+          }
           placeholder="Choose a material type"
         />
         <input
           className="input"
           list="tags"
           name="tags_query"
-          defaultValue={data?.tags_query ?? ""}
+          value={tags_query}
+          onChange={(e) =>
+              setSearchParams((prev) => {
+                const next = new URLSearchParams(prev);
+                if (e.target.value) {
+                  next.set("tags_query", e.target.value);
+                } else {
+                  next.delete("tags_query");
+                }
+                return next;
+              })
+          }
           placeholder="Choose material tags"
         />
         <div className="outlined-checkbox">
@@ -127,7 +147,14 @@ export function CompletedPage() {
             id="outlined"
             name="outlined"
             value="outlined"
-            defaultChecked={data?.outlined === "outlined"}
+            checked={outlined === "outlined"}
+            onChange={(e) =>
+                setSearchParams((prev) => {
+                  const next = new URLSearchParams(prev);
+                  next.set("outlined", e.target.value);
+                  return next;
+                })
+            }
           />
           <label htmlFor="outlined"> Outlined only </label>
           <br />
@@ -136,7 +163,14 @@ export function CompletedPage() {
             id="not_outlined"
             name="outlined"
             value="not_outlined"
-            defaultChecked={data?.outlined === "not_outlined"}
+            checked={outlined === "not_outlined"}
+            onChange={(e) =>
+                setSearchParams((prev) => {
+                  const next = new URLSearchParams(prev);
+                  next.set("outlined", e.target.value);
+                  return next;
+                })
+            }
           />
           <label htmlFor="not_outlined"> Not outlined only </label>
           <br />
@@ -145,7 +179,13 @@ export function CompletedPage() {
             id="all"
             name="outlined"
             value="all"
-            defaultChecked={!data?.outlined || data.outlined === "all"}
+            checked={outlined === "all"}
+            onChange={(_) =>
+                setSearchParams((prev) => {
+                  const next = new URLSearchParams(prev);
+                  next.delete("outlined");
+                  return next;                })
+            }
           />
           <label htmlFor="all"> All </label>
         </div>
