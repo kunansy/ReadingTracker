@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { apiFetch } from "@/api/materials.ts";
+import { apiFetch } from "../../api/materials";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
-import { itemsLabel, itemsLabelLower } from "@/materials/format.ts";
-import type { MaterialStatisticsJson } from "@/types.ts";
+import { itemsLabel, itemsLabelLower } from "../../materials/format";
+import type { MaterialStatisticsJson } from "../../types";
 
 type ReadingResponse = {
   statistics: MaterialStatisticsJson[];
