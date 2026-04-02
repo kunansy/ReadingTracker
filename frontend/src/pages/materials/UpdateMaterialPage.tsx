@@ -4,14 +4,10 @@ import { useSearchParams } from "react-router-dom";
 
 import { apiFetch } from "../../api/materials";
 import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
-import {MaterialJson, MaterialType, MaterialTypes} from "../../types";
+import {MaterialJson, MaterialType, MaterialTagsResponse, MaterialTypes} from "../../types";
 
 type MaterialResponse = {
   material: MaterialJson;
-};
-
-type TagsResponse = {
-  tagsList: string[];
 };
 
 export function UpdateMaterialPage() {
@@ -20,7 +16,7 @@ export function UpdateMaterialPage() {
   const titleRef = useRef<HTMLInputElement>(null);
   useAltchHotkeys(titleRef);
 
-  const [materialTags, setMaterialTags] = useState<TagsResponse | null>(null);
+  const [materialTags, setMaterialTags] = useState<MaterialTagsResponse | null>(null);
   const [title, setTitle] = useState("");
   const [authors, setAuthors] = useState("");
   const [pages, setPages] = useState("");
@@ -31,7 +27,7 @@ export function UpdateMaterialPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void apiFetch<TagsResponse>("/tags").then(setMaterialTags).catch(() => {
+    void apiFetch<MaterialTagsResponse>("/tags").then(setMaterialTags).catch(() => {
       setError("Failed to load material tags");
     });
   }, []);

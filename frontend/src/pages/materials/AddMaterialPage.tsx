@@ -3,15 +3,8 @@ import {useEffect, useRef, useState} from "react";
 
 import {apiFetch} from "../../api/materials";
 import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
-import {MaterialType, MaterialTypes} from "../../types";
+import {MaterialType, MaterialTagsResponse, MaterialTypes, MaterialAuthorsResponse} from "../../types";
 
-type TagsResponse = {
-  tagsList: string[];
-};
-
-type AuthorsResponse = {
-  authorsList: string[];
-}
 
 type ParsedMaterial = {
   title: string;
@@ -25,8 +18,8 @@ export function AddMaterialPage() {
   const titleRef = useRef<HTMLInputElement>(null);
   useAltchHotkeys(titleRef);
 
-  const [materialTags, setMaterialTags] = useState<TagsResponse | null>(null);
-  const [materialAuthors, setMaterialAuthors] = useState<AuthorsResponse | null>(null);
+  const [materialTags, setMaterialTags] = useState<MaterialTagsResponse | null>(null);
+  const [materialAuthors, setMaterialAuthors] = useState<MaterialAuthorsResponse | null>(null);
   const [title, setTitle] = useState("");
   const [authors, setAuthors] = useState("");
   const [pages, setPages] = useState("");
@@ -37,12 +30,12 @@ export function AddMaterialPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void apiFetch<TagsResponse>("/tags").then(setMaterialTags).catch(() => {
+    void apiFetch<MaterialTagsResponse>("/tags").then(setMaterialTags).catch(() => {
       setError("Failed to load material tags");
     });
   }, []);
   useEffect(() => {
-    void apiFetch<AuthorsResponse>("/authors").then(setMaterialAuthors).catch(() => {
+    void apiFetch<MaterialAuthorsResponse>("/authors").then(setMaterialAuthors).catch(() => {
       setError("Failed to load material authors");
     });
   }, []);

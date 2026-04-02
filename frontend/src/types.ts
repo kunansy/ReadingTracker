@@ -63,3 +63,11 @@ export type RepeatingQueueJson = {
   priority_days: number;
   priority_months: number;
 };
+
+export type MaterialTagsResponse = {
+  tagsList: string[];
+};
+
+export type MaterialAuthorsResponse = {
+  authorsList: string[];
+}

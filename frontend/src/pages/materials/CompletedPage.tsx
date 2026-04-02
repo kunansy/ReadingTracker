@@ -7,14 +7,10 @@ import { CelebrateButton } from "../../components/CelebrateButton";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
-import {MaterialStatisticsJson, MaterialTypes} from "../../types";
+import {MaterialStatisticsJson, MaterialTagsResponse, MaterialTypes} from "../../types";
 
 type CompletedResponse = {
   statistics: MaterialStatisticsJson[];
-};
-
-type TagsResponse = {
-  tagsList: string[];
 };
 
 export function CompletedPage() {
@@ -22,11 +18,11 @@ export function CompletedPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { open, close } = useContextMenu();
   const navigate = useNavigate();
-  const [materialTags, setMaterialTags] = useState<TagsResponse | null>(null);
+  const [materialTags, setMaterialTags] = useState<MaterialTagsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void apiFetch<TagsResponse>("/tags").then(setMaterialTags).catch(() => {
+    void apiFetch<MaterialTagsResponse>("/tags").then(setMaterialTags).catch(() => {
       setError("Failed to load material tags");
     });
   }, []);
