@@ -45,9 +45,10 @@ div.group {
     max-width: 75%;
     text-align: center;
 }
-.chapter_number {
+h4.chapter_number {
     margin: 4vh auto 1vh;
     font-size: 4.5vh;
+    text-align: center;
 }
 
 .material_divider {
