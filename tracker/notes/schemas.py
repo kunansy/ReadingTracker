@@ -205,3 +205,18 @@ class AutocompletionResponse(CustomBaseModel):
 class GetMaterialNotes(CustomBaseModel):
     notes: list[GetNoteJsonResponse]
     material_id: UUID
+
+
+class NoteTagsResponse(CustomBaseModel):
+    tags: list[str]
+
+
+class GetNotesMetaResponse(CustomBaseModel):
+    tags: list[str]
+    titles: dict[UUID, str]
+
+
+class GetNotesGraphResponse(CustomBaseModel):
+    iframe_srcdoc: str
+    titles: dict[UUID, int]
+    material_id: UUID
