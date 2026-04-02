@@ -6,14 +6,12 @@ import { apiFetch } from "../../api/materials";
 import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
 import {MaterialJson, MaterialType, MaterialTypes} from "../../types";
 
-type MetaResponse = {
-  tags_list: string[];
-  material_authors: string[];
-  material_types: string[];
-};
-
 type MaterialResponse = {
   material: MaterialJson;
+};
+
+type TagsResponse = {
+  tagsList: string[];
 };
 
 export function UpdateMaterialPage() {
@@ -22,7 +20,7 @@ export function UpdateMaterialPage() {
   const titleRef = useRef<HTMLInputElement>(null);
   useAltchHotkeys(titleRef);
 
-  const [meta, setMeta] = useState<MetaResponse | null>(null);
+  const [materialTags, setMaterialTags] = useState<TagsResponse | null>(null);
   const [title, setTitle] = useState("");
   const [authors, setAuthors] = useState("");
   const [pages, setPages] = useState("");
@@ -33,8 +31,8 @@ export function UpdateMaterialPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void apiFetch<MetaResponse>("/meta").then(setMeta).catch(() => {
-      setError("Failed to load form metadata");
+    void apiFetch<TagsResponse>("/tags").then(setMaterialTags).catch(() => {
+      setError("Failed to load material tags");
     });
   }, []);
 
@@ -176,7 +174,7 @@ export function UpdateMaterialPage() {
               }}
             />
             <datalist id="tags">
-              {(meta?.tags_list ?? []).map((t) => (
+              {(materialTags?.tagsList ?? []).map((t) => (
                 <option key={t} value={t}>
                   «{t}»
                 </option>

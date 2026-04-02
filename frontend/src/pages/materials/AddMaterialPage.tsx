@@ -6,8 +6,11 @@ import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
 import {MaterialType, MaterialTypes} from "../../types";
 
 type MetaResponse = {
-  tags_list: string[];
   material_authors: string[];
+};
+
+type TagsResponse = {
+  tagsList: string[];
 };
 
 type ParsedMaterial = {
@@ -23,6 +26,7 @@ export function AddMaterialPage() {
   useAltchHotkeys(titleRef);
 
   const [meta, setMeta] = useState<MetaResponse | null>(null);
+  const [materialTags, setMaterialTags] = useState<TagsResponse | null>(null);
   const [title, setTitle] = useState("");
   const [authors, setAuthors] = useState("");
   const [pages, setPages] = useState("");
@@ -35,6 +39,11 @@ export function AddMaterialPage() {
   useEffect(() => {
     void apiFetch<MetaResponse>("/meta").then(setMeta).catch(() => {
       setError("Failed to load form metadata");
+    });
+  }, []);
+  useEffect(() => {
+    void apiFetch<TagsResponse>("/tags").then(setMaterialTags).catch(() => {
+      setError("Failed to load material tags");
     });
   }, []);
 
@@ -219,7 +228,7 @@ export function AddMaterialPage() {
               }}
             />
             <datalist id="tags">
-              {(meta?.tags_list ?? []).map((t) => (
+              {(materialTags?.tagsList ?? []).map((t) => (
                 <option key={t} value={t}>
                   «{t}»
                 </option>
