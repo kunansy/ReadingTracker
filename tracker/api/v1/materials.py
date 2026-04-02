@@ -50,7 +50,7 @@ async def get_queue_json():
     estimates = await db.estimate()
     mean = await db.get_means()
     return {
-        "estimates": [e.model_dump(mode="json") for e in estimates],
+        "estimates": estimates,
         "mean": _serialize_means(mean),
     }
 
@@ -59,7 +59,7 @@ async def get_queue_json():
 async def get_reading_json():
     statistics = await db.reading_statistics()
     return {
-        "statistics": [s.model_dump(mode="json") for s in statistics],
+        "statistics": statistics,
     }
 
 
@@ -78,7 +78,7 @@ async def get_completed_json(search: Annotated[schemas.SearchParams, Depends()])
     statistics = get_statistics_task.result()
     tags = get_material_tags_task.result()
     return {
-        "statistics": [s.model_dump(mode="json") for s in statistics],
+        "statistics": statistics,
         "tags": tags,
         "material_type": _material_type_query_public(search.material_type),
         "tags_query": search.tags_query,
@@ -90,7 +90,7 @@ async def get_completed_json(search: Annotated[schemas.SearchParams, Depends()])
 async def get_repeat_json(*, only_outlined: bool = False):
     repeating_queue = await db.get_repeating_queue(is_outlined=only_outlined)
     return {
-        "repeating_queue": [r.model_dump(mode="json") for r in repeating_queue],
+        "repeating_queue": repeating_queue,
         "is_outlined": only_outlined,
     }
 
@@ -142,13 +142,13 @@ async def parse_habr_json(payload: ParseLinkBody):
     html = await db.get_html(str(link))
     article_info = db.parse_habr(html)
 
-    return schemas.ParsedMaterial(
-        title=article_info.title,
-        authors=article_info.authors,
-        type=enums.MaterialTypesEnum.article,
-        link=str(link),
-        duration=None,
-    )
+    return {
+        "title": article_info.title,
+        "authors": article_info.authors,
+        "type": enums.MaterialTypesEnum.article,
+        "link": link,
+        "duration": None,
+    }
 
 
 @router.post("/parse/youtube", response_model=schemas.ParsedMaterial)
@@ -163,13 +163,13 @@ async def parse_youtube_json(payload: ParseLinkBody):
     video_id = link.query_params()[0][1]
     video_info = await db.parse_youtube(video_id)
 
-    return schemas.ParsedMaterial(
-        title=video_info.title,
-        authors=video_info.authors,
-        duration=video_info.duration,
-        type=enums.MaterialTypesEnum.lecture,
-        link=str(link),
-    )
+    return {
+        "title": video_info.title,
+        "authors": video_info.authors,
+        "duration": video_info.duration,
+        "type": enums.MaterialTypesEnum.lecture,
+        "link": link,
+    }
 
 
 @router.post("/", status_code=201)
@@ -189,7 +189,8 @@ async def create_material_json(material: schemas.Material):
 async def get_material_json(material_id: UUID):
     if not (material := await db.get_material(material_id=material_id)):
         raise HTTPException(status_code=404, detail="Material not found")
-    return {"material": material.model_dump(mode="json")}
+
+    return {"material": material}
 
 
 @router.patch("/{material_id}")

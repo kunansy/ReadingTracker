@@ -29,7 +29,7 @@ class ParsedMaterial(CustomBaseModel):
     authors: str
     title: str
     type: str
-    link: str
+    link: HttpUrl
     duration: int | None = None
 
 
