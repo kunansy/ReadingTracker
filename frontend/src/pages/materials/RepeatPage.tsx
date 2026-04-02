@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 
-import { apiFetch, buildQuery } from "../api/materials";
-import { CelebrateButton } from "../components/CelebrateButton";
-import { NotFoundMaterials } from "../components/NotFoundMaterials";
-import { useContextMenu } from "../contexts/ContextMenuContext";
-import { itemsLabel } from "../materials/format";
-import type { RepeatingQueueJson } from "../types";
+import { apiFetch, buildQuery } from "@/api/materials.ts";
+import { CelebrateButton } from "../../components/CelebrateButton";
+import { NotFoundMaterials } from "../../components/NotFoundMaterials";
+import { useContextMenu } from "../../contexts/ContextMenuContext";
+import { itemsLabel } from "@/materials/format.ts";
+import type { RepeatingQueueJson } from "@/types.ts";
 
 type RepeatResponse = {
   repeating_queue: RepeatingQueueJson[];

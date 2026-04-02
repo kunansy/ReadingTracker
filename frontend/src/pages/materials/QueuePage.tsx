@@ -1,11 +1,11 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 
-import { apiFetch } from "../api/materials";
-import { NotFoundMaterials } from "../components/NotFoundMaterials";
-import { useContextMenu } from "../contexts/ContextMenuContext";
-import { itemsLabel, itemsLabelLower } from "../materials/format";
-import type { MaterialEstimateJson } from "../types";
+import { apiFetch } from "@/api/materials.ts";
+import { NotFoundMaterials } from "../../components/NotFoundMaterials";
+import { useContextMenu } from "../../contexts/ContextMenuContext";
+import { itemsLabel, itemsLabelLower } from "@/materials/format.ts";
+import type { MaterialEstimateJson } from "@/types.ts";
 
 type QueueResponse = {
   estimates: MaterialEstimateJson[];
