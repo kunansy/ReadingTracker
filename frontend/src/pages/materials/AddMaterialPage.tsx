@@ -5,13 +5,13 @@ import {apiFetch} from "../../api/materials";
 import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
 import {MaterialType, MaterialTypes} from "../../types";
 
-type MetaResponse = {
-  material_authors: string[];
-};
-
 type TagsResponse = {
   tagsList: string[];
 };
+
+type AuthorsResponse = {
+  authorsList: string[];
+}
 
 type ParsedMaterial = {
   title: string;
@@ -25,8 +25,8 @@ export function AddMaterialPage() {
   const titleRef = useRef<HTMLInputElement>(null);
   useAltchHotkeys(titleRef);
 
-  const [meta, setMeta] = useState<MetaResponse | null>(null);
   const [materialTags, setMaterialTags] = useState<TagsResponse | null>(null);
+  const [materialAuthors, setMaterialAuthors] = useState<AuthorsResponse | null>(null);
   const [title, setTitle] = useState("");
   const [authors, setAuthors] = useState("");
   const [pages, setPages] = useState("");
@@ -37,13 +37,13 @@ export function AddMaterialPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void apiFetch<MetaResponse>("/meta").then(setMeta).catch(() => {
-      setError("Failed to load form metadata");
+    void apiFetch<TagsResponse>("/tags").then(setMaterialTags).catch(() => {
+      setError("Failed to load material tags");
     });
   }, []);
   useEffect(() => {
-    void apiFetch<TagsResponse>("/tags").then(setMaterialTags).catch(() => {
-      setError("Failed to load material tags");
+    void apiFetch<AuthorsResponse>("/authors").then(setMaterialAuthors).catch(() => {
+      setError("Failed to load material authors");
     });
   }, []);
 
@@ -97,7 +97,7 @@ export function AddMaterialPage() {
       setTitle("");
       setAuthors("");
       setPages("");
-      setMaterialType("book");
+      setMaterialType(MaterialType.book);
       setTags("");
       setLink("");
       setError(null);
@@ -176,7 +176,7 @@ export function AddMaterialPage() {
               }}
             />
             <datalist id="material_authors">
-              {(meta?.material_authors ?? []).map((a) => (
+              {(materialAuthors?.authorsList ?? []).map((a) => (
                 <option key={a} value={a}>
                   «{a}»
                 </option>
