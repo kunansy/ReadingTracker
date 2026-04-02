@@ -1,13 +1,12 @@
 import asyncio
 from collections import defaultdict
-from typing import Annotated, Any, cast
+from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import NonNegativeInt
 
 from tracker.common import manticoresearch
-from tracker.models import enums
 from tracker.notes import cached, db, schemas
 from tracker.notes.listing import build_notes_search_result
 
@@ -82,7 +81,7 @@ async def notes_search_json(
 
 
 @router.get("/graph")
-async def notes_graph_json(material_id: UUID | str | None = None):
+async def notes_graph_json(material_id: UUID | None = None):
     async with asyncio.TaskGroup() as tg:
         get_notes_task = tg.create_task(db.get_notes())
         get_titles_task = tg.create_task(db.get_material_titles())
@@ -102,7 +101,7 @@ async def notes_graph_json(material_id: UUID | str | None = None):
         notes_dict = {note.note_id: note for note in notes}
         material_notes = {note.note_id for note in get_material_notes_task.result()}
         graph = db.create_material_graph(
-            material_id=UUID(cast("str", material_id)),
+            material_id=material_id,
             material_notes=material_notes,
             notes=notes_dict,
         )
@@ -117,14 +116,14 @@ async def notes_graph_json(material_id: UUID | str | None = None):
     }
 
 
-@router.get("/meta")
-async def notes_meta_json(material_id: str | None = None):
+@router.get("/meta", response_model=schemas.GetNotesMetaResponse)
+async def get_notes_meta(material_id: UUID | None = None):
     async with asyncio.TaskGroup() as tg:
         get_titles_task = tg.create_task(db.get_material_titles())
         get_tags_task = tg.create_task(db.get_sorted_tags(material_id=material_id))
 
     return {
-        "titles": _serialize_titles(get_titles_task.result()),
+        "titles": get_titles_task.result(),
         "tags": get_tags_task.result(),
     }
 
@@ -150,8 +149,8 @@ async def autocompletion_json(query: str, limit: int = 10):
     return {"autocompletions": autocompletions}
 
 
-@router.get("/tags")
-async def tags_json(material_id: UUID):
+@router.get("/tags", response_model=schemas.NoteTagsResponse)
+async def get_note_tags(material_id: UUID):
     tags = await db.get_sorted_tags(material_id=material_id)
 
     return {"tags": tags}
