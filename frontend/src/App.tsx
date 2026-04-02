@@ -32,13 +32,13 @@ export function App() {
             <Route path="queue" element={<QueuePage />} />
             <Route path="reading" element={<ReadingPage />} />
             <Route path="completed" element={<CompletedPage />} />
-            <Route path="repeat-view" element={<RepeatPage />} />
-            <Route path="add-view" element={<AddMaterialPage />} />
-            <Route path="update-view" element={<UpdateMaterialPage />} />
+            <Route path="repeat" element={<RepeatPage />} />
+            <Route path="add" element={<AddMaterialPage />} />
+            <Route path="update" element={<UpdateMaterialPage />} />
           </Route>
           <Route path="/notes" element={<NotesLayout />}>
             <Route index element={<SearchNotesPage />} />
-            <Route path="add-view" element={<AddNotePage />} />
+            <Route path="add" element={<AddNotePage />} />
             <Route path="graph" element={<GraphPage />} />
           </Route>
         </Routes>
