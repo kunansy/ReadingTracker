@@ -2,9 +2,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { apiFetch } from "../api/materials";
-import { useAltchHotkeys } from "../hooks/useAltchHotkeys";
-import type { MaterialJson, MaterialType } from "../types";
+import { apiFetch } from "@/api/materials.ts";
+import { useAltchHotkeys } from "@/hooks/useAltchHotkeys.ts";
+import type { MaterialJson, MaterialType } from "@/types.ts";
 
 type MetaResponse = {
   tags_list: string[];
