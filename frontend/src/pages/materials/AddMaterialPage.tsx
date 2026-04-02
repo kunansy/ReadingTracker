@@ -1,14 +1,13 @@
-import { useMutation } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import {useMutation} from "@tanstack/react-query";
+import {useEffect, useRef, useState} from "react";
 
-import { apiFetch } from "../../api/materials";
-import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
-import type { MaterialType } from "../../types";
+import {apiFetch} from "../../api/materials";
+import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
+import {MaterialType, MaterialTypes} from "../../types";
 
 type MetaResponse = {
   tags_list: string[];
   material_authors: string[];
-  material_types: string[];
 };
 
 type ParsedMaterial = {
@@ -27,7 +26,7 @@ export function AddMaterialPage() {
   const [title, setTitle] = useState("");
   const [authors, setAuthors] = useState("");
   const [pages, setPages] = useState("");
-  const [materialType, setMaterialType] = useState<MaterialType>("book");
+  const [materialType, setMaterialType] = useState<MaterialType>(MaterialType.book);
   const [tags, setTags] = useState("");
   const [link, setLink] = useState("");
   const [parseUrl, setParseUrl] = useState("");
@@ -58,7 +57,7 @@ export function AddMaterialPage() {
       if (data.duration != null) {
         setPages(String(data.duration));
       }
-      setMaterialType((data.type as MaterialType) ?? "book");
+      setMaterialType((data.type as MaterialType) ?? MaterialType.book);
       setLink(data.link);
     },
     onError: (e: Error) => {
@@ -200,7 +199,7 @@ export function AddMaterialPage() {
               }}
             />
             <datalist id="material_types">
-              {(meta?.material_types ?? []).map((t) => (
+              {(MaterialTypes ?? []).map((t) => (
                 <option key={t} value={t}>
                   «{t}»
                 </option>

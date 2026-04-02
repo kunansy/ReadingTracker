@@ -4,7 +4,7 @@ import { useSearchParams } from "react-router-dom";
 
 import { apiFetch } from "../../api/materials";
 import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
-import type { MaterialJson, MaterialType } from "../../types";
+import {MaterialJson, MaterialType, MaterialTypes} from "../../types";
 
 type MetaResponse = {
   tags_list: string[];
@@ -157,7 +157,7 @@ export function UpdateMaterialPage() {
               }}
             />
             <datalist id="material_types">
-              {(meta?.material_types ?? []).map((t) => (
+              {(MaterialTypes ?? []).map((t) => (
                 <option key={t} value={t}>
                   «{t}»
                 </option>

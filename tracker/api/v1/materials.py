@@ -104,7 +104,6 @@ async def get_meta_json():
     return {
         "tags_list": tags_task.result(),
         "material_authors": authors_task.result(),
-        "material_types": [t.name for t in enums.MaterialTypesEnum],
     }
 
 
