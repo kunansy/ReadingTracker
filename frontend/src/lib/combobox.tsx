@@ -145,8 +145,19 @@ export function MultiCombobox({
         return () => document.removeEventListener("click", handler);
     }, []);
 
+    const normalize = (s: string) => s.trim();
+
     const addTag = (tag: string) => {
-        onChange([...values, tag]);
+        const t = normalize(tag);
+        if (!t) return;
+
+        if (values.some((v) => v.toLowerCase() === t.toLowerCase())) {
+            setInput("");
+            setOpen(false);
+            return;
+        }
+
+        onChange([...values, t]);
         setInput("");
         setOpen(false);
     };
@@ -154,6 +165,13 @@ export function MultiCombobox({
     const removeTag = (tag: string) => {
         onChange(values.filter((t) => t !== tag));
     };
+
+    const trimmed = input.trim();
+
+    const canCreate =
+        trimmed.length > 0 &&
+        !options.some((o) => o.toLowerCase() === trimmed.toLowerCase()) &&
+        !values.some((v) => v.toLowerCase() === trimmed.toLowerCase());
 
     return (
         <div ref={ref} style={{ position: "relative" }}>
@@ -195,9 +213,8 @@ export function MultiCombobox({
         if (e.key === "ArrowDown") {
             e.preventDefault();
             setHighlight((h) =>
-                Math.min(h + 1, filtered.length - 1)
-            );
-        }
+                Math.min(h + 1, filtered.length + (canCreate ? 0 : -1))
+            );        }
 
         if (e.key === "ArrowUp") {
             e.preventDefault();
@@ -205,15 +222,19 @@ export function MultiCombobox({
         }
 
         if (e.key === "Enter") {
-            if (filtered[highlight]) {
+            e.preventDefault();
+
+            if (highlight < filtered.length) {
                 addTag(filtered[highlight]);
+            } else if (canCreate) {
+                addTag(input);
             }
         }
     }}
     />
     </div>
 
-    {open && filtered.length > 0 && (
+    {open && (filtered.length > 0 || canCreate === true) && (
         <div
             style={{
         position: "absolute",
@@ -227,7 +248,22 @@ export function MultiCombobox({
             overflowY: "auto",
     }}
     >
-        {filtered.map((opt, i) => (
+            {canCreate && (
+                <div
+                    style={{
+                        padding: "6px 10px",
+                        cursor: "pointer",
+                        borderBottom: filtered.length ? "1px solid #eee" : undefined,
+                        fontStyle: "italic",
+                    }}
+                    onMouseDown={(e) => e.preventDefault()} // важно: не теряем фокус
+                    onClick={() => addTag(input)}
+                >
+                    Create: "{trimmed}"
+                </div>
+            )}
+
+            {filtered.map((opt, i) => (
             <div
                 key={opt}
             style={{
