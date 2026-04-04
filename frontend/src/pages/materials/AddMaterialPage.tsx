@@ -3,7 +3,7 @@ import {useEffect, useRef, useState} from "react";
 
 import {apiFetch} from "../../api/materials";
 import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
-import {Combobox} from "../../lib/combobox";
+import {Combobox, MultiCombobox} from "../../lib/combobox";
 import {
   MaterialType,
   MaterialTagsResponse,
@@ -30,7 +30,7 @@ export function AddMaterialPage() {
   const [authors, setAuthors] = useState("");
   const [pages, setPages] = useState("");
   const [materialType, setMaterialType] = useState<MaterialType>(MaterialType.book);
-  const [tags, setTags] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [link, setLink] = useState("");
   const [parseUrl, setParseUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -81,8 +81,8 @@ export function AddMaterialPage() {
         pages: Number(pages),
         material_type: materialType,
       };
-      if (tags.trim()) {
-        body.tags = tags.trim();
+      if (tags.length) {
+        body.tags = tags.join(" ");
       }
       if (link.trim()) {
         body.link = link.trim();
@@ -97,7 +97,7 @@ export function AddMaterialPage() {
       setAuthors("");
       setPages("");
       setMaterialType(MaterialType.book);
-      setTags("");
+      setTags([]);
       setLink("");
       setError(null);
     },
@@ -189,26 +189,14 @@ export function AddMaterialPage() {
                 options={MaterialTypes ?? []}
                 placeholder="Enter a material type"
             />
-            <input
-              id="input-tags"
-              className="input"
-              type="text"
-              list="tags"
-              placeholder="Enter tags"
-              name="tags"
-              value={tags}
-              title="Tags of the material"
-              onChange={(e) => {
-                setTags(e.target.value);
-              }}
+            <MultiCombobox
+                values={tags}
+                onChange={(v) => {
+                  setTags(v);
+                }}
+                options={materialTags?.tagsList ?? []}
+                placeholder="Enter tags"
             />
-            <datalist id="tags">
-              {(materialTags?.tagsList ?? []).map((t) => (
-                <option key={t} value={t}>
-                  «{t}»
-                </option>
-              ))}
-            </datalist>
             <input
               id="input-link"
               className="input"
