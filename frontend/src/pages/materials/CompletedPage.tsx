@@ -4,6 +4,7 @@ import {
     useMemo,
     useEffect,
     useState,
+    useRef,
 } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
@@ -19,7 +20,7 @@ import {
 } from "../../types";
 
 type CompletedResponse = {
-  statistics: MaterialStatisticsJson[];
+    statistics: MaterialStatisticsJson[];
 };
 
 function useDebounce<T>(value: T, delay: number): T {
@@ -33,62 +34,166 @@ function useDebounce<T>(value: T, delay: number): T {
     return debounced;
 }
 
-export function CompletedPage() {
-  const qc = useQueryClient();
-  const navigate = useNavigate();
-  const { open, close } = useContextMenu();
+function Combobox({
+                      value,
+                      onChange,
+                      options,
+                      placeholder,
+                  }: {
+    value: string;
+    onChange: (v: string) => void;
+    options: string[];
+    placeholder?: string;
+}) {
+    const [open, setOpen] = useState(false);
+    const [highlight, setHighlight] = useState(0);
+    const ref = useRef<HTMLDivElement>(null);
 
-  const [searchParams, setSearchParams] = useSearchParams();
+    const filtered = useMemo(() => {
+        return options.filter((o) =>
+            o.toLowerCase().includes(value.toLowerCase())
+        );
+    }, [options, value]);
 
-  const [formState, setFormState] = useState({
-      material_type: searchParams.get("material_type") ?? "",
-      tags_query: searchParams.get("tags_query") ?? "",
-      outlined: searchParams.get("outlined") ?? "all",
-  });
-
-  useEffect(() => {
-      setFormState({
-          material_type: searchParams.get("material_type") ?? "",
-          tags_query: searchParams.get("tags_query") ?? "",
-          outlined: searchParams.get("outlined") ?? "all",
-      });
-  }, [searchParams]);
-
-  const debouncedForm = useDebounce(formState, 300);
-
-  const [materialTags, setMaterialTags] = useState<MaterialTagsResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    void apiFetch<MaterialTagsResponse>("/tags")
-        .then(setMaterialTags)
-        .catch(() => setError("Failed to load material tags"));
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (!ref.current?.contains(e.target as Node)) {
+                setOpen(false);
+            }
+        };
+        document.addEventListener("click", handler);
+        return () => document.removeEventListener("click", handler);
     }, []);
 
-  const queryString = useMemo(() => {
-    return buildQuery({
-      material_type: debouncedForm.material_type || undefined,
-      tags_query: debouncedForm.tags_query || undefined,
-      outlined:
-          debouncedForm.outlined === "all"
-              ? undefined
-              : debouncedForm.outlined,
+    return (
+        <div ref={ref} style={{ position: "relative" }}>
+            <input
+                className="input"
+                value={value}
+                placeholder={placeholder}
+                onFocus={() => setOpen(true)}
+                onChange={(e) => {
+                    onChange(e.target.value);
+                    setOpen(true);
+                    setHighlight(0);
+                }}
+                onKeyDown={(e) => {
+                    if (!open) return;
+
+                    if (e.key === "ArrowDown") {
+                        e.preventDefault();
+                        setHighlight((h) =>
+                            Math.min(h + 1, filtered.length - 1)
+                        );
+                    }
+                    if (e.key === "ArrowUp") {
+                        e.preventDefault();
+                        setHighlight((h) => Math.max(h - 1, 0));
+                    }
+                    if (e.key === "Enter") {
+                        if (filtered[highlight]) {
+                            onChange(filtered[highlight]);
+                            setOpen(false);
+                        }
+                    }
+                }}
+            />
+
+            {open && filtered.length > 0 && (
+                <div
+                    style={{
+                        position: "absolute",
+                        top: "100%",
+                        left: 0,
+                        right: 0,
+                        background: "white",
+                        border: "1px solid #ccc",
+                        zIndex: 10,
+                        maxHeight: 200,
+                        overflowY: "auto",
+                    }}
+                >
+                    {filtered.map((opt, i) => (
+                        <div
+                            key={opt}
+                            style={{
+                                padding: "6px 10px",
+                                cursor: "pointer",
+                                background:
+                                    i === highlight ? "#eee" : "white",
+                            }}
+                            onMouseEnter={() => setHighlight(i)}
+                            onClick={() => {
+                                onChange(opt);
+                                setOpen(false);
+                            }}
+                        >
+                            {opt}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
+export function CompletedPage() {
+    const qc = useQueryClient();
+    const navigate = useNavigate();
+    const { open, close } = useContextMenu();
+
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    const [formState, setFormState] = useState({
+        material_type: searchParams.get("material_type") ?? "",
+        tags_query: searchParams.get("tags_query") ?? "",
+        outlined: searchParams.get("outlined") ?? "all",
     });
-  }, [debouncedForm]);
 
-  const q = useQuery({
-    queryKey: ["materials", "completed", queryString],
-    queryFn: () =>
-        apiFetch<CompletedResponse>(`/completed${queryString}`),
-  });
+    useEffect(() => {
+        setFormState({
+            material_type: searchParams.get("material_type") ?? "",
+            tags_query: searchParams.get("tags_query") ?? "",
+            outlined: searchParams.get("outlined") ?? "all",
+        });
+    }, [searchParams]);
 
-  const outlineMut = useMutation({
-    mutationFn: (materialId: string) =>
-      apiFetch(`/${materialId}/outline`, { method: "POST" }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["materials"] });
-    },
-  });
+    const debouncedForm = useDebounce(formState, 300);
+
+    const [materialTags, setMaterialTags] =
+        useState<MaterialTagsResponse | null>(null);
+    const [error, setError] = useState<string | null>(null);
+
+    useEffect(() => {
+        void apiFetch<MaterialTagsResponse>("/tags")
+            .then(setMaterialTags)
+            .catch(() => setError("Failed to load material tags"));
+    }, []);
+
+    const queryString = useMemo(() => {
+        return buildQuery({
+            material_type: debouncedForm.material_type || undefined,
+            tags_query: debouncedForm.tags_query || undefined,
+            outlined:
+                debouncedForm.outlined === "all"
+                    ? undefined
+                    : debouncedForm.outlined,
+        });
+    }, [debouncedForm]);
+
+    const q = useQuery({
+        queryKey: ["materials", "completed", queryString],
+        queryFn: () =>
+            apiFetch<CompletedResponse>(`/completed${queryString}`),
+    });
+
+    const outlineMut = useMutation({
+        mutationFn: (materialId: string) =>
+            apiFetch(`/${materialId}/outline`, { method: "POST" }),
+        onSuccess: () => {
+            void qc.invalidateQueries({ queryKey: ["materials"] });
+        },
+    });
 
     const updateURL = useCallback(
         (state: typeof formState) => {
@@ -117,21 +222,18 @@ export function CompletedPage() {
             open(e.clientX, e.clientY, [
                 {
                     label: "Edit",
-                    action: async () => {
-                        navigate(`/materials/update?material_id=${materialId}`);
-                    },
+                    action: async () =>
+                        navigate(`/materials/update?material_id=${materialId}`),
                 },
                 {
                     label: "Open notes",
-                    action: async () => {
-                        navigate(`/notes?material_id=${materialId}`);
-                    },
+                    action: async () =>
+                        navigate(`/notes?material_id=${materialId}`),
                 },
                 {
                     label: "Add note",
-                    action: async () => {
-                        navigate(`/notes/add?material_id=${materialId}`);
-                    },
+                    action: async () =>
+                        navigate(`/notes/add?material_id=${materialId}`),
                 },
             ]);
         },
@@ -143,9 +245,8 @@ export function CompletedPage() {
     };
 
     if (q.isLoading) return <p>Loading…</p>;
-    if (q.error) {
+    if (q.error)
         return <p className="error">{(q.error as Error).message}</p>;
-    }
 
     const stats = q.data?.statistics ?? [];
 
@@ -154,29 +255,21 @@ export function CompletedPage() {
             {error && <div className="alert error">{error}</div>}
 
             <form id="search-materials-form" onSubmit={onSubmit}>
-                <input
-                    className="input"
-                    list="material_types"
+                <Combobox
                     value={formState.material_type}
-                    onChange={(e) =>
-                        setFormState((prev) => ({
-                            ...prev,
-                            material_type: e.target.value,
-                        }))
+                    onChange={(v) =>
+                        setFormState((p) => ({ ...p, material_type: v }))
                     }
+                    options={MaterialTypes ?? []}
                     placeholder="Choose a material type"
                 />
 
-                <input
-                    className="input"
-                    list="tags"
+                <Combobox
                     value={formState.tags_query}
-                    onChange={(e) =>
-                        setFormState((prev) => ({
-                            ...prev,
-                            tags_query: e.target.value,
-                        }))
+                    onChange={(v) =>
+                        setFormState((p) => ({ ...p, tags_query: v }))
                     }
+                    options={materialTags?.tagsList ?? []}
                     placeholder="Choose material tags"
                 />
 
@@ -213,22 +306,6 @@ export function CompletedPage() {
                     </label>
                 </div>
 
-                <datalist id="tags">
-                    {(materialTags?.tagsList ?? []).map((tag) => (
-                        <option key={tag} value={tag}>
-                            #{tag}
-                        </option>
-                    ))}
-                </datalist>
-
-                <datalist id="material_types">
-                    {(MaterialTypes ?? []).map((t) => (
-                        <option key={t} value={t}>
-                            {t}
-                        </option>
-                    ))}
-                </datalist>
-
                 <button type="submit" className="submit-button">
                     Search
                 </button>
@@ -252,7 +329,6 @@ export function CompletedPage() {
                             <div
                                 key={material.material_id}
                                 className="material hover"
-                                id={material.material_id}
                                 onContextMenu={(e) =>
                                     onMaterialContextMenu(e, material.material_id)
                                 }
