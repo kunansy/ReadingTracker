@@ -3,7 +3,13 @@ import {useEffect, useRef, useState} from "react";
 
 import {apiFetch} from "../../api/materials";
 import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
-import {MaterialType, MaterialTagsResponse, MaterialTypes, MaterialAuthorsResponse} from "../../types";
+import {Combobox} from "../../lib/combobox";
+import {
+  MaterialType,
+  MaterialTagsResponse,
+  MaterialTypes,
+  MaterialAuthorsResponse,
+} from "../../types";
 
 
 type ParsedMaterial = {
@@ -155,26 +161,14 @@ export function AddMaterialPage() {
                 setTitle(e.target.value);
               }}
             />
-            <input
-              id="input-authors"
-              className="input"
-              type="text"
-              list="material_authors"
-              placeholder="Enter authors"
-              name="authors"
-              value={authors}
-              title="Authors of the material"
-              onChange={(e) => {
-                setAuthors(e.target.value);
-              }}
+            <Combobox
+                value={authors}
+                onChange={(v) =>
+                    setAuthors(v)
+                }
+                options={materialAuthors?.authorsList ?? []}
+                placeholder="Enter a material authors"
             />
-            <datalist id="material_authors">
-              {(materialAuthors?.authorsList ?? []).map((a) => (
-                <option key={a} value={a}>
-                  «{a}»
-                </option>
-              ))}
-            </datalist>
             <input
               id="input-duration"
               className="input"
@@ -187,26 +181,14 @@ export function AddMaterialPage() {
                 setPages(e.target.value);
               }}
             />
-            <input
-              id="input-type"
-              className="input"
-              type="text"
-              list="material_types"
-              placeholder="Enter material type"
-              name="material_type"
-              value={materialType}
-              title="Type of the material"
-              onChange={(e) => {
-                setMaterialType(e.target.value as MaterialType);
-              }}
+            <Combobox
+                value={materialType}
+                onChange={(v) =>
+                    setMaterialType(v as MaterialType)
+                }
+                options={MaterialTypes ?? []}
+                placeholder="Enter a material type"
             />
-            <datalist id="material_types">
-              {(MaterialTypes ?? []).map((t) => (
-                <option key={t} value={t}>
-                  «{t}»
-                </option>
-              ))}
-            </datalist>
             <input
               id="input-tags"
               className="input"
