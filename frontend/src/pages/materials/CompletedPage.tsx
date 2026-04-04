@@ -137,6 +137,140 @@ function Combobox({
     );
 }
 
+function MultiCombobox({
+                           values,
+                           onChange,
+                           options,
+                           placeholder,
+                       }: {
+    values: string[];
+    onChange: (v: string[]) => void;
+    options: string[];
+    placeholder?: string;
+}) {
+    const [input, setInput] = useState("");
+    const [open, setOpen] = useState(false);
+    const [highlight, setHighlight] = useState(0);
+    const ref = useRef<HTMLDivElement>(null);
+
+    const filtered = useMemo(() => {
+        return options.filter(
+            (o) =>
+                o.toLowerCase().includes(input.toLowerCase()) &&
+                !values.includes(o)
+        );
+    }, [options, input, values]);
+
+    useEffect(() => {
+        const handler = (e: MouseEvent) => {
+            if (!ref.current?.contains(e.target as Node)) {
+                setOpen(false);
+            }
+        };
+        document.addEventListener("click", handler);
+        return () => document.removeEventListener("click", handler);
+    }, []);
+
+    const addTag = (tag: string) => {
+        onChange([...values, tag]);
+        setInput("");
+        setOpen(false);
+    };
+
+    const removeTag = (tag: string) => {
+        onChange(values.filter((t) => t !== tag));
+    };
+
+    return (
+        <div ref={ref} style={{ position: "relative" }}>
+            <div className="input" style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                {values.map((tag) => (
+                    <span
+                        key={tag}
+                        style={{
+                            background: "#eee",
+                            padding: "2px 6px",
+                            borderRadius: 4,
+                            cursor: "pointer",
+                        }}
+                        onClick={() => removeTag(tag)}
+                    >
+            {tag} ×
+          </span>
+                ))}
+
+                <input
+                    style={{ border: "none", outline: "none", flex: 1 }}
+                    value={input}
+                    placeholder={placeholder}
+                    onFocus={() => setOpen(true)}
+                    onChange={(e) => {
+                        setInput(e.target.value);
+                        setOpen(true);
+                        setHighlight(0);
+                    }}
+                    onKeyDown={(e) => {
+                        if (e.key === "Backspace" && !input && values.length) {
+                            removeTag(values[values.length - 1]);
+                        }
+
+                        if (!open) return;
+
+                        if (e.key === "ArrowDown") {
+                            e.preventDefault();
+                            setHighlight((h) =>
+                                Math.min(h + 1, filtered.length - 1)
+                            );
+                        }
+
+                        if (e.key === "ArrowUp") {
+                            e.preventDefault();
+                            setHighlight((h) => Math.max(h - 1, 0));
+                        }
+
+                        if (e.key === "Enter") {
+                            if (filtered[highlight]) {
+                                addTag(filtered[highlight]);
+                            }
+                        }
+                    }}
+                />
+            </div>
+
+            {open && filtered.length > 0 && (
+                <div
+                    style={{
+                        position: "absolute",
+                        top: "100%",
+                        left: 0,
+                        right: 0,
+                        background: "white",
+                        border: "1px solid #ccc",
+                        zIndex: 10,
+                        maxHeight: 200,
+                        overflowY: "auto",
+                    }}
+                >
+                    {filtered.map((opt, i) => (
+                        <div
+                            key={opt}
+                            style={{
+                                padding: "6px 10px",
+                                cursor: "pointer",
+                                background: i === highlight ? "#eee" : "white",
+                            }}
+                            onMouseEnter={() => setHighlight(i)}
+                            onClick={() => addTag(opt)}
+                        >
+                            {opt}
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+}
+
 export function CompletedPage() {
     const qc = useQueryClient();
     const navigate = useNavigate();
@@ -146,14 +280,18 @@ export function CompletedPage() {
 
     const [formState, setFormState] = useState({
         material_type: searchParams.get("material_type") ?? "",
-        tags_query: searchParams.get("tags_query") ?? "",
+        tags_query: searchParams.get("tags_query")
+            ? searchParams.get("tags_query")!.split(" ")
+            : [],
         outlined: searchParams.get("outlined") ?? "all",
     });
 
     useEffect(() => {
         setFormState({
             material_type: searchParams.get("material_type") ?? "",
-            tags_query: searchParams.get("tags_query") ?? "",
+            tags_query: searchParams.get("tags_query")
+                ? searchParams.get("tags_query")!.split(" ")
+                : [],
             outlined: searchParams.get("outlined") ?? "all",
         });
     }, [searchParams]);
@@ -173,7 +311,9 @@ export function CompletedPage() {
     const queryString = useMemo(() => {
         return buildQuery({
             material_type: debouncedForm.material_type || undefined,
-            tags_query: debouncedForm.tags_query || undefined,
+            tags_query: debouncedForm.tags_query.length
+                ? debouncedForm.tags_query.join(" ")
+                : undefined,
             outlined:
                 debouncedForm.outlined === "all"
                     ? undefined
@@ -200,7 +340,9 @@ export function CompletedPage() {
             const next: Record<string, string> = {};
 
             if (state.material_type) next.material_type = state.material_type;
-            if (state.tags_query) next.tags_query = state.tags_query;
+            if (state.tags_query.length) {
+                next.tags_query = state.tags_query.join(" ");
+            }
             if (state.outlined && state.outlined !== "all") {
                 next.outlined = state.outlined;
             }
@@ -264,8 +406,8 @@ export function CompletedPage() {
                     placeholder="Choose a material type"
                 />
 
-                <Combobox
-                    value={formState.tags_query}
+                <MultiCombobox
+                    values={formState.tags_query}
                     onChange={(v) =>
                         setFormState((p) => ({ ...p, tags_query: v }))
                     }
