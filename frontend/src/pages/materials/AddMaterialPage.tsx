@@ -3,7 +3,13 @@ import {useEffect, useRef, useState} from "react";
 
 import {apiFetch} from "../../api/materials";
 import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
-import {MaterialType, MaterialTagsResponse, MaterialTypes, MaterialAuthorsResponse} from "../../types";
+import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox";
+import {
+  MaterialType,
+  MaterialTagsResponse,
+  MaterialTypes,
+  MaterialAuthorsResponse,
+} from "../../types";
 
 
 type ParsedMaterial = {
@@ -24,7 +30,7 @@ export function AddMaterialPage() {
   const [authors, setAuthors] = useState("");
   const [pages, setPages] = useState("");
   const [materialType, setMaterialType] = useState<MaterialType>(MaterialType.book);
-  const [tags, setTags] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [link, setLink] = useState("");
   const [parseUrl, setParseUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -75,8 +81,8 @@ export function AddMaterialPage() {
         pages: Number(pages),
         material_type: materialType,
       };
-      if (tags.trim()) {
-        body.tags = tags.trim();
+      if (tags.length) {
+        body.tags = tags.join(" ");
       }
       if (link.trim()) {
         body.link = link.trim();
@@ -91,7 +97,7 @@ export function AddMaterialPage() {
       setAuthors("");
       setPages("");
       setMaterialType(MaterialType.book);
-      setTags("");
+      setTags([]);
       setLink("");
       setError(null);
     },
@@ -155,26 +161,17 @@ export function AddMaterialPage() {
                 setTitle(e.target.value);
               }}
             />
-            <input
-              id="input-authors"
-              className="input"
-              type="text"
-              list="material_authors"
-              placeholder="Enter authors"
-              name="authors"
-              value={authors}
-              title="Authors of the material"
-              onChange={(e) => {
-                setAuthors(e.target.value);
-              }}
-            />
-            <datalist id="material_authors">
-              {(materialAuthors?.authorsList ?? []).map((a) => (
-                <option key={a} value={a}>
-                  «{a}»
-                </option>
-              ))}
-            </datalist>
+
+            <ComboboxRoot
+                value={authors}
+                onChange={setAuthors}
+                options={materialAuthors?.authorsList ?? []}
+                allowCreate
+            >
+              <ComboboxInput placeholder="Enter a material authors" />
+              <ComboboxList />
+            </ComboboxRoot>
+
             <input
               id="input-duration"
               className="input"
@@ -187,46 +184,27 @@ export function AddMaterialPage() {
                 setPages(e.target.value);
               }}
             />
-            <input
-              id="input-type"
-              className="input"
-              type="text"
-              list="material_types"
-              placeholder="Enter material type"
-              name="material_type"
-              value={materialType}
-              title="Type of the material"
-              onChange={(e) => {
-                setMaterialType(e.target.value as MaterialType);
-              }}
-            />
-            <datalist id="material_types">
-              {(MaterialTypes ?? []).map((t) => (
-                <option key={t} value={t}>
-                  «{t}»
-                </option>
-              ))}
-            </datalist>
-            <input
-              id="input-tags"
-              className="input"
-              type="text"
-              list="tags"
-              placeholder="Enter tags"
-              name="tags"
-              value={tags}
-              title="Tags of the material"
-              onChange={(e) => {
-                setTags(e.target.value);
-              }}
-            />
-            <datalist id="tags">
-              {(materialTags?.tagsList ?? []).map((t) => (
-                <option key={t} value={t}>
-                  «{t}»
-                </option>
-              ))}
-            </datalist>
+
+            <ComboboxRoot
+                value={materialType}
+                onChange={setMaterialType}
+                options={MaterialTypes ?? []}
+            >
+              <ComboboxInput placeholder="Enter a material type" />
+              <ComboboxList />
+            </ComboboxRoot>
+
+            <ComboboxRoot
+                value={tags}
+                onChange={setTags}
+                options={materialTags?.tagsList ?? []}
+                multiple
+                allowCreate
+            >
+              <ComboboxInput placeholder="Enter tags" />
+              <ComboboxList />
+            </ComboboxRoot>
+
             <input
               id="input-link"
               className="input"

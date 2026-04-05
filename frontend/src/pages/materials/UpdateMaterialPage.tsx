@@ -1,10 +1,11 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {useEffect, useRef, useState} from "react";
+import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 
-import { apiFetch } from "../../api/materials";
-import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
-import {MaterialJson, MaterialType, MaterialTagsResponse, MaterialTypes} from "../../types";
+import {apiFetch} from "../../api/materials";
+import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
+import {MaterialJson, MaterialTagsResponse, MaterialType, MaterialTypes} from "../../types";
+import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox";
 
 type MaterialResponse = {
   material: MaterialJson;
@@ -20,11 +21,17 @@ export function UpdateMaterialPage() {
   const [title, setTitle] = useState("");
   const [authors, setAuthors] = useState("");
   const [pages, setPages] = useState("");
-  const [materialType, setMaterialType] = useState<MaterialType>("book");
-  const [tags, setTags] = useState("");
+  const [materialType, setMaterialType] = useState<MaterialType>(MaterialType.book);
+  const [tags, setTags] = useState<string[]>([]);
   const [link, setLink] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const qc = useQueryClient();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const from = location.state?.from || "/materials/queue";
 
   useEffect(() => {
     void apiFetch<MaterialTagsResponse>("/tags").then(setMaterialTags).catch(() => {
@@ -47,9 +54,9 @@ export function UpdateMaterialPage() {
     setAuthors(m.authors);
     setPages(String(m.pages));
     setMaterialType(m.material_type);
-    setTags(m.tags ?? "");
+    setTags(m.tags ? m.tags.split(", ") : []);
     setLink(m.link ?? "");
-  }, [q.data]);
+  }, [q.data, materialId]);
 
   const updateMut = useMutation({
     mutationFn: async () => {
@@ -62,7 +69,7 @@ export function UpdateMaterialPage() {
         authors,
         pages: Number(pages),
         material_type: materialType,
-        tags: tags.trim() || null,
+        tags: tags.join(", "),
         link: link.trim() || null,
       };
       await apiFetch(`/${materialId}`, {
@@ -73,10 +80,26 @@ export function UpdateMaterialPage() {
     onSuccess: () => {
       setMessage("Material updated successfully.");
       setError(null);
-    },
-    onError: (e: Error) => {
-      setMessage(null);
-      setError(e.message);
+
+      qc.setQueryData(["material", materialId], (old: any) => {
+        if (!old) return old;
+
+        return {
+          ...old,
+          material: {
+            ...old.material,
+            title,
+            authors,
+            pages: Number(pages),
+            material_type: materialType,
+            tags: tags.join(", "),
+            link: link.trim() || null,
+          },
+        };
+      });
+
+      void qc.invalidateQueries({ queryKey: ["materials"] });
+      navigate(from);
     },
   });
 
@@ -138,44 +161,27 @@ export function UpdateMaterialPage() {
                 setPages(e.target.value);
               }}
             />
-            <input
-              className="input"
-              type="text"
-              list="material_types"
-              placeholder="Enter material type"
-              name="material_type"
-              value={materialType}
-              title="Type of the material"
-              onChange={(e) => {
-                setMaterialType(e.target.value as MaterialType);
-              }}
-            />
-            <datalist id="material_types">
-              {(MaterialTypes ?? []).map((t) => (
-                <option key={t} value={t}>
-                  «{t}»
-                </option>
-              ))}
-            </datalist>
-            <input
-              className="input"
-              type="text"
-              list="tags"
-              placeholder="Enter tags"
-              name="tags"
-              value={tags}
-              title="Tags of the material"
-              onChange={(e) => {
-                setTags(e.target.value);
-              }}
-            />
-            <datalist id="tags">
-              {(materialTags?.tagsList ?? []).map((t) => (
-                <option key={t} value={t}>
-                  «{t}»
-                </option>
-              ))}
-            </datalist>
+
+            <ComboboxRoot
+                value={materialType}
+                onChange={setMaterialType}
+                options={MaterialTypes ?? []}
+            >
+              <ComboboxInput placeholder="Enter a material type" />
+              <ComboboxList />
+            </ComboboxRoot>
+
+            <ComboboxRoot
+                value={tags}
+                onChange={setTags}
+                options={materialTags?.tagsList ?? []}
+                multiple
+                allowCreate
+            >
+              <ComboboxInput placeholder="Enter tags" />
+              <ComboboxList />
+            </ComboboxRoot>
+
             <input
               className="input"
               type="text"
