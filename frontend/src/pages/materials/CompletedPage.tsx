@@ -18,8 +18,7 @@ import {
     MaterialTypes,
 } from "../../types";
 import {
-    Combobox,
-    MultiCombobox,
+    ComboboxInput, ComboboxList, ComboboxRoot,
 } from "../../components/Combobox";
 
 type CompletedResponse = {
@@ -163,23 +162,29 @@ export function CompletedPage() {
             {error && <div className="alert error">{error}</div>}
 
             <form id="search-materials-form" onSubmit={onSubmit}>
-                <Combobox
+                <ComboboxRoot
                     value={formState.material_type}
                     onChange={(v) =>
                         setFormState((p) => ({ ...p, material_type: v }))
                     }
                     options={MaterialTypes ?? []}
-                    placeholder="Choose a material type"
-                />
+                >
+                    <ComboboxInput placeholder="Enter a material type" />
+                    <ComboboxList />
+                </ComboboxRoot>
 
-                <MultiCombobox
-                    values={formState.tags_query}
+                <ComboboxRoot
+                    value={formState.tags_query}
                     onChange={(v) =>
                         setFormState((p) => ({ ...p, tags_query: v }))
                     }
                     options={materialTags?.tagsList ?? []}
-                    placeholder="Choose material tags"
-                />
+                    multiple
+                    allowCreate
+                >
+                    <ComboboxInput placeholder="Enter material tags" />
+                    <ComboboxList />
+                </ComboboxRoot>
 
                 <div className="outlined-checkbox">
                     <label>
