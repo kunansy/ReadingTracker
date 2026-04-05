@@ -3,7 +3,7 @@ import {useEffect, useRef, useState} from "react";
 
 import {apiFetch} from "../../api/materials";
 import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
-import {Combobox, MultiCombobox} from "../../components/Combobox";
+import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox";
 import {
   MaterialType,
   MaterialTagsResponse,
@@ -161,14 +161,16 @@ export function AddMaterialPage() {
                 setTitle(e.target.value);
               }}
             />
-            <Combobox
+
+            <ComboboxRoot
                 value={authors}
-                onChange={(v) =>
-                    setAuthors(v)
-                }
+                onChange={setAuthors}
                 options={materialAuthors?.authorsList ?? []}
-                placeholder="Enter a material authors"
-            />
+            >
+              <ComboboxInput placeholder="Enter a material authors" />
+              <ComboboxList />
+            </ComboboxRoot>
+
             <input
               id="input-duration"
               className="input"
@@ -181,22 +183,27 @@ export function AddMaterialPage() {
                 setPages(e.target.value);
               }}
             />
-            <Combobox
+
+            <ComboboxRoot
                 value={materialType}
-                onChange={(v) =>
-                    setMaterialType(v as MaterialType)
-                }
+                onChange={setMaterialType}
                 options={MaterialTypes ?? []}
-                placeholder="Enter a material type"
-            />
-            <MultiCombobox
-                values={tags}
-                onChange={(v) => {
-                  setTags(v);
-                }}
+            >
+              <ComboboxInput placeholder="Enter a material type" />
+              <ComboboxList />
+            </ComboboxRoot>
+
+            <ComboboxRoot
+                value={tags}
+                onChange={setTags}
                 options={materialTags?.tagsList ?? []}
-                placeholder="Enter tags"
-            />
+                multiple
+                allowCreate
+            >
+              <ComboboxInput placeholder="Enter tags" />
+              <ComboboxList />
+            </ComboboxRoot>
+
             <input
               id="input-link"
               className="input"
