@@ -20,7 +20,7 @@ import {
 import {
     Combobox,
     MultiCombobox,
-} from "../../lib/combobox";
+} from "../../components/Combobox";
 
 type CompletedResponse = {
     statistics: MaterialStatisticsJson[];

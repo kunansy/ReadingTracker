@@ -3,7 +3,7 @@ import {useEffect, useRef, useState} from "react";
 
 import {apiFetch} from "../../api/materials";
 import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
-import {Combobox, MultiCombobox} from "../../lib/combobox";
+import {Combobox, MultiCombobox} from "../../components/Combobox";
 import {
   MaterialType,
   MaterialTagsResponse,
