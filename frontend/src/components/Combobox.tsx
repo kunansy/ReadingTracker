@@ -110,6 +110,12 @@ export function ComboboxRoot({
         return () => document.removeEventListener("click", handler);
     }, []);
 
+    useEffect(() => {
+        if (!multiple) {
+            setInput(selected[0] ?? "");
+        }
+    }, [selected, multiple]);
+
     return (
         <ComboboxContext.Provider
             value={{
