@@ -1,6 +1,6 @@
-import {useMutation, useQuery} from "@tanstack/react-query";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {useEffect, useRef, useState} from "react";
-import {useSearchParams} from "react-router-dom";
+import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 
 import {apiFetch} from "../../api/materials";
 import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
@@ -27,6 +27,12 @@ export function UpdateMaterialPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const qc = useQueryClient();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const from = location.state?.from || "/materials/queue";
+
   useEffect(() => {
     void apiFetch<MaterialTagsResponse>("/tags").then(setMaterialTags).catch(() => {
       setError("Failed to load material tags");
@@ -50,7 +56,7 @@ export function UpdateMaterialPage() {
     setMaterialType(m.material_type);
     setTags(m.tags ? m.tags.split(", ") : []);
     setLink(m.link ?? "");
-  }, [q.data]);
+  }, [q.data, materialId]);
 
   const updateMut = useMutation({
     mutationFn: async () => {
@@ -74,10 +80,26 @@ export function UpdateMaterialPage() {
     onSuccess: () => {
       setMessage("Material updated successfully.");
       setError(null);
-    },
-    onError: (e: Error) => {
-      setMessage(null);
-      setError(e.message);
+
+      qc.setQueryData(["material", materialId], (old: any) => {
+        if (!old) return old;
+
+        return {
+          ...old,
+          material: {
+            ...old.material,
+            title,
+            authors,
+            pages: Number(pages),
+            material_type: materialType,
+            tags: tags.join(", "),
+            link: link.trim() || null,
+          },
+        };
+      });
+
+      void qc.invalidateQueries({ queryKey: ["materials"] });
+      navigate(from);
     },
   });
 

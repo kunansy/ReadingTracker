@@ -130,7 +130,9 @@ export function CompletedPage() {
                 {
                     label: "Edit",
                     action: async () =>
-                        navigate(`/materials/update?material_id=${materialId}`),
+                        navigate(`/materials/update?material_id=${materialId}`, {
+                            state: { from: location.pathname + location.search },
+                        })
                 },
                 {
                     label: "Open notes",
