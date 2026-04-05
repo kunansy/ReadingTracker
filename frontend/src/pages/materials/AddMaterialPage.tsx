@@ -166,6 +166,7 @@ export function AddMaterialPage() {
                 value={authors}
                 onChange={setAuthors}
                 options={materialAuthors?.authorsList ?? []}
+                allowCreate
             >
               <ComboboxInput placeholder="Enter a material authors" />
               <ComboboxList />
