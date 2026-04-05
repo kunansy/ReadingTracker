@@ -45,7 +45,9 @@ export function ReadingPage() {
         {
           label: "Edit",
           action: async () => {
-            navigate(`/materials/update?material_id=${materialId}`);
+            navigate(`/materials/update?material_id=${materialId}`, {
+              state: { from: location.pathname + location.search },
+            })
           },
         },
         {
