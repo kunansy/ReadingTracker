@@ -1,4 +1,4 @@
-import {useMutation} from "@tanstack/react-query";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {useEffect, useRef, useState} from "react";
 
 import {apiFetch} from "../../api/materials";
@@ -34,6 +34,7 @@ export function AddMaterialPage() {
   const [link, setLink] = useState("");
   const [parseUrl, setParseUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const qc = useQueryClient();
 
   useEffect(() => {
     void apiFetch<MaterialTagsResponse>("/tags").then(setMaterialTags).catch(() => {
@@ -100,6 +101,8 @@ export function AddMaterialPage() {
       setTags([]);
       setLink("");
       setError(null);
+
+      void qc.invalidateQueries({ queryKey: ["queue"] });
     },
     onError: (e: Error) => {
       setError(e.message);
