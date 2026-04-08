@@ -174,7 +174,7 @@ export function UpdateMaterialPage() {
             <ComboboxRoot
                 value={tags}
                 onChange={setTags}
-                options={materialTags?.tagsList ?? []}
+                options={materialTags?.tags ?? []}
                 multiple
                 allowCreate
             >
