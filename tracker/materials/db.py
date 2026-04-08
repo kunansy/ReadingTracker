@@ -1053,6 +1053,9 @@ async def parse_youtube(video_id: str, *, http_timeout: int = 5) -> YoutubeVideo
         resp_json = await resp.json()
         resp.raise_for_status()
 
+    if not resp_json["items"]:
+        raise ValueError("No items found")
+
     item = resp_json["items"][0]
     title = item["snippet"]["title"]
     authors = item["snippet"]["channelTitle"]
