@@ -217,7 +217,7 @@ export function ReadingPage() {
           <button
             type="button"
             id="complete-material-cancel"
-            className="btn btn-secondary"
+            className="submit-button"
             onClick={() => {
               dialogRef.current?.close();
             }}
