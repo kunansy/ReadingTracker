@@ -149,7 +149,11 @@ async def parse_youtube_json(payload: ParseLinkBody):
     if host.replace("www.", "") not in ("youtube.com", "youtu.be"):
         raise HTTPException(detail="Invalid youtube url", status_code=400)
 
-    video_id = link.query_params()[0][1]
+    if "youtube.com" in host:
+        video_id = link.query_params()[0][1]
+    else:
+       video_id = link.path.replace("/", "")
+
     video_info = await db.parse_youtube(video_id)
 
     return {
