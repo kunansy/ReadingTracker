@@ -78,9 +78,13 @@ class MaterialStatistics(CustomBaseModel):
     # according to mean read pages count
     would_be_completed: datetime.date | None = None
 
+    @computed_field
     @property
     def percent_completed(self) -> float:
-        return round(self.total / self.material.pages * 100, 2)
+        try:
+            return round(self.total / self.material.pages * 100, 2)
+        except ZeroDivisionError:
+            return 0.0
 
 
 class RepeatAnalytics(CustomBaseModel):
