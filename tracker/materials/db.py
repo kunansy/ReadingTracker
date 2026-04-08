@@ -78,8 +78,8 @@ class MaterialStatistics(CustomBaseModel):
     # according to mean read pages count
     would_be_completed: datetime.date | None = None
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
-    @computed_field
     def percent_completed(self) -> float:
         try:
             return round(self.total / self.material.pages * 100, 2)
@@ -97,8 +97,8 @@ class RepeatAnalytics(CustomBaseModel):
     def replace_none(cls, v: int | None) -> int:
         return v or 0
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
-    @computed_field
     def priority_months(self) -> float:
         return _calculate_priority_months(
             self.priority_days,
