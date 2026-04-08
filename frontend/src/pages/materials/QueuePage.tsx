@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
+import {useCallback, useEffect, useRef, useState} from "react";
 import { useNavigate } from "react-router-dom";
 
 import { apiFetch } from "../../api/materials";
@@ -7,6 +7,7 @@ import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
 import type { MaterialEstimateJson } from "../../types";
+import {CelebrateButton} from "../../components/CelebrateButton.tsx";
 
 type QueueResponse = {
   estimates: MaterialEstimateJson[];
@@ -16,6 +17,9 @@ type QueueResponse = {
 export function QueuePage() {
   const qc = useQueryClient();
   const { open, close } = useContextMenu();
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const [completeId, setCompleteId] = useState<string | null>(null);
+  const [dateStr, setDateStr] = useState("");
   const navigate = useNavigate();
 
   const q = useQuery({
@@ -24,8 +28,11 @@ export function QueuePage() {
   });
 
   const startMut = useMutation({
-    mutationFn: (materialId: string) =>
-      apiFetch(`/${materialId}/start`, { method: "POST" }),
+    mutationFn: (p: { materialId: string; startedAt: string}) =>
+      apiFetch(`/${p.materialId}/start`, {
+        method: "POST",
+        body: JSON.stringify({ started_at: p.startedAt }),
+      }),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["materials"] });
     },
@@ -41,6 +48,34 @@ export function QueuePage() {
       void qc.invalidateQueries({ queryKey: ["materials"] });
     },
   });
+
+  const setToday = () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    setDateStr(`${yyyy}-${mm}-${dd}`);
+  };
+
+  const openStart = (materialId: string) => {
+    setCompleteId(materialId);
+    setToday();
+    dialogRef.current?.showModal();
+  };
+
+  useEffect(() => {
+    const d = dialogRef.current;
+    if (!d) {
+      return;
+    }
+    const onClose = () => {
+      setCompleteId(null);
+    };
+    d.addEventListener("close", onClose);
+    return () => {
+      d.removeEventListener("close", onClose);
+    };
+  }, []);
 
   const onQueueContextMenu = useCallback(
     async (e: React.MouseEvent, materialId: string, index: number) => {
@@ -159,18 +194,77 @@ export function QueuePage() {
               {" "}
               Expected mean: {Math.ceil(mean)} {ill} per day{" "}
             </p>
-            <form
-              className="form start"
-              title={`Start the material id=${material.material_id}`}
-              onSubmit={(e) => {
-                e.preventDefault();
-                startMut.mutate(material.material_id);
-              }}
+            <div
+                className="form start"
+                title={`Start the material id=${material.material_id}`}
             >
-              <button type="submit" className="submit-button">
+              <button
+                  type="button"
+                  className="submit-button celebrate-btn"
+                  onClick={() => {
+                    openStart(material.material_id);
+                  }}
+              >
                 Start
               </button>
-            </form>
+            </div>
+
+
+            <dialog
+                ref={dialogRef}
+                id="complete-material-dialog"
+                className="complete-material-dialog"
+            >
+              <p className="complete-material-dialog__title">Completion date</p>
+              <p>
+                <label className="complete-material-dialog__label">
+                  Date{" "}
+                  <input
+                      type="date"
+                      id="complete-material-date"
+                      className="complete-material-dialog__date"
+                      required
+                      value={dateStr}
+                      onChange={(e) => {
+                        setDateStr(e.target.value);
+                      }}
+                  />
+                </label>
+              </p>
+              <div className="complete-material-dialog__actions">
+                <button
+                    type="button"
+                    id="complete-material-cancel"
+                    className="submit-button"
+                    onClick={() => {
+                      dialogRef.current?.close();
+                    }}
+                >
+                  Cancel
+                </button>
+                <CelebrateButton
+                    id="complete-material-confirm"
+                    className="submit-button celebrate-btn"
+                    onClick={async () => {
+                      if (!completeId || !dateStr) {
+                        return;
+                      }
+                      try {
+                        await startMut.mutateAsync({
+                          materialId: completeId,
+                          startedAt: dateStr,
+                        });
+                        dialogRef.current?.close();
+                      } catch (err) {
+                        window.alert((err as Error).message);
+                      }
+                    }}
+                >
+                  Start
+                </CelebrateButton>
+              </div>
+            </dialog>
+
           </div>
         );
       })}
