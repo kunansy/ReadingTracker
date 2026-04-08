@@ -83,7 +83,7 @@ export function AddMaterialPage() {
         material_type: materialType,
       };
       if (tags.length) {
-        body.tags = tags.join(" ");
+        body.tags = tags.join(", ");
       }
       if (link.trim()) {
         body.link = link.trim();
