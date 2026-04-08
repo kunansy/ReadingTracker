@@ -1,9 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-    useCallback,
-    useMemo,
-    useEffect,
-    useState,
+  useCallback,
+  useMemo,
+  useEffect,
+  useState,
 } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 
@@ -13,302 +13,296 @@ import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
 import {
-    MaterialStatisticsJson,
-    MaterialTagsResponse,
-    MaterialTypes,
+  MaterialStatisticsJson,
+  MaterialTagsResponse,
+  MaterialTypes,
 } from "../../types";
 import {
-    ComboboxInput, ComboboxList, ComboboxRoot,
+  ComboboxInput, ComboboxList, ComboboxRoot,
 } from "../../components/Combobox";
 
 type CompletedResponse = {
-    statistics: MaterialStatisticsJson[];
+  statistics: MaterialStatisticsJson[];
 };
 
 function useDebounce<T>(value: T, delay: number): T {
-    const [debounced, setDebounced] = useState(value);
+  const [debounced, setDebounced] = useState(value);
 
-    useEffect(() => {
-        const id = setTimeout(() => setDebounced(value), delay);
-        return () => clearTimeout(id);
-    }, [value, delay]);
+  useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(id);
+  }, [value, delay]);
 
-    return debounced;
+  return debounced;
 }
 
 export function CompletedPage() {
-    const qc = useQueryClient();
-    const navigate = useNavigate();
-    const { open, close } = useContextMenu();
+  const qc = useQueryClient();
+  const navigate = useNavigate();
+  const { open, close } = useContextMenu();
 
-    const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-    const [formState, setFormState] = useState({
-        material_type: searchParams.get("material_type") ?? "",
-        tags_query: searchParams.get("tags_query")
-            ? searchParams.get("tags_query")!.split(" ")
-            : [],
-        outlined: searchParams.get("outlined") ?? "all",
+  const [formState, setFormState] = useState({
+    material_type: searchParams.get("material_type") ?? "",
+    tags_query: searchParams.get("tags_query")
+      ? searchParams.get("tags_query")!.split(" ")
+      : [],
+    outlined: searchParams.get("outlined") ?? "all",
+  });
+
+  useEffect(() => {
+    setFormState({
+      material_type: searchParams.get("material_type") ?? "",
+      tags_query: searchParams.get("tags_query")
+        ? searchParams.get("tags_query")!.split(" ")
+        : [],
+      outlined: searchParams.get("outlined") ?? "all",
+      });
+  }, [searchParams]);
+
+  const debouncedForm = useDebounce(formState, 300);
+
+  const [materialTags, setMaterialTags] = useState<MaterialTagsResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+   void apiFetch<MaterialTagsResponse>("/tags")
+       .then(setMaterialTags)
+       .catch(() => setError("Failed to load material tags"));
+  }, []);
+
+  const queryString = useMemo(() => {
+    return buildQuery({
+      material_type: debouncedForm.material_type || undefined,
+      tags_query: debouncedForm.tags_query.length ? debouncedForm.tags_query.join(" ") : undefined,
+      outlined: debouncedForm.outlined === "all" ? undefined : debouncedForm.outlined,
     });
+  }, [debouncedForm]);
 
-    useEffect(() => {
-        setFormState({
-            material_type: searchParams.get("material_type") ?? "",
-            tags_query: searchParams.get("tags_query")
-                ? searchParams.get("tags_query")!.split(" ")
-                : [],
-            outlined: searchParams.get("outlined") ?? "all",
-        });
-    }, [searchParams]);
+  const q = useQuery({
+    queryKey: ["materials", "completed", queryString],
+    queryFn: () =>
+      apiFetch<CompletedResponse>(`/completed${queryString}`),
+  });
 
-    const debouncedForm = useDebounce(formState, 300);
+  const outlineMut = useMutation({
+      mutationFn: (materialId: string) =>
+          apiFetch(`/${materialId}/outline`, { method: "POST" }),
+      onSuccess: () => {
+          void qc.invalidateQueries({ queryKey: ["materials"] });
+      },
+  });
 
-    const [materialTags, setMaterialTags] =
-        useState<MaterialTagsResponse | null>(null);
-    const [error, setError] = useState<string | null>(null);
+  const updateURL = useCallback(
+      (state: typeof formState) => {
+          const next: Record<string, string> = {};
 
-    useEffect(() => {
-        void apiFetch<MaterialTagsResponse>("/tags")
-            .then(setMaterialTags)
-            .catch(() => setError("Failed to load material tags"));
-    }, []);
+          if (state.material_type) next.material_type = state.material_type;
+          if (state.tags_query.length) {
+              next.tags_query = state.tags_query.join(" ");
+          }
+          if (state.outlined && state.outlined !== "all") {
+              next.outlined = state.outlined;
+          }
 
-    const queryString = useMemo(() => {
-        return buildQuery({
-            material_type: debouncedForm.material_type || undefined,
-            tags_query: debouncedForm.tags_query.length
-                ? debouncedForm.tags_query.join(" ")
-                : undefined,
-            outlined:
-                debouncedForm.outlined === "all"
-                    ? undefined
-                    : debouncedForm.outlined,
-        });
-    }, [debouncedForm]);
+          setSearchParams(next);
+      },
+      [setSearchParams]
+  );
 
-    const q = useQuery({
-        queryKey: ["materials", "completed", queryString],
-        queryFn: () =>
-            apiFetch<CompletedResponse>(`/completed${queryString}`),
-    });
+  const onSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      updateURL(formState);
+  };
 
-    const outlineMut = useMutation({
-        mutationFn: (materialId: string) =>
-            apiFetch(`/${materialId}/outline`, { method: "POST" }),
-        onSuccess: () => {
-            void qc.invalidateQueries({ queryKey: ["materials"] });
-        },
-    });
+  const onMaterialContextMenu = useCallback(
+      (e: React.MouseEvent, materialId: string) => {
+          e.preventDefault();
+          close();
+          open(e.clientX, e.clientY, [
+              {
+                  label: "Edit",
+                  action: async () =>
+                      navigate(`/materials/update?material_id=${materialId}`, {
+                          state: { from: location.pathname + location.search },
+                      })
+              },
+              {
+                  label: "Open notes",
+                  action: async () =>
+                      navigate(`/notes?material_id=${materialId}`),
+              },
+              {
+                  label: "Add note",
+                  action: async () =>
+                      navigate(`/notes/add?material_id=${materialId}`),
+              },
+          ]);
+      },
+      [close, open, navigate]
+  );
 
-    const updateURL = useCallback(
-        (state: typeof formState) => {
-            const next: Record<string, string> = {};
+  const handleOutlinedChange = (value: string) => {
+      setFormState((prev) => ({ ...prev, outlined: value }));
+  };
 
-            if (state.material_type) next.material_type = state.material_type;
-            if (state.tags_query.length) {
-                next.tags_query = state.tags_query.join(" ");
-            }
-            if (state.outlined && state.outlined !== "all") {
-                next.outlined = state.outlined;
-            }
+  if (q.isLoading) return <p>Loading…</p>;
+  if (q.error)
+      return <p className="error">{(q.error as Error).message}</p>;
 
-            setSearchParams(next);
-        },
-        [setSearchParams]
-    );
+  const stats = q.data?.statistics ?? [];
 
-    const onSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        updateURL(formState);
-    };
+  return (
+      <>
+          {error && <div className="alert error">{error}</div>}
 
-    const onMaterialContextMenu = useCallback(
-        (e: React.MouseEvent, materialId: string) => {
-            e.preventDefault();
-            close();
-            open(e.clientX, e.clientY, [
-                {
-                    label: "Edit",
-                    action: async () =>
-                        navigate(`/materials/update?material_id=${materialId}`, {
-                            state: { from: location.pathname + location.search },
-                        })
-                },
-                {
-                    label: "Open notes",
-                    action: async () =>
-                        navigate(`/notes?material_id=${materialId}`),
-                },
-                {
-                    label: "Add note",
-                    action: async () =>
-                        navigate(`/notes/add?material_id=${materialId}`),
-                },
-            ]);
-        },
-        [close, open, navigate]
-    );
+          <form id="search-materials-form" onSubmit={onSubmit}>
+              <ComboboxRoot
+                  value={formState.material_type}
+                  onChange={(v) =>
+                      setFormState((p) => ({ ...p, material_type: v }))
+                  }
+                  options={MaterialTypes ?? []}
+              >
+                  <ComboboxInput placeholder="Enter a material type" />
+                  <ComboboxList />
+              </ComboboxRoot>
 
-    const handleOutlinedChange = (value: string) => {
-        setFormState((prev) => ({ ...prev, outlined: value }));
-    };
+              <ComboboxRoot
+                  value={formState.tags_query}
+                  onChange={(v) =>
+                      setFormState((p) => ({ ...p, tags_query: v }))
+                  }
+                  options={materialTags?.tagsList ?? []}
+                  multiple
+                  allowCreate
+              >
+                  <ComboboxInput placeholder="Enter material tags" />
+                  <ComboboxList />
+              </ComboboxRoot>
 
-    if (q.isLoading) return <p>Loading…</p>;
-    if (q.error)
-        return <p className="error">{(q.error as Error).message}</p>;
+              <div className="outlined-checkbox">
+                  <label>
+                      <input
+                          type="radio"
+                          checked={formState.outlined === "outlined"}
+                          onChange={() => handleOutlinedChange("outlined")}
+                      />
+                      Outlined only
+                  </label>
 
-    const stats = q.data?.statistics ?? [];
+                  <br />
 
-    return (
-        <>
-            {error && <div className="alert error">{error}</div>}
+                  <label>
+                      <input
+                          type="radio"
+                          checked={formState.outlined === "not_outlined"}
+                          onChange={() => handleOutlinedChange("not_outlined")}
+                      />
+                      Not outlined only
+                  </label>
 
-            <form id="search-materials-form" onSubmit={onSubmit}>
-                <ComboboxRoot
-                    value={formState.material_type}
-                    onChange={(v) =>
-                        setFormState((p) => ({ ...p, material_type: v }))
-                    }
-                    options={MaterialTypes ?? []}
-                >
-                    <ComboboxInput placeholder="Enter a material type" />
-                    <ComboboxList />
-                </ComboboxRoot>
+                  <br />
 
-                <ComboboxRoot
-                    value={formState.tags_query}
-                    onChange={(v) =>
-                        setFormState((p) => ({ ...p, tags_query: v }))
-                    }
-                    options={materialTags?.tagsList ?? []}
-                    multiple
-                    allowCreate
-                >
-                    <ComboboxInput placeholder="Enter material tags" />
-                    <ComboboxList />
-                </ComboboxRoot>
+                  <label>
+                      <input
+                          type="radio"
+                          checked={formState.outlined === "all"}
+                          onChange={() => handleOutlinedChange("all")}
+                      />
+                      All
+                  </label>
+              </div>
 
-                <div className="outlined-checkbox">
-                    <label>
-                        <input
-                            type="radio"
-                            checked={formState.outlined === "outlined"}
-                            onChange={() => handleOutlinedChange("outlined")}
-                        />
-                        Outlined only
-                    </label>
+              <button type="submit" className="submit-button">
+                  Search
+              </button>
+          </form>
 
-                    <br />
+          {!stats.length ? (
+              <NotFoundMaterials kind="completed materials" />
+          ) : (
+              [...stats]
+                  .sort((a, b) => {
+                      const ac = a.completed_at ?? a.material.added_at;
+                      const bc = b.completed_at ?? b.material.added_at;
+                      return String(ac).localeCompare(String(bc));
+                  })
+                  .map((ms, idx) => {
+                      const material = ms.material;
+                      const il = itemsLabel(material.material_type);
+                      const ill = itemsLabelLower(material.material_type);
 
-                    <label>
-                        <input
-                            type="radio"
-                            checked={formState.outlined === "not_outlined"}
-                            onChange={() => handleOutlinedChange("not_outlined")}
-                        />
-                        Not outlined only
-                    </label>
+                      return (
+                          <div
+                              key={material.material_id}
+                              className="material hover"
+                              onContextMenu={(e) =>
+                                  onMaterialContextMenu(e, material.material_id)
+                              }
+                          >
+                              <p className="little-text">
+                                  {idx + 1} / {stats.length}
+                              </p>
+                              <p>Title: «{material.title}»</p>
+                              <p>Author: {material.authors}</p>
+                              <p>
+                                  {il}: {material.pages}
+                              </p>
+                              <p>Type: {material.material_type}</p>
+                              {material.tags && <p>Tags: {material.tags}</p>}
+                              {material.link && <p>Link: {material.link}</p>}
+                              <p>
+                                  Is outlined: {material.is_outlined ? "Yes" : "No"}
+                              </p>
 
-                    <br />
+                              <hr title="Analytics"/>
 
-                    <label>
-                        <input
-                            type="radio"
-                            checked={formState.outlined === "all"}
-                            onChange={() => handleOutlinedChange("all")}
-                        />
-                        All
-                    </label>
-                </div>
+                              <p>Started at: {ms.started_at}</p>
+                              <p>Completed at: {ms.completed_at}</p>
+                              <p>Total duration: {ms.total_reading_duration}</p>
+                              <p>Notes count: {ms.notes_count}</p>
+                              <p>Was being reading: {ms.duration} days</p>
+                              <p>Lost time: {ms.lost_time} days</p>
+                              <p>
+                                  Mean: {ms.mean} {ill} per day
+                              </p>
 
-                <button type="submit" className="submit-button">
-                    Search
-                </button>
-            </form>
+                              {ms.max_record && ms.min_record && (
+                                  <>
+                                      <hr title="Min/max" />
+                                      <p>
+                                          Max: {ms.max_record.count} {ill},{" "}
+                                          {ms.max_record.date}
+                                      </p>
+                                      <p>
+                                          Min: {ms.min_record.count} {ill},{" "}
+                                          {ms.min_record.date}
+                                      </p>
+                                  </>
+                              )}
 
-            {!stats.length ? (
-                <NotFoundMaterials kind="completed materials" />
-            ) : (
-                [...stats]
-                    .sort((a, b) => {
-                        const ac = a.completed_at ?? a.material.added_at;
-                        const bc = b.completed_at ?? b.material.added_at;
-                        return String(ac).localeCompare(String(bc));
-                    })
-                    .map((ms, idx) => {
-                        const material = ms.material;
-                        const il = itemsLabel(material.material_type);
-                        const ill = itemsLabelLower(material.material_type);
-
-                        return (
-                            <div
-                                key={material.material_id}
-                                className="material hover"
-                                onContextMenu={(e) =>
-                                    onMaterialContextMenu(e, material.material_id)
-                                }
-                            >
-                                <p className="little-text">
-                                    {idx + 1} / {stats.length}
-                                </p>
-                                <p>Title: «{material.title}»</p>
-                                <p>Author: {material.authors}</p>
-                                <p>
-                                    {il}: {material.pages}
-                                </p>
-                                <p>Type: {material.material_type}</p>
-                                {material.tags && <p>Tags: {material.tags}</p>}
-                                {material.link && <p>Link: {material.link}</p>}
-                                <p>
-                                    Is outlined: {material.is_outlined ? "Yes" : "No"}
-                                </p>
-
-                                <hr title="Analytics"/>
-
-                                <p>Started at: {ms.started_at}</p>
-                                <p>Completed at: {ms.completed_at}</p>
-                                <p>Total duration: {ms.total_reading_duration}</p>
-                                <p>Notes count: {ms.notes_count}</p>
-                                <p>Was being reading: {ms.duration} days</p>
-                                <p>Lost time: {ms.lost_time} days</p>
-                                <p>
-                                    Mean: {ms.mean} {ill} per day
-                                </p>
-
-                                {ms.max_record && ms.min_record && (
-                                    <>
-                                        <hr title="Min/max" />
-                                        <p>
-                                            Max: {ms.max_record.count} {ill},{" "}
-                                            {ms.max_record.date}
-                                        </p>
-                                        <p>
-                                            Min: {ms.min_record.count} {ill},{" "}
-                                            {ms.min_record.date}
-                                        </p>
-                                    </>
-                                )}
-
-                                {!material.is_outlined && (
-                                    <form
-                                        className="outline"
-                                        title={`Mark the material id=${material.material_id} as outlined`}
-                                        onSubmit={(e) => {
-                                            e.preventDefault();
-                                            outlineMut.mutate(material.material_id);
-                                        }}
-                                    >
-                                        <CelebrateButton
-                                            type="submit"
-                                            className="submit-button">
-                                            Outline
-                                        </CelebrateButton>
-                                    </form>
-                                )}
-                            </div>
-                        );
-                    })
-            )}
-        </>
-    );
+                              {!material.is_outlined && (
+                                  <form
+                                      className="outline"
+                                      title={`Mark the material id=${material.material_id} as outlined`}
+                                      onSubmit={(e) => {
+                                          e.preventDefault();
+                                          outlineMut.mutate(material.material_id);
+                                      }}
+                                  >
+                                      <CelebrateButton
+                                          type="submit"
+                                          className="submit-button">
+                                          Outline
+                                      </CelebrateButton>
+                                  </form>
+                              )}
+                          </div>
+                      );
+                  })
+          )}
+      </>
+  );
 }
