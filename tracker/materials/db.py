@@ -97,8 +97,8 @@ class RepeatAnalytics(CustomBaseModel):
     def replace_none(cls, v: int | None) -> int:
         return v or 0
 
-    @computed_field  # type: ignore[prop-decorator]
     @property
+    @computed_field
     def priority_months(self) -> float:
         return _calculate_priority_months(
             self.priority_days,
