@@ -29,7 +29,7 @@ export function AddMaterialPage() {
   const [title, setTitle] = useState("");
   const [authors, setAuthors] = useState("");
   const [pages, setPages] = useState("");
-  const [materialType, setMaterialType] = useState<MaterialType>(MaterialType.book);
+  const [materialType, setMaterialType] = useState<MaterialType>("");
   const [tags, setTags] = useState<string[]>([]);
   const [link, setLink] = useState("");
   const [parseUrl, setParseUrl] = useState("");
