@@ -152,7 +152,7 @@ async def parse_youtube_json(payload: ParseLinkBody):
     if "youtube.com" in host:
         video_id = link.query_params()[0][1]
     else:
-       video_id = link.path.replace("/", "")
+        video_id = (link.path or "").replace("/", "")
 
     video_info = await db.parse_youtube(video_id)
 
@@ -162,7 +162,12 @@ async def parse_youtube_json(payload: ParseLinkBody):
         "duration": video_info.duration,
         "type": enums.MaterialTypesEnum.lecture,
         # build a custom link to remove redundant query params
-        "link": HttpUrl.build(scheme="https", host="youtube.com", path="watch", query=f"v={video_id}"),
+        "link": HttpUrl.build(
+            scheme="https",
+            host="youtube.com",
+            path="watch",
+            query=f"v={video_id}",
+        ),
     }
 
 
