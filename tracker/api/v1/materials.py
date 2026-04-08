@@ -144,7 +144,11 @@ async def parse_youtube_json(payload: ParseLinkBody):
     else:
         video_id = (link.path or "").replace("/", "")
 
-    video_info = await db.parse_youtube(video_id)
+    try:
+        video_info = await db.parse_youtube(video_id)
+    except ValueError as e:
+        logger.error("Failed to parse youtube, link=%s, e=%r", link, e)
+        raise HTTPException(detail=str(e), status_code=400) from None
 
     return {
         "title": video_info.title,
