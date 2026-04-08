@@ -34,6 +34,6 @@ jobs:
           context: .
           platforms: linux/amd64
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/reading_tracker:256
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/reading_tracker:257
           build-args: |
             VITE_API_BASE_URL=${{ env.VITE_API_BASE_URL }}
