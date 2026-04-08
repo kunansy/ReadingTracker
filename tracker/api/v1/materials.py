@@ -161,7 +161,8 @@ async def parse_youtube_json(payload: ParseLinkBody):
         "authors": video_info.authors,
         "duration": video_info.duration,
         "type": enums.MaterialTypesEnum.lecture,
-        "link": link,
+        # build a custom link to remove redundant query params
+        "link": HttpUrl.build(scheme="https", host="youtube.com", path="watch", query=f"v={video_id}"),
     }
 
 
