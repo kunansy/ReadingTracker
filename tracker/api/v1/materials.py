@@ -18,16 +18,6 @@ def _serialize_means(mean: enums.MEANS) -> dict[str, float]:
     return {k: float(v) for k, v in mean.items()}
 
 
-def _material_type_query_public(
-    mt: enums.MaterialTypesEnum | str | None,
-) -> str | None:
-    if mt is None or mt == "":
-        return None
-    if isinstance(mt, enums.MaterialTypesEnum):
-        return mt.value
-    return str(mt)
-
-
 class SwapOrderRequest(CustomBaseModel):
     material_id: UUID
     index: int
