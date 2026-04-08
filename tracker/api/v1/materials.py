@@ -88,7 +88,7 @@ async def get_authors():
     authors = await db.get_authors()
 
     return {
-        "authorsList": authors,
+        "authors": authors,
     }
 
 
@@ -97,7 +97,7 @@ async def get_tags():
     tags = await db.get_material_tags()
 
     return {
-        "tagsList": tags,
+        "tags": tags,
     }
 
 

@@ -168,7 +168,7 @@ export function AddMaterialPage() {
             <ComboboxRoot
                 value={authors}
                 onChange={setAuthors}
-                options={materialAuthors?.authorsList ?? []}
+                options={materialAuthors?.authors ?? []}
                 allowCreate
             >
               <ComboboxInput placeholder="Enter a material authors" />
@@ -200,7 +200,7 @@ export function AddMaterialPage() {
             <ComboboxRoot
                 value={tags}
                 onChange={setTags}
-                options={materialTags?.tagsList ?? []}
+                options={materialTags?.tags ?? []}
                 multiple
                 allowCreate
             >

@@ -174,7 +174,7 @@ export function CompletedPage() {
                   onChange={(v) =>
                       setFormState((p) => ({ ...p, tags_query: v }))
                   }
-                  options={materialTags?.tagsList ?? []}
+                  options={materialTags?.tags ?? []}
                   multiple
                   allowCreate
               >

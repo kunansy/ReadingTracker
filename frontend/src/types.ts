@@ -65,9 +65,9 @@ export type RepeatingQueueJson = {
 };
 
 export type MaterialTagsResponse = {
-  tagsList: string[];
+  tags: string[];
 };
 
 export type MaterialAuthorsResponse = {
-  authorsList: string[];
+  authors: string[];
 }
