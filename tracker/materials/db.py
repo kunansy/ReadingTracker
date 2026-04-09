@@ -512,23 +512,31 @@ async def insert_material(
     material_type: enums.MaterialTypesEnum,
     tags: str | None,
     link: str | None,
-) -> None:
+) -> UUID:
     logger.debug("Inserting material title=%s", title)
 
-    values = {
-        "title": title,
-        "authors": authors,
-        "pages": pages,
-        "tags": tags,
-        "link": link,
-        "material_type": material_type,
-    }
-    stmt = models.Materials.insert().values(values)
+    stmt = (
+        models.Materials.insert()
+        .values(
+            {
+                "title": title,
+                "authors": authors,
+                "pages": pages,
+                "tags": tags,
+                "link": link,
+                "material_type": material_type,
+            },
+        )
+        .returning(models.Materials.c.material_id)
+    )
 
     async with database.session() as ses:
-        await ses.execute(stmt)
+        res = await ses.execute(stmt)
 
-    logger.debug("Material inserted")
+    material_id = res.scalar()
+
+    logger.debug("Material inserted, id=%r", material_id)
+    return material_id
 
 
 async def update_material(
