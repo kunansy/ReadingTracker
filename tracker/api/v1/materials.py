@@ -179,8 +179,10 @@ async def create_material(material: schemas.Material):
         )
     except database.AlreadyExistsException as e:
         logger.exception(e)
-        msg = (f"Material of type='{material.material_type}', "
-               f"title={material.title!r} already exists")
+        msg = (
+            f"Material of type='{material.material_type}', "
+            f"title={material.title!r} already exists"
+        )
         raise HTTPException(detail=msg, status_code=409) from None
 
     return {"material_id": material_id}
