@@ -110,6 +110,11 @@ async def database_exception_handler(request: Request, exc: database.DatabaseExc
     logger.exception("Database exception occurred, (%s), %s", request.url, str(exc))
 
     if request.url.path.startswith("/api/v1"):
+        if isinstance(exc, database.AlreadyExistsException):
+            return JSONResponse(
+                status_code=409,
+                content={"detail": f"Database error: {exc}"},
+            )
         return JSONResponse(
             status_code=500,
             content={"detail": f"Database error: {exc}"},
