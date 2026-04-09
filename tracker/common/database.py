@@ -64,7 +64,7 @@ async def session(**kwargs) -> AsyncGenerator[AsyncSession]:
         yield new_session
         await new_session.commit()
     except IntegrityError as e:
-        if e.orig.pgcode == PG_UNIQUE_VIOLATION:
+        if getattr(e.orig, "pgcode", None) == PG_UNIQUE_VIOLATION:
             raise AlreadyExistsException(e) from None
 
         await new_session.rollback()
