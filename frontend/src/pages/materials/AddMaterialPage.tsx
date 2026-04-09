@@ -102,7 +102,7 @@ export function AddMaterialPage() {
       setLink("");
       setError(null);
 
-      void qc.invalidateQueries({ queryKey: ["queue"] });
+      void qc.invalidateQueries({ queryKey: ["materials", "queue"], });
     },
     onError: (e: Error) => {
       setError(e.message);
