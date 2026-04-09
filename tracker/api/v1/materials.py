@@ -5,7 +5,6 @@ from uuid import UUID
 from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import HttpUrl
 
-from tracker.common import database
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.materials import db, schemas
