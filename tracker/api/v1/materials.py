@@ -5,6 +5,7 @@ from uuid import UUID
 from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import HttpUrl
 
+from tracker.common import database
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.materials import db, schemas
@@ -167,14 +168,20 @@ async def parse_youtube_json(payload: ParseLinkBody):
 
 @router.post("/", status_code=201)
 async def create_material_json(material: schemas.Material):
-    await db.insert_material(
-        title=material.title,
-        authors=material.authors,
-        pages=material.pages,
-        material_type=material.material_type,
-        tags=material.tags,
-        link=material.get_link(),
-    )
+    try:
+        await db.insert_material(
+            title=material.title,
+            authors=material.authors,
+            pages=material.pages,
+            material_type=material.material_type,
+            tags=material.tags,
+            link=material.get_link(),
+        )
+    except database.AlreadyExistsException as e:
+        logger.exception(e)
+        msg = f"Material of type={material.material_type!r}, title={material.title!r} already exists"
+        raise HTTPException(detail=msg, status_code=409) from None
+
     return {"ok": True}
 
 
