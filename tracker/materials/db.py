@@ -536,7 +536,7 @@ async def insert_material(
     material_id = res.scalar()
 
     logger.debug("Material inserted, id=%r", material_id)
-    return material_id
+    return cast("UUID", material_id)
 
 
 async def update_material(
