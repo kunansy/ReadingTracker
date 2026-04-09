@@ -167,7 +167,7 @@ async def parse_youtube_json(payload: ParseLinkBody):
 
 
 @router.post("/", status_code=201, response_model=schemas.CreateMaterialResponse)
-async def create_material_json(material: schemas.Material):
+async def create_material(material: schemas.Material):
     try:
         material_id = await db.insert_material(
             title=material.title,
