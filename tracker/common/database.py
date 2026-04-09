@@ -1,11 +1,12 @@
 import datetime
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any
+from typing import Any, Final
 from uuid import UUID
 
 import orjson
 import sqlalchemy.sql as sa
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.ddl import DropTable
@@ -16,7 +17,14 @@ from tracker.common.schemas import CustomBaseModel
 from tracker.models import models
 
 
+PG_UNIQUE_VIOLATION: Final[str] = "23505"
+
+
 class DatabaseException(Exception):
+    pass
+
+
+class AlreadyExistsException(DatabaseException):
     pass
 
 
@@ -55,6 +63,12 @@ async def session(**kwargs) -> AsyncGenerator[AsyncSession]:
     try:
         yield new_session
         await new_session.commit()
+    except IntegrityError as e:
+        if e.orig.pgcode == PG_UNIQUE_VIOLATION:
+            raise AlreadyExistsException(e) from None
+
+        await new_session.rollback()
+        raise DatabaseException(e) from e
     except Exception as e:
         logger.exception("Error with the session")
 
