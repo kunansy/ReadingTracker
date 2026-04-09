@@ -166,10 +166,10 @@ async def parse_youtube_json(payload: ParseLinkBody):
     }
 
 
-@router.post("/", status_code=201)
+@router.post("/", status_code=201, response_model=schemas.CreateMaterialResponse)
 async def create_material_json(material: schemas.Material):
     try:
-        await db.insert_material(
+        material_id = await db.insert_material(
             title=material.title,
             authors=material.authors,
             pages=material.pages,
@@ -182,7 +182,7 @@ async def create_material_json(material: schemas.Material):
         msg = f"Material of type={material.material_type!r}, title={material.title!r} already exists"
         raise HTTPException(detail=msg, status_code=409) from None
 
-    return {"ok": True}
+    return {"material_id": material_id}
 
 
 @router.get("/{material_id}")

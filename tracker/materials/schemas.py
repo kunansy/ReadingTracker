@@ -25,6 +25,10 @@ class UpdateMaterial(Material):
     material_id: UUID
 
 
+class CreateMaterialResponse(CustomBaseModel):
+    material_id: UUID
+
+
 class ParsedMaterial(CustomBaseModel):
     authors: str
     title: str
