@@ -13,6 +13,8 @@ import { UpdateMaterialPage } from "./pages/materials/UpdateMaterialPage";
 import { AddNotePage } from "./pages/notes/AddNotePage";
 import { GraphPage } from "./pages/notes/GraphPage";
 import { SearchNotesPage } from "./pages/notes/SearchNotesPage";
+import { ReadingLogLayout } from "./components/ReadingLogLayout.tsx";
+import { ListReadingLogsPage } from "./pages/reading_log/ListReadingLogsPage.tsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,6 +42,11 @@ export function App() {
             <Route index element={<SearchNotesPage />} />
             <Route path="add" element={<AddNotePage />} />
             <Route path="graph" element={<GraphPage />} />
+          </Route>
+          <Route path="/reading_log" element={<ReadingLogLayout />}>
+            <Route index element={<Navigate to="list" replace />} />
+            <Route path="list" element={<ListReadingLogsPage />} />
+            {/*<Route path="graph" element={<GraphPage />} />*/}
           </Route>
         </Routes>
       </ContextMenuProvider>
