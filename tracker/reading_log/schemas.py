@@ -18,3 +18,7 @@ class CompletionInfoSchema(CustomBaseModel):
     material_type: enums.MaterialTypesEnum
     pages_read: NonNegativeInt
     read_days: NonNegativeInt
+
+
+class GetReadingLogsRequest(CustomBaseModel):
+    material_id: UUID
