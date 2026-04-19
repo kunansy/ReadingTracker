@@ -8,6 +8,7 @@ from tracker.models import enums
 
 
 class LogRecord(CustomBaseModel):
+    log_id: UUID
     material_id: UUID
     count: conint(ge=1)
     date: datetime.date
@@ -21,6 +22,7 @@ class CompletionInfoSchema(CustomBaseModel):
 
 
 class _GetLogRecordItem(CustomBaseModel):
+    log_id: UUID
     material_id: UUID
     # because of 'without material' notes
     count: NonNegativeInt

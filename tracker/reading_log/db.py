@@ -17,6 +17,7 @@ from tracker.reading_log import schemas
 
 
 class LogRecord(CustomBaseModel):
+    log_id: UUID | None = None
     date: datetime.date
     count: int
     material_id: UUID
