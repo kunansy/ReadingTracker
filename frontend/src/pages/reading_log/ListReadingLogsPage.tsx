@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 
-import {apiFetch, buildQuery} from "../../api/readingLog.ts";
-import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
+import { apiFetch } from "../../api/readingLog.ts";
 
 
 type ReadingLogListItem = {
@@ -21,81 +20,81 @@ type ListMaterialsTitlesResponse = {
 }
 
 export function ListReadingLogsPage() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const materialId = searchParams.get("material_id") ?? "";
+    const [searchParams, setSearchParams] = useSearchParams();
+    const materialId = searchParams.get("material_id") ?? "";
 
-  const materialsTitlesQ = useQuery({
-    queryKey: ["materials_titles"],
-    queryFn: () =>
-        apiFetch<ListMaterialsTitlesResponse>(`/materials-titles`),
-  });
-  const searchQ = useQuery({
-    queryKey: ["reading_logs", "list"],
-    queryFn: () =>
-      apiFetch<ReadingLogResponse>(`/${buildQuery({
-              materialId: materialId || undefined,
-          })}`,
-        ),
-  });
+    const materialsTitlesQ = useQuery({
+        queryKey: ["materials", "titles"],
+        queryFn: () => apiFetch<ListMaterialsTitlesResponse>("/materials-titles"),
+        staleTime: 5 * 60 * 1000,
+    });
 
-  if (searchQ.isLoading || materialsTitlesQ.isLoading) {
-    return <p>Loading…</p>;
-  }
-  const hasError = searchQ.error || materialsTitlesQ.error;
-  if (hasError) {
+    const logsQ = useQuery({
+        queryKey: ["logs", { materialId }],
+        queryFn: () => {
+            const params = materialId ? `?material_id=${materialId}` : '';
+            return apiFetch<ReadingLogResponse>(`/${params}`);
+        },
+    });
+
+    const materialsTitles = materialsTitlesQ.data?.items ?? {};
+    const data = logsQ.data?.items ?? [];
+
+    if (logsQ.isLoading || materialsTitlesQ.isLoading) {
+        return <p>Загрузка...</p>;
+    }
+
+    if (logsQ.error || materialsTitlesQ.error) {
+        return <p className="error">Error: {((logsQ.error || materialsTitlesQ.error) as Error)?.message}</p>;
+    }
+
     return (
-      <p className="error">
-        {(hasError as Error).message || "Не удалось загрузить данные"}
-      </p>
-    );
-  }
+        <>
+            <div className="form">
+                <form
+                    id="search-reading-logs-form"
+                    action="#"
+                    method="get"
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        const fd = new FormData(e.currentTarget);
+                        const next = new URLSearchParams();
+                        const mid = String(fd.get("material_id") ?? "").trim();
+                        if (mid) {
+                            next.set("material_id", mid);
+                        }
+                        setSearchParams(next);
+                    }}
+                >
 
-  const data = searchQ.data;
-  const materialsTitles = materialsTitlesQ.data;
-
-  return (
-    <>
-      <div className="form">
-        <form
-          id="search-reading-logs-form"
-          action="#"
-          method="get"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const fd = new FormData(e.currentTarget);
-            const next = new URLSearchParams();
-            const mid = String(fd.get("material_id") ?? "").trim();
-            if (mid) {
-              next.set("material_id", mid);
-            }
-            setSearchParams(next);
-          }}
-        >
-          <ComboboxRoot
-              value={materialId || ""}
-              onChange={(v) => {
-                const next = new URLSearchParams();
-                const mid = String(v ?? "").trim();
-                if (mid) {
-                  next.set("material_id", mid);
-                }
-                setSearchParams(next);
-              }}
-              options={[]}
-          >
-            <ComboboxInput placeholder="Choose a material" />
-            <ComboboxList />
-          </ComboboxRoot>
-          <button type="submit" className="submit-button">
-            {" "}
-            Search{" "}
-          </button>
-        </form>
-      </div>
+                    <input
+                        className="input"
+                        list="materials"
+                        name="material_id"
+                        defaultValue={materialId}
+                        placeholder="Choose a material"
+                    />
+                    {/*TODO: rewrite with combobox*/}
+                    <datalist id="materials">
+                        {Object.entries(materialsTitles)
+                            .sort((a, b) => a[1].localeCompare(b[1]))
+                            .map(([id, title]) => (
+                                <option key={id} value={id}>
+                                    {" "}
+                                    «{title}»{" "}
+                                </option>
+                            ))}
+                    </datalist>
+                    <button type="submit" className="submit-button">
+                        {" "}
+                        Search{" "}
+                    </button>
+                </form>
+            </div>
 
       <div>
-        {data.items.map((item, index) => {
-          const title = materialsTitles?.items[item.material_id] ?? "";
+        {data.map((item, index) => {
+          const title = materialsTitles[item.material_id] ?? "";
           return (
               <div
               key={item.log_id}
@@ -104,7 +103,7 @@ export function ListReadingLogsPage() {
               >
                 <p className="little-text">
                   {" "}
-                  {index + 1} / {data.items.length}
+                  {index + 1} / {data.length}
                 </p>
                 <p> Date: {item.date} </p>
                 <p> Title: «{title}» </p>
