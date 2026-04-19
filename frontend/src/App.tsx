@@ -44,8 +44,7 @@ export function App() {
             <Route path="graph" element={<GraphPage />} />
           </Route>
           <Route path="/reading_logs" element={<ReadingLogLayout />}>
-            <Route index element={<Navigate to="list" replace />} />
-            <Route path="list" element={<ListReadingLogsPage />} />
+            <Route index element={<ListReadingLogsPage />} />
             {/*<Route path="graph" element={<GraphPage />} />*/}
           </Route>
         </Routes>
