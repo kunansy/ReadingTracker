@@ -1,8 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { apiFetch } from "../../api/readingLog.ts";
+import {apiFetch, buildQuery} from "../../api/readingLog.ts";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
 
 
@@ -23,41 +22,41 @@ type ListMaterialsTitlesResponse = {
 
 export function ListReadingLogsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [materialsTitles, setMaterialsTitles] = useState<ListMaterialsTitlesResponse | null>(null);
-  const [_, setError] = useState<string | null>(null);
-  // const itemRootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    void apiFetch<ListMaterialsTitlesResponse>("/materials-titles")
-        .then(setMaterialsTitles)
-        .catch(() => setError("Failed to load reading materials tags"));
-  }, []);
-
   const materialId = searchParams.get("material_id") ?? "";
 
+  const materialsTitlesQ = useQuery({
+    queryKey: ["materials_titles"],
+    queryFn: () =>
+        apiFetch<ListMaterialsTitlesResponse>(`/materials-titles`),
+  });
   const searchQ = useQuery({
     queryKey: ["reading_logs", "list"],
     queryFn: () =>
-      apiFetch<ReadingLogResponse>(`/`),
+      apiFetch<ReadingLogResponse>(`/${buildQuery({
+              materialId: materialId || undefined,
+          })}`,
+        ),
   });
 
-  if (searchQ.isLoading) {
+  if (searchQ.isLoading || materialsTitlesQ.isLoading) {
     return <p>Loading…</p>;
   }
-  if (searchQ.error) {
-    return <p className="error">{(searchQ.error as Error).message}</p>;
+  const hasError = searchQ.error || materialsTitlesQ.error;
+  if (hasError) {
+    return (
+      <p className="error">
+        {(hasError as Error).message || "Не удалось загрузить данные"}
+      </p>
+    );
   }
 
   const data = searchQ.data;
-  if (!data) {
-    return null;
-  }
+  const materialsTitles = materialsTitlesQ.data;
 
   return (
     <>
       <div className="form">
         <form
-          key={`${materialId}`}
           id="search-reading-logs-form"
           action="#"
           method="get"
