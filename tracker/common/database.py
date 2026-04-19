@@ -28,6 +28,10 @@ class AlreadyExistsException(DatabaseException):
     pass
 
 
+class NotFoundException(DatabaseException):
+    pass
+
+
 class MinMax(CustomBaseModel):
     log_id: UUID | str = ""
     material_id: UUID | str = ""
