@@ -18,19 +18,19 @@ type ReadingLogResponse = {
   items: ReadingLogListItem[];
 };
 
-type ListReadingMaterialsResponse = {
+type ListMaterialsTitlesResponse = {
   items: Record<string, string>;
 }
 
 export function ListReadingLogsPage() {
   const { open, close } = useContextMenu();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [materialsTitles, setMaterialsTitles] = useState<ListReadingMaterialsResponse | null>(null);
+  const [materialsTitles, setMaterialsTitles] = useState<ListMaterialsTitlesResponse | null>(null);
   const [_, setError] = useState<string | null>(null);
   // const itemRootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    void apiFetch<ListReadingMaterialsResponse>("/materials-titles")
+    void apiFetch<ListMaterialsTitlesResponse>("/materials-titles")
         .then(setMaterialsTitles)
         .catch(() => setError("Failed to load reading materials tags"));
   }, []);
