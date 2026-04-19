@@ -117,8 +117,14 @@ async def database_exception_handler(request: Request, exc: database.DatabaseExc
         if isinstance(exc, database.AlreadyExistsException):
             return JSONResponse(
                 status_code=409,
-                content={"detail": f"Database error: {exc}"},
+                content={"detail": f"AlreadyExistsError: {exc}"},
             )
+        if isinstance(exc, database.NotFoundException):
+            return JSONResponse(
+                status_code=404,
+                content={"detail": f"NotFoundError: {exc}"},
+            )
+
         return JSONResponse(
             status_code=500,
             content={"detail": f"Database error: {exc}"},
