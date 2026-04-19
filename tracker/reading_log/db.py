@@ -76,7 +76,7 @@ async def get_log_records(*, material_id: str | UUID | None = None) -> list[LogR
 async def list_log_records(
     *,
     material_id: UUID | None = None,
-) -> list[schemas.LogRecord]:
+) -> list[LogRecord]:
     logger.debug("Getting all log records")
 
     stmt = sa.select(models.ReadingLog).order_by(models.ReadingLog.c.date.desc())
@@ -86,7 +86,7 @@ async def list_log_records(
 
     async with database.session() as ses:
         records = [
-            schemas.LogRecord.model_validate(row, from_attributes=True)
+            LogRecord.model_validate(row, from_attributes=True)
             for row in (await ses.execute(stmt)).all()
         ]
 
