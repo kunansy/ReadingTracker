@@ -30,3 +30,7 @@ class ListReadingLogsResponse(CustomBaseModel):
 
 class CreateReadingLogsResponse(CustomBaseModel):
     log_id: UUID
+
+
+class GetReadingLogRequest(CustomBaseModel):
+    reading_log: LogRecord
