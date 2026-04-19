@@ -1,9 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { apiFetch } from "../../api/readingLog.ts";
-import { useContextMenu } from "../../contexts/ContextMenuContext";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
 
 
@@ -23,7 +22,6 @@ type ListMaterialsTitlesResponse = {
 }
 
 export function ListReadingLogsPage() {
-  const { open, close } = useContextMenu();
   const [searchParams, setSearchParams] = useSearchParams();
   const [materialsTitles, setMaterialsTitles] = useState<ListMaterialsTitlesResponse | null>(null);
   const [_, setError] = useState<string | null>(null);
@@ -42,40 +40,6 @@ export function ListReadingLogsPage() {
     queryFn: () =>
       apiFetch<ReadingLogResponse>(`/`),
   });
-
-  const onReadingLogContextMenu = useCallback(
-    (e: React.MouseEvent, noteId: string) => {
-      e.preventDefault();
-      close();
-      void (async () => {
-        const items: { label: string; action: () => void | Promise<void> }[] = [
-          {
-            label: "Open",
-            action: () => {
-                // todo: navigate to
-              window.open(`/reading_logs/log?log_id=${noteId}`);
-            },
-          },
-          {
-            label: "Edit",
-            action: () => {
-                // todo: navigate to
-              window.open(`/reading_logs/update-view?note_id=${noteId}`);
-            },
-          },
-          {
-            label: "Delete",
-            action: () => {
-                // todo: navigate to
-              window.open(`/reading_logs/update-view?note_id=${noteId}`);
-            },
-          },
-        ];
-        open(e.clientX, e.clientY, items);
-      })();
-    },
-    [close, open],
-  );
 
   if (searchQ.isLoading) {
     return <p>Loading…</p>;
@@ -138,9 +102,6 @@ export function ListReadingLogsPage() {
               key={item.log_id}
               className="record hover"
               id={item.log_id}
-              onContextMenu={(e) => {
-                  void onReadingLogContextMenu(e, item.log_id)
-              }}
               >
                 <p className="little-text">
                   {" "}

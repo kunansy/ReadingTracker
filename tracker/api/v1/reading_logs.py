@@ -45,14 +45,3 @@ async def list_reading_materials_titles():
     return {
         "items": items,
     }
-
-
-@router.get("/{log_id}", response_model=schemas.GetReadingLogResponse)
-async def get_reading_log(log_id: UUID):
-    reading_log = await db.get_log_record(log_id=log_id)
-    return {"reading_log": reading_log}
-
-
-@router.patch("/{log_id}")
-async def update_reading_log(log_id: UUID, body: typing.Any):
-    raise NotImplementedError
