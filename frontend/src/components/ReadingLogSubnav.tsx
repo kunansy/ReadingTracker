@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 
 const links: { name: string; to: string; className: string }[] = [
-  { name: "Reading log", to: "list", className: "list-nav" },
+  { name: "Reading log", to: ".", className: "list-nav" },
   { name: "Add log record", to: "add", className: "add-nav" },
 ];
 
