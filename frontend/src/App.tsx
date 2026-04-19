@@ -15,6 +15,7 @@ import { GraphPage } from "./pages/notes/GraphPage";
 import { SearchNotesPage } from "./pages/notes/SearchNotesPage";
 import { ReadingLogLayout } from "./components/ReadingLogLayout.tsx";
 import { ListReadingLogsPage } from "./pages/reading_log/ListReadingLogsPage.tsx";
+import { AddReadingLogPage } from "./pages/reading_log/AddReadingLogPage.tsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -45,7 +46,7 @@ export function App() {
           </Route>
           <Route path="/reading_logs" element={<ReadingLogLayout />}>
             <Route index element={<ListReadingLogsPage />} />
-            {/*<Route path="graph" element={<GraphPage />} />*/}
+            <Route path="add" element={<AddReadingLogPage />} />
           </Route>
         </Routes>
       </ContextMenuProvider>
