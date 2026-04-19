@@ -39,6 +39,13 @@ async def list_materials_titles():
     }
 
 
+@router.get("/reading-materials-titles", response_model=schemas.ListMaterialsTitles)
+async def list_reading_materials_titles():
+    items = await db.get_reading_material_titles()
+    return {
+        "items": items,
+    }
+
 
 @router.get("/{log_id}", response_model=schemas.GetReadingLogResponse)
 async def get_reading_log(log_id: UUID):
