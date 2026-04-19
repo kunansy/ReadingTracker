@@ -1,4 +1,3 @@
-import typing
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
@@ -47,7 +46,10 @@ async def list_reading_materials_titles():
     }
 
 
-@router.get("/{material_id}/completion-info", response_model=schemas.GetMaterialCompletionInfoResponse)
+@router.get(
+    "/{material_id}/completion-info",
+    response_model=schemas.GetMaterialCompletionInfoResponse,
+)
 async def get_material_completion_info(material_id: UUID):
     from tracker.reading_log.routes import completion_info as get_completion_info
 

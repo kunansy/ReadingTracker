@@ -13,7 +13,6 @@ from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.materials import db as materials_db
 from tracker.models import models
-from tracker.reading_log import schemas
 
 
 class LogRecord(CustomBaseModel):
