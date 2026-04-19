@@ -7,7 +7,7 @@ import { CelebrateButton } from "../../components/CelebrateButton";
 import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
 import { MaterialType } from "../../types.ts";
 
-function isUuid(value: string): boolean {
+export function isUuid(value: string): boolean {
   return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
     value.trim(),
   );
