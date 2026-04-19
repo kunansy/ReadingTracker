@@ -39,3 +39,7 @@ class CreateReadingLogsResponse(CustomBaseModel):
 
 class GetReadingLogRequest(CustomBaseModel):
     reading_log: _GetLogRecordItem
+
+
+class ListMaterialsTitles(CustomBaseModel):
+    items: dict[UUID, str]
