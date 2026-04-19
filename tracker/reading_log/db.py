@@ -75,7 +75,7 @@ async def get_log_records(*, material_id: str | UUID | None = None) -> list[LogR
 
 async def list_log_records(
     *,
-    material_id: str | UUID | None = None,
+    material_id: UUID | None = None,
 ) -> list[schemas.LogRecord]:
     logger.debug("Getting all log records")
 
