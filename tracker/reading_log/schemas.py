@@ -20,8 +20,12 @@ class CompletionInfoSchema(CustomBaseModel):
     read_days: NonNegativeInt
 
 
-class GetReadingLogsRequest(CustomBaseModel):
-    material_id: UUID
+class ListReadingLogsRequest(CustomBaseModel):
+    material_id: UUID | None
+
+
+class ListReadingLogsResponse(CustomBaseModel):
+    items: list[LogRecord]
 
 
 class CreateReadingLogsResponse(CustomBaseModel):
