@@ -31,13 +31,10 @@ async def create_log_record(log: schemas.LogRecord):
     return {"log_id": log_id}
 
 
-@router.get("/{log_id}")
+@router.get("/{log_id}", response_model=schemas.LogRecord)
 async def get_reading_log(log_id: UUID):
-    # TODO: implement
-    if not (log := await db.list_log_records(material_id=log_id)):
-        raise HTTPException(status_code=404, detail="Log not found")
-
-    return {"reading_log": log}
+    reading_log = await db.get_log_record(log_id=log_id)
+    return {"reading_log": reading_log}
 
 
 @router.patch("/{log_id}")
