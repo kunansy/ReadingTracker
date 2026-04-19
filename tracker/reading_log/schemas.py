@@ -42,3 +42,14 @@ class GetReadingLogResponse(CustomBaseModel):
 
 class ListMaterialsTitles(CustomBaseModel):
     items: dict[UUID, str]
+
+
+class GetMaterialReadingNowResponse(CustomBaseModel):
+    material_id: UUID
+
+
+class GetMaterialCompletionInfoResponse(CustomBaseModel):
+    material_pages: NonNegativeInt
+    material_type: enums.MaterialTypesEnum
+    pages_read: NonNegativeInt
+    read_days: NonNegativeInt
