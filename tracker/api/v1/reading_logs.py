@@ -31,6 +31,14 @@ async def create_log_record(log: schemas.LogRecord):
     return {"log_id": log_id}
 
 
+@router.get("/materials-titles", response_model=schemas.ListMaterialsTitles)
+async def list_materials_titles():
+    items = await db.get_titles()
+    return {
+        "items": items,
+    }
+
+
 @router.get("/{log_id}", response_model=schemas.LogRecord)
 async def get_reading_log(log_id: UUID):
     reading_log = await db.get_log_record(log_id=log_id)
