@@ -12,6 +12,8 @@ import "../../static/materials/repeating_queue.css";
 import "../../static/materials/add_material.css";
 import "../../static/notes/notes.css";
 import "../../static/notes/add_note.css";
+import "../../static/reading_log/reading_log.css";
+import "../../static/reading_log/add_log_record.css";
 
 const rootEl = document.getElementById("root");
 if (!rootEl) {
