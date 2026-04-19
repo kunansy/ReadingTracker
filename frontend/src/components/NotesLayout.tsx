@@ -9,7 +9,7 @@ export function NotesLayout() {
       <header>
         <nav className="navbar" id="head">
           <a href="/materials"> Materials </a>
-          <a href="/reading_log"> Reading log </a>
+          <a href="/reading_logs"> Reading log </a>
           <a href="/notes"> Notes </a>
           <a href="/cards/list"> Cards </a>
           <a href="/system"> System </a>

@@ -41,7 +41,7 @@ export function ListReadingLogsPage() {
   const searchQ = useQuery({
     queryKey: ["reading_logs", "list"],
     queryFn: () =>
-      apiFetch<ReadingLogResponse>(`/reading_logs`),
+      apiFetch<ReadingLogResponse>(`/`),
   });
 
   const onReadingLogContextMenu = useCallback(
