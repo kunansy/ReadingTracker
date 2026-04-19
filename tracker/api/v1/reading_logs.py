@@ -10,8 +10,8 @@ router = APIRouter(prefix="/reading_logs", tags=["reading-logs-api"])
 
 
 @router.get("/", response_model=schemas.ListReadingLogsResponse)
-async def list_reading_logs(req: schemas.ListReadingLogsRequest):
-    items = await db.list_log_records(material_id=req.material_id)
+async def list_reading_logs(material_id: UUID | None = None):
+    items = await db.list_log_records(material_id=material_id)
     return {
         "items": items,
     }
