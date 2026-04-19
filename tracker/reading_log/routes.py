@@ -51,7 +51,7 @@ async def add_log_record_view(request: Request, material_id: UUID | None = None)
     if not (material_id and is_material_reading.result()):
         log_material_id = get_reading_material_id.result()
 
-    completion_info = await _completion_info(log_material_id)
+    completion_info_ = await completion_info(log_material_id)
 
     context: dict[str, Any] = {
         "request": request,
@@ -60,10 +60,10 @@ async def add_log_record_view(request: Request, material_id: UUID | None = None)
         "date": database.utcnow(),
     }
 
-    if completion_info:
-        completion_info = cast("schemas.CompletionInfoSchema", completion_info)
-        context["pages_read"] = completion_info.pages_read
-        context["material_pages"] = completion_info.material_pages
+    if completion_info_:
+        completion_info_ = cast("schemas.CompletionInfoSchema", completion_info_)
+        context["pages_read"] = completion_info_.pages_read
+        context["material_pages"] = completion_info_.material_pages
 
     return templates.TemplateResponse(request, "reading_log/add_log_record.html", context)
 
@@ -85,13 +85,13 @@ async def add_log_record(record: Annotated[schemas.CreateReadingLogsRequest, For
 
 @router.get("/completion-info", response_model=schemas.CompletionInfoSchema)
 async def get_completion_info(material_id: UUID):
-    if completion_info := await _completion_info(material_id):
-        return completion_info
+    if completion_info_ := await completion_info(material_id):
+        return completion_info_
 
     raise HTTPException(status_code=404, detail="Material not found")
 
 
-async def _completion_info(
+async def completion_info(
     material_id: UUID | None,
 ) -> schemas.CompletionInfoSchema | None:
     if not material_id:

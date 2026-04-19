@@ -45,3 +45,23 @@ async def list_reading_materials_titles():
     return {
         "items": items,
     }
+
+
+@router.get("/{material_id}/completion-info", response_model=schemas.GetMaterialCompletionInfoResponse)
+async def get_material_completion_info(material_id: UUID):
+    from tracker.reading_log.routes import completion_info as get_completion_info
+
+    if not (completion_info := await get_completion_info(material_id)):
+        raise HTTPException(status_code=404, detail="Material not found")
+
+    return completion_info
+
+
+@router.get("/material-reading-now", response_model=schemas.GetMaterialReadingNowResponse)
+async def get_material_reading_now():
+    if material_id := await db.get_material_reading_now():
+        return {
+            "material_id": material_id,
+        }
+
+    raise HTTPException(status_code=404, detail="No materials reading now found")
