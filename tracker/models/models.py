@@ -82,6 +82,7 @@ ReadingLog = Table(
     PrimaryKey("log_id"),
     Column("material_id", UUID, index=True),
     Column("count", Integer),
+    # TODO: add btree index
     Column("date", Date, default=_utc_now),
     UniqueConstraint("material_id", "date", name="uix_reading_log"),
 )

@@ -48,6 +48,7 @@ async def get_mean_materials_read_pages() -> dict[UUID, Decimal]:
     return mean
 
 
+# TODO: deprecated, remove
 async def get_log_records(*, material_id: str | UUID | None = None) -> list[LogRecord]:
     logger.debug("Getting all log records")
 
@@ -262,7 +263,12 @@ async def get_material_reading_now() -> UUID | None:
     return material_id
 
 
-async def insert_log_record(*, material_id: str, count: int, date: datetime.date) -> None:
+async def insert_log_record(
+    *,
+    material_id: str | UUID,
+    count: int,
+    date: datetime.date,
+) -> UUID:
     logger.debug(
         "Inserting log material_id=%s, count=%s, date=%s",
         material_id,
@@ -277,7 +283,7 @@ async def insert_log_record(*, material_id: str, count: int, date: datetime.date
         log_id = await ses.scalar(stmt)
 
     logger.debug("Log record inserted, id=%s", log_id)
-    return log_id
+    return cast("UUID", log_id)
 
 
 async def is_record_correct(
