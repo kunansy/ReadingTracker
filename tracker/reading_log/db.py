@@ -309,7 +309,7 @@ async def is_record_correct(
     count: int,
 ) -> bool:
     if date > database.utcnow().date() or count <= 0:
-        raise ValueError("Invalid args")
+        return False
 
     async with asyncio.TaskGroup() as tg:
         reading_materials_task = tg.create_task(materials_db.get_reading_materials())
