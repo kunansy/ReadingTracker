@@ -52,18 +52,21 @@ export function ListReadingLogsPage() {
           {
             label: "Open",
             action: () => {
+                // todo: navigate to
               window.open(`/reading_logs/log?log_id=${noteId}`);
             },
           },
           {
             label: "Edit",
             action: () => {
+                // todo: navigate to
               window.open(`/reading_logs/update-view?note_id=${noteId}`);
             },
           },
           {
             label: "Delete",
             action: () => {
+                // todo: navigate to
               window.open(`/reading_logs/update-view?note_id=${noteId}`);
             },
           },
