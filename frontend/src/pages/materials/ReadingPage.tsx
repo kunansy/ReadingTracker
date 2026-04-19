@@ -59,7 +59,7 @@ export function ReadingPage() {
         {
           label: "Open reading log",
           action: async () => {
-            window.open(`/reading_log/?material_id=${materialId}`);
+            navigate(`/reading_logs?material_id=${materialId}#header`);
           },
         },
         {
@@ -71,7 +71,9 @@ export function ReadingPage() {
         {
           label: "Add reading log",
           action: async () => {
-            window.open(`/reading_log/add-view?material_id=${materialId}`);
+            navigate(`/reading_logs/add?material_id=${materialId}#header`, {
+              state: { from: location.pathname + location.search },
+            });
           },
         },
       ]);
