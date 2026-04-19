@@ -29,22 +29,15 @@ type GetMaterialReadingNow = {
 }
 
 export function AddReadingLogPage() {
-  const getMaterialReadingNow = useQuery({
-    queryKey: ["reading_logs", "material_reading_now"],
-    queryFn: () =>
-        apiFetch<GetMaterialReadingNow>("/material-reading-now"),
-  });
-
   const [searchParams] = useSearchParams();
-  let initialMaterial = searchParams.get("material_id");
+  const initialMaterial = searchParams.get("material_id");
 
   const contentRef = useRef<HTMLTextAreaElement>(null);
   useAltchHotkeys(contentRef);
 
-  let [materialId, setMaterialId] = useState(initialMaterial);
+  const [materialId, setMaterialId] = useState(initialMaterial);
   const [date, setDate] = useState("");
   const [count, setCount] = useState("");
-  const [readingMaterialsTitles, setReadingMaterialsTitles] = useState<ListReadingMaterialsTitlesResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const qc = useQueryClient();
@@ -52,19 +45,26 @@ export function AddReadingLogPage() {
   const navigate = useNavigate();
   const from = location.state?.from || "/materials/reading";
 
-  useEffect(() => {
-    void apiFetch<ListReadingMaterialsTitlesResponse>("/reading-materials-titles")
-        .then(setReadingMaterialsTitles)
-        .catch(() => setError("Failed to load reading materials titles"));
-  }, []);
+  const getMaterialReadingNow = useQuery({
+    queryKey: ["material_reading_now"],
+    queryFn: () =>
+        apiFetch<GetMaterialReadingNow>("/material-reading-now"),
+  });
 
-  const completionQuery = useQuery({
+  const completionQ = useQuery({
     queryKey: ["material", materialId, "completion-info"],
     queryFn: () => apiFetch<MaterialCompletionInfo>(`/${materialId}/completion-info`),
     enabled: !!materialId && isUuid(materialId),
   });
 
-  const materialCompletionInfo = completionQuery.data;
+  const readingMaterialsTitlesQ = useQuery({
+    queryKey: ["reading_materials_titles"],
+    queryFn: () => apiFetch<ListReadingMaterialsTitlesResponse>("/reading-materials-titles"),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const materialCompletionInfo = completionQ.data;
+  const readingMaterialsTitles = readingMaterialsTitlesQ.data;
 
   useEffect(() => {
     const today = new Date();
@@ -75,10 +75,10 @@ export function AddReadingLogPage() {
   }, []);
 
   useEffect(() => {
-    if (!materialId && getMaterialReadingNow.data?.material_id) {
+    if (!initialMaterial && getMaterialReadingNow.data?.material_id) {
       setMaterialId(getMaterialReadingNow.data.material_id);
     }
-  }, [getMaterialReadingNow.data?.material_id, searchParams]);
+  }, [getMaterialReadingNow.data?.material_id, initialMaterial]);
 
   const addMut = useMutation({
     mutationFn: async () => {
@@ -108,14 +108,16 @@ export function AddReadingLogPage() {
     },
   });
 
-  if (getMaterialReadingNow.isLoading || completionQuery.isLoading) {
+  if (getMaterialReadingNow.isLoading || completionQ.isLoading || readingMaterialsTitlesQ.isLoading) {
     return <p>Loading…</p>;
   }
-  if (getMaterialReadingNow.error) {
-    return <p className="error">{(getMaterialReadingNow.error as Error).message}</p>;
-  }
-  if (completionQuery.error) {
-    return <p className="error">{(completionQuery.error as Error).message}</p>;
+  const hasError = getMaterialReadingNow.error || readingMaterialsTitlesQ.error || completionQ.error;
+  if (hasError) {
+    return (
+        <p className="error">
+          {(hasError as Error).message || "Не удалось загрузить данные"}
+        </p>
+    );
   }
 
   return (
@@ -135,7 +137,7 @@ export function AddReadingLogPage() {
               className="input input-datalist"
               list="materials"
               placeholder="Choose a material"
-              value={materialId ?? ""}
+              value={materialId || ""}
               title="ID of the material"
               onChange={(e) => {
                 setMaterialId(e.target.value);
