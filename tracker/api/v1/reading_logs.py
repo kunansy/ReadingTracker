@@ -9,9 +9,9 @@ from tracker.reading_log import db, schemas
 router = APIRouter(prefix="/reading_logs", tags=["reading-logs-api"])
 
 
-@router.get("/reading_logs")
-async def get_reading_logs(req: schemas.GetReadingLogsRequest):
-    items = await db.get_log_records(material_id=req.material_id)
+@router.get("/", response_model=schemas.ListReadingLogsResponse)
+async def list_reading_logs(req: schemas.ListReadingLogsRequest):
+    items = await db.list_log_records(material_id=req.material_id)
     return {
         "items": items,
     }
@@ -34,7 +34,7 @@ async def create_log_record(log: schemas.LogRecord):
 @router.get("/{log_id}")
 async def get_reading_log(log_id: UUID):
     # TODO: implement
-    if not (log := await db.get_log_records(material_id=log_id)):
+    if not (log := await db.list_log_records(material_id=log_id)):
         raise HTTPException(status_code=404, detail="Log not found")
 
     return {"reading_log": log}

@@ -13,6 +13,7 @@ from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.materials import db as materials_db
 from tracker.models import models
+from tracker.reading_log import schemas
 
 
 class LogRecord(CustomBaseModel):
@@ -64,6 +65,27 @@ async def get_log_records(*, material_id: str | UUID | None = None) -> list[LogR
     async with database.session() as ses:
         records = [
             LogRecord.model_validate(row, from_attributes=True)
+            for row in (await ses.execute(stmt)).all()
+        ]
+
+    logger.debug("%s log records got", len(records))
+    return records
+
+
+async def list_log_records(
+    *,
+    material_id: str | UUID | None = None,
+) -> list[schemas.LogRecord]:
+    logger.debug("Getting all log records")
+
+    stmt = sa.select(models.ReadingLog).order_by(models.ReadingLog.c.date.desc())
+
+    if material_id:
+        stmt = stmt.where(models.ReadingLog.c.material_id == str(material_id))
+
+    async with database.session() as ses:
+        records = [
+            schemas.LogRecord.model_validate(row, from_attributes=True)
             for row in (await ses.execute(stmt)).all()
         ]
 
