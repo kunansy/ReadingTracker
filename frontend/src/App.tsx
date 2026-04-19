@@ -43,7 +43,7 @@ export function App() {
             <Route path="add" element={<AddNotePage />} />
             <Route path="graph" element={<GraphPage />} />
           </Route>
-          <Route path="/reading_log" element={<ReadingLogLayout />}>
+          <Route path="/reading_logs" element={<ReadingLogLayout />}>
             <Route index element={<Navigate to="list" replace />} />
             <Route path="list" element={<ListReadingLogsPage />} />
             {/*<Route path="graph" element={<GraphPage />} />*/}
