@@ -248,13 +248,14 @@ async def insert_log_record(*, material_id: str, count: int, date: datetime.date
         date,
     )
 
-    values = {"material_id": material_id, "count": count, "date": date}
-    stmt = models.ReadingLog.insert().values(values)
+    values = {"material_id": str(material_id), "count": count, "date": date}
+    stmt = models.ReadingLog.insert().values(values).returning(models.ReadingLog.c.log_id)
 
     async with database.session() as ses:
-        await ses.execute(stmt)
+        log_id = await ses.scalar(stmt)
 
-    logger.debug("Log record inserted")
+    logger.debug("Log record inserted, id=%s", log_id)
+    return log_id
 
 
 async def is_record_correct(

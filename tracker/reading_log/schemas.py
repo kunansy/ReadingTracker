@@ -22,3 +22,7 @@ class CompletionInfoSchema(CustomBaseModel):
 
 class GetReadingLogsRequest(CustomBaseModel):
     material_id: UUID
+
+
+class CreateReadingLogsResponse(CustomBaseModel):
+    log_id: UUID

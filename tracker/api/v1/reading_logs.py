@@ -17,11 +17,13 @@ async def get_reading_logs(req: schemas.GetReadingLogsRequest):
     }
 
 
-@router.post("/", status_code=201, response_model=schemas.LogRecord)
+@router.post("/", status_code=201, response_model=schemas.CreateReadingLogsResponse)
 async def create_log_record(log: schemas.LogRecord):
-    # TODO:
-    log_id = await db.insert_log_record(  # type: ignore[func-returns-value]
-        material_id=str(log.material_id),
+    if not await db.is_record_correct(**log.model_dump()):
+        raise HTTPException(status_code=400, detail="Invalid record")
+
+    log_id = await db.insert_log_record(
+        material_id=log.material_id,
         date=log.date,
         count=log.count,
     )
