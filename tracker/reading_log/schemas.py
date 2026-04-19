@@ -7,13 +7,6 @@ from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums
 
 
-class LogRecord(CustomBaseModel):
-    log_id: UUID
-    material_id: UUID
-    count: conint(ge=1)
-    date: datetime.date
-
-
 class CompletionInfoSchema(CustomBaseModel):
     material_pages: NonNegativeInt
     material_type: enums.MaterialTypesEnum
@@ -37,7 +30,13 @@ class CreateReadingLogsResponse(CustomBaseModel):
     log_id: UUID
 
 
-class GetReadingLogRequest(CustomBaseModel):
+class CreateReadingLogsRequest(CustomBaseModel):
+    material_id: UUID
+    count: conint(ge=1)
+    date: datetime.date
+
+
+class GetReadingLogResponse(CustomBaseModel):
     reading_log: _GetLogRecordItem
 
 
