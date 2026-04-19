@@ -18,7 +18,7 @@ async def list_reading_logs(material_id: UUID | None = None):
 
 
 @router.post("/", status_code=201, response_model=schemas.CreateReadingLogsResponse)
-async def create_log_record(log: schemas.LogRecord):
+async def create_log_record(log: schemas.CreateReadingLogsRequest):
     if not await db.is_record_correct(**log.model_dump()):
         raise HTTPException(status_code=400, detail="Invalid record")
 
@@ -39,7 +39,8 @@ async def list_materials_titles():
     }
 
 
-@router.get("/{log_id}", response_model=schemas.LogRecord)
+
+@router.get("/{log_id}", response_model=schemas.GetReadingLogResponse)
 async def get_reading_log(log_id: UUID):
     reading_log = await db.get_log_record(log_id=log_id)
     return {"reading_log": reading_log}

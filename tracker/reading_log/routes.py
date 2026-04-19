@@ -69,7 +69,7 @@ async def add_log_record_view(request: Request, material_id: UUID | None = None)
 
 
 @router.post("/add")
-async def add_log_record(record: Annotated[schemas.LogRecord, Form()]):
+async def add_log_record(record: Annotated[schemas.CreateReadingLogsRequest, Form()]):
     if not await db.is_record_correct(**record.model_dump()):
         raise HTTPException(status_code=400, detail="Invalid record")
 

@@ -95,7 +95,7 @@ async def list_log_records(
     return records
 
 
-async def get_log_record(*, log_id: UUID) -> schemas.LogRecord:
+async def get_log_record(*, log_id: UUID) -> LogRecord:
     logger.debug("Getting log record, id=%s", log_id)
 
     stmt = sa.select(models.ReadingLog).where(models.ReadingLog.c.log_id == str(log_id))
@@ -103,7 +103,7 @@ async def get_log_record(*, log_id: UUID) -> schemas.LogRecord:
     async with database.session() as ses:
         if row := (await ses.execute(stmt)).one_or_none():
             logger.debug("Record got")
-            return schemas.LogRecord.model_validate(row, from_attributes=True)
+            return LogRecord.model_validate(row, from_attributes=True)
 
     msg = f"Log record id={log_id!r} not found"
     logger.info(msg)
