@@ -10,7 +10,6 @@ import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combob
 type ReadingLogListItem = {
   log_id: string;
   material_id: string;
-  material_title: string;
   date: string;
   count: number;
 };
@@ -19,21 +18,21 @@ type ReadingLogResponse = {
   items: ReadingLogListItem[];
 };
 
-type MaterialIdsResponse = {
-  materialIds: string[];
+type ListReadingMaterialsResponse = {
+  items: Record<string, string>;
 }
 
 export function ListReadingLogsPage() {
   const { open, close } = useContextMenu();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [materialIds, setMaterialIds] = useState<MaterialIdsResponse | null>(null);
+  const [materialsTitles, setMaterialsTitles] = useState<ListReadingMaterialsResponse | null>(null);
   const [_, setError] = useState<string | null>(null);
   // const itemRootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    void apiFetch<MaterialIdsResponse>("/reading")
-        .then(setMaterialIds)
-        .catch(() => setError("Failed to load material tags"));
+    void apiFetch<ListReadingMaterialsResponse>("/materials-titles")
+        .then(setMaterialsTitles)
+        .catch(() => setError("Failed to load reading materials tags"));
   }, []);
 
   const materialId = searchParams.get("material_id") ?? "";
@@ -116,7 +115,7 @@ export function ListReadingLogsPage() {
                 }
                 setSearchParams(next);
               }}
-              options={materialIds?.materialIds ?? []}
+              options={[]}
           >
             <ComboboxInput placeholder="Choose a material" />
             <ComboboxList />
@@ -130,6 +129,7 @@ export function ListReadingLogsPage() {
 
       <div>
         {data.items.map((item, index) => {
+          const title = materialsTitles?.items[item.material_id] ?? "";
           return (
               <div
               key={item.log_id}
@@ -144,7 +144,7 @@ export function ListReadingLogsPage() {
                   {index + 1} / {data.items.length}
                 </p>
                 <p> Date: {item.date} </p>
-                <p> Title: {item.material_title} </p>
+                <p> Title: «{title}» </p>
                 <p> Count: {item.count} </p>
               </div>
           );
