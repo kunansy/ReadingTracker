@@ -101,6 +101,7 @@ export function AddReadingLogPage() {
       setDate("");
 
       void qc.invalidateQueries({ queryKey: ["reading_logs", "list"] });
+      void qc.invalidateQueries({ queryKey: ["materials", "reading"] });
       navigate(from);
     },
     onError: (e: Error) => {
