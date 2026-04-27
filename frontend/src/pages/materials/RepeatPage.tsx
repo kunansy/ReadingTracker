@@ -1,41 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useSearchParams } from "react-router-dom";
+import {useNavigate, useSearchParams} from "react-router-dom";
 
 import { apiFetch, buildQuery } from "../../api/materials";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel } from "../../materials/format";
-import type { RepeatingQueueJson } from "../../types";
-
-type RepeatResponse = {
-  repeating_queue: RepeatingQueueJson[];
-  is_outlined: boolean;
-};
-
-async function fetchHasCards(materialId: string) {
-  const res = await fetch(
-    `/cards/has-cards?material_id=${encodeURIComponent(materialId)}`,
-    { credentials: "same-origin" },
-  );
-  if (!res.ok) {
-    return { has_cards: false, cards_count: 0 };
-  }
-  return (await res.json()) as {
-    has_cards: boolean;
-    cards_count: number;
-  };
-}
-
-function openNotes(materialId: string, notesCount: number) {
-  const url = `/notes?material_id=${materialId}&page_size=${notesCount}`;
-  // todo
-  void window.open(url);
-}
+import type { GetRepeatingQueueResponse } from "../../types";
 
 export function RepeatPage() {
   const qc = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
   const { open } = useContextMenu();
 
   const onlyOutlined =
@@ -48,7 +24,7 @@ export function RepeatPage() {
 
   const q = useQuery({
     queryKey: ["materials", "repeat", queryString],
-    queryFn: () => apiFetch<RepeatResponse>(`/repeat${queryString}`),
+    queryFn: () => apiFetch<GetRepeatingQueueResponse>(`/repeat${queryString}`),
   });
 
   const repeatMut = useMutation({
@@ -116,19 +92,19 @@ export function RepeatPage() {
               id={repeat.material_id}
               title="Click to see notes"
               onClick={() => {
-                openNotes(repeat.material_id, repeat.notes_count);
+                navigate(`/notes?material_id=${repeat.material_id}&page_size=${repeat.notes_count}`);
               }}
               onContextMenu={async (e) => {
-                const has = await fetchHasCards(repeat.material_id);
-                if (!has.has_cards) {
+                if (repeat.cards_count === 0) {
                   return;
                 }
                 e.preventDefault();
                 open(e.clientX, e.clientY, [
                   {
-                    label: `Open cards (${has.cards_count})`,
+                    label: `Open cards (${repeat.cards_count})`,
                     action: async () => {
                       window.open(
+                          // todo: navigate
                         `/cards/list?material_id=${encodeURIComponent(repeat.material_id)}`,
                       );
                     },
@@ -178,6 +154,7 @@ export function RepeatPage() {
                     onSubmit={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
+                      // todo: navigate
                       window.open(
                         `/cards/list?material_id=${encodeURIComponent(repeat.material_id)}`,
                       );
