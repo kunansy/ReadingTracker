@@ -49,7 +49,7 @@ export type MaterialStatisticsJson = {
   percent_completed: number;
 };
 
-export type RepeatingQueueJson = {
+type RepeatingQueueJson = {
   material_id: string;
   title: string;
   pages: number;
@@ -64,6 +64,11 @@ export type RepeatingQueueJson = {
   priority_months: number;
 };
 
+export type GetRepeatingQueueResponse = {
+  repeating_queue: RepeatingQueueJson[];
+};
+
+
 export type MaterialTagsResponse = {
   tags: string[];
 };
@@ -71,3 +76,11 @@ export type MaterialTagsResponse = {
 export type MaterialAuthorsResponse = {
   authors: string[];
 }
+
+export type ParsedMaterialResponse = {
+  title: string;
+  authors: string;
+  type: string;
+  link: string;
+  duration?: number | null;
+};
