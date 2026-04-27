@@ -91,14 +91,14 @@ async def calculate_materials_stat(material_ids: set[UUID]) -> dict[UUID, LogSta
         row.total += count
         if not (min_r := row.min_record) or min_r.count > count != 0:
             row.min_record = database.MinMax(
-                log_id=info.log_id,
+                log_id=info.log_id,  # type: ignore[arg-type]
                 material_id=material_id,
                 date=date,
                 count=count,
             )
         if not (max_r := row.max_record) or max_r.count < count:
             row.max_record = database.MinMax(
-                log_id=info.log_id,
+                log_id=info.log_id,  # type: ignore[arg-type]
                 material_id=material_id,
                 date=date,
                 count=count,
