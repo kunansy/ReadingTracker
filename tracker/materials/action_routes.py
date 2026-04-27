@@ -15,7 +15,7 @@ router = APIRouter(prefix="/materials", tags=["materials"])
 
 
 @router.post("/add")
-async def insert_material(material: Annotated[schemas.Material, Form()]):
+async def insert_material(material: Annotated[schemas.CreateMaterialRequest, Form()]):
     """Insert a material to the queue."""
     await db.insert_material(
         title=material.title,
@@ -30,7 +30,7 @@ async def insert_material(material: Annotated[schemas.Material, Form()]):
 
 
 @router.post("/update", response_class=RedirectResponse)
-async def update_material(material: Annotated[schemas.UpdateMaterial, Form()]):
+async def update_material(material: Annotated[schemas.UpdateMaterialRequest, Form()]):
     success = True
     try:
         await db.update_material(
@@ -127,7 +127,7 @@ async def is_material_reading(material_id: UUID):
 
 @router.post(
     "/parse/habr",
-    response_model=schemas.ParsedMaterial,
+    response_model=schemas.ParsedMaterialResponse,
     response_model_exclude_unset=True,
 )
 async def parse_habr_article(link: HttpUrl):
@@ -140,7 +140,7 @@ async def parse_habr_article(link: HttpUrl):
     html = await db.get_html(str(link))
     article_info = db.parse_habr(html)
 
-    return schemas.ParsedMaterial(
+    return schemas.ParsedMaterialResponse(
         title=article_info.title,
         authors=article_info.authors,
         type=enums.MaterialTypesEnum.article,
@@ -151,7 +151,7 @@ async def parse_habr_article(link: HttpUrl):
 
 @router.post(
     "/parse/youtube",
-    response_model=schemas.ParsedMaterial,
+    response_model=schemas.ParsedMaterialResponse,
     response_model_exclude_unset=True,
 )
 async def parse_youtube_video(link: HttpUrl):
@@ -164,7 +164,7 @@ async def parse_youtube_video(link: HttpUrl):
     video_id = link.query_params()[0][1]
     video_info = await db.parse_youtube(video_id)
 
-    return schemas.ParsedMaterial(
+    return schemas.ParsedMaterialResponse(
         title=video_info.title,
         authors=video_info.authors,
         duration=video_info.duration,

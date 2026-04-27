@@ -1,16 +1,36 @@
+import datetime
+import typing
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BeforeValidator, HttpUrl, conint
+from pydantic import BeforeValidator, HttpUrl, PositiveInt
 
 from tracker.common.schemas import CustomBaseModel, skip_empty_value
 from tracker.models import enums
 
 
-class Material(CustomBaseModel):
+class GetMaterialItem(CustomBaseModel):
+    material_id: UUID
     title: str
     authors: str
-    pages: conint(ge=1)
+    pages: PositiveInt
+    material_type: enums.MaterialTypesEnum
+    tags: Annotated[str | None, BeforeValidator(skip_empty_value)] = None
+    link: Annotated[HttpUrl | None, BeforeValidator(skip_empty_value)] = None
+
+
+class OkResponse(CustomBaseModel):
+    ok: bool
+
+
+class GetMaterialResponse(CustomBaseModel):
+    material: GetMaterialResponse
+
+
+class CreateMaterialRequest(CustomBaseModel):
+    title: str
+    authors: str
+    pages: PositiveInt
     material_type: enums.MaterialTypesEnum
     tags: Annotated[str | None, BeforeValidator(skip_empty_value)] = None
     link: Annotated[HttpUrl | None, BeforeValidator(skip_empty_value)] = None
@@ -21,15 +41,19 @@ class Material(CustomBaseModel):
         return None
 
 
-class UpdateMaterial(Material):
-    material_id: UUID
-
-
 class CreateMaterialResponse(CustomBaseModel):
     material_id: UUID
 
 
-class ParsedMaterial(CustomBaseModel):
+class UpdateMaterialRequest(CreateMaterialRequest):
+    material_id: UUID
+
+
+class UpdateMaterialResponse(CreateMaterialRequest):
+    material_id: UUID
+
+
+class ParsedMaterialResponse(CustomBaseModel):
     authors: str
     title: str
     type: str
@@ -63,3 +87,36 @@ class SearchParams(CustomBaseModel):
         if isinstance(self.material_type, enums.MaterialTypesEnum):
             return self.material_type
         return None
+
+
+class IsMaterialReadingResponse(CustomBaseModel):
+    is_reading: bool
+
+
+class GetQueueEdgeResponse(CustomBaseModel):
+    index: PositiveInt
+
+
+class GetMaterialTagsResponse(CustomBaseModel):
+    tags: set[str]
+
+
+class GetAuthorsResponse(CustomBaseModel):
+    authors: typing.Iterable[str]
+
+
+class SwapOrderRequest(CustomBaseModel):
+    material_id: UUID
+    index: int
+
+
+class StartMaterialRequest(CustomBaseModel):
+    started_at: datetime.date | None = None
+
+
+class CompleteMaterialRequest(CustomBaseModel):
+    completed_at: datetime.date | None = None
+
+
+class ParseLinkRequest(CustomBaseModel):
+    link: HttpUrl

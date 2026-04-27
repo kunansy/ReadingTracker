@@ -142,6 +142,21 @@ async def get_material(*, material_id: UUID) -> Material | None:
     return None
 
 
+async def get_material_api(*, material_id: UUID) -> Material:
+    logger.debug("Getting material=%s", material_id)
+    stmt = sa.select(models.Materials).where(
+        models.Materials.c.material_id == material_id,
+    )
+
+    async with database.session() as ses:
+        if material := (await ses.execute(stmt)).one_or_none():
+            logger.debug("Material got")
+            return Material.model_validate(material, from_attributes=True)
+
+    msg = f"Material id={material_id!r} not found"
+    raise database.NotFoundException(msg)
+
+
 async def get_materials() -> list[Material]:
     stmt = sa.select(models.Materials)
 
@@ -592,7 +607,7 @@ async def start_material(
     logger.debug("Material started")
 
 
-async def complete_material(
+async def is_completion_request_valid(
     *,
     material_id: UUID,
     completed_at: datetime.date | None = None,
@@ -604,7 +619,6 @@ async def complete_material(
         get_logs_task = tg.create_task(get_log_records(material_id=material_id))
         get_material_task = tg.create_task(get_material(material_id=material_id))
 
-    logger.debug("Completing material_id=%s", material_id)
     completed_at = completed_at or database.utcnow().date()
 
     if not (material := get_material_task.result()):
@@ -619,6 +633,14 @@ async def complete_material(
         raise ValueError("Reading logs not found")
     if sum(log.count for log in reading_logs) != material.pages:
         raise ValueError("Invalid pages count, something is unread")
+
+
+async def complete_material(
+    *,
+    material_id: UUID,
+    completed_at: datetime.date | None = None,
+) -> None:
+    logger.debug("Completing material_id=%s", material_id)
 
     values = {"completed_at": completed_at}
     stmt = (
