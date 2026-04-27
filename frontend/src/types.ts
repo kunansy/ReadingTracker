@@ -21,7 +21,7 @@ export type MaterialJson = {
   is_outlined: boolean;
 };
 
-export type MaterialEstimateJson = {
+type MaterialEstimateJson = {
   material: MaterialJson;
   will_be_started: string;
   will_be_completed: string;
@@ -87,5 +87,10 @@ export type ParsedMaterialResponse = {
 
 export type ListCompletedMaterialsResponse = {
   statistics: MaterialStatisticsJson[];
+};
+
+export type ListMaterialsQueueResponse = {
+  estimates: MaterialEstimateJson[];
+  mean: Record<string, number>;
 };
 
