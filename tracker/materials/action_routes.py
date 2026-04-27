@@ -11,7 +11,7 @@ from tracker.materials import db, schemas
 from tracker.models import enums
 
 
-router = APIRouter(prefix="/materials", tags=["materials"])
+router = APIRouter(prefix="/materials", tags=["materials"], deprecated=True)
 
 
 @router.post("/add")
