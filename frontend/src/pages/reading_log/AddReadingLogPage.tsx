@@ -5,27 +5,16 @@ import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { apiFetch } from "../../api/readingLog";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
-import { MaterialType } from "../../types.ts";
+import {
+  GetMaterialCompletionInfoResponse,
+  GetMaterialReadingNowResponse,
+  ListReadingMaterialsTitlesResponse
+} from "../../types.ts";
 
 export function isUuid(value: string): boolean {
   return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
     value.trim(),
   );
-}
-
-type ListReadingMaterialsTitlesResponse = {
-  items: Record<string, string>;
-}
-
-type MaterialCompletionInfo = {
-  material_pages: number;
-  material_type: MaterialType;
-  pages_read: number;
-  read_days: number;
-}
-
-type GetMaterialReadingNow = {
-  material_id: string;
 }
 
 export function AddReadingLogPage() {
@@ -48,12 +37,12 @@ export function AddReadingLogPage() {
   const getMaterialReadingNow = useQuery({
     queryKey: ["material_reading_now"],
     queryFn: () =>
-        apiFetch<GetMaterialReadingNow>("/material-reading-now"),
+        apiFetch<GetMaterialReadingNowResponse>("/material-reading-now"),
   });
 
   const completionQ = useQuery({
     queryKey: ["material", materialId, "completion-info"],
-    queryFn: () => apiFetch<MaterialCompletionInfo>(`/${materialId}/completion-info`),
+    queryFn: () => apiFetch<GetMaterialCompletionInfoResponse>(`/${materialId}/completion-info`),
     enabled: !!materialId && isUuid(materialId),
   });
 
