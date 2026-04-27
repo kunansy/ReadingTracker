@@ -8,7 +8,7 @@ export enum MaterialType {
 
 export const MaterialTypes = Object.values(MaterialType);
 
-export type MaterialJson = {
+type GetMaterialItem = {
   material_id: string;
   index: number;
   title: string;
@@ -22,7 +22,7 @@ export type MaterialJson = {
 };
 
 type MaterialEstimateJson = {
-  material: MaterialJson;
+  material: GetMaterialItem;
   will_be_started: string;
   will_be_completed: string;
   expected_duration: number;
@@ -31,7 +31,7 @@ type MaterialEstimateJson = {
 export type MinMaxJson = { count: number; date: string };
 
 type MaterialStatisticsJson = {
-  material: MaterialJson;
+  material: GetMaterialItem;
   started_at: string;
   duration: number;
   lost_time: number;
@@ -96,5 +96,9 @@ export type ListCompletedMaterialsResponse = {
 export type ListMaterialsQueueResponse = {
   estimates: MaterialEstimateJson[];
   mean: Record<string, number>;
+};
+
+export type GetMaterialResponse = {
+  material: GetMaterialItem;
 };
 
