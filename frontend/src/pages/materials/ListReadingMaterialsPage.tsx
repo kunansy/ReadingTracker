@@ -7,13 +7,9 @@ import { CelebrateButton } from "../../components/CelebrateButton";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
-import type { MaterialStatisticsJson } from "../../types";
+import type {ListReadingMaterialsResponse} from "../../types";
 
-type ReadingResponse = {
-  statistics: MaterialStatisticsJson[];
-};
-
-export function ReadingPage() {
+export function ListReadingMaterialsPage() {
   const qc = useQueryClient();
   const { open, close } = useContextMenu();
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -23,7 +19,7 @@ export function ReadingPage() {
 
   const q = useQuery({
     queryKey: ["materials", "reading"],
-    queryFn: () => apiFetch<ReadingResponse>("/reading"),
+    queryFn: () => apiFetch<ListReadingMaterialsResponse>("/reading"),
   });
 
   const completeMut = useMutation({

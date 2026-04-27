@@ -7,7 +7,7 @@ import { NotesLayout } from "./components/NotesLayout";
 import { AddMaterialPage } from "./pages/materials/AddMaterialPage";
 import { ListCompletedMaterialsPage } from "./pages/materials/ListCompletedMaterialsPage";
 import { ListMaterialsQueuePage } from "./pages/materials/ListMaterialsQueuePage";
-import { ReadingPage } from "./pages/materials/ReadingPage";
+import { ListReadingMaterialsPage } from "./pages/materials/ListReadingMaterialsPage";
 import { RepeatPage } from "./pages/materials/RepeatPage";
 import { UpdateMaterialPage } from "./pages/materials/UpdateMaterialPage";
 import { AddNotePage } from "./pages/notes/AddNotePage";
@@ -33,7 +33,7 @@ export function App() {
           <Route path="/materials" element={<MaterialsLayout />}>
             <Route index element={<Navigate to="reading" replace />} />
             <Route path="queue" element={<ListMaterialsQueuePage />} />
-            <Route path="reading" element={<ReadingPage />} />
+            <Route path="reading" element={<ListReadingMaterialsPage />} />
             <Route path="completed" element={<ListCompletedMaterialsPage />} />
             <Route path="repeat" element={<RepeatPage />} />
             <Route path="add" element={<AddMaterialPage />} />
