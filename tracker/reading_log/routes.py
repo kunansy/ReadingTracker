@@ -15,6 +15,7 @@ router = APIRouter(
     prefix="/reading_log",
     tags=["reading log"],
     default_response_class=HTMLResponse,
+    deprecated=True,
 )
 templates = Jinja2Templates(directory="templates")
 

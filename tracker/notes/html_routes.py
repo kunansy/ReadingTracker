@@ -18,7 +18,7 @@ from tracker.notes.listing import build_notes_search_result
 templates = Jinja2Templates(directory="templates")
 
 # Single-note and update forms are still Jinja (not implemented in React yet).
-note_detail_router = APIRouter(tags=["notes-legacy"])
+note_detail_router = APIRouter(tags=["notes-legacy"], deprecated=True)
 
 
 @note_detail_router.get("/note", response_class=HTMLResponse)

@@ -11,7 +11,7 @@ from tracker.materials import db, schemas
 from tracker.models import enums
 
 
-router = APIRouter(prefix="/materials", tags=["materials-legacy"])
+router = APIRouter(prefix="/materials", tags=["materials-legacy"], deprecated=True)
 templates = Jinja2Templates(directory="templates")
 
 
