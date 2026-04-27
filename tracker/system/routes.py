@@ -3,7 +3,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import conint
 
@@ -118,7 +118,7 @@ async def graphic(
     return templates.TemplateResponse(request, "system/graphic.html", context)
 
 
-@router.get("/backup", response_model=schemas.BackupResponse)
+@router.get("/backup", response_model=schemas.BackupResponse, response_class=JSONResponse)
 async def backup():
     async with asyncio.TaskGroup() as tg:
         tg.create_task(drive_api.backup())
@@ -147,7 +147,7 @@ async def restore(request: Request):
     return templates.TemplateResponse(request, "system/restore.html", context)
 
 
-@router.post("/report", response_model=schemas.GetSpanReportResponse)
+@router.post("/report", response_model=schemas.GetSpanReportResponse, response_class=JSONResponse)
 async def get_span_report(span: Annotated[schemas.GetSpanReportRequest, Form()]):
     """Get analytics for the span: analyze materials, read items and inserted notes."""
     span_analysis = await trends.get_span_analytics(span)
