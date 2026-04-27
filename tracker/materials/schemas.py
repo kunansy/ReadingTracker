@@ -17,6 +17,9 @@ class GetMaterialItem(CustomBaseModel):
     material_type: enums.MaterialTypesEnum
     tags: Annotated[str | None, BeforeValidator(skip_empty_value)] = None
     link: Annotated[HttpUrl | None, BeforeValidator(skip_empty_value)] = None
+    added_at: datetime.date
+    is_outlined: bool
+    index: PositiveInt
 
 
 class OkResponse(CustomBaseModel):
