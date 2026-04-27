@@ -35,9 +35,15 @@ export function ContextMenuProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const hide = (e: MouseEvent) => {
-      const t = e.target as HTMLElement;
-      if (t.closest("#context-menu")) {
+    const hide = (e: Event) => {
+      const target = e.target;
+
+      if (!(target instanceof Element)) {
+        close();
+        return;
+      }
+
+      if (target.closest("#context-menu")) {
         return;
       }
       close();
