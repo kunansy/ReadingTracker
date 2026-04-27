@@ -102,3 +102,32 @@ export type GetMaterialResponse = {
   material: GetMaterialItem;
 };
 
+export type ListReadingMaterialsTitlesResponse = {
+  items: Record<string, string>;
+}
+
+export type GetMaterialCompletionInfoResponse = {
+  material_pages: number;
+  material_type: MaterialType;
+  pages_read: number;
+  read_days: number;
+}
+
+export type GetMaterialReadingNowResponse = {
+  material_id: string;
+}
+
+export type ReadingLogListItem = {
+  log_id: string;
+  material_id: string;
+  date: string;
+  count: number;
+};
+
+export type ReadingLogResponse = {
+  items: ReadingLogListItem[];
+};
+
+export type ListMaterialsTitlesResponse = {
+  items: Record<string, string>;
+}
