@@ -84,3 +84,8 @@ export type ParsedMaterialResponse = {
   link: string;
   duration?: number | null;
 };
+
+export type ListCompletedMaterialsResponse = {
+  statistics: MaterialStatisticsJson[];
+};
+

@@ -11,32 +11,19 @@ import { apiFetch, buildQuery } from "../../api/materials";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
+import { useDebounce } from "../../lib/debounce.ts";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
 import {
-  MaterialStatisticsJson,
-  MaterialTagsResponse,
-  MaterialTypes,
+    ListCompletedMaterialsResponse,
+    MaterialTagsResponse,
+    MaterialTypes,
 } from "../../types";
 import {
   ComboboxInput, ComboboxList, ComboboxRoot,
 } from "../../components/Combobox";
 
-type CompletedResponse = {
-  statistics: MaterialStatisticsJson[];
-};
 
-function useDebounce<T>(value: T, delay: number): T {
-  const [debounced, setDebounced] = useState(value);
-
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(id);
-  }, [value, delay]);
-
-  return debounced;
-}
-
-export function CompletedPage() {
+export function ListCompletedMaterialsPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { open, close } = useContextMenu();
@@ -63,15 +50,6 @@ export function CompletedPage() {
 
   const debouncedForm = useDebounce(formState, 300);
 
-  const [materialTags, setMaterialTags] = useState<MaterialTagsResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-   void apiFetch<MaterialTagsResponse>("/tags")
-       .then(setMaterialTags)
-       .catch(() => setError("Failed to load material tags"));
-  }, []);
-
   const queryString = useMemo(() => {
     return buildQuery({
       material_type: debouncedForm.material_type || undefined,
@@ -83,7 +61,12 @@ export function CompletedPage() {
   const q = useQuery({
     queryKey: ["materials", "completed", queryString],
     queryFn: () =>
-      apiFetch<CompletedResponse>(`/completed${queryString}`),
+      apiFetch<ListCompletedMaterialsResponse>(`/completed${queryString}`),
+  });
+  const materialTagsQ = useQuery({
+    queryKey: ["materials", "tags"],
+    queryFn: () => apiFetch<MaterialTagsResponse>(`/tags`),
+    staleTime: 5 * 60 * 1000,
   });
 
   const outlineMut = useMutation({
@@ -147,16 +130,17 @@ export function CompletedPage() {
       setFormState((prev) => ({ ...prev, outlined: value }));
   };
 
-  if (q.isLoading) return <p>Loading…</p>;
-  if (q.error)
-      return <p className="error">{(q.error as Error).message}</p>;
+  if (q.isLoading || materialTagsQ.isLoading) return <p>Loading…</p>;
+
+  const err = q.error || materialTagsQ.error;
+  if (err)
+      return <p className="error">{(err as Error).message}</p>;
 
   const stats = q.data?.statistics ?? [];
+  const materialTags = materialTagsQ.data?.tags ?? [];
 
   return (
       <>
-          {error && <div className="alert error">{error}</div>}
-
           <form id="search-materials-form" onSubmit={onSubmit}>
               <ComboboxRoot
                   value={formState.material_type}
@@ -174,7 +158,7 @@ export function CompletedPage() {
                   onChange={(v) =>
                       setFormState((p) => ({ ...p, tags_query: v }))
                   }
-                  options={materialTags?.tags ?? []}
+                  options={materialTags}
                   multiple
                   allowCreate
               >

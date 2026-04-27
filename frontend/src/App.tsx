@@ -5,7 +5,7 @@ import { ContextMenuProvider } from "./contexts/ContextMenuContext";
 import { MaterialsLayout } from "./components/MaterialsLayout";
 import { NotesLayout } from "./components/NotesLayout";
 import { AddMaterialPage } from "./pages/materials/AddMaterialPage";
-import { CompletedPage } from "./pages/materials/CompletedPage";
+import { ListCompletedMaterialsPage } from "./pages/materials/ListCompletedMaterialsPage";
 import { QueuePage } from "./pages/materials/QueuePage";
 import { ReadingPage } from "./pages/materials/ReadingPage";
 import { RepeatPage } from "./pages/materials/RepeatPage";
@@ -34,7 +34,7 @@ export function App() {
             <Route index element={<Navigate to="reading" replace />} />
             <Route path="queue" element={<QueuePage />} />
             <Route path="reading" element={<ReadingPage />} />
-            <Route path="completed" element={<CompletedPage />} />
+            <Route path="completed" element={<ListCompletedMaterialsPage />} />
             <Route path="repeat" element={<RepeatPage />} />
             <Route path="add" element={<AddMaterialPage />} />
             <Route path="update" element={<UpdateMaterialPage />} />
