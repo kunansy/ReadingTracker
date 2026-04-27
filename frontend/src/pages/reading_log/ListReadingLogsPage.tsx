@@ -2,22 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 
 import { apiFetch } from "../../api/readingLog.ts";
+import {ListMaterialsTitlesResponse, ReadingLogResponse} from "../../types.ts";
 
-
-type ReadingLogListItem = {
-  log_id: string;
-  material_id: string;
-  date: string;
-  count: number;
-};
-
-type ReadingLogResponse = {
-  items: ReadingLogListItem[];
-};
-
-type ListMaterialsTitlesResponse = {
-  items: Record<string, string>;
-}
 
 export function ListReadingLogsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
