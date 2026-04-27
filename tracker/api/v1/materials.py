@@ -187,7 +187,7 @@ async def update_material(material_id: UUID, body: schemas.UpdateMaterialRequest
 @router.post("/{material_id}/start", status_code=204)
 async def start_material(
     material_id: UUID,
-    body: Annotated[schemas.StartMaterialRequest, Body()] = None,
+    body: Annotated[schemas.StartMaterialRequest, Body()],
 ):
     if not (material := await db.get_material(material_id=material_id)):
         raise HTTPException(status_code=404, detail=f"Material {material_id} not found")
@@ -201,7 +201,7 @@ async def start_material(
 @router.post("/{material_id}/complete", status_code=204)
 async def complete_material(
     material_id: UUID,
-    body: Annotated[schemas.CompleteMaterialRequest, Body()] = None,
+    body: Annotated[schemas.CompleteMaterialRequest, Body()],
 ):
     try:
         await db.is_completion_request_valid(
