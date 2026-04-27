@@ -30,7 +30,7 @@ type MaterialEstimateJson = {
 
 export type MinMaxJson = { count: number; date: string };
 
-export type MaterialStatisticsJson = {
+type MaterialStatisticsJson = {
   material: MaterialJson;
   started_at: string;
   duration: number;
@@ -83,6 +83,10 @@ export type ParsedMaterialResponse = {
   type: string;
   link: string;
   duration?: number | null;
+};
+
+export type ListReadingMaterialsResponse = {
+  statistics: MaterialStatisticsJson[];
 };
 
 export type ListCompletedMaterialsResponse = {
