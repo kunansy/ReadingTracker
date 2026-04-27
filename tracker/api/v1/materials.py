@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from typing import Annotated
 from uuid import UUID
@@ -14,45 +15,45 @@ from tracker.models import enums
 router = APIRouter(prefix="/materials", tags=["materials-api"])
 
 
-def _serialize_means(mean: enums.MEANS) -> dict[str, float]:
-    return {k: float(v) for k, v in mean.items()}
+@router.get("/queue", response_model=schemas.GetMaterialsQueueResponse)
+async def get_materials_queue():
+    async with asyncio.TaskGroup() as tg:
+        estimates_task = tg.create_task(db.estimate())
+        mean_task = tg.create_task(db.get_means())
 
-
-@router.get("/queue")
-async def get_queue_json():
-    estimates = await db.estimate()
-    mean = await db.get_means()
     return {
-        "estimates": estimates,
-        "mean": _serialize_means(mean),
+        "estimates": estimates_task.result(),
+        "mean": mean_task.result(),
     }
 
 
-@router.get("/reading")
-async def get_reading_json():
+@router.get("/reading", response_model=schemas.GetReadingMaterialsResponse)
+async def get_reading_materials():
     statistics = await db.reading_statistics()
     return {
         "statistics": statistics,
     }
 
 
-@router.get("/completed")
-async def get_completed_json(search: Annotated[schemas.SearchParams, Depends()]):
+@router.get("/completed", response_model=schemas.GetCompletedMaterialsResponse)
+async def get_completed_materials(search: Annotated[schemas.SearchParams, Depends()]):
     get_statistics = await db.completed_statistics(
         material_type=search.get_material_type(),
         is_outlined=search.is_outlined,
         tags=search.requested_tags(),
     )
 
-    return {"statistics": get_statistics}
+    return {
+        "statistics": get_statistics,
+    }
 
 
-@router.get("/repeat")
-async def get_repeat_json(*, only_outlined: bool = False):
+@router.get("/repeat", response_model=schemas.GetRepeatingQueueResponse)
+async def get_repeating_queue(*, only_outlined: bool = False):
     repeating_queue = await db.get_repeating_queue(is_outlined=only_outlined)
+
     return {
         "repeating_queue": repeating_queue,
-        "is_outlined": only_outlined,
     }
 
 
