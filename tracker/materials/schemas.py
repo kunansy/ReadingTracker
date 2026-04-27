@@ -15,11 +15,11 @@ class GetMaterialItem(CustomBaseModel):
     material_id: UUID
     title: str
     authors: str
-    pages: PositiveInt
+    pages: NonNegativeInt
     material_type: enums.MaterialTypesEnum
     tags: Annotated[str | None, BeforeValidator(skip_empty_value)] = None
     link: Annotated[HttpUrl | None, BeforeValidator(skip_empty_value)] = None
-    added_at: datetime.date
+    added_at: datetime.datetime
     is_outlined: bool
     index: PositiveInt
 
@@ -72,7 +72,7 @@ class RepeatingQueueItem(CustomBaseModel):
 
 class GetMaterialsQueueResponse(CustomBaseModel):
     estimates: list[MaterialEstimate]
-    means: dict[MaterialTypesEnum, Decimal]
+    mean: dict[MaterialTypesEnum, Decimal]
 
 
 class GetReadingMaterialsResponse(CustomBaseModel):
@@ -88,7 +88,7 @@ class GetRepeatingQueueResponse(CustomBaseModel):
 
 
 class GetMaterialResponse(CustomBaseModel):
-    material: GetMaterialResponse
+    material: GetMaterialItem
 
 
 class CreateMaterialRequest(CustomBaseModel):
