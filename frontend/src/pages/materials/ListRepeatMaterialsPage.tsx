@@ -8,7 +8,7 @@ import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel } from "../../materials/format";
 import type { GetRepeatingQueueResponse } from "../../types";
 
-export function RepeatPage() {
+export function ListRepeatMaterialsPage() {
   const qc = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();

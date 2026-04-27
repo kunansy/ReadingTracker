@@ -4,12 +4,8 @@ import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 
 import {apiFetch} from "../../api/materials";
 import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
-import {MaterialJson, MaterialTagsResponse, MaterialType, MaterialTypes} from "../../types";
+import {GetMaterialResponse, MaterialTagsResponse, MaterialType, MaterialTypes} from "../../types";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox";
-
-type MaterialResponse = {
-  material: MaterialJson;
-};
 
 export function UpdateMaterialPage() {
   const [searchParams] = useSearchParams();
@@ -17,7 +13,6 @@ export function UpdateMaterialPage() {
   const titleRef = useRef<HTMLInputElement>(null);
   useAltchHotkeys(titleRef);
 
-  const [materialTags, setMaterialTags] = useState<MaterialTagsResponse | null>(null);
   const [title, setTitle] = useState("");
   const [authors, setAuthors] = useState("");
   const [pages, setPages] = useState("");
@@ -33,16 +28,15 @@ export function UpdateMaterialPage() {
 
   const from = location.state?.from || "/materials/queue";
 
-  useEffect(() => {
-    void apiFetch<MaterialTagsResponse>("/tags").then(setMaterialTags).catch(() => {
-      setError("Failed to load material tags");
-    });
-  }, []);
-
   const q = useQuery({
     queryKey: ["material", materialId],
     enabled: Boolean(materialId),
-    queryFn: () => apiFetch<MaterialResponse>(`/${materialId}`),
+    queryFn: () => apiFetch<GetMaterialResponse>(`/${materialId}`),
+  });
+  const materialTagsQ = useQuery({
+    queryKey: ["materials", "tags"],
+    queryFn: () => apiFetch<MaterialTagsResponse>(`/tags`),
+    staleTime: 5 * 60 * 1000,
   });
 
   useEffect(() => {
@@ -99,6 +93,7 @@ export function UpdateMaterialPage() {
       });
 
       void qc.invalidateQueries({ queryKey: ["materials"] });
+      void qc.invalidateQueries({ queryKey: ["materials", "tags"], });
       navigate(from);
     },
   });
@@ -107,12 +102,15 @@ export function UpdateMaterialPage() {
     return <p className="error">Missing material_id</p>;
   }
 
-  if (q.isLoading) {
+  if (q.isLoading || materialTagsQ.isLoading) {
     return <p>Loading…</p>;
   }
-  if (q.error) {
-    return <p className="error">{(q.error as Error).message}</p>;
+  const err = q.error || materialTagsQ.error;
+  if (err) {
+    return <p className="error">{(err as Error).message}</p>;
   }
+
+  const materialTags = materialTagsQ.data?.tags ?? [];
 
   return (
     <>
@@ -174,7 +172,7 @@ export function UpdateMaterialPage() {
             <ComboboxRoot
                 value={tags}
                 onChange={setTags}
-                options={materialTags?.tags ?? []}
+                options={materialTags}
                 multiple
                 allowCreate
             >

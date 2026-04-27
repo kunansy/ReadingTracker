@@ -8,7 +8,7 @@ import { AddMaterialPage } from "./pages/materials/AddMaterialPage";
 import { ListCompletedMaterialsPage } from "./pages/materials/ListCompletedMaterialsPage";
 import { ListMaterialsQueuePage } from "./pages/materials/ListMaterialsQueuePage";
 import { ListReadingMaterialsPage } from "./pages/materials/ListReadingMaterialsPage";
-import { RepeatPage } from "./pages/materials/RepeatPage";
+import { ListRepeatMaterialsPage } from "./pages/materials/ListRepeatMaterialsPage";
 import { UpdateMaterialPage } from "./pages/materials/UpdateMaterialPage";
 import { AddNotePage } from "./pages/notes/AddNotePage";
 import { GraphPage } from "./pages/notes/GraphPage";
@@ -35,7 +35,7 @@ export function App() {
             <Route path="queue" element={<ListMaterialsQueuePage />} />
             <Route path="reading" element={<ListReadingMaterialsPage />} />
             <Route path="completed" element={<ListCompletedMaterialsPage />} />
-            <Route path="repeat" element={<RepeatPage />} />
+            <Route path="repeat" element={<ListRepeatMaterialsPage />} />
             <Route path="add" element={<AddMaterialPage />} />
             <Route path="update" element={<UpdateMaterialPage />} />
           </Route>
