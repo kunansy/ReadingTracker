@@ -3,7 +3,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import conint
 
@@ -147,7 +147,11 @@ async def restore(request: Request):
     return templates.TemplateResponse(request, "system/restore.html", context)
 
 
-@router.post("/report", response_model=schemas.GetSpanReportResponse, response_class=JSONResponse)
+@router.post(
+    "/report",
+    response_model=schemas.GetSpanReportResponse,
+    response_class=JSONResponse,
+)
 async def get_span_report(span: Annotated[schemas.GetSpanReportRequest, Form()]):
     """Get analytics for the span: analyze materials, read items and inserted notes."""
     span_analysis = await trends.get_span_analytics(span)

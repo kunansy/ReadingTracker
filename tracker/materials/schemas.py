@@ -4,9 +4,9 @@ from decimal import Decimal
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BeforeValidator, HttpUrl, PositiveInt, NonNegativeInt
+from pydantic import BeforeValidator, HttpUrl, NonNegativeInt, PositiveInt
 
-from tracker.common.schemas import CustomBaseModel, skip_empty_value, MinMax
+from tracker.common.schemas import CustomBaseModel, MinMax, skip_empty_value
 from tracker.models import enums
 from tracker.models.enums import MaterialTypesEnum
 
