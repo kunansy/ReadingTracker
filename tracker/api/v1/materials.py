@@ -1,5 +1,4 @@
 import asyncio
-import datetime
 from typing import Annotated
 from uuid import UUID
 
@@ -7,7 +6,6 @@ from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import HttpUrl
 
 from tracker.common.logger import logger
-from tracker.common.schemas import CustomBaseModel
 from tracker.materials import db, schemas
 from tracker.models import enums
 
@@ -206,7 +204,10 @@ async def complete_material(
     body: Annotated[schemas.CompleteMaterialRequest, Body()] = None,
 ):
     try:
-        await db.is_completion_request_valid(material_id=material_id, completed_at=body.completed_at)
+        await db.is_completion_request_valid(
+            material_id=material_id,
+            completed_at=body.completed_at,
+        )
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
