@@ -1,5 +1,5 @@
-import {useMutation, useQueryClient} from "@tanstack/react-query";
-import {useEffect, useRef, useState} from "react";
+import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {useRef, useState} from "react";
 
 import {apiFetch} from "../../api/materials";
 import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
@@ -9,50 +9,41 @@ import {
   MaterialTagsResponse,
   MaterialTypes,
   MaterialAuthorsResponse,
+  ParsedMaterialResponse,
 } from "../../types";
 
-
-type ParsedMaterial = {
-  title: string;
-  authors: string;
-  type: string;
-  link: string;
-  duration?: number | null;
-};
 
 export function AddMaterialPage() {
   const titleRef = useRef<HTMLInputElement>(null);
   useAltchHotkeys(titleRef);
 
-  const [materialTags, setMaterialTags] = useState<MaterialTagsResponse | null>(null);
-  const [materialAuthors, setMaterialAuthors] = useState<MaterialAuthorsResponse | null>(null);
   const [title, setTitle] = useState("");
   const [authors, setAuthors] = useState("");
   const [pages, setPages] = useState("");
-  const [materialType, setMaterialType] = useState<MaterialType>("");
+  const [materialType, setMaterialType] = useState<MaterialType | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [link, setLink] = useState("");
   const [parseUrl, setParseUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const qc = useQueryClient();
 
-  useEffect(() => {
-    void apiFetch<MaterialTagsResponse>("/tags").then(setMaterialTags).catch(() => {
-      setError("Failed to load material tags");
-    });
-  }, []);
-  useEffect(() => {
-    void apiFetch<MaterialAuthorsResponse>("/authors").then(setMaterialAuthors).catch(() => {
-      setError("Failed to load material authors");
-    });
-  }, []);
+  const materialTagsQ = useQuery({
+    queryKey: ["materials", "tags"],
+    queryFn: () => apiFetch<MaterialTagsResponse>(`/tags`),
+    staleTime: 5 * 60 * 1000,
+  });
+  const materialAuthorsQ = useQuery({
+    queryKey: ["materials", "authors"],
+    queryFn: () => apiFetch<MaterialAuthorsResponse>(`/authors`),
+    staleTime: 5 * 60 * 1000,
+  });
 
   const parseMut = useMutation({
     mutationFn: async (url: string) => {
       const endpoint = url.includes("habr")
         ? "/parse/habr"
         : "/parse/youtube";
-      return apiFetch<ParsedMaterial>(endpoint, {
+      return apiFetch<ParsedMaterialResponse>(endpoint, {
         method: "POST",
         body: JSON.stringify({ link: url }),
       });
@@ -97,17 +88,33 @@ export function AddMaterialPage() {
       setTitle("");
       setAuthors("");
       setPages("");
-      setMaterialType(MaterialType.book);
+      setMaterialType(null);
       setTags([]);
       setLink("");
+      setParseUrl("");
       setError(null);
 
       void qc.invalidateQueries({ queryKey: ["materials", "queue"], });
+      // todo: invalidate if new ones added only
+      void qc.invalidateQueries({ queryKey: ["materials", "tags"], });
+      void qc.invalidateQueries({ queryKey: ["materials", "authors"], });
     },
     onError: (e: Error) => {
       setError(e.message);
     },
   });
+
+
+  if (materialTagsQ.isLoading || materialAuthorsQ.isLoading) {
+    return <p>Loading…</p>;
+  }
+  const err = materialTagsQ.error || materialAuthorsQ.error;
+  if (err) {
+    return <p className="error">{(err as Error).message}</p>;
+  }
+
+  const materialTags = materialTagsQ.data?.tags ?? [];
+  const materialAuthors = materialAuthorsQ.data?.authors ?? [];
 
   return (
     <>
@@ -168,7 +175,7 @@ export function AddMaterialPage() {
             <ComboboxRoot
                 value={authors}
                 onChange={setAuthors}
-                options={materialAuthors?.authors ?? []}
+                options={materialAuthors}
                 allowCreate
             >
               <ComboboxInput placeholder="Enter a material authors" />
@@ -189,7 +196,7 @@ export function AddMaterialPage() {
             />
 
             <ComboboxRoot
-                value={materialType}
+                value={materialType ?? ""}
                 onChange={setMaterialType}
                 options={MaterialTypes ?? []}
             >
@@ -200,7 +207,7 @@ export function AddMaterialPage() {
             <ComboboxRoot
                 value={tags}
                 onChange={setTags}
-                options={materialTags?.tags ?? []}
+                options={materialTags}
                 multiple
                 allowCreate
             >
