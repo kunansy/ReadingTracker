@@ -1,12 +1,14 @@
 import datetime
 import typing
+from decimal import Decimal
 from typing import Annotated, Literal
 from uuid import UUID
 
-from pydantic import BeforeValidator, HttpUrl, PositiveInt
+from pydantic import BeforeValidator, HttpUrl, PositiveInt, NonNegativeInt
 
-from tracker.common.schemas import CustomBaseModel, skip_empty_value
+from tracker.common.schemas import CustomBaseModel, skip_empty_value, MinMax
 from tracker.models import enums
+from tracker.models.enums import MaterialTypesEnum
 
 
 class GetMaterialItem(CustomBaseModel):
@@ -24,6 +26,65 @@ class GetMaterialItem(CustomBaseModel):
 
 class OkResponse(CustomBaseModel):
     ok: bool
+
+
+class MaterialEstimate(CustomBaseModel):
+    material: GetMaterialItem
+    will_be_started: datetime.date
+    will_be_completed: datetime.date
+    expected_duration: PositiveInt
+
+
+class MaterialStatistics(CustomBaseModel):
+    material: GetMaterialItem
+    started_at: datetime.date
+    duration: int
+    lost_time: NonNegativeInt
+    total: int
+    min_record: MinMax | None
+    max_record: MinMax | None
+    mean: NonNegativeInt
+    notes_count: NonNegativeInt
+    remaining_pages: NonNegativeInt | None = None
+    remaining_days: NonNegativeInt | None = None
+    completed_at: datetime.date | None = None
+    total_reading_duration: str | None = None
+    # date when the material would be completed
+    # according to mean read pages count
+    would_be_completed: datetime.date | None = None
+    percent_completed: float
+
+
+class RepeatingQueueItem(CustomBaseModel):
+    material_id: UUID
+    title: str
+    pages: NonNegativeInt
+    material_type: enums.MaterialTypesEnum
+    is_outlined: bool
+    notes_count: NonNegativeInt
+    cards_count: NonNegativeInt
+    repeats_count: NonNegativeInt
+    completed_at: datetime.datetime | None
+    last_repeated_at: datetime.datetime | None
+    priority_days: int
+    priority_months: float
+
+
+class GetMaterialsQueueResponse(CustomBaseModel):
+    estimates: list[MaterialEstimate]
+    means: dict[MaterialTypesEnum, Decimal]
+
+
+class GetReadingMaterialsResponse(CustomBaseModel):
+    statistics: list[MaterialStatistics]
+
+
+class GetCompletedMaterialsResponse(CustomBaseModel):
+    statistics: list[MaterialStatistics]
+
+
+class GetRepeatingQueueResponse(CustomBaseModel):
+    repeating_queue: list[RepeatingQueueItem]
 
 
 class GetMaterialResponse(CustomBaseModel):
