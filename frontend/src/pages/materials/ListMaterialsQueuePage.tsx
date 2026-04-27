@@ -6,25 +6,21 @@ import { apiFetch } from "../../api/materials";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
-import type { MaterialEstimateJson } from "../../types";
+import type {ListMaterialsQueueResponse} from "../../types";
 import {CelebrateButton} from "../../components/CelebrateButton.tsx";
 
-type QueueResponse = {
-  estimates: MaterialEstimateJson[];
-  mean: Record<string, number>;
-};
 
-export function QueuePage() {
-  const qc = useQueryClient();
-  const { open, close } = useContextMenu();
-  const dialogRef = useRef<HTMLDialogElement>(null);
+export function ListMaterialsQueuePage() {
   const [completeId, setCompleteId] = useState<string | null>(null);
   const [dateStr, setDateStr] = useState("");
+  const qc = useQueryClient();
+  const dialogRef = useRef<HTMLDialogElement>(null);
   const navigate = useNavigate();
+  const { open, close } = useContextMenu();
 
   const q = useQuery({
     queryKey: ["materials", "queue"],
-    queryFn: () => apiFetch<QueueResponse>("/queue"),
+    queryFn: () => apiFetch<ListMaterialsQueueResponse>("/queue"),
   });
 
   const startMut = useMutation({
