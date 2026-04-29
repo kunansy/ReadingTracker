@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 
 import { apiFetch } from "../../api/readingLog.ts";
-import {ListMaterialsTitlesResponse, ReadingLogResponse} from "../../types.ts";
+import {ListMaterialsTitlesResponse, ListReadingLogsResponse} from "../../types.ts";
 
 
 export function ListReadingLogsPage() {
@@ -19,7 +19,7 @@ export function ListReadingLogsPage() {
         queryKey: ["logs", { materialId }],
         queryFn: () => {
             const params = materialId ? `?material_id=${materialId}` : '';
-            return apiFetch<ReadingLogResponse>(`/${params}`);
+            return apiFetch<ListReadingLogsResponse>(`/${params}`);
         },
     });
 
