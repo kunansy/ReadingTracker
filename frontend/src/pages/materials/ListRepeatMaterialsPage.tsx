@@ -95,21 +95,28 @@ export function ListRepeatMaterialsPage() {
                 navigate(`/notes?material_id=${repeat.material_id}&page_size=${repeat.notes_count}`);
               }}
               onContextMenu={async (e) => {
-                if (repeat.cards_count === 0) {
+                if (repeat.notes_count === 0 && repeat.notes_count === 0) {
                   return;
                 }
                 e.preventDefault();
-                open(e.clientX, e.clientY, [
+                const items = [
                   {
-                    label: `Open cards (${repeat.cards_count})`,
+                    label: `Open notes (${repeat.notes_count})`,
                     action: async () => {
-                      window.open(
-                          // todo: navigate
-                        `/cards/list?material_id=${encodeURIComponent(repeat.material_id)}`,
-                      );
+                      navigate(`/notes/?material_id=${encodeURIComponent(repeat.material_id)}`);
                     },
                   },
-                ]);
+                ];
+                if (repeat.cards_count !== 0) {
+                  items.push({
+                    label: `Open cards (${repeat.cards_count})`,
+                    action: async () => {
+                      navigate(`/cards/?material_id=${encodeURIComponent(repeat.material_id)}`);
+                    },
+                  })
+                }
+
+                open(e.clientX, e.clientY, items);
               }}
             >
               <p className="little-text">
@@ -144,27 +151,6 @@ export function ListRepeatMaterialsPage() {
                     Repeat
                   </CelebrateButton>
                 </form>
-                {repeat.cards_count > 0 ? (
-                  <form
-                    className="open-cards"
-                    title="Open material cards"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                    }}
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      // todo: navigate
-                      window.open(
-                        `/cards/list?material_id=${encodeURIComponent(repeat.material_id)}`,
-                      );
-                    }}
-                  >
-                    <CelebrateButton type="submit" className="submit-button">
-                      Open cards ({repeat.cards_count})
-                    </CelebrateButton>
-                  </form>
-                ) : null}
               </div>
             </div>
           );
