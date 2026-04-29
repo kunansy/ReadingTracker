@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { apiFetch as cardsApiFetch } from "../../api/cards";
@@ -26,6 +26,10 @@ type NotesMetaResponse = {
 
 type CreateCardResponse = {
   card_id: string;
+};
+
+type NotesWithCardsResponse = {
+  items: string[];
 };
 
 export function isUuid(value: string): boolean {
@@ -75,11 +79,25 @@ export function AddCardPage() {
 
   const notesQ = useQuery({
     queryKey: ["notes", "search", { materialId }],
-    enabled: !!materialId && isUuid(materialId),
     queryFn: () =>
       notesApiFetch<NotesSearchResponse>(
-        `/search${buildQuery({ material_id: materialId, page: 1, page_size: 200 })}`,
+        `/search${buildQuery({
+          ...(isUuid(materialId) ? { material_id: materialId } : {}),
+          page: 1,
+          page_size: 200,
+        })}`,
       ),
+  });
+
+  const notesWithCardsQ = useQuery({
+    queryKey: ["cards", "notes-with-cards", { materialId }],
+    queryFn: () =>
+      cardsApiFetch<NotesWithCardsResponse>(
+        `/notes-with-cards${buildQuery({
+          ...(isUuid(materialId) ? { material_id: materialId } : {}),
+        })}`,
+      ),
+    staleTime: 30_000,
   });
 
   const addMut = useMutation({
@@ -124,14 +142,17 @@ export function AddCardPage() {
 
   const materialsTitles = metaQ.data?.titles ?? {};
   const notes = notesQ.data?.notes ?? [];
+  const notesWithCards = useMemo(() => {
+    return new Set((notesWithCardsQ.data?.items ?? []).map((x) => x.trim()));
+  }, [notesWithCardsQ.data?.items]);
 
-  if (metaQ.isLoading || notesQ.isLoading) {
+  if (metaQ.isLoading || notesQ.isLoading || notesWithCardsQ.isLoading) {
     return <p>Loading…</p>;
   }
-  if (metaQ.error || notesQ.error) {
+  if (metaQ.error || notesQ.error || notesWithCardsQ.error) {
     return (
       <p className="error">
-        {((metaQ.error || notesQ.error) as Error)?.message ||
+        {((metaQ.error || notesQ.error || notesWithCardsQ.error) as Error)?.message ||
           "Не удалось загрузить данные"}
       </p>
     );
@@ -139,6 +160,83 @@ export function AddCardPage() {
 
   return (
     <>
+      {!!materialId && isUuid(materialId) ? (
+          <div className="notes">
+            <h3 id="srch-label" className="search-notes-label">
+              Search notes | {notesQ.data?.total_count ?? 0} items
+            </h3>
+            {materialsTitles[materialId] ? (
+                <h3 className="material-title">«{materialsTitles[materialId]}»</h3>
+            ) : null}
+            <ul className="notes" id="notes-list">
+              {notes.map((n) => (
+                  <li
+                      key={n.note_id}
+                      className={[
+                        "note",
+                        "hover",
+                        notesWithCards.has(n.note_id) ? "with_card" : "without_card",
+                      ].join(" ")}
+                      id={`note-${n.note_id}`}
+                      title="Click to choose this note"
+                      onClick={() => {
+                        setNoteId(n.note_id);
+                        if (!question.trim()) {
+                          setQuestion(stripHtml(n.content_html));
+                        }
+                        const p = new URLSearchParams(searchParams);
+                        p.set("note_id", n.note_id);
+                        setSearchParams(p, { replace: true });
+                      }}
+                  >
+                    <p
+                        className="note-content"
+                        dangerouslySetInnerHTML={{ __html: n.content_html }}
+                    />
+                    <p className="note-page">Page: {n.page}</p>
+                    <p className="note-id">ID: {n.note_id}</p>
+                  </li>
+              ))}
+            </ul>
+          </div>
+      ) : (
+          <div className="notes">
+            <h3 id="srch-label" className="search-notes-label">
+              Search notes | {notesQ.data?.total_count ?? 0} items
+            </h3>
+            <ul className="notes" id="notes-list">
+              {notes.map((n) => (
+                  <li
+                      key={n.note_id}
+                      className={[
+                        "note",
+                        "hover",
+                        notesWithCards.has(n.note_id) ? "with_card" : "without_card",
+                      ].join(" ")}
+                      id={`note-${n.note_id}`}
+                      title="Click to choose this note"
+                      onClick={() => {
+                        setMaterialId(n.material_id);
+                        setNoteId(n.note_id);
+
+                        const p = new URLSearchParams(searchParams);
+                        p.set("material_id", n.material_id);
+                        p.set("note_id", n.note_id);
+                        setSearchParams(p, { replace: true });
+                      }}
+                  >
+                    <p
+                        className="note-content"
+                        dangerouslySetInnerHTML={{ __html: n.content_html }}
+                    />
+                    <p className="note-page">Page: {n.page}</p>
+                    <p className="note-id">ID: {n.note_id}</p>
+                  </li>
+              ))}
+            </ul>
+          </div>
+      )}
+
       <div className="form">
         <form
           onSubmit={(e) => {
@@ -219,43 +317,6 @@ export function AddCardPage() {
           </CelebrateButton>
         </form>
       </div>
-
-      {!!materialId && isUuid(materialId) ? (
-        <div className="notes">
-          <h3 id="srch-label" className="search-notes-label">
-            Search notes | {notesQ.data?.total_count ?? 0} items
-          </h3>
-          {materialsTitles[materialId] ? (
-            <h3 className="material-title">«{materialsTitles[materialId]}»</h3>
-          ) : null}
-          <ul className="notes" id="notes-list">
-            {notes.map((n) => (
-              <li
-                key={n.note_id}
-                className="note hover"
-                id={`note-${n.note_id}`}
-                title="Click to choose this note"
-                onClick={() => {
-                  setNoteId(n.note_id);
-                  if (!question.trim()) {
-                    setQuestion(stripHtml(n.content_html));
-                  }
-                  const p = new URLSearchParams(searchParams);
-                  p.set("note_id", n.note_id);
-                  setSearchParams(p, { replace: true });
-                }}
-              >
-                <p
-                  className="note-content"
-                  dangerouslySetInnerHTML={{ __html: n.content_html }}
-                />
-                <p className="note-page">Page: {n.page}</p>
-                <p className="note-id">ID: {n.note_id}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
 
       {error ? <p className="error">{error}</p> : null}
     </>

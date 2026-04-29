@@ -60,3 +60,7 @@ class CreateCardResponse(CustomBaseModel):
 
 class ListMaterialsWithCardsResponse(CustomBaseModel):
     items: dict[UUID, str]
+
+
+class ListNotesWithCardsResponse(CustomBaseModel):
+    items: list[UUID]

@@ -27,10 +27,13 @@ class Card(CustomBaseModel):
     material_type: enums.MaterialTypesEnum
 
 
-async def get_notes_with_cards() -> set[UUID]:
+async def get_notes_with_cards(*, material_id: UUID | None = None) -> set[UUID]:
     logger.info("Getting notes with cards")
 
     stmt = sa.select(models.Cards.c.note_id.distinct())
+
+    if material_id:
+        stmt = stmt.where(models.Cards.c.material_id == str(material_id))
 
     async with database.session() as ses:
         note_ids = await ses.scalars(stmt)
@@ -56,7 +59,7 @@ async def add_card(
     stmt = models.Cards.insert().values(values).returning(models.Cards.c.card_id)
 
     async with database.session() as ses:
-        card_id = await ses.execute(stmt)
+        card_id = await ses.scalar(stmt)
 
     logger.debug("Card %r added", card_id)
     return cast("UUID", card_id)
