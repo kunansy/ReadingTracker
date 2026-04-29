@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import {useNavigate, useSearchParams} from "react-router-dom";
 
 import { apiFetch, buildQuery } from "../../api/notes";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
@@ -146,6 +146,7 @@ export function SearchNotesPage() {
   const tagsQuery = searchParams.get("tags_query") ?? "";
   const pageParam = searchParams.get("page");
   const currentPage = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
+  const navigate = useNavigate();
 
   const [hintList, setHintList] = useState<string[]>([]);
 
@@ -310,16 +311,14 @@ export function SearchNotesPage() {
         items.push({
           label: "Add card",
           action: () => {
-            window.open(
-              `/cards/add-view?note_id=${noteId}&material_id=${noteJson.material_id}`,
-            );
+            navigate(`/cards/add?note_id=${noteId}&material_id=${noteJson.material_id}`);
           },
         });
         if (hasCards.has_cards) {
           items.push({
             label: `Open cards (${hasCards.cards_count})`,
             action: () => {
-              window.open(`/cards/list?note_id=${noteId}`);
+              navigate(`/cards/?note_id=${encodeURIComponent(noteJson.material_id)}`);
             },
           });
         }
@@ -605,11 +604,13 @@ export function SearchNotesPage() {
                   className="material_title"
                   id={`material-${group.materialId}`}
                   onClick={() => {
+                    // todo
                     window.open(`/materials/completed#${group.materialId}`, "_blank");
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
+                      // todo
                       window.open(`/materials/completed#${group.materialId}`, "_blank");
                     }
                   }}
