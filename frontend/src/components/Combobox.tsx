@@ -17,6 +17,7 @@ type ComboboxContextType = {
 
     options: string[];
     filtered: string[];
+    getOptionLabel: (opt: string) => string;
 
     highlight: number;
     setHighlight: React.Dispatch<React.SetStateAction<number>>;
@@ -42,6 +43,7 @@ function useComboboxCtx() {
 type RootProps = {
     children: ReactNode;
     options: string[];
+    getOptionLabel?: (opt: string) => string;
 
     value: string | string[];
     onChange: (v: any) => void;
@@ -53,6 +55,7 @@ type RootProps = {
 export function ComboboxRoot({
                                  children,
                                  options,
+                                 getOptionLabel,
                                  value,
                                  onChange,
                                  multiple = false,
@@ -64,6 +67,10 @@ export function ComboboxRoot({
 
     const ref = useRef<HTMLDivElement>(null);
 
+    const optionLabel = useMemo(() => {
+        return getOptionLabel ?? ((opt: string) => opt);
+    }, [getOptionLabel]);
+
     const selected = useMemo<string[]>(() => {
         return multiple ? (value as string[]) : value ? [value as string] : [];
     }, [value, multiple]);
@@ -71,10 +78,11 @@ export function ComboboxRoot({
     const filtered = useMemo(() => {
         return options.filter(
             (o) =>
-                o.toLowerCase().includes(input.toLowerCase()) &&
+                (o.toLowerCase().includes(input.toLowerCase()) ||
+                    optionLabel(o).toLowerCase().includes(input.toLowerCase())) &&
                 (!multiple || !selected.includes(o))
         );
-    }, [options, input, multiple, selected]);
+    }, [options, input, multiple, selected, optionLabel]);
 
     const normalized = input.trim();
 
@@ -90,7 +98,7 @@ export function ComboboxRoot({
             setInput("");
         } else {
             onChange(v);
-            setInput(v);
+            setInput(optionLabel(v));
             setOpen(false);
         }
     };
@@ -112,9 +120,9 @@ export function ComboboxRoot({
 
     useEffect(() => {
         if (!multiple) {
-            setInput(selected[0] ?? "");
+            setInput(selected[0] ? optionLabel(selected[0]) : "");
         }
-    }, [selected, multiple]);
+    }, [selected, multiple, optionLabel]);
 
     return (
         <ComboboxContext.Provider
@@ -125,6 +133,7 @@ export function ComboboxRoot({
                 setInput,
                 options,
                 filtered,
+                getOptionLabel: optionLabel,
                 highlight,
                 setHighlight,
                 multiple,
@@ -142,7 +151,17 @@ export function ComboboxRoot({
     );
 }
 
-export function ComboboxInput({ placeholder }: { placeholder?: string }) {
+export function ComboboxInput({
+                                 placeholder,
+                                 id,
+                                 title,
+                                 className,
+                             }: {
+    placeholder?: string;
+    id?: string;
+    title?: string;
+    className?: string;
+}) {
     const {
         input,
         setInput,
@@ -160,7 +179,7 @@ export function ComboboxInput({ placeholder }: { placeholder?: string }) {
 
     return (
         <div
-            className="input"
+            className={className ?? "input"}
             style={{ display: "flex", flexWrap: "wrap", gap: 4 }}
         >
             {multiple &&
@@ -182,6 +201,8 @@ export function ComboboxInput({ placeholder }: { placeholder?: string }) {
                 ))}
 
             <input
+                id={id}
+                title={title}
                 style={{ border: "none", outline: "none", flex: 1 }}
                 value={input}
                 placeholder={placeholder}
@@ -234,6 +255,7 @@ export function ComboboxList() {
         select,
         canCreate,
         input,
+        getOptionLabel,
     } = useComboboxCtx();
 
     if (!open || (filtered.length === 0 && !canCreate)) return null;
@@ -281,7 +303,7 @@ export function ComboboxList() {
                     onMouseEnter={() => setHighlight(i)}
                     onClick={() => select(opt)}
                 >
-                    {opt}
+                    {getOptionLabel(opt)}
                 </div>
             ))}
         </div>
