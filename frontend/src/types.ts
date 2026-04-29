@@ -131,3 +131,23 @@ export type ListReadingLogsResponse = {
 export type ListMaterialsTitlesResponse = {
   items: Record<string, string>;
 }
+
+type ListCardsItem = {
+  card_id: string;
+  note_id: string;
+  material_id: string;
+  question: string;
+  answer: string | null;
+  added_at: string;
+  note_title: string | null;
+  note_content: string;
+  note_chapter: string;
+  note_page: number;
+  material_title: string;
+  material_authors: string;
+  material_type: MaterialType;
+}
+
+export type ListCardsResponse = {
+  items: ListCardsItem[];
+}
