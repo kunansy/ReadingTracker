@@ -5,6 +5,11 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { apiFetch as cardsApiFetch } from "../../api/cards";
 import { apiFetch as notesApiFetch, buildQuery } from "../../api/notes";
 import { CelebrateButton } from "../../components/CelebrateButton";
+import {
+  ComboboxInput,
+  ComboboxList,
+  ComboboxRoot,
+} from "../../components/Combobox";
 import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
 
 type NoteListItem = {
@@ -146,6 +151,20 @@ export function AddCardPage() {
     return new Set((notesWithCardsQ.data?.items ?? []).map((x) => x.trim()));
   }, [notesWithCardsQ.data?.items]);
 
+  const materialOptions = useMemo(() => {
+    return Object.keys(materialsTitles).sort((a, b) =>
+      (materialsTitles[a] ?? "").localeCompare(materialsTitles[b] ?? ""),
+    );
+  }, [materialsTitles]);
+
+  const notesById = useMemo(() => {
+    const m = new Map<string, NoteListItem>();
+    for (const n of notes) m.set(n.note_id, n);
+    return m;
+  }, [notes]);
+
+  const noteOptions = useMemo(() => notes.map((n) => n.note_id), [notes]);
+
   if (metaQ.isLoading || notesQ.isLoading || notesWithCardsQ.isLoading) {
     return <p>Loading…</p>;
   }
@@ -245,56 +264,72 @@ export function AddCardPage() {
             addMut.mutate();
           }}
         >
-          <input
-            className="input input-datalist"
-            id="material_id"
-            list="materials"
-            placeholder="Choose a material"
+          <ComboboxRoot
+            options={materialOptions}
             value={materialId}
-            title="ID of the material"
-            onChange={(e) => {
-              const next = e.target.value;
+            onChange={(next: string) => {
               setMaterialId(next);
+              setNoteId("");
+              setQuestion("");
+              setAnswer("");
+
               const p = new URLSearchParams(searchParams);
               if (next) p.set("material_id", next);
               else p.delete("material_id");
               p.delete("note_id");
               setSearchParams(p, { replace: true });
             }}
-          />
-          {/* TODO: rewrite with combobox */}
-          <datalist id="materials">
-            {Object.entries(materialsTitles)
-              .sort((a, b) => a[1].localeCompare(b[1]))
-              .map(([id, t]) => (
-                <option key={id} value={id}>
-                  «{t}»
-                </option>
-              ))}
-          </datalist>
+            getOptionLabel={(id) => materialsTitles[id] ?? ""}
+          >
+            <ComboboxInput
+              className="input input-datalist"
+              id="material_id"
+              placeholder="Choose a material"
+              title="ID of the material"
+            />
+            <ComboboxList />
+          </ComboboxRoot>
 
-          <input
-            className="input input-datalist"
-            id="note_id"
-            list="notes"
-            placeholder="Choose a note"
+          <ComboboxRoot
+            options={noteOptions}
             value={noteId}
-            onChange={(e) => {
-              const next = e.target.value;
+            onChange={(next: string) => {
+              const n = notesById.get(next);
+              if (n) {
+                // legacy behavior: choosing a note sets both fields
+                setMaterialId(n.material_id);
+                setNoteId(n.note_id);
+                setQuestion("");
+                setAnswer("");
+                if (!question.trim()) {
+                  setQuestion(stripHtml(n.content_html));
+                }
+                const p = new URLSearchParams(searchParams);
+                p.set("material_id", n.material_id);
+                p.set("note_id", n.note_id);
+                setSearchParams(p, { replace: true });
+                return;
+              }
+
+              // fallback if user typed a UUID that's not in current notes list
               setNoteId(next);
               const p = new URLSearchParams(searchParams);
               if (next) p.set("note_id", next);
               else p.delete("note_id");
               setSearchParams(p, { replace: true });
             }}
-          />
-          <datalist id="notes">
-            {notes.map((n) => (
-              <option key={n.note_id} value={n.note_id}>
-                {stripHtml(n.content_html)}
-              </option>
-            ))}
-          </datalist>
+            getOptionLabel={(id) => {
+              const n = notesById.get(id);
+              return n ? stripHtml(n.content_html) : "";
+            }}
+          >
+            <ComboboxInput
+              className="input input-datalist"
+              id="note_id"
+              placeholder="Choose a note"
+            />
+            <ComboboxList />
+          </ComboboxRoot>
 
           <textarea
             ref={questionRef}
