@@ -117,15 +117,15 @@ export type GetMaterialReadingNowResponse = {
   material_id: string;
 }
 
-export type ReadingLogListItem = {
+type ListReadingLogsItem = {
   log_id: string;
   material_id: string;
   date: string;
   count: number;
 };
 
-export type ReadingLogResponse = {
-  items: ReadingLogListItem[];
+export type ListReadingLogsResponse = {
+  items: ListReadingLogsItem[];
 };
 
 export type ListMaterialsTitlesResponse = {
