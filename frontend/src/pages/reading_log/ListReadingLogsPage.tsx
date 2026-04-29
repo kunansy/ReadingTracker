@@ -10,7 +10,7 @@ export function ListReadingLogsPage() {
     const materialId = searchParams.get("material_id") ?? "";
 
     const materialsTitlesQ = useQuery({
-        queryKey: ["materials", "titles"],
+        queryKey: ["materials", "reading_logs", "titles"],
         queryFn: () => apiFetch<ListMaterialsTitlesResponse>("/materials-titles"),
         staleTime: 5 * 60 * 1000,
     });
