@@ -18,6 +18,7 @@ import { ListReadingLogsPage } from "./pages/reading_log/ListReadingLogsPage.tsx
 import { AddReadingLogPage } from "./pages/reading_log/AddReadingLogPage.tsx";
 import { CardsLayout } from "./components/CardsLayout.tsx";
 import { ListCardsPage } from "./pages/cards/ListCardsPage.tsx";
+import { AddCardPage } from "./pages/cards/AddCardPage.tsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -52,7 +53,7 @@ export function App() {
           </Route>
           <Route path="/cards" element={<CardsLayout />}>
             <Route index element={<ListCardsPage />} />
-            {/*<Route path="add" element={<AddCardPage />} />*/}
+            <Route path="add" element={<AddCardPage />} />
           </Route>
         </Routes>
       </ContextMenuProvider>
