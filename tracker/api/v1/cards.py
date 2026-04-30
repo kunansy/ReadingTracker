@@ -29,6 +29,7 @@ async def create_card(card: schemas.CreateCardRequest):
         "card_id": card_id,
     }
 
+
 @router.get("/materials-titles", response_model=schemas.ListMaterialsWithCardsResponse)
 async def list_materials_with_cards():
     items = await db.list_materials_with_cards()
