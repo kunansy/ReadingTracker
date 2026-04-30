@@ -64,7 +64,7 @@ type BackupResponse = {
 };
 
 function SvgImg({ b64 }: { b64: string }) {
-  return <img src={`data:image/svg+xml;base64,${b64}`} />;
+  return <img src={`data:image/svg+xml;base64,${b64}`}  alt="nope"/>;
 }
 
 function SpanStatsBlock({ s }: { s: SpanSummary }) {
