@@ -208,6 +208,7 @@ export function AddCardPage() {
                   title="Click to choose this note"
                   onClick={() => {
                     setNoteId(n.note_id);
+                    setMaterialId(n.material_id);
                     if (!question.trim()) {
                       setQuestion(stripHtml(n.content_html));
                     }
