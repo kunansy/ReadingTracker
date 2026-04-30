@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  useCallback,
-  useMemo,
-  useEffect,
-  useState,
+    useCallback,
+    useMemo,
+    useEffect,
+    useState,
+    useRef,
 } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import {useSearchParams, useNavigate, useLocation} from "react-router-dom";
 
 import { apiFetch, buildQuery } from "../../api/materials";
 import { CelebrateButton } from "../../components/CelebrateButton";
@@ -27,6 +28,9 @@ export function ListCompletedMaterialsPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const { open, close } = useContextMenu();
+  const location = useLocation();
+  const [didScroll, setDidScroll] = useState(false);
+  const refs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -130,6 +134,31 @@ export function ListCompletedMaterialsPage() {
       setFormState((prev) => ({ ...prev, outlined: value }));
   };
 
+    useEffect(() => {
+        const id = location.state?.scrollTo;
+        if (!id) return;
+
+        if (!q.data) return;
+
+        if (didScroll) return;
+
+        const el = refs.current[id];
+        if (el) {
+            el.scrollIntoView({
+                behavior: "smooth",
+                block: "center",
+            });
+
+            setDidScroll(true);
+        }
+    }, [location.state, q.data, didScroll]);
+
+    useEffect(() => {
+        if (didScroll) {
+            navigate(location.pathname + location.search, { replace: true });
+        }
+    }, [didScroll]);
+
   if (q.isLoading || materialTagsQ.isLoading) return <p>Loading…</p>;
 
   const err = q.error || materialTagsQ.error;
@@ -221,6 +250,10 @@ export function ListCompletedMaterialsPage() {
                       return (
                           <div
                               key={material.material_id}
+                              id={material.material_id}
+                              ref={(el) => {
+                                  refs.current[material.material_id] = el;
+                              }}
                               className="material hover"
                               onContextMenu={(e) =>
                                   onMaterialContextMenu(e, material.material_id)
