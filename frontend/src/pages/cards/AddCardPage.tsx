@@ -188,85 +188,44 @@ export function AddCardPage() {
 
   return (
     <>
-      {!!materialId && isUuid(materialId) ? (
-          <div className="notes">
-            <h3 id="srch-label" className="search-notes-label">
-              Search notes | {notesQ.data?.total_count ?? 0} items
-            </h3>
-            {materialsTitles[materialId] ? (
-                <h3 className="material-title">«{materialsTitles[materialId]}»</h3>
-            ) : null}
-            <ul className="notes" id="notes-list">
-              {notes.map((n) => (
-                  <li
-                      key={n.note_id}
-                      className={[
-                        "note",
-                        "hover",
-                        notesWithCards.has(n.note_id) ? "with_card" : "without_card",
-                      ].join(" ")}
-                      id={`note-${n.note_id}`}
-                      title="Click to choose this note"
-                      onClick={() => {
-                        setNoteId(n.note_id);
-                        if (!question.trim()) {
-                          setQuestion(stripHtml(n.content_html));
-                        }
-                        const p = new URLSearchParams(searchParams);
-                        p.set("note_id", n.note_id);
-                        setSearchParams(p, { replace: true });
-                      }}
-                  >
-                    <p
-                        className="note-content"
-                        dangerouslySetInnerHTML={{ __html: n.content_html }}
-                    />
-                    <p className="note-page">Page: {n.page}</p>
-                    <p className="note-id">ID: {n.note_id}</p>
-                  </li>
-              ))}
-            </ul>
-          </div>
-      ) : (
-          <div className="notes">
-            <h3 id="srch-label" className="search-notes-label">
-              Search notes | {notesQ.data?.total_count ?? 0} items
-            </h3>
-            <ul className="notes" id="notes-list">
-              {notes.map((n) => (
-                  <li
-                      key={n.note_id}
-                      className={[
-                        "note",
-                        "hover",
-                        notesWithCards.has(n.note_id) ? "with_card" : "without_card",
-                      ].join(" ")}
-                      id={`note-${n.note_id}`}
-                      title="Click to choose this note"
-                      onClick={() => {
-                        setMaterialId(n.material_id);
-                        setNoteId(n.note_id);
-                        if (!question.trim()) {
-                          setQuestion(stripHtml(n.content_html));
-                        }
-
-                        const p = new URLSearchParams(searchParams);
-                        p.set("material_id", n.material_id);
-                        p.set("note_id", n.note_id);
-                        setSearchParams(p, { replace: true });
-                      }}
-                  >
-                    <p
-                        className="note-content"
-                        dangerouslySetInnerHTML={{ __html: n.content_html }}
-                    />
-                    <p className="note-page">Page: {n.page}</p>
-                    <p className="note-id">ID: {n.note_id}</p>
-                  </li>
-              ))}
-            </ul>
-          </div>
-      )}
+      <div className="notes">
+        <h3 id="srch-label" className="search-notes-label">
+          Search notes | {notesQ.data?.total_count ?? 0} items
+        </h3>
+        {materialsTitles[materialId] ? (
+            <h3 className="material-title">«{materialsTitles[materialId]}»</h3>
+        ) : null}
+        <ul className="notes" id="notes-list">
+          {notes.map((n) => (
+              <li
+                  key={n.note_id}
+                  className={[
+                    "note",
+                    "hover",
+                    notesWithCards.has(n.note_id) ? "with_card" : "without_card",
+                  ].join(" ")}
+                  id={`note-${n.note_id}`}
+                  title="Click to choose this note"
+                  onClick={() => {
+                    setNoteId(n.note_id);
+                    if (!question.trim()) {
+                      setQuestion(stripHtml(n.content_html));
+                    }
+                    const p = new URLSearchParams(searchParams);
+                    p.set("note_id", n.note_id);
+                    setSearchParams(p, { replace: true });
+                  }}
+              >
+                <p
+                    className="note-content"
+                    dangerouslySetInnerHTML={{ __html: n.content_html }}
+                />
+                <p className="note-page">Page: {n.page}</p>
+                <p className="note-id">ID: {n.note_id}</p>
+              </li>
+          ))}
+        </ul>
+      </div>
 
       <div className="form">
         <form
