@@ -142,6 +142,7 @@ async def list_materials_with_cards() -> dict[UUID, str]:
     )
 
     async with database.session() as ses:
+        # TODO: probably, it should to remove mappings at all
         titles = {
             row.material_id: row.title
             for row in (await ses.execute(stmt)).mappings().all()
