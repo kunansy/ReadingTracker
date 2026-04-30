@@ -604,14 +604,12 @@ export function SearchNotesPage() {
                   className="material_title"
                   id={`material-${group.materialId}`}
                   onClick={() => {
-                    // todo
-                    window.open(`/materials/completed#${group.materialId}`, "_blank");
+                    navigate(`/materials/completed`, { state: {scrollTo: group.materialId } });
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      // todo
-                      window.open(`/materials/completed#${group.materialId}`, "_blank");
+                      navigate(`/materials/completed`, { state: {scrollTo: group.materialId } });
                     }
                   }}
                   role="presentation"
