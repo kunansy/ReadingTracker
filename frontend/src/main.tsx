@@ -16,6 +16,7 @@ import "../../static/reading_log/reading_log.css";
 import "../../static/reading_log/add_log_record.css";
 import "../../static/cards/cards_list.css";
 import "../../static/cards/add_card.css";
+import "../../static/system/system.css";
 
 const rootEl = document.getElementById("root");
 if (!rootEl) {
