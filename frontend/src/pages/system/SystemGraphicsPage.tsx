@@ -204,15 +204,6 @@ export function SystemGraphicsPage() {
               setSearchParams(p, { replace: true });
             }}
           />
-
-          <button
-            type="button"
-            className="submit-button"
-            onClick={() => backupMut.mutate()}
-            disabled={backupMut.isPending}
-          >
-            {backupMut.isPending ? "Backing up…" : "Backup"}
-          </button>
         </form>
       </div>
 
