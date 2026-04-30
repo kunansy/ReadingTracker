@@ -19,6 +19,10 @@ import { AddReadingLogPage } from "./pages/reading_log/AddReadingLogPage.tsx";
 import { CardsLayout } from "./components/CardsLayout.tsx";
 import { ListCardsPage } from "./pages/cards/ListCardsPage.tsx";
 import { AddCardPage } from "./pages/cards/AddCardPage.tsx";
+import { SystemLayout } from "./components/SystemLayout.tsx";
+import { SystemGraphicsPage } from "./pages/system/SystemGraphicsPage.tsx";
+import { SystemBackupPage } from "./pages/system/SystemBackupPage.tsx";
+import { SystemRestorePage } from "./pages/system/SystemRestorePage.tsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -54,6 +58,11 @@ export function App() {
           <Route path="/cards" element={<CardsLayout />}>
             <Route index element={<ListCardsPage />} />
             <Route path="add" element={<AddCardPage />} />
+          </Route>
+          <Route path="/system" element={<SystemLayout />}>
+            <Route index element={<SystemGraphicsPage />} />
+            <Route path="backup" element={<SystemBackupPage />} />
+            <Route path="restore" element={<SystemRestorePage />} />
           </Route>
         </Routes>
       </ContextMenuProvider>
