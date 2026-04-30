@@ -132,9 +132,14 @@ async def get_cards_count(
 async def list_materials_with_cards() -> dict[UUID, str]:
     logger.debug("Getting material titles")
 
-    stmt = (sa.select(models.Materials.c.material_id, models.Materials.c.title)
-            .select_from(models.Cards)
-            .join(models.Materials, models.Cards.c.material_id == models.Materials.c.material_id))
+    stmt = (
+        sa.select(models.Materials.c.material_id, models.Materials.c.title)
+        .select_from(models.Cards)
+        .join(
+            models.Materials,
+            models.Cards.c.material_id == models.Materials.c.material_id,
+        )
+    )
 
     async with database.session() as ses:
         titles = {
