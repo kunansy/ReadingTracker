@@ -163,6 +163,15 @@ export function AddCardPage() {
     return m;
   }, [notes]);
 
+  useEffect(() => {
+    if (noteId) {
+      const note = notesById.get(noteId);
+      if (note) {
+        setQuestion((prev) => (prev.trim() ? prev : stripHtml(note.content_html)));
+      }
+    }
+  }, [noteId, notesById]);
+
   const noteOptions = useMemo(() => notes.map((n) => n.note_id), [notes]);
 
   if (metaQ.isLoading || notesQ.isLoading || notesWithCardsQ.isLoading) {
@@ -237,6 +246,9 @@ export function AddCardPage() {
                       onClick={() => {
                         setMaterialId(n.material_id);
                         setNoteId(n.note_id);
+                        if (!question.trim()) {
+                          setQuestion(stripHtml(n.content_html));
+                        }
 
                         const p = new URLSearchParams(searchParams);
                         p.set("material_id", n.material_id);
