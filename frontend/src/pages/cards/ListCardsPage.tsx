@@ -3,6 +3,8 @@ import {useSearchParams} from "react-router-dom";
 
 import { apiFetch } from "../../api/cards.ts";
 import {ListMaterialsTitlesResponse, ListCardsResponse} from "../../types.ts";
+import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
+import {useMemo} from "react";
 
 
 export function ListCardsPage() {
@@ -25,6 +27,12 @@ export function ListCardsPage() {
 
     const materialsTitles = materialsTitlesQ.data?.items ?? {};
     const data = cardsQ.data?.items ?? [];
+
+    const materialOptions = useMemo(() => {
+        return Object.keys(materialsTitles).sort((a, b) =>
+            (materialsTitles[a] ?? "").localeCompare(materialsTitles[b] ?? ""),
+        );
+    }, [materialsTitles]);
 
     if (cardsQ.isLoading || materialsTitlesQ.isLoading) {
         return <p>Загрузка...</p>;
@@ -53,24 +61,25 @@ export function ListCardsPage() {
                     }}
                 >
 
-                    <input
-                        className="input"
-                        list="materials"
-                        name="material_id"
-                        defaultValue={materialId}
-                        placeholder="Choose a material"
-                    />
-                    {/*TODO: rewrite with combobox*/}
-                    <datalist id="materials">
-                        {Object.entries(materialsTitles)
-                            .sort((a, b) => a[1].localeCompare(b[1]))
-                            .map(([id, title]) => (
-                                <option key={id} value={id}>
-                                    {" "}
-                                    «{title}»{" "}
-                                </option>
-                            ))}
-                    </datalist>
+                    <ComboboxRoot
+                        options={materialOptions}
+                        value={materialId}
+                        onChange={(next: string) => {
+                            const p = new URLSearchParams(searchParams);
+                            if (next) p.set("material_id", next);
+                            else p.delete("material_id");
+                            setSearchParams(p, { replace: true });
+                        }}
+                        getOptionLabel={(id) => materialsTitles[id] ?? ""}
+                    >
+                        <ComboboxInput
+                            className="input input-datalist"
+                            id="material_id"
+                            placeholder="Choose a material"
+                            title="ID of the material"
+                        />
+                        <ComboboxList />
+                    </ComboboxRoot>
                     <button type="submit" className="submit-button">
                         {" "}
                         Search{" "}
