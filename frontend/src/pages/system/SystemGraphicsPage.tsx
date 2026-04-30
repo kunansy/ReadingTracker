@@ -277,10 +277,13 @@ export function SystemGraphicsPage() {
             <SpanStatsBlock s={summaryQ.data.reading_trend} />
           </div>
 
-          <GraphicBlock
-            queryKey={["system", "graphic", "total-read", { lastDays }]}
-            path={`/graphics/total-read${buildQuery({ last_days: lastDays })}`}
-          />
+          <div className="graphic-image trend reading-trend">
+            <h3 className="header">Total read</h3>
+            <GraphicBlock
+                queryKey={["system", "graphic", "total-read", { lastDays }]}
+                path={`/graphics/total-read${buildQuery({ last_days: lastDays })}`}
+            />
+          </div>
 
           <GraphicBlock
             title="Outline percentage"
