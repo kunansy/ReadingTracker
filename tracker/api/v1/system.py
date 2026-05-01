@@ -9,6 +9,10 @@ from tracker.google_drive import (
     db as drive_db,
     drive_api,
 )
+from tracker.reading_log import (
+    db as logs_db,
+    statistics,
+)
 from tracker.system import db, schemas, trends
 
 
@@ -31,7 +35,7 @@ def _span_summary(stat: trends.SpanStatistics) -> dict[str, Any]:
 async def system_meta():
     async with asyncio.TaskGroup() as tg:
         titles_task = tg.create_task(db.get_read_material_titles())
-        reading_now_task = tg.create_task(db.get_material_reading_now())
+        reading_now_task = tg.create_task(logs_db.get_material_reading_now())
 
     return {
         "material_id": reading_now_task.result(),
@@ -41,7 +45,7 @@ async def system_meta():
 
 @router.get("/summary")
 async def get_system_summary(r: Annotated[schemas.GetSystemSummaryRequest, Depends()]):
-    material_id = r.material_id or await db.get_material_reading_now()
+    material_id = r.material_id or await logs_db.get_material_reading_now()
     if material_id is None:
         raise HTTPException(status_code=404, detail="No material found to show")
 
@@ -49,8 +53,8 @@ async def get_system_summary(r: Annotated[schemas.GetSystemSummaryRequest, Depen
 
     async with asyncio.TaskGroup() as tg:
         titles_task = tg.create_task(db.get_read_material_titles())
-        tracker_statistics_task = tg.create_task(db.get_tracker_statistics())
-        completion_dates_task = tg.create_task(db.get_completion_dates())
+        tracker_statistics_task = tg.create_task(statistics.get_tracker_statistics())
+        completion_dates_task = tg.create_task(logs_db.get_completion_dates())
 
         reading_trend_task = tg.create_task(
             trends.get_span_reading_statistics(span_size=last_days),
@@ -110,7 +114,7 @@ async def graphic_reading_trend(
         stat_task = tg.create_task(
             trends.get_span_reading_statistics(span_size=r.last_days),
         )
-        completion_dates_task = tg.create_task(db.get_completion_dates())
+        completion_dates_task = tg.create_task(logs_db.get_completion_dates())
     image = trends.create_reading_graphic(
         stat_task.result(),
         completion_dates=completion_dates_task.result(),

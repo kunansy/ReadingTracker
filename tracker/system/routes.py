@@ -10,6 +10,10 @@ from pydantic import conint
 from tracker.common.logger import logger
 from tracker.google_drive import drive_api
 from tracker.google_drive.db import get_tables_analytics
+from tracker.reading_log import (
+    db as logs_db,
+    statistics,
+)
 from tracker.system import db, schemas, trends
 
 
@@ -20,7 +24,7 @@ templates = Jinja2Templates(directory="templates")
 @router.get("/", response_class=RedirectResponse)
 async def system_view():
     redirect_path = router.url_path_for(graphic.__name__)
-    material_id = await db.get_material_reading_now()
+    material_id = await logs_db.get_material_reading_now()
 
     redirect_url = f"{redirect_path}?material_id={material_id}"
     return RedirectResponse(redirect_url, status_code=302)
@@ -35,7 +39,7 @@ async def graphic(
     context: dict[str, Any] = {
         "request": request,
     }
-    material_id = material_id or await db.get_material_reading_now()
+    material_id = material_id or await logs_db.get_material_reading_now()
 
     if material_id is None:
         context["what"] = "No material found to show"
@@ -60,8 +64,8 @@ async def graphic(
         total_read_trend_task = tg.create_task(
             trends.get_span_total_read_statistics(span_size=last_days),
         )
-        tracker_statistics_task = tg.create_task(db.get_tracker_statistics())
-        completion_dates_task = tg.create_task(db.get_completion_dates())
+        tracker_statistics_task = tg.create_task(statistics.get_tracker_statistics())
+        completion_dates_task = tg.create_task(logs_db.get_completion_dates())
         titles_task = tg.create_task(db.get_read_material_titles())
         graphic_image_task = tg.create_task(
             db.create_reading_graphic(material_id=material_id, last_days=last_days),

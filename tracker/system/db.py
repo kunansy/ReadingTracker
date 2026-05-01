@@ -14,7 +14,6 @@ from tracker.materials import db as materials_db
 from tracker.models import enums, models
 from tracker.reading_log import (
     db as logs_db,
-    statistics,
 )
 
 
@@ -179,8 +178,3 @@ async def create_outline_percentage_graphic() -> str:
     buff = BytesIO()
     fig.savefig(buff, format="svg")
     return base64.b64encode(buff.getvalue()).decode("utf-8")
-
-
-get_material_reading_now = logs_db.get_material_reading_now
-get_tracker_statistics = statistics.get_tracker_statistics
-get_completion_dates = logs_db.get_completion_dates
