@@ -172,9 +172,7 @@ async def graphic_total_read(r: Annotated[schemas.GetTotalReadGraphicRequest, De
 @router.post("/backup", response_model=schemas.BackupResponse)
 async def backup_api():
     async with asyncio.TaskGroup() as tg:
-        # TODO
-        tg.create_task(asyncio.sleep(10))
-        # tg.create_task(drive_api.backup())
+        tg.create_task(drive_api.backup())
         get_stat_task = tg.create_task(drive_db.get_tables_analytics())
     return get_stat_task.result()
 
