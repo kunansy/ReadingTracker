@@ -174,19 +174,30 @@ async def backup_api():
     async with asyncio.TaskGroup() as tg:
         tg.create_task(drive_api.backup())
         get_stat_task = tg.create_task(drive_db.get_tables_analytics())
-    return get_stat_task.result()
+
+    stat = get_stat_task.result()
+    return schemas.BackupResponse(
+        materials_count=stat["materials_count"],
+        reading_log_count=stat["reading_log_count"],
+        statuses_count=stat["statuses_count"],
+        notes_count=stat["notes_count"],
+        cards_count=stat["cards_count"],
+        repeats_count=stat["repeats_count"],
+        note_repeats_history_count=stat["note_repeats_history_count"],
+    )
 
 
 @router.post("/restore", response_model=schemas.RestoreResponse)
 async def restore_api():
     snapshot = await drive_api.restore()
+
     snapshot_dict = snapshot.to_dict()
-    return {
-        "materials_count": snapshot_dict["materials"].counter,
-        "reading_log_count": snapshot_dict["reading_log"].counter,
-        "statuses_count": snapshot_dict["statuses"].counter,
-        "notes_count": snapshot_dict["notes"].counter,
-        "cards_count": snapshot_dict["cards"].counter,
-        "repeats_count": snapshot_dict["repeats"].counter,
-        "note_repeats_history_count": snapshot_dict["note_repeats_history"].counter,
-    }
+    return schemas.RestoreResponse(
+        materials_count=snapshot_dict["materials"].counter,
+        reading_log_count=snapshot_dict["reading_log"].counter,
+        statuses_count=snapshot_dict["statuses"].counter,
+        notes_count=snapshot_dict["notes"].counter,
+        cards_count=snapshot_dict["cards"].counter,
+        repeats_count=snapshot_dict["repeats"].counter,
+        note_repeats_history_count=snapshot_dict["note_repeats_history"].counter,
+    )
