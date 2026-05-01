@@ -4,64 +4,7 @@ import { useSearchParams } from "react-router-dom";
 
 import { apiFetch, buildQuery } from "../../api/system";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox";
-
-type SystemMetaResponse = {
-  material_id: string | null;
-  titles: Record<string, string>;
-};
-
-type SpanSummary = {
-  total: number;
-  would_be_total: number;
-  zero_days: number;
-  mean: number;
-  median: number;
-  max: { date: string; amount: number };
-  min: { date: string; amount: number };
-};
-
-type TrackerStatistics = {
-  started_at: string;
-  finished_at: string;
-  duration: number;
-  lost_time: number;
-  duration_period: string;
-  lost_time_period: string;
-  lost_time_percent: number;
-  mean: number;
-  median: number;
-  total_materials_completed: number;
-  pages_read: Record<string, number>;
-  materials_completed: Record<string, number>;
-  total_pages_read: number;
-  would_be_total: number;
-  max_log_record: { count: number; date: string; material_title: string } | null;
-  min_log_record: { count: number; date: string; material_title: string } | null;
-};
-
-type SystemSummaryResponse = {
-  material_id: string;
-  last_days: number;
-  titles: Record<string, string>;
-  tracker_statistics: TrackerStatistics;
-  reading_trend: SpanSummary;
-  notes_trend: SpanSummary;
-  completed_materials_trend: SpanSummary;
-  repeated_materials_trend: SpanSummary;
-  outlined_materials_trend: SpanSummary;
-};
-
-type GraphicResponse = { image: string };
-
-type BackupResponse = {
-  materials_count: number;
-  reading_log_count: number;
-  statuses_count: number;
-  notes_count: number;
-  cards_count: number;
-  repeats_count: number;
-  note_repeats_history_count: number;
-};
+import {BackupResponse, GraphicResponse, SpanSummary, SystemMetaResponse, SystemSummaryResponse} from "../../types.ts";
 
 function SvgImg({ b64 }: { b64: string }) {
   return <img src={`data:image/svg+xml;base64,${b64}`}  alt="nope"/>;
