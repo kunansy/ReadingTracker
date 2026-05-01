@@ -19,6 +19,7 @@ from tracker.system import db, schemas, trends
 router = APIRouter(prefix="/system", tags=["system-api"])
 
 
+# TODO
 def _span_summary(stat: trends.SpanStatistics) -> dict[str, Any]:
     return {
         "total": stat.total,
