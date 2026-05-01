@@ -1,13 +1,8 @@
 import { useMutation } from "@tanstack/react-query";
+import { useEffect, useRef } from "react";
 
 import { apiFetch } from "../../api/system";
-
-type RestoreResponse = {
-  materials_count: number;
-  logs_count: number;
-  statuses_count: number;
-  notes_count: number;
-};
+import { RestoreResponse } from "../../types.ts";
 
 export function SystemRestorePage() {
   const mut = useMutation({
@@ -17,24 +12,36 @@ export function SystemRestorePage() {
       }),
   });
 
+  const didRunRef = useRef(false);
+  useEffect(() => {
+    // Avoid double-running in React StrictMode (dev)
+    if (didRunRef.current) return;
+    didRunRef.current = true;
+    mut.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  let status = "";
+  if (mut.isSuccess) {
+    status = "success";
+  }
+  if (mut.isError) {
+    status = "error";
+  }
+
   return (
-    <div>
-      <button
-        className="submit-button"
-        onClick={() => mut.mutate()}
-        disabled={mut.isPending}
-      >
-        {mut.isPending ? "Restoring…" : "Restore from backup"}
-      </button>
+    <div className={`status alert ${status}`}>
+      {mut.isPending ? <div>Restoring…</div> : null}
 
       {mut.data ? (
-        <div className="alert success status">
+        <div>
           Success! Restore was completed successfully. ({mut.data.materials_count} materials,{" "}
-          {mut.data.logs_count} logs, {mut.data.statuses_count} statuses,{" "}
-          {mut.data.notes_count} notes)
+          {mut.data.reading_log_count} logs, {mut.data.statuses_count} statuses,{" "}
+          {mut.data.notes_count} notes, {mut.data.cards_count} cards, {mut.data.repeats_count}{" "}
+          repeats, {mut.data.note_repeats_history_count} note repeats)
         </div>
       ) : null}
-      {mut.error ? <div className="alert error status">Error! Restore failed.</div> : null}
+      {mut.error ? <div>Error! Restore failed. Reason: {(mut.error as Error).message}</div> : null}
     </div>
   );
 }
