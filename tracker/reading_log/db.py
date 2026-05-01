@@ -76,6 +76,8 @@ async def get_log_records(*, material_id: str | UUID | None = None) -> list[LogR
 async def list_log_records(
     *,
     material_id: UUID | None = None,
+    from_date: datetime.date | None = None,
+    to_date: datetime.date | None = None,
 ) -> list[LogRecord]:
     logger.debug("Getting all log records")
 
@@ -83,6 +85,10 @@ async def list_log_records(
 
     if material_id:
         stmt = stmt.where(models.ReadingLog.c.material_id == str(material_id))
+    if from_date:
+        stmt = stmt.where(from_date <= models.ReadingLog.c.date)
+    if to_date:
+        stmt = stmt.where(to_date >= models.ReadingLog.c.date)
 
     async with database.session() as ses:
         records = [
@@ -340,3 +346,19 @@ async def is_record_correct(
         return False
 
     return True
+
+
+async def records_sum(
+    *,
+    from_date: datetime.date | None = None,
+    to_date: datetime.date | None = None,
+) -> int:
+    stmt = sa.select(sa.func.sum(models.ReadingLog.c.count))
+
+    if from_date:
+        stmt = stmt.where(from_date <= models.ReadingLog.c.date)
+    if to_date:
+        stmt = stmt.where(to_date >= models.ReadingLog.c.date)
+
+    async with database.session() as ses:
+        return await ses.scalar(stmt) or 0
