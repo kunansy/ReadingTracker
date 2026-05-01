@@ -241,10 +241,6 @@ celebrate {
     cursor: pointer;
 }
 
-.tab-text {
-    padding-left: 4vw;
-}
-
 div.repeat-btns {
     display: flex;
     margin: auto;

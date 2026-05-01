@@ -227,7 +227,23 @@ export function SystemGraphicsPage() {
                   <p>Mean: {stat.mean}</p>
                   <p>Median: {stat.median}</p>
                   <p>Total materials completed: {stat.total_materials_completed}</p>
+                  <ul
+                      className="tab-text"
+                      style={{ flexDirection: "column" }}
+                  >
+                    {Object.entries(stat.materials_completed).map(([material_type, count]) => (
+                      <li style={{textTransform: "capitalize"}}> { material_type }: { count } items </li>
+                     ))}
+                  </ul>
                   <p>Total pages read: {stat.total_pages_read}</p>
+                  <ul
+                      className="tab-text"
+                      style={{ flexDirection: "column" }}
+                  >
+                    {Object.entries(stat.pages_read).map(([material_type, count]) => (
+                        <li style={{textTransform: "capitalize"}}> { material_type }: { count } items </li>
+                    ))}
+                  </ul>
                   <p>Would be total: {stat.would_be_total}</p>
                   {stat.max_log_record ? (
                     <p>
