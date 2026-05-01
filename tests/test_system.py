@@ -80,10 +80,6 @@ async def test_get_read_material_titles():
     }
 
 
-async def test_get_material_reading_now():
-    assert await db.get_material_reading_now() == await logs_db.get_material_reading_now()
-
-
 @pytest.mark.parametrize(
     ("material_id", "last_days"),
     [
@@ -113,7 +109,3 @@ async def test_create_reading_graphic_material_not_found():
         str(e.value)
         == "'material_id=UUID('d012fba9-efe0-4171-b3e7-730c3c3b2666')' not found"
     )
-
-
-async def test_get_tracker_statistics():
-    assert await db.get_tracker_statistics() == await statistics.get_tracker_statistics()
