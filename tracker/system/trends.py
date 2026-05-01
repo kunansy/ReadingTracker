@@ -16,6 +16,7 @@ from tracker.common import database, settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
+from tracker.reading_log import db as logs_db
 from tracker.system import schemas
 
 
@@ -329,41 +330,19 @@ async def _calculate_span_total_read(
 ) -> dict[datetime.date, int]:
     logger.debug("Calculating span total read statistics")
 
-    total_read = (
-        sa.select(
-            models.ReadingLog.c.date,
-            sa.func.sum(models.ReadingLog.c.count)
-            .over(order_by=models.ReadingLog.c.date)
-            .label("sum"),
-        ).order_by(models.ReadingLog.c.date.desc())
-    ).cte("total_read")
+    records = await logs_db.list_log_records(from_date=span.start, to_date=span.stop)
+    sum_before_date = span.start - datetime.timedelta(days=1)
+    sum_before = await logs_db.records_sum(to_date=sum_before_date)
 
-    stmt = (
-        sa.select(
-            total_read.c.date,
-            sa.func.max(total_read.c.sum).label("total"),
-        )
-        .select_from(total_read)
-        .where(sa.func.date(total_read.c.date) >= span.start)
-        .where(sa.func.date(total_read.c.date) <= span.stop)
-        .group_by(total_read.c.date)
-    )
+    date_to_count: dict[datetime.date, int] = {}
+    for r in records:
+        date_to_count[r.date] = date_to_count.get(r.date, 0) + r.count
 
-    async with database.session() as ses:
-        rows = (await ses.execute(stmt)).all()
-
-    logger.debug("Span total read statistics calculated")
-
-    if not rows:
-        return {}
-    rows_stat = {row.date: row.total for row in rows}
-    last = next(iter(rows_stat.values()))
     res = {}
     for date in span.iter():
-        if value := rows_stat.get(date):
-            last = value
-        res[date] = last
-
+        if count := date_to_count.get(date):
+            sum_before += count
+        res[date] = sum_before
     return res
 
 
