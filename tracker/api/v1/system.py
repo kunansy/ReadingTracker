@@ -1,13 +1,14 @@
 import asyncio
-from typing import Any
-from uuid import UUID
+from typing import Annotated, Any
 
 from fastapi import APIRouter, HTTPException
+from fastapi.params import Depends
 from fastapi.responses import JSONResponse
-from pydantic import conint
 
-from tracker.google_drive import drive_api
-from tracker.google_drive.db import get_tables_analytics
+from tracker.google_drive import (
+    db as drive_db,
+    drive_api,
+)
 from tracker.system import db, schemas, trends
 
 
@@ -38,14 +39,13 @@ async def system_meta():
     }
 
 
-@router.get("/summary", response_class=JSONResponse)
-async def system_summary(
-    material_id: UUID | None = None,
-    last_days: conint(ge=1) = 7,  # type: ignore[valid-type]
-):
-    material_id = material_id or await db.get_material_reading_now()
+@router.get("/summary")
+async def get_system_summary(r: Annotated[schemas.GetSystemSummaryRequest, Depends()]):
+    material_id = r.material_id or await db.get_material_reading_now()
     if material_id is None:
         raise HTTPException(status_code=404, detail="No material found to show")
+
+    last_days = r.last_days
 
     async with asyncio.TaskGroup() as tg:
         titles_task = tg.create_task(db.get_read_material_titles())
@@ -84,98 +84,107 @@ async def system_summary(
     }
 
 
-@router.get("/graphics/reading-progress", response_class=JSONResponse)
+@router.get("/graphics/reading-progress", response_model=schemas.GetImageResponse)
 async def graphic_reading_progress(
-    material_id: UUID,
-    last_days: conint(ge=1) = 7,  # type: ignore[valid-type]
+    r: Annotated[schemas.GetReadingProgressGraphicRequest, Depends()],
 ):
-    image = await db.create_reading_graphic(material_id=material_id, last_days=last_days)
+    image = await db.create_reading_graphic(
+        material_id=r.material_id,
+        last_days=r.last_days,
+    )
+
     return {"image": image}
 
 
-@router.get("/graphics/outline-percentage", response_class=JSONResponse)
+@router.get("/graphics/outline-percentage", response_model=schemas.GetImageResponse)
 async def graphic_outline_percentage():
     image = await db.create_outline_percentage_graphic()
     return {"image": image}
 
 
-@router.get("/graphics/reading-trend", response_class=JSONResponse)
+@router.get("/graphics/reading-trend", response_model=schemas.GetImageResponse)
 async def graphic_reading_trend(
-    last_days: conint(ge=1) = 7,  # type: ignore[valid-type]
+    r: Annotated[schemas.GetReadingTrendGraphicRequest, Depends()],
 ):
     async with asyncio.TaskGroup() as tg:
         stat_task = tg.create_task(
-            trends.get_span_reading_statistics(span_size=last_days),
+            trends.get_span_reading_statistics(span_size=r.last_days),
         )
         completion_dates_task = tg.create_task(db.get_completion_dates())
     image = trends.create_reading_graphic(
         stat_task.result(),
         completion_dates=completion_dates_task.result(),
     )
+
     return {"image": image}
 
 
-@router.get("/graphics/notes-trend", response_class=JSONResponse)
+@router.get("/graphics/notes-trend", response_model=schemas.GetImageResponse)
 async def graphic_notes_trend(
-    last_days: conint(ge=1) = 7,  # type: ignore[valid-type]
+    r: Annotated[schemas.GetNotesTrendGraphicRequest, Depends()],
 ):
-    stat = await trends.get_span_notes_statistics(span_size=last_days)
+    stat = await trends.get_span_notes_statistics(span_size=r.last_days)
+
     return {"image": trends.create_notes_graphic(stat)}
 
 
-@router.get("/graphics/completed-materials-trend", response_class=JSONResponse)
+@router.get(
+    "/graphics/completed-materials-trend",
+    response_model=schemas.GetImageResponse,
+)
 async def graphic_completed_materials_trend(
-    last_days: conint(ge=1) = 7,  # type: ignore[valid-type]
+    r: Annotated[schemas.GetCompletedMaterialsTrendGraphicRequest, Depends()],
 ):
-    stat = await trends.get_span_completed_materials_statistics(span_size=last_days)
+    stat = await trends.get_span_completed_materials_statistics(span_size=r.last_days)
+
     return {"image": trends.create_completed_materials_graphic(stat)}
 
 
-@router.get("/graphics/repeated-materials-trend", response_class=JSONResponse)
+@router.get("/graphics/repeated-materials-trend", response_model=schemas.GetImageResponse)
 async def graphic_repeated_materials_trend(
-    last_days: conint(ge=1) = 7,  # type: ignore[valid-type]
+    r: Annotated[schemas.GetRepeatedMaterialsTrendGraphicRequest, Depends()],
 ):
-    stat = await trends.get_span_repeated_materials_statistics(span_size=last_days)
+    stat = await trends.get_span_repeated_materials_statistics(span_size=r.last_days)
+
     return {"image": trends.create_repeated_materials_graphic(stat)}
 
 
-@router.get("/graphics/outlined-materials-trend", response_class=JSONResponse)
+@router.get("/graphics/outlined-materials-trend", response_model=schemas.GetImageResponse)
 async def graphic_outlined_materials_trend(
-    last_days: conint(ge=1) = 7,  # type: ignore[valid-type]
+    r: Annotated[schemas.GetOutlinedMaterialsTrendGraphicRequest, Depends()],
 ):
-    stat = await trends.get_span_outlined_materials_statistics(span_size=last_days)
+    stat = await trends.get_span_outlined_materials_statistics(span_size=r.last_days)
+
     return {"image": trends.create_outlined_materials_graphic(stat)}
 
 
-@router.get("/graphics/total-read", response_class=JSONResponse)
-async def graphic_total_read(
-    last_days: conint(ge=1) = 7,  # type: ignore[valid-type]
-):
-    stat = await trends.get_span_total_read_statistics(span_size=last_days)
+@router.get("/graphics/total-read", response_model=schemas.GetImageResponse)
+async def graphic_total_read(r: Annotated[schemas.GetTotalReadGraphicRequest, Depends()]):
+    stat = await trends.get_span_total_read_statistics(span_size=r.last_days)
+
     return {"image": trends.create_total_read_graphic(stat)}
 
 
-@router.post(
-    "/backup",
-    response_model=schemas.BackupResponse,
-    response_class=JSONResponse,
-)
+@router.post("/backup", response_model=schemas.BackupResponse)
 async def backup_api():
     async with asyncio.TaskGroup() as tg:
         # TODO
         tg.create_task(asyncio.sleep(10))
         # tg.create_task(drive_api.backup())
-        get_stat_task = tg.create_task(get_tables_analytics())
+        get_stat_task = tg.create_task(drive_db.get_tables_analytics())
     return get_stat_task.result()
 
 
-@router.post("/restore", response_class=JSONResponse)
+@router.post("/restore", response_model=schemas.RestoreResponse)
 async def restore_api():
     snapshot = await drive_api.restore()
     snapshot_dict = snapshot.to_dict()
     return {
         "materials_count": snapshot_dict["materials"].counter,
-        "logs_count": snapshot_dict["reading_log"].counter,
+        "reading_log_count": snapshot_dict["reading_log"].counter,
         "statuses_count": snapshot_dict["statuses"].counter,
         "notes_count": snapshot_dict["notes"].counter,
+        "cards_count": snapshot_dict["cards"].counter,
+        "repeats_count": snapshot_dict["repeats"].counter,
+        "note_repeats_history_count": snapshot_dict["note_repeats_history"].counter,
     }
