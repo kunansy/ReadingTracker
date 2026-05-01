@@ -1,6 +1,7 @@
 import datetime
+from uuid import UUID
 
-from pydantic import Field, NonNegativeInt, field_validator
+from pydantic import Field, NonNegativeInt, conint, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from tracker.common.schemas import CustomBaseModel
@@ -69,3 +70,51 @@ class BackupResponse(CustomBaseModel):
     cards_count: NonNegativeInt
     repeats_count: NonNegativeInt
     note_repeats_history_count: NonNegativeInt
+
+
+class RestoreResponse(CustomBaseModel):
+    materials_count: NonNegativeInt
+    reading_log_count: NonNegativeInt
+    statuses_count: NonNegativeInt
+    notes_count: NonNegativeInt
+    cards_count: NonNegativeInt
+    repeats_count: NonNegativeInt
+    note_repeats_history_count: NonNegativeInt
+
+
+class GetImageResponse(CustomBaseModel):
+    image: str
+
+
+class GetSystemSummaryRequest(CustomBaseModel):
+    material_id: UUID
+    last_days: conint(ge=1) = 7
+
+
+class GetReadingProgressGraphicRequest(CustomBaseModel):
+    material_id: UUID
+    last_days: conint(ge=1) = 7
+
+
+class GetReadingTrendGraphicRequest(CustomBaseModel):
+    last_days: conint(ge=1) = 7
+
+
+class GetNotesTrendGraphicRequest(CustomBaseModel):
+    last_days: conint(ge=1) = 7
+
+
+class GetCompletedMaterialsTrendGraphicRequest(CustomBaseModel):
+    last_days: conint(ge=1) = 7
+
+
+class GetRepeatedMaterialsTrendGraphicRequest(CustomBaseModel):
+    last_days: conint(ge=1) = 7
+
+
+class GetOutlinedMaterialsTrendGraphicRequest(CustomBaseModel):
+    last_days: conint(ge=1) = 7
+
+
+class GetTotalReadGraphicRequest(CustomBaseModel):
+    last_days: conint(ge=1) = 7
