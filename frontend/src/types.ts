@@ -209,3 +209,13 @@ export type BackupResponse = {
   repeats_count: number;
   note_repeats_history_count: number;
 };
+
+export type RestoreResponse = {
+  materials_count: number;
+  reading_log_count: number;
+  statuses_count: number;
+  notes_count: number;
+  cards_count: number;
+  repeats_count: number;
+  note_repeats_history_count: number;
+};
