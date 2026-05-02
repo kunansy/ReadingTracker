@@ -17,7 +17,7 @@ from tracker.reading_log import (
 from tracker.system import db, schemas, trends
 
 
-router = APIRouter(prefix="/system", tags=["system"], default_response_class=HTMLResponse)
+router = APIRouter(prefix="/system", tags=["system"], default_response_class=HTMLResponse, deprecated=True)
 templates = Jinja2Templates(directory="templates")
 
 
