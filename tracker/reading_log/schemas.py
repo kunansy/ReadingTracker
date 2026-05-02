@@ -1,7 +1,7 @@
 import datetime
 from uuid import UUID
 
-from pydantic import NonNegativeInt, conint
+from pydantic import NonNegativeInt, PositiveInt
 
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums
@@ -32,7 +32,7 @@ class CreateReadingLogsResponse(CustomBaseModel):
 
 class CreateReadingLogsRequest(CustomBaseModel):
     material_id: UUID
-    count: conint(ge=1)
+    count: PositiveInt
     date: datetime.date
 
 
