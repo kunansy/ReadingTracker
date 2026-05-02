@@ -33,7 +33,7 @@ function GraphicBlock({
   queryKey,
   path,
 }: {
-  title?: string;
+  title: string;
   queryKey: unknown[];
   path: string;
 }) {
@@ -45,7 +45,7 @@ function GraphicBlock({
 
   return (
     <div className="graphic-image trend">
-      {title ? <h3 className="header">{title}</h3> : null}
+      <h3 className="header">{title}</h3>
       {q.isLoading ? <p>Loading graphic…</p> : null}
       {q.error ? <p className="error">{(q.error as Error).message}</p> : null}
       {q.data?.image ? <SvgImg b64={q.data.image} /> : null}
@@ -185,6 +185,7 @@ export function SystemGraphicsPage() {
           </div>
 
           <GraphicBlock
+            title="Reading progress"
             queryKey={[
               "system",
               "graphic",
@@ -198,8 +199,8 @@ export function SystemGraphicsPage() {
           />
 
           <div className="graphic-image trend reading-trend">
-            <h3 className="header">Read pages</h3>
             <GraphicBlock
+              title="Read pages"
               queryKey={["system", "graphic", "reading-trend", { lastDays }]}
               path={`/graphics/reading-trend${buildQuery({ last_days: lastDays })}`}
             />
@@ -207,8 +208,8 @@ export function SystemGraphicsPage() {
           </div>
 
           <div className="graphic-image trend reading-trend">
-            <h3 className="header">Total read</h3>
             <GraphicBlock
+                title="Total read"
                 queryKey={["system", "graphic", "total-read", { lastDays }]}
                 path={`/graphics/total-read${buildQuery({ last_days: lastDays })}`}
             />
@@ -221,8 +222,8 @@ export function SystemGraphicsPage() {
           />
 
           <div className="graphic-image trend notes-trend">
-            <h3 className="header">Inserted notes</h3>
             <GraphicBlock
+              title="Inserted notes"
               queryKey={["system", "graphic", "notes-trend", { lastDays }]}
               path={`/graphics/notes-trend${buildQuery({ last_days: lastDays })}`}
             />
@@ -230,8 +231,8 @@ export function SystemGraphicsPage() {
           </div>
 
           <div className="graphic-image trend completed-materials-trend">
-            <h3 className="header">Completed materials</h3>
             <GraphicBlock
+              title="Completed materials"
               queryKey={["system", "graphic", "completed-materials-trend", { lastDays }]}
               path={`/graphics/completed-materials-trend${buildQuery({ last_days: lastDays })}`}
             />
@@ -239,8 +240,8 @@ export function SystemGraphicsPage() {
           </div>
 
           <div className="graphic-image trend repeated-materials-trend">
-            <h3 className="header">Repeated materials</h3>
             <GraphicBlock
+              title="Repeated materials"
               queryKey={["system", "graphic", "repeated-materials-trend", { lastDays }]}
               path={`/graphics/repeated-materials-trend${buildQuery({ last_days: lastDays })}`}
             />
@@ -248,8 +249,8 @@ export function SystemGraphicsPage() {
           </div>
 
           <div className="graphic-image trend outlined-materials-trend">
-            <h3 className="header">Outlined materials</h3>
             <GraphicBlock
+              title="Outlined materials"
               queryKey={["system", "graphic", "outlined-materials-trend", { lastDays }]}
               path={`/graphics/outlined-materials-trend${buildQuery({ last_days: lastDays })}`}
             />
