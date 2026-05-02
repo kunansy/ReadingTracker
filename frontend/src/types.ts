@@ -216,3 +216,26 @@ export type RestoreResponse = {
   repeats_count: number;
   note_repeats_history_count: number;
 };
+
+type Note = {
+  note_id: string;
+  material_id: string;
+  link_id: string | null;
+  title: string | null;
+  content: string;
+  added_at: string;
+  chapter: string;
+  page: number;
+  tags: string[];
+  is_deleted: boolean;
+  note_number: number;
+  links_count: number | null;
+}
+
+export type GetNoteResponse = {
+  note: Note;
+};
+
+export type GetNoteTagsResponse = {
+  tags: string[];
+};
