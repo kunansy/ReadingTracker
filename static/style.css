@@ -276,6 +276,21 @@ div.repeat-btns {
     display: none;
 }
 
+div.material,
+div.repeat,
+div.record {
+    border: black 0.25vh solid;
+    margin: 2vh auto;
+    width: 50vw;
+    border-radius: 3vh;
+    padding: 5vh;
+}
+div.material p,
+div.repeat,
+div.record {
+    word-wrap: break-word;
+}
+
 /* ============================
    Mobile-only responsive fixes
    (Desktop styles unchanged)
@@ -434,10 +449,33 @@ div.repeat-btns {
     }
 
     .submit-button {
-        width: 100%;
+        width: 100% !important;
         max-width: 28rem;
-        height: 44px;
-        margin-top: 0.75rem;
+        height: 44px !important;
+        margin-top: 0.75rem !important;
+    }
+
+    div.material,
+    div.repeat,
+    div.record,
+    div.note {
+        width: auto !important;
+        max-width: 100%;
+        padding: 1.25rem !important;
+        margin: 0 0 1rem !important;
+        flex-direction: column;
+    }
+    div.note {
+        text-align: center;
+    }
+
+    div.material > p,
+    div.repeat p,
+    div.record > p,
+    div.note p {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+        width: auto;
     }
 
     /* Not found message: avoid overflow */
@@ -449,6 +487,13 @@ div.repeat-btns {
         padding: 2rem 1.25rem;
         font-size: 1.5rem;
         text-align: center;
+    }
+
+    .material_title {
+        font-size: 1.75rem !important;
+    }
+    .chapter_number {
+        font-size: 1.5rem !important;
     }
 
     /* Reduce huge footer on small screens */
