@@ -270,6 +270,11 @@ div.repeat-btns {
   100% { transform: rotate(360deg); }
 }
 
+/* Hide the mobile navbar on desktop */
+.mobileNav {
+    display: none;
+}
+
 /* ============================
    Mobile-only responsive fixes
    (Desktop styles unchanged)
