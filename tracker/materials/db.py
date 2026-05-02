@@ -519,6 +519,17 @@ async def get_authors() -> tuple[str]:
     return authors
 
 
+async def get_titles() -> dict[UUID, str]:
+    logger.info("Getting material titles")
+
+    stmt = sa.select(models.Materials.c.material_id, models.Materials.c.title)
+
+    async with database.session() as ses:
+        return {
+            row.material_id: row.title for row in (await ses.execute(stmt)).all()
+        }
+
+
 async def insert_material(
     *,
     title: str,
