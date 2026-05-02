@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
-import { apiFetch } from "../../api/notes";
+import { apiFetch, buildQuery } from "../../api/notes";
 import { apiFetch as materialsApiFetch  } from "../../api/materials";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
@@ -32,6 +32,15 @@ export function NoteEditPage() {
   const [searchParams] = useSearchParams();
   const noteIdQuery = searchParams.get("note_id") ?? "";
 
+  const [materialId, setMaterialId] = useState("");
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [tags, setTags] = useState("");
+  const [linkId, setLinkId] = useState("");
+  const [chapter, setChapter] = useState("");
+  const [page, setPage] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
   const noteId = useMemo(() => {
     const fromParam = (noteIdParam ?? "").trim();
     if (fromParam && isUuid(fromParam)) {
@@ -54,19 +63,10 @@ export function NoteEditPage() {
     queryFn: () => materialsApiFetch<ListMaterialsTitlesResponse>(`/titles`),
   });
   const noteTagsQ = useQuery({
-    queryKey: ["notes", "tags"],
-    queryFn: () => apiFetch<GetNoteTagsResponse>(`/tags`),
-    staleTime: 5 * 60 * 1000,
+    queryKey: ["notes", "tags", materialId],
+    enabled: isUuid(materialId),
+    queryFn: () => apiFetch<GetNoteTagsResponse>(`/tags${buildQuery({material_id: materialId || undefined})}`),
   });
-
-  const [materialId, setMaterialId] = useState("");
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const [tags, setTags] = useState("");
-  const [linkId, setLinkId] = useState("");
-  const [chapter, setChapter] = useState("");
-  const [page, setPage] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
   const updateMut = useMutation({
     mutationFn: async () => {
@@ -210,7 +210,6 @@ export function NoteEditPage() {
               type="number"
               placeholder="Enter a page number"
               value={page}
-              min={0}
               onChange={(e) => {
                 setPage(e.target.value);
               }}
