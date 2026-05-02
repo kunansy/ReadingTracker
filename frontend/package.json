@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "generate-client": "openapi-typescript ./openapi.json -o ./src/api/schema.d.ts",
     "build": "vite build",
     "dev": "vite",
     "preview": "vite preview"
