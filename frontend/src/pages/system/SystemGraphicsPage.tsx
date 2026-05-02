@@ -7,7 +7,17 @@ import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Comb
 import {GraphicResponse, SpanSummary, SystemMetaResponse, SystemSummaryResponse} from "../../types.ts";
 
 function SvgImg({ b64 }: { b64: string }) {
-  return <img src={`data:image/svg+xml;base64,${b64}`}  alt="nope"/>;
+  return <img
+      style={{
+          height: "auto",
+          display: "block",
+          maxWidth: "100%",
+          width: "100%",
+      }}
+      className="graphicImage"
+      src={`data:image/svg+xml;base64,${b64}`}
+      alt="nope"
+  />;
 }
 
 function SpanStatsBlock({ s }: { s: SpanSummary }) {

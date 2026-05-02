@@ -304,6 +304,10 @@ div.repeat-btns {
         background-color: black;
         color: white;
     }
+    .graphicImage {
+        padding: 0 10px;
+        margin-bottom: 20px;
+    }
 
     .mobileNav__bar {
         display: flex;
