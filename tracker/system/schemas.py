@@ -2,7 +2,7 @@ import datetime
 from decimal import Decimal
 from uuid import UUID
 
-from pydantic import Field, NonNegativeFloat, NonNegativeInt, conint, field_validator
+from pydantic import Field, NonNegativeFloat, NonNegativeInt, PositiveInt, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from tracker.common.schemas import CustomBaseModel
@@ -89,7 +89,7 @@ class GetImageResponse(CustomBaseModel):
 
 
 class GetSystemSummaryRequest(CustomBaseModel):
-    last_days: conint(ge=1)
+    last_days: PositiveInt
 
 
 class _MinMaxRecord(CustomBaseModel):
@@ -118,28 +118,28 @@ class GetSystemSummaryResponse(CustomBaseModel):
 
 class GetReadingProgressGraphicRequest(CustomBaseModel):
     material_id: UUID
-    last_days: conint(ge=1)
+    last_days: PositiveInt
 
 
 class GetReadingTrendGraphicRequest(CustomBaseModel):
-    last_days: conint(ge=1)
+    last_days: PositiveInt
 
 
 class GetNotesTrendGraphicRequest(CustomBaseModel):
-    last_days: conint(ge=1)
+    last_days: PositiveInt
 
 
 class GetCompletedMaterialsTrendGraphicRequest(CustomBaseModel):
-    last_days: conint(ge=1)
+    last_days: PositiveInt
 
 
 class GetRepeatedMaterialsTrendGraphicRequest(CustomBaseModel):
-    last_days: conint(ge=1)
+    last_days: PositiveInt
 
 
 class GetOutlinedMaterialsTrendGraphicRequest(CustomBaseModel):
-    last_days: conint(ge=1)
+    last_days: PositiveInt
 
 
 class GetTotalReadGraphicRequest(CustomBaseModel):
-    last_days: conint(ge=1)
+    last_days: PositiveInt

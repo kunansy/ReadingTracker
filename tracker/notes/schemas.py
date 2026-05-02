@@ -5,7 +5,7 @@ from uuid import UUID
 
 from pydantic import (
     BeforeValidator,
-    conint,
+    NonNegativeInt,
     field_serializer,
     field_validator,
     model_validator,
@@ -103,7 +103,7 @@ class Note(CustomBaseModel):
     tags: list[str] | None = None
     link_id: Annotated[UUID | None, BeforeValidator(skip_empty_value)] = None
     chapter: str = ""
-    page: conint(ge=0) = 0
+    page: NonNegativeInt = 0
 
     @field_validator("content")
     def format_content(cls, content: str) -> str:
