@@ -184,3 +184,7 @@ class CompleteMaterialRequest(CustomBaseModel):
 
 class ParseLinkRequest(CustomBaseModel):
     link: HttpUrl
+
+
+class ListMaterialTitlesResponse(CustomBaseModel):
+    items: dict[UUID, str]

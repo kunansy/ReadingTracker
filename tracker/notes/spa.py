@@ -4,7 +4,7 @@ from fastapi import APIRouter
 from fastapi.responses import FileResponse
 
 
-# React-only paths; /note and /update-view stay Jinja (see main.py).
+# React-only paths.
 SPA_INDEX = Path("static/app-spa/index.html")
 
 router = APIRouter(prefix="/notes", tags=["notes-spa"])
@@ -27,4 +27,9 @@ async def notes_spa_add_view() -> FileResponse:
 
 @router.get("/graph", include_in_schema=False)
 async def notes_spa_graph() -> FileResponse:
+    return _spa_response()
+
+
+@router.get("/{path:path}", include_in_schema=False)
+async def notes_spa_catch_all(path: str) -> FileResponse:  # noqa: ARG001
     return _spa_response()
