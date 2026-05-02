@@ -10,7 +10,7 @@ from tracker.cards import db, schemas
 from tracker.common import settings
 
 
-router = APIRouter(prefix="/cards", tags=["cards"])
+router = APIRouter(prefix="/cards", tags=["cards"], deprecated=True)
 templates = Jinja2Templates(directory="templates")
 
 
