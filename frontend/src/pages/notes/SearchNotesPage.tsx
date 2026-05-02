@@ -116,7 +116,7 @@ function buildPaginationItems(
 }
 
 async function fetchNoteJson(noteId: string): Promise<NoteJson> {
-  const r = await apiFetch<NoteJson>(`/note-json${buildQuery({ note_id: noteId })}`);
+  const r = await apiFetch<NoteJson>(`/${noteId}`);
   if (!r) {
     throw new Error("Empty note response");
   }
@@ -283,7 +283,7 @@ export function SearchNotesPage() {
           {
             label: "Open",
             action: () => {
-              window.open(`/notes/note?note_id=${noteId}`);
+              navigate(`/notes/${noteId}`);
             },
           },
           {
@@ -318,7 +318,7 @@ export function SearchNotesPage() {
           items.push({
             label: `Open cards (${hasCards.cards_count})`,
             action: () => {
-              navigate(`/cards/?note_id=${encodeURIComponent(noteJson.material_id)}`);
+              navigate(`/cards/?note_id=${encodeURIComponent(noteId)}`);
             },
           });
         }
@@ -382,7 +382,7 @@ export function SearchNotesPage() {
         }
         try {
           const note = await apiFetch<{ content: string }>(
-            `/note-json${buildQuery({ note_id: linkId })}`,
+            `/${linkId}`,
           );
           if (note?.content) {
             localStorage.setItem(cacheKey, note.content);
