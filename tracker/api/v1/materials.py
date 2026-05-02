@@ -73,6 +73,14 @@ async def get_tags():
     }
 
 
+@router.get("/titles", response_model=schemas.ListMaterialTitlesResponse)
+async def list_titles():
+    titles = await db.get_titles()
+
+    return {"items": titles}
+
+
+
 @router.get("/queue/start", response_model=schemas.GetQueueEdgeResponse)
 async def get_queue_start():
     index = await db.get_queue_start()
