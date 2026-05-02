@@ -87,7 +87,6 @@ class GetImageResponse(CustomBaseModel):
 
 
 class GetSystemSummaryRequest(CustomBaseModel):
-    material_id: UUID
     last_days: conint(ge=1) = 7
 
 

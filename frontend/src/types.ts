@@ -187,9 +187,6 @@ type TrackerStatistics = {
 };
 
 export type SystemSummaryResponse = {
-  material_id: string;
-  last_days: number;
-  titles: Record<string, string>;
   tracker_statistics: TrackerStatistics;
   reading_trend: SpanSummary;
   notes_trend: SpanSummary;

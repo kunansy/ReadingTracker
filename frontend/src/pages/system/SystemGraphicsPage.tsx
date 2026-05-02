@@ -69,16 +69,15 @@ export function SystemGraphicsPage() {
   }, [materialId, metaQ.data?.material_id]);
 
   const summaryQ = useQuery({
-    queryKey: ["system", "summary", { effectiveMaterialId, lastDays }],
-    enabled: !!effectiveMaterialId,
+    queryKey: ["system", "summary", { lastDays }],
     queryFn: () =>
       apiFetch<SystemSummaryResponse>(
-        `/summary${buildQuery({ material_id: effectiveMaterialId, last_days: lastDays })}`,
+        `/summary${buildQuery({ last_days: lastDays })}`,
       ),
     staleTime: 30_000,
   });
 
-  const titles = summaryQ.data?.titles ?? metaQ.data?.titles ?? {};
+  const titles = metaQ.data?.titles ?? {};
   const materialOptions = useMemo(() => {
     return Object.keys(titles).sort((a, b) =>
       (titles[a] ?? "").localeCompare(titles[b] ?? ""),
