@@ -23,7 +23,6 @@ from tracker.materials.html_routes import router as materials_html_router
 from tracker.materials.spa import router as materials_spa_router
 from tracker.notes.action_routes import router as notes_action_router
 from tracker.notes.html_routes import (
-    note_detail_router as notes_note_detail_router,
     router as notes_html_router,
 )
 from tracker.notes.spa import router as notes_spa_router
@@ -91,8 +90,6 @@ if settings.APP_SPA_ENABLED:
     app.include_router(reading_logs_spa_router)
     app.include_router(cards_spa_router)
     app.include_router(system_spa_router)
-    # Single-note and update pages are still server-rendered (not in React yet).
-    app.include_router(notes_note_detail_router, prefix="/notes")
 else:
     app.include_router(notes_html_router)
     app.include_router(materials_html_router)
