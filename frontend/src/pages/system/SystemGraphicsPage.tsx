@@ -1,10 +1,10 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { apiFetch, buildQuery } from "../../api/system";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox";
-import {BackupResponse, GraphicResponse, SpanSummary, SystemMetaResponse, SystemSummaryResponse} from "../../types.ts";
+import {GraphicResponse, SpanSummary, SystemMetaResponse, SystemSummaryResponse} from "../../types.ts";
 
 function SvgImg({ b64 }: { b64: string }) {
   return <img src={`data:image/svg+xml;base64,${b64}`}  alt="nope"/>;
@@ -84,31 +84,11 @@ export function SystemGraphicsPage() {
     );
   }, [titles]);
 
-  const backupMut = useMutation({
-    mutationFn: () =>
-      apiFetch<BackupResponse>("/backup", {
-        method: "POST",
-      }),
-  });
-
   if (metaQ.isLoading) return <p>Loading…</p>;
   if (metaQ.error) return <p className="error">{(metaQ.error as Error).message}</p>;
 
   return (
     <>
-      {backupMut.data ? (
-        <div className="alert success status">
-          Success! Backup was created successfully. ({backupMut.data.materials_count}{" "}
-          materials, {backupMut.data.reading_log_count} logs,{" "}
-          {backupMut.data.statuses_count} statuses, {backupMut.data.notes_count} notes,{" "}
-          {backupMut.data.cards_count} cards, {backupMut.data.repeats_count} repeats,{" "}
-          {backupMut.data.note_repeats_history_count} note repeats)
-        </div>
-      ) : null}
-      {backupMut.error ? (
-        <div className="alert error status">Error! Backup failed.</div>
-      ) : null}
-
       <div className="form">
         <form
           onSubmit={(e) => {
