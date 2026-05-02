@@ -170,68 +170,70 @@ export function ListCompletedMaterialsPage() {
 
   return (
       <>
-          <form id="search-materials-form" onSubmit={onSubmit}>
-              <ComboboxRoot
-                  value={formState.material_type}
-                  onChange={(v) =>
-                      setFormState((p) => ({ ...p, material_type: v }))
-                  }
-                  options={MaterialTypes ?? []}
-              >
-                  <ComboboxInput placeholder="Enter a material type" />
-                  <ComboboxList />
-              </ComboboxRoot>
+          <div className="form">
+              <form onSubmit={onSubmit}>
+                  <ComboboxRoot
+                      value={formState.material_type}
+                      onChange={(v) =>
+                          setFormState((p) => ({ ...p, material_type: v }))
+                      }
+                      options={MaterialTypes ?? []}
+                  >
+                      <ComboboxInput placeholder="Enter a material type" />
+                      <ComboboxList />
+                  </ComboboxRoot>
 
-              <ComboboxRoot
-                  value={formState.tags_query}
-                  onChange={(v) =>
-                      setFormState((p) => ({ ...p, tags_query: v }))
-                  }
-                  options={materialTags}
-                  multiple
-                  allowCreate
-              >
-                  <ComboboxInput placeholder="Enter material tags" />
-                  <ComboboxList />
-              </ComboboxRoot>
+                  <ComboboxRoot
+                      value={formState.tags_query}
+                      onChange={(v) =>
+                          setFormState((p) => ({ ...p, tags_query: v }))
+                      }
+                      options={materialTags}
+                      multiple
+                      allowCreate
+                  >
+                      <ComboboxInput placeholder="Enter material tags" />
+                      <ComboboxList />
+                  </ComboboxRoot>
 
-              <div className="outlined-checkbox">
-                  <label>
-                      <input
-                          type="radio"
-                          checked={formState.outlined === "outlined"}
-                          onChange={() => handleOutlinedChange("outlined")}
-                      />
-                      Outlined only
-                  </label>
+                  <div className="outlined-checkbox">
+                      <label>
+                          <input
+                              type="radio"
+                              checked={formState.outlined === "outlined"}
+                              onChange={() => handleOutlinedChange("outlined")}
+                          />
+                          Outlined only
+                      </label>
 
-                  <br />
+                      <br />
 
-                  <label>
-                      <input
-                          type="radio"
-                          checked={formState.outlined === "not_outlined"}
-                          onChange={() => handleOutlinedChange("not_outlined")}
-                      />
-                      Not outlined only
-                  </label>
+                      <label>
+                          <input
+                              type="radio"
+                              checked={formState.outlined === "not_outlined"}
+                              onChange={() => handleOutlinedChange("not_outlined")}
+                          />
+                          Not outlined only
+                      </label>
 
-                  <br />
+                      <br />
 
-                  <label>
-                      <input
-                          type="radio"
-                          checked={formState.outlined === "all"}
-                          onChange={() => handleOutlinedChange("all")}
-                      />
-                      All
-                  </label>
-              </div>
+                      <label>
+                          <input
+                              type="radio"
+                              checked={formState.outlined === "all"}
+                              onChange={() => handleOutlinedChange("all")}
+                          />
+                          All
+                      </label>
+                  </div>
 
-              <button type="submit" className="submit-button">
-                  Search
-              </button>
-          </form>
+                  <button type="submit" className="submit-button">
+                      Search
+                  </button>
+              </form>
+          </div>
 
           {!stats.length ? (
               <NotFoundMaterials kind="completed materials" />
