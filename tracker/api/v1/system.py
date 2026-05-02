@@ -46,16 +46,10 @@ async def system_meta():
 
 @router.get("/summary")
 async def get_system_summary(r: Annotated[schemas.GetSystemSummaryRequest, Depends()]):
-    material_id = r.material_id or await logs_db.get_material_reading_now()
-    if material_id is None:
-        raise HTTPException(status_code=404, detail="No material found to show")
-
     last_days = r.last_days
 
     async with asyncio.TaskGroup() as tg:
-        titles_task = tg.create_task(db.get_read_material_titles())
         tracker_statistics_task = tg.create_task(statistics.get_tracker_statistics())
-        completion_dates_task = tg.create_task(logs_db.get_completion_dates())
 
         reading_trend_task = tg.create_task(
             trends.get_span_reading_statistics(span_size=last_days),
@@ -74,11 +68,7 @@ async def get_system_summary(r: Annotated[schemas.GetSystemSummaryRequest, Depen
         )
 
     return {
-        "material_id": material_id,
-        "last_days": last_days,
-        "titles": titles_task.result(),
         "tracker_statistics": tracker_statistics_task.result(),
-        "completion_dates": completion_dates_task.result(),
         "reading_trend": _span_summary(reading_trend_task.result()),
         "notes_trend": _span_summary(notes_trend_task.result()),
         "completed_materials_trend": _span_summary(
