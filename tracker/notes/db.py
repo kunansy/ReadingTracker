@@ -337,7 +337,7 @@ async def add_note(
 async def update_note(
     *,
     note_id: UUID,
-    material_id: str,
+    material_id: UUID,
     link_id: UUID | None,
     title: str | None,
     content: str,
@@ -348,7 +348,7 @@ async def update_note(
     logger.debug("Updating note_id='%s'", note_id)
 
     values = {
-        "material_id": material_id,
+        "material_id": str(material_id),
         "title": title,
         "content": content,
         "page": page,
