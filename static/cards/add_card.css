@@ -25,9 +25,6 @@ li.note {
 li.with_card {
     background-color: rgba(220, 220, 220, .5);
 }
-p.note-content {
-    width: 50vh;
-}
 .note-page, .note-id {
     font-size: 4vh;
     font-weight: 500;

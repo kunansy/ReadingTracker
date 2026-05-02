@@ -89,12 +89,6 @@ p.note-content {
     display: flex;
 }
 
-.form {
-    display: flex;
-    margin: auto;
-    flex-direction: row;
-}
-
 .from-links {
     flex-direction: column;
     align-self: center;
