@@ -89,7 +89,7 @@ class GetImageResponse(CustomBaseModel):
 
 
 class GetSystemSummaryRequest(CustomBaseModel):
-    last_days: conint(ge=1) = 7
+    last_days: conint(ge=1)
 
 
 class _MinMaxRecord(CustomBaseModel):
@@ -118,28 +118,28 @@ class GetSystemSummaryResponse(CustomBaseModel):
 
 class GetReadingProgressGraphicRequest(CustomBaseModel):
     material_id: UUID
-    last_days: conint(ge=1) = 7
+    last_days: conint(ge=1)
 
 
 class GetReadingTrendGraphicRequest(CustomBaseModel):
-    last_days: conint(ge=1) = 7
+    last_days: conint(ge=1)
 
 
 class GetNotesTrendGraphicRequest(CustomBaseModel):
-    last_days: conint(ge=1) = 7
+    last_days: conint(ge=1)
 
 
 class GetCompletedMaterialsTrendGraphicRequest(CustomBaseModel):
-    last_days: conint(ge=1) = 7
+    last_days: conint(ge=1)
 
 
 class GetRepeatedMaterialsTrendGraphicRequest(CustomBaseModel):
-    last_days: conint(ge=1) = 7
+    last_days: conint(ge=1)
 
 
 class GetOutlinedMaterialsTrendGraphicRequest(CustomBaseModel):
-    last_days: conint(ge=1) = 7
+    last_days: conint(ge=1)
 
 
 class GetTotalReadGraphicRequest(CustomBaseModel):
-    last_days: conint(ge=1) = 7
+    last_days: conint(ge=1)
