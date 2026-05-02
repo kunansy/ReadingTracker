@@ -53,3 +53,25 @@ p.note-id {
 p.card-id {
     font-size: 2.7vh;
 }
+
+/* Mobile-only fixes (desktop unchanged) */
+@media (max-width: 767px) {
+    div.card {
+        width: auto;
+        max-width: 100%;
+        padding: 1.25rem; /* ensure text doesn't touch borders */
+        margin: 0 0 1rem;
+        flex-direction: column;
+    }
+
+    p.question,
+    p.answer,
+    p.material-title {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+    }
+
+    p.remains-cards {
+        margin-bottom: 1.5rem;
+    }
+}

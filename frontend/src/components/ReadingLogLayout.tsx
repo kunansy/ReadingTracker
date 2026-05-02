@@ -1,12 +1,14 @@
 import { Outlet } from "react-router-dom";
 
 import { ScrollArrows } from "./ScrollArrows";
+import { MobileNav } from "./MobileNav";
 import {ReadingLogSubnav} from "../components/ReadingLogSubnav.tsx";
 
 export function ReadingLogLayout() {
   return (
     <>
       <header>
+        <MobileNav />
         <nav className="navbar" id="head">
           <a href="/materials"> Materials </a>
           <a href="/reading_logs"> Reading log </a>
