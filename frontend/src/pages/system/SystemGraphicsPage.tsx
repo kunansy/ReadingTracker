@@ -19,10 +19,10 @@ function SpanStatsBlock({ s }: { s: SpanSummary }) {
       <p>Mean: {s.mean}</p>
       <p>Median: {s.median}</p>
       <p>
-        Max: {s.max.amount}, {s.max.date}
+        Max: {s.max_record.amount}, {s.max_record.date}
       </p>
       <p>
-        Min: {s.min.amount}, {s.min.date}
+        Min: {s.min_record.amount}, {s.min_record.date}
       </p>
     </div>
   );

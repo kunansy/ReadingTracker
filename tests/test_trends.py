@@ -156,9 +156,9 @@ async def test_get_span_statistics(start, stop, size):
     assert result.median == expected_median
     assert result.total == sum(values)
 
-    assert result.max.amount == max(values)
-    if result.min.amount != 0:
-        assert result.min.amount == min(values)
+    assert result.max_record.amount == max(values)
+    if result.min_record.amount != 0:
+        assert result.min_record.amount == min(values)
 
     assert result.zero_days == (span.stop - span.start).days + 1 - len(stat)
 
