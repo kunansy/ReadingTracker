@@ -163,8 +163,8 @@ export type SpanSummary = {
   zero_days: number;
   mean: number;
   median: number;
-  max: { date: string; amount: number };
-  min: { date: string; amount: number };
+  max_record: { date: string; amount: number };
+  min_record: { date: string; amount: number };
 };
 
 type TrackerStatistics = {

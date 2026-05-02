@@ -1,11 +1,13 @@
 import datetime
+from decimal import Decimal
 from uuid import UUID
 
-from pydantic import Field, NonNegativeInt, conint, field_validator
+from pydantic import Field, NonNegativeFloat, NonNegativeInt, conint, field_validator
 from pydantic_core.core_schema import ValidationInfo
 
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums
+from tracker.reading_log.statistics import TrackerStatistics
 
 
 def _now() -> datetime.date:
@@ -88,6 +90,30 @@ class GetImageResponse(CustomBaseModel):
 
 class GetSystemSummaryRequest(CustomBaseModel):
     last_days: conint(ge=1) = 7
+
+
+class _MinMaxRecord(CustomBaseModel):
+    date: datetime.date
+    amount: NonNegativeInt
+
+
+class _SpanStatsResponse(CustomBaseModel):
+    total: NonNegativeInt
+    would_be_total: NonNegativeInt
+    zero_days: NonNegativeInt
+    mean: Decimal
+    median: NonNegativeFloat
+    max_record: _MinMaxRecord
+    min_record: _MinMaxRecord
+
+
+class GetSystemSummaryResponse(CustomBaseModel):
+    tracker_statistics: TrackerStatistics
+    reading_trend: _SpanStatsResponse
+    notes_trend: _SpanStatsResponse
+    completed_materials_trend: _SpanStatsResponse
+    repeated_materials_trend: _SpanStatsResponse
+    outlined_materials_trend: _SpanStatsResponse
 
 
 class GetReadingProgressGraphicRequest(CustomBaseModel):

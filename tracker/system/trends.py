@@ -10,7 +10,7 @@ from typing import Any
 import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa
 from matplotlib import ticker
-from pydantic import NonNegativeInt, model_validator
+from pydantic import NonNegativeInt, computed_field, model_validator
 
 from tracker.common import database, settings
 from tracker.common.logger import logger
@@ -70,39 +70,47 @@ class SpanStatistics(CustomBaseModel):
     def values(self) -> list[int]:
         return [day.amount for day in self.data]
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def mean(self) -> Decimal:
         value = Decimal(self.total) / self.span_size
         return round(value, 2)
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def median(self) -> float:
         return round(statistics.median(self.values), 2)
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def total(self) -> int:
         return sum(day.amount for day in self.data)
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
-    def max(self) -> DayStatistics:
+    def max_record(self) -> DayStatistics:
         return max(self.data, key=lambda day: day.amount)
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
-    def min(self) -> DayStatistics:
+    def min_record(self) -> DayStatistics:
         data = filter(lambda day: day.amount != 0, self.data)
         try:
             return min(data, key=lambda day: day.amount)
         except ValueError:
             return self.data[0]
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def zero_days(self) -> int:
         return sum(1 for day in self.data if day.amount == 0)
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def lost_pages(self) -> int:
         return round(self.zero_days * self.mean)
 
+    @computed_field  # type: ignore[prop-decorator]
     @property
     def would_be_total(self) -> int:
         return self.total + self.lost_pages
@@ -530,7 +538,7 @@ def _create_graphic(
         line = plt.axvline(x=float(stat.mean), color="black", linestyle="-")
         line.set_label(f"Mean {stat.mean} items")
 
-    a_percent = stat.max.amount / 100
+    a_percent = stat.max_record.amount / 100
     xlim = -a_percent, a_percent * 115 or 100
 
     ax.set_title(title)

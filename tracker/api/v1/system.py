@@ -1,7 +1,7 @@
 import asyncio
-from typing import Annotated, Any
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter
 from fastapi.params import Depends
 from fastapi.responses import JSONResponse
 
@@ -19,19 +19,6 @@ from tracker.system import db, schemas, trends
 router = APIRouter(prefix="/system", tags=["system-api"])
 
 
-# TODO
-def _span_summary(stat: trends.SpanStatistics) -> dict[str, Any]:
-    return {
-        "total": stat.total,
-        "would_be_total": stat.would_be_total,
-        "zero_days": stat.zero_days,
-        "mean": float(stat.mean),
-        "median": float(stat.median),
-        "max": {"date": stat.max.format(), "amount": stat.max.amount},
-        "min": {"date": stat.min.format(), "amount": stat.min.amount},
-    }
-
-
 @router.get("/meta", response_class=JSONResponse)
 async def system_meta():
     async with asyncio.TaskGroup() as tg:
@@ -44,7 +31,7 @@ async def system_meta():
     }
 
 
-@router.get("/summary")
+@router.get("/summary", response_model=schemas.GetSystemSummaryResponse)
 async def get_system_summary(r: Annotated[schemas.GetSystemSummaryRequest, Depends()]):
     last_days = r.last_days
 
@@ -69,13 +56,11 @@ async def get_system_summary(r: Annotated[schemas.GetSystemSummaryRequest, Depen
 
     return {
         "tracker_statistics": tracker_statistics_task.result(),
-        "reading_trend": _span_summary(reading_trend_task.result()),
-        "notes_trend": _span_summary(notes_trend_task.result()),
-        "completed_materials_trend": _span_summary(
-            completed_materials_trend_task.result(),
-        ),
-        "repeated_materials_trend": _span_summary(repeated_materials_trend_task.result()),
-        "outlined_materials_trend": _span_summary(outlined_materials_trend_task.result()),
+        "reading_trend": reading_trend_task.result(),
+        "notes_trend": notes_trend_task.result(),
+        "completed_materials_trend": completed_materials_trend_task.result(),
+        "repeated_materials_trend": repeated_materials_trend_task.result(),
+        "outlined_materials_trend": outlined_materials_trend_task.result(),
     }
 
 
