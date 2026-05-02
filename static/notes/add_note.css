@@ -51,19 +51,3 @@ fieldset.add-note-fieldset {
 legend.add-note-legend {
     text-align: center;
 }
-
-.voice-record {
-    display: flex;
-    margin: auto;
-}
-
-.voice-record > .submit-button {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-#input-content-errata {
-    display: flex;
-    margin: auto;
-}

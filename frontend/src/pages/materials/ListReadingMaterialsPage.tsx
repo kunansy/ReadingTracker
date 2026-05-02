@@ -173,7 +173,7 @@ export function ListReadingMaterialsPage() {
               </>
             ) : null}
             <div
-              className="complete"
+              className="complete form"
               title={`Complete the material id=${material.material_id}`}
             >
               <button
