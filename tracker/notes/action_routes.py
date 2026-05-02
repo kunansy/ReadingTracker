@@ -12,7 +12,7 @@ from tracker.notes import cached, db, schemas
 router = APIRouter(prefix="/notes", tags=["notes"], deprecated=True)
 
 
-@router.get("/note-json", response_model=schemas.GetNoteJsonResponse)
+@router.get("/note-json", response_model=schemas.NoteJson)
 async def get_note_json(note_id: UUID):
     if note := await cached.get_note_json(note_id):
         return note

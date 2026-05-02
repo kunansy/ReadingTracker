@@ -169,7 +169,7 @@ class IsNoteDeletedResponse(CustomBaseModel):
     is_deleted: bool
 
 
-class GetNoteJsonResponse(CustomBaseModel):
+class NoteJson(CustomBaseModel):
     note_id: UUID
     link_id: UUID | None
     material_id: UUID
@@ -188,6 +188,10 @@ class GetNoteJsonResponse(CustomBaseModel):
         return added_at.strftime(settings.DATETIME_FORMAT)
 
 
+class GetNoteResponse(CustomBaseModel):
+    note: NoteJson
+
+
 class AutocompletionResponse(CustomBaseModel):
     autocompletions: list[str]
 
@@ -203,7 +207,7 @@ class AutocompletionResponse(CustomBaseModel):
 
 
 class GetMaterialNotes(CustomBaseModel):
-    notes: list[GetNoteJsonResponse]
+    notes: list[NoteJson]
     material_id: UUID
 
 

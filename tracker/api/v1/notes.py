@@ -143,6 +143,23 @@ async def add_note_json(note: schemas.Note):
     return {"ok": True, "note_id": note_id}
 
 
+@router.patch("/{note_id}", status_code=204)
+async def update_note_json(note_id: UUID, body: schemas.UpdateNote):
+    if note_id != body.note_id:
+        raise HTTPException(status_code=400, detail="note_id mismatch")
+
+    await db.update_note(
+        note_id=body.note_id,
+        material_id=body.material_id,
+        link_id=body.link_id,
+        title=body.title,
+        content=body.content,
+        chapter=body.chapter,
+        page=body.page,
+        tags=body.tags,
+    )
+
+
 @router.get("/autocompletion", response_model=schemas.AutocompletionResponse)
 async def autocompletion_json(query: str, limit: int = 10):
     autocompletions = await manticoresearch.autocompletion(query=query, limit=limit)
@@ -157,9 +174,8 @@ async def get_note_tags(material_id: UUID):
     return {"tags": tags}
 
 
-@router.get("/note-json", response_model=schemas.GetNoteJsonResponse)
-async def get_note_json_api(note_id: UUID):
-    if note := await cached.get_note_json(note_id):
-        return note
+@router.get("/{note_id}", response_model=schemas.GetNoteResponse)
+async def get_note(note_id: UUID):
+    note = await db.get_note_api(note_id=note_id)
 
-    raise HTTPException(status_code=404, detail=f"Note id={note_id} not found")
+    return {"note": note}

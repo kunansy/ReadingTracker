@@ -272,6 +272,19 @@ async def get_note(*, note_id: UUID | str) -> Note | None:
     return None
 
 
+async def get_note_api(*, note_id: UUID) -> Note:
+    logger.debug("Getting note_id='%s'", note_id)
+
+    stmt = _get_note_stmt(note_id=note_id)
+
+    async with database.session() as ses:
+        if note := (await ses.execute(stmt)).one_or_none():
+            logger.debug("Note got")
+            return Note.model_validate(note, from_attributes=True)
+
+    raise database.NotFoundException(f"Note_id='{note_id}' not found")
+
+
 async def get_all_notes_count() -> dict[UUID, int]:
     """Get notes count for the materials."""
     logger.debug("Getting notes count for all materials")
