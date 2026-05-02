@@ -80,9 +80,6 @@ p.note-content {
     font-size: 3.25vh;
     font-weight: 300;
 }
-div.note p {
-    word-wrap: break-word;
-}
 
 .network {
     height: 100vh;
