@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import {useSearchParams} from "react-router-dom";
+import {useNavigate, useSearchParams} from "react-router-dom";
 
 import { apiFetch } from "../../api/cards.ts";
 import {ListMaterialsTitlesResponse, ListCardsResponse} from "../../types.ts";
@@ -10,6 +10,7 @@ import {useMemo} from "react";
 export function ListCardsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const materialId = searchParams.get("material_id") ?? "";
+    const navigate = useNavigate();
 
     const materialsTitlesQ = useQuery({
         queryKey: ["materials", "cards", "titles"],
@@ -109,7 +110,7 @@ export function ListCardsPage() {
                       <p
                           className="txt note-id"
                           onClick={async () => {
-                            window.open(`/notes/note?note_id=${item.note_id}`, "_blank");
+                            navigate(`/notes/${item.note_id}`);
                           }}
                       >
                           Note ID: {item.note_id}
