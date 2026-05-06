@@ -153,8 +153,8 @@ export function NoteEditPage() {
             <ComboboxRoot
                 options={materialOptions}
                 value={materialId}
-                onChange={(next: string) => {
-                  setMaterialId(next);
+                onChange={(next) => {
+                  setMaterialId(next.target.value);
                 }}
                 getOptionLabel={(id) => titles[id] ?? ""}
             >
@@ -181,7 +181,9 @@ export function NoteEditPage() {
             />
             <ComboboxRoot
                 value={tags}
-                onChange={setTags}
+                onChange={(e) => {
+                  setTags(e.target.value);
+                }}
                 options={noteTags}
                 multiple
                 allowCreate
