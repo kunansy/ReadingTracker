@@ -111,6 +111,7 @@ export function AddNotePage() {
     );
   }, [titlesQ]);
 
+  // TODO
   const pageLabel = "page number";
   const chapterLabel = "chapter";
 
