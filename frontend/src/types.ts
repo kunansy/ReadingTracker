@@ -254,3 +254,13 @@ export type AddNoteRequest = {
   chapter: string;
   page: number;
 };
+
+type PossibleLink = {
+  note_id: string;
+  content: string;
+  title?: string;
+};
+
+export type ListPossibleLinkResponse = {
+  items: PossibleLink[];
+}
