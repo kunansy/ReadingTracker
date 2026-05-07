@@ -3,12 +3,12 @@ from collections import defaultdict
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import NonNegativeInt
 
 from tracker.common import manticoresearch
 from tracker.models import enums
-from tracker.notes import cached, db, schemas
+from tracker.notes import db, schemas
 from tracker.notes.listing import build_notes_search_result
 
 

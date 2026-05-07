@@ -5,10 +5,13 @@ from uuid import UUID
 
 from pydantic import (
     BeforeValidator,
+    Field,
     NonNegativeInt,
+    conlist,
+    constr,
     field_serializer,
     field_validator,
-    model_validator, conlist, constr, Field,
+    model_validator,
 )
 
 from tracker.common import settings
@@ -149,7 +152,9 @@ class AddNoteRequest(CustomBaseModel):
     material_id: UUID
     title: str | None = None
     content: str
-    tags: conlist(constr(pattern=TAG_PATTERN, to_lower=True, strip_whitespace=True)) = Field(default_factory=list)
+    tags: conlist(constr(pattern=TAG_PATTERN, to_lower=True, strip_whitespace=True)) = (
+        Field(default_factory=list)
+    )
     link_id: UUID | None = None
     chapter: str = ""
     page: NonNegativeInt = 0
