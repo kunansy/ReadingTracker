@@ -118,7 +118,11 @@ export function AddNotePage() {
   const pageLabel = "page number";
   const chapterLabel = "chapter";
 
-  if (!titlesQ.isLoading && !hasTitles && formData.materialId) {
+  if (titlesQ.error || tagListQ.error) {
+    return <p className="error">{((titlesQ.error || tagListQ.error) as Error).message}</p>;
+  }
+
+  if (!titlesQ.isLoading && !hasTitles) {
     return <div className="not-found"><p className="message">No materials found</p></div>;
   }
 
