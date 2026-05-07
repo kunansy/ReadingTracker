@@ -7,7 +7,7 @@ import { apiFetch as materialsApiFetch } from "../../api/materials";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox.tsx";
-import { ListMaterialsTitlesResponse } from "../../types.ts";
+import { ListMaterialsTitlesResponse, AddNoteRequest } from "../../types.ts";
 import { useSpellChecker } from "../../hooks/useSpellChecker.ts";
 import { SpellErrorsList } from "../../components/SpellErrorsList.tsx";
 
@@ -17,16 +17,6 @@ function isUuid(value: string): boolean {
   );
 }
 
-type FormData = {
-  materialId: string;
-  title: string;
-  content: string;
-  tags: string[];
-  linkId: string;
-  chapter: string;
-  page: number;
-};
-
 export function AddNotePage() {
   const [searchParams] = useSearchParams();
   const initialMaterial = searchParams.get("material_id") ?? "";
@@ -34,7 +24,7 @@ export function AddNotePage() {
   const contentRef = useRef<HTMLTextAreaElement>(null);
   useAltchHotkeys(contentRef);
 
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<AddNoteRequest>({
     materialId: initialMaterial,
     title: "",
     content: "",
@@ -61,7 +51,7 @@ export function AddNotePage() {
     queryFn: () => apiFetch<{ tags: string[] }>(`/tags${buildQuery({ material_id: formData.materialId || undefined })}`),
   });
 
-  const updateFormData = useCallback((updates: Partial<FormData>) => {
+  const updateFormData = useCallback((updates: Partial<AddNoteRequest>) => {
     setFormData(prev => ({ ...prev, ...updates }));
     setError(null);
   }, []);
