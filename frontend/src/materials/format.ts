@@ -1,8 +1,10 @@
+import {MaterialType} from "../types.ts";
+
 export function itemsLabel(materialType: string): string {
-  if (materialType === "lecture") {
+  if (materialType === MaterialType.lecture) {
     return "Minutes";
   }
-  if (materialType === "course") {
+  if (materialType === MaterialType.course) {
     return "Lectures";
   }
   return "Pages";
