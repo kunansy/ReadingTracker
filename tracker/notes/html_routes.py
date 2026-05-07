@@ -89,7 +89,7 @@ async def update_note_view(note_id: UUID, request: Request, success: bool | None
     return templates.TemplateResponse(request, "notes/update_note.html", context)
 
 
-router = APIRouter(prefix="/notes", tags=["notes-legacy"])
+router = APIRouter(prefix="/notes", tags=["notes-legacy"], deprecated=True)
 
 
 @router.get("/", response_class=HTMLResponse)
