@@ -2,15 +2,6 @@
   width: 0;
 }
 
-fieldset.material-fieldset {
-    display: flex;
-    margin: auto;
-    flex-direction: column;
-}
-legend.material-legend {
-    text-align: center;
-}
-
 .parse-material-source {
     display: flex;
     margin: auto auto 2vh;

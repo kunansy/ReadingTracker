@@ -123,8 +123,8 @@ export function UpdateMaterialPage() {
             updateMut.mutate();
           }}
         >
-          <fieldset className="material-fieldset">
-            <legend className="material-legend"> Update a material </legend>
+          <fieldset className="fieldset">
+            <legend className="legend"> Update a material </legend>
             <input
               ref={titleRef}
               className="input altch"

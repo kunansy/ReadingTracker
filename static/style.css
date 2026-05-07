@@ -293,6 +293,15 @@ div.record {
     word-wrap: break-word;
 }
 
+.fieldset {
+    display: flex;
+    margin: auto;
+    flex-direction: column;
+}
+.legend {
+    text-align: center;
+}
+
 /* ============================
    Mobile-only responsive fixes
    (Desktop styles unchanged)

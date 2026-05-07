@@ -119,8 +119,8 @@ export function AddMaterialPage() {
   return (
     <>
       <div className="parse-material-source">
-        <fieldset className="material-fieldset">
-          <legend className="material-legend"> Parse youtube or habr </legend>
+        <fieldset className="fieldset">
+          <legend className="legend"> Parse youtube or habr </legend>
           <input
             id="parse-url"
             className="input"
@@ -156,8 +156,8 @@ export function AddMaterialPage() {
             addMut.mutate();
           }}
         >
-          <fieldset className="material-fieldset">
-            <legend className="material-legend"> Add a material </legend>
+          <fieldset className="fieldset">
+            <legend className="legend"> Add a material </legend>
             <input
               ref={titleRef}
               id="input-title"

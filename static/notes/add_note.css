@@ -41,13 +41,3 @@
     max-width: 35vw;
     height: 20vh;
 }
-
-fieldset.add-note-fieldset {
-    display: flex;
-    margin: auto;
-    flex-direction: column;
-}
-
-legend.add-note-legend {
-    text-align: center;
-}

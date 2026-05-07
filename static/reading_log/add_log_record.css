@@ -1,14 +1,6 @@
 ::-webkit-scrollbar {
   width: 0;
 }
-fieldset.log-record-fieldset {
-    display: flex;
-    margin: auto;
-    flex-direction: column;
-}
-legend.log-record-legend {
-    text-align: center;
-}
 
 main {
     min-height: 60vh;
