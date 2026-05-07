@@ -58,8 +58,7 @@ export function AddNotePage() {
 
   const tagListQ = useQuery({
     queryKey: ["tags", formData.materialId],
-    queryFn: () => apiFetch<{ tags: string[] }>(`/tags${buildQuery({ material_id: formData.materialId })}`),
-    enabled: !!formData.materialId && isUuid(formData.materialId),
+    queryFn: () => apiFetch<{ tags: string[] }>(`/tags${buildQuery({ material_id: formData.materialId || undefined })}`),
   });
 
   const updateFormData = useCallback((updates: Partial<FormData>) => {
