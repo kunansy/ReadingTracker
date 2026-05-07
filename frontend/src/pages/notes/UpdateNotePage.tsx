@@ -9,7 +9,7 @@ import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
 import {
   GetNoteResponse,
   GetNoteTagsResponse,
-  ListMaterialsTitlesResponse,
+  ListMaterialsTitlesResponse, ListPossibleLinkResponse,
 } from "../../types.ts";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox.tsx";
 import { useSpellChecker } from "../../hooks/useSpellChecker.ts";
@@ -75,6 +75,11 @@ export function UpdateNotePage() {
     enabled: isUuid(materialId),
     queryFn: () => apiFetch<GetNoteTagsResponse>(`/tags${buildQuery({material_id: materialId || undefined})}`),
   });
+  const possibleLinksQ = useQuery({
+    queryKey: ["possible-links", noteId],
+    enabled: Boolean(noteId),
+    queryFn: () => apiFetch<ListPossibleLinkResponse>(`/possible-links${buildQuery({note_id: noteId})}`),
+  });
 
   const updateMut = useMutation({
     mutationFn: async () => {
@@ -102,6 +107,7 @@ export function UpdateNotePage() {
       setError(null);
       await qc.invalidateQueries({ queryKey: ["notes", noteId] });
       await qc.invalidateQueries({ queryKey: ["notes"] });
+      await qc.invalidateQueries({ queryKey: ["possible-links", noteId] });
       navigate(`/notes/${noteId}`);
     },
     onError: (e: Error) => {
@@ -233,6 +239,51 @@ export function UpdateNotePage() {
             </fieldset>
           </form>
         </div>
+
+        {possibleLinksQ.data?.items.length ? (
+            <div
+                className="links-list"
+                style={{
+                  display: "flex",
+                  flexDirection: "row",
+                  overflow: "scroll",
+                  margin: "16px auto",
+                  maxWidth: "80%",
+                  gap: "12px",
+                  alignItems: "flex-start",
+                }}
+            >
+              {possibleLinksQ.data.items.map((link) => (
+                  <div
+                      key={link.note_id}
+                      className="links-list-item"
+                      style={{
+                        border: "2px solid #333",
+                        borderRadius: "12px",
+                        padding: "16px",
+                        minWidth: "280px",
+                        maxWidth: "35vw",
+                        wordBreak: "break-word",
+                        lineHeight: "1.4",
+                        fontSize: "14px",
+                      }}
+                      title={link.title}
+                      onClick={() => {
+                        setLinkId(link.note_id);
+                      }}
+                  >
+                    <div
+                        style={{
+                            flexGrow: 1,
+                            minHeight: 0,
+                        }}
+                    >
+                      {link.content}
+                    </div>
+                  </div>
+              ))}
+            </div>
+        ) : null}
 
         {error ? <p className="error">{error}</p> : null}
       </>
