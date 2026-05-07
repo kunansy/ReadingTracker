@@ -117,7 +117,7 @@ async def notes_graph_json(material_id: UUID | None = None):
     }
 
 
-@router.get("/meta", response_model=schemas.GetNotesMetaResponse)
+@router.get("/meta", response_model=schemas.GetNotesMetaResponse, deprecated=True)
 async def get_notes_meta(material_id: UUID | None = None):
     async with asyncio.TaskGroup() as tg:
         get_titles_task = tg.create_task(db.get_material_titles())
