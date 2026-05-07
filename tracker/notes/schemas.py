@@ -148,13 +148,14 @@ class Note(CustomBaseModel):
         return data
 
 
+type Tags = conlist(constr(pattern=TAG_PATTERN, to_lower=True, strip_whitespace=True))
+
+
 class AddNoteRequest(CustomBaseModel):
     material_id: UUID
     title: str | None = None
     content: str
-    tags: conlist(constr(pattern=TAG_PATTERN, to_lower=True, strip_whitespace=True)) = (
-        Field(default_factory=list)
-    )
+    tags: Tags = Field(default_factory=list)
     link_id: UUID | None = None
     chapter: str = ""
     page: NonNegativeInt = 0
@@ -190,7 +191,7 @@ class UpdateNoteRequest(CustomBaseModel):
     link_id: UUID | None
     title: str | None
     content: str
-    tags: list[str] | None = None
+    tags: Tags = Field(default_factory=list)
     chapter: str = "0"
     page: NonNegativeInt = 0
 
