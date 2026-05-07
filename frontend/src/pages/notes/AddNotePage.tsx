@@ -8,6 +8,8 @@ import { CelebrateButton } from "../../components/CelebrateButton";
 import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox.tsx";
 import { ListMaterialsTitlesResponse } from "../../types.ts";
+import { useSpellChecker } from "../../hooks/useSpellChecker.ts";
+import { SpellErrorsList } from "../../components/SpellErrorsList.tsx";
 
 function isUuid(value: string): boolean {
   return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
@@ -43,6 +45,11 @@ export function AddNotePage() {
   });
   const [successId, setSuccessId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const { spellErrors, replaceWord } = useSpellChecker(
+      formData.content,
+      (newContent) => updateFormData({ content: newContent })
+  );
 
   const titlesQ = useQuery({
     queryKey: ["materials", "titles"],
@@ -177,7 +184,8 @@ export function AddNotePage() {
                   onChange={(e) => updateFormData({ content: e.target.value })}
                   rows={6}
               />
-              <div id="input-content-errata" />
+
+              <SpellErrorsList spellErrors={spellErrors} onReplace={replaceWord} />
 
               <ComboboxRoot
                   multiple
