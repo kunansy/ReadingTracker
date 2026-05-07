@@ -113,7 +113,7 @@ class Note(CustomBaseModel):
 
     @field_validator("content")
     def fix_double_spaces(cls, content: str) -> str:
-        return " ".join(content.split(" "))
+        return " ".join(word for word in content.split(" ") if word)
 
     @model_validator(mode="before")
     @classmethod
