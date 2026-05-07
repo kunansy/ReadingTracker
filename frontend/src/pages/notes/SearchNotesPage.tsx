@@ -289,7 +289,7 @@ export function SearchNotesPage() {
           {
             label: "Edit",
             action: () => {
-              navigate(`/notes/${noteId}/edit`);
+              navigate(`/notes/${noteId}/update`);
             },
           },
         ];

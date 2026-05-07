@@ -53,7 +53,7 @@ export function NotePage() {
     <div className="note-page-root">
       <div className="form">
         <div className="note-page-actions">
-          <Link className="submit-button" to={`/notes/${n.note_id}/edit`}>
+          <Link className="submit-button" to={`/notes/${n.note_id}/update`}>
             Edit
           </Link>
           <Link className="submit-button" to="/notes">
