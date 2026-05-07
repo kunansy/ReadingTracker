@@ -77,7 +77,6 @@ export function NoteEditPage() {
         throw new Error("Choose a valid material (UUID)");
       }
       const body: Record<string, unknown> = {
-        note_id: noteId,
         material_id: materialId,
         title: title.trim() ? title.trim() : null,
         content,

@@ -144,12 +144,9 @@ async def add_note_json(note: schemas.Note):
 
 
 @router.patch("/{note_id}", status_code=204)
-async def update_note_json(note_id: UUID, body: schemas.UpdateNote):
-    if note_id != body.note_id:
-        raise HTTPException(status_code=400, detail="note_id mismatch")
-
+async def update_note(note_id: UUID, body: schemas.UpdateNoteRequest):
     await db.update_note(
-        note_id=body.note_id,
+        note_id=note_id,
         material_id=body.material_id,
         link_id=body.link_id,
         title=body.title,
