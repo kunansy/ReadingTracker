@@ -244,3 +244,13 @@ export type SpellError = {
   word: string;
   suggestions: string[];
 };
+
+export type AddNoteRequest = {
+  materialId: string;
+  title: string;
+  content: string;
+  tags: string[];
+  linkId: string;
+  chapter: string;
+  page: number;
+};
