@@ -400,7 +400,7 @@ async def test_insert_note(mocker, material_id, link_id, title, content, chapter
         mock_trans
     )
 
-    note_id = await db.add_note(
+    note_id = await db.insert_note(
         material_id=material_id,
         link_id=link_id,
         title=title,
