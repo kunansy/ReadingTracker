@@ -18,7 +18,7 @@ export function AddMaterialPage() {
   useAltchHotkeys(titleRef);
 
   const [title, setTitle] = useState("");
-  const [authors, setAuthors] = useState("");
+  const [authors, setAuthors] = useState<string[]>([]);
   const [pages, setPages] = useState("");
   const [materialType, setMaterialType] = useState<MaterialType | null>(null);
   const [tags, setTags] = useState<string[]>([]);
@@ -53,7 +53,7 @@ export function AddMaterialPage() {
         return;
       }
       setTitle(data.title);
-      setAuthors(data.authors);
+      setAuthors([data.authors]);
       if (data.duration != null) {
         setPages(String(data.duration));
       }
@@ -86,7 +86,7 @@ export function AddMaterialPage() {
     },
     onSuccess: () => {
       setTitle("");
-      setAuthors("");
+      setAuthors([]);
       setPages("");
       setMaterialType(null);
       setTags([]);
@@ -177,6 +177,7 @@ export function AddMaterialPage() {
                 onChange={setAuthors}
                 options={materialAuthors}
                 allowCreate
+                multiple
             >
               <ComboboxInput placeholder="Enter a material authors" />
               <ComboboxList />
@@ -197,8 +198,10 @@ export function AddMaterialPage() {
 
             <ComboboxRoot
                 value={materialType ?? ""}
-                onChange={setMaterialType}
-                options={MaterialTypes ?? []}
+                onChange={(v) => {
+                  setMaterialType(v as MaterialType);
+                }}
+                options={MaterialTypes}
             >
               <ComboboxInput placeholder="Enter a material type" />
               <ComboboxList />
