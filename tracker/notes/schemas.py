@@ -152,6 +152,16 @@ class UpdateNote(Note):
         return str(self.material_id)
 
 
+class UpdateNoteRequest(CustomBaseModel):
+    material_id: UUID
+    link_id: UUID | None
+    title: str | None
+    content: str
+    tags: list[str] | None = None
+    chapter: str = "0"
+    page: NonNegativeInt = 0
+
+
 class SearchParams(CustomBaseModel):
     material_id: UUID | str | None = None
     query: str | None = None
