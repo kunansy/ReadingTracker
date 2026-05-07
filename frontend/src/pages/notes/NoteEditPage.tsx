@@ -153,7 +153,7 @@ export function NoteEditPage() {
                 options={materialOptions}
                 value={materialId}
                 onChange={(next) => {
-                  setMaterialId(next.target.value);
+                  setMaterialId(next);
                 }}
                 getOptionLabel={(id) => titles[id] ?? ""}
             >

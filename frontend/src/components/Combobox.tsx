@@ -40,27 +40,39 @@ function useComboboxCtx() {
     return ctx;
 }
 
-type RootProps = {
+type BaseProps = {
     children: ReactNode;
     options: string[];
     getOptionLabel?: (opt: string) => string;
-
-    value: string | string[];
-    onChange: (v: any) => void;
-
-    multiple?: boolean;
     allowCreate?: boolean;
 };
 
-export function ComboboxRoot({
-                                 children,
-                                 options,
-                                 getOptionLabel,
-                                 value,
-                                 onChange,
-                                 multiple = false,
-                                 allowCreate = false,
-                             }: RootProps) {
+type SingleProps = BaseProps & {
+    multiple?: false;
+
+    value: string;
+    onChange: (v: string) => void;
+};
+
+type MultiProps = BaseProps & {
+    multiple: true;
+
+    value: string[];
+    onChange: (v: string[]) => void;
+};
+
+type RootProps = SingleProps | MultiProps;
+
+export function ComboboxRoot(props: RootProps) {
+    const {
+        children,
+        options,
+        getOptionLabel,
+        allowCreate = false,
+    } = props;
+
+    const multiple = props.multiple === true;
+
     const [open, setOpen] = useState(false);
     const [input, setInput] = useState("");
     const [highlight, setHighlight] = useState(0);
@@ -72,40 +84,66 @@ export function ComboboxRoot({
     }, [getOptionLabel]);
 
     const selected = useMemo<string[]>(() => {
-        return multiple ? (value as string[]) : value ? [value as string] : [];
-    }, [value, multiple]);
+        if (multiple) {
+            return props.value;
+        }
+
+        return props.value ? [props.value] : [];
+    }, [multiple, props.value]);
 
     const filtered = useMemo(() => {
         return options.filter(
             (o) =>
                 (o.toLowerCase().includes(input.toLowerCase()) ||
-                    optionLabel(o).toLowerCase().includes(input.toLowerCase())) &&
-                (!multiple || !selected.includes(o))
+                    optionLabel(o)
+                        .toLowerCase()
+                        .includes(input.toLowerCase())) &&
+                (!multiple || !selected.includes(o)),
         );
-    }, [options, input, multiple, selected, optionLabel]);
+    }, [
+        options,
+        input,
+        multiple,
+        selected,
+        optionLabel,
+    ]);
 
     const normalized = input.trim();
 
     const canCreate =
         allowCreate &&
         normalized.length > 0 &&
-        !options.some((o) => o.toLowerCase() === normalized.toLowerCase()) &&
-        !selected.some((s) => s.toLowerCase() === normalized.toLowerCase());
+        !options.some(
+            (o) =>
+                o.toLowerCase() ===
+                normalized.toLowerCase(),
+        ) &&
+        !selected.some(
+            (s) =>
+                s.toLowerCase() ===
+                normalized.toLowerCase(),
+        );
 
     const select = (v: string) => {
         if (multiple) {
-            onChange([...selected, v]);
+            props.onChange([...selected, v]);
             setInput("");
-        } else {
-            onChange(v);
-            setInput(optionLabel(v));
-            setOpen(false);
+            return;
         }
+
+        props.onChange(v);
+        setInput(optionLabel(v));
+        setOpen(false);
     };
 
     const remove = (v: string) => {
-        if (!multiple) return;
-        onChange(selected.filter((s) => s !== v));
+        if (!multiple) {
+            return;
+        }
+
+        props.onChange(
+            selected.filter((s) => s !== v),
+        );
     };
 
     useEffect(() => {
