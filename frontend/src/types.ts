@@ -239,3 +239,8 @@ export type GetNoteResponse = {
 export type GetNoteTagsResponse = {
   tags: string[];
 };
+
+export type SpellError = {
+  word: string;
+  suggestions: string[];
+};
