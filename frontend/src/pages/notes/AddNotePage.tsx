@@ -3,14 +3,11 @@ import {useRef, useState, useCallback, useMemo} from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { apiFetch, buildQuery } from "../../api/notes";
+import { apiFetch as materialsApiFetch } from "../../api/materials";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox.tsx";
-
-type MetaResponse = {
-  titles: Record<string, string>;
-  tags: string[];
-};
+import { ListMaterialsTitlesResponse } from "../../types.ts";
 
 function isUuid(value: string): boolean {
   return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
@@ -47,10 +44,9 @@ export function AddNotePage() {
   const [successId, setSuccessId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const metaQ = useQuery({
-    queryKey: ["notes", "meta", formData.materialId],
-    queryFn: () => apiFetch<MetaResponse>(`/meta${buildQuery({ material_id: formData.materialId || undefined })}`),
-    enabled: !!formData.materialId && isUuid(formData.materialId),
+  const titlesQ = useQuery({
+    queryKey: ["materials", "titles"],
+    queryFn: () => materialsApiFetch<ListMaterialsTitlesResponse>(`/titles`),
   });
 
   const tagListQ = useQuery({
@@ -109,7 +105,7 @@ export function AddNotePage() {
     },
   });
 
-  const titles = metaQ.data?.titles ?? {};
+  const titles = titlesQ.data?.items ?? {};
   const hasTitles = Object.keys(titles).length > 0;
   const availableTags = tagListQ.data?.tags ?? [];
 
@@ -117,12 +113,12 @@ export function AddNotePage() {
     return Object.keys(titles).sort((a, b) =>
         (titles[a] ?? "").localeCompare(titles[b] ?? ""),
     );
-  }, [metaQ]);
+  }, [titlesQ]);
 
   const pageLabel = "page number";
   const chapterLabel = "chapter";
 
-  if (!metaQ.isLoading && !hasTitles && formData.materialId) {
+  if (!titlesQ.isLoading && !hasTitles && formData.materialId) {
     return <div className="not-found"><p className="message">No materials found</p></div>;
   }
 
