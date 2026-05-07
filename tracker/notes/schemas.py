@@ -268,3 +268,14 @@ class GetNotesGraphResponse(CustomBaseModel):
     iframe_srcdoc: str
     titles: dict[UUID, int]
     material_id: UUID
+
+
+class ListPossibleLinksItem(CustomBaseModel):
+    note_id: UUID
+    title: str | None
+    content: str
+    tags: set[str]
+
+
+class ListPossibleNoteLinksResponse(CustomBaseModel):
+    items: list[ListPossibleLinksItem]

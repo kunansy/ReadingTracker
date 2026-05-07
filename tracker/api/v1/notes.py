@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import NonNegativeInt
 
 from tracker.common import manticoresearch
@@ -169,6 +169,16 @@ async def get_note_tags(material_id: UUID | None = None):
     tags = await db.get_sorted_tags(material_id=material_id)
 
     return {"tags": tags}
+
+
+@router.get("/possible-links", response_model=schemas.ListPossibleNoteLinksResponse)
+async def list_possible_note_links(note_id: UUID):
+    if not (note := await db.get_note_api(note_id=note_id)):
+        raise HTTPException(status_code=404, detail="Note not found")
+
+    possible_links = await db.get_possible_links(note_id=note_id, note_tags=note.tags)
+
+    return {"items": possible_links}
 
 
 @router.get("/{note_id}", response_model=schemas.GetNoteResponse)
