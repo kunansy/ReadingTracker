@@ -165,7 +165,7 @@ async def autocompletion_json(query: str, limit: int = 10):
 
 
 @router.get("/tags", response_model=schemas.NoteTagsResponse)
-async def get_note_tags(material_id: UUID):
+async def get_note_tags(material_id: UUID | None = None):
     tags = await db.get_sorted_tags(material_id=material_id)
 
     return {"tags": tags}
