@@ -31,7 +31,7 @@ type SpellError = {
   suggestions: string[];
 };
 
-export function NoteEditPage() {
+export function UpdateNotePage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const contentRef = useRef<HTMLTextAreaElement>(null);
@@ -237,8 +237,8 @@ export function NoteEditPage() {
                 updateMut.mutate();
               }}
           >
-            <fieldset className="add-note-fieldset">
-              <legend className="add-note-legend"> Edit note </legend>
+            <fieldset className="fieldset">
+              <legend className="legend"> Update </legend>
 
               <ComboboxRoot
                   options={materialOptions}

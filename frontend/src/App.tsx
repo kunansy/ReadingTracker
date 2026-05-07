@@ -12,7 +12,7 @@ import { ListRepeatMaterialsPage } from "./pages/materials/ListRepeatMaterialsPa
 import { UpdateMaterialPage } from "./pages/materials/UpdateMaterialPage";
 import { AddNotePage } from "./pages/notes/AddNotePage";
 import { GraphPage } from "./pages/notes/GraphPage";
-import { NoteEditPage } from "./pages/notes/NoteEditPage";
+import { UpdateNotePage } from "./pages/notes/UpdateNotePage";
 import { NotePage } from "./pages/notes/NotePage";
 import { SearchNotesPage } from "./pages/notes/SearchNotesPage";
 import { ReadingLogLayout } from "./components/ReadingLogLayout.tsx";
@@ -54,7 +54,7 @@ export function App() {
             <Route path="graph" element={<GraphPage />} />
             <Route path="note" element={<NotePage />} />
             <Route path=":noteId" element={<NotePage />} />
-            <Route path=":noteId/edit" element={<NoteEditPage />} />
+            <Route path=":noteId/update" element={<UpdateNotePage />} />
           </Route>
           <Route path="/reading_logs" element={<ReadingLogLayout />}>
             <Route index element={<ListReadingLogsPage />} />
