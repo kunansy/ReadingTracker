@@ -80,7 +80,6 @@ async def list_titles():
     return {"items": titles}
 
 
-
 @router.get("/queue/start", response_model=schemas.GetQueueEdgeResponse)
 async def get_queue_start():
     index = await db.get_queue_start()
