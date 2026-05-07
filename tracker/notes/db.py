@@ -418,20 +418,20 @@ async def _get_material_tags(material_id: str | UUID) -> list[str]:
     return [tag for tag, _ in tags_counter.most_common()]
 
 
-async def get_possible_links(note: Note) -> list[Note]:
+async def get_possible_links(note_id: UUID, note_tags: set[str]) -> list[Note]:
     """Get notes with which the given one might be linked.
 
     So possibility coeff = size of tags set intersection.
     """
-    logger.debug("Getting possible links for note=%s, tags=%s", note.note_id, note.tags)
+    logger.debug("Getting possible links for note=%s, tags=%s", note_id, note_tags)
 
     stmt = (
         sa.select(models.Notes)
         .where(~models.Notes.c.is_deleted)
-        .where(models.Notes.c.note_id != note.note_id)
+        .where(models.Notes.c.note_id != note_id)
         .where(
             sa.text(
-                f"tags ?| array(SELECT jsonb_array_elements_text(tags) FROM notes WHERE note_id = '{note.note_id}')",  # noqa: S608, E501
+                f"tags ?| array(SELECT jsonb_array_elements_text(tags) FROM notes WHERE note_id = '{note_id}')",  # noqa: S608, E501
             ),
         )
     )
@@ -443,7 +443,7 @@ async def get_possible_links(note: Note) -> list[Note]:
         ]
 
     # most possible first
-    links.sort(key=lambda link: len(link.tags & note.tags), reverse=True)
+    links.sort(key=lambda link: len(link.tags & note_tags), reverse=True)
 
     logger.debug("%s possible links got", len(links))
     return links
