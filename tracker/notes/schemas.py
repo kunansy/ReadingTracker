@@ -8,7 +8,7 @@ from pydantic import (
     NonNegativeInt,
     field_serializer,
     field_validator,
-    model_validator,
+    model_validator, conlist, constr, Field,
 )
 
 from tracker.common import settings
@@ -143,6 +143,34 @@ class Note(CustomBaseModel):
                 page = 0
             data["page"] = int(page)
         return data
+
+
+class AddNoteRequest(CustomBaseModel):
+    material_id: UUID
+    title: str | None = None
+    content: str
+    tags: conlist(constr(pattern=TAG_PATTERN, to_lower=True, strip_whitespace=True)) = Field(default_factory=list)
+    link_id: UUID | None = None
+    chapter: str = ""
+    page: NonNegativeInt = 0
+
+    @field_validator("content")
+    def format_content(cls, content: str) -> str:
+        for formatter in NOTES_FORMATTERS:
+            content = formatter(content)
+        return content
+
+    @field_validator("content")
+    def fix_double_spaces(cls, content: str) -> str:
+        return " ".join(word for word in content.split(" ") if word)
+
+    @field_validator("tags")
+    def format_tags(cls, tags: list[str]) -> list[str]:
+        return sorted(tags)
+
+
+class AddNoteResponse(CustomBaseModel):
+    note_id: UUID
 
 
 class UpdateNote(Note):

@@ -129,8 +129,8 @@ async def get_notes_meta(material_id: UUID | None = None):
     }
 
 
-@router.post("/add", status_code=201)
-async def add_note_json(note: schemas.Note):
+@router.post("/add", status_code=201, response_model=schemas.AddNoteResponse)
+async def add_note(note: schemas.AddNoteRequest):
     note_id = await db.add_note(
         material_id=note.material_id,
         link_id=note.link_id,
@@ -140,7 +140,7 @@ async def add_note_json(note: schemas.Note):
         page=note.page,
         tags=note.tags,
     )
-    return {"ok": True, "note_id": note_id}
+    return {"note_id": note_id}
 
 
 @router.patch("/{note_id}", status_code=204)
