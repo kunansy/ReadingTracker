@@ -120,8 +120,8 @@ export function AddReadingLogPage() {
             addMut.mutate();
           }}
         >
-          <fieldset className="log-record-fieldset">
-            <legend className="log-record-legend"> Add reading log </legend>
+          <fieldset className="fieldset">
+            <legend className="legend"> Add reading log </legend>
             <input
               id="input_material_id"
               className="input input-datalist"

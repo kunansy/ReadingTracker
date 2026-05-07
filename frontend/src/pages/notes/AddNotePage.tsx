@@ -173,8 +173,8 @@ export function AddNotePage() {
             addMut.mutate();
           }}
         >
-          <fieldset className="add-note-fieldset">
-            <legend className="add-note-legend"> Add note </legend>
+          <fieldset className="fieldset">
+            <legend className="legend"> Add note </legend>
             <input
               id="input_material_id"
               className="input input-datalist"
