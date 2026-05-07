@@ -48,7 +48,7 @@ async def add_note(note: Annotated[schemas.Note, Form()]):
         content=note.content,
         chapter=note.chapter,
         page=note.page,
-        tags=note.tags,
+        tags=note.tags or [],
     )
 
     response.set_cookie("note_id", note_id, expires=5)
@@ -71,7 +71,7 @@ async def update_note(note: Annotated[schemas.UpdateNote, Form()]):
             content=note.content,
             chapter=note.chapter,
             page=note.page,
-            tags=note.tags,
+            tags=note.tags or [],
         )
 
     except Exception as e:
