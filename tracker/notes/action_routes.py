@@ -41,7 +41,7 @@ async def add_note(note: Annotated[schemas.Note, Form()]):
     ).items():
         response.set_cookie(key, value, expires=3600)
 
-    note_id = await db.add_note(
+    note_id = await db.insert_note(
         material_id=note.material_id,
         link_id=note.link_id,
         title=note.title,
@@ -51,7 +51,7 @@ async def add_note(note: Annotated[schemas.Note, Form()]):
         tags=note.tags or [],
     )
 
-    response.set_cookie("note_id", note_id, expires=5)
+    response.set_cookie("note_id", str(note_id), expires=5)
     if material_type := await db.get_material_type(material_id=note.material_id):
         response.set_cookie("material_type", material_type, expires=5)
 

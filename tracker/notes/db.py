@@ -3,7 +3,7 @@ import datetime
 import re
 from collections import Counter, defaultdict
 from collections.abc import Iterable
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 import networkx as nx
@@ -303,7 +303,7 @@ async def get_all_notes_count() -> dict[UUID, int]:
         return dict((await ses.execute(stmt)).all())  # type: ignore[arg-type]
 
 
-async def add_note(
+async def insert_note(
     *,
     material_id: UUID,
     link_id: UUID | None,
@@ -312,8 +312,8 @@ async def add_note(
     chapter: str,
     page: int,
     tags: list[str],
-) -> str:
-    logger.debug("Adding note for material_id='%s'", material_id)
+) -> UUID:
+    logger.debug("Inserting note for material_id='%s'", material_id)
 
     values = {
         "material_id": str(material_id),
@@ -330,8 +330,8 @@ async def add_note(
     async with database.session() as ses:
         note_id = await ses.scalar(stmt)
 
-    logger.debug("Note_id='%s' added", note_id)
-    return str(note_id)
+    logger.debug("Note_id='%s' inserted", note_id)
+    return cast("UUID", note_id)
 
 
 async def update_note(

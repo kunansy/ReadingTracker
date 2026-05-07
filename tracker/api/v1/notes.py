@@ -131,7 +131,7 @@ async def get_notes_meta(material_id: UUID | None = None):
 
 @router.post("/add", status_code=201, response_model=schemas.AddNoteResponse)
 async def add_note(note: schemas.AddNoteRequest):
-    note_id = await db.add_note(
+    note_id = await db.insert_note(
         material_id=note.material_id,
         link_id=note.link_id,
         title=note.title,
