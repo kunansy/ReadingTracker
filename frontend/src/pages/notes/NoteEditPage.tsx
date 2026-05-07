@@ -35,7 +35,7 @@ export function NoteEditPage() {
   const [materialId, setMaterialId] = useState("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
-  const [tags, setTags] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
   const [linkId, setLinkId] = useState("");
   const [chapter, setChapter] = useState("");
   const [page, setPage] = useState("");
@@ -117,7 +117,7 @@ export function NoteEditPage() {
     setMaterialId(n.material_id);
     setTitle(n.title ?? "");
     setContent(demarkNote(n.content));
-    setTags((n.tags ?? []).map((t) => `#${t}`).join(" "));
+    setTags(n.tags ?? []);
     setLinkId(n.link_id ?? "");
     setChapter(n.chapter ?? "");
     setPage(String(n.page ?? 0));
@@ -181,8 +181,8 @@ export function NoteEditPage() {
             />
             <ComboboxRoot
                 value={tags}
-                onChange={(e) => {
-                  setTags(e.target.value);
+                onChange={(value) => {
+                  setTags(value);
                 }}
                 options={noteTags}
                 multiple
