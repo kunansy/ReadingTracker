@@ -16,6 +16,7 @@ from tracker.notes.listing import build_notes_search_result
 router = APIRouter(prefix="/notes", tags=["notes-api"])
 
 
+# TODO: refactor with schemas
 def _note_list_item(note: db.Note) -> dict[str, Any]:
     return {
         "note_id": str(note.note_id),
@@ -50,6 +51,7 @@ def _serialize_material_notes(counts: dict[UUID, int]) -> dict[str, int]:
     return {str(k): v for k, v in counts.items()}
 
 
+# TODO: split the request
 @router.get("/search")
 async def notes_search_json(
     search: Annotated[schemas.SearchParams, Depends()],
@@ -57,6 +59,7 @@ async def notes_search_json(
     page_size: NonNegativeInt = 10,
 ):
     # TODO: get cards count
+    # TODO: implement pagination
     ctx = await build_notes_search_result(
         search=search,
         page=page,
@@ -120,6 +123,7 @@ async def notes_graph_json(material_id: UUID | None = None):
     }
 
 
+# TODO: split the request
 @router.get("/meta", response_model=schemas.GetNotesMetaResponse, deprecated=True)
 async def get_notes_meta(material_id: UUID | None = None):
     async with asyncio.TaskGroup() as tg:
@@ -215,3 +219,6 @@ async def get_note(note_id: UUID):
     note = await db.get_note_api(note_id=note_id)
 
     return {"note": note}
+
+
+# TODO: add another action endpoints here
