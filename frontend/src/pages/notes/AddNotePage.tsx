@@ -1,16 +1,14 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {useRef, useState, useCallback, useMemo, useEffect} from "react";
+import {useState, useCallback, useMemo, useEffect} from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { apiFetch, buildQuery } from "../../api/notes";
 import { apiFetch as materialsApiFetch } from "../../api/materials";
 import { CelebrateButton } from "../../components/CelebrateButton";
-import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox.tsx";
 import {ListMaterialsTitlesResponse, AddNoteRequest, MaterialType, GetMaterialResponse} from "../../types.ts";
-import { useSpellChecker } from "../../hooks/useSpellChecker.ts";
-import { SpellErrorsList } from "../../components/SpellErrorsList.tsx";
 import {isUuid} from "../../utils/isUuid.ts";
+import {SpellTextarea} from "../../components/SpellTextrea.tsx";
 
 
 export function AddNotePage() {
@@ -18,9 +16,6 @@ export function AddNotePage() {
   const initialMaterial = searchParams.get("material_id") ?? "";
   const [pageName, setPageName] = useState("page number");
   const [chapterName, setChapterName] = useState("chapter");
-
-  const contentRef = useRef<HTMLTextAreaElement>(null);
-  useAltchHotkeys(contentRef);
 
   const [formData, setFormData] = useState<AddNoteRequest>({
     materialId: initialMaterial,
@@ -33,11 +28,6 @@ export function AddNotePage() {
   });
   const [successId, setSuccessId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const { spellErrors, replaceWord } = useSpellChecker(
-      formData.content,
-      (newContent) => updateFormData({ content: newContent })
-  );
 
   const titlesQ = useQuery({
     queryKey: ["materials", "titles"],
@@ -177,20 +167,13 @@ export function AddNotePage() {
                   onChange={(e) => updateFormData({ title: e.target.value })}
               />
 
-              <textarea
-                  ref={contentRef}
+              <SpellTextarea
                   className="input"
                   placeholder="Enter a content"
                   value={formData.content}
-                  title="Text of the note"
-                  onChange={(e) => updateFormData({ content: e.target.value })}
-                  rows={6}
-                  style={{
-                    height: "30vh",
-                  }}
+                  onChange={(content) => updateFormData({ content })}
+                  style={{ height: "30vh", }}
               />
-
-              <SpellErrorsList spellErrors={spellErrors} onReplace={replaceWord} />
 
               <ComboboxRoot
                   multiple

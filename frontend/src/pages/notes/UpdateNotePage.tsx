@@ -1,27 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { apiFetch, buildQuery } from "../../api/notes";
 import { apiFetch as materialsApiFetch } from "../../api/materials";
 import { CelebrateButton } from "../../components/CelebrateButton";
-import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
 import {
   GetNoteResponse,
   GetNoteTagsResponse,
   ListMaterialsTitlesResponse, ListPossibleLinkResponse,
 } from "../../types.ts";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox.tsx";
-import { useSpellChecker } from "../../hooks/useSpellChecker.ts";
-import { SpellErrorsList } from "../../components/SpellErrorsList.tsx";
 import {isUuid} from "../../utils/isUuid.ts";
+import {SpellTextarea} from "../../components/SpellTextrea.tsx";
 
 
 export function UpdateNotePage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
-  const contentRef = useRef<HTMLTextAreaElement>(null);
-  useAltchHotkeys(contentRef);
 
   const { noteId: noteIdParam } = useParams();
   const [searchParams] = useSearchParams();
@@ -35,8 +31,6 @@ export function UpdateNotePage() {
   const [chapter, setChapter] = useState("");
   const [page, setPage] = useState("");
   const [error, setError] = useState<string | null>(null);
-
-  const { spellErrors, replaceWord } = useSpellChecker(content, setContent);
 
   const noteId = useMemo(() => {
     const fromParam = (noteIdParam ?? "").trim();
@@ -172,20 +166,14 @@ export function UpdateNotePage() {
                     setTitle(e.target.value);
                   }}
               />
-              <textarea
-                  ref={contentRef}
+
+              <SpellTextarea
                   className="input"
                   placeholder="Enter a content"
                   value={content}
-                  onChange={(e) => {
-                    setContent(e.target.value);
-                  }}
-                  style={{
-                    height: "30vh",
-                  }}
+                  onChange={setContent}
+                  style={{ height: "30vh", }}
               />
-
-              <SpellErrorsList spellErrors={spellErrors} onReplace={replaceWord} />
 
               <ComboboxRoot
                   value={tags}
