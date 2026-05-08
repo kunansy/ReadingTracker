@@ -4,6 +4,7 @@ import {useNavigate, useSearchParams} from "react-router-dom";
 
 import { apiFetch, buildQuery } from "../../api/notes";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
+import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 
 type NoteListItem = {
   note_id: string;
@@ -617,7 +618,7 @@ export function SearchNotesPage() {
                           ) : null}
                           <p
                             className="note-content"
-                            dangerouslySetInnerHTML={{ __html: note.content_html }}
+                            dangerouslySetInnerHTML={{ __html: parseMarkdown(note.content_html) }}
                           />
                           {note.tags_html ? (
                             <p
