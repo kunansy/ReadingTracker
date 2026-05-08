@@ -70,7 +70,7 @@ export function NotePage() {
           <div className="to-link">
             <div
               className="note-link"
-              onClick={async () => navigate(`/notes/${noteLinks.link_to.note_id}`)}
+              onClick={() => navigate(`/notes/${noteLinks.link_to.note_id}`)}
               title={noteLinks.link_to.info}
             />
           </div>
@@ -138,7 +138,7 @@ export function NotePage() {
                 <div
                   className="note-link"
                   key={link.note_id}
-                  onClick={async () => navigate(`/notes/${link.note_id}`)}
+                  onClick={() => navigate(`/notes/${link.note_id}`)}
                   title={link.info}
                 />
               )
