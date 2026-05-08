@@ -38,27 +38,31 @@ export function NotePage() {
     enabled: Boolean(noteId),
     queryFn: () => apiFetch<GetNoteResponse>(`/${noteId}`),
   });
+
   const materialQ = useQuery({
     queryKey: ["materials", q.data?.note.material_id],
     enabled: Boolean(q.data?.note.material_id),
-    queryFn: () => materialsApiFetch<GetMaterialResponse>(`/${q.data?.note.material_id}`),
+    queryFn: () =>
+      materialsApiFetch<GetMaterialResponse>(`/${q.data?.note.material_id}`),
   });
+
   const noteLinksQ = useQuery({
     queryKey: ["notes", "links", noteId],
     enabled: Boolean(noteId),
-    queryFn: () => apiFetch<GetNoteLinksResponse>(`/links${buildQuery({note_id: noteId})}`),
+    queryFn: () =>
+      apiFetch<GetNoteLinksResponse>(`/links${buildQuery({ note_id: noteId })}`),
   });
 
   useEffect(() => {
     const materialType = materialQ.data?.material.material_type || MaterialType.book;
     setPageName("Page");
-    if (materialType == MaterialType.lecture || materialType == MaterialType.audiobook) {
+    if (materialType === MaterialType.lecture || materialType === MaterialType.audiobook) {
       setPageName("Minute");
     }
-    if (materialType == MaterialType.course) {
+    if (materialType === MaterialType.course) {
       setPageName("Lecture");
     }
-  }, [materialQ.data?.material.material_type])
+  }, [materialQ.data?.material.material_type]);
 
   if (!noteId) {
     return <p className="error">Invalid note id</p>;
