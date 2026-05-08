@@ -8,12 +8,7 @@ import { GetMaterialResponse, GetNoteLinksResponse, GetNoteResponse, MaterialTyp
 import { NetworkIframe } from "../../components/NetworkIframe";
 import { QueryStateFromResult } from "../../components/QueryState";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
-
-function isUuid(value: string): boolean {
-  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
-    value.trim(),
-  );
-}
+import {isUuid} from "../../utils/isUuid.ts";
 
 export function NotePage() {
   const { noteId: noteIdParam } = useParams();
