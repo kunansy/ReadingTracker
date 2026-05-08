@@ -1,5 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {useRef, useState, useCallback, useMemo} from "react";
+import {useRef, useState, useCallback, useMemo, useEffect} from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { apiFetch, buildQuery } from "../../api/notes";
@@ -7,7 +7,7 @@ import { apiFetch as materialsApiFetch } from "../../api/materials";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox.tsx";
-import { ListMaterialsTitlesResponse, AddNoteRequest } from "../../types.ts";
+import {ListMaterialsTitlesResponse, AddNoteRequest, MaterialType, GetMaterialResponse} from "../../types.ts";
 import { useSpellChecker } from "../../hooks/useSpellChecker.ts";
 import { SpellErrorsList } from "../../components/SpellErrorsList.tsx";
 import {isUuid} from "../../utils/isUuid.ts";
@@ -16,6 +16,8 @@ import {isUuid} from "../../utils/isUuid.ts";
 export function AddNotePage() {
   const [searchParams] = useSearchParams();
   const initialMaterial = searchParams.get("material_id") ?? "";
+  const [pageName, setPageName] = useState("page number");
+  const [chapterName, setChapterName] = useState("chapter");
 
   const contentRef = useRef<HTMLTextAreaElement>(null);
   useAltchHotkeys(contentRef);
@@ -46,6 +48,26 @@ export function AddNotePage() {
     queryKey: ["tags", formData.materialId],
     queryFn: () => apiFetch<{ tags: string[] }>(`/tags${buildQuery({ material_id: formData.materialId || undefined })}`),
   });
+  const materialId = initialMaterial || formData.materialId;
+  const materialQ = useQuery({
+    queryKey: ["materials", materialId],
+    enabled: !!materialId,
+    queryFn: () =>
+        materialsApiFetch<GetMaterialResponse>(`/${materialId}`),
+  });
+
+  useEffect(() => {
+    const materialType = materialQ.data?.material.material_type || MaterialType.book;
+    setPageName("Page");
+    setChapterName("Chapter");
+    if (materialType === MaterialType.lecture || materialType === MaterialType.audiobook) {
+      setPageName("Minute");
+    }
+    if (materialType === MaterialType.course) {
+      setPageName("Lecture");
+      setChapterName("Block");
+    }
+  }, [materialQ.data?.material.material_type]);
 
   const updateFormData = useCallback((updates: Partial<AddNoteRequest>) => {
     setFormData(prev => ({ ...prev, ...updates }));
@@ -106,10 +128,6 @@ export function AddNotePage() {
         (titles[a] ?? "").localeCompare(titles[b] ?? ""),
     );
   }, [titlesQ]);
-
-  // TODO
-  const pageLabel = "page number";
-  const chapterLabel = "chapter";
 
   if (titlesQ.error || tagListQ.error) {
     return <p className="error">{((titlesQ.error || tagListQ.error) as Error).message}</p>;
@@ -197,18 +215,18 @@ export function AddNotePage() {
 
               <input
                   className="input"
-                  placeholder={`Enter a ${chapterLabel}`}
+                  placeholder={`Enter a ${chapterName.toLowerCase()}`}
                   value={formData.chapter}
-                  title={`${chapterLabel} where the note might be found`}
+                  title={`${chapterName} where the note might be found`}
                   onChange={(e) => updateFormData({ chapter: e.target.value })}
               />
 
               <input
                   className="input"
                   type="number"
-                  placeholder={`Enter a ${pageLabel}`}
+                  placeholder={`Enter a ${pageName.toLowerCase()}`}
                   value={formData.page || ""}
-                  title={`${pageLabel} where the note might be found`}
+                  title={`${pageName} where the note might be found`}
                   onChange={(e) => updateFormData({ page: Number(e.target.value) || 0 })}
                   min={0}
               />
