@@ -187,6 +187,9 @@ export function UpdateNotePage() {
                   onChange={(e) => {
                     setContent(e.target.value);
                   }}
+                  style={{
+                    height: "30vh",
+                  }}
               />
 
               <SpellErrorsList spellErrors={spellErrors} onReplace={replaceWord} />
