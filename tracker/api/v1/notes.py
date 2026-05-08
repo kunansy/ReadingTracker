@@ -186,6 +186,7 @@ async def list_possible_note_links(note_id: UUID):
 
 @router.get("/links-network", response_class=HTMLResponse)
 async def get_note_links_network(note_id: UUID):
+    # TODO: try to refactor without full listing
     notes = {note.note_id: note for note in await db.get_notes()}
     graph = db.link_notes(note_id=note_id, notes=notes)
     return db.create_graphic(graph)
