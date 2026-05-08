@@ -37,10 +37,6 @@ def _serialize_chapters(chapters: defaultdict[UUID, list[str]]) -> dict[str, lis
     return {str(k): v for k, v in chapters.items()}
 
 
-def _serialize_titles(titles: dict[UUID, str]) -> dict[str, str]:
-    return {str(k): v for k, v in titles.items()}
-
-
 def _serialize_material_types(
     types_: dict[str, enums.MaterialTypesEnum],
 ) -> dict[str, str]:
@@ -74,7 +70,7 @@ async def notes_search_json(
     return {
         "notes": [_note_list_item(n) for n in notes],
         "total_count": ctx["total_count"],
-        "titles": _serialize_titles(titles),
+        "titles": titles,
         "material_types": _serialize_material_types(material_types),
         "material_notes": _serialize_material_notes(material_notes),
         "chapters": _serialize_chapters(chapters),
@@ -118,7 +114,7 @@ async def notes_graph_json(material_id: UUID | None = None):
     iframe_srcdoc = db.create_graphic(graph, height="80vh")
     return {
         "iframe_srcdoc": iframe_srcdoc,
-        "titles": _serialize_titles(titles),
+        "titles": titles,
         "material_id": str(material_id) if material_id else None,
     }
 
