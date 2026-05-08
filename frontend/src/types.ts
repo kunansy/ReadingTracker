@@ -264,3 +264,13 @@ type PossibleLink = {
 export type ListPossibleLinkResponse = {
   items: PossibleLink[];
 }
+
+type NoteLinkItem = {
+  note_id: string;
+  info: string;
+}
+
+export type GetNoteLinksResponse = {
+  links_from: NoteLinkItem[];
+  link_to: NoteLinkItem;
+}
