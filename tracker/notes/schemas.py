@@ -279,3 +279,13 @@ class ListPossibleLinksItem(CustomBaseModel):
 
 class ListPossibleNoteLinksResponse(CustomBaseModel):
     items: list[ListPossibleLinksItem]
+
+
+class GetNoteLinksItem(CustomBaseModel):
+    note_id: UUID
+    info: str = ""
+
+
+class GetNoteLinksResponse(CustomBaseModel):
+    link_to: GetNoteLinksItem | None
+    links_from: list[GetNoteLinksItem] | None

@@ -11,7 +11,6 @@ from tracker.common import settings
 from tracker.materials import db as materials_db
 from tracker.models import enums
 from tracker.notes import cached, db, schemas
-from tracker.notes.links import get_note_links
 from tracker.notes.listing import build_notes_search_result
 
 
@@ -30,7 +29,7 @@ async def get_note(request: Request, note_id: UUID):
         get_material_task = tg.create_task(
             materials_db.get_material(material_id=note.material_id),
         )
-        get_note_links_task = tg.create_task(get_note_links(note))
+        get_note_links_task = tg.create_task(_get_note_links(note))
 
     context = note.model_dump() | {
         "request": request,
@@ -169,6 +168,17 @@ async def get_graph(request: Request, material_id: UUID | str | None = None):
         "material_id": material_id,
     }
     return templates.TemplateResponse(request, "notes/graph.html", context)
+
+
+async def _get_note_links(note: db.Note) -> dict[str, Any]:
+    async with asyncio.TaskGroup() as tg:
+        get_links_from_task = tg.create_task(db.get_links_from(note_id=note.note_id))
+        if note.link_id:
+            get_link_to_task = tg.create_task(cached.get_note(note.link_id))
+        else:
+            get_link_to_task = tg.create_task(asyncio.sleep(1 / 1000, result=None))
+
+    return {"from": get_links_from_task.result(), "to": get_link_to_task.result()}
 
 
 router.include_router(note_detail_router)
