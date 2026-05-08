@@ -148,7 +148,7 @@ export function NotePage() {
                   {( materialResponse: GetMaterialResponse | undefined ) => {
                     const material = materialResponse?.material;
                     if (!material) {
-                      return <p>Note not found</p>;
+                      return <p>Material not found</p>;
                     }
                     return <>
                       <p className="medium-text">Material id: {material.material_id}</p>
