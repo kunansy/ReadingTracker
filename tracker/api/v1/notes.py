@@ -161,7 +161,7 @@ async def update_note(note_id: UUID, body: schemas.UpdateNoteRequest):
 
 
 @router.get("/autocompletion", response_model=schemas.AutocompletionResponse)
-async def autocompletion_json(query: str, limit: int = 10):
+async def get_autocompletion(query: str, limit: int = 10):
     autocompletions = await manticoresearch.autocompletion(query=query, limit=limit)
 
     return {"autocompletions": autocompletions}
