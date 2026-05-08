@@ -10,12 +10,7 @@ import {
   GetMaterialReadingNowResponse,
   ListReadingMaterialsTitlesResponse
 } from "../../types.ts";
-
-export function isUuid(value: string): boolean {
-  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
-    value.trim(),
-  );
-}
+import {isUuid} from "../../utils/isUuid.ts";
 
 export function AddReadingLogPage() {
   const [searchParams] = useSearchParams();

@@ -14,13 +14,8 @@ import {
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox.tsx";
 import { useSpellChecker } from "../../hooks/useSpellChecker.ts";
 import { SpellErrorsList } from "../../components/SpellErrorsList.tsx";
+import {isUuid} from "../../utils/isUuid.ts";
 
-
-function isUuid(value: string): boolean {
-  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
-    value.trim(),
-  );
-}
 
 function demarkNote(s: string): string {
   return s;

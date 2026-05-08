@@ -11,6 +11,7 @@ import {
   ComboboxRoot,
 } from "../../components/Combobox";
 import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
+import {isUuid} from "../../utils/isUuid.ts";
 
 type NoteListItem = {
   note_id: string;
@@ -37,11 +38,6 @@ type NotesWithCardsResponse = {
   items: string[];
 };
 
-export function isUuid(value: string): boolean {
-  return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
-    value.trim(),
-  );
-}
 
 function stripHtml(html: string): string {
   const tmp = document.createElement("div");
