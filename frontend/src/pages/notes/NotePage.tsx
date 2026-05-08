@@ -7,6 +7,7 @@ import { apiFetch as materialsApiFetch } from "../../api/materials";
 import { GetMaterialResponse, GetNoteLinksResponse, GetNoteResponse, MaterialType } from "../../types";
 import { NetworkIframe } from "../../components/NetworkIframe";
 import { QueryStateFromResult } from "../../components/QueryState";
+import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 
 function isUuid(value: string): boolean {
   return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
@@ -102,7 +103,7 @@ export function NotePage() {
                 ) : null}
                 <p
                   className="note-content"
-                  dangerouslySetInnerHTML={{ __html: note.content }}
+                  dangerouslySetInnerHTML={{ __html: parseMarkdown(note.content) }}
                 />
                 {note.tags?.length ? (
                   <div
