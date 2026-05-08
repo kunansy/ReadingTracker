@@ -56,6 +56,7 @@ async def notes_search_json(
     page: NonNegativeInt = 1,
     page_size: NonNegativeInt = 10,
 ):
+    # TODO: get cards count
     ctx = await build_notes_search_result(
         search=search,
         page=page,
