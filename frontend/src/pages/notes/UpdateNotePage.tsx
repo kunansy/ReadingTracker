@@ -17,12 +17,6 @@ import { SpellErrorsList } from "../../components/SpellErrorsList.tsx";
 import {isUuid} from "../../utils/isUuid.ts";
 
 
-function demarkNote(s: string): string {
-  return s;
-  // todo
-  // return s.replaceAll("&lt;", "<").replaceAll("&gt;", ">");
-}
-
 export function UpdateNotePage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
@@ -124,7 +118,7 @@ export function UpdateNotePage() {
     }
     setMaterialId(n.material_id);
     setTitle(n.title ?? "");
-    setContent(demarkNote(n.content));
+    setContent(n.content);
     setTags(n.tags ?? []);
     setLinkId(n.link_id ?? "");
     setChapter(n.chapter ?? "");
