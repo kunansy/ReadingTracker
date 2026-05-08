@@ -189,6 +189,23 @@ async def get_note_links_network(note_id: UUID):
     return db.create_graphic(graph)
 
 
+@router.get("/links", response_model=schemas.GetNoteLinksResponse)
+async def get_note_links(note_id: UUID):
+    note = await db.get_note_api(note_id=note_id)
+
+    async with asyncio.TaskGroup() as tg:
+        get_links_from_task = tg.create_task(db.get_links_from(note_id=note_id))
+        if note.link_id:
+            get_link_to_task = tg.create_task(db.get_note_api(note_id=note.link_id))
+        else:
+            get_link_to_task = tg.create_task(asyncio.sleep(1 / 1000, result=None))
+
+    return {
+        "links_from": get_links_from_task.result(),
+        "link_to": get_link_to_task.result(),
+    }
+
+
 @router.get("/{note_id}", response_model=schemas.GetNoteResponse)
 async def get_note(note_id: UUID):
     note = await db.get_note_api(note_id=note_id)
