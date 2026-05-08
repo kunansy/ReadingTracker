@@ -5,6 +5,7 @@ import {Link, useNavigate, useParams, useSearchParams} from "react-router-dom";
 import {apiFetch, buildQuery} from "../../api/notes";
 import {apiFetch as materialsApiFetch} from "../../api/materials";
 import {GetMaterialResponse, GetNoteLinksResponse, GetNoteResponse, MaterialType} from "../../types.ts";
+import {NetworkIframe} from "../../components/NetworkIframe.tsx";
 
 function isUuid(value: string): boolean {
   return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
@@ -159,10 +160,7 @@ export function NotePage() {
         ) : null}
       </div>
 
-      <iframe
-        className="iframe"
-        src={`/api/v1/notes/links-network?note_id=${note.note_id}`}
-      />
+      <NetworkIframe key={note.note_id} src={`/api/v1/notes/links-network?note_id=${note.note_id}`}/>
     </>
   );
 }
