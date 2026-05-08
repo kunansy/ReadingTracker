@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
-import {useNavigate, useParams, useSearchParams} from "react-router-dom";
+import {Link, useNavigate, useParams, useSearchParams} from "react-router-dom";
 
 import {apiFetch, buildQuery} from "../../api/notes";
 import { apiFetch as materialsApiFetch } from "../../api/materials";
@@ -93,27 +93,27 @@ export function NotePage() {
             >
               {note.tags.map((t) => {
                   return (
-                    <a
+                    <Link
                         className="note-tag"
-                        href={`/notes?tags_query=${t}`}
+                        to={`/notes?tags_query=${t}`}
                     >
                       #{t}
-                    </a>
+                    </Link>
                   )
                 })}
             </div>
           ) : null}
           {note.link_id ?
               <p className="note-content">
-                <a
-                  href={`/notes/${note.link_id}`}
+                <Link
+                  to={`/notes/${note.link_id}`}
                   style={{
                     textAlign: "left",
                     fontSize: "2.5vh",
                   }}
                 >
                   [[{note.link_id}]]
-                </a>
+                </Link>
               </p> : null}
           <p className="medium-text">Page: {note.page} of {material.pages}</p>
           <p className="medium-text">Added at: {note.added_at}</p>
