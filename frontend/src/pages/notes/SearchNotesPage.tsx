@@ -16,6 +16,7 @@ type NoteListItem = {
   chapter_int: number;
   page: number;
   links_count: number;
+  is_deleted?: boolean;
 };
 
 type SearchResponse = {
@@ -36,17 +37,6 @@ type SearchResponse = {
 type MetaResponse = {
   titles: Record<string, string>;
   tags: string[];
-};
-
-type NoteJson = {
-  note_id: string;
-  material_id: string;
-  is_deleted: boolean;
-};
-
-type HasCards = {
-  has_cards: boolean;
-  cards_count: number;
 };
 
 const PAGE_SIZE = 10;
@@ -113,26 +103,6 @@ function buildPaginationItems(
   }
   items.push("»");
   return items;
-}
-
-async function fetchNoteJson(noteId: string): Promise<NoteJson> {
-  const r = await apiFetch<NoteJson>(`/${noteId}`);
-  if (!r) {
-    throw new Error("Empty note response");
-  }
-  return r;
-}
-
-async function fetchHasCards(noteId: string): Promise<HasCards> {
-  const res = await fetch(`/cards/has-cards?note_id=${encodeURIComponent(noteId)}`, {
-    credentials: "same-origin",
-    headers: { "Content-Type": "application/json" },
-  });
-  const text = await res.text();
-  if (!res.ok) {
-    throw new Error(text.slice(0, 200) || `HTTP ${res.status}`);
-  }
-  return JSON.parse(text) as HasCards;
 }
 
 export function SearchNotesPage() {
@@ -263,62 +233,50 @@ export function SearchNotesPage() {
   });
 
   const onNoteContextMenu = useCallback(
-    (e: React.MouseEvent, noteId: string) => {
+    (e: React.MouseEvent, note: {note_id: string, material_id: string, is_deleted?: boolean, has_cards?: boolean, cards_count?: number}) => {
       e.preventDefault();
       close();
       void (async () => {
-        let noteJson: NoteJson;
-        try {
-          noteJson = await fetchNoteJson(noteId);
-        } catch {
-          return;
-        }
-        let hasCards: HasCards = { has_cards: false, cards_count: 0 };
-        try {
-          hasCards = await fetchHasCards(noteId);
-        } catch {
-          /* ignore */
-        }
         const items: { label: string; action: () => void | Promise<void> }[] = [
           {
             label: "Open",
             action: () => {
-              navigate(`/notes/${noteId}`);
+              navigate(`/notes/${note.note_id}`);
             },
           },
           {
             label: "Edit",
             action: () => {
-              navigate(`/notes/${noteId}/update`);
+              navigate(`/notes/${note.note_id}/update`);
             },
           },
         ];
-        if (noteJson.is_deleted) {
+        if (note.is_deleted) {
           items.push({
             label: "Restore",
             action: async () => {
-              await restoreMut.mutateAsync(noteId);
+              await restoreMut.mutateAsync(note.note_id);
             },
           });
         } else {
           items.push({
             label: "Delete",
             action: async () => {
-              await deleteMut.mutateAsync(noteId);
+              await deleteMut.mutateAsync(note.note_id);
             },
           });
         }
         items.push({
           label: "Add card",
           action: () => {
-            navigate(`/cards/add?note_id=${noteId}&material_id=${noteJson.material_id}`);
+            navigate(`/cards/add?note_id=${note.note_id}&material_id=${note.material_id}`);
           },
         });
-        if (hasCards.has_cards) {
+        if (note.has_cards) {
           items.push({
-            label: `Open cards (${hasCards.cards_count})`,
+            label: `Open cards (${note.cards_count})`,
             action: () => {
-              navigate(`/cards/?note_id=${encodeURIComponent(noteId)}`);
+              navigate(`/cards/?note_id=${encodeURIComponent(note.note_id)}`);
             },
           });
         }
@@ -326,7 +284,7 @@ export function SearchNotesPage() {
           label: "Insert to repeat queue",
           action: async () => {
             const res = await fetch(
-              `/notes/repeat-queue/insert?note_id=${encodeURIComponent(noteId)}`,
+              `/notes/repeat-queue/insert?note_id=${encodeURIComponent(note.note_id)}`,
               {
                 method: "POST",
                 credentials: "same-origin",
@@ -634,7 +592,7 @@ export function SearchNotesPage() {
                           key={note.note_id}
                           className="note hover"
                           id={note.note_id}
-                          onContextMenu={(e) => onNoteContextMenu(e, note.note_id)}
+                          onContextMenu={(e) => onNoteContextMenu(e, note)}
                         >
                           <p className="little-text">
                             {" "}
