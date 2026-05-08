@@ -1,10 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import {useQuery} from "@tanstack/react-query";
+import {useEffect, useMemo, useState} from "react";
 import {Link, useNavigate, useParams, useSearchParams} from "react-router-dom";
 
 import {apiFetch, buildQuery} from "../../api/notes";
-import { apiFetch as materialsApiFetch } from "../../api/materials";
-import {GetNoteResponse, GetMaterialResponse, GetNoteLinksResponse} from "../../types.ts";
+import {apiFetch as materialsApiFetch} from "../../api/materials";
+import {GetMaterialResponse, GetNoteLinksResponse, GetNoteResponse, MaterialType} from "../../types.ts";
 
 function isUuid(value: string): boolean {
   return /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/.test(
@@ -17,6 +17,7 @@ export function NotePage() {
   const [searchParams] = useSearchParams();
   const noteIdQuery = searchParams.get("note_id") ?? "";
   const navigate = useNavigate();
+  const [pageName, setPageName] = useState("Page");
 
   const noteId = useMemo(() => {
     const fromParam = (noteIdParam ?? "").trim();
@@ -45,6 +46,17 @@ export function NotePage() {
     enabled: Boolean(noteId),
     queryFn: () => apiFetch<GetNoteLinksResponse>(`/links${buildQuery({note_id: noteId})}`),
   });
+
+  useEffect(() => {
+    const materialType = materialQ.data?.material.material_type || MaterialType.book;
+    setPageName("Page");
+    if (materialType == MaterialType.lecture || materialType == MaterialType.audiobook) {
+      setPageName("Minute");
+    }
+    if (materialType == MaterialType.course) {
+      setPageName("Lecture");
+    }
+  }, [materialQ.data?.material.material_type])
 
   if (!noteId) {
     return <p className="error">Invalid note id</p>;
@@ -115,7 +127,7 @@ export function NotePage() {
                   [[{note.link_id}]]
                 </Link>
               </p> : null}
-          <p className="medium-text">Page: {note.page} of {material.pages}</p>
+          <p className="medium-text">{pageName}: {note.page} of {material.pages}</p>
           <p className="medium-text">Added at: {note.added_at}</p>
           <hr/>
           <p className="medium-text">Material id: {material.material_id}</p>
