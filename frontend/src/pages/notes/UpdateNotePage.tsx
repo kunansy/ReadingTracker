@@ -174,8 +174,7 @@ export function UpdateNotePage() {
               />
               <textarea
                   ref={contentRef}
-                  className="input altch"
-                  id="input-content"
+                  className="input"
                   placeholder="Enter a content"
                   value={content}
                   onChange={(e) => {
