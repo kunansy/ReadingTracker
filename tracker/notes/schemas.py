@@ -27,7 +27,8 @@ PUNCTUATION_MAPPING = {
 }
 UP_INDEX_PATTERN = re.compile(r"(\S)\^(\S+)(\s)")
 
-_TAG_PATTERN = r"(\w+)"
+# TODO: implement test
+_TAG_PATTERN = r"^(\w+)$"
 TAG_PATTERN = re.compile(_TAG_PATTERN)
 LINK_PATTERN = re.compile(
     r"\[\[([0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12})\]\]",
