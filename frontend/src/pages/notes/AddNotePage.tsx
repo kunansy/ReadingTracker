@@ -185,6 +185,9 @@ export function AddNotePage() {
                   title="Text of the note"
                   onChange={(e) => updateFormData({ content: e.target.value })}
                   rows={6}
+                  style={{
+                    height: "30vh",
+                  }}
               />
 
               <SpellErrorsList spellErrors={spellErrors} onReplace={replaceWord} />
