@@ -145,7 +145,7 @@ export function AddNotePage() {
               >
                 <ComboboxInput
                     placeholder="Choose a material"
-                    className="input input-datalist"
+                    className="input"
                     title="ID of the material"
                 />
                 <ComboboxList />
@@ -161,7 +161,7 @@ export function AddNotePage() {
 
               <textarea
                   ref={contentRef}
-                  className="input altch"
+                  className="input"
                   placeholder="Enter a content"
                   value={formData.content}
                   title="Text of the note"
