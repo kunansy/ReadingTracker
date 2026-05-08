@@ -4,6 +4,7 @@ from typing import Annotated, Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import HTMLResponse
 from pydantic import NonNegativeInt
 
 from tracker.common import manticoresearch
@@ -179,6 +180,13 @@ async def list_possible_note_links(note_id: UUID):
     possible_links = await db.get_possible_links(note_id=note_id, note_tags=note.tags)
 
     return {"items": possible_links}
+
+
+@router.get("/links-network", response_class=HTMLResponse)
+async def get_note_links_network(note_id: UUID):
+    notes = {note.note_id: note for note in await db.get_notes()}
+    graph = db.link_notes(note_id=note_id, notes=notes)
+    return db.create_graphic(graph)
 
 
 @router.get("/{note_id}", response_model=schemas.GetNoteResponse)
