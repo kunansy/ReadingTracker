@@ -69,6 +69,10 @@ p.note-content {
     text-align: left;
     font-size: 2.5vh;
 }
+p.note-content > ul {
+    display: block;
+}
+
 .note-tag {
     font-size: 2.5vh;
 }
