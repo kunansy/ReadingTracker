@@ -144,7 +144,6 @@ export function AddNotePage() {
                   onChange={(id) => updateFormData({ materialId: id })}
               >
                 <ComboboxInput
-                    id="input_material_id"
                     placeholder="Choose a material"
                     className="input input-datalist"
                     title="ID of the material"
@@ -163,7 +162,6 @@ export function AddNotePage() {
               <textarea
                   ref={contentRef}
                   className="input altch"
-                  id="input-content"
                   placeholder="Enter a content"
                   value={formData.content}
                   title="Text of the note"
@@ -182,7 +180,6 @@ export function AddNotePage() {
                   allowCreate
               >
                 <ComboboxInput
-                    id="note-tags"
                     className="input"
                     placeholder="Enter tags"
                     title="Tags for the note"
