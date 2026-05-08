@@ -198,7 +198,9 @@ async def get_note_links(note_id: UUID):
     async with asyncio.TaskGroup() as tg:
         get_links_from_task = tg.create_task(db.get_links_from(note_id=note_id))
         if note.link_id:
-            get_link_to_task = tg.create_task(db.get_note_api(note_id=note.link_id))
+            get_link_to_task: asyncio.Task[db.Note | None] = tg.create_task(
+                db.get_note_api(note_id=note.link_id),
+            )
         else:
             get_link_to_task = tg.create_task(asyncio.sleep(1 / 1000, result=None))
 
