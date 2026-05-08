@@ -28,6 +28,7 @@ def _note_list_item(note: db.Note) -> dict[str, Any]:
         "chapter_int": note.chapter_int,
         "page": note.page,
         "links_count": note.links_count,
+        "is_deleted": note.is_deleted,
     }
 
 
