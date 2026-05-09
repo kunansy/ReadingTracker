@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import {useEffect, useMemo, useState} from "react";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 
 import { apiFetch } from "../../api/readingLog";
@@ -10,6 +10,7 @@ import {
   ListReadingMaterialsTitlesResponse
 } from "../../types.ts";
 import {isUuid} from "../../utils/isUuid.ts";
+import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
 
 export function AddReadingLogPage() {
   const [searchParams] = useSearchParams();
@@ -89,6 +90,13 @@ export function AddReadingLogPage() {
     },
   });
 
+  const titles = readingMaterialsTitles?.items ?? {};
+  const materialOptions = useMemo(() => {
+    return Object.keys(titles).sort((a, b) =>
+        (titles[a] ?? "").localeCompare(titles[b] ?? ""),
+    );
+  }, [titles]);
+
   if (getMaterialReadingNow.isLoading || completionQ.isLoading || readingMaterialsTitlesQ.isLoading) {
     return <p>Loading…</p>;
   }
@@ -113,27 +121,19 @@ export function AddReadingLogPage() {
         >
           <fieldset className="fieldset">
             <legend className="legend"> Add reading log </legend>
-            <input
-              id="input_material_id"
-              className="input input-datalist"
-              list="materials"
-              placeholder="Choose a material"
-              value={materialId || ""}
-              title="ID of the material"
-              onChange={(e) => {
-                setMaterialId(e.target.value);
-              }}
-            />
-            {/*todo: rewrite with combobox*/}
-            <datalist id="materials">
-              {Object.entries(readingMaterialsTitles?.items ?? {})
-                .sort((a, b) => a[1].localeCompare(b[1]))
-                .map(([id, t]) => (
-                  <option key={id} value={id}>
-                    «{t}»
-                  </option>
-                ))}
-            </datalist>
+            <ComboboxRoot
+                options={materialOptions}
+                getOptionLabel={(id) => titles[id] || id}
+                value={materialId || ""}
+                onChange={setMaterialId}
+            >
+              <ComboboxInput
+                  placeholder="Choose a material"
+                  className="input"
+                  title="ID of the material"
+              />
+              <ComboboxList />
+            </ComboboxRoot>
 
             <p
                 className="little-text"
