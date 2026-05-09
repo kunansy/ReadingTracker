@@ -30,24 +30,6 @@ def _safe_list_get[T](lst: list[T], index: int, default: T | None = None) -> T |
         return default
 
 
-async def get_mean_materials_read_pages() -> dict[UUID, Decimal]:
-    logger.debug("Getting mean reading read pages count of materials")
-
-    stmt = sa.select(
-        models.ReadingLog.c.material_id,
-        sa.func.avg(models.ReadingLog.c.count).label("mean"),
-    ).group_by(models.ReadingLog.c.material_id)
-
-    async with database.session() as ses:
-        mean = {
-            material_id: round(mean, 2)
-            for material_id, mean in (await ses.execute(stmt)).all()
-        }
-
-    logger.debug("Mean material reading got")
-    return mean
-
-
 async def list_log_records(
     *,
     material_id: UUID | None = None,
