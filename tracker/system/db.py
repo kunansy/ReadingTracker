@@ -56,8 +56,7 @@ def _set_plot_style() -> None:
 
 
 async def create_reading_graphic(*, material_id: UUID, last_days: int) -> str:
-    if not (material := await materials_db.get_material(material_id=material_id)):
-        raise ValueError(f"'{material_id=}' not found")
+    material = await materials_db.get_material_api(material_id=material_id)
 
     data = await _get_graphic_data(material_id=material_id, last_days=last_days)
     total_pages_read = data.counts[-1]

@@ -196,8 +196,7 @@ async def start_material(
     material_id: UUID,
     body: Annotated[schemas.StartMaterialRequest, Body()],
 ):
-    if not (material := await db.get_material(material_id=material_id)):
-        raise HTTPException(status_code=404, detail=f"Material {material_id} not found")
+    material = await db.get_material_api(material_id=material_id)
     # TODO: rearch queue model
     if material.index != (queue_start := await db.get_queue_start()):
         await db.swap_order(material_id, queue_start)

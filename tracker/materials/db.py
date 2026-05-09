@@ -127,6 +127,7 @@ async def get_means() -> enums.MEANS:
     return await get_means()
 
 
+# TODO: pending to remove
 async def get_material(*, material_id: UUID) -> Material | None:
     logger.debug("Getting material=%s", material_id)
     stmt = sa.select(models.Materials).where(
