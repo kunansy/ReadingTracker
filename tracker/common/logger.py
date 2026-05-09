@@ -31,5 +31,5 @@ class EndpointLogsFilter(logging.Filter):
         return record.getMessage().find(self._path) == -1
 
 
-logging.getLogger("uvicorn.access").addFilter(EndpointLogsFilter(endpoint="/metrics"))
-logging.getLogger("uvicorn.access").addFilter(EndpointLogsFilter(endpoint="/readiness"))
+logging.getLogger("gunicorn.access").addFilter(EndpointLogsFilter(endpoint="/metrics"))
+logging.getLogger("gunicorn.access").addFilter(EndpointLogsFilter(endpoint="/readiness"))
