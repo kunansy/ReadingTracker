@@ -28,7 +28,6 @@ export function SpellTextarea({
 }: SpellTextareaProps) {
   const contentRef = useRef<HTMLTextAreaElement>(null);
 
-  // TODO: fix the hook
   useAltchHotkeys(contentRef, value, onChange, { disabled, readOnly });
 
   const { spellErrors, replaceWord } = useSpellChecker(value, onChange);
