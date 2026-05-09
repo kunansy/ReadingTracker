@@ -46,8 +46,8 @@ async def get_completed_materials(search: Annotated[schemas.SearchParams, Depend
     }
 
 
-@router.get("/repeat", response_model=schemas.GetRepeatingQueueResponse)
-async def get_repeating_queue(*, only_outlined: bool = False):
+@router.get("/repeat", response_model=schemas.ListRepeatingQueueResponse)
+async def list_repeating_queue(*, only_outlined: bool = False):
     repeating_queue = await db.get_repeating_queue(is_outlined=only_outlined)
 
     return {
@@ -110,13 +110,13 @@ async def parse_habr(payload: schemas.ParseLinkRequest):
     html = await db.get_html(str(link))
     article_info = db.parse_habr(html)
 
-    return {
-        "title": article_info.title,
-        "authors": article_info.authors,
-        "type": enums.MaterialTypesEnum.article,
-        "link": link,
-        "duration": None,
-    }
+    return schemas.ParsedMaterialResponse(
+        title=article_info.title,
+        authors=article_info.authors,
+        type=enums.MaterialTypesEnum.article,
+        link=link,
+        duration=None,
+    )
 
 
 @router.post("/parse/youtube", response_model=schemas.ParsedMaterialResponse)
@@ -139,19 +139,19 @@ async def parse_youtube(payload: schemas.ParseLinkRequest):
         logger.error("Failed to parse YouTube, link=%s, e=%r", link, e)
         raise HTTPException(detail=str(e), status_code=400) from None
 
-    return {
-        "title": video_info.title,
-        "authors": video_info.authors,
-        "duration": video_info.duration,
-        "type": enums.MaterialTypesEnum.lecture,
+    return schemas.ParsedMaterialResponse(
+        title=video_info.title,
+        authors=video_info.authors,
+        duration=video_info.duration,
+        type=enums.MaterialTypesEnum.lecture,
         # build a custom link to remove redundant query params
-        "link": HttpUrl.build(
+        link=HttpUrl.build(
             scheme="https",
             host="youtube.com",
             path="watch",
             query=f"v={video_id}",
         ),
-    }
+    )
 
 
 @router.post("/", status_code=201, response_model=schemas.CreateMaterialResponse)
