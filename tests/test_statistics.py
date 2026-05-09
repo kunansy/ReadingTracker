@@ -33,7 +33,7 @@ def mean(coll: Sequence[int | float | Decimal]) -> int | float | Decimal:
     ],
 )
 async def test_calculate_materials_stat(material_id):
-    records = await db.get_log_records()
+    records = await db.list_log_records()
 
     stats = await st.calculate_materials_stat({material_id})
     stat = stats[material_id]
@@ -53,21 +53,21 @@ async def test_calculate_materials_stat(material_id):
 
 
 async def test_get_start_date():
-    records = await db.get_log_records()
+    records = await db.list_log_records()
     start_date = st._calc_started_at(records)
 
     assert min(records, key=lambda record: record.date).date == start_date
 
 
 async def test_get_last_date():
-    records = await db.get_log_records()
+    records = await db.list_log_records()
     last_date = st._calc_finished_at(records)
 
     assert max(records, key=lambda record: record.date).date == last_date
 
 
 async def test_get_log_duration():
-    records = await db.get_log_records()
+    records = await db.list_log_records()
     start_date = st._calc_started_at(records)
     last_date = st._calc_finished_at(records)
     duration = st._calc_log_duration(start_date, last_date)
@@ -82,13 +82,13 @@ async def test_get_log_duration():
 
 async def test_get_total_read_pages():
     total = await st._get_read_pages()
-    records = await db.get_log_records()
+    records = await db.list_log_records()
 
     assert sum(total.values()) == sum(record.count for record in records)
 
 
 async def test_get_lost_days():
-    records = await db.get_log_records()
+    records = await db.list_log_records()
     start_date = st._calc_started_at(records)
     last_date = st._calc_finished_at(records)
     duration = st._calc_log_duration(start_date, last_date)
@@ -111,7 +111,7 @@ async def test_get_lost_days():
 async def test_get_means():
     # TODO: zero material
     means = await st.get_means()
-    records = await db.get_log_records()
+    records = await db.list_log_records()
 
     assert records
 
@@ -137,7 +137,7 @@ async def test_get_means():
 
 
 async def test_get_median_pages_read_per_day():
-    records = await db.get_log_records()
+    records = await db.list_log_records()
     median = st._calc_median_pages_read_per_day(records)
 
     counts = sorted(record.count for record in records)
@@ -150,7 +150,7 @@ async def test_get_median_pages_read_per_day():
 
 
 async def test_contains():
-    records = await db.get_log_records()
+    records = await db.list_log_records()
 
     assert all(
         [
@@ -171,7 +171,7 @@ async def test_contains():
 )
 async def test_get_min_record(material_id):
     min_record = await st._get_min_record(material_id=material_id)
-    records = await db.get_log_records()
+    records = await db.list_log_records()
     material = await materials_db.get_material(material_id=material_id)
 
     if material_id:
@@ -196,7 +196,7 @@ async def test_get_min_record(material_id):
 )
 async def test_get_max_record(material_id):
     max_record = await st._get_max_record(material_id=material_id)
-    records = await db.get_log_records()
+    records = await db.list_log_records()
     material = await materials_db.get_material(material_id=material_id)
 
     if material_id:
@@ -223,7 +223,7 @@ async def test_get_max_record_nof_found():
 
 
 async def test_would_be_total():
-    logs = await db.get_log_records()
+    logs = await db.list_log_records()
     started_at = st._calc_started_at(logs)
     finished_at = st._calc_finished_at(logs)
     duration = st._calc_log_duration(started_at, finished_at)

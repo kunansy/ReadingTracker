@@ -281,7 +281,7 @@ def _tracker_mean(means: enums.MEANS) -> float:
 
 async def get_tracker_statistics() -> TrackerStatistics:
     async with asyncio.TaskGroup() as tg:
-        log_records_task = tg.create_task(db.get_log_records())
+        log_records_task = tg.create_task(db.list_log_records())
         mean_task = tg.create_task(get_means())
         read_pages_task = tg.create_task(_get_read_pages())
         min_log_record_task = tg.create_task(_get_min_record())

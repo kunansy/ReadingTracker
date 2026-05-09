@@ -622,11 +622,11 @@ async def is_completion_request_valid(
     material_id: UUID,
     completed_at: datetime.date | None = None,
 ) -> None:
-    from tracker.reading_log.db import get_log_records
+    from tracker.reading_log.db import list_log_records
 
     async with asyncio.TaskGroup() as tg:
         get_status_task = tg.create_task(_get_status(material_id=material_id))
-        get_logs_task = tg.create_task(get_log_records(material_id=material_id))
+        get_logs_task = tg.create_task(list_log_records(material_id=material_id))
         get_material_task = tg.create_task(get_material(material_id=material_id))
 
     completed_at = completed_at or database.utcnow().date()

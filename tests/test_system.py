@@ -24,7 +24,7 @@ from tracker.system import db
 async def test_get_graphic_data_clear_reading(material_id, last_days):
     material_id = UUID(material_id)
     result = await db._get_graphic_data(material_id=material_id, last_days=last_days)
-    logs = await logs_db.get_log_records()
+    logs = await logs_db.list_log_records()
 
     material_logs = [log for log in logs if log.material_id == material_id]
     material_logs = material_logs[:last_days]
@@ -51,7 +51,7 @@ async def test_get_graphic_data_unclear_reading(material_id, last_days):
     material_id = UUID(material_id)
 
     result = await db._get_graphic_data(material_id=material_id, last_days=last_days)
-    logs = await logs_db.get_log_records()
+    logs = await logs_db.list_log_records()
 
     material_logs = [log for log in logs if log.material_id == material_id]
     material_logs = material_logs[:last_days]
