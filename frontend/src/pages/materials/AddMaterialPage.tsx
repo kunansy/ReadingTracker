@@ -1,8 +1,7 @@
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
-import {useRef, useState} from "react";
+import {useState} from "react";
 
 import {apiFetch} from "../../api/materials";
-import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox";
 import {
   MaterialType,
@@ -14,9 +13,6 @@ import {
 
 
 export function AddMaterialPage() {
-  const titleRef = useRef<HTMLInputElement>(null);
-  useAltchHotkeys(titleRef);
-
   const [title, setTitle] = useState("");
   const [authors, setAuthors] = useState<string[]>([]);
   const [pages, setPages] = useState("");
@@ -159,7 +155,6 @@ export function AddMaterialPage() {
           <fieldset className="fieldset">
             <legend className="legend"> Add a material </legend>
             <input
-              ref={titleRef}
               id="input-title"
               className="input altch"
               type="text"
