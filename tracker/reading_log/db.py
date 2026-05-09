@@ -134,24 +134,6 @@ async def get_reading_material_titles() -> dict[UUID, str]:
     return titles
 
 
-async def get_titles() -> dict[UUID, str]:
-    """Get titles for materials even been read."""
-    logger.debug("Getting reading material titles")
-
-    stmt = sa.select(models.Materials.c.material_id, models.Materials.c.title).join(
-        models.Statuses,
-        models.Materials.c.material_id == models.Statuses.c.material_id,
-    )
-
-    async with database.session() as ses:
-        titles = {  # noqa: C416
-            material_id: title for material_id, title in (await ses.execute(stmt)).all()
-        }
-
-    logger.debug("%s materials titles got", len(titles))
-    return titles
-
-
 async def get_completion_dates() -> dict[UUID | None, datetime.datetime]:
     logger.debug("Getting completion dates")
 

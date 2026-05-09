@@ -1103,3 +1103,21 @@ async def parse_youtube(video_id: str, *, http_timeout: int = 5) -> YoutubeVideo
     parsed_duration = _parse_duration(duration)
 
     return YoutubeVideo(title=title, authors=authors, duration=parsed_duration)
+
+
+async def get_read_material_titles() -> dict[UUID, str]:
+    """Get titles for materials even been read."""
+    logger.debug("Getting reading material titles")
+
+    stmt = sa.select(models.Materials.c.material_id, models.Materials.c.title).join(
+        models.Statuses,
+        models.Materials.c.material_id == models.Statuses.c.material_id,
+        )
+
+    async with database.session() as ses:
+        titles = {  # noqa: C416
+            material_id: title for material_id, title in (await ses.execute(stmt)).all()
+        }
+
+    logger.debug("%s materials titles got", len(titles))
+    return titles
