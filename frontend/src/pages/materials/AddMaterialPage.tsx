@@ -66,7 +66,7 @@ export function AddMaterialPage() {
     mutationFn: async () => {
       const body: Record<string, unknown> = {
         title,
-        authors,
+        authors: authors.join(", "),
         pages: Number(pages),
         material_type: materialType,
       };
