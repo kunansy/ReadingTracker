@@ -10,6 +10,7 @@ import {
   MaterialAuthorsResponse,
   ParsedMaterialResponse,
 } from "../../types";
+import {CelebrateButton} from "../../components/CelebrateButton.tsx";
 
 
 export function AddMaterialPage() {
@@ -225,9 +226,13 @@ export function AddMaterialPage() {
                 setLink(e.target.value);
               }}
             />
-            <button type="submit" className="submit-button">
-              Add
-            </button>
+            <CelebrateButton
+                type="submit"
+                className="submit-button"
+                disabled={addMut.isPending}
+            >
+              {addMut.isPending ? "Pending..." : "Add"}
+            </CelebrateButton>
           </fieldset>
         </form>
       </div>
