@@ -1,8 +1,10 @@
+import asyncio
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 
 from tracker.reading_log import db, schemas
+from tracker.materials import db as materials_db
 
 
 router = APIRouter(prefix="/reading_logs", tags=["reading-logs-api"])
@@ -43,8 +45,6 @@ async def list_reading_materials_titles():
     response_model=schemas.GetMaterialCompletionInfoResponse,
 )
 async def get_material_completion_info(material_id: UUID):
-    from tracker.reading_log.routes import completion_info as get_completion_info
-
     if not (completion_info := await get_completion_info(material_id)):
         raise HTTPException(status_code=404, detail="Material not found")
 
@@ -59,3 +59,25 @@ async def get_material_reading_now():
         }
 
     raise HTTPException(status_code=404, detail="No materials reading now found")
+
+
+async def get_completion_info(
+        material_id: UUID | None,
+) -> schemas.CompletionInfoSchema | None:
+    if not material_id:
+        return None
+
+    async with asyncio.TaskGroup() as tg:
+        material_task = tg.create_task(materials_db.get_material(material_id=material_id))
+        reading_logs_task = tg.create_task(db.get_log_records(material_id=material_id))
+
+    if not (material := material_task.result()):
+        return None
+    reading_logs = reading_logs_task.result()
+
+    return schemas.CompletionInfoSchema(
+        material_pages=material.pages,
+        material_type=material.material_type,
+        pages_read=sum(record.count for record in reading_logs),
+        read_days=len(reading_logs),
+    )
