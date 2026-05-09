@@ -34,7 +34,7 @@ export function AddReadingLogPage() {
   });
 
   const completionQ = useQuery({
-    queryKey: ["material", materialId, "completion-info"],
+    queryKey: ["materials", materialId, "completion-info"],
     queryFn: () => apiFetch<GetMaterialCompletionInfoResponse>(`/${materialId}/completion-info`),
     enabled: !!materialId && isUuid(materialId),
   });

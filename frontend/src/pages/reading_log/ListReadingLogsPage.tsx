@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 
-import { apiFetch } from "../../api/readingLog.ts";
+import { apiFetch, buildQuery } from "../../api/readingLog.ts";
 import { apiFetch as materialsApiFetch } from "../../api/materials.ts";
 import {ListMaterialsTitlesResponse, ListReadingLogsResponse} from "../../types.ts";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
@@ -20,8 +20,7 @@ export function ListReadingLogsPage() {
     const logsQ = useQuery({
         queryKey: ["logs", { materialId }],
         queryFn: () => {
-            const params = materialId ? `?material_id=${materialId}` : '';
-            return apiFetch<ListReadingLogsResponse>(`/${params}`);
+            return apiFetch<ListReadingLogsResponse>(`/${buildQuery({material_id: materialId || undefined})}`);
         },
     });
 
