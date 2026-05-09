@@ -84,6 +84,7 @@ export function AddReadingLogPage() {
 
       void qc.invalidateQueries({ queryKey: ["reading_logs", "list"] });
       void qc.invalidateQueries({ queryKey: ["materials", "reading"] });
+      void qc.invalidateQueries({ queryKey: ["materials", materialId, "completion-info"] });
       navigate(from);
     },
     onError: (e: Error) => {
