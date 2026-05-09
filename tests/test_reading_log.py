@@ -24,31 +24,6 @@ def test_safe_list_get(lst, index, default, value):
     assert db._safe_list_get(lst, index, default) == value
 
 
-@pytest.mark.skip
-async def test_get_mean_materials_read_pages():
-    # TODO: zero material
-    stat = await db.get_mean_materials_read_pages()
-
-    stmt = sa.select(models.ReadingLog.c.material_id, models.ReadingLog.c.count)
-
-    async with database.session() as ses:
-        result = (await ses.execute(stmt)).all()
-
-    expected_stat = {}
-    for material_id, count in result:
-        count = Decimal(count)
-        expected_stat[material_id] = [*expected_stat.get(material_id, []), count]
-
-    expected_result = {
-        material_id: round(statistics.mean(counts), 2)
-        for material_id, counts in expected_stat.items()
-    }
-
-    # not zeros
-    assert all(stat.values())
-    assert expected_result == stat
-
-
 async def test_get_log_records():
     stmt = sa.select(sa.func.count(1)).select_from(models.ReadingLog)
 
