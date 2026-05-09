@@ -24,7 +24,6 @@ from tracker.notes.html_routes import (
     router as notes_html_router,
 )
 from tracker.notes.spa import router as notes_spa_router
-from tracker.reading_log.routes import router as reading_log_router
 from tracker.reading_log.spa import router as reading_logs_spa_router
 from tracker.system.routes import router as system_router
 from tracker.system.spa import router as system_spa_router
@@ -89,7 +88,6 @@ if settings.APP_SPA_ENABLED:
     app.include_router(system_spa_router)
 else:
     app.include_router(notes_html_router)
-app.include_router(reading_log_router)
 app.include_router(cards_router)
 app.include_router(system_router)
 
