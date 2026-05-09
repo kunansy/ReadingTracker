@@ -100,7 +100,7 @@ export function AddReadingLogPage() {
   if (hasError) {
     return (
         <p className="error">
-          {(hasError as Error).message || "Не удалось загрузить данные"}
+          {(hasError as Error).message || "Failed to load data"}
         </p>
     );
   }

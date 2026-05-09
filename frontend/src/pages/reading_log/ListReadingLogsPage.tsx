@@ -28,7 +28,7 @@ export function ListReadingLogsPage() {
     const data = logsQ.data?.items ?? [];
 
     if (logsQ.isLoading || materialsTitlesQ.isLoading) {
-        return <p>Загрузка...</p>;
+        return <p>Loading...</p>;
     }
 
     if (logsQ.error || materialsTitlesQ.error) {
