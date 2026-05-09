@@ -1,10 +1,11 @@
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 
 import { apiFetch } from "../../api/readingLog.ts";
 import { apiFetch as materialsApiFetch } from "../../api/materials.ts";
 import {ListMaterialsTitlesResponse, ListReadingLogsResponse} from "../../types.ts";
-
+import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
 
 export function ListReadingLogsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -26,6 +27,12 @@ export function ListReadingLogsPage() {
 
     const materialsTitles = materialsTitlesQ.data?.items ?? {};
     const data = logsQ.data?.items ?? [];
+
+    const materialOptions = useMemo(() => {
+        return Object.keys(materialsTitles).sort((a, b) =>
+            (materialsTitles[a] ?? "").localeCompare(materialsTitles[b] ?? ""),
+        );
+    }, [materialsTitlesQ]);
 
     if (logsQ.isLoading || materialsTitlesQ.isLoading) {
         return <p>Loading...</p>;
@@ -54,24 +61,24 @@ export function ListReadingLogsPage() {
                     }}
                 >
 
-                    <input
-                        className="input"
-                        list="materials"
-                        name="material_id"
-                        defaultValue={materialId}
-                        placeholder="Choose a material"
-                    />
-                    {/*TODO: rewrite with combobox*/}
-                    <datalist id="materials">
-                        {Object.entries(materialsTitles)
-                            .sort((a, b) => a[1].localeCompare(b[1]))
-                            .map(([id, title]) => (
-                                <option key={id} value={id}>
-                                    {" "}
-                                    «{title}»{" "}
-                                </option>
-                            ))}
-                    </datalist>
+                    <ComboboxRoot
+                        options={materialOptions}
+                        getOptionLabel={(id) => materialsTitles[id] || id}
+                        value={materialId}
+                        onChange={(e) => {
+                            const next = new URLSearchParams();
+                            next.set("material_id", e);
+                            setSearchParams(next);
+                        }}
+                    >
+                        <ComboboxInput
+                            placeholder="Choose a material"
+                            className="input"
+                            title="ID of the material"
+                        />
+                        <ComboboxList />
+                    </ComboboxRoot>
+
                     <button type="submit" className="submit-button">
                         {" "}
                         Search{" "}
