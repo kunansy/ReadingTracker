@@ -102,10 +102,6 @@ export type GetMaterialResponse = {
   material: GetMaterialItem;
 };
 
-export type ListReadingMaterialsTitlesResponse = {
-  items: Record<string, string>;
-}
-
 export type GetMaterialCompletionInfoResponse = {
   material_pages: number;
   material_type: MaterialType;

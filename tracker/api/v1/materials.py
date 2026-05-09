@@ -80,8 +80,9 @@ async def get_tags():
 )
 async def list_titles():
     titles = await db.get_titles()
-
-    return {"items": titles}
+    return {
+        "items": titles,
+    }
 
 
 @router.get(

@@ -40,10 +40,6 @@ class GetReadingLogResponse(CustomBaseModel):
     reading_log: _GetLogRecordItem
 
 
-class ListMaterialsTitles(CustomBaseModel):
-    items: dict[UUID, str]
-
-
 class GetMaterialReadingNowResponse(CustomBaseModel):
     material_id: UUID
 
