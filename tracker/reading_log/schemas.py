@@ -6,7 +6,7 @@ from pydantic import NonNegativeInt, PositiveInt
 from tracker.common.schemas import CustomBaseModel
 
 
-class _GetLogRecordItem(CustomBaseModel):
+class _ListLogRecordItem(CustomBaseModel):
     log_id: UUID
     material_id: UUID
     # because of 'without material' notes
@@ -15,7 +15,7 @@ class _GetLogRecordItem(CustomBaseModel):
 
 
 class ListReadingLogsResponse(CustomBaseModel):
-    items: list[_GetLogRecordItem]
+    items: list[_ListLogRecordItem]
 
 
 class CreateReadingLogsResponse(CustomBaseModel):
@@ -29,7 +29,7 @@ class CreateReadingLogsRequest(CustomBaseModel):
 
 
 class GetReadingLogResponse(CustomBaseModel):
-    reading_log: _GetLogRecordItem
+    reading_log: _ListLogRecordItem
 
 
 class GetMaterialReadingNowResponse(CustomBaseModel):

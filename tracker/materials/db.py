@@ -1112,7 +1112,7 @@ async def get_read_material_titles() -> dict[UUID, str]:
     stmt = sa.select(models.Materials.c.material_id, models.Materials.c.title).join(
         models.Statuses,
         models.Materials.c.material_id == models.Statuses.c.material_id,
-        )
+    )
 
     async with database.session() as ses:
         titles = {  # noqa: C416
@@ -1132,7 +1132,7 @@ async def get_reading_material_titles() -> dict[UUID, str]:
         .join(
             models.Statuses,
             models.Materials.c.material_id == models.Statuses.c.material_id,
-            )
+        )
         .where(models.Statuses.c.completed_at == None)
     )
 
