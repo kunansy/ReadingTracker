@@ -66,16 +66,16 @@ class RepeatingQueueItem(CustomBaseModel):
     priority_months: float
 
 
-class GetMaterialsQueueResponse(CustomBaseModel):
+class ListMaterialsQueueResponse(CustomBaseModel):
     estimates: list[MaterialEstimate]
     mean: dict[MaterialTypesEnum, Decimal]
 
 
-class GetReadingMaterialsResponse(CustomBaseModel):
+class ListReadingMaterialsResponse(CustomBaseModel):
     statistics: list[MaterialStatistics]
 
 
-class GetCompletedMaterialsResponse(CustomBaseModel):
+class ListCompletedMaterialsResponse(CustomBaseModel):
     statistics: list[MaterialStatistics]
 
 

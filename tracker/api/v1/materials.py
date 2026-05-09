@@ -13,8 +13,8 @@ from tracker.models import enums
 router = APIRouter(prefix="/materials", tags=["materials-api"])
 
 
-@router.get("/queue", response_model=schemas.GetMaterialsQueueResponse)
-async def get_materials_queue():
+@router.get("/queue", response_model=schemas.ListMaterialsQueueResponse)
+async def list_materials_queue():
     async with asyncio.TaskGroup() as tg:
         estimates_task = tg.create_task(db.estimate())
         mean_task = tg.create_task(db.get_means())
@@ -25,16 +25,16 @@ async def get_materials_queue():
     }
 
 
-@router.get("/reading", response_model=schemas.GetReadingMaterialsResponse)
-async def get_reading_materials():
+@router.get("/reading", response_model=schemas.ListReadingMaterialsResponse)
+async def list_reading_materials():
     statistics = await db.reading_statistics()
     return {
         "statistics": statistics,
     }
 
 
-@router.get("/completed", response_model=schemas.GetCompletedMaterialsResponse)
-async def get_completed_materials(search: Annotated[schemas.SearchParams, Depends()]):
+@router.get("/completed", response_model=schemas.ListCompletedMaterialsResponse)
+async def list_completed_materials(search: Annotated[schemas.SearchParams, Depends()]):
     get_statistics = await db.completed_statistics(
         material_type=search.get_material_type(),
         is_outlined=search.is_outlined,
