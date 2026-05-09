@@ -4,14 +4,6 @@ from uuid import UUID
 from pydantic import NonNegativeInt, PositiveInt
 
 from tracker.common.schemas import CustomBaseModel
-from tracker.models import enums
-
-
-class CompletionInfoSchema(CustomBaseModel):
-    material_pages: NonNegativeInt
-    material_type: enums.MaterialTypesEnum
-    pages_read: NonNegativeInt
-    read_days: NonNegativeInt
 
 
 class _GetLogRecordItem(CustomBaseModel):
@@ -42,10 +34,3 @@ class GetReadingLogResponse(CustomBaseModel):
 
 class GetMaterialReadingNowResponse(CustomBaseModel):
     material_id: UUID
-
-
-class GetMaterialCompletionInfoResponse(CustomBaseModel):
-    material_pages: NonNegativeInt
-    material_type: enums.MaterialTypesEnum
-    pages_read: NonNegativeInt
-    read_days: NonNegativeInt
