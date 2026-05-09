@@ -126,6 +126,8 @@ services:
     restart: always
     ports:
        - "127.0.0.1:${API_PORT}:8000"
+    # see https://gunicorn.org/asgi/
+    # TODO: use uwsgi with nginx, https://gunicorn.org/uwsgi/
     entrypoint: ["gunicorn", "tracker.main:app", "--bind", "0.0.0.0:8000", "--workers",
                  "${API_ASGI_WORKERS}", "--worker-class", "asgi", "--asgi-loop", "uvloop",
                  "--asgi-lifespan", "on", "--http-parser", "fast",
