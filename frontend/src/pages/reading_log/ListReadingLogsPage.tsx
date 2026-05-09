@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 
 import { apiFetch } from "../../api/readingLog.ts";
+import { apiFetch as materialsApiFetch } from "../../api/materials.ts";
 import {ListMaterialsTitlesResponse, ListReadingLogsResponse} from "../../types.ts";
 
 
@@ -10,8 +11,8 @@ export function ListReadingLogsPage() {
     const materialId = searchParams.get("material_id") ?? "";
 
     const materialsTitlesQ = useQuery({
-        queryKey: ["materials", "reading_logs", "titles"],
-        queryFn: () => apiFetch<ListMaterialsTitlesResponse>("/materials-titles"),
+        queryKey: ["materials", "read_titles"],
+        queryFn: () => materialsApiFetch<ListMaterialsTitlesResponse>("/read-titles"),
         staleTime: 5 * 60 * 1000,
     });
 

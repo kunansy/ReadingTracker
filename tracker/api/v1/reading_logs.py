@@ -30,14 +30,6 @@ async def create_log_record(log: schemas.CreateReadingLogsRequest):
     return {"log_id": log_id}
 
 
-@router.get("/materials-titles", response_model=schemas.ListMaterialsTitles)
-async def list_materials_titles():
-    items = await db.get_titles()
-    return {
-        "items": items,
-    }
-
-
 @router.get("/reading-materials-titles", response_model=schemas.ListMaterialsTitles)
 async def list_reading_materials_titles():
     items = await db.get_reading_material_titles()
