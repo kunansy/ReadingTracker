@@ -1,10 +1,8 @@
-import asyncio
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 
 from tracker.reading_log import db, schemas
-from tracker.materials import db as materials_db
 
 
 router = APIRouter(prefix="/reading_logs", tags=["reading-logs-api"])
@@ -21,9 +19,13 @@ async def list_reading_logs(material_id: UUID | None = None):
 @router.post("/", status_code=201, response_model=schemas.CreateReadingLogsResponse)
 async def create_log_record(log: schemas.CreateReadingLogsRequest):
     try:
-        await db.check_record_correct(material_id=log.material_id, date=log.date, count=log.count)
+        await db.check_record_correct(
+            material_id=log.material_id,
+            date=log.date,
+            count=log.count,
+        )
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e)) from None
 
     log_id = await db.insert_log_record(
         material_id=log.material_id,
@@ -32,7 +34,6 @@ async def create_log_record(log: schemas.CreateReadingLogsRequest):
     )
 
     return {"log_id": log_id}
-
 
 
 @router.get("/material-reading-now", response_model=schemas.GetMaterialReadingNowResponse)

@@ -2,7 +2,6 @@ import asyncio
 import datetime
 from collections import defaultdict
 from collections.abc import AsyncGenerator
-from decimal import Decimal
 from typing import cast
 from uuid import UUID
 
@@ -253,14 +252,17 @@ async def check_record_correct(
 
     st = material.status
     if date < st.started_at.date() or (st.completed_at and date > st.completed_at.date()):
-        raise ValueError(f"Date is not inside the range. {date} not in [{st.started_at}; {st.completed_at}]")
+        raise ValueError(
+            "Date is not inside the range. "
+            f"{date} not in [{st.started_at}; {st.completed_at}]",
+        )
 
     total_pages_read = sum(record.count for record in log_records_task.result())
     if total_pages_read + count > material.material.pages:
         raise ValueError(
             "There are more pages than the material remains: "
             f"total pages read {total_pages_read}, "
-            f"material pages {material.material.pages}"
+            f"material pages {material.material.pages}",
         )
 
 
