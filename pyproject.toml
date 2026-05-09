@@ -124,7 +124,7 @@ uvloop = "~0.22.0"
 python-multipart = "~0.0.6"
 matplotlib = "~3.10.0"
 orjson = "~3.11.0"
-gunicorn = "~25.3.0"
+gunicorn = {version = "~26.0.0", extras = ["fast"]}
 aiomysql = "~0.3.2"
 networkx = "~3.5"
 pyvis = "~0.3.2"
