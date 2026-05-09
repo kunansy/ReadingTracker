@@ -48,31 +48,6 @@ async def get_mean_materials_read_pages() -> dict[UUID, Decimal]:
     return mean
 
 
-# TODO: deprecated, remove
-async def get_log_records(*, material_id: str | UUID | None = None) -> list[LogRecord]:
-    logger.debug("Getting all log records")
-
-    stmt = sa.select(
-        models.ReadingLog,
-        models.Materials.c.title.label("material_title"),
-    ).join(
-        models.Materials,
-        models.ReadingLog.c.material_id == models.Materials.c.material_id,
-    )
-
-    if material_id:
-        stmt = stmt.where(models.Materials.c.material_id == str(material_id))
-
-    async with database.session() as ses:
-        records = [
-            LogRecord.model_validate(row, from_attributes=True)
-            for row in (await ses.execute(stmt)).all()
-        ]
-
-    logger.debug("%s log records got", len(records))
-    return records
-
-
 async def list_log_records(
     *,
     material_id: UUID | None = None,
@@ -149,7 +124,7 @@ async def data(
     """
     logger.debug("Getting logging data")
 
-    if not (log_records := log_records or await get_log_records()):
+    if not (log_records := log_records or await list_log_records()):
         return
 
     log_records_dict: defaultdict[datetime.date, list[LogRecord]] = defaultdict(list)
@@ -283,7 +258,7 @@ async def check_record_correct(
 
     async with asyncio.TaskGroup() as tg:
         reading_materials_task = tg.create_task(materials_db.get_reading_materials())
-        log_records_task = tg.create_task(get_log_records(material_id=str(material_id)))
+        log_records_task = tg.create_task(list_log_records(material_id=material_id))
 
     materials = [
         material

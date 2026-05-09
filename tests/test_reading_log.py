@@ -52,7 +52,7 @@ async def test_get_mean_materials_read_pages():
 async def test_get_log_records():
     stmt = sa.select(sa.func.count(1)).select_from(models.ReadingLog)
 
-    log_records = await db.get_log_records()
+    log_records = await db.list_log_records()
 
     async with database.session() as ses:
         expected_res_count = await ses.scalar(stmt)

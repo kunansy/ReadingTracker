@@ -267,7 +267,7 @@ async def get_material_completion_info(material_id: UUID):
     from tracker.reading_log import db as logs_db
 
     material = await db.get_material_api(material_id=material_id)
-    reading_logs = await logs_db.get_log_records(material_id=material_id)
+    reading_logs = await logs_db.list_log_records(material_id=material_id)
 
     return {
         "material_pages": material.pages,
