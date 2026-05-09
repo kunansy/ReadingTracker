@@ -184,3 +184,10 @@ class ParseLinkRequest(CustomBaseModel):
 
 class ListMaterialTitlesResponse(CustomBaseModel):
     items: dict[UUID, str]
+
+
+class GetMaterialCompletionInfoResponse(CustomBaseModel):
+    material_pages: NonNegativeInt
+    material_type: enums.MaterialTypesEnum
+    pages_read: NonNegativeInt
+    read_days: NonNegativeInt

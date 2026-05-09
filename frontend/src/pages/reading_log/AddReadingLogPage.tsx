@@ -35,7 +35,7 @@ export function AddReadingLogPage() {
 
   const completionQ = useQuery({
     queryKey: ["materials", materialId, "completion-info"],
-    queryFn: () => apiFetch<GetMaterialCompletionInfoResponse>(`/${materialId}/completion-info`),
+    queryFn: () => materialsApiFetch<GetMaterialCompletionInfoResponse>(`/${materialId}/completion-info`),
     enabled: !!materialId && isUuid(materialId),
   });
 
