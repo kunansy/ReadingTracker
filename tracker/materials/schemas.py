@@ -1,12 +1,12 @@
 import datetime
 import typing
 from decimal import Decimal
-from typing import Annotated, Literal
+from typing import Literal
 from uuid import UUID
 
-from pydantic import BeforeValidator, HttpUrl, NonNegativeInt, PositiveInt
+from pydantic import HttpUrl, NonNegativeInt, PositiveInt
 
-from tracker.common.schemas import CustomBaseModel, MinMax, skip_empty_value
+from tracker.common.schemas import CustomBaseModel, MinMax
 from tracker.models import enums
 from tracker.models.enums import MaterialTypesEnum
 
@@ -17,15 +17,11 @@ class GetMaterialItem(CustomBaseModel):
     authors: str
     pages: NonNegativeInt
     material_type: enums.MaterialTypesEnum
-    tags: Annotated[str | None, BeforeValidator(skip_empty_value)] = None
-    link: Annotated[HttpUrl | None, BeforeValidator(skip_empty_value)] = None
+    tags: str | None = None
+    link: HttpUrl | None = None
     added_at: datetime.datetime
     is_outlined: bool
     index: PositiveInt
-
-
-class OkResponse(CustomBaseModel):
-    ok: bool
 
 
 class MaterialEstimate(CustomBaseModel):
@@ -96,8 +92,8 @@ class CreateMaterialRequest(CustomBaseModel):
     authors: str
     pages: PositiveInt
     material_type: enums.MaterialTypesEnum
-    tags: Annotated[str | None, BeforeValidator(skip_empty_value)] = None
-    link: Annotated[HttpUrl | None, BeforeValidator(skip_empty_value)] = None
+    tags: str | None = None
+    link: HttpUrl | None = None
 
     def get_link(self) -> str | None:
         if link := self.link:
