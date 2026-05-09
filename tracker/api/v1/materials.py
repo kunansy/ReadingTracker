@@ -96,6 +96,18 @@ async def list_read_materials_titles():
     }
 
 
+@router.get(
+    "/reading-titles",
+    response_model=schemas.ListMaterialTitlesResponse,
+    description="List titles of materials reading now",
+)
+async def list_reading_materials_titles():
+    items = await db.get_reading_material_titles()
+    return {
+        "items": items,
+    }
+
+
 @router.get("/queue/start", response_model=schemas.GetQueueEdgeResponse)
 async def get_queue_start():
     index = await db.get_queue_start()

@@ -3,11 +3,12 @@ import {useEffect, useMemo, useState} from "react";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 
 import { apiFetch } from "../../api/readingLog";
+import { apiFetch as materialsApiFetch } from "../../api/materials.ts";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import {
   GetMaterialCompletionInfoResponse,
   GetMaterialReadingNowResponse,
-  ListReadingMaterialsTitlesResponse
+  ListMaterialsTitlesResponse,
 } from "../../types.ts";
 import {isUuid} from "../../utils/isUuid.ts";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
@@ -27,7 +28,7 @@ export function AddReadingLogPage() {
   const from = location.state?.from || "/materials/reading";
 
   const getMaterialReadingNow = useQuery({
-    queryKey: ["material_reading_now"],
+    queryKey: ["materials", "reading_now"],
     queryFn: () =>
         apiFetch<GetMaterialReadingNowResponse>("/material-reading-now"),
   });
@@ -39,8 +40,8 @@ export function AddReadingLogPage() {
   });
 
   const readingMaterialsTitlesQ = useQuery({
-    queryKey: ["reading_materials_titles"],
-    queryFn: () => apiFetch<ListReadingMaterialsTitlesResponse>("/reading-materials-titles"),
+    queryKey: ["materials", "reading_titles"],
+    queryFn: () => materialsApiFetch<ListMaterialsTitlesResponse>("/reading-titles"),
     staleTime: 5 * 60 * 1000,
   });
 

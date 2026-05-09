@@ -115,25 +115,6 @@ async def get_log_record(*, log_id: UUID) -> LogRecord:
     raise database.NotFoundException(msg)
 
 
-async def get_reading_material_titles() -> dict[UUID, str]:
-    logger.debug("Getting reading material titles")
-
-    stmt = (
-        sa.select(models.Materials.c.material_id, models.Materials.c.title)
-        .join(
-            models.Statuses,
-            models.Materials.c.material_id == models.Statuses.c.material_id,
-        )
-        .where(models.Statuses.c.completed_at == None)
-    )
-
-    async with database.session() as ses:
-        titles: dict[UUID, str] = dict((await ses.execute(stmt)).all())  # type: ignore[arg-type]
-
-    logger.debug("%s reading materials titles got", len(titles))
-    return titles
-
-
 async def get_completion_dates() -> dict[UUID | None, datetime.datetime]:
     logger.debug("Getting completion dates")
 
