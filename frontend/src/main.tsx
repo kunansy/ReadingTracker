@@ -11,7 +11,6 @@ import "../../static/materials/repeating_queue.css";
 import "../../static/materials/add_material.css";
 import "../../static/notes/notes.css";
 import "../../static/notes/add_note.css";
-import "../../static/reading_log/add_log_record.css";
 import "../../static/cards/cards_list.css";
 import "../../static/cards/add_card.css";
 import "../../static/system/system.css";
