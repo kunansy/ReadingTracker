@@ -289,14 +289,16 @@ async def insert_log_record(
     return cast("UUID", log_id)
 
 
-async def is_record_correct(
+async def check_record_correct(
     *,
     material_id: UUID,
     date: datetime.date,
     count: int,
-) -> bool:
-    if date > database.utcnow().date() or count <= 0:
-        return False
+) -> None:
+    if date > database.utcnow().date():
+        raise ValueError("Date could not be in the future")
+    if count <= 0:
+        raise ValueError("Count must be greater than 0")
 
     async with asyncio.TaskGroup() as tg:
         reading_materials_task = tg.create_task(materials_db.get_reading_materials())
@@ -308,26 +310,20 @@ async def is_record_correct(
         if material.material_id == material_id
     ]
     if not materials:
-        logger.warning("No reading material id=%s found", material_id)
-        return False
+        raise ValueError(f"No reading material id={material_id} found")
     material = materials[0]
 
     st = material.status
     if date < st.started_at.date() or (st.completed_at and date > st.completed_at.date()):
-        logger.warning(
-            "Date is not inside the range %s not in [%s; %s]",
-            date,
-            st.started_at,
-            st.completed_at,
-        )
-        return False
+        raise ValueError(f"Date is not inside the range. {date} not in [{st.started_at}; {st.completed_at}]")
 
     total_pages_read = sum(record.count for record in log_records_task.result())
     if total_pages_read + count > material.material.pages:
-        logger.warning("There are more pages than the material has: ")
-        return False
-
-    return True
+        raise ValueError(
+            "There are more pages than the material remains: "
+            f"total pages read {total_pages_read}, "
+            f"material pages {material.material.pages}"
+        )
 
 
 async def records_sum(
