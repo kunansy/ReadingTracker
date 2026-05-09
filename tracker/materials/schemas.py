@@ -83,7 +83,7 @@ class GetCompletedMaterialsResponse(CustomBaseModel):
     statistics: list[MaterialStatistics]
 
 
-class GetRepeatingQueueResponse(CustomBaseModel):
+class ListRepeatingQueueResponse(CustomBaseModel):
     repeating_queue: list[RepeatingQueueItem]
 
 
