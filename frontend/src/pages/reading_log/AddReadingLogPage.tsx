@@ -1,10 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 
 import { apiFetch } from "../../api/readingLog";
 import { CelebrateButton } from "../../components/CelebrateButton";
-import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
 import {
   GetMaterialCompletionInfoResponse,
   GetMaterialReadingNowResponse,
@@ -15,9 +14,6 @@ import {isUuid} from "../../utils/isUuid.ts";
 export function AddReadingLogPage() {
   const [searchParams] = useSearchParams();
   const initialMaterial = searchParams.get("material_id");
-
-  const contentRef = useRef<HTMLTextAreaElement>(null);
-  useAltchHotkeys(contentRef);
 
   const [materialId, setMaterialId] = useState(initialMaterial);
   const [date, setDate] = useState("");
