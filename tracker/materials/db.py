@@ -1152,7 +1152,7 @@ async def list_material_titles_with_cards() -> dict[UUID, str]:
         .join(
             models.Materials,
             models.Cards.c.material_id == models.Materials.c.material_id,
-            )
+        )
     )
 
     async with database.session() as ses:
