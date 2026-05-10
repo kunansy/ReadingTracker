@@ -14,7 +14,6 @@ from tracker.api.v1.materials import router as api_v1_materials_router
 from tracker.api.v1.notes import router as api_v1_notes_router
 from tracker.api.v1.reading_logs import router as api_v1_reading_logs_router
 from tracker.api.v1.system import router as api_v1_system_router
-from tracker.cards.routes import router as cards_router
 from tracker.cards.spa import router as cards_spa_router
 from tracker.common import database, keydb_api, manticoresearch, settings
 from tracker.common.logger import logger
@@ -87,7 +86,6 @@ if settings.APP_SPA_ENABLED:
     app.include_router(system_spa_router)
 else:
     app.include_router(notes_html_router)
-app.include_router(cards_router)
 
 
 def _api_v1_json_detail(exc: HTTPException) -> str:
