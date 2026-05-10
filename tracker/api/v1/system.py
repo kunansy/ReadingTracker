@@ -3,7 +3,6 @@ from typing import Annotated
 
 from fastapi import APIRouter
 from fastapi.params import Depends
-from fastapi.responses import JSONResponse
 
 from tracker.google_drive import (
     db as drive_db,
@@ -167,9 +166,12 @@ async def restore_api():
     )
 
 
-@router.post("/report", response_model=schemas.GetSpanReportResponse)
+@router.post(
+    "/report",
+    response_model=schemas.GetSpanReportResponse,
+    description="Get analytics for the time span",
+)
 async def get_span_report(span: schemas.GetSpanReportRequest):
-    """Get analytics for the time span: analyze materials, read items and inserted notes."""
     span_analysis = await trends.get_span_analytics(span)
 
     return {
