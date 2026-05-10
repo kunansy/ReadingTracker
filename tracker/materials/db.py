@@ -1107,7 +1107,7 @@ async def parse_youtube(video_id: str, *, http_timeout: int = 5) -> YoutubeVideo
 
 async def get_read_material_titles() -> dict[UUID, str]:
     """Get titles for materials even been read."""
-    logger.debug("Getting reading material titles")
+    logger.debug("Getting read material titles")
 
     stmt = sa.select(models.Materials.c.material_id, models.Materials.c.title).join(
         models.Statuses,
