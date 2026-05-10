@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
-import { apiFetch as cardsApiFetch } from "../../api/cards";
+import { apiFetch } from "../../api/cards";
 import { apiFetch as notesApiFetch, buildQuery } from "../../api/notes";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import {
@@ -90,7 +90,7 @@ export function AddCardPage() {
   const notesWithCardsQ = useQuery({
     queryKey: ["cards", "notes-with-cards", { materialId }],
     queryFn: () =>
-      cardsApiFetch<NotesWithCardsResponse>(
+      apiFetch<NotesWithCardsResponse>(
         `/notes-with-cards${buildQuery({
           ...(isUuid(materialId) ? { material_id: materialId } : {}),
         })}`,
@@ -115,7 +115,7 @@ export function AddCardPage() {
         throw new Error("Question is required");
       }
 
-      return cardsApiFetch<CreateCardResponse>("/", {
+      return apiFetch<CreateCardResponse>("/", {
         method: "POST",
         body: JSON.stringify({
           material_id: mid,
@@ -174,7 +174,7 @@ export function AddCardPage() {
     return (
       <p className="error">
         {((metaQ.error || notesQ.error || notesWithCardsQ.error) as Error)?.message ||
-          "Не удалось загрузить данные"}
+          "Failed to load data"}
       </p>
     );
   }
@@ -247,8 +247,7 @@ export function AddCardPage() {
             getOptionLabel={(id) => materialsTitles[id] ?? ""}
           >
             <ComboboxInput
-              className="input input-datalist"
-              id="material_id"
+              className="input"
               placeholder="Choose a material"
               title="ID of the material"
             />
@@ -289,8 +288,7 @@ export function AddCardPage() {
             }}
           >
             <ComboboxInput
-              className="input input-datalist"
-              id="note_id"
+              className="input"
               placeholder="Choose a note"
             />
             <ComboboxList />

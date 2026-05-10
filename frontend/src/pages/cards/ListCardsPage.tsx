@@ -35,12 +35,12 @@ export function ListCardsPage() {
         );
     }, [materialsTitles]);
 
-    if (cardsQ.isLoading || materialsTitlesQ.isLoading) {
-        return <p>Загрузка...</p>;
+    if (cardsQ.isLoading) {
+        return <p>Loading...</p>;
     }
 
-    if (cardsQ.error || materialsTitlesQ.error) {
-        return <p className="error">Error: {((cardsQ.error || materialsTitlesQ.error) as Error)?.message}</p>;
+    if (cardsQ.error) {
+        return <p className="error">Error: {((cardsQ.error) as Error)?.message}</p>;
     }
 
     return (
@@ -74,16 +74,14 @@ export function ListCardsPage() {
                         getOptionLabel={(id) => materialsTitles[id] ?? ""}
                     >
                         <ComboboxInput
-                            className="input input-datalist"
-                            id="material_id"
+                            className="input"
                             placeholder="Choose a material"
                             title="ID of the material"
                         />
                         <ComboboxList />
                     </ComboboxRoot>
                     <button type="submit" className="submit-button">
-                        {" "}
-                        Search{" "}
+                        Search
                     </button>
                 </form>
             </div>

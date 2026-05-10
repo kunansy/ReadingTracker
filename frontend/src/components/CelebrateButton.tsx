@@ -20,7 +20,7 @@ export function CelebrateButton({
     <button
       type={type}
       {...rest}
-      className={`celebrate-btn ${className}`.trim()}
+      className={className}
       onMouseEnter={(e) => {
         timeoutRef.current = setTimeout(() => {
           celebrateAtEvent(e);
