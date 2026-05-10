@@ -3,8 +3,16 @@ import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { apiFetch, buildQuery } from "../../api/system";
+import { apiFetch as readingLogsApiFetch } from "../../api/readingLog";
+import { apiFetch as materialsApiFetch } from "../../api/materials";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox";
-import {GraphicResponse, SpanSummary, SystemMetaResponse, SystemSummaryResponse} from "../../types.ts";
+import {
+    GetMaterialReadingNowResponse,
+    GraphicResponse,
+    ListMaterialsTitlesResponse,
+    SpanSummary,
+    SystemSummaryResponse
+} from "../../types.ts";
 
 function SvgImg({ b64 }: { b64: string }) {
   return <img
@@ -72,15 +80,19 @@ export function SystemGraphicsPage() {
   const materialId = (searchParams.get("material_id") ?? "").trim();
   const lastDays = Number(searchParams.get("last_days") ?? "7") || 7;
 
-  const metaQ = useQuery({
-    queryKey: ["system", "meta"],
-    queryFn: () => apiFetch<SystemMetaResponse>("/meta"),
-    staleTime: 10 * 60_000,
+  const materialReadingNowQ = useQuery({
+    queryKey: ["materials", "reading_now"],
+    queryFn: () => readingLogsApiFetch<GetMaterialReadingNowResponse>("/material-reading-now"),
+  });
+  const materialsTitlesQ = useQuery({
+    queryKey: ["materials", "read_titles"],
+    queryFn: () => materialsApiFetch<ListMaterialsTitlesResponse>("/read-titles"),
+    staleTime: 5 * 60 * 1000,
   });
 
   const effectiveMaterialId = useMemo(() => {
-    return materialId || metaQ.data?.material_id || "";
-  }, [materialId, metaQ.data?.material_id]);
+    return materialId || materialReadingNowQ.data?.material_id || "";
+  }, [materialId, materialReadingNowQ.data?.material_id]);
 
   const summaryQ = useQuery({
     queryKey: ["system", "summary", { lastDays }],
@@ -91,15 +103,15 @@ export function SystemGraphicsPage() {
     staleTime: 30_000,
   });
 
-  const titles = metaQ.data?.titles ?? {};
+  const titles = materialsTitlesQ.data?.items ?? {};
   const materialOptions = useMemo(() => {
     return Object.keys(titles).sort((a, b) =>
       (titles[a] ?? "").localeCompare(titles[b] ?? ""),
     );
   }, [titles]);
 
-  if (metaQ.isLoading) return <p>Loading…</p>;
-  if (metaQ.error) return <p className="error">{(metaQ.error as Error).message}</p>;
+  if (materialReadingNowQ.isLoading) return <p>Loading…</p>;
+  if (materialReadingNowQ.error) return <p className="error">{(materialReadingNowQ.error as Error).message}</p>;
 
   return (
     <>
