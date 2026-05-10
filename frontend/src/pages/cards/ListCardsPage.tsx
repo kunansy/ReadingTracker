@@ -99,7 +99,7 @@ export function ListCardsPage() {
               id={item.card_id}
               >
                   <p
-                      className="question"
+                      className="question note-content"
                       dangerouslySetInnerHTML={{ __html: parseMarkdown(item.question) }}
                   />
                   <hr className="question-divider"/>
@@ -107,12 +107,12 @@ export function ListCardsPage() {
                       <summary className="answer"> Show answer </summary>
                       {item.answer && (
                           <p
-                              className="answer"
+                              className="answer note-content"
                               dangerouslySetInnerHTML={{ __html: parseMarkdown(item.answer) }}
                           />
                       )}
                       <p
-                          className="answer note-answer"
+                          className="answer note-answer note-content"
                           dangerouslySetInnerHTML={{ __html: parseMarkdown(item.note_content) }}
                       />
                       <p className="txt material-title"> «{ item.material_title }»/{ item.material_authors }/{ item.material_type } </p>
