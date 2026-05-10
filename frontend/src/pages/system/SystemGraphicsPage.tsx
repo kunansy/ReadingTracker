@@ -42,10 +42,12 @@ function GraphicBlock({
   title,
   queryKey,
   path,
+  spanSummary,
 }: {
   title: string;
   queryKey: unknown[];
   path: string;
+  spanSummary?: SpanSummary;
 }) {
   const q = useQuery({
     queryKey,
@@ -54,11 +56,13 @@ function GraphicBlock({
   });
 
   return (
-    <div className="graphic-image trend">
+    <div className="graphic-image">
       <h3 className="header">{title}</h3>
       {q.isLoading ? <p>Loading graphic…</p> : null}
       {q.error ? <p className="error">{(q.error as Error).message}</p> : null}
       {q.data?.image ? <SvgImg b64={q.data.image} /> : null}
+
+      {spanSummary ? <SpanStatsBlock s={spanSummary} />: null}
     </div>
   );
 }
@@ -144,7 +148,7 @@ export function SystemGraphicsPage() {
 
       {summaryQ.data ? (
         <>
-          <div className="tracker-statistics statistics">
+          <div className="statistics">
             <h3 className="header">Tracker statistics</h3>
             {(() => {
               const stat = summaryQ.data.tracker_statistics;
@@ -196,34 +200,25 @@ export function SystemGraphicsPage() {
 
           <GraphicBlock
             title="Reading progress"
-            queryKey={[
-              "system",
-              "graphic",
-              "reading-progress",
-              { effectiveMaterialId, lastDays },
-            ]}
+            queryKey={["system", "graphic", "reading-progress", { effectiveMaterialId, lastDays }]}
             path={`/graphics/reading-progress${buildQuery({
               material_id: effectiveMaterialId,
               last_days: lastDays,
             })}`}
           />
 
-          <div className="graphic-image trend reading-trend">
-            <GraphicBlock
-              title="Read pages"
-              queryKey={["system", "graphic", "reading-trend", { lastDays }]}
-              path={`/graphics/reading-trend${buildQuery({ last_days: lastDays })}`}
-            />
-            <SpanStatsBlock s={summaryQ.data.reading_trend} />
-          </div>
+          <GraphicBlock
+            title="Read pages"
+            queryKey={["system", "graphic", "reading-trend", { lastDays }]}
+            path={`/graphics/reading-trend${buildQuery({ last_days: lastDays })}`}
+            spanSummary={summaryQ.data.reading_trend}
+          />
 
-          <div className="graphic-image trend reading-trend">
-            <GraphicBlock
-                title="Total read"
-                queryKey={["system", "graphic", "total-read", { lastDays }]}
-                path={`/graphics/total-read${buildQuery({ last_days: lastDays })}`}
-            />
-          </div>
+          <GraphicBlock
+            title="Total read"
+            queryKey={["system", "graphic", "total-read", { lastDays }]}
+            path={`/graphics/total-read${buildQuery({ last_days: lastDays })}`}
+          />
 
           <GraphicBlock
             title="Outline percentage"
@@ -231,41 +226,33 @@ export function SystemGraphicsPage() {
             path="/graphics/outline-percentage"
           />
 
-          <div className="graphic-image trend notes-trend">
-            <GraphicBlock
-              title="Inserted notes"
-              queryKey={["system", "graphic", "notes-trend", { lastDays }]}
-              path={`/graphics/notes-trend${buildQuery({ last_days: lastDays })}`}
-            />
-            <SpanStatsBlock s={summaryQ.data.notes_trend} />
-          </div>
+          <GraphicBlock
+            title="Inserted notes"
+            queryKey={["system", "graphic", "notes-trend", { lastDays }]}
+            path={`/graphics/notes-trend${buildQuery({ last_days: lastDays })}`}
+            spanSummary={summaryQ.data.notes_trend}
+          />
 
-          <div className="graphic-image trend completed-materials-trend">
-            <GraphicBlock
-              title="Completed materials"
-              queryKey={["system", "graphic", "completed-materials-trend", { lastDays }]}
-              path={`/graphics/completed-materials-trend${buildQuery({ last_days: lastDays })}`}
-            />
-            <SpanStatsBlock s={summaryQ.data.completed_materials_trend} />
-          </div>
+          <GraphicBlock
+            title="Completed materials"
+            queryKey={["system", "graphic", "completed-materials-trend", { lastDays }]}
+            path={`/graphics/completed-materials-trend${buildQuery({ last_days: lastDays })}`}
+            spanSummary={summaryQ.data.completed_materials_trend}
+          />
 
-          <div className="graphic-image trend repeated-materials-trend">
-            <GraphicBlock
-              title="Repeated materials"
-              queryKey={["system", "graphic", "repeated-materials-trend", { lastDays }]}
-              path={`/graphics/repeated-materials-trend${buildQuery({ last_days: lastDays })}`}
-            />
-            <SpanStatsBlock s={summaryQ.data.repeated_materials_trend} />
-          </div>
+          <GraphicBlock
+            title="Repeated materials"
+            queryKey={["system", "graphic", "repeated-materials-trend", { lastDays }]}
+            path={`/graphics/repeated-materials-trend${buildQuery({ last_days: lastDays })}`}
+            spanSummary={summaryQ.data.repeated_materials_trend}
+          />
 
-          <div className="graphic-image trend outlined-materials-trend">
-            <GraphicBlock
-              title="Outlined materials"
-              queryKey={["system", "graphic", "outlined-materials-trend", { lastDays }]}
-              path={`/graphics/outlined-materials-trend${buildQuery({ last_days: lastDays })}`}
-            />
-            <SpanStatsBlock s={summaryQ.data.outlined_materials_trend} />
-          </div>
+          <GraphicBlock
+            title="Outlined materials"
+            queryKey={["system", "graphic", "outlined-materials-trend", { lastDays }]}
+            path={`/graphics/outlined-materials-trend${buildQuery({ last_days: lastDays })}`}
+            spanSummary={summaryQ.data.outlined_materials_trend}
+          />
         </>
       ) : null}
     </>
