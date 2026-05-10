@@ -148,11 +148,6 @@ export type ListCardsResponse = {
   items: ListCardsItem[];
 }
 
-export type SystemMetaResponse = {
-  material_id: string | null;
-  titles: Record<string, string>;
-};
-
 export type SpanSummary = {
   total: number;
   would_be_total: number;
