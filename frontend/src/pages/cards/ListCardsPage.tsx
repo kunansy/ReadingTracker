@@ -5,6 +5,7 @@ import { apiFetch } from "../../api/cards.ts";
 import {ListMaterialsTitlesResponse, ListCardsResponse} from "../../types.ts";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
 import {useMemo} from "react";
+import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 
 
 export function ListCardsPage() {
@@ -96,12 +97,23 @@ export function ListCardsPage() {
               className="card hover"
               id={item.card_id}
               >
-                  <p className="question"> { item.question } </p>
+                  <p
+                      className="question"
+                      dangerouslySetInnerHTML={{ __html: parseMarkdown(item.question) }}
+                  />
                   <hr className="question-divider"/>
                   <details className="answer">
                       <summary className="answer"> Show answer </summary>
-                      {item.answer && <p className="answer">{item.answer}</p>}
-                      <p className="answer note-answer"> { item.note_content } </p>
+                      {item.answer && (
+                          <p
+                              className="answer"
+                              dangerouslySetInnerHTML={{ __html: parseMarkdown(item.answer) }}
+                          />
+                      )}
+                      <p
+                          className="answer note-answer"
+                          dangerouslySetInnerHTML={{ __html: parseMarkdown(item.note_content) }}
+                      />
                       <p className="txt material-title"> «{ item.material_title }»/{ item.material_authors }/{ item.material_type } </p>
                       <p className="txt material-page"> Chapter: { item.note_chapter } </p>
                       <p className="txt material-page"> Page: { item.note_page } </p>
