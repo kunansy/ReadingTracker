@@ -19,18 +19,6 @@ from tracker.system import db, schemas, trends
 router = APIRouter(prefix="/system", tags=["system-api"])
 
 
-@router.get("/meta", response_class=JSONResponse)
-async def system_meta():
-    async with asyncio.TaskGroup() as tg:
-        titles_task = tg.create_task(db.get_read_material_titles())
-        reading_now_task = tg.create_task(logs_db.get_material_reading_now())
-
-    return {
-        "material_id": reading_now_task.result(),
-        "titles": titles_task.result(),
-    }
-
-
 @router.get("/summary", response_model=schemas.GetSystemSummaryResponse)
 async def get_system_summary(r: Annotated[schemas.GetSystemSummaryRequest, Depends()]):
     last_days = r.last_days

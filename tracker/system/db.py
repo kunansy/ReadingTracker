@@ -36,18 +36,6 @@ async def _get_graphic_data(*, material_id: UUID, last_days: int) -> ReadingData
     return ReadingData(counts[-last_days:], dates[-last_days:])
 
 
-async def get_read_material_titles() -> dict[UUID, str]:
-    stmt = sa.select(models.Materials.c.material_id, models.Materials.c.title).join(
-        models.Statuses,
-        models.Materials.c.material_id == models.Statuses.c.material_id,
-    )
-
-    async with database.session() as ses:
-        return {  # noqa: C416
-            material_id: title for material_id, title in (await ses.execute(stmt)).all()
-        }
-
-
 def _set_plot_style() -> None:
     if datetime.datetime.now(tz=datetime.UTC).time() >= settings.EX_DARKMODE_ENABLE:
         plt.style.use("dark_background")
