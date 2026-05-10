@@ -126,26 +126,3 @@ async def get_cards_count(
 
     async with database.session() as ses:
         return await ses.scalar(stmt) or 0
-
-
-async def list_materials_with_cards() -> dict[UUID, str]:
-    logger.debug("Getting material titles")
-
-    stmt = (
-        sa.select(models.Materials.c.material_id, models.Materials.c.title)
-        .select_from(models.Cards)
-        .join(
-            models.Materials,
-            models.Cards.c.material_id == models.Materials.c.material_id,
-        )
-    )
-
-    async with database.session() as ses:
-        # TODO: probably, it should to remove mappings at all
-        titles = {
-            row.material_id: row.title
-            for row in (await ses.execute(stmt)).mappings().all()
-        }
-
-    logger.debug("Titles got")
-    return titles

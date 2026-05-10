@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
 import { apiFetch } from "../../api/cards.ts";
+import { apiFetch as materialsApiFetch } from "../../api/materials.ts";
 import {ListMaterialsTitlesResponse, ListCardsResponse} from "../../types.ts";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
 import {useMemo} from "react";
@@ -14,8 +15,8 @@ export function ListCardsPage() {
     const navigate = useNavigate();
 
     const materialsTitlesQ = useQuery({
-        queryKey: ["materials", "cards", "titles"],
-        queryFn: () => apiFetch<ListMaterialsTitlesResponse>("/materials-titles"),
+        queryKey: ["materials", "with_cards_titles"],
+        queryFn: () => materialsApiFetch<ListMaterialsTitlesResponse>("/with-cards-titles"),
         staleTime: 5 * 60 * 1000,
     });
 

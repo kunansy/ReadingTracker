@@ -1141,3 +1141,22 @@ async def get_reading_material_titles() -> dict[UUID, str]:
 
     logger.debug("%s reading materials titles got", len(titles))
     return titles
+
+
+async def list_material_titles_with_cards() -> dict[UUID, str]:
+    logger.debug("Getting material titles")
+
+    stmt = (
+        sa.select(models.Materials.c.material_id, models.Materials.c.title)
+        .select_from(models.Cards)
+        .join(
+            models.Materials,
+            models.Cards.c.material_id == models.Materials.c.material_id,
+            )
+    )
+
+    async with database.session() as ses:
+        titles: dict[UUID, str] = dict((await ses.execute(stmt)).all())  # type: ignore[arg-type]
+
+    logger.debug("Titles got")
+    return titles
