@@ -178,7 +178,7 @@ export function ListReadingMaterialsPage() {
             >
               <button
                 type="button"
-                className="submit-button celebrate-btn complete-material-open"
+                className="submit-button complete-material-open"
                 onClick={() => {
                   openComplete(material.material_id);
                 }}
@@ -224,7 +224,7 @@ export function ListReadingMaterialsPage() {
           </button>
           <CelebrateButton
             id="complete-material-confirm"
-            className="submit-button celebrate-btn"
+            className="submit-button"
             onClick={async () => {
               if (!completeId || !dateStr) {
                 return;

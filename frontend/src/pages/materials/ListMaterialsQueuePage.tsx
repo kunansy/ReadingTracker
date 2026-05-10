@@ -196,7 +196,7 @@ export function ListMaterialsQueuePage() {
             >
               <button
                   type="button"
-                  className="submit-button celebrate-btn"
+                  className="submit-button"
                   onClick={() => {
                     openStart(material.material_id);
                   }}
@@ -240,7 +240,7 @@ export function ListMaterialsQueuePage() {
                 </button>
                 <CelebrateButton
                     id="complete-material-confirm"
-                    className="submit-button celebrate-btn"
+                    className="submit-button"
                     onClick={async () => {
                       if (!completeId || !dateStr) {
                         return;

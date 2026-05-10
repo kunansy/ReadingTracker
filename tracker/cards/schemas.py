@@ -1,14 +1,11 @@
 import datetime
-from typing import Annotated, Self
 from uuid import UUID
 
-from pydantic import BeforeValidator, NonNegativeInt, model_validator
-
-from tracker.common.schemas import CustomBaseModel, skip_empty_value
+from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums
 
 
-class ListCardsItem(CustomBaseModel):
+class _ListCardsItem(CustomBaseModel):
     card_id: UUID
     note_id: UUID
     material_id: UUID
@@ -25,7 +22,7 @@ class ListCardsItem(CustomBaseModel):
 
 
 class ListCardsResponse(CustomBaseModel):
-    items: list[ListCardsItem]
+    items: list[_ListCardsItem]
 
 
 class CreateCardRequest(CustomBaseModel):
