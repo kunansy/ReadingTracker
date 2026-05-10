@@ -12,6 +12,7 @@ import {
 } from "../../components/Combobox";
 import {isUuid} from "../../utils/isUuid.ts";
 import {SpellTextarea} from "../../components/SpellTextrea.tsx";
+import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 
 type NoteListItem = {
   note_id: string;
@@ -212,7 +213,7 @@ export function AddCardPage() {
               >
                 <p
                     className="note-content"
-                    dangerouslySetInnerHTML={{ __html: n.content_html }}
+                    dangerouslySetInnerHTML={{ __html: parseMarkdown(n.content_html) }}
                 />
                 <p className="note-page">Page: {n.page}</p>
                 <p className="note-id">ID: {n.note_id}</p>
