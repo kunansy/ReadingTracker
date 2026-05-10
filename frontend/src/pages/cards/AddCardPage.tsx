@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { apiFetch as cardsApiFetch } from "../../api/cards";
@@ -10,8 +10,8 @@ import {
   ComboboxList,
   ComboboxRoot,
 } from "../../components/Combobox";
-import { useAltchHotkeys } from "../../hooks/useAltchHotkeys";
 import {isUuid} from "../../utils/isUuid.ts";
+import {SpellTextarea} from "../../components/SpellTextrea.tsx";
 
 type NoteListItem = {
   note_id: string;
@@ -49,9 +49,6 @@ export function AddCardPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialMaterialId = searchParams.get("material_id") ?? "";
   const initialNoteId = searchParams.get("note_id") ?? "";
-
-  const questionRef = useRef<HTMLTextAreaElement>(null);
-  useAltchHotkeys(questionRef);
 
   const [materialId, setMaterialId] = useState<string>(initialMaterialId);
   const [noteId, setNoteId] = useState<string>(initialNoteId);
@@ -299,21 +296,21 @@ export function AddCardPage() {
             <ComboboxList />
           </ComboboxRoot>
 
-          <textarea
-            ref={questionRef}
-            className="input altch"
-            id="input-question"
-            placeholder="Enter a question"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-          />
-          <textarea
-            className="input altch"
-            id="input-answer"
-            placeholder="Enter an answer (optional)"
-            value={answer}
-            onChange={(e) => setAnswer(e.target.value)}
-          />
+        <SpellTextarea
+          value={question}
+          onChange={setQuestion}
+          className="input"
+          id="input-question"
+          placeholder="Enter a question"
+        />
+
+        <SpellTextarea
+          value={answer}
+          onChange={setAnswer}
+          className="input"
+          id="input-answer"
+          placeholder="Enter an answer (optional)"
+        />
 
           <CelebrateButton type="submit" className="submit-button">
             Add
