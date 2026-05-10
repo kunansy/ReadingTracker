@@ -30,14 +30,6 @@ async def create_card(card: schemas.CreateCardRequest):
     }
 
 
-@router.get("/materials-titles", response_model=schemas.ListMaterialsWithCardsResponse)
-async def list_materials_with_cards():
-    items = await db.list_materials_with_cards()
-    return {
-        "items": items,
-    }
-
-
 @router.get("/notes-with-cards", response_model=schemas.ListNotesWithCardsResponse)
 async def list_notes_with_cards(material_id: UUID | None = None):
     items = await db.get_notes_with_cards(material_id=material_id)
