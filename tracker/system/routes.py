@@ -149,23 +149,3 @@ async def restore(request: Request):
         context["notes_count"] = snapshot_dict["notes"].counter
 
     return templates.TemplateResponse(request, "system/restore.html", context)
-
-
-@router.post(
-    "/report",
-    response_model=schemas.GetSpanReportResponse,
-    response_class=JSONResponse,
-)
-async def get_span_report(span: Annotated[schemas.GetSpanReportRequest, Form()]):
-    """Get analytics for the span: analyze materials, read items and inserted notes."""
-    span_analysis = await trends.get_span_analytics(span)
-
-    return {
-        "completed_materials": span_analysis.materials_analytics.stats,
-        "total_materials_completed": span_analysis.materials_analytics.total,
-        "read_items": span_analysis.reading_analytics.stats,
-        "reading": span_analysis.reading.dump(),
-        "notes": span_analysis.notes.dump(),
-        "repeats_total": span_analysis.repeat_analytics.repeats_count,
-        "repeat_materials_count": span_analysis.repeat_analytics.unique_materials_count,
-    }

@@ -177,3 +177,19 @@ async def restore_api():
         repeats_count=snapshot_dict["repeats"].counter,
         note_repeats_history_count=snapshot_dict["note_repeats_history"].counter,
     )
+
+
+@router.post("/report", response_model=schemas.GetSpanReportResponse)
+async def get_span_report(span: schemas.GetSpanReportRequest):
+    """Get analytics for the time span: analyze materials, read items and inserted notes."""
+    span_analysis = await trends.get_span_analytics(span)
+
+    return {
+        "completed_materials": span_analysis.materials_analytics.stats,
+        "total_materials_completed": span_analysis.materials_analytics.total,
+        "read_items": span_analysis.reading_analytics.stats,
+        "reading": span_analysis.reading.dump(),
+        "notes": span_analysis.notes.dump(),
+        "repeats_total": span_analysis.repeat_analytics.repeats_count,
+        "repeat_materials_count": span_analysis.repeat_analytics.unique_materials_count,
+    }
