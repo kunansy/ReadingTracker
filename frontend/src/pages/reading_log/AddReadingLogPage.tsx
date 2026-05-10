@@ -27,7 +27,7 @@ export function AddReadingLogPage() {
   const navigate = useNavigate();
   const from = location.state?.from || "/materials/reading";
 
-  const getMaterialReadingNow = useQuery({
+  const materialReadingNowQ = useQuery({
     queryKey: ["materials", "reading_now"],
     queryFn: () =>
         apiFetch<GetMaterialReadingNowResponse>("/material-reading-now"),
@@ -57,10 +57,10 @@ export function AddReadingLogPage() {
   }, []);
 
   useEffect(() => {
-    if (!initialMaterial && getMaterialReadingNow.data?.material_id) {
-      setMaterialId(getMaterialReadingNow.data.material_id);
+    if (!initialMaterial && materialReadingNowQ.data?.material_id) {
+      setMaterialId(materialReadingNowQ.data.material_id);
     }
-  }, [getMaterialReadingNow.data?.material_id, initialMaterial]);
+  }, [materialReadingNowQ.data?.material_id, initialMaterial]);
 
   const addMut = useMutation({
     mutationFn: async () => {
@@ -99,10 +99,10 @@ export function AddReadingLogPage() {
     );
   }, [titles]);
 
-  if (getMaterialReadingNow.isLoading || completionQ.isLoading || readingMaterialsTitlesQ.isLoading) {
+  if (materialReadingNowQ.isLoading || completionQ.isLoading || readingMaterialsTitlesQ.isLoading) {
     return <p>Loading…</p>;
   }
-  const hasError = getMaterialReadingNow.error || readingMaterialsTitlesQ.error || completionQ.error;
+  const hasError = materialReadingNowQ.error || readingMaterialsTitlesQ.error || completionQ.error;
   if (hasError) {
     return (
         <p className="error">
