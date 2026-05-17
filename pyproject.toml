@@ -138,7 +138,7 @@ aiohttp = "~3.13.0"
 redis = "~5.2.1"
 
 [tool.poetry.group.dev.dependencies]
-mypy = "~2.0.0"
+mypy = "~2.1.0"
 bumpversion = "~0.6.0"
 greenlet = "~3.2.0"
 ruff = "~0.15.4"
