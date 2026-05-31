@@ -254,6 +254,7 @@ export function ListMaterialsQueuePage() {
                       } catch (err) {
                         window.alert((err as Error).message);
                       }
+                      navigate("/materials/reading#header");
                     }}
                 >
                   Start
