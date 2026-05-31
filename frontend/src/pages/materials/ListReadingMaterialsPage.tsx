@@ -238,6 +238,7 @@ export function ListReadingMaterialsPage() {
               } catch (err) {
                 window.alert((err as Error).message);
               }
+              navigate(`/materials/completed`, { state: {scrollTo: completeId } });
             }}
           >
             Complete
