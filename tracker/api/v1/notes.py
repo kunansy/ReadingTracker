@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from pydantic import NonNegativeInt
 
-from tracker.common import manticoresearch
+from tracker.common import database, manticoresearch
 from tracker.models import enums
 from tracker.notes import db, schemas
 from tracker.notes.listing import build_notes_search_result
@@ -143,6 +143,11 @@ async def add_note(note: schemas.AddNoteRequest):
         page=note.page,
         tags=note.tags,
     )
+    await manticoresearch.insert_note(
+        note_id=note_id,
+        content=note.content,
+        added_at=database.utcnow(),
+    )
     return {"note_id": note_id}
 
 
@@ -157,6 +162,11 @@ async def update_note(note_id: UUID, body: schemas.UpdateNoteRequest):
         chapter=body.chapter,
         page=body.page,
         tags=body.tags,
+    )
+    await manticoresearch.update_content(
+        note_id=note_id,
+        content=body.content,
+        added_at=database.utcnow(),
     )
 
 

@@ -108,7 +108,7 @@ async def _create_table() -> None:
         await cur.execute(CREATE_TABLE_QUERY)
 
 
-async def _insert_all(notes: list[Note]) -> None:
+async def _insert_all(*notes: Note) -> None:
     logger.debug("Inserting all %s notes", len(notes))
     if not notes:
         return
@@ -133,7 +133,7 @@ async def init() -> None:
     logger.debug("Getting notes")
     notes = await _get_notes()
     logger.debug("%s notes got, inserting", len(notes))
-    await _insert_all(notes)
+    await _insert_all(*notes)
     logger.debug("Notes inserted")
 
     logger.info("Manticore search init completed")
@@ -146,6 +146,16 @@ async def delete(note_id: UUID | str) -> None:
         await cur.execute(DELETE_QUERY, note_id)
 
     logger.debug("Note deleted")
+
+
+async def insert_note(
+    *,
+    note_id: UUID,
+    content: str,
+    added_at: datetime.datetime,
+) -> None:
+    note = Note(note_id=note_id, content=content, added_at=added_at)
+    await _insert_all(note)
 
 
 async def update_content(
