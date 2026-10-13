@@ -4,16 +4,16 @@ import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 
 import {apiFetch} from "../../api/materials";
 import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
-import {GetMaterialResponse, MaterialTagsResponse, MaterialType, MaterialTypes} from "../../types";
+import {GetMaterialResponse, isMaterialType, MaterialTagsResponse, MaterialType, MaterialTypes} from "../../types";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox";
 
 export function UpdateMaterialPage() {
   const [searchParams] = useSearchParams();
   const materialId = searchParams.get("material_id");
   const titleRef = useRef<HTMLInputElement>(null);
-  useAltchHotkeys(titleRef);
 
   const [title, setTitle] = useState("");
+  useAltchHotkeys(titleRef, title, setTitle);
   const [authors, setAuthors] = useState("");
   const [pages, setPages] = useState("");
   const [materialType, setMaterialType] = useState<MaterialType>(MaterialType.book);
@@ -162,7 +162,11 @@ export function UpdateMaterialPage() {
 
             <ComboboxRoot
                 value={materialType}
-                onChange={setMaterialType}
+                onChange={(value) => {
+                  if (isMaterialType(value)) {
+                    setMaterialType(value);
+                  }
+                }}
                 options={MaterialTypes ?? []}
             >
               <ComboboxInput placeholder="Enter a material type" />

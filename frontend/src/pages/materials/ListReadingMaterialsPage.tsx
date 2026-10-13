@@ -9,6 +9,7 @@ import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
 import type {ListReadingMaterialsResponse} from "../../types";
 import { ScrollArrows } from "../../components/ScrollArrows";
+import { dateInputValue } from "../../utils/dateInputValue";
 
 export function ListReadingMaterialsPage() {
   const qc = useQueryClient();
@@ -79,11 +80,7 @@ export function ListReadingMaterialsPage() {
   );
 
   const setToday = () => {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, "0");
-    const dd = String(today.getDate()).padStart(2, "0");
-    setDateStr(`${yyyy}-${mm}-${dd}`);
+    setDateStr(dateInputValue());
   };
 
   const openComplete = (materialId: string) => {

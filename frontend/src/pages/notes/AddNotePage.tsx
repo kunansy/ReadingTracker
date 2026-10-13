@@ -10,11 +10,10 @@ import {ListMaterialsTitlesResponse, AddNoteRequest, MaterialType, GetMaterialRe
 import {isUuid} from "../../utils/isUuid.ts";
 import {SpellTextarea} from "../../components/SpellTextrea.tsx";
 import { loadWithTtl, saveWithTtl } from "../../lib/ttlStorage.ts";
+import { NoteDraft, parseNoteDraft, resolveNoteDraft } from "./noteDraft.ts";
 
 const NOTE_DRAFT_KEY = "add-note-draft";
 const NOTE_DRAFT_TTL_MS = 12 * 60 * 60 * 1000;
-
-type NoteDraft = Pick<AddNoteRequest, "materialId" | "chapter" | "page">;
 
 
 export function AddNotePage() {
@@ -23,21 +22,13 @@ export function AddNotePage() {
   const [pageName, setPageName] = useState("page number");
   const [chapterName, setChapterName] = useState("chapter");
 
-  const [formData, setFormData] = useState<AddNoteRequest>(() => {
-    const draft = loadWithTtl<NoteDraft>(NOTE_DRAFT_KEY);
-    const materialId = initialMaterial || draft?.materialId || "";
-    const isDraftMaterial = draft?.materialId === materialId;
-
-    return {
-      materialId,
-      title: "",
-      content: "",
-      tags: [],
-      linkId: "",
-      chapter: isDraftMaterial ? draft.chapter : "",
-      page: isDraftMaterial ? draft.page : 0,
-    };
-  });
+  const [formData, setFormData] = useState<AddNoteRequest>(() => ({
+    ...resolveNoteDraft(initialMaterial, parseNoteDraft(loadWithTtl(NOTE_DRAFT_KEY))),
+    title: "",
+    content: "",
+    tags: [],
+    linkId: "",
+  }));
   const [successId, setSuccessId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -77,22 +68,22 @@ export function AddNotePage() {
   }, []);
 
   const addMut = useMutation({
-    mutationFn: async () => {
-      if (!isUuid(formData.materialId)) {
+    mutationFn: async (request: AddNoteRequest) => {
+      if (!isUuid(request.materialId)) {
         throw new Error("Choose a valid material (UUID)");
       }
       const body: Record<string, unknown> = {
-        material_id: formData.materialId,
-        content: formData.content,
-        chapter: formData.chapter || "",
-        page: formData.page,
-        tags: formData.tags,
+        material_id: request.materialId,
+        content: request.content,
+        chapter: request.chapter || "",
+        page: request.page,
+        tags: request.tags,
       };
-      if (formData.title.trim()) {
-        body.title = formData.title.trim();
+      if (request.title.trim()) {
+        body.title = request.title.trim();
       }
-      if (formData.linkId.trim() && isUuid(formData.linkId.trim())) {
-        body.link_id = formData.linkId.trim();
+      if (request.linkId.trim() && isUuid(request.linkId.trim())) {
+        body.link_id = request.linkId.trim();
       }
       return apiFetch<{ note_id: string }>("/add", {
         method: "POST",
@@ -103,11 +94,18 @@ export function AddNotePage() {
       await new Promise(resolve => setTimeout(resolve, 0));
       setSuccessId("optimistic");
     },
-    onSuccess: (data) => {
+    onSuccess: (data, request) => {
       setSuccessId(data?.note_id ?? null);
-      const { materialId, chapter, page } = formData;
+      const { materialId, chapter, page } = request;
       saveWithTtl<NoteDraft>(NOTE_DRAFT_KEY, { materialId, chapter, page }, NOTE_DRAFT_TTL_MS);
-      setFormData(prev => ({ ...prev, title: "", content: "", tags: [], linkId: "" }));
+      // Fields edited while the request was in flight were not submitted, so they are kept.
+      setFormData(prev => ({
+        ...prev,
+        title: prev.title === request.title ? "" : prev.title,
+        content: prev.content === request.content ? "" : prev.content,
+        tags: prev.tags === request.tags ? [] : prev.tags,
+        linkId: prev.linkId === request.linkId ? "" : prev.linkId,
+      }));
     },
     onError: (e: Error) => {
       setSuccessId(null);
@@ -145,7 +143,7 @@ export function AddNotePage() {
               onSubmit={(e) => {
             e.preventDefault();
             setError(null);
-            addMut.mutate();
+            addMut.mutate(formData);
           }}
           >
             <fieldset className="fieldset">

@@ -2,6 +2,11 @@ import { useEffect, useState } from "react";
 
 const SHOW_UP_AFTER_PX = 300;
 
+function scrollBehavior(): ScrollBehavior {
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  return prefersReducedMotion ? "auto" : "smooth";
+}
+
 export function ScrollArrows() {
   const [canScrollUp, setCanScrollUp] = useState(false);
   const [canScrollDown, setCanScrollDown] = useState(false);
@@ -34,7 +39,7 @@ export function ScrollArrows() {
         <button
           type="button"
           aria-label="Scroll to top"
-          onClick={() => window.scrollTo({ top: 0 })}
+          onClick={() => window.scrollTo({ top: 0, behavior: scrollBehavior() })}
         >
           &#x2191;
         </button>
@@ -44,7 +49,10 @@ export function ScrollArrows() {
           type="button"
           aria-label="Scroll to bottom"
           onClick={() =>
-            window.scrollTo({ top: document.documentElement.scrollHeight })
+            window.scrollTo({
+              top: document.documentElement.scrollHeight,
+              behavior: scrollBehavior(),
+            })
           }
         >
           &#x2193;

@@ -226,11 +226,6 @@ a.arrow-up, a.arrow-down {
 .scroll-arrows button:active {
     transform: scale(.92);
 }
-@media (prefers-reduced-motion: no-preference) {
-    html {
-        scroll-behavior: smooth;
-    }
-}
 
 .hints {
     display: flex;
@@ -251,7 +246,7 @@ a.arrow-up, a.arrow-down {
     transition: background-color 150ms, color 150ms, transform 150ms;
 }
 .hint-button:hover:not(:disabled),
-.hint-button[aria-pressed="true"] {
+.hint-button[data-active="true"] {
     background-color: black;
     color: white;
 }
