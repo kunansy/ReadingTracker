@@ -9,6 +9,7 @@ import { itemsLabel, itemsLabelLower } from "../../materials/format";
 import type {ListMaterialsQueueResponse} from "../../types";
 import {CelebrateButton} from "../../components/CelebrateButton.tsx";
 import { ScrollArrows } from "../../components/ScrollArrows";
+import { dateInputValue } from "../../utils/dateInputValue";
 
 
 export function ListMaterialsQueuePage() {
@@ -47,11 +48,7 @@ export function ListMaterialsQueuePage() {
   });
 
   const setToday = () => {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, "0");
-    const dd = String(today.getDate()).padStart(2, "0");
-    setDateStr(`${yyyy}-${mm}-${dd}`);
+    setDateStr(dateInputValue());
   };
 
   const openStart = (materialId: string) => {

@@ -170,9 +170,10 @@ export function useAltchHotkeys(
       }
     };
 
-    field.addEventListener("keydown", onKeyDown, true);
+    const target: HTMLElement = field;
+    target.addEventListener("keydown", onKeyDown, true);
     return () => {
-      field.removeEventListener("keydown", onKeyDown, true);
+      target.removeEventListener("keydown", onKeyDown, true);
     };
   }, [ref, value, onChange, options.disabled, options.readOnly]);
 }

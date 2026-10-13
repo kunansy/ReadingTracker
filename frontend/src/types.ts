@@ -8,6 +8,10 @@ export enum MaterialType {
 
 export const MaterialTypes = Object.values(MaterialType);
 
+export function isMaterialType(value: string): value is MaterialType {
+  return MaterialTypes.some((materialType) => materialType === value);
+}
+
 type GetMaterialItem = {
   material_id: string;
   index: number;

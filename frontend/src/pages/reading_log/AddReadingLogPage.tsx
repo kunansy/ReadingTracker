@@ -11,16 +11,8 @@ import {
   ListMaterialsTitlesResponse,
 } from "../../types.ts";
 import {isUuid} from "../../utils/isUuid.ts";
+import {dateInputValue} from "../../utils/dateInputValue.ts";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
-
-function dateInputValue(daysAgo = 0) {
-  const d = new Date();
-  d.setDate(d.getDate() - daysAgo);
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
 
 interface HintButtonProps {
   label: string;
@@ -35,7 +27,7 @@ function HintButton({ label, value, current, showValue = false, onPick }: HintBu
     <button
       type="button"
       className="hint-button"
-      aria-pressed={value !== undefined && value === current}
+      data-active={value === current}
       disabled={value === undefined}
       onClick={() => {
         if (value !== undefined) onPick(value);
@@ -175,15 +167,17 @@ export function AddReadingLogPage() {
               <ComboboxList />
             </ComboboxRoot>
 
-            <p
-                className="little-text"
-                id="reading-info"
-                key="reading-info"
-            > { materialCompletionInfo?.pages_read } of { materialCompletionInfo?.material_pages },
-              { " " }
-              { Math.ceil(materialCompletionInfo?.pages_read / materialCompletionInfo?.material_pages * 100) }
-              {"%"}
-            </p>
+            {materialCompletionInfo && materialCompletionInfo.material_pages > 0 ? (
+              <p
+                  className="little-text"
+                  id="reading-info"
+                  key="reading-info"
+              > { materialCompletionInfo.pages_read } of { materialCompletionInfo.material_pages },
+                { " " }
+                { Math.ceil(materialCompletionInfo.pages_read / materialCompletionInfo.material_pages * 100) }
+                {"%"}
+              </p>
+            ) : null}
 
             <input
              className="input"
