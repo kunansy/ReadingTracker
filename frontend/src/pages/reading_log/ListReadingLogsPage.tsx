@@ -6,6 +6,7 @@ import { apiFetch, buildQuery } from "../../api/readingLog.ts";
 import { apiFetch as materialsApiFetch } from "../../api/materials.ts";
 import {ListMaterialsTitlesResponse, ListReadingLogsResponse} from "../../types.ts";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
+import { ScrollArrows } from "../../components/ScrollArrows";
 
 export function ListReadingLogsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -111,6 +112,7 @@ export function ListReadingLogsPage() {
        {/*   <p className="message"> No reading logs found </p>*/}
        {/* </div>*/}
 
+      <ScrollArrows />
     </>
   );
 }

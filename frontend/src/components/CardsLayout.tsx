@@ -1,6 +1,5 @@
 import { Outlet } from "react-router-dom";
 
-import { ScrollArrows } from "./ScrollArrows";
 import { MobileNav } from "./MobileNav";
 import { CardsSubnav } from "../components/CardsSubnav.tsx";
 
@@ -21,7 +20,6 @@ export function CardsLayout() {
       <main>
         <div id="loader" />
         <Outlet />
-        <ScrollArrows />
       </main>
       <footer id="footer" />
     </>

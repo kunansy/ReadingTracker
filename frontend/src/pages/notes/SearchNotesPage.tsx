@@ -5,6 +5,7 @@ import {useNavigate, useSearchParams} from "react-router-dom";
 import { apiFetch, buildQuery } from "../../api/notes";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
+import { ScrollArrows } from "../../components/ScrollArrows";
 
 type NoteListItem = {
   note_id: string;
@@ -654,6 +655,7 @@ export function SearchNotesPage() {
           <p className="message"> No notes found </p>
         </div>
       )}
+      <ScrollArrows />
     </>
   );
 }

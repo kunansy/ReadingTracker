@@ -7,6 +7,7 @@ import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel } from "../../materials/format";
 import type { GetRepeatingQueueResponse } from "../../types";
+import { ScrollArrows } from "../../components/ScrollArrows";
 
 export function ListRepeatMaterialsPage() {
   const qc = useQueryClient();
@@ -156,6 +157,7 @@ export function ListRepeatMaterialsPage() {
           );
         })
       )}
+      <ScrollArrows />
     </>
   );
 }
