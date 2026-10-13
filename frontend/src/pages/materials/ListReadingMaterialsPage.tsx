@@ -8,6 +8,7 @@ import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
 import type {ListReadingMaterialsResponse} from "../../types";
+import { ScrollArrows } from "../../components/ScrollArrows";
 
 export function ListReadingMaterialsPage() {
   const qc = useQueryClient();
@@ -245,6 +246,7 @@ export function ListReadingMaterialsPage() {
           </CelebrateButton>
         </div>
       </dialog>
+      <ScrollArrows />
     </>
   );
 }

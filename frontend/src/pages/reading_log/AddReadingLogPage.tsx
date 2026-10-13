@@ -13,6 +13,40 @@ import {
 import {isUuid} from "../../utils/isUuid.ts";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
 
+function dateInputValue(daysAgo = 0) {
+  const d = new Date();
+  d.setDate(d.getDate() - daysAgo);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+interface HintButtonProps {
+  label: string;
+  value: string | undefined;
+  current: string;
+  showValue?: boolean;
+  onPick: (value: string) => void;
+}
+
+function HintButton({ label, value, current, showValue = false, onPick }: HintButtonProps) {
+  return (
+    <button
+      type="button"
+      className="hint-button"
+      aria-pressed={value !== undefined && value === current}
+      disabled={value === undefined}
+      onClick={() => {
+        if (value !== undefined) onPick(value);
+      }}
+    >
+      {label}
+      {showValue && value !== undefined ? <span className="hint-value">{value}</span> : null}
+    </button>
+  );
+}
+
 export function AddReadingLogPage() {
   const [searchParams] = useSearchParams();
   const initialMaterial = searchParams.get("material_id");
@@ -49,11 +83,7 @@ export function AddReadingLogPage() {
   const readingMaterialsTitles = readingMaterialsTitlesQ.data;
 
   useEffect(() => {
-    const today = new Date();
-    const yyyy = today.getFullYear();
-    const mm = String(today.getMonth() + 1).padStart(2, "0");
-    const dd = String(today.getDate()).padStart(2, "0");
-    setDate(`${yyyy}-${mm}-${dd}`);
+    setDate(dateInputValue());
   }, []);
 
   useEffect(() => {
@@ -91,6 +121,14 @@ export function AddReadingLogPage() {
       setError(e.message);
     },
   });
+
+  const pagesTotal = materialCompletionInfo?.material_pages;
+  const pagesRemain = materialCompletionInfo
+      ? materialCompletionInfo.material_pages - materialCompletionInfo.pages_read
+      : undefined;
+  const hasReadingLogs = (materialCompletionInfo?.pages_read ?? 0) > 0;
+  const allHint = pagesTotal === undefined ? undefined : String(pagesTotal);
+  const remainsHint = pagesRemain === undefined || pagesRemain <= 0 ? undefined : String(pagesRemain);
 
   const titles = readingMaterialsTitles?.items ?? {};
   const materialOptions = useMemo(() => {
@@ -157,6 +195,10 @@ export function AddReadingLogPage() {
                setDate(e.target.value);
              }}
             />
+            <div className="hints" role="group" aria-label="Date shortcuts">
+              <HintButton label="today" value={dateInputValue()} current={date} onPick={setDate} />
+              <HintButton label="yesterday" value={dateInputValue(1)} current={date} onPick={setDate} />
+            </div>
             <input
               className="input"
               type="number"
@@ -167,6 +209,13 @@ export function AddReadingLogPage() {
                 setCount(e.target.value);
               }}
             />
+            <div className="hints" role="group" aria-label="Count shortcuts">
+              {hasReadingLogs ? (
+                <HintButton label="remains" value={remainsHint} current={count} showValue onPick={setCount} />
+              ) : (
+                <HintButton label="all" value={allHint} current={count} showValue onPick={setCount} />
+              )}
+            </div>
             <CelebrateButton type="submit" className="submit-button">
               Add
             </CelebrateButton>

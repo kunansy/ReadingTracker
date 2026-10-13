@@ -9,6 +9,12 @@ import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Comb
 import {ListMaterialsTitlesResponse, AddNoteRequest, MaterialType, GetMaterialResponse} from "../../types.ts";
 import {isUuid} from "../../utils/isUuid.ts";
 import {SpellTextarea} from "../../components/SpellTextrea.tsx";
+import { loadWithTtl, saveWithTtl } from "../../lib/ttlStorage.ts";
+
+const NOTE_DRAFT_KEY = "add-note-draft";
+const NOTE_DRAFT_TTL_MS = 12 * 60 * 60 * 1000;
+
+type NoteDraft = Pick<AddNoteRequest, "materialId" | "chapter" | "page">;
 
 
 export function AddNotePage() {
@@ -17,14 +23,20 @@ export function AddNotePage() {
   const [pageName, setPageName] = useState("page number");
   const [chapterName, setChapterName] = useState("chapter");
 
-  const [formData, setFormData] = useState<AddNoteRequest>({
-    materialId: initialMaterial,
-    title: "",
-    content: "",
-    tags: [],
-    linkId: "",
-    chapter: "",
-    page: 0,
+  const [formData, setFormData] = useState<AddNoteRequest>(() => {
+    const draft = loadWithTtl<NoteDraft>(NOTE_DRAFT_KEY);
+    const materialId = initialMaterial || draft?.materialId || "";
+    const isDraftMaterial = draft?.materialId === materialId;
+
+    return {
+      materialId,
+      title: "",
+      content: "",
+      tags: [],
+      linkId: "",
+      chapter: isDraftMaterial ? draft.chapter : "",
+      page: isDraftMaterial ? draft.page : 0,
+    };
   });
   const [successId, setSuccessId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -93,15 +105,9 @@ export function AddNotePage() {
     },
     onSuccess: (data) => {
       setSuccessId(data?.note_id ?? null);
-      setFormData({
-        materialId: "",
-        title: "",
-        content: "",
-        tags: [],
-        linkId: "",
-        chapter: "",
-        page: 0,
-      });
+      const { materialId, chapter, page } = formData;
+      saveWithTtl<NoteDraft>(NOTE_DRAFT_KEY, { materialId, chapter, page }, NOTE_DRAFT_TTL_MS);
+      setFormData(prev => ({ ...prev, title: "", content: "", tags: [], linkId: "" }));
     },
     onError: (e: Error) => {
       setSuccessId(null);

@@ -14,6 +14,7 @@ import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { useDebounce } from "../../lib/debounce.ts";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
+import { ScrollArrows } from "../../components/ScrollArrows";
 import {
     ListCompletedMaterialsResponse,
     MaterialTagsResponse,
@@ -322,6 +323,7 @@ export function ListCompletedMaterialsPage() {
                       );
                   })
           )}
+        <ScrollArrows />
       </>
   );
 }

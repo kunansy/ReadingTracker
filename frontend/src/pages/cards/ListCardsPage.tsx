@@ -7,6 +7,7 @@ import {ListMaterialsTitlesResponse, ListCardsResponse} from "../../types.ts";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
 import {useMemo} from "react";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
+import { ScrollArrows } from "../../components/ScrollArrows";
 
 
 export function ListCardsPage() {
@@ -135,6 +136,7 @@ export function ListCardsPage() {
        {/* <div className="not-found">*/}
        {/*   <p className="message"> No cards found </p>*/}
        {/* </div>*/}
+      <ScrollArrows />
     </>
   );
 }

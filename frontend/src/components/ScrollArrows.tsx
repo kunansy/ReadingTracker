@@ -1,17 +1,55 @@
+import { useEffect, useState } from "react";
+
+const SHOW_UP_AFTER_PX = 300;
+
 export function ScrollArrows() {
+  const [canScrollUp, setCanScrollUp] = useState(false);
+  const [canScrollDown, setCanScrollDown] = useState(false);
+
+  useEffect(() => {
+    const update = () => {
+      const { scrollHeight } = document.documentElement;
+      setCanScrollUp(window.scrollY > SHOW_UP_AFTER_PX);
+      setCanScrollDown(window.scrollY + window.innerHeight < scrollHeight - 1);
+    };
+    update();
+
+    window.addEventListener("scroll", update, { passive: true });
+    const observer = new ResizeObserver(update);
+    observer.observe(document.body);
+
+    return () => {
+      window.removeEventListener("scroll", update);
+      observer.disconnect();
+    };
+  }, []);
+
+  if (!canScrollUp && !canScrollDown) {
+    return null;
+  }
+
   return (
-    <div className="arrow-div">
-      <div className="arrow-down hover">
-        <a className="arrow-down" href="#footer">
+    <nav className="scroll-arrows" aria-label="Page scroll">
+      {canScrollUp && (
+        <button
+          type="button"
+          aria-label="Scroll to top"
+          onClick={() => window.scrollTo({ top: 0 })}
+        >
+          &#x2191;
+        </button>
+      )}
+      {canScrollDown && (
+        <button
+          type="button"
+          aria-label="Scroll to bottom"
+          onClick={() =>
+            window.scrollTo({ top: document.documentElement.scrollHeight })
+          }
+        >
           &#x2193;
-        </a>
-      </div>
-      <div className="arrow-up hover">
-        <a className="arrow-up" href="#head">
-          {" "}
-          &#x2191;{" "}
-        </a>
-      </div>
-    </div>
+        </button>
+      )}
+    </nav>
   );
 }

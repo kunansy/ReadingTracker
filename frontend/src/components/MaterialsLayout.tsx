@@ -2,7 +2,6 @@ import { Outlet } from "react-router-dom";
 
 import { MobileNav } from "./MobileNav";
 import { MaterialsSubnav } from "./MaterialsSubnav";
-import { ScrollArrows } from "./ScrollArrows";
 
 export function MaterialsLayout() {
   return (
@@ -21,7 +20,6 @@ export function MaterialsLayout() {
       <main>
         <div id="loader" />
         <Outlet />
-        <ScrollArrows />
       </main>
       <footer id="footer" />
     </>

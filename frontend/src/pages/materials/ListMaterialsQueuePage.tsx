@@ -8,6 +8,7 @@ import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
 import type {ListMaterialsQueueResponse} from "../../types";
 import {CelebrateButton} from "../../components/CelebrateButton.tsx";
+import { ScrollArrows } from "../../components/ScrollArrows";
 
 
 export function ListMaterialsQueuePage() {
@@ -265,6 +266,7 @@ export function ListMaterialsQueuePage() {
           </div>
         );
       })}
+      <ScrollArrows />
     </>
   );
 }
