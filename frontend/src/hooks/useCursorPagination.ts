@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 
-import { CursorStack, FIRST_PAGE, popCursor, pushCursor } from "./cursorStack.ts";
+import { FIRST_PAGE, KeyedStack, popCursor, pushCursor, reconcileKey } from "./cursorStack.ts";
 import { reverseOrder, SortOrder } from "./sortOrder.ts";
 
 export type PageCursor = { nextToken: string };
@@ -17,8 +17,6 @@ export interface CursorPagination<C> {
   toggleOrder: () => void;
 }
 
-type KeyedStack<C> = CursorStack<C> & { resetKey: string };
-
 /**
  * Keeps the cursor of the current page and the cursors of the pages visited before it.
  * A change of `resetKey` (e.g. serialized filters) or of the order brings the pagination
@@ -31,14 +29,20 @@ export function useCursorPagination<C>(
 ): CursorPagination<C> {
   const [order, setOrder] = useState<SortOrder>(defaultOrder);
   const key = `${resetKey}\u0000${order}`;
-  const [state, setState] = useState<KeyedStack<C>>({ ...FIRST_PAGE, resetKey: key });
+  const [state, setState] = useState<KeyedStack<C>>({
+    ...FIRST_PAGE,
+    resetKey: key,
+  });
 
-  const current: CursorStack<C> = state.resetKey === key ? state : FIRST_PAGE;
+  const current = reconcileKey(state, key);
+  if (current !== state) {
+    setState(current);
+  }
 
   const next = useCallback(
     (nextCursor: C) => {
       setState((prev) => ({
-        ...pushCursor(prev.resetKey === key ? prev : FIRST_PAGE, nextCursor),
+        ...pushCursor(reconcileKey(prev, key), nextCursor),
         resetKey: key,
       }));
     },
@@ -47,7 +51,7 @@ export function useCursorPagination<C>(
 
   const prev = useCallback(() => {
     setState((prevState) => ({
-      ...(prevState.resetKey === key ? popCursor(prevState) : FIRST_PAGE),
+      ...popCursor(reconcileKey(prevState, key)),
       resetKey: key,
     }));
   }, [key]);

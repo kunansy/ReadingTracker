@@ -19,3 +19,9 @@ export function popCursor<C>(state: CursorStack<C>): CursorStack<C> {
     previous: state.previous.slice(0, -1),
   };
 }
+
+export type KeyedStack<C> = CursorStack<C> & { resetKey: string };
+
+export function reconcileKey<C>(state: KeyedStack<C>, key: string): KeyedStack<C> {
+  return state.resetKey === key ? state : { ...FIRST_PAGE, resetKey: key };
+}
