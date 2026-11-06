@@ -17,6 +17,7 @@ from tracker.common.schemas import CustomBaseModel
 
 DEFAULT_PAGE_SIZE: Final[int] = 20
 MAX_PAGE_SIZE: Final[int] = 100
+MAX_TOKEN_LENGTH: Final[int] = 1024
 CURSOR_LABEL: Final[str] = "cursor"
 COLLATION: Final[str] = "C"
 
@@ -31,11 +32,17 @@ def encode_token(cursor: str) -> str:
 
 
 def decode_token(token: str) -> str:
+    msg = "next_token is not a valid page token"
     try:
-        return base64.b64decode(token, altchars=b"-_", validate=True).decode()
+        cursor = base64.b64decode(token, altchars=b"-_", validate=True).decode()
     except (binascii.Error, UnicodeError) as e:
-        msg = "next_token is not a valid page token"
         raise ValueError(msg) from e
+
+    # Every cursor ends with a sort key, which contains the separator;
+    # NUL is rejected by Postgres in text parameters.
+    if sort_keys.SEPARATOR not in cursor or "\x00" in cursor:
+        raise ValueError(msg)
+    return cursor
 
 
 def _validate_token(token: str | None) -> str | None:
@@ -45,7 +52,11 @@ def _validate_token(token: str | None) -> str | None:
 
 
 class PageParams(CustomBaseModel):
-    next_token: Annotated[str | None, AfterValidator(_validate_token)] = None
+    next_token: Annotated[
+        str | None,
+        Field(max_length=MAX_TOKEN_LENGTH),
+        AfterValidator(_validate_token),
+    ] = None
     page_size: Annotated[int, Field(ge=1, le=MAX_PAGE_SIZE)] = DEFAULT_PAGE_SIZE
     # None means the default order of the listing.
     order: Order | None = None

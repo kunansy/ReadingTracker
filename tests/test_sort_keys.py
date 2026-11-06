@@ -105,7 +105,7 @@ def test_page_params_defaults():
 
 @pytest.mark.parametrize(
     "cursor",
-    ("", "2024-01-02$$abc", "0000000012$$ö$$x", "a" * 600),
+    ("$$", "2024-01-02$$abc", "0000000012$$ö$$x", "a" * 600 + "$$b"),
 )
 def test_token_round_trip(cursor):
     token = pagination.encode_token(cursor)
@@ -114,7 +114,19 @@ def test_token_round_trip(cursor):
     assert pagination.PageParams(next_token=token).next_token == token
 
 
-@pytest.mark.parametrize("token", ("~", "a", "abc$", "gA==", "YWJ"))
+@pytest.mark.parametrize(
+    "token",
+    (
+        "~",
+        "a",
+        "abc$",
+        "gA==",
+        "YWJ",
+        pagination.encode_token("a\x00$$b"),
+        pagination.encode_token("no separator"),
+        pagination.encode_token("a" * pagination.MAX_TOKEN_LENGTH + "$$b"),
+    ),
+)
 def test_page_params_rejects_invalid_token(token):
     with pytest.raises(ValidationError):
         pagination.PageParams(next_token=token)
