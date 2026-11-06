@@ -1,4 +1,5 @@
 import datetime
+from typing import Final
 
 import sqlalchemy
 import uuid6
@@ -17,6 +18,9 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.sql.type_api import UserDefinedType
 
 from tracker.models import enums
+
+
+MAX_CHAPTER_LENGTH: Final[int] = 256
 
 
 def Column(*args, **kwargs) -> sqlalchemy.Column:
@@ -117,7 +121,7 @@ Notes = Table(
     Column("title", Unicode(4096), nullable=True, unique=True),
     Column("content", Unicode(65_536)),
     Column("added_at", DateTime, default=_utc_now),
-    Column("chapter", Unicode(4096)),
+    Column("chapter", Unicode(MAX_CHAPTER_LENGTH)),
     Column("page", Integer),
     Column("tags", JSONB, nullable=True),
     Column("is_deleted", Boolean, default=False),
