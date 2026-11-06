@@ -99,7 +99,11 @@ export function SearchNotesPage() {
   const query = searchParams.get("query") ?? "";
   const tagsQuery = searchParams.get("tags_query") ?? "";
   const navigate = useNavigate();
-  const pagination = useCursorPagination(PAGE_SIZE, `${materialId}|${query}|${tagsQuery}`, "asc");
+  const pagination = useCursorPagination(
+    PAGE_SIZE,
+    JSON.stringify([materialId, query, tagsQuery]),
+    "asc",
+  );
   const nextToken = pagination.cursor;
 
   const [hintList, setHintList] = useState<string[]>([]);
