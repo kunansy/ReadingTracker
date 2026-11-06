@@ -49,7 +49,7 @@ def generate_id() -> str:
 
 
 def SortKey() -> sqlalchemy.Column:
-    return Column("sort_key", Unicode(512, collation="C"), unique=True)
+    return Column("sort_key", Unicode(512, collation="C"), nullable=False, unique=True)
 
 
 def _utc_now() -> datetime.datetime:
