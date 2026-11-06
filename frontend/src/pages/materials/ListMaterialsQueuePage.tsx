@@ -13,7 +13,7 @@ import { dateInputValue } from "../../utils/dateInputValue";
 import { PageNav } from "../../components/PageNav";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 
-type QueueCursor = { nextToken: string; startDate?: string };
+type QueueCursor = { nextToken: string; startDate: string };
 
 export function ListMaterialsQueuePage() {
   const [completeId, setCompleteId] = useState<string | null>(null);
@@ -168,9 +168,7 @@ export function ListMaterialsQueuePage() {
       <PageNav
         pagination={pagination}
         nextToken={data.next_token}
-        onNext={(token) =>
-          pagination.next({ nextToken: token, startDate: data.next_start_date ?? undefined })
-        }
+        onNext={(token) => pagination.next({ nextToken: token, startDate: data.next_start_date })}
       />
       {data.estimates.map((estimate, i) => {
         const material = estimate.material;
@@ -286,9 +284,7 @@ export function ListMaterialsQueuePage() {
       <PageNav
         pagination={pagination}
         nextToken={data.next_token}
-        onNext={(token) =>
-          pagination.next({ nextToken: token, startDate: data.next_start_date ?? undefined })
-        }
+        onNext={(token) => pagination.next({ nextToken: token, startDate: data.next_start_date })}
       />
       <ScrollArrows />
     </>

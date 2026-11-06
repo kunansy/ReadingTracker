@@ -21,6 +21,12 @@ async def list_materials_queue(
     params: Annotated[PageParams, Depends()],
     start_date: datetime.date | None = None,
 ):
+    if params.next_token is not None and start_date is None:
+        raise HTTPException(
+            status_code=422,
+            detail="start_date is required with next_token",
+        )
+
     async with asyncio.TaskGroup() as tg:
         estimates_task = tg.create_task(
             db.estimate_page(

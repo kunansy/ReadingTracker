@@ -6,9 +6,11 @@ from typing import Literal
 
 import pytest
 import sqlalchemy.sql as sa
+from fastapi import HTTPException
 
 from tracker.common import database
-from tracker.common.pagination import MAX_PAGE_SIZE, PageParams
+from tracker.api.v1.materials import list_materials_queue
+from tracker.common.pagination import MAX_PAGE_SIZE, PageParams, encode_token
 from tracker.materials import db
 from tracker.models import enums
 from tracker.models import models
@@ -570,3 +572,12 @@ async def test_is_reading(material_id, expected):
     result = await db.is_reading(material_id=uuid.UUID(material_id))
 
     assert result is expected, material_id
+
+
+async def test_queue_next_page_requires_start_date():
+    params = PageParams(next_token=encode_token("0000000001$$x"))
+
+    with pytest.raises(HTTPException) as e:
+        await list_materials_queue(params=params, start_date=None)
+
+    assert e.value.status_code == 422
