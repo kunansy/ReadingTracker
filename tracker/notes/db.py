@@ -152,18 +152,26 @@ def _search_notes_stmt(
 async def search_notes_page(
     *,
     material_id: UUID | str | None,
+    query: str | None,
     tags: set[str],
     note_ids: Collection[UUID] | None,
     params: pagination.PageParams,
 ) -> pagination.Page[Note]:
+    """`note_ids` are the full-text search results of `query`."""
     logger.debug("Searching notes page material_id=%s", material_id)
+    request = pagination.page_request(
+        params,
+        default_order=pagination.Order.ASC,
+        material_id=material_id,
+        query=query,
+        tags=tags,
+    )
 
     stmt = _search_notes_stmt(material_id=material_id, tags=tags, note_ids=note_ids)
     page = await pagination.fetch_page(
         stmt,
         cursor_expr=pagination.cursor(stmt.selected_columns.sort_key),
-        params=params,
-        default_order=pagination.Order.ASC,
+        request=request,
         to_item=_to_note,
     )
 
@@ -747,8 +755,11 @@ async def get_links_from_page(
             pagination.int_part(notes_model.note_number),
             notes_model.sort_key,
         ),
-        params=params,
-        default_order=pagination.Order.ASC,
+        request=pagination.page_request(
+            params,
+            default_order=pagination.Order.ASC,
+            note_id=note_id,
+        ),
         to_item=_to_note,
     )
 

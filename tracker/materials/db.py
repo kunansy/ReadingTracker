@@ -1,4 +1,5 @@
 import asyncio
+import dataclasses
 import datetime
 import re
 import time
@@ -24,6 +25,7 @@ from tracker.notes import db as notes_db
 
 
 REPEAT_PERIOD_DAYS: Final[int] = 30
+_START_DATE_KEY: Final[str] = "start_date"
 
 
 class Material(CustomBaseModel):
@@ -467,6 +469,13 @@ async def completed_statistics_page(
     params: pagination.PageParams,
 ) -> pagination.Page[MaterialStatistics]:
     logger.info("Calculating completed materials statistics page")
+    request = pagination.page_request(
+        params,
+        default_order=pagination.Order.DESC,
+        material_type=material_type,
+        is_outlined=is_outlined,
+        tags=tags,
+    )
 
     stmt = _get_completed_materials_stmt(
         material_type=material_type,
@@ -479,8 +488,7 @@ async def completed_statistics_page(
             pagination.datetime_part(models.Statuses.c.completed_at),
             models.Materials.c.sort_key,
         ),
-        params=params,
-        default_order=pagination.Order.DESC,
+        request=request,
         to_item=lambda row: _to_material_status(row._asdict()),
     )
 
@@ -523,8 +531,7 @@ async def reading_statistics_page(
             pagination.date_part(columns.last_read_at),
             models.Materials.c.sort_key,
         ),
-        params=params,
-        default_order=pagination.Order.DESC,
+        request=pagination.page_request(params, default_order=pagination.Order.DESC),
         to_item=lambda row: _to_material_status(row._asdict()),
     )
 
@@ -756,14 +763,17 @@ async def estimate_page(
     *,
     start_date: datetime.date,
     params: pagination.PageParams,
-) -> tuple[pagination.Page[MaterialEstimate], datetime.date]:
+) -> pagination.Page[MaterialEstimate]:
     """Get a page of the queue with estimated time to read.
 
-    The page is estimated from `start_date`; the returned date is where
-    the next page starts.
+    The first page is estimated from `start_date`, the next ones continue
+    from the date stored in the token.
     """
     logger.info("Estimating materials page started")
     step = datetime.timedelta(days=1)
+    request = pagination.page_request(params, default_order=pagination.Order.DESC)
+    if request.continue_from is not None:
+        start_date = _token_start_date(request.continue_from)
 
     page = await pagination.fetch_page(
         _get_free_materials_stmt(),
@@ -771,8 +781,7 @@ async def estimate_page(
             pagination.int_part(models.Materials.c.index),
             models.Materials.c.sort_key,
         ),
-        params=params,
-        default_order=pagination.Order.DESC,
+        request=request,
         to_item=lambda row: Material.model_validate(row, from_attributes=True),
     )
     mean = await get_means()
@@ -798,7 +807,19 @@ async def estimate_page(
         last_date = expected_end + step
 
     logger.info("%s materials estimated", len(forecasts))
-    return page.with_items(forecasts), last_date
+    next_token = request.next_token(
+        page.next_cursor,
+        **{_START_DATE_KEY: last_date.isoformat()},
+    )
+    return dataclasses.replace(page.with_items(forecasts), next_token=next_token)
+
+
+def _token_start_date(continue_from: pagination.TokenMap) -> datetime.date:
+    try:
+        return datetime.date.fromisoformat(continue_from[_START_DATE_KEY])
+    except (KeyError, ValueError) as e:
+        msg = "next_token has no valid start date"
+        raise database.InvalidNextTokenException(msg) from e
 
 
 def _calculate_priority_months(
@@ -958,6 +979,12 @@ async def get_repeating_queue_page(
 ) -> pagination.Page[RepeatingQueue]:
     logger.debug("Getting repeating queue page")
 
+    request = pagination.page_request(
+        params,
+        default_order=pagination.Order.ASC,
+        is_outlined=is_outlined,
+    )
+
     stmt, repeat_at = _get_repeating_queue_stmt(is_outlined=is_outlined)
     page = await pagination.fetch_page(
         stmt,
@@ -965,8 +992,7 @@ async def get_repeating_queue_page(
             pagination.date_part(repeat_at),
             models.Materials.c.sort_key,
         ),
-        params=params,
-        default_order=pagination.Order.ASC,
+        request=request,
         to_item=_to_repeating_queue,
     )
 

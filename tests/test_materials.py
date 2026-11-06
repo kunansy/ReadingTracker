@@ -6,11 +6,11 @@ from typing import Literal
 
 import pytest
 import sqlalchemy.sql as sa
-from fastapi import HTTPException
+from starlette.requests import Request
 
 from tracker.common import database
-from tracker.api.v1.materials import list_materials_queue
-from tracker.common.pagination import MAX_PAGE_SIZE, PageParams, encode_token
+from tracker.api.v1.cards import list_cards
+from tracker.common.pagination import MAX_PAGE_SIZE, PageParams
 from tracker.materials import db
 from tracker.models import enums
 from tracker.models import models
@@ -380,10 +380,6 @@ async def test_get_material_tags():
     )
 
 
-async def test_insert_material():
-    pass
-
-
 async def test_update_material_not_found():
     with pytest.raises(database.NotFoundException):
         await db.update_material(
@@ -574,10 +570,15 @@ async def test_is_reading(material_id, expected):
     assert result is expected, material_id
 
 
-async def test_queue_next_page_requires_start_date():
-    params = PageParams(next_token=encode_token("0000000001$$x"))
+def _api_request(path: str) -> Request:
+    return Request({"type": "http", "method": "GET", "path": path, "headers": []})
 
-    with pytest.raises(HTTPException) as e:
-        await list_materials_queue(params=params, start_date=None)
 
-    assert e.value.status_code == 422
+async def test_api_rejects_invalid_next_token():
+    from tracker.main import database_exception_handler
+
+    with pytest.raises(database.InvalidNextTokenException) as e:
+        await list_cards(params=PageParams(next_token="~"), material_id=None)
+
+    response = await database_exception_handler(_api_request("/api/v1/cards/"), e.value)
+    assert response.status_code == 422

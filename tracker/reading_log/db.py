@@ -76,6 +76,11 @@ async def list_log_records_page(
     params: pagination.PageParams,
 ) -> pagination.Page[LogRecord]:
     logger.debug("Getting log records page")
+    request = pagination.page_request(
+        params,
+        default_order=pagination.Order.DESC,
+        material_id=material_id,
+    )
 
     return await pagination.fetch_page(
         _list_log_records_stmt(material_id=material_id),
@@ -83,8 +88,7 @@ async def list_log_records_page(
             pagination.date_part(models.ReadingLog.c.date),
             models.ReadingLog.c.sort_key,
         ),
-        params=params,
-        default_order=pagination.Order.DESC,
+        request=request,
         to_item=lambda row: LogRecord.model_validate(row, from_attributes=True),
     )
 

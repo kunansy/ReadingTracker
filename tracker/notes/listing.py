@@ -32,6 +32,7 @@ async def build_notes_search_result(
         get_notes_task = tg.create_task(
             db.search_notes_page(
                 material_id=material_id,
+                query=query,
                 tags=requested_tags,
                 note_ids=note_ids,
                 params=params,

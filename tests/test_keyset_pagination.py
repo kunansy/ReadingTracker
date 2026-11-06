@@ -1,4 +1,6 @@
+import base64
 import datetime
+import json
 from collections.abc import Awaitable, Callable
 from uuid import UUID
 
@@ -7,7 +9,7 @@ import sqlalchemy.sql as sa
 
 from tracker.cards import db as cards_db
 from tracker.common import database, sort_keys
-from tracker.common.pagination import Order, Page, PageParams, encode_token
+from tracker.common.pagination import Order, Page, PageParams
 from tracker.materials import db as materials_db
 from tracker.models import models
 from tracker.notes import db as notes_db
@@ -135,6 +137,7 @@ async def test_notes_search_pages(page_size):
     items = await _collect(
         lambda params: notes_db.search_notes_page(
             material_id=None,
+            query=None,
             tags=set(),
             note_ids=None,
             params=params,
@@ -160,6 +163,7 @@ async def test_notes_search_pages_filter_by_tags_and_ids():
     items = await _collect(
         lambda params: notes_db.search_notes_page(
             material_id=None,
+            query=None,
             tags={tag},
             note_ids=note_ids,
             params=params,
@@ -176,6 +180,7 @@ async def test_notes_search_pages_filter_by_tags_and_ids():
 async def test_notes_search_empty_ids():
     page = await notes_db.search_notes_page(
         material_id=None,
+        query=None,
         tags=set(),
         note_ids=[],
         params=PageParams(),
@@ -190,6 +195,7 @@ async def test_distinct_chapters_follow_listing_order():
     notes = await _collect(
         lambda params: notes_db.search_notes_page(
             material_id=None,
+            query=None,
             tags=set(),
             note_ids=None,
             params=params,
@@ -210,12 +216,28 @@ async def test_distinct_chapters_follow_listing_order():
     assert chapters == expected
 
 
-async def test_token_past_the_end_gives_empty_page():
-    page = await notes_db.search_notes_page(
+def _with_cursor(token: str, cursor: str) -> str:
+    payload = json.loads(base64.urlsafe_b64decode(token))
+    payload["continue_from"]["cursor"] = cursor
+    return base64.urlsafe_b64encode(json.dumps(payload).encode()).decode()
+
+
+async def _search_notes(params: PageParams) -> Page[notes_db.Note]:
+    return await notes_db.search_notes_page(
         material_id=None,
+        query=None,
         tags=set(),
         note_ids=None,
-        params=PageParams(next_token=encode_token("~$$~")),
+        params=params,
+    )
+
+
+async def test_token_past_the_end_gives_empty_page():
+    first = await _search_notes(PageParams(page_size=1))
+    assert first.next_token is not None
+
+    page = await _search_notes(
+        PageParams(page_size=1, next_token=_with_cursor(first.next_token, "~$$~")),
     )
 
     assert page.items == []
@@ -349,14 +371,9 @@ async def test_queue_pages_keep_estimates(page_size):
     today = database.utcnow().date()
 
     async def fetch(params: PageParams) -> Page[materials_db.MaterialEstimate]:
-        nonlocal start_date
-        page, start_date = await materials_db.estimate_page(
-            start_date=start_date,
-            params=params,
-        )
-        return page
+        # Pages after the first one continue from the date in the token.
+        return await materials_db.estimate_page(start_date=today, params=params)
 
-    start_date = today
     items = await _collect(fetch, page_size=page_size, order=Order.ASC)
 
     free_materials = await materials_db._get_free_materials()
@@ -428,12 +445,11 @@ async def test_repeating_queue_pages(page_size, is_outlined):
 
 
 async def _queue_page(params: PageParams) -> Page[UUID]:
-    page, _ = await materials_db.estimate_page(
+    page = await materials_db.estimate_page(
         start_date=database.utcnow().date(),
         params=params,
     )
-    ids = [e.material.material_id for e in page.items]
-    return Page(items=ids, next_token=page.next_token, total_count=page.total_count)
+    return page.with_items([e.material.material_id for e in page.items])
 
 
 def _ids_page[T](
@@ -442,11 +458,7 @@ def _ids_page[T](
 ) -> Callable[[PageParams], Awaitable[Page[UUID]]]:
     async def wrapped(params: PageParams) -> Page[UUID]:
         page = await fetch(params)
-        return Page(
-            items=[get_id(item) for item in page.items],
-            next_token=page.next_token,
-            total_count=page.total_count,
-        )
+        return page.with_items([get_id(item) for item in page.items])
 
     return wrapped
 
@@ -474,9 +486,7 @@ LISTINGS = {
         Order.DESC,
     ),
     "notes_search": (
-        lambda p: notes_db.search_notes_page(
-            material_id=None, tags=set(), note_ids=None, params=p
-        ),
+        _search_notes,
         lambda note: note.note_id,
         Order.ASC,
     ),
@@ -535,3 +545,83 @@ async def test_note_links_reverse_order():
 
     assert asc
     assert desc == asc[::-1]
+
+
+@pytest.mark.parametrize("cursor", ("$$", "zzz$$q", "", "0$$0$$0$$0$$0"))
+@pytest.mark.parametrize("name", LISTINGS)
+async def test_forged_cursor_gives_a_page(name, cursor):
+    fetch, _, _ = LISTINGS[name]
+    first = await fetch(PageParams(page_size=1))
+    assert first.next_token is not None
+
+    page = await fetch(
+        PageParams(page_size=1, next_token=_with_cursor(first.next_token, cursor)),
+    )
+
+    assert len(page.items) <= 1
+
+
+@pytest.mark.parametrize(
+    "changed",
+    (
+        {"page_size": 2},
+        {"order": Order.ASC},
+    ),
+)
+async def test_token_rejects_changed_page_params(changed):
+    params = PageParams(page_size=1)
+    first = await cards_db.get_cards_page(material_id=None, params=params)
+    assert first.next_token is not None
+
+    next_params = params.model_copy(update={"next_token": first.next_token, **changed})
+    with pytest.raises(database.InvalidNextTokenException):
+        await cards_db.get_cards_page(material_id=None, params=next_params)
+
+
+async def test_token_rejects_changed_filter():
+    stmt = sa.select(models.ReadingLog.c.material_id).limit(1)
+    [material_id] = await _ids(stmt)
+    first = await logs_db.list_log_records_page(
+        material_id=None,
+        params=PageParams(page_size=1),
+    )
+    assert first.next_token is not None
+
+    with pytest.raises(database.InvalidNextTokenException):
+        await logs_db.list_log_records_page(
+            material_id=material_id,
+            params=PageParams(page_size=1, next_token=first.next_token),
+        )
+
+
+async def test_token_rejects_changed_notes_query():
+    notes = await notes_db.get_notes()
+    note_ids = [note.note_id for note in notes]
+    first = await notes_db.search_notes_page(
+        material_id=None,
+        query="first",
+        tags=set(),
+        note_ids=note_ids,
+        params=PageParams(page_size=1),
+    )
+    assert first.next_token is not None
+
+    with pytest.raises(database.InvalidNextTokenException):
+        await notes_db.search_notes_page(
+            material_id=None,
+            query="second",
+            tags=set(),
+            note_ids=note_ids,
+            params=PageParams(page_size=1, next_token=first.next_token),
+        )
+
+
+async def test_queue_token_without_start_date_is_rejected():
+    first = await _queue_page(PageParams(page_size=1))
+    assert first.next_token is not None
+    payload = json.loads(base64.urlsafe_b64decode(first.next_token))
+    del payload["continue_from"]["start_date"]
+    token = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode()
+
+    with pytest.raises(database.InvalidNextTokenException):
+        await _queue_page(PageParams(page_size=1, next_token=token))

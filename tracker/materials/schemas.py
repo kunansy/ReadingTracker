@@ -70,7 +70,6 @@ class RepeatingQueueItem(CustomBaseModel):
 class ListMaterialsQueueResponse(PageResponse):
     estimates: list[MaterialEstimate]
     mean: dict[MaterialTypesEnum, Decimal]
-    next_start_date: datetime.date
 
 
 class ListReadingMaterialsResponse(PageResponse):

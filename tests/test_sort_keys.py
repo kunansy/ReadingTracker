@@ -1,10 +1,12 @@
+import base64
 import datetime
+import json
 import uuid
 
 import pytest
 from pydantic import ValidationError
 
-from tracker.common import pagination, sort_keys
+from tracker.common import database, pagination, sort_keys
 
 
 @pytest.mark.parametrize(
@@ -103,15 +105,25 @@ def test_page_params_defaults():
     assert params.page_size == pagination.DEFAULT_PAGE_SIZE
 
 
-@pytest.mark.parametrize(
-    "cursor",
-    ("$$", "2024-01-02$$abc", "0000000012$$ö$$x", "a" * 600 + "$$b"),
-)
-def test_token_round_trip(cursor):
-    token = pagination.encode_token(cursor)
+PARAMS = {"order": "asc", "max_items": "20", "material_id": ""}
 
-    assert pagination.decode_token(token) == cursor
-    assert pagination.PageParams(next_token=token).next_token == token
+
+def _raw_token(payload: object) -> str:
+    return base64.urlsafe_b64encode(json.dumps(payload).encode()).decode()
+
+
+@pytest.mark.parametrize(
+    "continue_from",
+    (
+        {"cursor": "$$"},
+        {"cursor": "0000000012$$ö$$x"},
+        {"cursor": "a" * 600, "start_date": "2024-01-02"},
+    ),
+)
+def test_next_token_round_trip(continue_from):
+    token = pagination.encode_next_token(PARAMS, continue_from)
+
+    assert pagination.decode_and_check_next_token(token, PARAMS) == continue_from
 
 
 @pytest.mark.parametrize(
@@ -122,14 +134,89 @@ def test_token_round_trip(cursor):
         "abc$",
         "gA==",
         "YWJ",
-        pagination.encode_token("a\x00$$b"),
-        pagination.encode_token("no separator"),
-        pagination.encode_token("a" * pagination.MAX_TOKEN_LENGTH + "$$b"),
+        base64.urlsafe_b64encode(b"\xff").decode(),
+        base64.urlsafe_b64encode(b"not json").decode(),
+        _raw_token([]),
+        _raw_token({"params": PARAMS}),
+        _raw_token({"params": PARAMS, "continue_from": {"cursor": "a"}, "x": {}}),
+        _raw_token({"params": PARAMS, "continue_from": {"cursor": 1}}),
+        _raw_token({"params": PARAMS, "continue_from": ["a"]}),
+        _raw_token({"params": PARAMS, "continue_from": {"cursor": "a\x00b"}}),
+        _raw_token({"params": PARAMS, "continue_from": {}}),
     ),
 )
-def test_page_params_rejects_invalid_token(token):
+def test_decode_rejects_malformed_token(token):
+    with pytest.raises(database.InvalidNextTokenException):
+        pagination.decode_and_check_next_token(token, PARAMS)
+
+
+@pytest.mark.parametrize(
+    "changed",
+    (
+        {"order": "desc"},
+        {"max_items": "21"},
+        {"material_id": "x"},
+        {"extra": ""},
+    ),
+)
+def test_decode_rejects_other_params(changed):
+    token = pagination.encode_next_token(PARAMS, {"cursor": "a"})
+
+    with pytest.raises(database.InvalidNextTokenException):
+        pagination.decode_and_check_next_token(token, PARAMS | changed)
+
+
+def test_page_params_rejects_too_long_token():
     with pytest.raises(ValidationError):
-        pagination.PageParams(next_token=token)
+        pagination.PageParams(next_token="a" * (pagination.MAX_TOKEN_LENGTH + 1))
+
+
+def test_page_request_binds_order_page_size_and_filters():
+    request = pagination.page_request(
+        pagination.PageParams(page_size=5),
+        default_order=pagination.Order.DESC,
+        material_id=None,
+        tags={"b", "a"},
+        is_outlined=False,
+    )
+
+    assert request.order == pagination.Order.DESC
+    assert request.continue_from is None
+    assert request.params == {
+        "order": "desc",
+        "max_items": "5",
+        "material_id": "",
+        "tags": "a,b",
+        "is_outlined": "False",
+    }
+
+
+def test_page_request_reads_cursor_from_token():
+    first = pagination.page_request(
+        pagination.PageParams(),
+        default_order=pagination.Order.ASC,
+        material_id=None,
+    )
+    token = first.next_token("cursor-value", start_date="2024-01-01")
+    assert token is not None
+
+    request = pagination.page_request(
+        pagination.PageParams(next_token=token),
+        default_order=pagination.Order.ASC,
+        material_id=None,
+    )
+
+    assert request.cursor == "cursor-value"
+    assert request.continue_from == {"cursor": "cursor-value", "start_date": "2024-01-01"}
+
+
+def test_page_request_next_token_is_none_without_cursor():
+    request = pagination.page_request(
+        pagination.PageParams(),
+        default_order=pagination.Order.ASC,
+    )
+
+    assert request.next_token(None) is None
 
 
 def test_page_params_rejects_unknown_order():
@@ -143,21 +230,18 @@ class _Row:
 
 
 @pytest.mark.parametrize(
-    ("rows_count", "page_size", "expected_len", "expected_token"),
+    ("rows_count", "page_size", "expected_len", "expected_cursor"),
     (
         (0, 2, 0, None),
         (2, 2, 2, None),
-        (3, 2, 2, pagination.encode_token("2")),
-        (5, 2, 2, pagination.encode_token("2")),
+        (3, 2, 2, "2"),
+        (5, 2, 2, "2"),
     ),
 )
-def test_split_page(rows_count, page_size, expected_len, expected_token):
+def test_split_page(rows_count, page_size, expected_len, expected_cursor):
     rows = [_Row(str(i)) for i in range(rows_count)]
 
-    page, next_token = pagination.split_page(
-        rows,
-        pagination.PageParams(page_size=page_size),
-    )
+    page, next_cursor = pagination.split_page(rows, page_size)
 
     assert len(page) == expected_len
-    assert next_token == expected_token
+    assert next_cursor == expected_cursor
