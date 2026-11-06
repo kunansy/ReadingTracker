@@ -20,11 +20,6 @@ async def notes_spa_root() -> FileResponse:
     return _spa_response()
 
 
-@router.get("/add-view", include_in_schema=False)
-async def notes_spa_add_view() -> FileResponse:
-    return _spa_response()
-
-
 @router.get("/graph", include_in_schema=False)
 async def notes_spa_graph() -> FileResponse:
     return _spa_response()

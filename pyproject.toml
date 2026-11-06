@@ -49,6 +49,7 @@ ignore = [
 # == True for sql
 "tracker/*/db.py" = ["E711", "E712"]
 "tracker/reading_log/statistics.py" = ["E711", "E712"]
+"migrations/alembic/*" = ["INP001"]
 "tracker/*/schemas.py" = ["S101"]
 
 
@@ -136,6 +137,7 @@ lxml = "~6.0.2"
 aiokafka = "~0.14.0"
 aiohttp = "~3.13.0"
 redis = "~5.2.1"
+alembic = "~1.16"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "~2.1.0"

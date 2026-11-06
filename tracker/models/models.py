@@ -1,4 +1,5 @@
 import datetime
+from typing import Final
 
 import sqlalchemy
 import uuid6
@@ -19,6 +20,9 @@ from sqlalchemy.sql.type_api import UserDefinedType
 from tracker.models import enums
 
 
+MAX_CHAPTER_LENGTH: Final[int] = 256
+
+
 def Column(*args, **kwargs) -> sqlalchemy.Column:
     """Make columns not nullable by default."""
     kwargs["nullable"] = kwargs.get("nullable", False)
@@ -29,7 +33,7 @@ def PrimaryKey(*args, **kwargs) -> sqlalchemy.Column:
     if len(args) == 1:
         args = *args, UUID
 
-    kwargs["default"] = kwargs.get("default", _uuid_gen)
+    kwargs["default"] = kwargs.get("default", generate_id)
     kwargs["primary_key"] = True
 
     return Column(*args, **kwargs)
@@ -44,8 +48,12 @@ class Serial(UserDefinedType):
         return "serial"
 
 
-def _uuid_gen() -> str:
+def generate_id() -> str:
     return str(uuid6.uuid7())
+
+
+def SortKey() -> sqlalchemy.Column:
+    return Column("sort_key", Unicode(512, collation="C"), nullable=False, unique=True)
 
 
 def _utc_now() -> datetime.datetime:
@@ -71,6 +79,7 @@ Materials = Table(
     Column("added_at", DateTime, default=_utc_now),
     Column("is_outlined", Boolean, default=False),
     Column("index", Serial),
+    SortKey(),
     UniqueConstraint("title", "material_type", name="uix_material"),
     # uniqueness should be deferrable
     UniqueConstraint("index", name="uix_materials_index", deferrable=True),
@@ -84,6 +93,7 @@ ReadingLog = Table(
     Column("count", Integer),
     # TODO: add btree index
     Column("date", Date, default=_utc_now),
+    SortKey(),
     UniqueConstraint("material_id", "date", name="uix_reading_log"),
 )
 
@@ -111,10 +121,11 @@ Notes = Table(
     Column("title", Unicode(4096), nullable=True, unique=True),
     Column("content", Unicode(65_536)),
     Column("added_at", DateTime, default=_utc_now),
-    Column("chapter", Unicode(4096)),
+    Column("chapter", Unicode(MAX_CHAPTER_LENGTH)),
     Column("page", Integer),
     Column("tags", JSONB, nullable=True),
     Column("is_deleted", Boolean, default=False),
+    SortKey(),
     UniqueConstraint("note_number", name="uix_notes_note_number", deferrable=True),
 )
 
@@ -127,6 +138,7 @@ Cards = Table(
     Column("question", Unicode),
     Column("answer", Unicode, nullable=True),
     Column("added_at", DateTime, default=_utc_now),
+    SortKey(),
 )
 
 Repeats = Table(

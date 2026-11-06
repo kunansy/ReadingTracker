@@ -1,16 +1,21 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 
-import { apiFetch, buildQuery } from "../../api/readingLog.ts";
+import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/readingLog.ts";
 import { apiFetch as materialsApiFetch } from "../../api/materials.ts";
 import {ListMaterialsTitlesResponse, ListReadingLogsResponse} from "../../types.ts";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
 import { ScrollArrows } from "../../components/ScrollArrows";
+import { PageNav } from "../../components/PageNav";
+import { PageLoadError } from "../../components/PageLoadError";
+import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 export function ListReadingLogsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const materialId = searchParams.get("material_id") ?? "";
+    const pagination = useCursorPagination(PAGE_SIZE, materialId, "desc");
+    const nextToken = pagination.cursor;
 
     const materialsTitlesQ = useQuery({
         queryKey: ["materials", "read_titles"],
@@ -19,9 +24,15 @@ export function ListReadingLogsPage() {
     });
 
     const logsQ = useQuery({
-        queryKey: ["logs", { materialId }],
+        queryKey: ["logs", { materialId, nextToken, order: pagination.order }],
+        placeholderData: keepPreviousData,
         queryFn: () => {
-            return apiFetch<ListReadingLogsResponse>(`/${buildQuery({material_id: materialId || undefined})}`);
+            return apiFetch<ListReadingLogsResponse>(`/${buildQuery({
+                material_id: materialId || undefined,
+                next_token: nextToken,
+                page_size: PAGE_SIZE,
+                order: pagination.order,
+            })}`);
         },
     });
 
@@ -38,8 +49,8 @@ export function ListReadingLogsPage() {
         return <p>Loading...</p>;
     }
 
-    if (logsQ.error || materialsTitlesQ.error) {
-        return <p className="error">Error: {((logsQ.error || materialsTitlesQ.error) as Error)?.message}</p>;
+    if (materialsTitlesQ.error) {
+        return <p className="error">Error: {(materialsTitlesQ.error as Error).message}</p>;
     }
 
     return (
@@ -86,6 +97,15 @@ export function ListReadingLogsPage() {
                 </form>
             </div>
 
+      {logsQ.error ? (
+        <PageLoadError pagination={pagination} error={logsQ.error} />
+      ) : (
+        <>
+      <PageNav
+          pagination={pagination}
+          nextToken={logsQ.data?.next_token}
+          isBusy={logsQ.isPlaceholderData}
+      />
       <div>
         {data.map((item, index) => {
           const title = materialsTitles[item.material_id] ?? "";
@@ -97,7 +117,7 @@ export function ListReadingLogsPage() {
               >
                 <p className="little-text">
                   {" "}
-                  {index + 1} / {data.length}
+                  {pagination.offset + index + 1} / {logsQ.data?.total_count ?? 0}
                 </p>
                 <p> Date: {item.date} </p>
                 <p> Title: «{title}» </p>
@@ -107,6 +127,13 @@ export function ListReadingLogsPage() {
         })}
 
       </div>
+      <PageNav
+          pagination={pagination}
+          nextToken={logsQ.data?.next_token}
+          isBusy={logsQ.isPlaceholderData}
+      />
+        </>
+      )}
        {/*: (*/}
        {/* <div className="not-found">*/}
        {/*   <p className="message"> No reading logs found </p>*/}

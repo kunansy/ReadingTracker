@@ -1,19 +1,24 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
-import { apiFetch } from "../../api/cards.ts";
+import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/cards.ts";
 import { apiFetch as materialsApiFetch } from "../../api/materials.ts";
 import {ListMaterialsTitlesResponse, ListCardsResponse} from "../../types.ts";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
 import {useMemo} from "react";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 import { ScrollArrows } from "../../components/ScrollArrows";
+import { PageNav } from "../../components/PageNav";
+import { PageLoadError } from "../../components/PageLoadError";
+import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 
 export function ListCardsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const materialId = searchParams.get("material_id") ?? "";
     const navigate = useNavigate();
+    const pagination = useCursorPagination(PAGE_SIZE, materialId, "desc");
+    const nextToken = pagination.cursor;
 
     const materialsTitlesQ = useQuery({
         queryKey: ["materials", "with_cards_titles"],
@@ -22,11 +27,15 @@ export function ListCardsPage() {
     });
 
     const cardsQ = useQuery({
-        queryKey: ["cards", { materialId }],
-        queryFn: () => {
-            const params = materialId ? `?material_id=${materialId}` : '';
-            return apiFetch<ListCardsResponse>(`/${params}`);
-        },
+        queryKey: ["cards", { materialId, nextToken, order: pagination.order }],
+        placeholderData: keepPreviousData,
+        queryFn: () =>
+            apiFetch<ListCardsResponse>(`/${buildQuery({
+                material_id: materialId || undefined,
+                next_token: nextToken,
+                page_size: PAGE_SIZE,
+                order: pagination.order,
+            })}`),
     });
 
     const materialsTitles = materialsTitlesQ.data?.items ?? {};
@@ -40,10 +49,6 @@ export function ListCardsPage() {
 
     if (cardsQ.isLoading) {
         return <p>Loading...</p>;
-    }
-
-    if (cardsQ.error) {
-        return <p className="error">Error: {((cardsQ.error) as Error)?.message}</p>;
     }
 
     return (
@@ -89,8 +94,17 @@ export function ListCardsPage() {
                 </form>
             </div>
 
-            <p className="total-cards"> Total { data.length } cards found </p>
+            {cardsQ.error ? (
+              <PageLoadError pagination={pagination} error={cardsQ.error} />
+            ) : (
+              <>
+            <p className="total-cards"> Total { cardsQ.data?.total_count ?? 0 } cards found </p>
 
+      <PageNav
+          pagination={pagination}
+          nextToken={cardsQ.data?.next_token}
+          isBusy={cardsQ.isPlaceholderData}
+      />
       <div>
         {data.map((item) => {
           return (
@@ -132,10 +146,13 @@ export function ListCardsPage() {
           );
         })}
       </div>
-       {/*: (*/}
-       {/* <div className="not-found">*/}
-       {/*   <p className="message"> No cards found </p>*/}
-       {/* </div>*/}
+      <PageNav
+          pagination={pagination}
+          nextToken={cardsQ.data?.next_token}
+          isBusy={cardsQ.isPlaceholderData}
+      />
+              </>
+            )}
       <ScrollArrows />
     </>
   );

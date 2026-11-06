@@ -1,10 +1,9 @@
 import datetime
-from typing import cast
 from uuid import UUID
 
 import sqlalchemy.sql as sa
 
-from tracker.common import database
+from tracker.common import database, pagination, sort_keys
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
@@ -49,28 +48,33 @@ async def add_card(
 ) -> UUID:
     logger.debug("Adding new card")
 
+    card_id = models.generate_id()
+    added_at = database.utcnow()
     values = {
+        "card_id": card_id,
+        "added_at": added_at,
+        "sort_key": sort_keys.card_sort_key(added_at=added_at, card_id=card_id),
         "material_id": str(material_id),
         "note_id": str(note_id),
         "question": question,
         "answer": answer,
     }
-    stmt = models.Cards.insert().values(values).returning(models.Cards.c.card_id)
+    stmt = models.Cards.insert().values(values)
 
     async with database.session() as ses:
-        card_id = await ses.scalar(stmt)
+        result = await ses.execute(stmt)
+
+    database.check_inserted_one(result, entity="Card")
 
     logger.debug("Card %r added", card_id)
-    return cast("UUID", card_id)
+    return UUID(card_id)
 
 
-async def get_cards(
+def _get_cards_stmt(
     *,
     note_id: UUID | None = None,
     material_id: UUID | str | None = None,
-) -> list[Card]:
-    logger.info("Getting all cards")
-
+) -> sa.Select:
     stmt = (
         sa.select(
             models.Cards,
@@ -93,12 +97,43 @@ async def get_cards(
         stmt = stmt.where(models.Cards.c.note_id == str(note_id))
     if material_id:
         stmt = stmt.where(models.Cards.c.material_id == str(material_id))
+    return stmt
+
+
+async def get_cards(
+    *,
+    note_id: UUID | None = None,
+    material_id: UUID | str | None = None,
+) -> list[Card]:
+    logger.info("Getting all cards")
+
+    stmt = _get_cards_stmt(note_id=note_id, material_id=material_id)
 
     async with database.session() as ses:
         return [
             Card.model_validate(row, from_attributes=True)
             for row in (await ses.execute(stmt)).all()
         ]
+
+
+async def get_cards_page(
+    *,
+    material_id: UUID | None,
+    params: pagination.PageParams,
+) -> pagination.Page[Card]:
+    logger.info("Getting cards page")
+    request = pagination.page_request(
+        params,
+        default_order=pagination.Order.DESC,
+        material_id=material_id,
+    )
+
+    return await pagination.fetch_page(
+        _get_cards_stmt(material_id=material_id),
+        cursor_expr=pagination.cursor(models.Cards.c.sort_key),
+        request=request,
+        to_item=lambda row: Card.model_validate(row, from_attributes=True),
+    )
 
 
 async def get_all_cards_count() -> dict[UUID, int]:

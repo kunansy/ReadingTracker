@@ -6,9 +6,13 @@ from typing import Literal
 
 import pytest
 import sqlalchemy.sql as sa
+from starlette.requests import Request
 
 from tracker.common import database
+from tracker.api.v1.cards import list_cards
+from tracker.common.pagination import MAX_PAGE_SIZE, PageParams
 from tracker.materials import db
+from tracker.models import enums
 from tracker.models import models
 from tracker.reading_log import statistics
 
@@ -290,8 +294,9 @@ async def test_completed_statistics():
         material_ids={m.material_id for m in materials},
     )
 
-    result = await db.completed_statistics()
-    assert len(result) == len(materials)
+    page = await db.completed_statistics_page(params=PageParams(page_size=MAX_PAGE_SIZE))
+    result = page.items
+    assert len(result) == min(len(materials), MAX_PAGE_SIZE)
     for st in result:
         assert st.remaining_pages is None
         assert st.remaining_days is None
@@ -375,12 +380,17 @@ async def test_get_material_tags():
     )
 
 
-async def test_insert_material():
-    pass
-
-
-async def test_update_material():
-    pass
+async def test_update_material_not_found():
+    with pytest.raises(database.NotFoundException):
+        await db.update_material(
+            material_id=uuid.uuid4(),
+            title="title",
+            authors="authors",
+            pages=1,
+            material_type=enums.MaterialTypesEnum.book,
+            tags=None,
+            link=None,
+        )
 
 
 async def test_start_material():
@@ -558,3 +568,17 @@ async def test_is_reading(material_id, expected):
     result = await db.is_reading(material_id=uuid.UUID(material_id))
 
     assert result is expected, material_id
+
+
+def _api_request(path: str) -> Request:
+    return Request({"type": "http", "method": "GET", "path": path, "headers": []})
+
+
+async def test_api_rejects_invalid_next_token():
+    from tracker.main import database_exception_handler
+
+    with pytest.raises(database.InvalidNextTokenException) as e:
+        await list_cards(params=PageParams(next_token="~"), material_id=None)
+
+    response = await database_exception_handler(_api_request("/api/v1/cards/"), e.value)
+    assert response.status_code == 422

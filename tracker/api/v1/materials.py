@@ -1,11 +1,14 @@
 import asyncio
+import datetime
 from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Body, Depends, HTTPException
 from pydantic import HttpUrl
 
+from tracker.common import database
 from tracker.common.logger import logger
+from tracker.common.pagination import PageParams
 from tracker.materials import db, schemas
 from tracker.models import enums
 
@@ -14,44 +17,82 @@ router = APIRouter(prefix="/materials", tags=["materials-api"])
 
 
 @router.get("/queue", response_model=schemas.ListMaterialsQueueResponse)
-async def list_materials_queue():
+async def list_materials_queue(
+    params: Annotated[PageParams, Depends()],
+    today: Annotated[datetime.date, Depends(database.utc_today)],
+    start_date: datetime.date | None = None,
+):
     async with asyncio.TaskGroup() as tg:
-        estimates_task = tg.create_task(db.estimate())
+        estimates_task = tg.create_task(
+            db.estimate_page(
+                start_date=start_date or today,
+                params=params,
+            ),
+        )
         mean_task = tg.create_task(db.get_means())
 
+    page = estimates_task.result()
     return {
-        "estimates": estimates_task.result(),
+        "estimates": page.items,
         "mean": mean_task.result(),
+        "next_token": page.next_token,
+        "total_count": page.total_count,
     }
 
 
 @router.get("/reading", response_model=schemas.ListReadingMaterialsResponse)
-async def list_reading_materials():
-    statistics = await db.reading_statistics()
+async def list_reading_materials(params: Annotated[PageParams, Depends()]):
+    page = await db.reading_statistics_page(params=params)
+    return {
+        "statistics": page.items,
+        "next_token": page.next_token,
+        "total_count": page.total_count,
+    }
+
+
+@router.get("/completed", response_model=schemas.ListCompletedMaterialsResponse)
+async def list_completed_materials(
+    search: Annotated[schemas.SearchParams, Depends()],
+    params: Annotated[PageParams, Depends()],
+):
+    page = await db.completed_statistics_page(
+        material_type=search.get_material_type(),
+        is_outlined=search.is_outlined,
+        tags=search.requested_tags(),
+        params=params,
+    )
+
+    return {
+        "statistics": page.items,
+        "next_token": page.next_token,
+        "total_count": page.total_count,
+    }
+
+
+@router.get(
+    "/completed/{material_id}",
+    response_model=schemas.GetCompletedMaterialResponse,
+)
+async def get_completed_material(material_id: UUID):
+    statistics = await db.get_completed_statistics(material_id=material_id)
+
     return {
         "statistics": statistics,
     }
 
 
-@router.get("/completed", response_model=schemas.ListCompletedMaterialsResponse)
-async def list_completed_materials(search: Annotated[schemas.SearchParams, Depends()]):
-    get_statistics = await db.completed_statistics(
-        material_type=search.get_material_type(),
-        is_outlined=search.is_outlined,
-        tags=search.requested_tags(),
-    )
-
-    return {
-        "statistics": get_statistics,
-    }
-
-
 @router.get("/repeat", response_model=schemas.ListRepeatingQueueResponse)
-async def list_repeating_queue(*, only_outlined: bool = False):
-    repeating_queue = await db.get_repeating_queue(is_outlined=only_outlined)
+async def list_repeating_queue(
+    params: Annotated[PageParams, Depends()],
+    *,
+    only_outlined: bool = False,
+):
+    page = await db.get_repeating_queue_page(is_outlined=only_outlined, params=params)
 
     return {
-        "repeating_queue": repeating_queue,
+        "repeating_queue": page.items,
+        "next_token": page.next_token,
+        "total_count": page.total_count,
     }
 
 

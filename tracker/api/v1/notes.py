@@ -5,9 +5,9 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
-from pydantic import NonNegativeInt
 
 from tracker.common import database, manticoresearch
+from tracker.common.pagination import PageParams
 from tracker.models import enums
 from tracker.notes import db, schemas
 from tracker.notes.listing import build_notes_search_result
@@ -51,16 +51,10 @@ def _serialize_material_notes(counts: dict[UUID, int]) -> dict[str, int]:
 @router.get("/search")
 async def notes_search_json(
     search: Annotated[schemas.SearchParams, Depends()],
-    page: NonNegativeInt = 1,
-    page_size: NonNegativeInt = 10,
+    params: Annotated[PageParams, Depends()],
 ):
     # TODO: get cards count
-    # TODO: implement pagination
-    ctx = await build_notes_search_result(
-        search=search,
-        page=page,
-        page_size=page_size,
-    )
+    ctx = await build_notes_search_result(search=search, params=params)
     notes = ctx["notes"]
     chapters = ctx["chapters"]
     titles = ctx["titles"]
@@ -77,7 +71,7 @@ async def notes_search_json(
         "query": ctx["query"],
         "tags": ctx["tags"],
         "tags_query": ctx["tags_query"],
-        "current_page": ctx["current_page"],
+        "next_token": ctx["next_token"],
         "page_size": ctx["page_size"],
         "material_id": str(ctx["material_id"]) if ctx["material_id"] else None,
     }
@@ -203,11 +197,13 @@ async def get_note_links_network(note_id: UUID):
 
 
 @router.get("/links", response_model=schemas.GetNoteLinksResponse)
-async def get_note_links(note_id: UUID):
+async def get_note_links(note_id: UUID, params: Annotated[PageParams, Depends()]):
     note = await db.get_note_api(note_id=note_id)
 
     async with asyncio.TaskGroup() as tg:
-        get_links_from_task = tg.create_task(db.get_links_from(note_id=note_id))
+        get_links_from_task = tg.create_task(
+            db.get_links_from_page(note_id=note_id, params=params),
+        )
         if note.link_id:
             get_link_to_task: asyncio.Task[db.Note | None] = tg.create_task(
                 db.get_note_api(note_id=note.link_id),
@@ -215,9 +211,12 @@ async def get_note_links(note_id: UUID):
         else:
             get_link_to_task = tg.create_task(asyncio.sleep(1 / 1000, result=None))
 
+    links_from = get_links_from_task.result()
     return {
-        "links_from": get_links_from_task.result(),
+        "links_from": links_from.items,
         "link_to": get_link_to_task.result(),
+        "next_token": links_from.next_token,
+        "total_count": links_from.total_count,
     }
 
 

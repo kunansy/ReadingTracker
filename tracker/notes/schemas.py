@@ -15,7 +15,9 @@ from pydantic import (
 )
 
 from tracker.common import settings
+from tracker.common.pagination import PageResponse
 from tracker.common.schemas import CustomBaseModel, skip_empty_value
+from tracker.models.models import MAX_CHAPTER_LENGTH
 
 
 PUNCTUATION_MAPPING = {
@@ -100,13 +102,16 @@ def demark_note(string: str) -> str:
     return string
 
 
+type Chapter = Annotated[str, Field(max_length=MAX_CHAPTER_LENGTH)]
+
+
 class Note(CustomBaseModel):
     material_id: UUID
     title: Annotated[str | None, BeforeValidator(skip_empty_value)] = None
     content: str
     tags: list[str] | None = None
     link_id: Annotated[UUID | None, BeforeValidator(skip_empty_value)] = None
-    chapter: str = ""
+    chapter: Chapter = ""
     page: NonNegativeInt = 0
 
     @field_validator("content")
@@ -158,7 +163,7 @@ class AddNoteRequest(CustomBaseModel):
     content: str
     tags: Tags = Field(default_factory=list)
     link_id: UUID | None = None
-    chapter: str = ""
+    chapter: Chapter = ""
     page: NonNegativeInt = 0
 
     @field_validator("content")
@@ -193,7 +198,7 @@ class UpdateNoteRequest(CustomBaseModel):
     title: str | None
     content: str
     tags: Tags = Field(default_factory=list)
-    chapter: str = "0"
+    chapter: Chapter = "0"
     page: NonNegativeInt = 0
 
 
@@ -287,6 +292,6 @@ class GetNoteLinksItem(CustomBaseModel):
     info: str = ""
 
 
-class GetNoteLinksResponse(CustomBaseModel):
+class GetNoteLinksResponse(PageResponse):
     link_to: GetNoteLinksItem | None
     links_from: list[GetNoteLinksItem] | None

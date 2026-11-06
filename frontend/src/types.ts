@@ -32,9 +32,16 @@ type MaterialEstimateJson = {
   expected_duration: number;
 };
 
+/** Fields every cursor-paginated listing response carries. */
+export type CursorPageResponse = {
+  /** Opaque, `null` when there are no more pages. */
+  next_token: string | null;
+  total_count: number;
+};
+
 export type MinMaxJson = { count: number; date: string };
 
-type MaterialStatisticsJson = {
+export type MaterialStatisticsJson = {
   material: GetMaterialItem;
   started_at: string;
   duration: number;
@@ -68,7 +75,7 @@ type RepeatingQueueJson = {
   priority_months: number;
 };
 
-export type GetRepeatingQueueResponse = {
+export type GetRepeatingQueueResponse = CursorPageResponse & {
   repeating_queue: RepeatingQueueJson[];
 };
 
@@ -89,15 +96,19 @@ export type ParsedMaterialResponse = {
   duration?: number | null;
 };
 
-export type ListReadingMaterialsResponse = {
+export type ListReadingMaterialsResponse = CursorPageResponse & {
   statistics: MaterialStatisticsJson[];
 };
 
-export type ListCompletedMaterialsResponse = {
+export type ListCompletedMaterialsResponse = CursorPageResponse & {
   statistics: MaterialStatisticsJson[];
 };
 
-export type ListMaterialsQueueResponse = {
+export type GetCompletedMaterialResponse = {
+  statistics: MaterialStatisticsJson;
+};
+
+export type ListMaterialsQueueResponse = CursorPageResponse & {
   estimates: MaterialEstimateJson[];
   mean: Record<string, number>;
 };
@@ -124,7 +135,7 @@ type ListReadingLogsItem = {
   count: number;
 };
 
-export type ListReadingLogsResponse = {
+export type ListReadingLogsResponse = CursorPageResponse & {
   items: ListReadingLogsItem[];
 };
 
@@ -148,7 +159,7 @@ type ListCardsItem = {
   material_type: MaterialType;
 }
 
-export type ListCardsResponse = {
+export type ListCardsResponse = CursorPageResponse & {
   items: ListCardsItem[];
 }
 
@@ -265,7 +276,7 @@ type NoteLinkItem = {
   info: string;
 }
 
-export type GetNoteLinksResponse = {
+export type GetNoteLinksResponse = CursorPageResponse & {
   links_from: NoteLinkItem[];
   link_to: NoteLinkItem;
 }

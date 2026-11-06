@@ -7,7 +7,7 @@ from uuid import UUID
 
 import sqlalchemy.sql as sa
 
-from tracker.common import database
+from tracker.common import database, pagination, sort_keys
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.materials import db as materials_db
@@ -29,14 +29,12 @@ def _safe_list_get[T](lst: list[T], index: int, default: T | None = None) -> T |
         return default
 
 
-async def list_log_records(
+def _list_log_records_stmt(
     *,
     material_id: UUID | None = None,
     from_date: datetime.date | None = None,
     to_date: datetime.date | None = None,
-) -> list[LogRecord]:
-    logger.debug("Getting all log records")
-
+) -> sa.Select:
     stmt = sa.select(models.ReadingLog).order_by(models.ReadingLog.c.date.desc())
 
     if material_id:
@@ -45,6 +43,22 @@ async def list_log_records(
         stmt = stmt.where(from_date <= models.ReadingLog.c.date)
     if to_date:
         stmt = stmt.where(to_date >= models.ReadingLog.c.date)
+    return stmt
+
+
+async def list_log_records(
+    *,
+    material_id: UUID | None = None,
+    from_date: datetime.date | None = None,
+    to_date: datetime.date | None = None,
+) -> list[LogRecord]:
+    logger.debug("Getting all log records")
+
+    stmt = _list_log_records_stmt(
+        material_id=material_id,
+        from_date=from_date,
+        to_date=to_date,
+    )
 
     async with database.session() as ses:
         records = [
@@ -54,6 +68,29 @@ async def list_log_records(
 
     logger.debug("%s log records got", len(records))
     return records
+
+
+async def list_log_records_page(
+    *,
+    material_id: UUID | None,
+    params: pagination.PageParams,
+) -> pagination.Page[LogRecord]:
+    logger.debug("Getting log records page")
+    request = pagination.page_request(
+        params,
+        default_order=pagination.Order.DESC,
+        material_id=material_id,
+    )
+
+    return await pagination.fetch_page(
+        _list_log_records_stmt(material_id=material_id),
+        cursor_expr=pagination.cursor(
+            pagination.date_part(models.ReadingLog.c.date),
+            models.ReadingLog.c.sort_key,
+        ),
+        request=request,
+        to_item=lambda row: LogRecord.model_validate(row, from_attributes=True),
+    )
 
 
 async def get_log_record(*, log_id: UUID) -> LogRecord:
@@ -216,14 +253,27 @@ async def insert_log_record(
         date,
     )
 
-    values = {"material_id": str(material_id), "count": count, "date": date}
-    stmt = models.ReadingLog.insert().values(values).returning(models.ReadingLog.c.log_id)
+    log_id = models.generate_id()
+    values = {
+        "log_id": log_id,
+        "sort_key": sort_keys.reading_log_sort_key(
+            material_id=material_id,
+            date=date,
+            log_id=log_id,
+        ),
+        "material_id": str(material_id),
+        "count": count,
+        "date": date,
+    }
+    stmt = models.ReadingLog.insert().values(values)
 
     async with database.session() as ses:
-        log_id = await ses.scalar(stmt)
+        result = await ses.execute(stmt)
+
+    database.check_inserted_one(result, entity="Reading log")
 
     logger.debug("Log record inserted, id=%s", log_id)
-    return cast("UUID", log_id)
+    return UUID(log_id)
 
 
 async def check_record_correct(

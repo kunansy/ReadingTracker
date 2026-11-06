@@ -1,9 +1,12 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { apiFetch } from "../../api/cards";
 import { apiFetch as notesApiFetch, buildQuery } from "../../api/notes";
+import { PageNav } from "../../components/PageNav";
+import { PageLoadError } from "../../components/PageLoadError";
+import { useCursorPagination } from "../../hooks/useCursorPagination";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import {
   ComboboxInput,
@@ -25,7 +28,10 @@ type NoteListItem = {
 type NotesSearchResponse = {
   notes: NoteListItem[];
   total_count: number;
+  next_token: string | null;
 };
+
+const NOTES_PAGE_SIZE = 100;
 
 type NotesMetaResponse = {
   titles: Record<string, string>;
@@ -76,14 +82,20 @@ export function AddCardPage() {
     staleTime: 10 * 60 * 1000,
   });
 
+  const notesMaterialId = isUuid(materialId) ? materialId : "";
+  const notesPagination = useCursorPagination(NOTES_PAGE_SIZE, notesMaterialId, "asc");
+  const notesNextToken = notesPagination.cursor;
+
   const notesQ = useQuery({
-    queryKey: ["notes", "search", { materialId }],
+    queryKey: ["notes", "search", { materialId: notesMaterialId, nextToken: notesNextToken, order: notesPagination.order }],
+    placeholderData: keepPreviousData,
     queryFn: () =>
       notesApiFetch<NotesSearchResponse>(
         `/search${buildQuery({
-          ...(isUuid(materialId) ? { material_id: materialId } : {}),
-          page: 1,
-          page_size: 200,
+          material_id: notesMaterialId || undefined,
+          next_token: notesNextToken,
+          page_size: NOTES_PAGE_SIZE,
+          order: notesPagination.order,
         })}`,
       ),
   });
@@ -171,11 +183,10 @@ export function AddCardPage() {
   if (metaQ.isLoading || notesQ.isLoading || notesWithCardsQ.isLoading) {
     return <p>Loading…</p>;
   }
-  if (metaQ.error || notesQ.error || notesWithCardsQ.error) {
+  if (metaQ.error || notesWithCardsQ.error) {
     return (
       <p className="error">
-        {((metaQ.error || notesQ.error || notesWithCardsQ.error) as Error)?.message ||
-          "Failed to load data"}
+        {((metaQ.error || notesWithCardsQ.error) as Error)?.message || "Failed to load data"}
       </p>
     );
   }
@@ -189,6 +200,15 @@ export function AddCardPage() {
         {materialsTitles[materialId] ? (
             <h3 className="material-title">«{materialsTitles[materialId]}»</h3>
         ) : null}
+        {notesQ.error ? (
+          <PageLoadError pagination={notesPagination} error={notesQ.error} />
+        ) : (
+          <>
+        <PageNav
+          pagination={notesPagination}
+          nextToken={notesQ.data?.next_token}
+          isBusy={notesQ.isPlaceholderData}
+        />
         <ul className="notes" id="notes-list">
           {notes.map((n) => (
               <li
@@ -220,6 +240,13 @@ export function AddCardPage() {
               </li>
           ))}
         </ul>
+        <PageNav
+          pagination={notesPagination}
+          nextToken={notesQ.data?.next_token}
+          isBusy={notesQ.isPlaceholderData}
+        />
+          </>
+        )}
       </div>
 
       <div className="form">

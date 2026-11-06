@@ -106,9 +106,17 @@ def _api_v1_validation_detail(exc: RequestValidationError) -> str:
 
 @app.exception_handler(database.DatabaseException)
 async def database_exception_handler(request: Request, exc: database.DatabaseException):
-    logger.exception("Database exception occurred, (%s), %s", request.url, str(exc))
+    if isinstance(exc, database.InvalidNextTokenException):
+        logger.info("Invalid next token, (%s), %s", request.url, str(exc))
+    else:
+        logger.exception("Database exception occurred, (%s), %s", request.url, str(exc))
 
     if request.url.path.startswith("/api/v1"):
+        if isinstance(exc, database.InvalidNextTokenException):
+            return JSONResponse(
+                status_code=422,
+                content={"detail": f"InvalidNextToken: {exc}"},
+            )
         if isinstance(exc, database.AlreadyExistsException):
             return JSONResponse(
                 status_code=409,

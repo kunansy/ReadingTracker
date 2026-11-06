@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
@@ -6,6 +6,9 @@ import { apiFetch, buildQuery } from "../../api/notes";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 import { ScrollArrows } from "../../components/ScrollArrows";
+import { PageNav } from "../../components/PageNav";
+import { PageLoadError } from "../../components/PageLoadError";
+import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 type NoteListItem = {
   note_id: string;
@@ -31,7 +34,7 @@ type SearchResponse = {
   query: string | null;
   tags: string[];
   tags_query: string | null;
-  current_page: number;
+  next_token: string | null;
   page_size: number;
   material_id: string | null;
 };
@@ -86,27 +89,6 @@ function labelsForMaterialType(t: string | undefined) {
   return { pageName: "Page", chapterName: "Chapter" };
 }
 
-function buildPaginationItems(
-  currentPage: number,
-  maxPage: number,
-): (number | "«" | "»")[] {
-  const items: (number | "«" | "»")[] = [];
-  let rangeStart = 1;
-  let rangeStop = 11;
-  if (currentPage > 5) {
-    rangeStart = currentPage - 4;
-    rangeStop = currentPage + 6;
-    items.push("«");
-  }
-  for (let p = rangeStart; p < rangeStop && p <= maxPage; p++) {
-    if (p >= 1) {
-      items.push(p);
-    }
-  }
-  items.push("»");
-  return items;
-}
-
 export function SearchNotesPage() {
   const qc = useQueryClient();
   const { open, close } = useContextMenu();
@@ -116,9 +98,13 @@ export function SearchNotesPage() {
   const materialId = searchParams.get("material_id") ?? "";
   const query = searchParams.get("query") ?? "";
   const tagsQuery = searchParams.get("tags_query") ?? "";
-  const pageParam = searchParams.get("page");
-  const currentPage = Math.max(1, parseInt(pageParam ?? "1", 10) || 1);
   const navigate = useNavigate();
+  const pagination = useCursorPagination(
+    PAGE_SIZE,
+    JSON.stringify([materialId, query, tagsQuery]),
+    "asc",
+  );
+  const nextToken = pagination.cursor;
 
   const [hintList, setHintList] = useState<string[]>([]);
 
@@ -129,15 +115,17 @@ export function SearchNotesPage() {
   });
 
   const searchQ = useQuery({
-    queryKey: ["notes", "search", materialId, query, tagsQuery, currentPage],
+    queryKey: ["notes", "search", materialId, query, tagsQuery, nextToken, pagination.order],
+    placeholderData: keepPreviousData,
     queryFn: () =>
       apiFetch<SearchResponse>(
         `/search${buildQuery({
           material_id: materialId || undefined,
           query: query || undefined,
           tags_query: tagsQuery || undefined,
-          page: currentPage,
+          next_token: nextToken,
           page_size: PAGE_SIZE,
+          order: pagination.order,
         })}`,
       ),
   });
@@ -146,8 +134,6 @@ export function SearchNotesPage() {
   const hasTitles = Object.keys(titles).length > 0;
 
   const searchData = searchQ.data;
-  const totalCount = searchData?.total_count ?? 0;
-  const maxPage = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
 
   const grouped = useMemo(
     () => (searchData?.notes ? groupNotesByMaterialAndChapter(searchData.notes) : []),
@@ -156,10 +142,7 @@ export function SearchNotesPage() {
 
   const indexByNoteId = useMemo(() => {
     const m = new Map<string, number>();
-    if (!searchData) {
-      return m;
-    }
-    let i = (searchData.current_page - 1) * searchData.page_size;
+    let i = pagination.offset;
     for (const g of grouped) {
       for (const ch of g.chapters) {
         for (const n of ch.notes) {
@@ -169,34 +152,7 @@ export function SearchNotesPage() {
       }
     }
     return m;
-  }, [grouped, searchData]);
-
-  const setPage = useCallback(
-    (p: number) => {
-      const next = new URLSearchParams(searchParams);
-      if (p <= 1) {
-        next.delete("page");
-      } else {
-        next.set("page", String(p));
-      }
-      setSearchParams(next);
-    },
-    [searchParams, setSearchParams],
-  );
-
-  const onPaginationClick = useCallback(
-    (item: number | "«" | "»") => {
-      const cp = searchData?.current_page ?? currentPage;
-      if (item === "«") {
-        setPage(Math.max(1, cp - 1));
-      } else if (item === "»") {
-        setPage(Math.min(maxPage, cp + 1));
-      } else {
-        setPage(item);
-      }
-    },
-    [currentPage, maxPage, searchData?.current_page, setPage],
-  );
+  }, [grouped, pagination.offset]);
 
   const deleteMut = useMutation({
     mutationFn: async (noteId: string) => {
@@ -382,7 +338,7 @@ export function SearchNotesPage() {
     return <p>Loading…</p>;
   }
   if (searchQ.error) {
-    return <p className="error">{(searchQ.error as Error).message}</p>;
+    return <PageLoadError pagination={pagination} error={searchQ.error} />;
   }
 
   const data = searchQ.data;
@@ -393,13 +349,12 @@ export function SearchNotesPage() {
   const chaptersMenu = data.chapters;
   const materialTypes = data.material_types;
   const materialNotes = data.material_notes;
-  const paginationItems = buildPaginationItems(data.current_page, maxPage);
 
   return (
     <>
       <div className="form">
         <form
-          key={`${materialId}|${query}|${tagsQuery}|${currentPage}`}
+          key={`${materialId}|${query}|${tagsQuery}`}
           id="search-notes-form"
           action="#"
           method="get"
@@ -517,39 +472,11 @@ export function SearchNotesPage() {
         </div>
       ) : null}
 
-      <div className="form pagination">
-        {paginationItems.map((item, i) => {
-          const key = `${item}-${i}`;
-          if (item === "«" || item === "»") {
-            return (
-              <div
-                key={key}
-                className="pagination-item hover"
-                role="presentation"
-                onClick={() => {
-                  onPaginationClick(item);
-                }}
-              >
-                {" "}
-                {item}{" "}
-              </div>
-            );
-          }
-          return (
-            <div
-              key={key}
-              className={`pagination-item hover ${item === data.current_page ? "current-page" : ""}`}
-              role="presentation"
-              onClick={() => {
-                onPaginationClick(item);
-              }}
-            >
-              {item}
-            </div>
-          );
-        })}
-      </div>
-
+      <PageNav
+        pagination={pagination}
+        nextToken={data.next_token}
+        isBusy={searchQ.isPlaceholderData}
+      />
       {data.notes.length > 0 ? (
         <div ref={notesRootRef}>
           {grouped.map((group, gi) => {
@@ -564,12 +491,12 @@ export function SearchNotesPage() {
                   className="material_title"
                   id={`material-${group.materialId}`}
                   onClick={() => {
-                    navigate(`/materials/completed`, { state: {scrollTo: group.materialId } });
+                    navigate(`/materials/completed/${group.materialId}`);
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.preventDefault();
-                      navigate(`/materials/completed`, { state: {scrollTo: group.materialId } });
+                      navigate(`/materials/completed/${group.materialId}`);
                     }
                   }}
                   role="presentation"
@@ -655,6 +582,11 @@ export function SearchNotesPage() {
           <p className="message"> No notes found </p>
         </div>
       )}
+      <PageNav
+        pagination={pagination}
+        nextToken={data.next_token}
+        isBusy={searchQ.isPlaceholderData}
+      />
       <ScrollArrows />
     </>
   );
