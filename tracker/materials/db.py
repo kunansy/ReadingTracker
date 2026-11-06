@@ -1,5 +1,4 @@
 import asyncio
-import dataclasses
 import datetime
 import re
 import time
@@ -771,7 +770,7 @@ async def estimate_page(
     if request.continue_from is not None:
         start_date = _token_start_date(request.continue_from)
 
-    page = await pagination.fetch_page(
+    materials, next_cursor, total_count = await pagination.fetch_rows(
         _get_free_materials_stmt(),
         cursor_expr=pagination.cursor(
             pagination.int_part(models.Materials.c.index),
@@ -784,7 +783,7 @@ async def estimate_page(
 
     last_date = start_date
     forecasts = []
-    for material in page.items:
+    for material in materials:
         mean_ = mean.get(material.material_type, 1)
         expected_duration = round(material.pages / mean_)
         expected_end = last_date + datetime.timedelta(days=expected_duration)
@@ -804,10 +803,14 @@ async def estimate_page(
 
     logger.info("%s materials estimated", len(forecasts))
     next_token = request.next_token(
-        page.next_cursor,
+        next_cursor,
         **{_START_DATE_KEY: last_date.isoformat()},
     )
-    return dataclasses.replace(page.with_items(forecasts), next_token=next_token)
+    return pagination.Page(
+        items=forecasts,
+        next_token=next_token,
+        total_count=total_count,
+    )
 
 
 def _token_start_date(continue_from: pagination.TokenMap) -> datetime.date:
