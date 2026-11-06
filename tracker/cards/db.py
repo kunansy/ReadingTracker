@@ -121,12 +121,16 @@ async def get_cards_page(
     params: pagination.PageParams,
 ) -> pagination.Page[Card]:
     logger.info("Getting cards page")
+    request = pagination.page_request(
+        params,
+        default_order=pagination.Order.DESC,
+        material_id=material_id,
+    )
 
     return await pagination.fetch_page(
         _get_cards_stmt(material_id=material_id),
         cursor_expr=pagination.cursor(models.Cards.c.sort_key),
-        params=params,
-        default_order=pagination.Order.DESC,
+        request=request,
         to_item=lambda row: Card.model_validate(row, from_attributes=True),
     )
 

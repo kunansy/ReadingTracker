@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {useCallback, useEffect, useRef, useState} from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -11,9 +11,7 @@ import {CelebrateButton} from "../../components/CelebrateButton.tsx";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { dateInputValue } from "../../utils/dateInputValue";
 import { PageNav } from "../../components/PageNav";
-import { useCursorPagination } from "../../hooks/useCursorPagination";
-
-type QueueCursor = { nextToken: string; startDate: string };
+import { PageCursor, useCursorPagination } from "../../hooks/useCursorPagination";
 
 export function ListMaterialsQueuePage() {
   const [completeId, setCompleteId] = useState<string | null>(null);
@@ -22,20 +20,20 @@ export function ListMaterialsQueuePage() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const navigate = useNavigate();
   const { open, close } = useContextMenu();
-  const pagination = useCursorPagination<QueueCursor>(PAGE_SIZE, "", "desc");
-  const { nextToken, startDate } = pagination.cursor ?? {};
+  const pagination = useCursorPagination<PageCursor>(PAGE_SIZE, "", "desc");
+  const nextToken = pagination.cursor?.nextToken;
 
   const q = useQuery({
-    queryKey: ["materials", "queue", { nextToken, startDate, order: pagination.order }],
+    queryKey: ["materials", "queue", { nextToken, order: pagination.order }],
     queryFn: () =>
       apiFetch<ListMaterialsQueueResponse>(
         `/queue${buildQuery({
           next_token: nextToken,
-          start_date: startDate,
           page_size: PAGE_SIZE,
           order: pagination.order,
         })}`,
       ),
+    placeholderData: keepPreviousData,
   });
 
   const startMut = useMutation({
@@ -168,7 +166,8 @@ export function ListMaterialsQueuePage() {
       <PageNav
         pagination={pagination}
         nextToken={data.next_token}
-        onNext={(token) => pagination.next({ nextToken: token, startDate: data.next_start_date })}
+        isBusy={q.isPlaceholderData}
+        onNext={(token) => pagination.next({ nextToken: token })}
       />
       {data.estimates.map((estimate, i) => {
         const material = estimate.material;
@@ -284,7 +283,8 @@ export function ListMaterialsQueuePage() {
       <PageNav
         pagination={pagination}
         nextToken={data.next_token}
-        onNext={(token) => pagination.next({ nextToken: token, startDate: data.next_start_date })}
+        isBusy={q.isPlaceholderData}
+        onNext={(token) => pagination.next({ nextToken: token })}
       />
       <ScrollArrows />
     </>

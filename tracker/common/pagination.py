@@ -1,12 +1,12 @@
 import base64
-import binascii
+import json
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Annotated, Final
+from typing import Annotated, Final, TypeGuard
 
 import sqlalchemy.sql as sa
-from pydantic import AfterValidator, Field
+from pydantic import Field
 from sqlalchemy import Text
 from sqlalchemy.engine import Row
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -17,7 +17,7 @@ from tracker.common.schemas import CustomBaseModel
 
 DEFAULT_PAGE_SIZE: Final[int] = 20
 MAX_PAGE_SIZE: Final[int] = 100
-MAX_TOKEN_LENGTH: Final[int] = 1024
+MAX_TOKEN_LENGTH: Final[int] = 4096
 CURSOR_LABEL: Final[str] = "cursor"
 COLLATION: Final[str] = "C"
 
@@ -27,48 +27,126 @@ class Order(StrEnum):
     DESC = "desc"
 
 
-def encode_token(cursor: str) -> str:
-    return base64.urlsafe_b64encode(cursor.encode()).decode()
+type TokenMap = dict[str, str]
+
+ORDER_PARAM: Final[str] = "order"
+MAX_ITEMS_PARAM: Final[str] = "max_items"
+CURSOR_KEY: Final[str] = "cursor"
+_PARAMS_KEY: Final[str] = "params"
+_CONTINUE_FROM_KEY: Final[str] = "continue_from"
 
 
-def decode_token(token: str) -> str:
-    msg = "next_token is not a valid page token"
-    try:
-        cursor = base64.b64decode(token, altchars=b"-_", validate=True).decode()
-    except (binascii.Error, UnicodeError) as e:
-        raise ValueError(msg) from e
+def encode_next_token(params: TokenMap, continue_from: TokenMap) -> str:
+    payload = {_PARAMS_KEY: params, _CONTINUE_FROM_KEY: continue_from}
+    raw = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return base64.urlsafe_b64encode(raw.encode()).decode()
 
+
+def _is_token_map(value: object) -> TypeGuard[TokenMap]:
     # Postgres rejects NUL in text parameters.
-    if sort_keys.SEPARATOR not in cursor or "\x00" in cursor:
-        raise ValueError(msg)
-    return cursor
+    return isinstance(value, dict) and all(
+        isinstance(key, str) and isinstance(val, str) and "\x00" not in val
+        for key, val in value.items()
+    )
 
 
-def _validate_token(token: str | None) -> str | None:
-    if token is not None:
-        decode_token(token)
-    return token
+def decode_and_check_next_token(token: str, params: TokenMap) -> TokenMap:
+    """Return the `continue_from` of the token issued for exactly these `params`."""
+    try:
+        payload = json.loads(base64.b64decode(token, altchars=b"-_", validate=True))
+    except ValueError as e:
+        raise database.InvalidNextTokenException("next_token is malformed") from e
+
+    expected_keys = {_PARAMS_KEY, _CONTINUE_FROM_KEY}
+    if not isinstance(payload, dict) or payload.keys() != expected_keys:
+        raise database.InvalidNextTokenException("next_token is malformed")
+
+    token_params, continue_from = payload[_PARAMS_KEY], payload[_CONTINUE_FROM_KEY]
+    if not (_is_token_map(token_params) and _is_token_map(continue_from)):
+        raise database.InvalidNextTokenException("next_token is malformed")
+    if token_params != params:
+        raise database.InvalidNextTokenException(
+            "next_token does not match the request parameters",
+        )
+    if CURSOR_KEY not in continue_from:
+        raise database.InvalidNextTokenException("next_token has no cursor")
+
+    return continue_from
 
 
 class PageParams(CustomBaseModel):
-    next_token: Annotated[
-        str | None,
-        Field(max_length=MAX_TOKEN_LENGTH),
-        AfterValidator(_validate_token),
-    ] = None
+    next_token: Annotated[str | None, Field(max_length=MAX_TOKEN_LENGTH)] = None
     page_size: Annotated[int, Field(ge=1, le=MAX_PAGE_SIZE)] = DEFAULT_PAGE_SIZE
     # None means the default order of the listing.
     order: Order | None = None
+
+
+def _param_value(value: object) -> str:
+    if value is None:
+        return ""
+    if isinstance(value, set | frozenset):
+        return ",".join(sorted(str(item) for item in value))
+    return str(value)
+
+
+@dataclass(frozen=True, slots=True)
+class PageRequest:
+    order: Order
+    page_size: int
+    params: TokenMap
+    # None on the first page.
+    continue_from: TokenMap | None
+
+    @property
+    def cursor(self) -> str | None:
+        return self.continue_from[CURSOR_KEY] if self.continue_from else None
+
+    def next_token(self, cursor: str | None, **continue_from: str) -> str | None:
+        if cursor is None:
+            return None
+        return encode_next_token(self.params, {CURSOR_KEY: cursor, **continue_from})
+
+
+def page_request(
+    params: PageParams,
+    *,
+    default_order: Order,
+    **filters: object,
+) -> PageRequest:
+    """Bind the page to the filters: a token is accepted only for the same ones."""
+    order = params.order or default_order
+    token_params = {
+        ORDER_PARAM: order.value,
+        MAX_ITEMS_PARAM: str(params.page_size),
+        **{name: _param_value(value) for name, value in filters.items()},
+    }
+    continue_from = None
+    if params.next_token is not None:
+        continue_from = decode_and_check_next_token(params.next_token, token_params)
+
+    return PageRequest(
+        order=order,
+        page_size=params.page_size,
+        params=token_params,
+        continue_from=continue_from,
+    )
 
 
 @dataclass(frozen=True, slots=True)
 class Page[T]:
     items: list[T]
     next_token: str | None
+    # Cursor of the first row of the next page, to issue a token with more state.
+    next_cursor: str | None
     total_count: int
 
     def with_items[U](self, items: list[U]) -> Page[U]:
-        return Page(items=items, next_token=self.next_token, total_count=self.total_count)
+        return Page(
+            items=items,
+            next_token=self.next_token,
+            next_cursor=self.next_cursor,
+            total_count=self.total_count,
+        )
 
 
 class PageResponse(CustomBaseModel):
@@ -99,32 +177,31 @@ def paginate(
     stmt: sa.Select,
     *,
     cursor_expr: sa.ColumnElement[str],
-    params: PageParams,
-    default_order: Order,
+    request: PageRequest,
 ) -> sa.Select:
-    """Rows from `next_token` inclusive, plus one extra row for the next token."""
-    is_desc = (params.order or default_order) == Order.DESC
+    """Rows from the cursor inclusive, plus one extra row for the next cursor."""
+    is_desc = request.order == Order.DESC
     stmt = stmt.add_columns(cursor_expr.label(CURSOR_LABEL)).order_by(None)
-    if params.next_token is not None:
-        start = decode_token(params.next_token)
+    if (start := request.cursor) is not None:
         if is_desc:
             stmt = stmt.where(cursor_expr <= start)
         else:
             stmt = stmt.where(cursor_expr >= start)
 
     order = cursor_expr.desc() if is_desc else cursor_expr.asc()
-    return stmt.order_by(order).limit(params.page_size + 1)
+    return stmt.order_by(order).limit(request.page_size + 1)
 
 
 def split_page[T: Row](
     rows: Sequence[T],
-    params: PageParams,
+    page_size: int,
 ) -> tuple[Sequence[T], str | None]:
-    if len(rows) <= params.page_size:
+    """Split rows of `paginate` into the page and the next cursor."""
+    if len(rows) <= page_size:
         return rows, None
 
-    next_row = rows[params.page_size]
-    return rows[: params.page_size], encode_token(getattr(next_row, CURSOR_LABEL))
+    next_row = rows[page_size]
+    return rows[:page_size], getattr(next_row, CURSOR_LABEL)
 
 
 async def count(ses: AsyncSession, stmt: sa.Select) -> int:
@@ -136,24 +213,19 @@ async def fetch_page[T](
     stmt: sa.Select,
     *,
     cursor_expr: sa.ColumnElement[str],
-    params: PageParams,
-    default_order: Order,
+    request: PageRequest,
     to_item: Callable[[Row], T],
 ) -> Page[T]:
-    page_stmt = paginate(
-        stmt,
-        cursor_expr=cursor_expr,
-        params=params,
-        default_order=default_order,
-    )
+    page_stmt = paginate(stmt, cursor_expr=cursor_expr, request=request)
 
     async with database.session() as ses:
         rows = (await ses.execute(page_stmt)).all()
         total_count = await count(ses, stmt)
 
-    page_rows, next_token = split_page(rows, params)
+    page_rows, next_cursor = split_page(rows, request.page_size)
     return Page(
         items=[to_item(row) for row in page_rows],
-        next_token=next_token,
+        next_token=request.next_token(next_cursor),
+        next_cursor=next_cursor,
         total_count=total_count,
     )

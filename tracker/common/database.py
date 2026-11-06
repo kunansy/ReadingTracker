@@ -36,6 +36,10 @@ class NotFoundException(DatabaseException):
     pass
 
 
+class InvalidNextTokenException(DatabaseException):
+    pass
+
+
 class MinMax(CustomBaseModel):
     log_id: UUID | str = ""
     material_id: UUID | str = ""
