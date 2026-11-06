@@ -11,7 +11,7 @@ import {CelebrateButton} from "../../components/CelebrateButton.tsx";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { dateInputValue } from "../../utils/dateInputValue";
 import { PageNav } from "../../components/PageNav";
-import { PageCursor, useCursorPagination } from "../../hooks/useCursorPagination";
+import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 export function ListMaterialsQueuePage() {
   const [completeId, setCompleteId] = useState<string | null>(null);
@@ -20,8 +20,8 @@ export function ListMaterialsQueuePage() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const navigate = useNavigate();
   const { open, close } = useContextMenu();
-  const pagination = useCursorPagination<PageCursor>(PAGE_SIZE, "", "desc");
-  const nextToken = pagination.cursor?.nextToken;
+  const pagination = useCursorPagination(PAGE_SIZE, "", "desc");
+  const nextToken = pagination.cursor;
 
   const q = useQuery({
     queryKey: ["materials", "queue", { nextToken, order: pagination.order }],
@@ -167,7 +167,6 @@ export function ListMaterialsQueuePage() {
         pagination={pagination}
         nextToken={data.next_token}
         isBusy={q.isPlaceholderData}
-        onNext={(token) => pagination.next({ nextToken: token })}
       />
       {data.estimates.map((estimate, i) => {
         const material = estimate.material;
@@ -284,7 +283,6 @@ export function ListMaterialsQueuePage() {
         pagination={pagination}
         nextToken={data.next_token}
         isBusy={q.isPlaceholderData}
-        onNext={(token) => pagination.next({ nextToken: token })}
       />
       <ScrollArrows />
     </>

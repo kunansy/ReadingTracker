@@ -8,13 +8,13 @@ import {ListMaterialsTitlesResponse, ListReadingLogsResponse} from "../../types.
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
-import { PageCursor, useCursorPagination } from "../../hooks/useCursorPagination";
+import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 export function ListReadingLogsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const materialId = searchParams.get("material_id") ?? "";
-    const pagination = useCursorPagination<PageCursor>(PAGE_SIZE, materialId, "desc");
-    const nextToken = pagination.cursor?.nextToken;
+    const pagination = useCursorPagination(PAGE_SIZE, materialId, "desc");
+    const nextToken = pagination.cursor;
 
     const materialsTitlesQ = useQuery({
         queryKey: ["materials", "read_titles"],
@@ -100,7 +100,6 @@ export function ListReadingLogsPage() {
           pagination={pagination}
           nextToken={logsQ.data?.next_token}
           isBusy={logsQ.isPlaceholderData}
-          onNext={(token) => pagination.next({ nextToken: token })}
       />
       <div>
         {data.map((item, index) => {
@@ -127,7 +126,6 @@ export function ListReadingLogsPage() {
           pagination={pagination}
           nextToken={logsQ.data?.next_token}
           isBusy={logsQ.isPlaceholderData}
-          onNext={(token) => pagination.next({ nextToken: token })}
       />
        {/*: (*/}
        {/* <div className="not-found">*/}

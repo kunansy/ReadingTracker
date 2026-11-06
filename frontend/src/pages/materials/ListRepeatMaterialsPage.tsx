@@ -9,7 +9,7 @@ import { itemsLabel } from "../../materials/format";
 import type { GetRepeatingQueueResponse } from "../../types";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
-import { PageCursor, useCursorPagination } from "../../hooks/useCursorPagination";
+import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 export function ListRepeatMaterialsPage() {
   const qc = useQueryClient();
@@ -21,8 +21,8 @@ export function ListRepeatMaterialsPage() {
     searchParams.get("only_outlined") === "on" ||
     searchParams.get("only_outlined") === "true";
 
-  const pagination = useCursorPagination<PageCursor>(PAGE_SIZE, String(onlyOutlined), "asc");
-  const nextToken = pagination.cursor?.nextToken;
+  const pagination = useCursorPagination(PAGE_SIZE, String(onlyOutlined), "asc");
+  const nextToken = pagination.cursor;
 
   const queryString = buildQuery({
     only_outlined: onlyOutlined ? "true" : undefined,
@@ -89,7 +89,6 @@ export function ListRepeatMaterialsPage() {
         pagination={pagination}
         nextToken={q.data?.next_token}
         isBusy={q.isPlaceholderData}
-        onNext={(token) => pagination.next({ nextToken: token })}
       />
       {!rows.length ? (
         <NotFoundMaterials kind="repeating queue" />
@@ -175,7 +174,6 @@ export function ListRepeatMaterialsPage() {
         pagination={pagination}
         nextToken={q.data?.next_token}
         isBusy={q.isPlaceholderData}
-        onNext={(token) => pagination.next({ nextToken: token })}
       />
       <ScrollArrows />
     </>

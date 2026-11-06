@@ -12,7 +12,7 @@ import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { PageNav } from "../../components/PageNav";
 import { useDebounce } from "../../lib/debounce.ts";
 import { ScrollArrows } from "../../components/ScrollArrows";
-import { PageCursor, useCursorPagination } from "../../hooks/useCursorPagination";
+import { useCursorPagination } from "../../hooks/useCursorPagination";
 import { CompletedMaterialCard } from "./CompletedMaterialCard";
 import {
     ListCompletedMaterialsResponse,
@@ -54,8 +54,8 @@ export function ListCompletedMaterialsPage() {
   }), [debouncedForm]);
   const filtersQuery = buildQuery(filters);
 
-  const pagination = useCursorPagination<PageCursor>(PAGE_SIZE, filtersQuery, "desc");
-  const nextToken = pagination.cursor?.nextToken;
+  const pagination = useCursorPagination(PAGE_SIZE, filtersQuery, "desc");
+  const nextToken = pagination.cursor;
 
   const q = useQuery({
     queryKey: ["materials", "completed", "list", filtersQuery, nextToken, pagination.order],
@@ -177,7 +177,6 @@ export function ListCompletedMaterialsPage() {
               pagination={pagination}
               nextToken={q.data?.next_token}
               isBusy={q.isPlaceholderData}
-              onNext={(token) => pagination.next({ nextToken: token })}
           />
           {!stats.length ? (
               <NotFoundMaterials kind="completed materials" />
@@ -194,7 +193,6 @@ export function ListCompletedMaterialsPage() {
               pagination={pagination}
               nextToken={q.data?.next_token}
               isBusy={q.isPlaceholderData}
-              onNext={(token) => pagination.next({ nextToken: token })}
           />
         <ScrollArrows />
       </>

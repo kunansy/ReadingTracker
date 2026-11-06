@@ -5,7 +5,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { apiFetch } from "../../api/cards";
 import { apiFetch as notesApiFetch, buildQuery } from "../../api/notes";
 import { PageNav } from "../../components/PageNav";
-import { PageCursor, useCursorPagination } from "../../hooks/useCursorPagination";
+import { useCursorPagination } from "../../hooks/useCursorPagination";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import {
   ComboboxInput,
@@ -82,8 +82,8 @@ export function AddCardPage() {
   });
 
   const notesMaterialId = isUuid(materialId) ? materialId : "";
-  const notesPagination = useCursorPagination<PageCursor>(NOTES_PAGE_SIZE, notesMaterialId, "asc");
-  const notesNextToken = notesPagination.cursor?.nextToken;
+  const notesPagination = useCursorPagination(NOTES_PAGE_SIZE, notesMaterialId, "asc");
+  const notesNextToken = notesPagination.cursor;
 
   const notesQ = useQuery({
     queryKey: ["notes", "search", { materialId: notesMaterialId, nextToken: notesNextToken, order: notesPagination.order }],
@@ -204,7 +204,6 @@ export function AddCardPage() {
           pagination={notesPagination}
           nextToken={notesQ.data?.next_token}
           isBusy={notesQ.isPlaceholderData}
-          onNext={(token) => notesPagination.next({ nextToken: token })}
         />
         <ul className="notes" id="notes-list">
           {notes.map((n) => (
@@ -241,7 +240,6 @@ export function AddCardPage() {
           pagination={notesPagination}
           nextToken={notesQ.data?.next_token}
           isBusy={notesQ.isPlaceholderData}
-          onNext={(token) => notesPagination.next({ nextToken: token })}
         />
       </div>
 

@@ -9,15 +9,15 @@ import {useMemo} from "react";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
-import { PageCursor, useCursorPagination } from "../../hooks/useCursorPagination";
+import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 
 export function ListCardsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
     const materialId = searchParams.get("material_id") ?? "";
     const navigate = useNavigate();
-    const pagination = useCursorPagination<PageCursor>(PAGE_SIZE, materialId, "desc");
-    const nextToken = pagination.cursor?.nextToken;
+    const pagination = useCursorPagination(PAGE_SIZE, materialId, "desc");
+    const nextToken = pagination.cursor;
 
     const materialsTitlesQ = useQuery({
         queryKey: ["materials", "with_cards_titles"],
@@ -103,7 +103,6 @@ export function ListCardsPage() {
           pagination={pagination}
           nextToken={cardsQ.data?.next_token}
           isBusy={cardsQ.isPlaceholderData}
-          onNext={(token) => pagination.next({ nextToken: token })}
       />
       <div>
         {data.map((item) => {
@@ -150,7 +149,6 @@ export function ListCardsPage() {
           pagination={pagination}
           nextToken={cardsQ.data?.next_token}
           isBusy={cardsQ.isPlaceholderData}
-          onNext={(token) => pagination.next({ nextToken: token })}
       />
        {/*: (*/}
        {/* <div className="not-found">*/}

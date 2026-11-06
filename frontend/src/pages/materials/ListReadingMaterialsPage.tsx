@@ -11,7 +11,7 @@ import type {ListReadingMaterialsResponse} from "../../types";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { dateInputValue } from "../../utils/dateInputValue";
 import { PageNav } from "../../components/PageNav";
-import { PageCursor, useCursorPagination } from "../../hooks/useCursorPagination";
+import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 export function ListReadingMaterialsPage() {
   const qc = useQueryClient();
@@ -20,8 +20,8 @@ export function ListReadingMaterialsPage() {
   const [completeId, setCompleteId] = useState<string | null>(null);
   const [dateStr, setDateStr] = useState("");
   const navigate = useNavigate();
-  const pagination = useCursorPagination<PageCursor>(PAGE_SIZE, "", "desc");
-  const nextToken = pagination.cursor?.nextToken;
+  const pagination = useCursorPagination(PAGE_SIZE, "", "desc");
+  const nextToken = pagination.cursor;
 
   const q = useQuery({
     queryKey: ["materials", "reading", { nextToken, order: pagination.order }],
@@ -128,7 +128,6 @@ export function ListReadingMaterialsPage() {
         pagination={pagination}
         nextToken={q.data?.next_token}
         isBusy={q.isPlaceholderData}
-        onNext={(token) => pagination.next({ nextToken: token })}
       />
       {stats.map((ms) => {
         const material = ms.material;
@@ -205,7 +204,6 @@ export function ListReadingMaterialsPage() {
         pagination={pagination}
         nextToken={q.data?.next_token}
         isBusy={q.isPlaceholderData}
-        onNext={(token) => pagination.next({ nextToken: token })}
       />
 
       <dialog
