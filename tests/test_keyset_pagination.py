@@ -215,7 +215,7 @@ async def test_token_past_the_end_gives_empty_page():
         material_id=None,
         tags=set(),
         note_ids=None,
-        params=PageParams(next_token=encode_token("~")),
+        params=PageParams(next_token=encode_token("~$$~")),
     )
 
     assert page.items == []
