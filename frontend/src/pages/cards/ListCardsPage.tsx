@@ -151,10 +151,6 @@ export function ListCardsPage() {
           nextToken={cardsQ.data?.next_token}
           isBusy={cardsQ.isPlaceholderData}
       />
-       {/*: (*/}
-       {/* <div className="not-found">*/}
-       {/*   <p className="message"> No cards found </p>*/}
-       {/* </div>*/}
               </>
             )}
       <ScrollArrows />
