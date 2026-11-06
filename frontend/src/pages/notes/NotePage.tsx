@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo, useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
@@ -49,6 +49,8 @@ export function NotePage() {
 
   const noteLinksQ = useQuery({
     queryKey: ["notes", "links", noteId, linksNextToken, linksPagination.order],
+    placeholderData: (previous, previousQuery) =>
+      previousQuery?.queryKey[2] === noteId ? keepPreviousData(previous) : undefined,
     enabled: Boolean(noteId),
     queryFn: () =>
       apiFetch<GetNoteLinksResponse>(
@@ -195,6 +197,7 @@ export function NotePage() {
                       <PageNav
                         pagination={linksPagination}
                         nextToken={linksFromResponse?.next_token}
+                        isBusy={noteLinksQ.isPlaceholderData}
                         onNext={(token) => linksPagination.next({ nextToken: token })}
                       />
                       {links_from.length ? (
@@ -212,6 +215,7 @@ export function NotePage() {
                       <PageNav
                         pagination={linksPagination}
                         nextToken={linksFromResponse?.next_token}
+                        isBusy={noteLinksQ.isPlaceholderData}
                         onNext={(token) => linksPagination.next({ nextToken: token })}
                       />
                     </>

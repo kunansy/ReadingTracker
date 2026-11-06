@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
 import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/materials";
@@ -33,6 +33,7 @@ export function ListRepeatMaterialsPage() {
 
   const q = useQuery({
     queryKey: ["materials", "repeat", queryString],
+    placeholderData: keepPreviousData,
     queryFn: () => apiFetch<GetRepeatingQueueResponse>(`/repeat${queryString}`),
   });
 
@@ -87,6 +88,7 @@ export function ListRepeatMaterialsPage() {
       <PageNav
         pagination={pagination}
         nextToken={q.data?.next_token}
+        isBusy={q.isPlaceholderData}
         onNext={(token) => pagination.next({ nextToken: token })}
       />
       {!rows.length ? (
@@ -172,6 +174,7 @@ export function ListRepeatMaterialsPage() {
       <PageNav
         pagination={pagination}
         nextToken={q.data?.next_token}
+        isBusy={q.isPlaceholderData}
         onNext={(token) => pagination.next({ nextToken: token })}
       />
       <ScrollArrows />

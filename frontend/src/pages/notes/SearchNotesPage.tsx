@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
@@ -111,6 +111,7 @@ export function SearchNotesPage() {
 
   const searchQ = useQuery({
     queryKey: ["notes", "search", materialId, query, tagsQuery, nextToken, pagination.order],
+    placeholderData: keepPreviousData,
     queryFn: () =>
       apiFetch<SearchResponse>(
         `/search${buildQuery({
@@ -469,6 +470,7 @@ export function SearchNotesPage() {
       <PageNav
         pagination={pagination}
         nextToken={data.next_token}
+        isBusy={searchQ.isPlaceholderData}
         onNext={(token) => pagination.next({ nextToken: token })}
       />
       {data.notes.length > 0 ? (
@@ -579,6 +581,7 @@ export function SearchNotesPage() {
       <PageNav
         pagination={pagination}
         nextToken={data.next_token}
+        isBusy={searchQ.isPlaceholderData}
         onNext={(token) => pagination.next({ nextToken: token })}
       />
       <ScrollArrows />
