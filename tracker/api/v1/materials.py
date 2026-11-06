@@ -19,12 +19,13 @@ router = APIRouter(prefix="/materials", tags=["materials-api"])
 @router.get("/queue", response_model=schemas.ListMaterialsQueueResponse)
 async def list_materials_queue(
     params: Annotated[PageParams, Depends()],
+    today: Annotated[datetime.date, Depends(database.utc_today)],
     start_date: datetime.date | None = None,
 ):
     async with asyncio.TaskGroup() as tg:
         estimates_task = tg.create_task(
             db.estimate_page(
-                start_date=start_date or database.utcnow().date(),
+                start_date=start_date or today,
                 params=params,
             ),
         )
