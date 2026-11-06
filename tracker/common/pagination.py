@@ -1,6 +1,6 @@
 import base64
 import binascii
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
 from typing import Annotated, Final
@@ -11,7 +11,7 @@ from sqlalchemy import Text
 from sqlalchemy.engine import Row
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tracker.common import sort_keys
+from tracker.common import database, sort_keys
 from tracker.common.schemas import CustomBaseModel
 
 
@@ -67,6 +67,9 @@ class Page[T]:
     items: list[T]
     next_token: str | None
     total_count: int
+
+    def with_items[U](self, items: list[U]) -> Page[U]:
+        return Page(items=items, next_token=self.next_token, total_count=self.total_count)
 
 
 class PageResponse(CustomBaseModel):
@@ -128,3 +131,30 @@ def split_page[T: Row](
 async def count(ses: AsyncSession, stmt: sa.Select) -> int:
     count_stmt = sa.select(sa.func.count()).select_from(stmt.order_by(None).subquery())
     return await ses.scalar(count_stmt) or 0
+
+
+async def fetch_page[T](
+    stmt: sa.Select,
+    *,
+    cursor_expr: sa.ColumnElement[str],
+    params: PageParams,
+    default_order: Order,
+    to_item: Callable[[Row], T],
+) -> Page[T]:
+    page_stmt = paginate(
+        stmt,
+        cursor_expr=cursor_expr,
+        params=params,
+        default_order=default_order,
+    )
+
+    async with database.session() as ses:
+        rows = (await ses.execute(page_stmt)).all()
+        total_count = await count(ses, stmt)
+
+    page_rows, next_token = split_page(rows, params)
+    return Page(
+        items=[to_item(row) for row in page_rows],
+        next_token=next_token,
+        total_count=total_count,
+    )

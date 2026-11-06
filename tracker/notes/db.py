@@ -12,7 +12,7 @@ import sqlalchemy.sql as sa
 from fastapi.encoders import jsonable_encoder
 from pydantic import field_serializer, field_validator
 from pyvis.network import Network
-from sqlalchemy.engine import CursorResult
+from sqlalchemy.engine import CursorResult, Row
 
 from tracker.common import database, pagination, settings, sort_keys
 from tracker.common.logger import logger
@@ -129,6 +129,10 @@ class Note(CustomBaseModel):
         return self._mark_tags_with_ref(self.tags_str, self.tags)
 
 
+def _to_note(row: Row) -> Note:
+    return Note.model_validate(row, from_attributes=True)
+
+
 def _search_notes_stmt(
     *,
     material_id: UUID | str | None,
@@ -155,24 +159,16 @@ async def search_notes_page(
     logger.debug("Searching notes page material_id=%s", material_id)
 
     stmt = _search_notes_stmt(material_id=material_id, tags=tags, note_ids=note_ids)
-    page_stmt = pagination.paginate(
+    page = await pagination.fetch_page(
         stmt,
         cursor_expr=pagination.cursor(stmt.selected_columns.sort_key),
         params=params,
         default_order=pagination.Order.ASC,
+        to_item=_to_note,
     )
 
-    async with database.session() as ses:
-        rows = (await ses.execute(page_stmt)).all()
-        total_count = await pagination.count(ses, stmt)
-
-    page_rows, next_token = pagination.split_page(rows, params)
-    logger.debug("%s notes got", len(page_rows))
-    return pagination.Page(
-        items=[Note.model_validate(row, from_attributes=True) for row in page_rows],
-        next_token=next_token,
-        total_count=total_count,
-    )
+    logger.debug("%s notes got", len(page.items))
+    return page
 
 
 async def get_distinct_chapters(
@@ -745,7 +741,7 @@ async def get_links_from_page(
 ) -> pagination.Page[Note]:
     stmt = _get_note_stmt(link_id=note_id)
     notes_model = stmt.selected_columns
-    page_stmt = pagination.paginate(
+    return await pagination.fetch_page(
         stmt,
         cursor_expr=pagination.cursor(
             pagination.int_part(notes_model.note_number),
@@ -753,17 +749,7 @@ async def get_links_from_page(
         ),
         params=params,
         default_order=pagination.Order.ASC,
-    )
-
-    async with database.session() as ses:
-        rows = (await ses.execute(page_stmt)).all()
-        total_count = await pagination.count(ses, stmt)
-
-    page_rows, next_token = pagination.split_page(rows, params)
-    return pagination.Page(
-        items=[Note.model_validate(row, from_attributes=True) for row in page_rows],
-        next_token=next_token,
-        total_count=total_count,
+        to_item=_to_note,
     )
 
 
