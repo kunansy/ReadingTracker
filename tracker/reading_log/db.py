@@ -77,26 +77,15 @@ async def list_log_records_page(
 ) -> pagination.Page[LogRecord]:
     logger.debug("Getting log records page")
 
-    stmt = _list_log_records_stmt(material_id=material_id)
-    page_stmt = pagination.paginate(
-        stmt,
+    return await pagination.fetch_page(
+        _list_log_records_stmt(material_id=material_id),
         cursor_expr=pagination.cursor(
             pagination.date_part(models.ReadingLog.c.date),
             models.ReadingLog.c.sort_key,
         ),
         params=params,
         default_order=pagination.Order.DESC,
-    )
-
-    async with database.session() as ses:
-        rows = (await ses.execute(page_stmt)).all()
-        total_count = await pagination.count(ses, stmt)
-
-    page_rows, next_token = pagination.split_page(rows, params)
-    return pagination.Page(
-        items=[LogRecord.model_validate(row, from_attributes=True) for row in page_rows],
-        next_token=next_token,
-        total_count=total_count,
+        to_item=lambda row: LogRecord.model_validate(row, from_attributes=True),
     )
 
 

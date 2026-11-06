@@ -122,23 +122,12 @@ async def get_cards_page(
 ) -> pagination.Page[Card]:
     logger.info("Getting cards page")
 
-    stmt = _get_cards_stmt(material_id=material_id)
-    page_stmt = pagination.paginate(
-        stmt,
+    return await pagination.fetch_page(
+        _get_cards_stmt(material_id=material_id),
         cursor_expr=pagination.cursor(models.Cards.c.sort_key),
         params=params,
         default_order=pagination.Order.DESC,
-    )
-
-    async with database.session() as ses:
-        rows = (await ses.execute(page_stmt)).all()
-        total_count = await pagination.count(ses, stmt)
-
-    page_rows, next_token = pagination.split_page(rows, params)
-    return pagination.Page(
-        items=[Card.model_validate(row, from_attributes=True) for row in page_rows],
-        next_token=next_token,
-        total_count=total_count,
+        to_item=lambda row: Card.model_validate(row, from_attributes=True),
     )
 
 
