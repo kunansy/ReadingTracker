@@ -378,7 +378,7 @@ async def test_insert_note(mocker, material_id, link_id, title, content, chapter
         tags=tags
     )
 
-    UUID(note_id)
+    assert isinstance(note_id, UUID)
 
     assert old_notes_count == await db.get_all_notes_count()
 
