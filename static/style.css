@@ -245,12 +245,12 @@ a.arrow-up, a.arrow-down {
     box-shadow: 0 0 .5vw rgba(0,0,0,0.35);
     transition: background-color 150ms, color 150ms, transform 150ms;
 }
-.hint-button:hover:not(:disabled),
+.hint-button:hover:not(:disabled, [aria-disabled="true"]),
 .hint-button[data-active="true"] {
     background-color: black;
     color: white;
 }
-.hint-button:active:not(:disabled) {
+.hint-button:active:not(:disabled, [aria-disabled="true"]) {
     transform: scale(.96);
 }
 .hint-button:focus-visible {
@@ -262,13 +262,17 @@ a.arrow-up, a.arrow-down {
     box-shadow: none;
     cursor: default;
 }
+.hint-button[aria-disabled="true"]:not(:disabled) {
+    opacity: .6;
+    cursor: progress;
+}
 .hint-value {
     margin-left: .4em;
     opacity: .55;
     font-variant-numeric: tabular-nums;
 }
 @media (prefers-reduced-motion: reduce) {
-    .hint-button:active:not(:disabled) {
+    .hint-button:active:not(:disabled, [aria-disabled="true"]) {
         transform: none;
     }
 }
