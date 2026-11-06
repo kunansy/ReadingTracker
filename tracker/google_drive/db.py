@@ -1,9 +1,9 @@
 import datetime
 from pathlib import Path
 from typing import NamedTuple
-from uuid import UUID
 
 import sqlalchemy.sql as sa
+from sqlalchemy import Date, DateTime
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracker.common import database, settings
@@ -39,8 +39,14 @@ class DBSnapshot(NamedTuple):
     def from_dump(cls, dump_data: DUMP_TYPE) -> DBSnapshot:
         tables = []
         for table_name, values in dump_data.items():
+            date_columns = _date_columns(table_name)
             rows = [
-                {key: _convert_str_to_date(value) for key, value in row.items()}
+                {
+                    key: _parse_date(value, date_columns[key])
+                    if key in date_columns
+                    else value
+                    for key, value in row.items()
+                }
                 for row in values
             ]
             tables.append(TableSnapshot(table_name=table_name, rows=rows))
@@ -59,41 +65,27 @@ TABLES = {
 }
 
 
-def _is_uuid(value: str) -> bool:
-    try:
-        UUID(value)
-        return True  # noqa: TRY300
-    except ValueError:
-        return False
+def _date_columns(table_name: str) -> dict[str, type[datetime.date]]:
+    """Columns of a known table that the dump stores as date or datetime strings."""
+    table = TABLES.get(table_name)
+    if table is None:
+        return {}
+    return {
+        column.name: column.type.python_type
+        for column in table.columns
+        if isinstance(column.type, Date | DateTime)
+    }
 
 
-def _contains_letter(value: str) -> bool:
-    return any(symbol.isalpha() for symbol in value)
-
-
-def _convert_str_to_date(value: JSON_FIELD_TYPES) -> JSON_FIELD_TYPES | DATE_TYPES:
-    if (
-        not value
-        or not isinstance(value, str)
-        or _is_uuid(value)
-        or _contains_letter(value)
-        or value.isdigit()
-        or value == "-"
-        or all(s.isdigit() or s == "." for s in value)
-    ):
+def _parse_date(
+    value: JSON_FIELD_TYPES,
+    python_type: type[datetime.date],
+) -> JSON_FIELD_TYPES | DATE_TYPES:
+    if not isinstance(value, str) or not value:
         return value
-
-    try:
+    if python_type is datetime.datetime:
         return datetime.datetime.strptime(value, settings.DATETIME_FORMAT)  # noqa: DTZ007
-    except Exception:  # noqa: S110
-        pass
-
-    try:
-        return datetime.datetime.strptime(value, settings.DATE_FORMAT).date()  # noqa: DTZ007
-    except Exception:  # noqa: S110
-        pass
-
-    raise ValueError(f"Invalid date format: {value!r}")
+    return datetime.datetime.strptime(value, settings.DATE_FORMAT).date()  # noqa: DTZ007
 
 
 def _get_now() -> str:

@@ -7,13 +7,13 @@ x-search-img: &search-img
   image: kunansy/tracker_search:6.3.2
 
 x-backup-img: &backup-img
-  image: kunansy/fast-backup:0.5.5
+  image: kunansy/fast-backup:0.6.0
 
 x-cache-img: &cache-img
   image: eqalpha/keydb:arm64_v6.3.4
 
 x-tracker-img: &tracker-img
-  image: kunansy/reading_tracker:279
+  image: kunansy/reading_tracker:280
 
 services:
   tracker-db:

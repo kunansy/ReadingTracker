@@ -1,4 +1,6 @@
 import time
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Any
 
@@ -12,33 +14,50 @@ from tracker.google_drive.db import DBSnapshot
 from tracker.protos import backup_pb2, backup_pb2_grpc
 
 
+LATEST = backup_pb2.BackupRef(latest=True)
+DUMP_EXTENSIONS = {
+    backup_pb2.BACKUP_FORMAT_PG_CUSTOM: "pgdump",
+    backup_pb2.BACKUP_FORMAT_LEGACY_JSON_ZSTD: "json",
+}
+
+
 class GoogleDriveException(Exception):
     pass
 
 
+@asynccontextmanager
+async def _backup_stub() -> AsyncGenerator[backup_pb2_grpc.BackupStub]:
+    async with grpc_chan(settings.BACKUP_TARGET) as channel:
+        yield backup_pb2_grpc.BackupStub(channel)
+
+
 def _read_local_dump(filepath: Path) -> dict[str, Any]:
     if not filepath.exists():
-        raise GoogleDriveException("%s file not found", filepath)
+        raise GoogleDriveException(f"{filepath} file not found")
 
     with filepath.open() as f:
         return orjson.loads(f.read())
 
 
-def dump_json(data: dict[str, Any], *, filepath: Path) -> None:
-    dump_data = orjson.dumps(data)
-    with filepath.open("wb") as f:
-        f.write(dump_data)
+async def _download(
+    stub: backup_pb2_grpc.BackupStub,
+    ref: backup_pb2.BackupRef,
+) -> tuple[backup_pb2.BackupInfo, bytes]:
+    info: backup_pb2.BackupInfo | None = None
+    chunks: list[bytes] = []
+
+    async for chunk in stub.DownloadBackup(ref):
+        if chunk.HasField("info"):
+            info = chunk.info
+        else:
+            chunks.append(chunk.data)
+
+    if info is None:
+        raise GoogleDriveException("Backup stream has no info message")
+    return info, b"".join(chunks)
 
 
-async def restore(*, dump_path: Path | None = None) -> db.DBSnapshot:
-    logger.info("Restoring started")
-    start_time = time.perf_counter()
-
-    if dump_path:
-        dump = _read_local_dump(dump_path)
-    else:
-        dump = await get_dump()
-
+async def _restore_legacy(dump: dict[str, Any]) -> None:
     snapshot = DBSnapshot.from_dump(dump)
     async with database.transaction() as ses:
         await database.recreate_db()
@@ -54,47 +73,68 @@ async def restore(*, dump_path: Path | None = None) -> db.DBSnapshot:
         logger.debug("Creating repeat notes material view")
         await database.create_repeat_notes_matview(ses)
 
-        logger.info(
-            "Restoring completed, %ss",
-            round(time.perf_counter() - start_time, 2),
+
+async def _restore_from_service(stub: backup_pb2_grpc.BackupStub) -> None:
+    info: backup_pb2.BackupInfo = await stub.GetBackup(LATEST)
+    ref = backup_pb2.BackupRef(id=info.id)
+    logger.info("Restoring from '%s'", info.name)
+
+    if info.format == backup_pb2.BACKUP_FORMAT_PG_CUSTOM:
+        reply: backup_pb2.RestoreReply = await stub.Restore(
+            backup_pb2.RestoreRequest(backup=ref, confirm_db_name=settings.DB_NAME),
         )
+        # pg_restore recreated tables and types; pooled connections hold stale OIDs.
+        await database.engine.dispose()
+        logger.info(
+            "Restored from '%s', previous state saved as '%s'",
+            reply.restored.name,
+            reply.pre_restore_backup.name,
+        )
+    elif info.format == backup_pb2.BACKUP_FORMAT_LEGACY_JSON_ZSTD:
+        _, content = await _download(stub, ref)
+        await _restore_legacy(orjson.loads(content))
+    else:
+        raise GoogleDriveException(f"Unsupported backup format of '{info.name}'")
 
-    return snapshot
+
+async def restore(*, dump_path: Path | None = None) -> None:
+    logger.info("Restoring started")
+    start_time = time.perf_counter()
+
+    if dump_path:
+        await _restore_legacy(_read_local_dump(dump_path))
+    else:
+        async with _backup_stub() as stub:
+            await _restore_from_service(stub)
+
+    logger.info("Restoring completed, %ss", round(time.perf_counter() - start_time, 2))
 
 
-async def backup() -> str | None:
+async def backup() -> str:
     start = time.perf_counter()
 
-    async with grpc_chan(settings.BACKUP_TARGET) as channel:
-        stub = backup_pb2_grpc.GoogleDriveStub(channel)
-        response: backup_pb2.BackupReply = await stub.Backup(
-            backup_pb2.DBRequest(
-                db_host=settings.DB_HOST,
-                db_port=settings.DB_PORT,
-                db_username=settings.DB_USERNAME,
-                db_password=settings.DB_PASSWORD,
-                db_name=settings.DB_NAME,
-            ),
+    async with _backup_stub() as stub:
+        info: backup_pb2.BackupInfo = await stub.CreateBackup(
+            backup_pb2.CreateBackupRequest(),
         )
 
-    file_id = response.file_id
     exec_time = round(time.perf_counter() - start, 2)
-    logger.info("Backup completed for %ss, file_id: '%s'", exec_time, file_id)
+    logger.info("Backup completed for %ss, file_id: '%s'", exec_time, info.id)
 
-    return file_id
+    return info.id
 
 
-async def get_dump() -> dict[str, Any]:
-    async with grpc_chan(
-        settings.BACKUP_TARGET,
-        options=[
-            ("grpc.max_send_message_length", 2**30),
-            ("grpc.max_receive_message_length", 2**30),
-        ],
-    ) as channel:
-        stub = backup_pb2_grpc.GoogleDriveStub(channel)
-        response: backup_pb2.DownloadReply = await stub.DownloadLatestBackup(
-            backup_pb2.Empty(),
-        )
+async def download_latest(*, prefix: str = "last_dump") -> Path:
+    """Save the latest backup to DATA_DIR: `.pgdump` or decompressed legacy `.json`."""
+    async with _backup_stub() as stub:
+        info, content = await _download(stub, LATEST)
 
-    return orjson.loads(response.file_content)
+    extension = DUMP_EXTENSIONS.get(info.format)
+    if extension is None:
+        raise GoogleDriveException(f"Unsupported backup format of '{info.name}'")
+
+    filepath = db.get_dump_filename(prefix=prefix).with_suffix(f".{extension}")
+    filepath.write_bytes(content)
+    logger.info("Backup '%s' saved to %s", info.name, filepath)
+
+    return filepath
