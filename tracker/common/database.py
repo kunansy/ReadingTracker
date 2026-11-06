@@ -70,6 +70,10 @@ def utcnow() -> datetime.datetime:
     return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
 
 
+def utc_today() -> datetime.date:
+    return utcnow().date()
+
+
 def check_inserted_one(result: Result[Any], *, entity: str) -> None:
     rowcount = cast("CursorResult[Any]", result).rowcount
     if rowcount != 1:
