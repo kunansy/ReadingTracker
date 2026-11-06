@@ -10,6 +10,7 @@ import { useSearchParams } from "react-router-dom";
 import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/materials";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { PageNav } from "../../components/PageNav";
+import { PageLoadError } from "../../components/PageLoadError";
 import { useDebounce } from "../../lib/debounce.ts";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
@@ -99,9 +100,8 @@ export function ListCompletedMaterialsPage() {
 
   if (q.isLoading || materialTagsQ.isLoading) return <p>Loading…</p>;
 
-  const err = q.error || materialTagsQ.error;
-  if (err)
-      return <p className="error">{(err as Error).message}</p>;
+  if (materialTagsQ.error)
+      return <p className="error">{(materialTagsQ.error as Error).message}</p>;
 
   const stats = q.data?.statistics ?? [];
   const materialTags = materialTagsQ.data?.tags ?? [];
@@ -173,27 +173,33 @@ export function ListCompletedMaterialsPage() {
               </form>
           </div>
 
-          <PageNav
-              pagination={pagination}
-              nextToken={q.data?.next_token}
-              isBusy={q.isPlaceholderData}
-          />
-          {!stats.length ? (
-              <NotFoundMaterials kind="completed materials" />
+          {q.error ? (
+              <PageLoadError pagination={pagination} error={q.error} />
           ) : (
-              stats.map((ms, idx) => (
-                  <CompletedMaterialCard
-                      key={ms.material.material_id}
-                      stats={ms}
-                      position={{ index: pagination.offset + idx + 1, total: q.data?.total_count ?? 0 }}
+              <>
+                  <PageNav
+                      pagination={pagination}
+                      nextToken={q.data?.next_token}
+                      isBusy={q.isPlaceholderData}
                   />
-              ))
+                  {!stats.length ? (
+                      <NotFoundMaterials kind="completed materials" />
+                  ) : (
+                      stats.map((ms, idx) => (
+                          <CompletedMaterialCard
+                              key={ms.material.material_id}
+                              stats={ms}
+                              position={{ index: pagination.offset + idx + 1, total: q.data?.total_count ?? 0 }}
+                          />
+                      ))
+                  )}
+                  <PageNav
+                      pagination={pagination}
+                      nextToken={q.data?.next_token}
+                      isBusy={q.isPlaceholderData}
+                  />
+              </>
           )}
-          <PageNav
-              pagination={pagination}
-              nextToken={q.data?.next_token}
-              isBusy={q.isPlaceholderData}
-          />
         <ScrollArrows />
       </>
   );

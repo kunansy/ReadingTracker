@@ -11,6 +11,7 @@ import {CelebrateButton} from "../../components/CelebrateButton.tsx";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { dateInputValue } from "../../utils/dateInputValue";
 import { PageNav } from "../../components/PageNav";
+import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 export function ListMaterialsQueuePage() {
@@ -154,7 +155,7 @@ export function ListMaterialsQueuePage() {
     return <p>Loading…</p>;
   }
   if (q.error) {
-    return <p className="error">{(q.error as Error).message}</p>;
+    return <PageLoadError pagination={pagination} error={q.error} />;
   }
   const data = q.data;
   if (!data?.estimates?.length) {

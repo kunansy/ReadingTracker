@@ -7,6 +7,7 @@ import { useContextMenu } from "../../contexts/ContextMenuContext";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
+import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 type NoteListItem = {
@@ -333,7 +334,7 @@ export function SearchNotesPage() {
     return <p>Loading…</p>;
   }
   if (searchQ.error) {
-    return <p className="error">{(searchQ.error as Error).message}</p>;
+    return <PageLoadError pagination={pagination} error={searchQ.error} />;
   }
 
   const data = searchQ.data;

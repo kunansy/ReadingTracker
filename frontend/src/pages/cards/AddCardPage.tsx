@@ -5,6 +5,7 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { apiFetch } from "../../api/cards";
 import { apiFetch as notesApiFetch, buildQuery } from "../../api/notes";
 import { PageNav } from "../../components/PageNav";
+import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import {
@@ -182,11 +183,10 @@ export function AddCardPage() {
   if (metaQ.isLoading || notesQ.isLoading || notesWithCardsQ.isLoading) {
     return <p>Loading…</p>;
   }
-  if (metaQ.error || notesQ.error || notesWithCardsQ.error) {
+  if (metaQ.error || notesWithCardsQ.error) {
     return (
       <p className="error">
-        {((metaQ.error || notesQ.error || notesWithCardsQ.error) as Error)?.message ||
-          "Failed to load data"}
+        {((metaQ.error || notesWithCardsQ.error) as Error)?.message || "Failed to load data"}
       </p>
     );
   }
@@ -200,6 +200,10 @@ export function AddCardPage() {
         {materialsTitles[materialId] ? (
             <h3 className="material-title">«{materialsTitles[materialId]}»</h3>
         ) : null}
+        {notesQ.error ? (
+          <PageLoadError pagination={notesPagination} error={notesQ.error} />
+        ) : (
+          <>
         <PageNav
           pagination={notesPagination}
           nextToken={notesQ.data?.next_token}
@@ -241,6 +245,8 @@ export function AddCardPage() {
           nextToken={notesQ.data?.next_token}
           isBusy={notesQ.isPlaceholderData}
         />
+          </>
+        )}
       </div>
 
       <div className="form">

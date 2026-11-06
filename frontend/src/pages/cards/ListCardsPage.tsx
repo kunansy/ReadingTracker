@@ -9,6 +9,7 @@ import {useMemo} from "react";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
+import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 
@@ -48,10 +49,6 @@ export function ListCardsPage() {
 
     if (cardsQ.isLoading) {
         return <p>Loading...</p>;
-    }
-
-    if (cardsQ.error) {
-        return <p className="error">Error: {((cardsQ.error) as Error)?.message}</p>;
     }
 
     return (
@@ -97,6 +94,10 @@ export function ListCardsPage() {
                 </form>
             </div>
 
+            {cardsQ.error ? (
+              <PageLoadError pagination={pagination} error={cardsQ.error} />
+            ) : (
+              <>
             <p className="total-cards"> Total { cardsQ.data?.total_count ?? 0 } cards found </p>
 
       <PageNav
@@ -154,6 +155,8 @@ export function ListCardsPage() {
        {/* <div className="not-found">*/}
        {/*   <p className="message"> No cards found </p>*/}
        {/* </div>*/}
+              </>
+            )}
       <ScrollArrows />
     </>
   );

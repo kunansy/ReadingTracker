@@ -10,6 +10,7 @@ import { QueryStateFromResult } from "../../components/QueryState";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 import {isUuid} from "../../utils/isUuid.ts";
 import { PageNav } from "../../components/PageNav";
+import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 export function NotePage() {
@@ -183,9 +184,7 @@ export function NotePage() {
               <QueryStateFromResult
                 query={noteLinksQ}
                 loading={<p>Loading note links…</p>}
-                errorRenderer={(err) => (
-                  <p className="error">Links error: {err instanceof Error ? err.message : String(err)}</p>
-                )}
+                errorRenderer={(err) => <PageLoadError pagination={linksPagination} error={err} />}
               >
                 {( linksFromResponse: GetNoteLinksResponse | undefined) => {
                   const links_from = linksFromResponse?.links_from;
