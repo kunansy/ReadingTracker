@@ -1,5 +1,9 @@
-import pytest
+import uuid
 
+import pytest
+from pydantic import ValidationError
+
+from tracker.models.models import MAX_CHAPTER_LENGTH
 from tracker.notes import schemas
 from tracker.notes.db import Note as NoteDb
 
@@ -223,3 +227,32 @@ def test_replace_up_index(string, expected):
 )
 def test_mark_tags_with_ref(text, tags, expected):
     assert NoteDb._mark_tags_with_ref(text, tags) == expected
+
+
+CHAPTER_REQUESTS = [
+    lambda chapter: schemas.AddNoteRequest(
+        material_id=uuid.uuid4(),
+        content="content",
+        chapter=chapter,
+    ),
+    lambda chapter: schemas.UpdateNoteRequest(
+        material_id=uuid.uuid4(),
+        link_id=None,
+        title=None,
+        content="content",
+        chapter=chapter,
+    ),
+]
+
+
+@pytest.mark.parametrize("make_request", CHAPTER_REQUESTS)
+def test_chapter_at_the_limit_is_accepted(make_request):
+    chapter = "1" * MAX_CHAPTER_LENGTH
+
+    assert make_request(chapter).chapter == chapter
+
+
+@pytest.mark.parametrize("make_request", CHAPTER_REQUESTS)
+def test_chapter_over_the_limit_is_rejected(make_request):
+    with pytest.raises(ValidationError, match="chapter"):
+        make_request("1" * (MAX_CHAPTER_LENGTH + 1))
