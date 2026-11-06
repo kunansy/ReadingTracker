@@ -9,6 +9,7 @@ import { itemsLabel } from "../../materials/format";
 import type { GetRepeatingQueueResponse } from "../../types";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
+import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 export function ListRepeatMaterialsPage() {
@@ -60,7 +61,7 @@ export function ListRepeatMaterialsPage() {
     return <p>Loading…</p>;
   }
   if (q.error) {
-    return <p className="error">{(q.error as Error).message}</p>;
+    return <PageLoadError pagination={pagination} error={q.error} />;
   }
 
   const rows = q.data?.repeating_queue ?? [];

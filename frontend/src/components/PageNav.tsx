@@ -1,6 +1,6 @@
 import type { SortOrder } from "../hooks/sortOrder";
 
-interface PageNavPagination {
+export interface PageNavPagination {
   hasPrev: boolean;
   next: (nextToken: string) => void;
   prev: () => void;

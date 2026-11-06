@@ -8,6 +8,7 @@ import {ListMaterialsTitlesResponse, ListReadingLogsResponse} from "../../types.
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
+import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 export function ListReadingLogsPage() {
@@ -48,8 +49,8 @@ export function ListReadingLogsPage() {
         return <p>Loading...</p>;
     }
 
-    if (logsQ.error || materialsTitlesQ.error) {
-        return <p className="error">Error: {((logsQ.error || materialsTitlesQ.error) as Error)?.message}</p>;
+    if (materialsTitlesQ.error) {
+        return <p className="error">Error: {(materialsTitlesQ.error as Error).message}</p>;
     }
 
     return (
@@ -96,6 +97,10 @@ export function ListReadingLogsPage() {
                 </form>
             </div>
 
+      {logsQ.error ? (
+        <PageLoadError pagination={pagination} error={logsQ.error} />
+      ) : (
+        <>
       <PageNav
           pagination={pagination}
           nextToken={logsQ.data?.next_token}
@@ -127,6 +132,8 @@ export function ListReadingLogsPage() {
           nextToken={logsQ.data?.next_token}
           isBusy={logsQ.isPlaceholderData}
       />
+        </>
+      )}
        {/*: (*/}
        {/* <div className="not-found">*/}
        {/*   <p className="message"> No reading logs found </p>*/}
