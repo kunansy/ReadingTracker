@@ -62,6 +62,7 @@ async def test_stored_sort_keys_match_generator():
         )
     for log in logs:
         assert log.sort_key == sort_keys.reading_log_sort_key(
+            material_id=log.material_id,
             date=log.date,
             log_id=log.log_id,
         )
@@ -104,7 +105,8 @@ async def test_reading_logs_pages(page_size):
         page_size=page_size,
     )
     stmt = sa.select(models.ReadingLog.c.log_id).order_by(
-        models.ReadingLog.c.sort_key.desc()
+        models.ReadingLog.c.date.desc(),
+        models.ReadingLog.c.sort_key.desc(),
     )
 
     assert [log.log_id for log in items] == await _ids(stmt)

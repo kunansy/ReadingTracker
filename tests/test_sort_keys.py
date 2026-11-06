@@ -39,11 +39,15 @@ def test_material_sort_key():
 
 
 def test_reading_log_sort_key():
-    log_id = uuid.uuid4()
+    material_id, log_id = uuid.uuid4(), uuid.uuid4()
 
-    result = sort_keys.reading_log_sort_key(date=datetime.date(2024, 1, 2), log_id=log_id)
+    result = sort_keys.reading_log_sort_key(
+        material_id=material_id,
+        date=datetime.date(2024, 1, 2),
+        log_id=log_id,
+    )
 
-    assert result == f"2024-01-02$${log_id}"
+    assert result == f"{material_id}$$2024-01-02$${log_id}"
 
 
 def test_note_sort_key():
