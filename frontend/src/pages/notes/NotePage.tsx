@@ -10,7 +10,7 @@ import { QueryStateFromResult } from "../../components/QueryState";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 import {isUuid} from "../../utils/isUuid.ts";
 import { PageNav } from "../../components/PageNav";
-import { PageCursor, useCursorPagination } from "../../hooks/useCursorPagination";
+import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 export function NotePage() {
   const { noteId: noteIdParam } = useParams();
@@ -44,8 +44,8 @@ export function NotePage() {
       materialsApiFetch<GetMaterialResponse>(`/${q.data?.note.material_id}`),
   });
 
-  const linksPagination = useCursorPagination<PageCursor>(PAGE_SIZE, noteId, "asc");
-  const linksNextToken = linksPagination.cursor?.nextToken;
+  const linksPagination = useCursorPagination(PAGE_SIZE, noteId, "asc");
+  const linksNextToken = linksPagination.cursor;
 
   const noteLinksQ = useQuery({
     queryKey: ["notes", "links", noteId, linksNextToken, linksPagination.order],
@@ -198,7 +198,6 @@ export function NotePage() {
                         pagination={linksPagination}
                         nextToken={linksFromResponse?.next_token}
                         isBusy={noteLinksQ.isPlaceholderData}
-                        onNext={(token) => linksPagination.next({ nextToken: token })}
                       />
                       {links_from.length ? (
                         <div className="from-links">
@@ -216,7 +215,6 @@ export function NotePage() {
                         pagination={linksPagination}
                         nextToken={linksFromResponse?.next_token}
                         isBusy={noteLinksQ.isPlaceholderData}
-                        onNext={(token) => linksPagination.next({ nextToken: token })}
                       />
                     </>
                   );

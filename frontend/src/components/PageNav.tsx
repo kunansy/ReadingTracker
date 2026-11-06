@@ -2,6 +2,7 @@ import type { SortOrder } from "../hooks/sortOrder";
 
 interface PageNavPagination {
   hasPrev: boolean;
+  next: (nextToken: string) => void;
   prev: () => void;
   order: SortOrder;
   toggleOrder: () => void;
@@ -11,7 +12,6 @@ interface PageNavProps {
   pagination: PageNavPagination;
   /** `next_token` of the current response; `null` means there are no more pages. */
   nextToken: string | null | undefined;
-  onNext: (nextToken: string) => void;
   /**
    * The shown page is a placeholder while the requested one loads, so its token is stale.
    * Buttons ignore clicks via `aria-disabled` instead of `disabled` to keep keyboard focus.
@@ -24,8 +24,8 @@ const ORDER_LABELS: Record<SortOrder, string> = {
   desc: "↓ Desc",
 };
 
-export function PageNav({ pagination, nextToken, onNext, isBusy = false }: PageNavProps) {
-  const { hasPrev, prev, order, toggleOrder } = pagination;
+export function PageNav({ pagination, nextToken, isBusy = false }: PageNavProps) {
+  const { hasPrev, next, prev, order, toggleOrder } = pagination;
   const hasPages = hasPrev || Boolean(nextToken);
   const unlessBusy = (action: () => void) => () => {
     if (!isBusy) action();
@@ -66,7 +66,7 @@ export function PageNav({ pagination, nextToken, onNext, isBusy = false }: PageN
           disabled={!nextToken}
           aria-disabled={isBusy}
           onClick={unlessBusy(() => {
-            if (nextToken) onNext(nextToken);
+            if (nextToken) next(nextToken);
           })}
         >
           Next »

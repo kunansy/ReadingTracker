@@ -7,7 +7,7 @@ import { useContextMenu } from "../../contexts/ContextMenuContext";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
-import { PageCursor, useCursorPagination } from "../../hooks/useCursorPagination";
+import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 type NoteListItem = {
   note_id: string;
@@ -98,8 +98,8 @@ export function SearchNotesPage() {
   const query = searchParams.get("query") ?? "";
   const tagsQuery = searchParams.get("tags_query") ?? "";
   const navigate = useNavigate();
-  const pagination = useCursorPagination<PageCursor>(PAGE_SIZE, `${materialId}|${query}|${tagsQuery}`, "asc");
-  const nextToken = pagination.cursor?.nextToken;
+  const pagination = useCursorPagination(PAGE_SIZE, `${materialId}|${query}|${tagsQuery}`, "asc");
+  const nextToken = pagination.cursor;
 
   const [hintList, setHintList] = useState<string[]>([]);
 
@@ -471,7 +471,6 @@ export function SearchNotesPage() {
         pagination={pagination}
         nextToken={data.next_token}
         isBusy={searchQ.isPlaceholderData}
-        onNext={(token) => pagination.next({ nextToken: token })}
       />
       {data.notes.length > 0 ? (
         <div ref={notesRootRef}>
@@ -582,7 +581,6 @@ export function SearchNotesPage() {
         pagination={pagination}
         nextToken={data.next_token}
         isBusy={searchQ.isPlaceholderData}
-        onNext={(token) => pagination.next({ nextToken: token })}
       />
       <ScrollArrows />
     </>
