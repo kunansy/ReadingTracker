@@ -112,7 +112,7 @@ export type ListMaterialsQueueResponse = CursorPageResponse & {
   estimates: MaterialEstimateJson[];
   mean: Record<string, number>;
   /** `start_date` to pass along with `next_token` for the next page. */
-  next_start_date: string | null;
+  next_start_date: string;
 };
 
 export type GetMaterialResponse = {
