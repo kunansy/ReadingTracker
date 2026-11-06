@@ -1,7 +1,9 @@
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 
+from tracker.common.pagination import PageParams
 from tracker.reading_log import db, schemas
 
 
@@ -9,10 +11,15 @@ router = APIRouter(prefix="/reading_logs", tags=["reading-logs-api"])
 
 
 @router.get("/", response_model=schemas.ListReadingLogsResponse)
-async def list_reading_logs(material_id: UUID | None = None):
-    items = await db.list_log_records(material_id=material_id)
+async def list_reading_logs(
+    params: Annotated[PageParams, Depends()],
+    material_id: UUID | None = None,
+):
+    page = await db.list_log_records_page(material_id=material_id, params=params)
     return {
-        "items": items,
+        "items": page.items,
+        "next_token": page.next_token,
+        "total_count": page.total_count,
     }
 
 

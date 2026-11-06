@@ -2,13 +2,15 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
-import { apiFetch, buildQuery } from "../../api/notes";
+import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/notes";
 import { apiFetch as materialsApiFetch } from "../../api/materials";
 import { GetMaterialResponse, GetNoteLinksResponse, GetNoteResponse, MaterialType } from "../../types";
 import { NetworkIframe } from "../../components/NetworkIframe";
 import { QueryStateFromResult } from "../../components/QueryState";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 import {isUuid} from "../../utils/isUuid.ts";
+import { PageNav } from "../../components/PageNav";
+import { PageCursor, useCursorPagination } from "../../hooks/useCursorPagination";
 
 export function NotePage() {
   const { noteId: noteIdParam } = useParams();
@@ -42,11 +44,16 @@ export function NotePage() {
       materialsApiFetch<GetMaterialResponse>(`/${q.data?.note.material_id}`),
   });
 
+  const linksPagination = useCursorPagination<PageCursor>(PAGE_SIZE, noteId, "asc");
+  const linksNextToken = linksPagination.cursor?.nextToken;
+
   const noteLinksQ = useQuery({
-    queryKey: ["notes", "links", noteId],
+    queryKey: ["notes", "links", noteId, linksNextToken, linksPagination.order],
     enabled: Boolean(noteId),
     queryFn: () =>
-      apiFetch<GetNoteLinksResponse>(`/links${buildQuery({ note_id: noteId })}`),
+      apiFetch<GetNoteLinksResponse>(
+        `/links${buildQuery({ note_id: noteId, next_token: linksNextToken, page_size: PAGE_SIZE, order: linksPagination.order })}`,
+      ),
   });
 
   useEffect(() => {
@@ -183,18 +190,32 @@ export function NotePage() {
                   if (!links_from) {
                     return <p>Note links not found</p>;
                   }
-                  return links_from.length ? (
-                    <div className="from-links">
-                      {links_from.map((link) => (
-                        <div
-                          className="note-link"
-                          key={link.note_id}
-                          onClick={() => navigate(`/notes/${link.note_id}`)}
-                          title={link.info}
-                        />
-                      ))}
-                    </div>
-                  ) : null;
+                  return (
+                    <>
+                      <PageNav
+                        pagination={linksPagination}
+                        nextToken={linksFromResponse?.next_token}
+                        onNext={(token) => linksPagination.next({ nextToken: token })}
+                      />
+                      {links_from.length ? (
+                        <div className="from-links">
+                          {links_from.map((link) => (
+                            <div
+                              className="note-link"
+                              key={link.note_id}
+                              onClick={() => navigate(`/notes/${link.note_id}`)}
+                              title={link.info}
+                            />
+                          ))}
+                        </div>
+                      ) : null}
+                      <PageNav
+                        pagination={linksPagination}
+                        nextToken={linksFromResponse?.next_token}
+                        onNext={(token) => linksPagination.next({ nextToken: token })}
+                      />
+                    </>
+                  );
                 }}
               </QueryStateFromResult>
             </>

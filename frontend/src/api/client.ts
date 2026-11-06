@@ -1,3 +1,6 @@
+/** Server-side bounds: 1..100. */
+export const PAGE_SIZE = 20;
+
 export type ApiError = Error & { status?: number };
 
 function parseDetail(text: string, status: number): string {

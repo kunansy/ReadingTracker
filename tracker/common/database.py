@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
@@ -18,6 +19,7 @@ from tracker.models import models
 
 
 PG_UNIQUE_VIOLATION: Final[str] = "23505"
+ALEMBIC_CONFIG: Final[str] = "alembic.ini"
 
 
 class DatabaseException(Exception):
@@ -196,7 +198,13 @@ async def recreate_db() -> None:
         await create_repeat_notes_matview(conn)
 
 
+def _upgrade_db() -> None:
+    from alembic import command
+    from alembic.config import Config
+
+    command.upgrade(Config(ALEMBIC_CONFIG), "head")
+
+
 async def create_db() -> None:
-    async with engine.begin() as conn:
-        await conn.run_sync(models.metadata.create_all)
-        await create_repeat_notes_matview(conn)
+    # alembic env.py runs its own event loop
+    await asyncio.to_thread(_upgrade_db)

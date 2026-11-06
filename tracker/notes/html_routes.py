@@ -1,17 +1,15 @@
 import asyncio
-from typing import Annotated, Any, cast
+from typing import Any, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-from pydantic import NonNegativeInt
 
 from tracker.common import settings
 from tracker.materials import db as materials_db
 from tracker.models import enums
 from tracker.notes import cached, db, schemas
-from tracker.notes.listing import build_notes_search_result
 
 
 templates = Jinja2Templates(directory="templates")
@@ -91,22 +89,6 @@ async def update_note_view(note_id: UUID, request: Request, success: bool | None
 
 
 router = APIRouter(prefix="/notes", tags=["notes-legacy"], deprecated=True)
-
-
-@router.get("/", response_class=HTMLResponse)
-async def get_notes(
-    request: Request,
-    search: Annotated[schemas.SearchParams, Depends()],
-    page: NonNegativeInt = 1,
-    page_size: NonNegativeInt = 10,
-):
-    ctx = await build_notes_search_result(
-        search=search,
-        page=page,
-        page_size=page_size,
-    )
-    context: dict[str, Any] = {"request": request, **ctx}
-    return templates.TemplateResponse(request, "notes/notes.html", context)
 
 
 @router.get("/add-view", response_class=HTMLResponse)

@@ -6,6 +6,7 @@ from uuid import UUID
 
 from pydantic import HttpUrl, NonNegativeInt, PositiveInt
 
+from tracker.common.pagination import PageResponse
 from tracker.common.schemas import CustomBaseModel, MinMax
 from tracker.models import enums
 from tracker.models.enums import MaterialTypesEnum
@@ -66,20 +67,25 @@ class RepeatingQueueItem(CustomBaseModel):
     priority_months: float
 
 
-class ListMaterialsQueueResponse(CustomBaseModel):
+class ListMaterialsQueueResponse(PageResponse):
     estimates: list[MaterialEstimate]
     mean: dict[MaterialTypesEnum, Decimal]
+    next_start_date: datetime.date
 
 
-class ListReadingMaterialsResponse(CustomBaseModel):
+class ListReadingMaterialsResponse(PageResponse):
     statistics: list[MaterialStatistics]
 
 
-class ListCompletedMaterialsResponse(CustomBaseModel):
+class ListCompletedMaterialsResponse(PageResponse):
     statistics: list[MaterialStatistics]
 
 
-class ListRepeatingQueueResponse(CustomBaseModel):
+class GetCompletedMaterialResponse(CustomBaseModel):
+    statistics: MaterialStatistics
+
+
+class ListRepeatingQueueResponse(PageResponse):
     repeating_queue: list[RepeatingQueueItem]
 
 

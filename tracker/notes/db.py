@@ -2,7 +2,7 @@ import asyncio
 import datetime
 import re
 from collections import Counter, defaultdict
-from collections.abc import Iterable
+from collections.abc import Collection, Iterable
 from typing import Any, cast
 from uuid import UUID
 
@@ -13,7 +13,7 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import field_serializer, field_validator
 from pyvis.network import Network
 
-from tracker.common import database, settings
+from tracker.common import database, pagination, settings, sort_keys
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
@@ -21,6 +21,7 @@ from tracker.notes import schemas
 
 
 _TAG_PATTERN = r"(\B)#({tag})(\b)"
+_NOTES_SEARCH_PATH = "/notes/"
 
 
 class Note(CustomBaseModel):
@@ -77,9 +78,7 @@ class Note(CustomBaseModel):
 
     @property
     def chapter_int(self) -> int:
-        if chapter := self.chapter:
-            return int("".join(symb for symb in chapter if symb.isdigit()))
-        return 0
+        return sort_keys.chapter_int(self.chapter)
 
     def get_material_id(self) -> str:
         return str(self.material_id)
@@ -92,12 +91,8 @@ class Note(CustomBaseModel):
 
     @classmethod
     def _mark_tags_with_ref(cls, text: str, tags: set[str]) -> str:
-        from tracker.notes.routes import get_notes, router
-
-        search_url = router.url_path_for(get_notes.__name__)
-
         link_text_template = (
-            f"<a href={settings.TRACKER_URL}{search_url}?"
+            f"<a href={settings.TRACKER_URL}{_NOTES_SEARCH_PATH}?"
             'tags_query={tag} target="_blank">#{tag}</a>'
         )
 
@@ -133,16 +128,76 @@ class Note(CustomBaseModel):
         return self._mark_tags_with_ref(self.tags_str, self.tags)
 
 
-def get_distinct_chapters(notes: list[Note]) -> defaultdict[UUID, list[str]]:
+def _search_notes_stmt(
+    *,
+    material_id: UUID | str | None,
+    tags: set[str],
+    note_ids: Collection[UUID] | None,
+) -> sa.Select:
+    stmt = _get_note_stmt(material_id=material_id)
+    notes_model = stmt.selected_columns
+
+    if tags:
+        stmt = stmt.where(notes_model.tags.contains(sorted(tags)))
+    if note_ids is not None:
+        stmt = stmt.where(notes_model.note_id.in_([str(note_id) for note_id in note_ids]))
+    return stmt
+
+
+async def search_notes_page(
+    *,
+    material_id: UUID | str | None,
+    tags: set[str],
+    note_ids: Collection[UUID] | None,
+    params: pagination.PageParams,
+) -> pagination.Page[Note]:
+    logger.debug("Searching notes page material_id=%s", material_id)
+
+    stmt = _search_notes_stmt(material_id=material_id, tags=tags, note_ids=note_ids)
+    page_stmt = pagination.paginate(
+        stmt,
+        cursor_expr=pagination.cursor(stmt.selected_columns.sort_key),
+        params=params,
+        default_order=pagination.Order.ASC,
+    )
+
+    async with database.session() as ses:
+        rows = (await ses.execute(page_stmt)).all()
+        total_count = await pagination.count(ses, stmt)
+
+    page_rows, next_token = pagination.split_page(rows, params)
+    logger.debug("%s notes got", len(page_rows))
+    return pagination.Page(
+        items=[Note.model_validate(row, from_attributes=True) for row in page_rows],
+        next_token=next_token,
+        total_count=total_count,
+    )
+
+
+async def get_distinct_chapters(
+    *,
+    material_id: UUID | str | None,
+    tags: set[str],
+    note_ids: Collection[UUID] | None,
+) -> defaultdict[UUID, list[str]]:
+    """Chapters of all found notes in listing order, to build the menu."""
     logger.debug("Getting distinct chapters")
 
-    # chapters of the shown materials,
-    #  it should help to create menu
+    notes = _search_notes_stmt(
+        material_id=material_id,
+        tags=tags,
+        note_ids=note_ids,
+    ).subquery()
+    stmt = (
+        sa.select(notes.c.material_id, notes.c.chapter)
+        .group_by(notes.c.material_id, notes.c.chapter)
+        .order_by(sa.func.min(notes.c.sort_key))
+    )
+
     chapters: defaultdict[UUID, list[str]] = defaultdict(list)
-    for note in notes:
-        # the notes list is expected to be sorted
-        if (chapter := note.chapter) not in chapters[note.material_id]:
-            chapters[note.material_id].append(chapter)
+    async with database.session() as ses:
+        for material_id_, chapter in (await ses.execute(stmt)).all():
+            chapters[material_id_].append(chapter)
 
     logger.debug("Distinct chapters got")
     return chapters
@@ -315,7 +370,15 @@ async def insert_note(
 ) -> UUID:
     logger.debug("Inserting note for material_id='%s'", material_id)
 
+    note_id = models.generate_id()
     values = {
+        "note_id": note_id,
+        "sort_key": sort_keys.note_sort_key(
+            material_id=material_id,
+            chapter=chapter,
+            page=page,
+            note_id=note_id,
+        ),
         "material_id": str(material_id),
         "title": title,
         "content": content,
@@ -328,10 +391,10 @@ async def insert_note(
     stmt = models.Notes.insert().values(values).returning(models.Notes.c.note_id)
 
     async with database.session() as ses:
-        note_id = await ses.scalar(stmt)
+        inserted_id = await ses.scalar(stmt)
 
-    logger.debug("Note_id='%s' inserted", note_id)
-    return cast("UUID", note_id)
+    logger.debug("Note_id='%s' inserted", inserted_id)
+    return cast("UUID", inserted_id)
 
 
 async def update_note(
@@ -348,6 +411,12 @@ async def update_note(
     logger.debug("Updating note_id='%s'", note_id)
 
     values = {
+        "sort_key": sort_keys.note_sort_key(
+            material_id=material_id,
+            chapter=chapter,
+            page=page,
+            note_id=note_id,
+        ),
         "material_id": str(material_id),
         "title": title,
         "content": content,
@@ -656,6 +725,35 @@ async def get_links_from(*, note_id: UUID | str) -> list[Note]:
             Note.model_validate(row, from_attributes=True)
             for row in (await ses.execute(stmt)).all()
         ]
+
+
+async def get_links_from_page(
+    *,
+    note_id: UUID | str,
+    params: pagination.PageParams,
+) -> pagination.Page[Note]:
+    stmt = _get_note_stmt(link_id=note_id)
+    notes_model = stmt.selected_columns
+    page_stmt = pagination.paginate(
+        stmt,
+        cursor_expr=pagination.cursor(
+            pagination.int_part(notes_model.note_number),
+            notes_model.sort_key,
+        ),
+        params=params,
+        default_order=pagination.Order.ASC,
+    )
+
+    async with database.session() as ses:
+        rows = (await ses.execute(page_stmt)).all()
+        total_count = await pagination.count(ses, stmt)
+
+    page_rows, next_token = pagination.split_page(rows, params)
+    return pagination.Page(
+        items=[Note.model_validate(row, from_attributes=True) for row in page_rows],
+        next_token=next_token,
+        total_count=total_count,
+    )
 
 
 async def is_deleted(note_id: str) -> bool:
