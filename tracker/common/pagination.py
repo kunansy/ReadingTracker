@@ -18,8 +18,13 @@ from tracker.common.schemas import CustomBaseModel
 DEFAULT_PAGE_SIZE: Final[int] = 20
 MAX_PAGE_SIZE: Final[int] = 100
 MAX_TOKEN_LENGTH: Final[int] = 4096
-CURSOR_LABEL: Final[str] = "cursor"
 COLLATION: Final[str] = "C"
+_CURSOR_COLUMN: Final[str] = "cursor"
+_ORDER_PARAM: Final[str] = "order"
+_MAX_ITEMS_PARAM: Final[str] = "max_items"
+_CONTINUE_CURSOR_KEY: Final[str] = "cursor"
+_PARAMS_KEY: Final[str] = "params"
+_CONTINUE_FROM_KEY: Final[str] = "continue_from"
 
 
 class Order(StrEnum):
@@ -28,12 +33,6 @@ class Order(StrEnum):
 
 
 type TokenMap = dict[str, str]
-
-ORDER_PARAM: Final[str] = "order"
-MAX_ITEMS_PARAM: Final[str] = "max_items"
-CURSOR_KEY: Final[str] = "cursor"
-_PARAMS_KEY: Final[str] = "params"
-_CONTINUE_FROM_KEY: Final[str] = "continue_from"
 
 
 def encode_next_token(params: TokenMap, continue_from: TokenMap) -> str:
@@ -68,7 +67,7 @@ def decode_and_check_next_token(token: str, params: TokenMap) -> TokenMap:
         raise database.InvalidNextTokenException(
             "next_token does not match the request parameters",
         )
-    if CURSOR_KEY not in continue_from:
+    if _CONTINUE_CURSOR_KEY not in continue_from:
         raise database.InvalidNextTokenException("next_token has no cursor")
 
     return continue_from
@@ -99,12 +98,15 @@ class PageRequest:
 
     @property
     def cursor(self) -> str | None:
-        return self.continue_from[CURSOR_KEY] if self.continue_from else None
+        return self.continue_from[_CONTINUE_CURSOR_KEY] if self.continue_from else None
 
     def next_token(self, cursor: str | None, **continue_from: str) -> str | None:
         if cursor is None:
             return None
-        return encode_next_token(self.params, {CURSOR_KEY: cursor, **continue_from})
+        return encode_next_token(
+            self.params,
+            {_CONTINUE_CURSOR_KEY: cursor, **continue_from},
+        )
 
 
 def page_request(
@@ -116,8 +118,8 @@ def page_request(
     """Bind the page to the filters: a token is accepted only for the same ones."""
     order = params.order or default_order
     token_params = {
-        ORDER_PARAM: order.value,
-        MAX_ITEMS_PARAM: str(params.page_size),
+        _ORDER_PARAM: order.value,
+        _MAX_ITEMS_PARAM: str(params.page_size),
         **{name: _param_value(value) for name, value in filters.items()},
     }
     continue_from = None
@@ -136,15 +138,12 @@ def page_request(
 class Page[T]:
     items: list[T]
     next_token: str | None
-    # Cursor of the first row of the next page, to issue a token with more state.
-    next_cursor: str | None
     total_count: int
 
     def with_items[U](self, items: list[U]) -> Page[U]:
         return Page(
             items=items,
             next_token=self.next_token,
-            next_cursor=self.next_cursor,
             total_count=self.total_count,
         )
 
@@ -181,7 +180,7 @@ def paginate(
 ) -> sa.Select:
     """Rows from the cursor inclusive, plus one extra row for the next cursor."""
     is_desc = request.order == Order.DESC
-    stmt = stmt.add_columns(cursor_expr.label(CURSOR_LABEL)).order_by(None)
+    stmt = stmt.add_columns(cursor_expr.label(_CURSOR_COLUMN)).order_by(None)
     if (start := request.cursor) is not None:
         if is_desc:
             stmt = stmt.where(cursor_expr <= start)
@@ -201,12 +200,30 @@ def split_page[T: Row](
         return rows, None
 
     next_row = rows[page_size]
-    return rows[:page_size], getattr(next_row, CURSOR_LABEL)
+    return rows[:page_size], getattr(next_row, _CURSOR_COLUMN)
 
 
 async def count(ses: AsyncSession, stmt: sa.Select) -> int:
     count_stmt = sa.select(sa.func.count()).select_from(stmt.order_by(None).subquery())
     return await ses.scalar(count_stmt) or 0
+
+
+async def fetch_rows[T](
+    stmt: sa.Select,
+    *,
+    cursor_expr: sa.ColumnElement[str],
+    request: PageRequest,
+    to_item: Callable[[Row], T],
+) -> tuple[list[T], str | None, int]:
+    """Items of the page, the cursor of the next page and the total count."""
+    page_stmt = paginate(stmt, cursor_expr=cursor_expr, request=request)
+
+    async with database.session() as ses:
+        rows = (await ses.execute(page_stmt)).all()
+        total_count = await count(ses, stmt)
+
+    page_rows, next_cursor = split_page(rows, request.page_size)
+    return [to_item(row) for row in page_rows], next_cursor, total_count
 
 
 async def fetch_page[T](
@@ -216,16 +233,14 @@ async def fetch_page[T](
     request: PageRequest,
     to_item: Callable[[Row], T],
 ) -> Page[T]:
-    page_stmt = paginate(stmt, cursor_expr=cursor_expr, request=request)
-
-    async with database.session() as ses:
-        rows = (await ses.execute(page_stmt)).all()
-        total_count = await count(ses, stmt)
-
-    page_rows, next_cursor = split_page(rows, request.page_size)
+    items, next_cursor, total_count = await fetch_rows(
+        stmt,
+        cursor_expr=cursor_expr,
+        request=request,
+        to_item=to_item,
+    )
     return Page(
-        items=[to_item(row) for row in page_rows],
+        items=items,
         next_token=request.next_token(next_cursor),
-        next_cursor=next_cursor,
         total_count=total_count,
     )
