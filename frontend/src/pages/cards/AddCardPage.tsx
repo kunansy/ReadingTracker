@@ -4,6 +4,8 @@ import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { apiFetch } from "../../api/cards";
 import { apiFetch as notesApiFetch, buildQuery } from "../../api/notes";
+import { PageNav } from "../../components/PageNav";
+import { PageCursor, useCursorPagination } from "../../hooks/useCursorPagination";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import {
   ComboboxInput,
@@ -25,7 +27,10 @@ type NoteListItem = {
 type NotesSearchResponse = {
   notes: NoteListItem[];
   total_count: number;
+  next_token: string | null;
 };
+
+const NOTES_PAGE_SIZE = 100;
 
 type NotesMetaResponse = {
   titles: Record<string, string>;
@@ -76,14 +81,19 @@ export function AddCardPage() {
     staleTime: 10 * 60 * 1000,
   });
 
+  const notesMaterialId = isUuid(materialId) ? materialId : "";
+  const notesPagination = useCursorPagination<PageCursor>(NOTES_PAGE_SIZE, notesMaterialId, "asc");
+  const notesNextToken = notesPagination.cursor?.nextToken;
+
   const notesQ = useQuery({
-    queryKey: ["notes", "search", { materialId }],
+    queryKey: ["notes", "search", { materialId: notesMaterialId, nextToken: notesNextToken, order: notesPagination.order }],
     queryFn: () =>
       notesApiFetch<NotesSearchResponse>(
         `/search${buildQuery({
-          ...(isUuid(materialId) ? { material_id: materialId } : {}),
-          page: 1,
-          page_size: 200,
+          material_id: notesMaterialId || undefined,
+          next_token: notesNextToken,
+          page_size: NOTES_PAGE_SIZE,
+          order: notesPagination.order,
         })}`,
       ),
   });
@@ -189,6 +199,11 @@ export function AddCardPage() {
         {materialsTitles[materialId] ? (
             <h3 className="material-title">«{materialsTitles[materialId]}»</h3>
         ) : null}
+        <PageNav
+          pagination={notesPagination}
+          nextToken={notesQ.data?.next_token}
+          onNext={(token) => notesPagination.next({ nextToken: token })}
+        />
         <ul className="notes" id="notes-list">
           {notes.map((n) => (
               <li
@@ -220,6 +235,11 @@ export function AddCardPage() {
               </li>
           ))}
         </ul>
+        <PageNav
+          pagination={notesPagination}
+          nextToken={notesQ.data?.next_token}
+          onNext={(token) => notesPagination.next({ nextToken: token })}
+        />
       </div>
 
       <div className="form">

@@ -8,6 +8,7 @@ import pytest
 import sqlalchemy.sql as sa
 
 from tracker.common import database
+from tracker.common.pagination import MAX_PAGE_SIZE, PageParams
 from tracker.materials import db
 from tracker.models import models
 from tracker.reading_log import statistics
@@ -290,8 +291,9 @@ async def test_completed_statistics():
         material_ids={m.material_id for m in materials},
     )
 
-    result = await db.completed_statistics()
-    assert len(result) == len(materials)
+    page = await db.completed_statistics_page(params=PageParams(page_size=MAX_PAGE_SIZE))
+    result = page.items
+    assert len(result) == min(len(materials), MAX_PAGE_SIZE)
     for st in result:
         assert st.remaining_pages is None
         assert st.remaining_days is None

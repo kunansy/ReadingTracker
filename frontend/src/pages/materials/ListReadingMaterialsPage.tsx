@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { apiFetch } from "../../api/materials";
+import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/materials";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
@@ -10,6 +10,8 @@ import { itemsLabel, itemsLabelLower } from "../../materials/format";
 import type {ListReadingMaterialsResponse} from "../../types";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { dateInputValue } from "../../utils/dateInputValue";
+import { PageNav } from "../../components/PageNav";
+import { PageCursor, useCursorPagination } from "../../hooks/useCursorPagination";
 
 export function ListReadingMaterialsPage() {
   const qc = useQueryClient();
@@ -18,10 +20,15 @@ export function ListReadingMaterialsPage() {
   const [completeId, setCompleteId] = useState<string | null>(null);
   const [dateStr, setDateStr] = useState("");
   const navigate = useNavigate();
+  const pagination = useCursorPagination<PageCursor>(PAGE_SIZE, "", "desc");
+  const nextToken = pagination.cursor?.nextToken;
 
   const q = useQuery({
-    queryKey: ["materials", "reading"],
-    queryFn: () => apiFetch<ListReadingMaterialsResponse>("/reading"),
+    queryKey: ["materials", "reading", { nextToken, order: pagination.order }],
+    queryFn: () =>
+      apiFetch<ListReadingMaterialsResponse>(
+        `/reading${buildQuery({ next_token: nextToken, page_size: PAGE_SIZE, order: pagination.order })}`,
+      ),
   });
 
   const completeMut = useMutation({
@@ -116,6 +123,11 @@ export function ListReadingMaterialsPage() {
 
   return (
     <>
+      <PageNav
+        pagination={pagination}
+        nextToken={q.data?.next_token}
+        onNext={(token) => pagination.next({ nextToken: token })}
+      />
       {stats.map((ms) => {
         const material = ms.material;
         const il = itemsLabel(material.material_type);
@@ -187,6 +199,11 @@ export function ListReadingMaterialsPage() {
           </div>
         );
       })}
+      <PageNav
+        pagination={pagination}
+        nextToken={q.data?.next_token}
+        onNext={(token) => pagination.next({ nextToken: token })}
+      />
 
       <dialog
         ref={dialogRef}
@@ -236,7 +253,7 @@ export function ListReadingMaterialsPage() {
               } catch (err) {
                 window.alert((err as Error).message);
               }
-              navigate(`/materials/completed`, { state: {scrollTo: completeId } });
+              navigate(`/materials/completed/${completeId}`);
             }}
           >
             Complete

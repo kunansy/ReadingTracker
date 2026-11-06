@@ -2,22 +2,27 @@ import asyncio
 import datetime
 import re
 import time
+from collections.abc import Mapping
 from decimal import Decimal
-from typing import Any, cast
+from typing import Any, Final, cast
 from uuid import UUID
 
 import aiohttp
 import bs4
 import sqlalchemy.sql as sa
 from pydantic import ConfigDict, computed_field, field_validator
+from sqlalchemy import Integer, Text
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from tracker.cards import db as cards_db
-from tracker.common import database, schemas, settings
+from tracker.common import database, pagination, schemas, settings, sort_keys
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
 from tracker.notes import db as notes_db
+
+
+REPEAT_PERIOD_DAYS: Final[int] = 30
 
 
 class Material(CustomBaseModel):
@@ -168,20 +173,24 @@ async def get_materials() -> list[Material]:
         ]
 
 
-async def _get_free_materials() -> list[Material]:
-    logger.debug("Getting free materials")
-
+def _get_free_materials_stmt() -> sa.Select:
     assigned_condition = (
         sa.select(1)
         .select_from(models.Statuses)
         .where(models.Statuses.c.material_id == models.Materials.c.material_id)
     )
 
-    stmt = (
+    return (
         sa.select(models.Materials)
         .where(~sa.exists(assigned_condition))
         .order_by(models.Materials.c.index)
     )
+
+
+async def _get_free_materials() -> list[Material]:
+    logger.debug("Getting free materials")
+
+    stmt = _get_free_materials_stmt()
 
     async with database.session() as ses:
         materials = [
@@ -203,8 +212,12 @@ def _get_reading_materials_stmt() -> sa.Select:
         .cte("reading_logs")
     )
 
+    last_read_at = sa.func.coalesce(
+        reading_logs_cte.c.date,
+        sa.func.date(models.Statuses.c.started_at),
+    )
     return (
-        sa.select(models.Materials, models.Statuses)
+        sa.select(models.Materials, models.Statuses, last_read_at.label("last_read_at"))
         .join(
             models.Statuses,
             models.Materials.c.material_id == models.Statuses.c.material_id,
@@ -239,24 +252,53 @@ def _get_completed_materials_stmt(
     if is_outlined is not None:
         stmt = stmt.where(models.Materials.c.is_outlined == is_outlined)
     if tags:
-        tags_str = (f"'{tag}'" for tag in tags)
+        material_tags = sa.func.string_to_array(models.Materials.c.tags, ", ")
         stmt = stmt.where(
-            sa.text(
-                f"string_to_array(tags, ', ') @> array[{','.join(tags_str)}]",
+            material_tags.op("@>")(
+                sa.cast(postgresql.array(sorted(tags)), postgresql.ARRAY(Text)),
             ),
         )
     return stmt
 
 
+def _to_material_status(row: Mapping[Any, Any]) -> MaterialStatus:
+    return MaterialStatus(
+        material=Material.model_validate(row, from_attributes=True),
+        status=Status.model_validate(row, from_attributes=True),
+    )
+
+
 async def _parse_material_status_response(*, stmt: sa.Select) -> list[MaterialStatus]:
     async with database.session() as ses:
         return [
-            MaterialStatus(
-                material=Material.model_validate(row, from_attributes=True),
-                status=Status.model_validate(row, from_attributes=True),
-            )
-            for row in (await ses.execute(stmt)).mappings().all()
+            _to_material_status(row) for row in (await ses.execute(stmt)).mappings().all()
         ]
+
+
+async def _get_material_statuses_page(
+    stmt: sa.Select,
+    *,
+    cursor_expr: sa.ColumnElement[str],
+    params: pagination.PageParams,
+    default_order: pagination.Order,
+) -> pagination.Page[MaterialStatus]:
+    page_stmt = pagination.paginate(
+        stmt,
+        cursor_expr=cursor_expr,
+        params=params,
+        default_order=default_order,
+    )
+
+    async with database.session() as ses:
+        rows = (await ses.execute(page_stmt)).all()
+        total_count = await pagination.count(ses, stmt)
+
+    page_rows, next_token = pagination.split_page(rows, params)
+    return pagination.Page(
+        items=[_to_material_status(row._asdict()) for row in page_rows],
+        next_token=next_token,
+        total_count=total_count,
+    )
 
 
 async def get_reading_materials() -> list[MaterialStatus]:
@@ -407,88 +449,117 @@ def _get_material_statistics(
     )
 
 
-async def completed_statistics(
+async def _get_materials_statistics(
+    material_statuses: list[MaterialStatus],
+) -> list[MaterialStatistics]:
+    from tracker.reading_log.statistics import calculate_materials_stat
+
+    start = time.perf_counter()
+
+    async with asyncio.TaskGroup() as tg:
+        mean_read_pages_task = tg.create_task(get_means())
+        all_notes_count_task = tg.create_task(notes_db.get_all_notes_count())
+
+    ids = {ms.material_id for ms in material_statuses}
+    log_stats = await calculate_materials_stat(ids)
+    all_notes_count = all_notes_count_task.result()
+    mean_read_pages = mean_read_pages_task.result()
+
+    result = [
+        _get_material_statistics(
+            material_status=material_status,
+            notes_count=all_notes_count.get(material_status.material_id, 0),
+            mean_total=mean_read_pages.get(
+                material_status.material.material_type,
+                Decimal(1),
+            ),
+            log_stats=log_stats,
+        )
+        for material_status in material_statuses
+    ]
+
+    exec_time = round(time.perf_counter() - start, 2)
+    logger.info("%s materials statistics calculated for %ss", len(result), exec_time)
+
+    return result
+
+
+async def completed_statistics_page(
     *,
     material_type: enums.MaterialTypesEnum | None = None,
     is_outlined: bool | None = None,
     tags: set[str] | None = None,
-) -> list[MaterialStatistics]:
-    from tracker.reading_log.statistics import calculate_materials_stat
+    params: pagination.PageParams,
+) -> pagination.Page[MaterialStatistics]:
+    logger.info("Calculating completed materials statistics page")
 
-    logger.info("Calculating completed materials statistics")
-    start = time.perf_counter()
+    stmt = _get_completed_materials_stmt(
+        material_type=material_type,
+        is_outlined=is_outlined,
+        tags=tags,
+    )
+    page = await _get_material_statuses_page(
+        stmt,
+        cursor_expr=pagination.cursor(
+            pagination.datetime_part(models.Statuses.c.completed_at),
+            models.Materials.c.sort_key,
+        ),
+        params=params,
+        default_order=pagination.Order.DESC,
+    )
 
-    async with asyncio.TaskGroup() as tg:
-        completed_materials_task = tg.create_task(
-            _get_completed_materials(
-                material_type=material_type,
-                is_outlined=is_outlined,
-                tags=tags,
-            ),
-        )
-        mean_read_pages_task = tg.create_task(get_means())
-        all_notes_count_task = tg.create_task(notes_db.get_all_notes_count())
+    return pagination.Page(
+        items=await _get_materials_statistics(page.items),
+        next_token=page.next_token,
+        total_count=page.total_count,
+    )
 
-    material_statuses = completed_materials_task.result()
-    ids = {ms.material_id for ms in material_statuses}
-    log_stats = await calculate_materials_stat(ids)
 
-    all_notes_count = all_notes_count_task.result()
-    mean_read_pages = mean_read_pages_task.result()
+async def get_completed_statistics(*, material_id: UUID) -> MaterialStatistics:
+    logger.info("Calculating completed material statistics, id=%s", material_id)
 
-    result = [
-        _get_material_statistics(
-            material_status=material_status,
-            notes_count=all_notes_count.get(material_status.material_id, 0),
-            mean_total=mean_read_pages.get(
-                material_status.material.material_type,
-                Decimal(1),
-            ),
-            log_stats=log_stats,
-        )
-        for material_status in material_statuses
-    ]
+    stmt = _get_completed_materials_stmt().where(
+        models.Materials.c.material_id == str(material_id),
+    )
+    if not (material_statuses := await _parse_material_status_response(stmt=stmt)):
+        msg = f"Completed material id={material_id!r} not found"
+        logger.info(msg)
+        raise database.NotFoundException(msg)
 
-    exec_time = round(time.perf_counter() - start, 2)
-    logger.info("%s materials statistics calculated for %ss", len(result), exec_time)
-
-    return result
+    [statistics] = await _get_materials_statistics(material_statuses)
+    return statistics
 
 
 async def reading_statistics() -> list[MaterialStatistics]:
-    from tracker.reading_log.statistics import calculate_materials_stat
-
     logger.info("Calculating reading materials statistics")
-    start = time.perf_counter()
 
-    async with asyncio.TaskGroup() as tg:
-        reading_materials_task = tg.create_task(get_reading_materials())
-        mean_read_pages_task = tg.create_task(get_means())
-        all_notes_count_task = tg.create_task(notes_db.get_all_notes_count())
+    material_statuses = await get_reading_materials()
+    return await _get_materials_statistics(material_statuses)
 
-    material_statuses = reading_materials_task.result()
-    ids = {ms.material_id for ms in material_statuses}
-    log_stats = await calculate_materials_stat(ids)
-    all_notes_count = all_notes_count_task.result()
-    mean_read_pages = mean_read_pages_task.result()
 
-    result = [
-        _get_material_statistics(
-            material_status=material_status,
-            notes_count=all_notes_count.get(material_status.material_id, 0),
-            mean_total=mean_read_pages.get(
-                material_status.material.material_type,
-                Decimal(1),
-            ),
-            log_stats=log_stats,
-        )
-        for material_status in material_statuses
-    ]
+async def reading_statistics_page(
+    *,
+    params: pagination.PageParams,
+) -> pagination.Page[MaterialStatistics]:
+    logger.info("Calculating reading materials statistics page")
 
-    exec_time = round(time.perf_counter() - start, 2)
-    logger.info("%s materials statistics calculated for %ss", len(result), exec_time)
+    stmt = _get_reading_materials_stmt()
+    columns = stmt.selected_columns
+    page = await _get_material_statuses_page(
+        stmt,
+        cursor_expr=pagination.cursor(
+            pagination.date_part(columns.last_read_at),
+            models.Materials.c.sort_key,
+        ),
+        params=params,
+        default_order=pagination.Order.DESC,
+    )
 
-    return result
+    return pagination.Page(
+        items=await _get_materials_statistics(page.items),
+        next_token=page.next_token,
+        total_count=page.total_count,
+    )
 
 
 async def get_material_tags() -> set[str]:
@@ -540,10 +611,18 @@ async def insert_material(
 ) -> UUID:
     logger.debug("Inserting material title=%s", title)
 
+    material_id = models.generate_id()
+    added_at = database.utcnow()
     stmt = (
         models.Materials.insert()
         .values(
             {
+                "material_id": material_id,
+                "added_at": added_at,
+                "sort_key": sort_keys.material_sort_key(
+                    added_at=added_at,
+                    material_id=material_id,
+                ),
                 "title": title,
                 "authors": authors,
                 "pages": pages,
@@ -558,10 +637,10 @@ async def insert_material(
     async with database.session() as ses:
         res = await ses.execute(stmt)
 
-    material_id = res.scalar()
+    inserted_id = res.scalar()
 
-    logger.debug("Material inserted, id=%r", material_id)
-    return cast("UUID", material_id)
+    logger.debug("Material inserted, id=%r", inserted_id)
+    return cast("UUID", inserted_id)
 
 
 async def update_material(
@@ -699,21 +778,41 @@ async def _end_of_reading() -> datetime.date:
     return database.utcnow().date() + datetime.timedelta(days=remaining_days)
 
 
-async def estimate() -> list[MaterialEstimate]:
-    """Get materials from queue with estimated time to read."""
-    logger.info("Estimating materials started")
+async def estimate_page(
+    *,
+    start_date: datetime.date,
+    params: pagination.PageParams,
+) -> tuple[pagination.Page[MaterialEstimate], datetime.date]:
+    """Get a page of the queue with estimated time to read.
+
+    The page is estimated from `start_date`; the returned date is where
+    the next page starts.
+    """
+    logger.info("Estimating materials page started")
     step = datetime.timedelta(days=1)
 
-    async with asyncio.TaskGroup() as tg:
-        get_mean_task = tg.create_task(get_means())
-        get_free_materials_task = tg.create_task(_get_free_materials())
+    stmt = _get_free_materials_stmt()
+    page_stmt = pagination.paginate(
+        stmt,
+        cursor_expr=pagination.cursor(
+            pagination.int_part(models.Materials.c.index),
+            models.Materials.c.sort_key,
+        ),
+        params=params,
+        default_order=pagination.Order.DESC,
+    )
 
-    # start today, not when all reading material will be completed
-    last_date = database.utcnow().date()
-    mean = get_mean_task.result()
+    async with database.session() as ses:
+        rows = (await ses.execute(page_stmt)).all()
+        total_count = await pagination.count(ses, stmt)
+
+    page_rows, next_token = pagination.split_page(rows, params)
+    mean = await get_means()
+
+    last_date = start_date
     forecasts = []
-
-    for material in get_free_materials_task.result():
+    for row in page_rows:
+        material = Material.model_validate(row, from_attributes=True)
         mean_ = mean.get(material.material_type, 1)
         expected_duration = round(material.pages / mean_)
         expected_end = last_date + datetime.timedelta(days=expected_duration)
@@ -732,7 +831,12 @@ async def estimate() -> list[MaterialEstimate]:
         last_date = expected_end + step
 
     logger.info("%s materials estimated", len(forecasts))
-    return forecasts
+    page = pagination.Page(
+        items=forecasts,
+        next_token=next_token,
+        total_count=total_count,
+    )
+    return page, last_date
 
 
 def _calculate_priority_months(
@@ -743,7 +847,7 @@ def _calculate_priority_months(
     if not priority_days:
         return 0
 
-    priority_limit = repeats_count * 30
+    priority_limit = repeats_count * REPEAT_PERIOD_DAYS
     if (days := priority_days) < priority_limit:
         return 0
     # priority should decrease having repeats count increased
@@ -788,55 +892,129 @@ async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
     return analytics
 
 
-async def get_repeating_queue(*, is_outlined: bool) -> list[RepeatingQueue]:
-    logger.debug("Getting repeating queue")
+def _get_repeating_queue_stmt(*, is_outlined: bool) -> tuple[sa.Select, sa.ColumnElement]:
+    """Completed materials to repeat with the date they should be repeated at.
 
-    async with asyncio.TaskGroup() as tg:
-        completed_materials_task = tg.create_task(_get_completed_materials())
-        notes_count_task = tg.create_task(notes_db.get_all_notes_count())
-        cards_count_task = tg.create_task(cards_db.get_all_cards_count())
-        repeat_analytics_task = tg.create_task(get_repeats_analytics())
-
-    notes_count = notes_count_task.result()
-    cards_count = cards_count_task.result()
-    repeat_analytics = repeat_analytics_task.result()
-
-    completed_materials = (
-        material
-        for material in completed_materials_task.result()
-        # skip materials without notes and notwithstanding outlined
-        if not (
-            material.material.is_outlined and not notes_count.get(material.material_id)
+    Ordering by `repeat_at` ASC equals ordering by priority_months DESC.
+    """
+    repeats = (
+        sa.select(
+            models.Repeats.c.material_id,
+            sa.func.count(models.Repeats.c.repeat_id).label("repeats_count"),
+            sa.func.max(models.Repeats.c.repeated_at).label("last_repeated_at"),
         )
+        .group_by(models.Repeats.c.material_id)
+        .subquery("repeats_stat")
+    )
+    notes = (
+        sa.select(
+            models.Notes.c.material_id,
+            sa.func.count(models.Notes.c.note_id).label("notes_count"),
+        )
+        .where(~models.Notes.c.is_deleted)
+        .group_by(models.Notes.c.material_id)
+        .subquery("notes_stat")
+    )
+    cards = (
+        sa.select(
+            models.Cards.c.material_id,
+            sa.func.count(models.Cards.c.card_id).label("cards_count"),
+        )
+        .group_by(models.Cards.c.material_id)
+        .subquery("cards_stat")
+    )
+
+    repeats_count = sa.func.coalesce(repeats.c.repeats_count, 0)
+    notes_count = sa.func.coalesce(notes.c.notes_count, 0)
+    last_seen_at = sa.func.date(
+        sa.func.coalesce(repeats.c.last_repeated_at, models.Statuses.c.completed_at),
+    )
+    priority_days = sa.func.date(sa.func.now()) - last_seen_at
+    repeat_at = last_seen_at + REPEAT_PERIOD_DAYS * sa.cast(repeats_count, Integer)
+
+    stmt = (
+        sa.select(
+            models.Materials.c.material_id,
+            models.Materials.c.title,
+            models.Materials.c.pages,
+            models.Materials.c.material_type,
+            models.Materials.c.is_outlined,
+            models.Statuses.c.completed_at,
+            repeats.c.last_repeated_at,
+            repeats_count.label("repeats_count"),
+            notes_count.label("notes_count"),
+            sa.func.coalesce(cards.c.cards_count, 0).label("cards_count"),
+            priority_days.label("priority_days"),
+        )
+        .join(
+            models.Statuses,
+            models.Statuses.c.material_id == models.Materials.c.material_id,
+        )
+        .join(
+            repeats,
+            repeats.c.material_id == models.Materials.c.material_id,
+            isouter=True,
+        )
+        .join(notes, notes.c.material_id == models.Materials.c.material_id, isouter=True)
+        .join(cards, cards.c.material_id == models.Materials.c.material_id, isouter=True)
+        .where(models.Statuses.c.completed_at != None)
+        # skip materials without notes and notwithstanding outlined
+        .where(~(models.Materials.c.is_outlined & (notes_count == 0)))
+        # at least a month of priority
+        .where(priority_days >= REPEAT_PERIOD_DAYS * (repeats_count + 1))
     )
     if is_outlined:
-        completed_materials = (
-            material for material in completed_materials if material.material.is_outlined
-        )
+        stmt = stmt.where(models.Materials.c.is_outlined)
 
+    return stmt, repeat_at
+
+
+async def get_repeating_queue_page(
+    *,
+    is_outlined: bool,
+    params: pagination.PageParams,
+) -> pagination.Page[RepeatingQueue]:
+    logger.debug("Getting repeating queue page")
+
+    stmt, repeat_at = _get_repeating_queue_stmt(is_outlined=is_outlined)
+    page_stmt = pagination.paginate(
+        stmt,
+        cursor_expr=pagination.cursor(
+            pagination.date_part(repeat_at),
+            models.Materials.c.sort_key,
+        ),
+        params=params,
+        default_order=pagination.Order.ASC,
+    )
+
+    async with database.session() as ses:
+        rows = (await ses.execute(page_stmt)).all()
+        total_count = await pagination.count(ses, stmt)
+
+    page_rows, next_token = pagination.split_page(rows, params)
     queue = [
         RepeatingQueue(
-            material_id=material_status.material_id,
-            title=material_status.material.title,
-            pages=material_status.material.pages,
-            material_type=material_status.material.material_type,
-            is_outlined=material_status.material.is_outlined,
-            completed_at=material_status.status.completed_at,
-            notes_count=notes_count.get(material_status.material_id, 0),
-            cards_count=cards_count.get(material_status.material_id, 0),
-            repeats_count=repeat_analytics[material_status.material_id].repeats_count,
-            last_repeated_at=repeat_analytics[
-                material_status.material_id
-            ].last_repeated_at,
-            priority_days=repeat_analytics[material_status.material_id].priority_days,
-            priority_months=repeat_analytics[material_status.material_id].priority_months,
+            material_id=row.material_id,
+            title=row.title,
+            pages=row.pages,
+            material_type=row.material_type,
+            is_outlined=row.is_outlined,
+            completed_at=row.completed_at,
+            notes_count=row.notes_count,
+            cards_count=row.cards_count,
+            repeats_count=row.repeats_count,
+            last_repeated_at=row.last_repeated_at,
+            priority_days=row.priority_days,
+            priority_months=_calculate_priority_months(
+                row.priority_days,
+                repeats_count=row.repeats_count,
+            ),
         )
-        for material_status in completed_materials
-        if repeat_analytics[material_status.material_id].priority_months >= 1.0
+        for row in page_rows
     ]
 
-    logger.debug("Repeating queue got, %s materials found", len(queue))
-    return queue
+    logger.debug("Repeating queue page got, %s materials found", len(queue))
+    return pagination.Page(items=queue, next_token=next_token, total_count=total_count)
 
 
 async def get_queue_start() -> int:

@@ -46,3 +46,5 @@ COPY --from=spa /app/static/app-spa ./static/app-spa
 COPY /kafka ./kafka
 COPY /tracker ./tracker
 COPY VERSION ./VERSION
+COPY alembic.ini ./alembic.ini
+COPY /migrations ./migrations

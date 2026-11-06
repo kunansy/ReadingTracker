@@ -1,13 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
-import { apiFetch, buildQuery } from "../../api/materials";
+import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/materials";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel } from "../../materials/format";
 import type { GetRepeatingQueueResponse } from "../../types";
 import { ScrollArrows } from "../../components/ScrollArrows";
+import { PageNav } from "../../components/PageNav";
+import { PageCursor, useCursorPagination } from "../../hooks/useCursorPagination";
 
 export function ListRepeatMaterialsPage() {
   const qc = useQueryClient();
@@ -19,8 +21,14 @@ export function ListRepeatMaterialsPage() {
     searchParams.get("only_outlined") === "on" ||
     searchParams.get("only_outlined") === "true";
 
+  const pagination = useCursorPagination<PageCursor>(PAGE_SIZE, String(onlyOutlined), "asc");
+  const nextToken = pagination.cursor?.nextToken;
+
   const queryString = buildQuery({
     only_outlined: onlyOutlined ? "true" : undefined,
+    next_token: nextToken,
+    page_size: PAGE_SIZE,
+    order: pagination.order,
   });
 
   const q = useQuery({
@@ -55,7 +63,6 @@ export function ListRepeatMaterialsPage() {
   }
 
   const rows = q.data?.repeating_queue ?? [];
-  const sorted = [...rows].sort((a, b) => b.priority_months - a.priority_months);
 
   return (
     <>
@@ -77,10 +84,15 @@ export function ListRepeatMaterialsPage() {
         </form>
       </div>
 
-      {!sorted.length ? (
+      <PageNav
+        pagination={pagination}
+        nextToken={q.data?.next_token}
+        onNext={(token) => pagination.next({ nextToken: token })}
+      />
+      {!rows.length ? (
         <NotFoundMaterials kind="repeating queue" />
       ) : (
-        sorted.map((repeat, idx) => {
+        rows.map((repeat, idx) => {
           const il = itemsLabel(repeat.material_type);
           const isOutlined = repeat.is_outlined ? "Yes" : "No";
           const lastRepeated = repeat.last_repeated_at
@@ -93,7 +105,7 @@ export function ListRepeatMaterialsPage() {
               id={repeat.material_id}
               title="Click to see notes"
               onClick={() => {
-                navigate(`/notes?material_id=${repeat.material_id}&page_size=${repeat.notes_count}`);
+                navigate(`/notes?material_id=${repeat.material_id}`);
               }}
               onContextMenu={async (e) => {
                 if (repeat.notes_count === 0 && repeat.notes_count === 0) {
@@ -121,7 +133,7 @@ export function ListRepeatMaterialsPage() {
               }}
             >
               <p className="little-text">
-                {idx + 1} / {sorted.length}
+                {pagination.offset + idx + 1} / {q.data?.total_count ?? 0}
               </p>
               <p> Title: «{repeat.title}» </p>
               <p>
@@ -157,6 +169,11 @@ export function ListRepeatMaterialsPage() {
           );
         })
       )}
+      <PageNav
+        pagination={pagination}
+        nextToken={q.data?.next_token}
+        onNext={(token) => pagination.next({ nextToken: token })}
+      />
       <ScrollArrows />
     </>
   );

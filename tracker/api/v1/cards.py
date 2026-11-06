@@ -1,18 +1,25 @@
+from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from tracker.cards import db, schemas
+from tracker.common.pagination import PageParams
 
 
 router = APIRouter(prefix="/cards", tags=["cards-api"])
 
 
 @router.get("/", response_model=schemas.ListCardsResponse)
-async def list_cards(material_id: UUID | None = None):
-    items = await db.get_cards(material_id=material_id)
+async def list_cards(
+    params: Annotated[PageParams, Depends()],
+    material_id: UUID | None = None,
+):
+    page = await db.get_cards_page(material_id=material_id, params=params)
     return {
-        "items": items,
+        "items": page.items,
+        "next_token": page.next_token,
+        "total_count": page.total_count,
     }
 
 

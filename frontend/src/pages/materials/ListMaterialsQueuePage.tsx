@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {useCallback, useEffect, useRef, useState} from "react";
 import { useNavigate } from "react-router-dom";
 
-import { apiFetch } from "../../api/materials";
+import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/materials";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
@@ -10,7 +10,10 @@ import type {ListMaterialsQueueResponse} from "../../types";
 import {CelebrateButton} from "../../components/CelebrateButton.tsx";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { dateInputValue } from "../../utils/dateInputValue";
+import { PageNav } from "../../components/PageNav";
+import { useCursorPagination } from "../../hooks/useCursorPagination";
 
+type QueueCursor = { nextToken: string; startDate?: string };
 
 export function ListMaterialsQueuePage() {
   const [completeId, setCompleteId] = useState<string | null>(null);
@@ -19,10 +22,20 @@ export function ListMaterialsQueuePage() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const navigate = useNavigate();
   const { open, close } = useContextMenu();
+  const pagination = useCursorPagination<QueueCursor>(PAGE_SIZE, "", "desc");
+  const { nextToken, startDate } = pagination.cursor ?? {};
 
   const q = useQuery({
-    queryKey: ["materials", "queue"],
-    queryFn: () => apiFetch<ListMaterialsQueueResponse>("/queue"),
+    queryKey: ["materials", "queue", { nextToken, startDate, order: pagination.order }],
+    queryFn: () =>
+      apiFetch<ListMaterialsQueueResponse>(
+        `/queue${buildQuery({
+          next_token: nextToken,
+          start_date: startDate,
+          page_size: PAGE_SIZE,
+          order: pagination.order,
+        })}`,
+      ),
   });
 
   const startMut = useMutation({
@@ -152,6 +165,13 @@ export function ListMaterialsQueuePage() {
 
   return (
     <>
+      <PageNav
+        pagination={pagination}
+        nextToken={data.next_token}
+        onNext={(token) =>
+          pagination.next({ nextToken: token, startDate: data.next_start_date ?? undefined })
+        }
+      />
       {data.estimates.map((estimate, i) => {
         const material = estimate.material;
         const il = itemsLabel(material.material_type);
@@ -169,7 +189,7 @@ export function ListMaterialsQueuePage() {
           >
             <p className="little-text">
               {" "}
-              {i + 1} / {data.estimates.length}
+              {pagination.offset + i + 1} / {data.total_count}
             </p>
             <p> Title: «{material.title}» </p>
             <p> Author: {material.authors} </p>
@@ -263,6 +283,13 @@ export function ListMaterialsQueuePage() {
           </div>
         );
       })}
+      <PageNav
+        pagination={pagination}
+        nextToken={data.next_token}
+        onNext={(token) =>
+          pagination.next({ nextToken: token, startDate: data.next_start_date ?? undefined })
+        }
+      />
       <ScrollArrows />
     </>
   );

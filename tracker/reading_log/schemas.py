@@ -3,6 +3,7 @@ from uuid import UUID
 
 from pydantic import NonNegativeInt, PositiveInt
 
+from tracker.common.pagination import PageResponse
 from tracker.common.schemas import CustomBaseModel
 
 
@@ -14,7 +15,7 @@ class _ListLogRecordItem(CustomBaseModel):
     date: datetime.date
 
 
-class ListReadingLogsResponse(CustomBaseModel):
+class ListReadingLogsResponse(PageResponse):
     items: list[_ListLogRecordItem]
 
 

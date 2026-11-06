@@ -1,7 +1,6 @@
 import random
 import uuid
 from itertools import groupby
-from typing import NamedTuple
 from uuid import UUID
 
 import pytest
@@ -10,24 +9,7 @@ import sqlalchemy.sql as sa
 from tests.conftest import mock_trans
 from tracker.common import database
 from tracker.models import enums, models
-from tracker.notes import db, routes
-
-
-async def test_get_distinct_chapters():
-    notes = await db.get_notes()
-
-    result = db.get_distinct_chapters(notes)
-
-    expected = {}
-    for note in notes:
-        if note.chapter not in expected.get(note.material_id, []):
-            expected.setdefault(note.material_id, []).append(note.chapter)
-
-    assert result == expected
-
-
-def test_get_distinct_chapters_empty():
-    assert db.get_distinct_chapters([]) == {}
+from tracker.notes import db
 
 
 async def test_get_material_type():
@@ -260,69 +242,6 @@ async def test_get_links_from(note_id, expected):
 
     result = await db.get_links_from(note_id=UUID(note_id))
     assert result == expected_notes
-
-
-@pytest.mark.parametrize(
-    ("lst", "page", "page_size", "expected"),
-    [
-        (list(range(100)), 1, 10, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
-        (list(range(100)), 2, 10, [10, 11, 12, 13, 14, 15, 16, 17, 18, 19]),
-        (list(range(100)), 3, 10, [20, 21, 22, 23, 24, 25, 26, 27, 28, 29]),
-        (list(range(100)), 0, 10, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
-        (list(range(100)), -5, 10, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]),
-        (list(range(100)), 1, -5, []),
-        (list(range(5)), 1, 10, [0, 1, 2, 3, 4]),
-        (list(range(5)), 2, 10, []),
-        ([], 1, 10, []),
-    ],
-)
-def test_notes_limit(lst, page, page_size, expected):
-    assert routes._limit_notes(lst, page=page, page_size=page_size) == expected
-
-
-@pytest.mark.parametrize(
-    ("sample", "expected"),
-    [
-        ((
-                 (12, "1.2", 5), (12, "1.2", 2), (12, "1.2", 17), (12, "1.2", 0), (12, "1.2", 5),
-                 (4, "4", 5), (4, "4", 2), (4, "4", 17), (4, "4", 0), (4, "4", 5),
-                 (23, "2.3", 5), (23, "2.3", 2), (23, "2.3", 17), (23, "2.3", 0), (23, "2.3", 5),
-                 (10, "1.0", 5), (10, "1.0", 2), (10, "1.0", 17), (10, "1.0", 0), (10, "1.0", 5),
-                 (9, "9", 5), (9, "9", 2), (9, "9", 17), (9, "9", 0), (9, "9", 5),
-         ),
-         (
-                 (4, "4", 0), (4, "4", 2), (4, "4", 5), (4, "4", 5), (4, "4", 17),
-                 (9, "9", 0), (9, "9", 2), (9, "9", 5), (9, "9", 5), (9, "9", 17),
-                 (10, "1.0", 0), (10, "1.0", 2), (10, "1.0", 5), (10, "1.0", 5), (10, "1.0", 17),
-                 (12, "1.2", 0), (12, "1.2", 2), (12, "1.2", 5), (12, "1.2", 5), (12, "1.2", 17),
-                 (23, "2.3", 0), (23, "2.3", 2), (23, "2.3", 5), (23, "2.3", 5), (23, "2.3", 17),
-         ),)
-
-    ]
-)
-def test_sort_notes(sample, expected):
-    class Note(NamedTuple):
-        chapter_int: int
-        chapter: str
-        page: int
-
-    sample = [
-        Note(
-            chapter_int=chapter_int,
-            chapter=chapter,
-            page=page
-        )
-        for (chapter_int, chapter, page) in sample
-    ]
-    expected = [
-        Note(
-            chapter_int=chapter_int,
-            chapter=chapter,
-            page=page
-        )
-        for (chapter_int, chapter, page) in expected
-    ]
-    assert routes._sort_notes(sample) == expected
 
 
 @pytest.mark.parametrize(

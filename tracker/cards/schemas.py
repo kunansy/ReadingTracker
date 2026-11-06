@@ -1,6 +1,7 @@
 import datetime
 from uuid import UUID
 
+from tracker.common.pagination import PageResponse
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums
 
@@ -21,7 +22,7 @@ class _ListCardsItem(CustomBaseModel):
     material_type: enums.MaterialTypesEnum
 
 
-class ListCardsResponse(CustomBaseModel):
+class ListCardsResponse(PageResponse):
     items: list[_ListCardsItem]
 
 

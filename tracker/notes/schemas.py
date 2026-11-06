@@ -15,6 +15,7 @@ from pydantic import (
 )
 
 from tracker.common import settings
+from tracker.common.pagination import PageResponse
 from tracker.common.schemas import CustomBaseModel, skip_empty_value
 
 
@@ -287,6 +288,6 @@ class GetNoteLinksItem(CustomBaseModel):
     info: str = ""
 
 
-class GetNoteLinksResponse(CustomBaseModel):
+class GetNoteLinksResponse(PageResponse):
     link_to: GetNoteLinksItem | None
     links_from: list[GetNoteLinksItem] | None
