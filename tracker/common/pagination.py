@@ -38,8 +38,7 @@ def decode_token(token: str) -> str:
     except (binascii.Error, UnicodeError) as e:
         raise ValueError(msg) from e
 
-    # Every cursor ends with a sort key, which contains the separator;
-    # NUL is rejected by Postgres in text parameters.
+    # Postgres rejects NUL in text parameters.
     if sort_keys.SEPARATOR not in cursor or "\x00" in cursor:
         raise ValueError(msg)
     return cursor
