@@ -2,12 +2,13 @@ import asyncio
 import datetime
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, Final
+from typing import Any, Final, cast
 from uuid import UUID
 
 import orjson
 import sqlalchemy.sql as sa
 from sqlalchemy import inspect
+from sqlalchemy.engine import CursorResult, Result
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 from sqlalchemy.ext.compiler import compiles
@@ -67,6 +68,14 @@ engine = create_async_engine(
 
 def utcnow() -> datetime.datetime:
     return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+
+
+def check_inserted_one(result: Result[Any], *, entity: str) -> None:
+    rowcount = cast("CursorResult[Any]", result).rowcount
+    if rowcount != 1:
+        msg = f"{entity} insert affected {rowcount} rows, expected 1"
+        logger.error(msg)
+        raise DatabaseException(msg)
 
 
 @asynccontextmanager

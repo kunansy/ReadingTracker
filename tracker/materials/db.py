@@ -589,34 +589,30 @@ async def insert_material(
 
     material_id = models.generate_id()
     added_at = database.utcnow()
-    stmt = (
-        models.Materials.insert()
-        .values(
-            {
-                "material_id": material_id,
-                "added_at": added_at,
-                "sort_key": sort_keys.material_sort_key(
-                    added_at=added_at,
-                    material_id=material_id,
-                ),
-                "title": title,
-                "authors": authors,
-                "pages": pages,
-                "tags": tags,
-                "link": link,
-                "material_type": material_type,
-            },
-        )
-        .returning(models.Materials.c.material_id)
+    stmt = models.Materials.insert().values(
+        {
+            "material_id": material_id,
+            "added_at": added_at,
+            "sort_key": sort_keys.material_sort_key(
+                added_at=added_at,
+                material_id=material_id,
+            ),
+            "title": title,
+            "authors": authors,
+            "pages": pages,
+            "tags": tags,
+            "link": link,
+            "material_type": material_type,
+        },
     )
 
     async with database.session() as ses:
-        res = await ses.execute(stmt)
+        result = await ses.execute(stmt)
 
-    inserted_id = res.scalar()
+    database.check_inserted_one(result, entity="Material")
 
-    logger.debug("Material inserted, id=%r", inserted_id)
-    return cast("UUID", inserted_id)
+    logger.debug("Material inserted, id=%r", material_id)
+    return UUID(material_id)
 
 
 async def update_material(

@@ -265,13 +265,15 @@ async def insert_log_record(
         "count": count,
         "date": date,
     }
-    stmt = models.ReadingLog.insert().values(values).returning(models.ReadingLog.c.log_id)
+    stmt = models.ReadingLog.insert().values(values)
 
     async with database.session() as ses:
-        inserted_id = await ses.scalar(stmt)
+        result = await ses.execute(stmt)
 
-    logger.debug("Log record inserted, id=%s", inserted_id)
-    return cast("UUID", inserted_id)
+    database.check_inserted_one(result, entity="Reading log")
+
+    logger.debug("Log record inserted, id=%s", log_id)
+    return UUID(log_id)
 
 
 async def check_record_correct(

@@ -1,5 +1,4 @@
 import datetime
-from typing import cast
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -60,13 +59,15 @@ async def add_card(
         "question": question,
         "answer": answer,
     }
-    stmt = models.Cards.insert().values(values).returning(models.Cards.c.card_id)
+    stmt = models.Cards.insert().values(values)
 
     async with database.session() as ses:
-        inserted_id = await ses.scalar(stmt)
+        result = await ses.execute(stmt)
 
-    logger.debug("Card %r added", inserted_id)
-    return cast("UUID", inserted_id)
+    database.check_inserted_one(result, entity="Card")
+
+    logger.debug("Card %r added", card_id)
+    return UUID(card_id)
 
 
 def _get_cards_stmt(

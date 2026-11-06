@@ -393,13 +393,15 @@ async def insert_note(
         "link_id": str(link_id) if link_id else None,
     }
 
-    stmt = models.Notes.insert().values(values).returning(models.Notes.c.note_id)
+    stmt = models.Notes.insert().values(values)
 
     async with database.session() as ses:
-        inserted_id = await ses.scalar(stmt)
+        result = await ses.execute(stmt)
 
-    logger.debug("Note_id='%s' inserted", inserted_id)
-    return cast("UUID", inserted_id)
+    database.check_inserted_one(result, entity="Note")
+
+    logger.debug("Note_id='%s' inserted", note_id)
+    return UUID(note_id)
 
 
 async def update_note(
