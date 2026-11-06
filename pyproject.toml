@@ -32,7 +32,7 @@ ignore = [
 # assert
 "tracker/tests/*" = ["S101"]
 # access to the private members, commented code,
-"tracker/protos/*" = ["SLF001", "ERA001"]
+"tracker/protos/*" = ["SLF001", "ERA001", "E402", "E501"]
 "tracker/models/models.py" = ["N802", "ANN002"]
 # return type for routes
 "tracker/*/routes.py" = ["ANN201"]
