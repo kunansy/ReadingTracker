@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 
 import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/readingLog.ts";
@@ -24,6 +24,7 @@ export function ListReadingLogsPage() {
 
     const logsQ = useQuery({
         queryKey: ["logs", { materialId, nextToken, order: pagination.order }],
+        placeholderData: keepPreviousData,
         queryFn: () => {
             return apiFetch<ListReadingLogsResponse>(`/${buildQuery({
                 material_id: materialId || undefined,
@@ -98,6 +99,7 @@ export function ListReadingLogsPage() {
       <PageNav
           pagination={pagination}
           nextToken={logsQ.data?.next_token}
+          isBusy={logsQ.isPlaceholderData}
           onNext={(token) => pagination.next({ nextToken: token })}
       />
       <div>
@@ -124,6 +126,7 @@ export function ListReadingLogsPage() {
       <PageNav
           pagination={pagination}
           nextToken={logsQ.data?.next_token}
+          isBusy={logsQ.isPlaceholderData}
           onNext={(token) => pagination.next({ nextToken: token })}
       />
        {/*: (*/}

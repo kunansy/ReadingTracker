@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
 import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/cards.ts";
@@ -27,6 +27,7 @@ export function ListCardsPage() {
 
     const cardsQ = useQuery({
         queryKey: ["cards", { materialId, nextToken, order: pagination.order }],
+        placeholderData: keepPreviousData,
         queryFn: () =>
             apiFetch<ListCardsResponse>(`/${buildQuery({
                 material_id: materialId || undefined,
@@ -101,6 +102,7 @@ export function ListCardsPage() {
       <PageNav
           pagination={pagination}
           nextToken={cardsQ.data?.next_token}
+          isBusy={cardsQ.isPlaceholderData}
           onNext={(token) => pagination.next({ nextToken: token })}
       />
       <div>
@@ -147,6 +149,7 @@ export function ListCardsPage() {
       <PageNav
           pagination={pagination}
           nextToken={cardsQ.data?.next_token}
+          isBusy={cardsQ.isPlaceholderData}
           onNext={(token) => pagination.next({ nextToken: token })}
       />
        {/*: (*/}

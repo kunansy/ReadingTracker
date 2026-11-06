@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
     useCallback,
     useMemo,
@@ -59,6 +59,7 @@ export function ListCompletedMaterialsPage() {
 
   const q = useQuery({
     queryKey: ["materials", "completed", "list", filtersQuery, nextToken, pagination.order],
+    placeholderData: keepPreviousData,
     queryFn: () =>
       apiFetch<ListCompletedMaterialsResponse>(
         `/completed${buildQuery({ ...filters, next_token: nextToken, page_size: PAGE_SIZE, order: pagination.order })}`,
@@ -175,6 +176,7 @@ export function ListCompletedMaterialsPage() {
           <PageNav
               pagination={pagination}
               nextToken={q.data?.next_token}
+              isBusy={q.isPlaceholderData}
               onNext={(token) => pagination.next({ nextToken: token })}
           />
           {!stats.length ? (
@@ -191,6 +193,7 @@ export function ListCompletedMaterialsPage() {
           <PageNav
               pagination={pagination}
               nextToken={q.data?.next_token}
+              isBusy={q.isPlaceholderData}
               onNext={(token) => pagination.next({ nextToken: token })}
           />
         <ScrollArrows />

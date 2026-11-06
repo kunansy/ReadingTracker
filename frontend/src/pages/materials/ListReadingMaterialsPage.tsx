@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -25,6 +25,7 @@ export function ListReadingMaterialsPage() {
 
   const q = useQuery({
     queryKey: ["materials", "reading", { nextToken, order: pagination.order }],
+    placeholderData: keepPreviousData,
     queryFn: () =>
       apiFetch<ListReadingMaterialsResponse>(
         `/reading${buildQuery({ next_token: nextToken, page_size: PAGE_SIZE, order: pagination.order })}`,
@@ -126,6 +127,7 @@ export function ListReadingMaterialsPage() {
       <PageNav
         pagination={pagination}
         nextToken={q.data?.next_token}
+        isBusy={q.isPlaceholderData}
         onNext={(token) => pagination.next({ nextToken: token })}
       />
       {stats.map((ms) => {
@@ -202,6 +204,7 @@ export function ListReadingMaterialsPage() {
       <PageNav
         pagination={pagination}
         nextToken={q.data?.next_token}
+        isBusy={q.isPlaceholderData}
         onNext={(token) => pagination.next({ nextToken: token })}
       />
 

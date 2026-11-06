@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
@@ -87,6 +87,7 @@ export function AddCardPage() {
 
   const notesQ = useQuery({
     queryKey: ["notes", "search", { materialId: notesMaterialId, nextToken: notesNextToken, order: notesPagination.order }],
+    placeholderData: keepPreviousData,
     queryFn: () =>
       notesApiFetch<NotesSearchResponse>(
         `/search${buildQuery({
@@ -202,6 +203,7 @@ export function AddCardPage() {
         <PageNav
           pagination={notesPagination}
           nextToken={notesQ.data?.next_token}
+          isBusy={notesQ.isPlaceholderData}
           onNext={(token) => notesPagination.next({ nextToken: token })}
         />
         <ul className="notes" id="notes-list">
@@ -238,6 +240,7 @@ export function AddCardPage() {
         <PageNav
           pagination={notesPagination}
           nextToken={notesQ.data?.next_token}
+          isBusy={notesQ.isPlaceholderData}
           onNext={(token) => notesPagination.next({ nextToken: token })}
         />
       </div>
