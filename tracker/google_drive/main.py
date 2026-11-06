@@ -3,7 +3,7 @@ import argparse
 import asyncio
 from pathlib import Path
 
-from tracker.google_drive import db, drive_api
+from tracker.google_drive import drive_api
 
 
 def parse_args() -> argparse.Namespace:
@@ -34,7 +34,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--get-last-dump",
-        help="Download the last backup from the Google Drive",
+        help="Download the last backup: .pgdump, or .json for legacy backups",
         action="store_true",
         dest="get_last_dump",
     )
@@ -49,9 +49,7 @@ async def main() -> None:
     elif args.restore:
         await drive_api.restore()
     elif args.get_last_dump:
-        dump = await drive_api.get_dump()
-        filepath = db.get_dump_filename(prefix="last_dump")
-        drive_api.dump_json(dump, filepath=filepath)
+        await drive_api.download_latest()
     elif dump_path := args.restore_offline:
         await drive_api.restore(dump_path=dump_path)
     elif args.backup_offline:
