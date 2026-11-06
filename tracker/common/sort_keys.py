@@ -39,8 +39,13 @@ def material_sort_key(*, added_at: datetime.datetime, material_id: UUID | str) -
     return join(added_at.strftime(DATETIME_FORMAT), str(material_id))
 
 
-def reading_log_sort_key(*, date: datetime.date, log_id: UUID | str) -> str:
-    return join(date.strftime(DATE_FORMAT), str(log_id))
+def reading_log_sort_key(
+    *,
+    material_id: UUID | str,
+    date: datetime.date,
+    log_id: UUID | str,
+) -> str:
+    return join(str(material_id), date.strftime(DATE_FORMAT), str(log_id))
 
 
 def card_sort_key(*, added_at: datetime.datetime, card_id: UUID | str) -> str:

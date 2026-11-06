@@ -508,8 +508,9 @@ async def completed_statistics_page(
         default_order=pagination.Order.DESC,
     )
 
+    statistics = await _get_materials_statistics(page.items)
     return pagination.Page(
-        items=await _get_materials_statistics(page.items),
+        items=statistics,
         next_token=page.next_token,
         total_count=page.total_count,
     )
@@ -555,8 +556,9 @@ async def reading_statistics_page(
         default_order=pagination.Order.DESC,
     )
 
+    statistics = await _get_materials_statistics(page.items)
     return pagination.Page(
-        items=await _get_materials_statistics(page.items),
+        items=statistics,
         next_token=page.next_token,
         total_count=page.total_count,
     )

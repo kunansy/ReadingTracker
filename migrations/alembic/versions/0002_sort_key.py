@@ -32,7 +32,9 @@ def _pad(expr: str) -> str:
 
 BACKFILL = {
     "materials": f"{_DATETIME.format(col='added_at')} || '$$' || material_id::text",
-    "reading_log": "to_char(date, 'YYYY-MM-DD') || '$$' || log_id::text",
+    "reading_log": (
+        "material_id::text || '$$' || to_char(date, 'YYYY-MM-DD') || '$$' || log_id::text"
+    ),
     "cards": f"{_DATETIME.format(col='added_at')} || '$$' || card_id::text",
     "notes": (
         "material_id::text"

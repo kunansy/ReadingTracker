@@ -7,6 +7,7 @@ from uuid import UUID
 
 import orjson
 import sqlalchemy.sql as sa
+from sqlalchemy import inspect
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
 from sqlalchemy.ext.compiler import compiles
@@ -20,6 +21,7 @@ from tracker.models import models
 
 PG_UNIQUE_VIOLATION: Final[str] = "23505"
 ALEMBIC_CONFIG: Final[str] = "alembic.ini"
+BASELINE_REVISION: Final[str] = "0001"
 
 
 class DatabaseException(Exception):
@@ -198,13 +200,37 @@ async def recreate_db() -> None:
         await create_repeat_notes_matview(conn)
 
 
-def _upgrade_db() -> None:
+async def _is_unversioned_db() -> bool:
+    # A separate engine: the caller runs its own event loop, and the
+    # gunicorn master must not hand pooled connections to forked workers.
+    migration_engine = create_async_engine(settings.DB_URI)
+    try:
+        async with migration_engine.connect() as conn:
+            tables = await conn.run_sync(
+                lambda sync_conn: set(inspect(sync_conn).get_table_names()),
+            )
+    finally:
+        await migration_engine.dispose()
+
+    return "alembic_version" not in tables and models.Materials.name in tables
+
+
+def migrate_db() -> None:
+    """Upgrade the schema to head; a database created before Alembic is stamped first.
+
+    Must be called outside a running event loop, alembic env.py starts its own.
+    """
     from alembic import command
     from alembic.config import Config
 
-    command.upgrade(Config(ALEMBIC_CONFIG), "head")
+    config = Config(ALEMBIC_CONFIG)
+    if asyncio.run(_is_unversioned_db()):
+        logger.info("Database has no alembic version, stamping %s", BASELINE_REVISION)
+        command.stamp(config, BASELINE_REVISION)
+
+    command.upgrade(config, "head")
+    logger.info("Database migrated to head")
 
 
 async def create_db() -> None:
-    # alembic env.py runs its own event loop
-    await asyncio.to_thread(_upgrade_db)
+    await asyncio.to_thread(migrate_db)

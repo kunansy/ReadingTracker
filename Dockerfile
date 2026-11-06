@@ -47,4 +47,5 @@ COPY /kafka ./kafka
 COPY /tracker ./tracker
 COPY VERSION ./VERSION
 COPY alembic.ini ./alembic.ini
+COPY gunicorn.conf.py ./gunicorn.conf.py
 COPY /migrations ./migrations

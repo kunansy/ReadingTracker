@@ -30,34 +30,6 @@ async def get_material_notes_json(material_id: UUID):
     }
 
 
-@router.post("/add", response_class=RedirectResponse)
-async def add_note(note: Annotated[schemas.Note, Form()]):
-    redirect_url = "/notes/add-view"
-    response = RedirectResponse(redirect_url, status_code=302)
-
-    for key, value in note.model_dump(
-        exclude={"content", "tags", "link_id", "title"},
-        exclude_none=True,
-    ).items():
-        response.set_cookie(key, value, expires=3600)
-
-    note_id = await db.insert_note(
-        material_id=note.material_id,
-        link_id=note.link_id,
-        title=note.title,
-        content=note.content,
-        chapter=note.chapter,
-        page=note.page,
-        tags=note.tags or [],
-    )
-
-    response.set_cookie("note_id", str(note_id), expires=5)
-    if material_type := await db.get_material_type(material_id=note.material_id):
-        response.set_cookie("material_type", material_type, expires=5)
-
-    return response
-
-
 @router.post("/update", response_class=RedirectResponse)
 async def update_note(note: Annotated[schemas.UpdateNote, Form()]):
     success = True

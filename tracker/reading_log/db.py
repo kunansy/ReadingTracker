@@ -80,7 +80,10 @@ async def list_log_records_page(
     stmt = _list_log_records_stmt(material_id=material_id)
     page_stmt = pagination.paginate(
         stmt,
-        cursor_expr=pagination.cursor(models.ReadingLog.c.sort_key),
+        cursor_expr=pagination.cursor(
+            pagination.date_part(models.ReadingLog.c.date),
+            models.ReadingLog.c.sort_key,
+        ),
         params=params,
         default_order=pagination.Order.DESC,
     )
@@ -260,7 +263,11 @@ async def insert_log_record(
     log_id = models.generate_id()
     values = {
         "log_id": log_id,
-        "sort_key": sort_keys.reading_log_sort_key(date=date, log_id=log_id),
+        "sort_key": sort_keys.reading_log_sort_key(
+            material_id=material_id,
+            date=date,
+            log_id=log_id,
+        ),
         "material_id": str(material_id),
         "count": count,
         "date": date,

@@ -91,31 +91,6 @@ async def update_note_view(note_id: UUID, request: Request, success: bool | None
 router = APIRouter(prefix="/notes", tags=["notes-legacy"], deprecated=True)
 
 
-@router.get("/add-view", response_class=HTMLResponse)
-async def add_note_view(request: Request, material_id: str | None = None):
-    material_id = material_id or request.cookies.get("material_id", "")
-
-    async with asyncio.TaskGroup() as tg:
-        get_titles_task = tg.create_task(db.get_material_titles())
-        get_tags_task = tg.create_task(db.get_sorted_tags(material_id=material_id))
-
-    context = {
-        "request": request,
-        "material_id": material_id,
-        "material_type": request.cookies.get(
-            "material_type",
-            enums.MaterialTypesEnum.book.name,
-        ),
-        "content": request.cookies.get("content", ""),
-        "page": request.cookies.get("page", ""),
-        "chapter": request.cookies.get("chapter", ""),
-        "note_id": request.cookies.get("note_id", ""),
-        "titles": get_titles_task.result(),
-        "tags": get_tags_task.result(),
-    }
-    return templates.TemplateResponse(request, "notes/add_note.html", context)
-
-
 @router.get("/graph", response_class=HTMLResponse)
 async def get_graph(request: Request, material_id: UUID | str | None = None):
     async with asyncio.TaskGroup() as tg:
