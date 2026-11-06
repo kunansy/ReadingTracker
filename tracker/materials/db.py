@@ -13,6 +13,7 @@ import sqlalchemy.sql as sa
 from pydantic import ConfigDict, computed_field, field_validator
 from sqlalchemy import Integer, Text
 from sqlalchemy.dialects import postgresql
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracker.common import database, pagination, schemas, settings, sort_keys
@@ -673,7 +674,12 @@ async def update_material(
     )
 
     async with database.session() as ses:
-        await ses.execute(stmt)
+        result = cast("CursorResult[Any]", await ses.execute(stmt))
+
+    if result.rowcount != 1:
+        msg = f"Material id={material_id!r} not found"
+        logger.info(msg)
+        raise database.NotFoundException(msg)
 
     logger.debug("Material updated")
 

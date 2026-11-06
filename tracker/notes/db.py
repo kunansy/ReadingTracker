@@ -12,6 +12,7 @@ import sqlalchemy.sql as sa
 from fastapi.encoders import jsonable_encoder
 from pydantic import field_serializer, field_validator
 from pyvis.network import Network
+from sqlalchemy.engine import CursorResult
 
 from tracker.common import database, pagination, settings, sort_keys
 from tracker.common.logger import logger
@@ -429,7 +430,12 @@ async def update_note(
     stmt = models.Notes.update().values(values).where(models.Notes.c.note_id == note_id)
 
     async with database.session() as ses:
-        await ses.execute(stmt)
+        result = cast("CursorResult[Any]", await ses.execute(stmt))
+
+    if result.rowcount != 1:
+        msg = f"Note id={note_id!r} not found"
+        logger.info(msg)
+        raise database.NotFoundException(msg)
 
     logger.debug("Note updated")
 
@@ -439,7 +445,12 @@ async def _del_or_restore(*, note_id: UUID, is_deleted: bool) -> None:
     stmt = models.Notes.update().values(values).where(models.Notes.c.note_id == note_id)
 
     async with database.session() as ses:
-        await ses.execute(stmt)
+        result = cast("CursorResult[Any]", await ses.execute(stmt))
+
+    if result.rowcount != 1:
+        msg = f"Note id={note_id!r} not found"
+        logger.info(msg)
+        raise database.NotFoundException(msg)
 
 
 async def delete_note(*, note_id: UUID) -> None:

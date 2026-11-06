@@ -119,6 +119,26 @@ async def test_delete_restore_note():
     assert await db.get_note(note_id=note_id) is not None
 
 
+async def test_update_note_not_found():
+    with pytest.raises(database.NotFoundException):
+        await db.update_note(
+            note_id=uuid.uuid4(),
+            material_id=uuid.uuid4(),
+            link_id=None,
+            title=None,
+            content="content",
+            page=1,
+            chapter="1",
+            tags=[],
+        )
+
+
+@pytest.mark.parametrize("fn", [db.delete_note, db.restore_note])
+async def test_delete_restore_note_not_found(fn):
+    with pytest.raises(database.NotFoundException):
+        await fn(note_id=uuid.uuid4())
+
+
 @pytest.mark.parametrize(
     "note_id",
     [
