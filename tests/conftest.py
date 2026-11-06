@@ -26,3 +26,21 @@ async def mock_trans(**kwargs) -> AsyncGenerator[AsyncSession, None]:
             await t.rollback()
     finally:
         await new_session.close()
+
+
+@pytest.fixture
+async def shared_session(mocker) -> AsyncGenerator[AsyncSession, None]:
+    """Route every database.session() through one transaction rolled back after the test."""
+    ses = AsyncSession(bind=database.engine)
+    try:
+        async with ses.begin() as trans:
+
+            @asynccontextmanager
+            async def _session(**_kwargs) -> AsyncGenerator[AsyncSession, None]:
+                yield ses
+
+            mocker.patch("tracker.common.database.session", _session)
+            yield ses
+            await trans.rollback()
+    finally:
+        await ses.close()

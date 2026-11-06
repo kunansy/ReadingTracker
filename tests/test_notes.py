@@ -7,7 +7,7 @@ import pytest
 import sqlalchemy.sql as sa
 
 from tests.conftest import mock_trans
-from tracker.common import database
+from tracker.common import database, sort_keys
 from tracker.models import enums, models
 from tracker.notes import db
 
@@ -131,6 +131,35 @@ async def test_update_note_not_found():
             chapter="1",
             tags=[],
         )
+
+
+async def test_update_note_rewrites_sort_key(shared_session):
+    note = (
+        await shared_session.execute(
+            sa.select(models.Notes.c.note_id, models.Notes.c.material_id).limit(1),
+        )
+    ).one()
+
+    await db.update_note(
+        note_id=note.note_id,
+        material_id=note.material_id,
+        link_id=None,
+        title=None,
+        content="content",
+        page=1234,
+        chapter="Chapter 77",
+        tags=[],
+    )
+
+    stored = await shared_session.scalar(
+        sa.select(models.Notes.c.sort_key).where(models.Notes.c.note_id == note.note_id),
+    )
+    assert stored == sort_keys.note_sort_key(
+        material_id=note.material_id,
+        chapter="Chapter 77",
+        page=1234,
+        note_id=note.note_id,
+    )
 
 
 @pytest.mark.parametrize("fn", [db.delete_note, db.restore_note])
