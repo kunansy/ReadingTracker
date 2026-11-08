@@ -22,16 +22,21 @@ async def _kafka_producer() -> AsyncIterator[AIOKafkaProducer]:
         async with asyncio.timeout(settings.KAFKA_CONNECT_TIMEOUT):
             await producer.start()
     except (errors.KafkaError, TimeoutError) as exc:
+        await _stop(producer)
         raise KafkaSendError(f"Could not connect to kafka: {exc!r}") from exc
 
     try:
         yield producer
     finally:
-        try:
-            async with asyncio.timeout(settings.KAFKA_CONNECT_TIMEOUT):
-                await producer.stop()
-        except (errors.KafkaError, TimeoutError):
-            logger.exception("Could not stop kafka producer")
+        await _stop(producer)
+
+
+async def _stop(producer: AIOKafkaProducer) -> None:
+    try:
+        async with asyncio.timeout(settings.KAFKA_CONNECT_TIMEOUT):
+            await producer.stop()
+    except errors.KafkaError, TimeoutError:
+        logger.exception("Could not stop kafka producer")
 
 
 async def _send_one(key: str, value: str, *, topic: str) -> None:

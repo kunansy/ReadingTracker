@@ -1,6 +1,7 @@
 import asyncio
 import datetime
-from collections.abc import AsyncIterable
+from collections.abc import AsyncGenerator
+from contextlib import aclosing
 from uuid import UUID
 
 import orjson
@@ -63,7 +64,7 @@ class Record(CustomBaseModel):
         return not self.after or self.after.is_deleted
 
 
-async def iter_updates() -> AsyncIterable[Record]:
+async def iter_updates() -> AsyncGenerator[Record]:
     consumer = AIOKafkaConsumer(
         settings.KAFKA_CACHE_NOTES_TOPIC,
         bootstrap_servers=settings.KAFKA_URL,
@@ -98,15 +99,7 @@ async def _to_notify(payload: Record) -> None:
         return
 
     logger.info("To notify: note_id=%s", payload.note_id)
-    try:
-        await kafka.repeat_note(payload.note_id)
-    except kafka.KafkaSendError as exc:
-        logger.error(
-            "Could not notify, notification dropped: note_id=%s, %s",
-            payload.note_id,
-            exc,
-        )
-        return
+    await kafka.repeat_note(payload.note_id)
     logger.info("Sent")
 
 
@@ -126,11 +119,12 @@ async def _to_search_engine(payload: Record) -> None:
 
 
 async def parse():
-    async for msg in iter_updates():
-        await _to_search_engine(msg)
+    async with aclosing(iter_updates()) as updates:
+        async for msg in updates:
+            await _to_search_engine(msg)
 
-        if settings.EX_ENABLE_KAFKA_TO_NOTIFY:
-            await _to_notify(msg)
+            if settings.EX_ENABLE_KAFKA_TO_NOTIFY:
+                await _to_notify(msg)
 
 
 if __name__ == "__main__":

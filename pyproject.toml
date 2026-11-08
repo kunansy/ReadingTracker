@@ -36,8 +36,6 @@ ignore = [
 "tracker/models/models.py" = ["N802", "ANN002"]
 # return type for routes
 "tracker/api/v1/*.py" = ["ANN201"]
-"tracker/materials/spa.py" = ["ANN201"]
-"tracker/notes/spa.py" = ["ANN201"]
 "tracker/notes/listing.py" = ["ANN201"]
 "tracker/main.py" = ["ANN201"]
 # == True for sql
