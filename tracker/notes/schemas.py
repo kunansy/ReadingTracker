@@ -185,13 +185,6 @@ class AddNoteResponse(CustomBaseModel):
     note_id: UUID
 
 
-class UpdateNote(Note):
-    note_id: UUID
-
-    def get_material_id(self) -> str:
-        return str(self.material_id)
-
-
 class UpdateNoteRequest(CustomBaseModel):
     material_id: UUID
     link_id: UUID | None
@@ -212,11 +205,6 @@ class SearchParams(CustomBaseModel):
             return set()
 
         return {tag.strip() for tag in tags_query.split() if tag.strip()}
-
-
-class IsNoteDeletedResponse(CustomBaseModel):
-    note_id: UUID
-    is_deleted: bool
 
 
 class NoteJson(CustomBaseModel):
@@ -254,11 +242,6 @@ class AutocompletionResponse(CustomBaseModel):
             .replace("\r", "")
             for variant in autocompletions
         ]
-
-
-class GetMaterialNotes(CustomBaseModel):
-    notes: list[NoteJson]
-    material_id: UUID
 
 
 class NoteTagsResponse(CustomBaseModel):

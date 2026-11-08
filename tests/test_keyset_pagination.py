@@ -260,8 +260,9 @@ async def test_note_links_pages():
         page_size=1,
     )
 
-    expected = await notes_db.get_links_from(note_id=link_id)
-    assert [note.note_id for note in items] == [note.note_id for note in expected]
+    links_stmt = notes_db._get_note_stmt(link_id=link_id)
+    expected = await _ids(links_stmt.with_only_columns(links_stmt.selected_columns.note_id))
+    assert [note.note_id for note in items] == expected
 
 
 @pytest.mark.parametrize("page_size", PAGE_SIZES)

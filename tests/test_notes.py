@@ -8,24 +8,9 @@ import sqlalchemy.sql as sa
 
 from tests.conftest import mock_trans
 from tracker.common import database, sort_keys
+from tracker.common.pagination import MAX_PAGE_SIZE, PageParams
 from tracker.models import enums, models
 from tracker.notes import db
-
-
-async def test_get_material_type():
-    result = await db.get_material_type(
-        material_id="ab4d33f3-7602-4fde-afe8-d3fe5876867b",
-    )
-
-    assert result == enums.MaterialTypesEnum.audiobook.name
-
-
-async def test_get_material_type_not_found():
-    result = await db.get_material_type(
-        material_id="4c753160-3363-47f5-b888-3574809592b0",
-    )
-
-    assert result is None
 
 
 async def test_get_material_types():
@@ -286,11 +271,14 @@ async def test_get_sorted_tags_without_material():
         ("a5386aee-a186-4e6f-abaa-63853c75cce4", []),
     ],
 )
-async def test_get_links_from(note_id, expected):
+async def test_get_links_from_page(note_id, expected):
     expected_notes = [await db.get_note(note_id=exp_note_id) for exp_note_id in expected]
 
-    result = await db.get_links_from(note_id=UUID(note_id))
-    assert result == expected_notes
+    result = await db.get_links_from_page(
+        note_id=UUID(note_id),
+        params=PageParams(page_size=MAX_PAGE_SIZE),
+    )
+    assert result.items == expected_notes
 
 
 @pytest.mark.parametrize(
@@ -382,36 +370,3 @@ async def test_insert_note(mocker, material_id, link_id, title, content, chapter
 
     assert old_notes_count == await db.get_all_notes_count()
 
-
-async def test_is_deleted_false():
-    notes = await db.get_notes()
-    assert len(notes) > 0
-
-    note = random.choice(notes)
-
-    is_deleted = await db.is_deleted(note.note_id)
-    assert not is_deleted
-
-
-async def test_is_deleted_true():
-    deleted_notes_stmt = (sa.select(models.Notes.c.note_id)
-                     .where(models.Notes.c.is_deleted))
-
-    async with database.session() as ses:
-        deleted_notes = (await ses.execute(deleted_notes_stmt)).all()
-
-    assert len(deleted_notes) > 0
-    note_id, = random.choice(deleted_notes)
-
-    is_deleted = await db.is_deleted(note_id)
-    assert is_deleted
-
-
-async def test_is_deleted_not_found():
-    id = str(uuid.uuid4())
-
-    with pytest.raises(database.DatabaseException) as e:
-        await db.is_deleted(id)
-
-    assert e.type is database.DatabaseException
-    assert str(e.value) == f"Note id={id} not found"

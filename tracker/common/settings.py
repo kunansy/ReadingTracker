@@ -29,17 +29,6 @@ TRACKER_URL = env(
     validate=lambda url: not url.endswith("/"),
 )
 
-DEBUG_MODE = env.bool("DEBUG_MODE", False)
-
-APP_SPA_ENABLED = env.bool("APP_SPA_ENABLED", False)
-
-with env.prefixed("CACHE_"):
-    _CACHE_URL = env("URL", "keydb://tracker-cache")
-    _CACHE_PORT = env.int("PORT", 6379)
-    CACHE_PASSWORD = env("PASSWORD")
-
-CACHE_URL = f"{_CACHE_URL}:{_CACHE_PORT}"
-
 with env.prefixed("API_"):
     API_DEBUG = env.bool("DEBUG", False)
 

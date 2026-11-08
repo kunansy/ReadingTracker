@@ -9,9 +9,6 @@ x-search-img: &search-img
 x-backup-img: &backup-img
   image: kunansy/fast-backup:0.6.0
 
-x-cache-img: &cache-img
-  image: eqalpha/keydb:arm64_v6.3.4
-
 x-tracker-img: &tracker-img
   image: kunansy/reading_tracker:281
 
@@ -93,32 +90,6 @@ services:
         max-file: "3"
         compress: "true"
 
-#  tracker-cache:
-#    <<: *cache-img
-#    container_name: tracker-cache
-#    restart: always
-#    env_file: .env
-#    command: >
-#      --requirepass ${CACHE_PASSWORD}
-#      --server-threads 4
-#    networks:
-#      - tracker-net
-#    ports:
-#      - "127.0.0.1:${CACHE_PORT}:6379"
-#    volumes:
-#      - cache-volume:/data
-#    healthcheck:
-#      test: ["CMD-SHELL", "keydb-cli ping || exit 1"]
-#      interval: 5s
-#      timeout: 3s
-#      retries: 3
-#    logging:
-#      driver: json-file
-#      options:
-#        max-size: "1m"
-#        max-file: "3"
-#        compress: "true"
-
   tracker-app:
     <<: *tracker-img
     container_name: tracker-app
@@ -170,7 +141,6 @@ services:
 volumes:
   database-volume:
   manticore-data:
-  cache-volume:
 
 networks:
   tracker-net:

@@ -3,6 +3,7 @@ import uuid
 import pytest
 from pydantic import ValidationError
 
+from tracker.common import settings
 from tracker.models.models import MAX_CHAPTER_LENGTH
 from tracker.notes import schemas
 from tracker.notes.db import Note as NoteDb
@@ -227,6 +228,34 @@ def test_replace_up_index(string, expected):
 )
 def test_mark_tags_with_ref(text, tags, expected):
     assert NoteDb._mark_tags_with_ref(text, tags) == expected
+
+
+def _note(link_id: uuid.UUID | None) -> NoteDb:
+    return NoteDb(
+        note_id=uuid.uuid4(),
+        link_id=link_id,
+        material_id=uuid.uuid4(),
+        content="content",
+        added_at="2026-01-01T00:00:00",
+        chapter="1",
+        page=1,
+        tags=set(),
+        is_deleted=False,
+        note_number=1,
+    )
+
+
+def test_link_html_points_to_spa_note_page():
+    link_id = uuid.uuid4()
+
+    assert _note(link_id).link_html == (
+        f'<a class="link-ref" href={settings.TRACKER_URL}/notes/{link_id} '
+        f'target="_blank">[[{link_id}]]</a>'
+    )
+
+
+def test_link_html_is_empty_without_link():
+    assert _note(None).link_html == ""
 
 
 CHAPTER_REQUESTS = [
