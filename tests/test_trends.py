@@ -7,6 +7,8 @@ import sqlalchemy.sql as sa
 from tracker.common import database, settings
 from tracker.models import models
 from tracker.system import trends
+from tests.material_factory import start_material
+from tracker.materials import db as materials_db
 
 
 @pytest.mark.parametrize("size", [1, 6, 7, 34])
@@ -280,3 +282,18 @@ def test_time_span_wrong_span_size():
         trends.TimeSpan(start=today - datetime.timedelta(days=1), stop=today, span_size=1)
 
     assert str(e.value).startswith("Wrong span got")
+
+
+async def test_completed_materials_statistics_counts_a_new_completion(shared_session):
+    def amount(stat: trends.SpanStatistics, date: datetime.date) -> int:
+        return next(day.amount for day in stat.data if day.date == date)
+
+    before = await trends.get_span_completed_materials_statistics(span_size=7)
+    await start_material()
+    material_id, _ = await start_material()
+    await materials_db.complete_material(material_id=material_id, completed_at=before.stop)
+
+    after = await trends.get_span_completed_materials_statistics(span_size=7)
+
+    assert amount(after, before.stop) == amount(before, before.stop) + 1
+    assert after.total == before.total + 1

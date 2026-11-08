@@ -114,7 +114,7 @@ async def get_completion_dates() -> dict[UUID | None, datetime.datetime]:
     stmt = sa.select(
         models.Materials.c.material_id,
         models.Materials.c.completed_at,
-    ).where(models.Materials.c.completed_at != None)
+    ).where(models.MATERIAL_IS_COMPLETED)
 
     async with database.session() as ses:
         dates = {  # noqa: C416

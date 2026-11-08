@@ -80,8 +80,8 @@ def _fold_legacy_statuses(dump_data: DUMP_TYPE) -> DUMP_TYPE:
     folded_materials = [
         {
             **material,
-            "started_at": status.get("started_at"),
-            "completed_at": status.get("completed_at"),
+            "started_at": status.get("started_at", material.get("started_at")),
+            "completed_at": status.get("completed_at", material.get("completed_at")),
         }
         for material in materials
         for status in [status_by_material.get(material["material_id"], no_status)]

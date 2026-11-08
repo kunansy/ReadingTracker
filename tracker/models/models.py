@@ -87,6 +87,14 @@ Materials = Table(
     UniqueConstraint("index", name="uix_materials_index", deferrable=True),
 )
 
+MATERIAL_IS_QUEUED: Final = Materials.c.started_at.is_(None)
+MATERIAL_IS_STARTED: Final = Materials.c.started_at.is_not(None)
+MATERIAL_IS_COMPLETED: Final = Materials.c.completed_at.is_not(None)
+MATERIAL_IS_READING: Final = sqlalchemy.and_(
+    MATERIAL_IS_STARTED,
+    sqlalchemy.not_(MATERIAL_IS_COMPLETED),
+)
+
 ReadingLog = Table(
     "reading_log",
     metadata,

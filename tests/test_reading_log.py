@@ -9,6 +9,7 @@ import sqlalchemy.sql as sa
 from tracker.common import database
 from tracker.models import models
 from tracker.reading_log import db
+from tests.material_factory import complete_material, insert_material, start_material
 
 
 @pytest.mark.parametrize(
@@ -109,3 +110,45 @@ async def test_insert_log_record():
         await ses.execute(del_stmt)
 
         assert not (await ses.execute(stmt)).one_or_none()
+
+
+async def test_get_completion_dates_includes_only_completed(shared_session):
+    reading_id, _ = await start_material()
+    completed_id, completed_at = await complete_material()
+
+    dates = await db.get_completion_dates()
+
+    assert reading_id not in dates
+    assert dates[completed_id].date() == completed_at
+
+
+@pytest.mark.parametrize("state", ["queued", "completed"])
+async def test_check_record_correct_rejects_not_reading_material(shared_session, state):
+    if state == "queued":
+        material_id = await insert_material()
+    else:
+        material_id, _ = await complete_material()
+
+    with pytest.raises(ValueError, match="No reading material"):
+        await db.check_record_correct(
+            material_id=material_id,
+            date=database.utcnow().date(),
+            count=1,
+        )
+
+
+async def test_check_record_correct_rejects_date_before_start(shared_session):
+    material_id, started_at = await start_material()
+
+    with pytest.raises(ValueError, match="Date is not inside the range"):
+        await db.check_record_correct(
+            material_id=material_id,
+            date=started_at - datetime.timedelta(days=1),
+            count=1,
+        )
+
+
+async def test_check_record_correct_accepts_reading_material(shared_session):
+    material_id, started_at = await start_material()
+
+    await db.check_record_correct(material_id=material_id, date=started_at, count=1)

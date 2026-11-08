@@ -72,6 +72,7 @@ _CLIENT_DATABASE_ERRORS: dict[type[database.DatabaseException], tuple[int, str]]
     database.InvalidNextTokenException: (422, "InvalidNextToken"),
     database.AlreadyExistsException: (409, "AlreadyExistsError"),
     database.NotFoundException: (404, "NotFoundError"),
+    database.ConflictException: (409, "ConflictError"),
 }
 
 

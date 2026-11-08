@@ -144,20 +144,6 @@ UPDATES = {
         ),
         "Material",
     ),
-    "start_material": (
-        lambda material_id: materials_db.start_material(
-            material_id=material_id,
-            started_at=datetime.date(2026, 1, 1),
-        ),
-        "Not started material",
-    ),
-    "complete_material": (
-        lambda material_id: materials_db.complete_material(
-            material_id=material_id,
-            completed_at=datetime.date(2026, 1, 1),
-        ),
-        "Reading material",
-    ),
     "outline_material": (
         lambda material_id: materials_db.outline_material(material_id=material_id),
         "Material",
@@ -181,3 +167,32 @@ async def test_set_material_index_that_matches_no_rows_raises_not_found():
             index=1,
             conn=_ZeroRowcountSession(),  # type: ignore[arg-type]
         )
+
+
+STATE_TRANSITIONS = {
+    "start_material": (
+        lambda material_id: materials_db.start_material(
+            material_id=material_id,
+            started_at=datetime.date(2026, 1, 1),
+        ),
+        "is not in the queue",
+    ),
+    "complete_material": (
+        lambda material_id: materials_db.complete_material(
+            material_id=material_id,
+            completed_at=datetime.date(2026, 1, 1),
+        ),
+        "is not being read",
+    ),
+}
+
+
+@pytest.mark.parametrize("case", STATE_TRANSITIONS.values(), ids=STATE_TRANSITIONS.keys())
+async def test_state_transition_that_matches_no_rows_raises_conflict(
+    zero_rowcount_session,
+    case,
+):
+    call, reason = case
+
+    with pytest.raises(database.ConflictException, match=reason):
+        await call(uuid.uuid4())

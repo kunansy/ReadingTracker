@@ -13,7 +13,7 @@ import sqlalchemy.sql as sa
 from pydantic import ConfigDict, computed_field, field_validator
 from sqlalchemy import Integer, Text
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.engine import Row
+from sqlalchemy.engine import Result, Row
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracker.common import database, pagination, schemas, settings, sort_keys
@@ -163,7 +163,7 @@ async def get_materials() -> list[Material]:
 def _get_free_materials_stmt() -> sa.Select:
     return (
         sa.select(models.Materials)
-        .where(models.Materials.c.started_at == None)
+        .where(models.MATERIAL_IS_QUEUED)
         .order_by(models.Materials.c.index)
     )
 
@@ -204,8 +204,7 @@ def _get_reading_materials_stmt() -> sa.Select:
             reading_logs_cte.c.material_id == models.Materials.c.material_id,
             isouter=True,
         )
-        .where(models.Materials.c.started_at != None)
-        .where(models.Materials.c.completed_at == None)
+        .where(models.MATERIAL_IS_READING)
         .order_by(reading_logs_cte.c.date.desc())
     )
 
@@ -218,7 +217,7 @@ def _get_completed_materials_stmt(
 ) -> sa.Select:
     stmt = (
         sa.select(models.Materials)
-        .where(models.Materials.c.completed_at != None)
+        .where(models.MATERIAL_IS_COMPLETED)
         .order_by(models.Materials.c.completed_at)
     )
     if material_type:
@@ -612,26 +611,25 @@ async def start_material(
     started_at = started_at or database.utcnow().date()
     logger.debug("Starting material_id=%s", material_id)
 
-    if started_at > database.utcnow().date():
-        raise ValueError("Start date must be less than today")
-
     stmt = (
         models.Materials.update()
         .values(started_at=started_at)
         .where(models.Materials.c.material_id == material_id)
-        .where(models.Materials.c.started_at == None)
+        .where(models.MATERIAL_IS_QUEUED)
     )
 
     async with database.session() as ses:
         result = await ses.execute(stmt)
 
-    database.check_updated_one(
-        result,
-        entity="Not started material",
-        entity_id=material_id,
-    )
+    _check_state_changed(result, msg=f"Material id={material_id!r} is not in the queue")
 
     logger.debug("Material started")
+
+
+def _check_state_changed(result: Result[Any], *, msg: str) -> None:
+    if database.affected_rows(result) != 1:
+        logger.info(msg)
+        raise database.ConflictException(msg)
 
 
 async def is_completion_request_valid(
@@ -673,18 +671,13 @@ async def complete_material(
         models.Materials.update()
         .values(completed_at=completed_at)
         .where(models.Materials.c.material_id == material_id)
-        .where(models.Materials.c.started_at != None)
-        .where(models.Materials.c.completed_at == None)
+        .where(models.MATERIAL_IS_READING)
     )
 
     async with database.session() as ses:
         result = await ses.execute(stmt)
 
-    database.check_updated_one(
-        result,
-        entity="Reading material",
-        entity_id=material_id,
-    )
+    _check_state_changed(result, msg=f"Material id={material_id!r} is not being read")
 
     logger.debug("Material completed at %s", completed_at)
 
@@ -834,7 +827,7 @@ async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
             models.Repeats.c.material_id == models.Materials.c.material_id,
             isouter=True,
         )
-        .where(models.Materials.c.started_at != None)
+        .where(models.MATERIAL_IS_STARTED)
         .group_by(models.Materials.c.material_id)
     )
 
@@ -909,7 +902,7 @@ def _get_repeating_queue_stmt(*, is_outlined: bool) -> tuple[sa.Select, sa.Colum
         )
         .join(notes, notes.c.material_id == models.Materials.c.material_id, isouter=True)
         .join(cards, cards.c.material_id == models.Materials.c.material_id, isouter=True)
-        .where(models.Materials.c.completed_at != None)
+        .where(models.MATERIAL_IS_COMPLETED)
         # skip materials without notes and notwithstanding outlined
         .where(~(models.Materials.c.is_outlined & (notes_count == 0)))
         # at least a month of priority
@@ -972,7 +965,7 @@ async def get_repeating_queue_page(
 async def get_queue_start() -> int:
     stmt = (
         sa.select(models.Materials.c.index)
-        .where(models.Materials.c.started_at == None)
+        .where(models.MATERIAL_IS_QUEUED)
         .order_by(models.Materials.c.index)
         .limit(1)
     )
@@ -984,7 +977,7 @@ async def get_queue_start() -> int:
 async def get_queue_end() -> int:
     stmt = (
         sa.select(models.Materials.c.index)
-        .where(models.Materials.c.started_at == None)
+        .where(models.MATERIAL_IS_QUEUED)
         .order_by(models.Materials.c.index.desc())
         .limit(1)
     )
@@ -1126,8 +1119,7 @@ async def is_reading(*, material_id: UUID) -> bool:
         sa.select(sa.func.count(1) == 1)  # type: ignore[arg-type]
         .select_from(models.Materials)
         .where(models.Materials.c.material_id == material_id)
-        .where(models.Materials.c.started_at != None)
-        .where(models.Materials.c.completed_at == None)
+        .where(models.MATERIAL_IS_READING)
     )
 
     async with database.session() as ses:
@@ -1232,7 +1224,7 @@ async def get_read_material_titles() -> dict[UUID, str]:
     logger.debug("Getting read material titles")
 
     stmt = sa.select(models.Materials.c.material_id, models.Materials.c.title).where(
-        models.Materials.c.started_at != None,
+        models.MATERIAL_IS_STARTED,
     )
 
     async with database.session() as ses:
@@ -1248,10 +1240,8 @@ async def get_reading_material_titles() -> dict[UUID, str]:
     """Get titles for materials reading now."""
     logger.debug("Getting reading material titles")
 
-    stmt = (
-        sa.select(models.Materials.c.material_id, models.Materials.c.title)
-        .where(models.Materials.c.started_at != None)
-        .where(models.Materials.c.completed_at == None)
+    stmt = sa.select(models.Materials.c.material_id, models.Materials.c.title).where(
+        models.MATERIAL_IS_READING,
     )
 
     async with database.session() as ses:
