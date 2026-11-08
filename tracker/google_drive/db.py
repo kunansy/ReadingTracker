@@ -42,12 +42,14 @@ class DBSnapshot(NamedTuple):
         tables = []
         for table_name, values in _fold_legacy_statuses(dump_data).items():
             date_columns = _date_columns(table_name)
+            dropped_columns = _dropped_columns(table_name, values)
             rows = [
                 {
                     key: _parse_date(value, date_columns[key])
                     if key in date_columns
                     else value
                     for key, value in row.items()
+                    if key not in dropped_columns
                 }
                 for row in values
             ]
@@ -101,6 +103,18 @@ def _fold_status(
         "started_at": status.get("started_at", material.get("started_at")),
         "completed_at": status.get("completed_at", material.get("completed_at")),
     }
+
+
+def _dropped_columns(
+    table_name: str,
+    rows: list[dict[str, JSON_FIELD_TYPES]],
+) -> frozenset[str]:
+    """Columns of a known table that legacy dumps carry but the schema no longer has."""
+    if (table := TABLES.get(table_name)) is None:
+        return frozenset()
+
+    dumped = {key for row in rows for key in row}
+    return frozenset(dumped - set(table.columns.keys()))
 
 
 def _date_columns(table_name: str) -> dict[str, type[datetime.date]]:
@@ -201,15 +215,4 @@ async def set_notes_seq_value(notes: TableSnapshot, conn: AsyncSession) -> None:
         table_name=model.name,
         field_name=model.c.note_number.name,
         rows=notes,
-    )
-
-
-async def set_materials_seq_value(materials: TableSnapshot, conn: AsyncSession) -> None:
-    model = models.Materials
-
-    await _set_seq_value(
-        conn=conn,
-        table_name=model.name,
-        field_name=model.c.index.name,
-        rows=materials,
     )

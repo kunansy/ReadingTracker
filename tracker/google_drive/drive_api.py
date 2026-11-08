@@ -67,9 +67,6 @@ async def _restore_legacy(dump: dict[str, Any]) -> None:
         logger.debug("Set notes sequence value")
         await db.set_notes_seq_value(snapshot_dict["notes"], ses)
 
-        logger.debug("Set materials sequence value")
-        await db.set_materials_seq_value(snapshot_dict["materials"], ses)
-
         logger.debug("Creating repeat notes material view")
         await database.create_repeat_notes_matview(ses)
 

@@ -124,6 +124,18 @@ def test_from_dump_keeps_material_dates_without_matching_legacy_status():
     assert material["completed_at"] == datetime.datetime(2024, 2, 5)  # noqa: DTZ001
 
 
+def test_from_dump_drops_columns_missing_from_schema():
+    dump = {
+        "materials": [{"material_id": MATERIAL_ID, "index": 1}],
+        "unknown_table": [{"index": 1}],
+    }
+
+    snapshot = DBSnapshot.from_dump(dump).to_dict()
+
+    assert snapshot["materials"].rows == [{"material_id": MATERIAL_ID}]
+    assert snapshot["unknown_table"].rows == [{"index": 1}]
+
+
 async def test_restore_legacy_dump_folds_statuses_into_materials(shared_session):
     material_id = str(uuid.uuid4())
     added_at = "2024-01-01 00:00:00"

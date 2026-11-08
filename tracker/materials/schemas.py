@@ -22,7 +22,6 @@ class GetMaterialItem(CustomBaseModel):
     link: HttpUrl | None = None
     added_at: datetime.datetime
     is_outlined: bool
-    index: PositiveInt
 
 
 class MaterialEstimate(CustomBaseModel):
@@ -158,21 +157,12 @@ class IsMaterialReadingResponse(CustomBaseModel):
     is_reading: bool
 
 
-class GetQueueEdgeResponse(CustomBaseModel):
-    index: PositiveInt
-
-
 class GetMaterialTagsResponse(CustomBaseModel):
     tags: set[str]
 
 
 class GetAuthorsResponse(CustomBaseModel):
     authors: typing.Iterable[str]
-
-
-class SwapOrderRequest(CustomBaseModel):
-    material_id: UUID
-    index: int
 
 
 class StartMaterialRequest(CustomBaseModel):

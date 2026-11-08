@@ -48,17 +48,6 @@ export function ListMaterialsQueuePage() {
     },
   });
 
-  const swapMut = useMutation({
-    mutationFn: (p: { material_id: string; index: number }) =>
-      apiFetch("/queue/swap-order", {
-        method: "POST",
-        body: JSON.stringify(p),
-      }),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["materials"] });
-    },
-  });
-
   const setToday = () => {
     setDateStr(dateInputValue());
   };
@@ -84,71 +73,21 @@ export function ListMaterialsQueuePage() {
   }, []);
 
   const onQueueContextMenu = useCallback(
-    async (e: React.MouseEvent, materialId: string, index: number) => {
+    (e: React.MouseEvent, materialId: string) => {
       e.preventDefault();
       close();
-      const [start, end] = await Promise.all([
-        apiFetch<{ index: number }>("/queue/start"),
-        apiFetch<{ index: number }>("/queue/end"),
-      ]);
-      if (!start || !end) {
-        return;
-      }
-      const queueStart = start.index;
-      const queueEnd = end.index;
-      const items: { label: string; action: () => Promise<void> }[] = [
+      open(e.clientX, e.clientY, [
         {
           label: "Edit",
-          action: async () => {
+          action: () => {
             navigate(`/materials/update?material_id=${materialId}`, {
               state: { from: location.pathname + location.search },
-            })
+            });
           },
         },
-      ];
-      if (index > queueStart) {
-        items.push({
-          label: "Move top",
-          action: async () => {
-            await swapMut.mutateAsync({
-              material_id: materialId,
-              index: queueStart,
-            });
-          },
-        });
-        items.push({
-          label: "Move upper",
-          action: async () => {
-            await swapMut.mutateAsync({
-              material_id: materialId,
-              index: index - 1,
-            });
-          },
-        });
-      }
-      if (index < queueEnd) {
-        items.push({
-          label: "Move lower",
-          action: async () => {
-            await swapMut.mutateAsync({
-              material_id: materialId,
-              index: index + 1,
-            });
-          },
-        });
-        items.push({
-          label: "Move bottom",
-          action: async () => {
-            await swapMut.mutateAsync({
-              material_id: materialId,
-              index: queueEnd,
-            });
-          },
-        });
-      }
-      open(e.clientX, e.clientY, items);
+      ]);
     },
-    [close, open, swapMut],
+    [close, navigate, open],
   );
 
   if (q.isLoading) {
@@ -179,10 +118,7 @@ export function ListMaterialsQueuePage() {
             key={material.material_id}
             className="material hover queue-item"
             id={material.material_id}
-            data-index={String(material.index)}
-            onContextMenu={(e) =>
-              void onQueueContextMenu(e, material.material_id, material.index)
-            }
+            onContextMenu={(e) => onQueueContextMenu(e, material.material_id)}
           >
             <p className="little-text">
               {" "}

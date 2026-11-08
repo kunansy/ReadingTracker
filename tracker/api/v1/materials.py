@@ -162,18 +162,6 @@ async def list_materials_with_cards():
     }
 
 
-@router.get("/queue/start", response_model=schemas.GetQueueEdgeResponse)
-async def get_queue_start():
-    index = await db.get_queue_start()
-    return {"index": index}
-
-
-@router.get("/queue/end", response_model=schemas.GetQueueEdgeResponse)
-async def get_queue_end():
-    index = await db.get_queue_end()
-    return {"index": index}
-
-
 @router.get("/is-reading", response_model=schemas.IsMaterialReadingResponse)
 async def is_material_reading(material_id: UUID):
     is_reading = await db.is_reading(material_id=material_id)
@@ -287,10 +275,6 @@ async def start_material(
             detail="Start date must not be in the future",
         )
 
-    # TODO: rearch queue model
-    if material.index != (queue_start := await db.get_queue_start()):
-        await db.swap_order(material_id, queue_start)
-
     await db.start_material(material_id=material_id, started_at=body.started_at)
 
 
@@ -336,8 +320,3 @@ async def get_material_completion_info(material_id: UUID):
         "pages_read": sum(record.count for record in reading_logs),
         "read_days": len(reading_logs),
     }
-
-
-@router.post("/queue/swap-order", status_code=204)
-async def swap_order(body: schemas.SwapOrderRequest):
-    await db.swap_order(body.material_id, body.index)

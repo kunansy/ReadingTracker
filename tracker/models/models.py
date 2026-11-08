@@ -81,11 +81,8 @@ Materials = Table(
     Column("is_outlined", Boolean, default=False),
     Column("started_at", DateTime, nullable=True),
     Column("completed_at", DateTime, nullable=True),
-    Column("index", Serial),
     SortKey(),
     UniqueConstraint("title", "material_type", name="uix_material"),
-    # uniqueness should be deferrable
-    UniqueConstraint("index", name="uix_materials_index", deferrable=True),
     Index(
         "ix_materials_completed_at",
         "completed_at",

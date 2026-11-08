@@ -14,7 +14,6 @@ export function isMaterialType(value: string): value is MaterialType {
 
 type GetMaterialItem = {
   material_id: string;
-  index: number;
   title: string;
   authors: string;
   pages: number;
