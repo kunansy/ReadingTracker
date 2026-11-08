@@ -22,8 +22,7 @@ def join(*parts: str) -> str:
 
 
 def pad_int(value: int | str) -> str:
-    # zfill never truncates, unlike SQL lpad: the 0002 backfill guards lpad the same way,
-    # pagination.int_part pads only Serial columns, which never exceed INT_WIDTH digits.
+    # zfill never truncates; the 0002 backfill guards the truncating lpad the same way.
     return str(value).zfill(INT_WIDTH)
 
 

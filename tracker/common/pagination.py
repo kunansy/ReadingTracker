@@ -76,7 +76,6 @@ def decode_and_check_next_token(token: str, params: TokenMap) -> TokenMap:
 class PageParams(CustomBaseModel):
     next_token: Annotated[str | None, Field(max_length=MAX_TOKEN_LENGTH)] = None
     page_size: Annotated[int, Field(ge=1, le=MAX_PAGE_SIZE)] = DEFAULT_PAGE_SIZE
-    # None means the default order of the listing.
     order: Order | None = None
 
 
@@ -93,7 +92,6 @@ class PageRequest:
     order: Order
     page_size: int
     params: TokenMap
-    # None on the first page.
     continue_from: TokenMap | None
 
     @property
