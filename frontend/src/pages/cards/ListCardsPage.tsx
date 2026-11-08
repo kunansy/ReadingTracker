@@ -9,6 +9,7 @@ import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
 import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
+import { useMaterialsWithCardsTitles } from "../../materials/queries";
 
 
 export function ListCardsPage() {
@@ -18,11 +19,7 @@ export function ListCardsPage() {
     const pagination = useCursorPagination(PAGE_SIZE, materialId, "desc");
     const nextToken = pagination.cursor;
 
-    const materialsTitlesQ = useQuery({
-        queryKey: ["materials", "with_cards_titles"],
-        queryFn: () => unwrap(api.GET("/api/v1/materials/with-cards-titles")),
-        staleTime: 5 * 60 * 1000,
-    });
+    const materialsTitlesQ = useMaterialsWithCardsTitles();
 
     const cardsQ = useQuery({
         queryKey: ["cards", { materialId, nextToken, order: pagination.order }],

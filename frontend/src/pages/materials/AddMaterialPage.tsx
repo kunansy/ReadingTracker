@@ -69,7 +69,7 @@ export function AddMaterialPage() {
       setParseUrl("");
       setError(null);
 
-      void qc.invalidateQueries({ queryKey: ["materials", "queue"] });
+      void qc.invalidateQueries({ queryKey: materialKeys.queue });
       // todo: invalidate if new ones added only
       void qc.invalidateQueries({ queryKey: materialKeys.tags });
       void qc.invalidateQueries({ queryKey: materialKeys.authors });

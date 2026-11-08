@@ -11,6 +11,7 @@ import {isUuid} from "../../utils/isUuid.ts";
 import { PageNav } from "../../components/PageNav";
 import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
+import { useMaterial } from "../../materials/queries";
 
 export function NotePage() {
   const { noteId: noteIdParam } = useParams();
@@ -38,16 +39,7 @@ export function NotePage() {
       unwrap(api.GET("/api/v1/notes/{note_id}", { params: { path: { note_id: noteId } } })),
   });
 
-  const materialQ = useQuery({
-    queryKey: ["materials", q.data?.note.material_id],
-    enabled: Boolean(q.data?.note.material_id),
-    queryFn: () =>
-      unwrap(
-        api.GET("/api/v1/materials/{material_id}", {
-          params: { path: { material_id: q.data?.note.material_id ?? "" } },
-        }),
-      ),
-  });
+  const materialQ = useMaterial(q.data?.note.material_id);
 
   const linksPagination = useCursorPagination(PAGE_SIZE, noteId, "asc");
   const linksNextToken = linksPagination.cursor;

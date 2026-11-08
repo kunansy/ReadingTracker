@@ -13,7 +13,10 @@ from tracker.main import app
 from tracker.materials import db as materials_db
 from tracker.models import enums
 from tracker.notes import db as notes_db
+from tracker.notes.schemas import MAX_SEARCH_QUERY_LENGTH
 from tracker.reading_log import db as reading_log_db
+from tracker.reading_log import statistics
+from tracker.system import trends
 
 
 LISTINGS = [
@@ -266,6 +269,15 @@ async def test_notes_search_rejects_a_malformed_material_id(client, no_side_quer
     assert response.status_code == 422
 
 
+@pytest.mark.parametrize("param", ["query", "tags_query"])
+async def test_notes_search_rejects_an_overlong_query(client, no_side_queries, param):
+    response = await client.get(
+        "/api/v1/notes/search", params={param: "a" * (MAX_SEARCH_QUERY_LENGTH + 1)}
+    )
+
+    assert response.status_code == 422
+
+
 @pytest.fixture
 def graph_queries(mocker):
     material_id = uuid.uuid4()
@@ -327,3 +339,55 @@ async def test_materials_queue_mean_is_a_json_number(client, mocker):
 
     assert response.status_code == 200
     assert response.json()["mean"] == {"book": 1.5}
+
+
+SPAN_TRENDS = {
+    "get_span_reading_statistics": "reading_trend",
+    "get_span_notes_statistics": "notes_trend",
+    "get_span_completed_materials_statistics": "completed_materials_trend",
+    "get_span_repeated_materials_statistics": "repeated_materials_trend",
+    "get_span_outlined_materials_statistics": "outlined_materials_trend",
+}
+
+
+async def test_system_summary_means_are_json_numbers(client, mocker):
+    today = datetime.date(2026, 1, 3)
+    tracker_statistics = statistics.TrackerStatistics(
+        started_at=today,
+        finished_at=today,
+        duration=1,
+        lost_time=0,
+        mean=1.5,
+        median=1.0,
+        pages_read={enums.MaterialTypesEnum.book: 2},
+        materials_completed={},
+        total_materials_completed=0,
+        would_be_total=3,
+        min_log_record=None,
+        max_log_record=None,
+    )
+    span = trends.SpanStatistics(
+        data=[
+            trends.DayStatistics(
+                date=today - datetime.timedelta(days=offset), amount=amount
+            )
+            for offset, amount in ((2, 1), (1, 0), (0, 1))
+        ],
+        span_size=3,
+    )
+    assert isinstance(span.mean, Decimal)
+    mocker.patch.object(
+        statistics,
+        "get_tracker_statistics",
+        mocker.AsyncMock(return_value=tracker_statistics),
+    )
+    for name in SPAN_TRENDS:
+        mocker.patch.object(trends, name, mocker.AsyncMock(return_value=span))
+
+    response = await client.get("/api/v1/system/summary", params={"last_days": 3})
+
+    assert response.status_code == 200
+    body = response.json()
+    for field in SPAN_TRENDS.values():
+        assert body[field]["mean"] == 0.67
+        assert isinstance(body[field]["mean"], float)

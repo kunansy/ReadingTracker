@@ -10,6 +10,7 @@ import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
 import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
+import { materialKeys } from "../../materials/queries";
 
 export function ListRepeatMaterialsPage() {
   const qc = useQueryClient();
@@ -45,7 +46,7 @@ export function ListRepeatMaterialsPage() {
         }),
       ),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["materials"] });
+      void qc.invalidateQueries({ queryKey: materialKeys.all });
     },
   });
 

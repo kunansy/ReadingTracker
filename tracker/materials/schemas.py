@@ -3,7 +3,7 @@ import typing
 from typing import Literal
 from uuid import UUID
 
-from pydantic import HttpUrl, NonNegativeInt, PositiveInt
+from pydantic import HttpUrl, NonNegativeFloat, NonNegativeInt, PositiveInt
 
 from tracker.common.pagination import PageResponse
 from tracker.common.schemas import CustomBaseModel, MinMax
@@ -67,7 +67,7 @@ class RepeatingQueueItem(CustomBaseModel):
 
 class ListMaterialsQueueResponse(PageResponse):
     estimates: list[MaterialEstimate]
-    mean: dict[MaterialTypesEnum, float]
+    mean: dict[MaterialTypesEnum, NonNegativeFloat]
 
 
 class ListReadingMaterialsResponse(PageResponse):

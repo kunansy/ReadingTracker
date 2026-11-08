@@ -1,5 +1,5 @@
 import asyncio
-from typing import Annotated, Any
+from typing import Annotated
 from uuid import UUID
 
 from fastapi import APIRouter, Depends
@@ -12,23 +12,6 @@ from tracker.notes.listing import build_notes_search_result
 
 
 router = APIRouter(prefix="/notes", tags=["notes-api"])
-
-
-# TODO: refactor with schemas
-def _note_list_item(note: db.Note) -> dict[str, Any]:
-    return {
-        "note_id": str(note.note_id),
-        "material_id": str(note.material_id),
-        "title": note.title,
-        "content_html": note.content_html,
-        "tags_html": note.tags_html,
-        "link_html": note.link_html,
-        "chapter": note.chapter,
-        "chapter_int": note.chapter_int,
-        "page": note.page,
-        "links_count": note.links_count,
-        "is_deleted": note.is_deleted,
-    }
 
 
 # TODO: split the request
@@ -46,7 +29,9 @@ async def notes_search_json(
     material_notes = ctx["material_notes"]
 
     return {
-        "notes": [_note_list_item(n) for n in notes],
+        "notes": [
+            schemas.SearchNotesItem.model_validate(n, from_attributes=True) for n in notes
+        ],
         "total_count": ctx["total_count"],
         "titles": titles,
         "material_types": material_types,

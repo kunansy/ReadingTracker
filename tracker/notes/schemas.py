@@ -1,6 +1,6 @@
 import datetime
 import re
-from typing import Annotated, Any
+from typing import Annotated, Any, Final
 from uuid import UUID
 
 from pydantic import (
@@ -19,6 +19,9 @@ from tracker.common.pagination import PageResponse
 from tracker.common.schemas import CustomBaseModel, skip_empty_value
 from tracker.models.enums import MaterialTypesEnum
 from tracker.models.models import MAX_CHAPTER_LENGTH
+
+
+MAX_SEARCH_QUERY_LENGTH: Final[int] = 512
 
 
 PUNCTUATION_MAPPING = {
@@ -198,8 +201,8 @@ class UpdateNoteRequest(CustomBaseModel):
 
 class SearchParams(CustomBaseModel):
     material_id: UUID | None = None
-    query: str | None = None
-    tags_query: str | None = None
+    query: Annotated[str | None, Field(max_length=MAX_SEARCH_QUERY_LENGTH)] = None
+    tags_query: Annotated[str | None, Field(max_length=MAX_SEARCH_QUERY_LENGTH)] = None
 
     def requested_tags(self) -> set[str]:
         if not (tags_query := self.tags_query):
