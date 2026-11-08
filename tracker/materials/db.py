@@ -13,7 +13,7 @@ import sqlalchemy.sql as sa
 from pydantic import ConfigDict, computed_field, field_validator
 from sqlalchemy import Integer, Text
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.engine import Result, Row
+from sqlalchemy.engine import Row
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracker.common import database, pagination, schemas, settings, sort_keys
@@ -621,15 +621,12 @@ async def start_material(
     async with database.session() as ses:
         result = await ses.execute(stmt)
 
-    _check_state_changed(result, msg=f"Material id={material_id!r} is not in the queue")
+    database.check_state_changed(
+        result,
+        msg=f"Material id={material_id!r} is not in the queue",
+    )
 
     logger.debug("Material started")
-
-
-def _check_state_changed(result: Result[Any], *, msg: str) -> None:
-    if database.affected_rows(result) != 1:
-        logger.info(msg)
-        raise database.ConflictException(msg)
 
 
 async def is_completion_request_valid(
@@ -643,16 +640,19 @@ async def is_completion_request_valid(
         get_logs_task = tg.create_task(list_log_records(material_id=material_id))
         get_material_task = tg.create_task(get_material(material_id=material_id))
 
-    completed_at = completed_at or database.utcnow().date()
+    completed_at = completed_at or database.utc_today()
 
     if not (material := get_material_task.result()):
-        raise ValueError(f"{material_id=!r} not found")
+        msg = f"Material id={material_id!r} not found"
+        raise database.NotFoundException(msg)
     if material.started_at is None:
         raise ValueError("Material is not started")
     if material.completed_at is not None:
         raise ValueError("Material is already completed")
+    if completed_at > database.utc_today():
+        raise ValueError("Completion date must not be in the future")
     if material.started_at.date() > completed_at:
-        raise ValueError("Completion date must be greater than start date")
+        raise ValueError("Completion date must not be before the start date")
     if not (reading_logs := get_logs_task.result()):
         raise ValueError("Reading logs not found")
     if sum(log.count for log in reading_logs) != material.pages:
@@ -677,7 +677,10 @@ async def complete_material(
     async with database.session() as ses:
         result = await ses.execute(stmt)
 
-    _check_state_changed(result, msg=f"Material id={material_id!r} is not being read")
+    database.check_state_changed(
+        result,
+        msg=f"Material id={material_id!r} is not being read",
+    )
 
     logger.debug("Material completed at %s", completed_at)
 

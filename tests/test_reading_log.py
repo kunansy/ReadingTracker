@@ -152,3 +152,14 @@ async def test_check_record_correct_accepts_reading_material(shared_session):
     material_id, started_at = await start_material()
 
     await db.check_record_correct(material_id=material_id, date=started_at, count=1)
+
+
+async def test_check_record_correct_rejects_future_date(shared_session):
+    material_id, _ = await start_material()
+
+    with pytest.raises(ValueError, match="Date could not be in the future"):
+        await db.check_record_correct(
+            material_id=material_id,
+            date=database.utc_today() + datetime.timedelta(days=1),
+            count=1,
+        )

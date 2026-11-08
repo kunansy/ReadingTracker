@@ -14,6 +14,7 @@ from tracker.common.pagination import MAX_PAGE_SIZE, PageParams
 from tracker.materials import db
 from tracker.models import enums
 from tracker.models import models
+from tracker.reading_log import db as reading_log_db
 from tracker.reading_log import statistics
 from tests.material_factory import complete_material, insert_material, start_material
 
@@ -418,7 +419,7 @@ async def test_complete_material_invalid_date(shared_session):
     with pytest.raises(ValueError) as e:
         await db.is_completion_request_valid(material_id=material_id, completed_at=date)
 
-    assert str(e.value) == "Completion date must be greater than start date"
+    assert str(e.value) == "Completion date must not be before the start date"
 
 
 async def test_outline_material():
@@ -687,9 +688,78 @@ async def test_api_complete_validates_dates_before_db_call(shared_session):
         )
 
     assert e.value.status_code == 400
-    assert e.value.detail == "Completion date must be greater than start date"
+    assert e.value.detail == "Completion date must not be before the start date"
     material = await db.get_material_api(material_id=material_id)
     assert material.completed_at is None
+
+
+async def _api_complete(
+    material_id: uuid.UUID, completed_at: datetime.date | None = None
+):
+    from tracker.api.v1 import materials as materials_api
+    from tracker.materials import schemas as materials_schemas
+
+    await materials_api.complete_material(
+        material_id=material_id,
+        body=materials_schemas.CompleteMaterialRequest(completed_at=completed_at),
+    )
+
+
+async def _read_pages(material_id: uuid.UUID, *, date: datetime.date, count: int) -> None:
+    await reading_log_db.insert_log_record(
+        material_id=material_id, count=count, date=date
+    )
+
+
+async def test_api_complete_missing_material_raises_not_found(shared_session):
+    with pytest.raises(database.NotFoundException, match="Material id=.*not found"):
+        await _api_complete(uuid.uuid4())
+
+
+@pytest.mark.parametrize(
+    ("pages_read", "completed_days_ahead", "detail"),
+    [
+        (10, 1, "Completion date must not be in the future"),
+        (None, 0, "Reading logs not found"),
+        (9, 0, "Invalid pages count, something is unread"),
+    ],
+)
+async def test_api_complete_rejects_invalid_request(
+    shared_session,
+    pages_read: int | None,
+    completed_days_ahead: int,
+    detail: str,
+):
+    from fastapi import HTTPException
+
+    material_id, started_at = await start_material()
+    if pages_read is not None:
+        await _read_pages(material_id, date=started_at, count=pages_read)
+    completed_at = database.utc_today() + datetime.timedelta(days=completed_days_ahead)
+
+    with pytest.raises(HTTPException) as e:
+        await _api_complete(material_id, completed_at)
+
+    assert e.value.status_code == 400
+    assert e.value.detail == detail
+    material = await db.get_material_api(material_id=material_id)
+    assert material.completed_at is None
+
+
+@pytest.mark.parametrize("completed_days_after_start", [0, 1])
+async def test_api_complete_completes_fully_read_material(
+    shared_session,
+    completed_days_after_start: int,
+):
+    material_id, started_at = await start_material()
+    await _read_pages(material_id, date=started_at, count=10)
+    completed_at = started_at + datetime.timedelta(days=completed_days_after_start)
+
+    await _api_complete(material_id, completed_at)
+
+    material = await db.get_material_api(material_id=material_id)
+    assert material.completed_at is not None
+    assert material.completed_at.date() == completed_at
 
 
 def test_material_statistics_rejects_not_started_material():
