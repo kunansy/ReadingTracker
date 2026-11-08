@@ -24,6 +24,7 @@ from tracker.notes import db as notes_db
 
 
 REPEAT_PERIOD_DAYS: Final[int] = 30
+DAYS_IN_MONTH: Final[int] = 30
 _START_DATE_KEY: Final[str] = "start_date"
 
 
@@ -350,9 +351,9 @@ def _convert_duration_to_period(duration: datetime.timedelta | int) -> str:
     period = []
     if years := total_days // 365:
         period.append(f"{years} years")
-    if months := total_days % 365 // 30:
+    if months := total_days % 365 // DAYS_IN_MONTH:
         period.append(f"{months} months")
-    if days := total_days % 365 % 30:
+    if days := total_days % 365 % DAYS_IN_MONTH:
         period.append(f"{days} days")
 
     return ", ".join(period)
@@ -833,7 +834,7 @@ def _calculate_priority_months(
     if (days := priority_days) < priority_limit:
         return 0
     # priority should decrease having repeats count increased
-    return (days - priority_limit) / 30
+    return (days - priority_limit) / DAYS_IN_MONTH
 
 
 def _get_priority_days(priority_days: datetime.timedelta | None) -> int:
