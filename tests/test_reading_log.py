@@ -140,7 +140,7 @@ async def test_check_record_correct_rejects_not_reading_material(shared_session,
 async def test_check_record_correct_rejects_date_before_start(shared_session):
     material_id, started_at = await start_material()
 
-    with pytest.raises(ValueError, match="Date is not inside the range"):
+    with pytest.raises(ValueError, match="is before the material start"):
         await db.check_record_correct(
             material_id=material_id,
             date=started_at - datetime.timedelta(days=1),

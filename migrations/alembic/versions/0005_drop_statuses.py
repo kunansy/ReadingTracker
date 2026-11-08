@@ -37,7 +37,7 @@ def downgrade() -> None:
         ["material_id"],
         unique=True,
     )
-    # Original status_id values are lost on upgrade, fresh ones are generated.
+    # Downgrade cannot restore the original status_id values.
     op.execute(
         "INSERT INTO statuses (status_id, material_id, started_at, completed_at) "
         "SELECT gen_random_uuid(), material_id, started_at, completed_at "

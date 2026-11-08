@@ -8,6 +8,7 @@ from sqlalchemy import (
     Boolean,
     Date,
     DateTime,
+    Index,
     Integer,
     MetaData,
     Table,
@@ -85,6 +86,11 @@ Materials = Table(
     UniqueConstraint("title", "material_type", name="uix_material"),
     # uniqueness should be deferrable
     UniqueConstraint("index", name="uix_materials_index", deferrable=True),
+    Index(
+        "ix_materials_completed_at",
+        "completed_at",
+        postgresql_where=sqlalchemy.text("completed_at IS NOT NULL"),
+    ),
 )
 
 MATERIAL_IS_QUEUED: Final = Materials.c.started_at.is_(None)
