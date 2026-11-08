@@ -2,12 +2,13 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {useEffect, useMemo, useState} from "react";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 
-import { api, unwrap } from "../../api/client";
+import { api, errorMessage, unwrap } from "../../api/client";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import {isUuid} from "../../utils/isUuid.ts";
 import {dateInputValue} from "../../utils/dateInputValue.ts";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
 import { materialKeys, useMaterialReadingNow, useReadingMaterialTitles } from "../../materials/queries";
+import { readingLogKeys } from "../../reading_log/queries";
 
 interface HintButtonProps {
   label: string;
@@ -51,7 +52,7 @@ export function AddReadingLogPage() {
   const materialReadingNowQ = useMaterialReadingNow();
 
   const completionQ = useQuery({
-    queryKey: ["materials", materialId, "completion-info"],
+    queryKey: materialKeys.completionInfo(materialId ?? ""),
     queryFn: () =>
       unwrap(
         api.GET("/api/v1/materials/{material_id}/completion-info", {
@@ -92,13 +93,13 @@ export function AddReadingLogPage() {
       setCount("");
       setDate("");
 
-      void qc.invalidateQueries({ queryKey: ["reading_logs", "list"] });
+      void qc.invalidateQueries({ queryKey: readingLogKeys.all });
       void qc.invalidateQueries({ queryKey: materialKeys.reading });
-      void qc.invalidateQueries({ queryKey: ["materials", materialId, "completion-info"] });
+      void qc.invalidateQueries({ queryKey: materialKeys.completionInfo(materialId ?? "") });
       navigate(from);
     },
-    onError: (e: Error) => {
-      setError(e.message);
+    onError: (e: unknown) => {
+      setError(errorMessage(e));
     },
   });
 

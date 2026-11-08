@@ -91,7 +91,7 @@ services:
         compress: "true"
 
   tracker-app:
-    build: .
+    <<: *tracker-img
     container_name: tracker-app
     env_file: .env
     restart: always

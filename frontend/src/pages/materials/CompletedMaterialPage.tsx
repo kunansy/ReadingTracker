@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 
 import { api, ApiError, unwrap } from "../../api/client";
+import { materialKeys } from "../../materials/queries";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { isUuid } from "../../utils/isUuid.ts";
@@ -14,7 +15,7 @@ export function CompletedMaterialPage() {
   const isValidId = isUuid(materialId);
 
   const q = useQuery({
-    queryKey: ["materials", "completed", "item", materialId],
+    queryKey: materialKeys.completedItem(materialId),
     enabled: isValidId,
     queryFn: () =>
       unwrap(

@@ -3,13 +3,14 @@ import type { FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { api, unwrap } from "../../api/client";
+import { noteKeys } from "../../notes/queries";
 
 export function GraphPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const materialId = searchParams.get("material_id") ?? "";
 
   const q = useQuery({
-    queryKey: ["notes", "graph", materialId],
+    queryKey: noteKeys.graph(materialId),
     queryFn: () =>
       unwrap(
         api.GET("/api/v1/notes/graph", {

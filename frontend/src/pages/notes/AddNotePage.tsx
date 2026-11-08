@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {useState, useCallback, useMemo, useEffect} from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { api, unwrap } from "../../api/client";
+import { api, errorMessage, unwrap } from "../../api/client";
 import type { AddNoteRequest } from "../../api/schema";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox.tsx";
@@ -11,6 +11,7 @@ import {SpellTextarea} from "../../components/SpellTextrea.tsx";
 import { loadWithTtl, saveWithTtl } from "../../lib/ttlStorage.ts";
 import { NoteDraft, parseNoteDraft, resolveNoteDraft } from "./noteDraft.ts";
 import { useMaterial, useMaterialTitles } from "../../materials/queries";
+import { noteKeys } from "../../notes/queries";
 
 type AddNoteForm = NoteDraft & {
   title: string;
@@ -42,7 +43,7 @@ export function AddNotePage() {
   const titlesQ = useMaterialTitles();
 
   const tagListQ = useQuery({
-    queryKey: ["tags", formData.materialId],
+    queryKey: noteKeys.tags(formData.materialId),
     queryFn: () =>
       unwrap(
         api.GET("/api/v1/notes/tags", {
@@ -105,9 +106,9 @@ export function AddNotePage() {
         linkId: prev.linkId === request.linkId ? "" : prev.linkId,
       }));
     },
-    onError: (e: Error) => {
+    onError: (e: unknown) => {
       setSuccessId(null);
-      setError(e.message);
+      setError(errorMessage(e));
     },
   });
 

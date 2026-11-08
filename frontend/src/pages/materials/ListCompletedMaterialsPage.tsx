@@ -20,7 +20,7 @@ import { isMaterialType } from "../../types";
 import {
   ComboboxInput, ComboboxList, ComboboxRoot,
 } from "../../components/Combobox";
-import { useMaterialTags } from "../../materials/queries";
+import { materialKeys, useMaterialTags } from "../../materials/queries";
 
 function isOutlinedFilter(value: string): value is "outlined" | "not_outlined" {
   return value === "outlined" || value === "not_outlined";
@@ -60,7 +60,7 @@ export function ListCompletedMaterialsPage() {
   const nextToken = pagination.cursor;
 
   const q = useQuery({
-    queryKey: ["materials", "completed", "list", filtersKey, nextToken, pagination.order],
+    queryKey: materialKeys.completedList(filtersKey, nextToken, pagination.order),
     placeholderData: keepPreviousData,
     queryFn: () =>
       unwrap(

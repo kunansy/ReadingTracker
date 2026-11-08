@@ -2,7 +2,8 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
-import { api, unwrap } from "../../api/client";
+import { api, errorMessage, unwrap } from "../../api/client";
+import { noteKeys, useNotesMeta } from "../../notes/queries";
 import type { SearchNotesItem } from "../../api/schema";
 import { PageNav } from "../../components/PageNav";
 import { PageLoadError } from "../../components/PageLoadError";
@@ -50,18 +51,14 @@ export function AddCardPage() {
     setNoteId(initialNoteId);
   }, [initialNoteId]);
 
-  const metaQ = useQuery({
-    queryKey: ["notes", "meta"],
-    queryFn: () => unwrap(api.GET("/api/v1/notes/meta")),
-    staleTime: 10 * 60 * 1000,
-  });
+  const metaQ = useNotesMeta();
 
   const notesMaterialId = isUuid(materialId) ? materialId : "";
   const notesPagination = useCursorPagination(NOTES_PAGE_SIZE, notesMaterialId, "asc");
   const notesNextToken = notesPagination.cursor;
 
   const notesQ = useQuery({
-    queryKey: ["notes", "search", { materialId: notesMaterialId, nextToken: notesNextToken, order: notesPagination.order }],
+    queryKey: noteKeys.search({ materialId: notesMaterialId, nextToken: notesNextToken, order: notesPagination.order }),
     placeholderData: keepPreviousData,
     queryFn: () =>
       unwrap(
@@ -125,8 +122,8 @@ export function AddCardPage() {
       void qc.invalidateQueries({ queryKey: ["cards"] });
       navigate(from);
     },
-    onError: (e: Error) => {
-      setError(e.message);
+    onError: (e: unknown) => {
+      setError(errorMessage(e));
     },
   });
 

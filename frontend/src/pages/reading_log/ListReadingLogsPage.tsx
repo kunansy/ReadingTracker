@@ -9,6 +9,7 @@ import { PageNav } from "../../components/PageNav";
 import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 import { useReadMaterialTitles } from "../../materials/queries";
+import { readingLogKeys } from "../../reading_log/queries";
 
 export function ListReadingLogsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -19,7 +20,7 @@ export function ListReadingLogsPage() {
     const materialsTitlesQ = useReadMaterialTitles();
 
     const logsQ = useQuery({
-        queryKey: ["logs", { materialId, nextToken, order: pagination.order }],
+        queryKey: readingLogKeys.list({ materialId, nextToken, order: pagination.order }),
         placeholderData: keepPreviousData,
         queryFn: () =>
             unwrap(

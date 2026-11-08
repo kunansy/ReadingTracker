@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -81,12 +81,12 @@ function stubFetch(actions: ActionReplies = {}) {
   return fetchMock;
 }
 
-function renderPage() {
+function renderPage(url = "/notes") {
   const qc = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   });
   render(
-    <MemoryRouter initialEntries={["/notes"]}>
+    <MemoryRouter initialEntries={[url]}>
       <QueryClientProvider client={qc}>
         <ContextMenuProvider>
           <SearchNotesPage />
@@ -182,7 +182,6 @@ describe("SearchNotesPage query autocompletion", () => {
   async function typeQuery(value: string) {
     const input = await screen.findByPlaceholderText("Enter a query");
     fireEvent.change(input, { target: { value } });
-    fireEvent.keyDown(input, { key: "a" });
   }
 
   function hints(): string[] {
@@ -242,5 +241,81 @@ describe("SearchNotesPage query autocompletion", () => {
       expect(hints()).toEqual(["alpha"]);
     });
     expect(screen.queryByRole("alert")).toBeNull();
+  });
+
+  it("drops the suggestions and the error when the input is cleared", async () => {
+    stubFetch({ "GET /autocompletion": { status: 500, body: { detail: "boom" } } });
+    renderPage();
+    await typeQuery("al");
+    expect((await screen.findByRole("alert")).textContent).toContain("boom");
+
+    await typeQuery("");
+
+    await waitFor(() => {
+      expect(screen.queryByRole("alert")).toBeNull();
+    });
+    expect(hints()).toEqual([]);
+  });
+
+  it("keeps the suggestions of the latest input when an older response arrives late", async () => {
+    const pending = new Map<string, (r: Response) => void>();
+    const fetchMock = vi.fn((request: Request) => {
+      const url = new URL(request.url);
+      if (url.pathname.endsWith("/autocompletion")) {
+        const q = url.searchParams.get("query") ?? "";
+        return new Promise<Response>((resolve) => pending.set(q, resolve));
+      }
+      const body = url.pathname.endsWith("/meta") ? META_RESPONSE : SEARCH_RESPONSE;
+      return reply({ status: 200, body });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const answer = (q: string, autocompletions: string[]) =>
+      pending.get(q)?.(
+        new Response(JSON.stringify({ autocompletions }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+    renderPage();
+
+    await typeQuery("al");
+    await waitFor(() => {
+      expect(pending.has("al")).toBe(true);
+    });
+    await typeQuery("alp");
+    await waitFor(() => {
+      expect(pending.has("alp")).toBe(true);
+    });
+    answer("alp", ["alpha"]);
+    await waitFor(() => {
+      expect(hints()).toEqual(["alpha"]);
+    });
+    await act(async () => {
+      answer("al", ["alarm"]);
+    });
+
+    expect(hints()).toEqual(["alpha"]);
+  });
+});
+
+describe("SearchNotesPage search request", () => {
+  it("sends the filters from the URL and omits the empty ones", async () => {
+    const fetchMock = stubFetch();
+    renderPage(`/notes?material_id=${MATERIAL_ID}&query=foo&tags_query=`);
+
+    await waitFor(() => {
+      expect(document.getElementById(ACTIVE_NOTE_ID)).not.toBeNull();
+    });
+    const params = fetchMock.mock.calls
+      .map(([request]) => new URL(request.url))
+      .filter((url) => url.pathname === "/api/v1/notes/search")
+      .map((url) => url.searchParams);
+
+    expect(params.length).toBeGreaterThan(0);
+    for (const p of params) {
+      expect(p.get("material_id")).toBe(MATERIAL_ID);
+      expect(p.get("query")).toBe("foo");
+      expect(p.has("tags_query")).toBe(false);
+    }
   });
 });

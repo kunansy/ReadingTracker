@@ -129,14 +129,14 @@ describe("SystemGraphicsPage reading progress", () => {
     });
   });
 
-  it("skips the progress when no material is being read", async () => {
+  it("asks to select a material when none is being read", async () => {
     const fetchMock = stubFetch({
       "/api/v1/reading_logs/material-reading-now": { status: 200, body: { material_id: null } },
     });
     renderPage();
 
     expect(await screen.findByText("Tracker statistics")).not.toBeNull();
-    expect(screen.queryByText("Reading progress")).toBeNull();
+    expect(screen.getByText("Select a material to see reading progress.")).not.toBeNull();
     expect(readingProgressMaterialIds(fetchMock)).toEqual([]);
   });
 
