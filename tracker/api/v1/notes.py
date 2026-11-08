@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 
-from tracker.common import database, manticoresearch
+from tracker.common import database, kafka, manticoresearch
 from tracker.common.pagination import PageParams
 from tracker.models import enums
 from tracker.notes import db, schemas
@@ -227,4 +227,17 @@ async def get_note(note_id: UUID):
     return {"note": note}
 
 
-# TODO: add another action endpoints here
+@router.delete("/{note_id}", status_code=204)
+async def delete_note(note_id: UUID):
+    await db.delete_note(note_id=note_id)
+
+
+@router.post("/{note_id}/restore", status_code=204)
+async def restore_note(note_id: UUID):
+    await db.restore_note(note_id=note_id)
+
+
+@router.post("/{note_id}/repeat-queue", status_code=204)
+async def insert_to_repeat_queue(note_id: UUID):
+    await db.get_note_api(note_id=note_id)
+    await kafka.repeat_note(note_id)

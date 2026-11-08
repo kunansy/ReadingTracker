@@ -156,16 +156,7 @@ export function SearchNotesPage() {
 
   const deleteMut = useMutation({
     mutationFn: async (noteId: string) => {
-      const res = await fetch("/notes/delete", {
-        method: "DELETE",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ note_id: noteId }),
-      });
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(t.slice(0, 200) || `HTTP ${res.status}`);
-      }
+      await apiFetch(`/${encodeURIComponent(noteId)}`, { method: "DELETE" });
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["notes"] });
@@ -174,16 +165,7 @@ export function SearchNotesPage() {
 
   const restoreMut = useMutation({
     mutationFn: async (noteId: string) => {
-      const res = await fetch("/notes/restore", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ note_id: noteId }),
-      });
-      if (!res.ok) {
-        const t = await res.text();
-        throw new Error(t.slice(0, 200) || `HTTP ${res.status}`);
-      }
+      await apiFetch(`/${encodeURIComponent(noteId)}/restore`, { method: "POST" });
     },
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["notes"] });
@@ -241,16 +223,12 @@ export function SearchNotesPage() {
         items.push({
           label: "Insert to repeat queue",
           action: async () => {
-            const res = await fetch(
-              `/notes/repeat-queue/insert?note_id=${encodeURIComponent(note.note_id)}`,
-              {
+            try {
+              await apiFetch(`/${encodeURIComponent(note.note_id)}/repeat-queue`, {
                 method: "POST",
-                credentials: "same-origin",
-                headers: { "Content-Type": "application/json" },
-              },
-            );
-            if (!res.ok) {
-              console.error(await res.text());
+              });
+            } catch (err) {
+              console.error(err);
             }
           },
         });

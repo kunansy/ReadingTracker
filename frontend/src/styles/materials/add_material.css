@@ -1,0 +1,8 @@
+::-webkit-scrollbar {
+  width: 0;
+}
+
+.parse-material-source {
+    display: flex;
+    margin: auto auto 2vh;
+}

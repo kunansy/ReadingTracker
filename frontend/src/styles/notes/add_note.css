@@ -1,0 +1,43 @@
+#input-content {
+    padding: 1vh;
+    height: 30vh;
+}
+::-webkit-scrollbar {
+  width: 0;
+}
+
+.tags-list {
+    display: flex;
+    flex-direction: row;
+    overflow: scroll;
+    margin: auto;
+    max-width: 60%;
+}
+
+.tags-list li {
+    border: black .25vh solid;
+    border-radius: 1vh;
+    padding: 3vh;
+    text-align: center;
+    margin: auto 1vw auto auto;
+    display: inline;
+}
+
+.links-list {
+    display: flex;
+    flex-direction: row;
+    overflow: scroll;
+    margin: auto;
+    max-width: 80%;
+}
+
+.links-list li {
+    border: black .25vh solid;
+    border-radius: 1vh;
+    padding: 2vh;
+    text-align: center;
+    margin: auto 1vw auto auto;
+    display: inline;
+    max-width: 35vw;
+    height: 20vh;
+}
