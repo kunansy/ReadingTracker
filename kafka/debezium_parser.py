@@ -98,7 +98,11 @@ async def _to_notify(payload: Record) -> None:
         return
 
     logger.info("To notify: note_id=%s", payload.note_id)
-    await kafka.repeat_note(payload.note_id)
+    try:
+        await kafka.repeat_note(payload.note_id)
+    except kafka.KafkaSendError:
+        logger.exception("Could not notify about note_id=%s", payload.note_id)
+        return
     logger.info("Sent")
 
 
