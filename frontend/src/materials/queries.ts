@@ -16,6 +16,11 @@ export const materialKeys = {
   queue: ["materials", "queue"],
   reading: ["materials", "reading"],
   byId: (materialId: string) => ["materials", materialId] as const,
+  completionInfo: (materialId: string) => ["materials", materialId, "completion-info"] as const,
+  repeat: (query: object) => ["materials", "repeat", query] as const,
+  completedItem: (materialId: string) => ["materials", "completed", "item", materialId] as const,
+  completedList: (filtersKey: string, nextToken: string | undefined, order: string) =>
+    ["materials", "completed", "list", filtersKey, nextToken, order] as const,
 } as const;
 
 export function useMaterialTags() {

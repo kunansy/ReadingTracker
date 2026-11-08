@@ -236,7 +236,12 @@ export function SystemGraphicsPage() {
                 )
               }
             />
-          ) : null}
+          ) : materialReadingNowQ.isPending ? null : (
+            <section className="graphic-image" aria-labelledby="graphic-header-reading-progress">
+              <h3 id="graphic-header-reading-progress" className="header">Reading progress</h3>
+              <p role="status">Select a material to see reading progress.</p>
+            </section>
+          )}
 
           <GraphicBlock
             title="Read pages"

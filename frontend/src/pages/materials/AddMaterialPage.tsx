@@ -1,7 +1,7 @@
 import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {useState} from "react";
 
-import { api, unwrap } from "../../api/client";
+import { api, errorMessage, unwrap } from "../../api/client";
 import { type CreateMaterialRequest, type MaterialTypesEnum, materialTypesEnumValues } from "../../api/schema";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox";
 import { isMaterialType } from "../../types";
@@ -39,8 +39,8 @@ export function AddMaterialPage() {
       setMaterialType(isMaterialType(data.type) ? data.type : "book");
       setLink(data.link);
     },
-    onError: (e: Error) => {
-      setError(e.message);
+    onError: (e: unknown) => {
+      setError(errorMessage(e));
     },
   });
 
@@ -74,8 +74,8 @@ export function AddMaterialPage() {
       void qc.invalidateQueries({ queryKey: materialKeys.tags });
       void qc.invalidateQueries({ queryKey: materialKeys.authors });
     },
-    onError: (e: Error) => {
-      setError(e.message);
+    onError: (e: unknown) => {
+      setError(errorMessage(e));
     },
   });
 

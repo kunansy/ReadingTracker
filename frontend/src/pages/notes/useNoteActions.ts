@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 
 import { api, errorMessage, unwrapEmpty } from "../../api/client";
+import { noteKeys } from "../../notes/queries";
 
 export interface NoteActions {
   deleteNote: (noteId: string) => void;
@@ -32,7 +33,7 @@ export function useNoteActions(): NoteActions {
     },
   };
   const refreshNotes = () => {
-    void qc.invalidateQueries({ queryKey: ["notes"] });
+    void qc.invalidateQueries({ queryKey: noteKeys.all });
   };
 
   const deleteMut = useMutation({

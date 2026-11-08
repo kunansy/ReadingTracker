@@ -47,7 +47,7 @@ init:
 	PYTHONPATH=. python3 tracker/main.py
 
 gen-api:
-	python -m tracker.openapi_dump frontend/openapi.json
+	python3 -m tracker.openapi_dump frontend/openapi.json
 	npm --prefix frontend run gen:api
 
 run:

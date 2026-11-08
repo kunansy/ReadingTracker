@@ -2,13 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
-import { api, unwrap, unwrapEmpty } from "../../api/client";
+import { api, errorMessage, unwrap, unwrapEmpty } from "../../api/client";
 import type { UpdateNoteRequest } from "../../api/schema";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox.tsx";
 import {isUuid} from "../../utils/isUuid.ts";
 import {SpellTextarea} from "../../components/SpellTextrea.tsx";
 import { useMaterialTitles } from "../../materials/queries";
+import { noteKeys } from "../../notes/queries";
 
 
 export function UpdateNotePage() {
@@ -41,20 +42,20 @@ export function UpdateNotePage() {
   }, [noteIdParam, noteIdQuery]);
 
   const q = useQuery({
-    queryKey: ["notes", noteId],
+    queryKey: noteKeys.byId(noteId),
     enabled: Boolean(noteId),
     queryFn: () =>
       unwrap(api.GET("/api/v1/notes/{note_id}", { params: { path: { note_id: noteId } } })),
   });
   const materialTitlesQ = useMaterialTitles();
   const noteTagsQ = useQuery({
-    queryKey: ["notes", "tags", materialId],
+    queryKey: noteKeys.tags(materialId),
     enabled: isUuid(materialId),
     queryFn: () =>
       unwrap(api.GET("/api/v1/notes/tags", { params: { query: { material_id: materialId } } })),
   });
   const possibleLinksQ = useQuery({
-    queryKey: ["possible-links", noteId],
+    queryKey: noteKeys.possibleLinks(noteId),
     enabled: Boolean(noteId),
     queryFn: () =>
       unwrap(api.GET("/api/v1/notes/possible-links", { params: { query: { note_id: noteId } } })),
@@ -83,13 +84,11 @@ export function UpdateNotePage() {
     },
     onSuccess: async () => {
       setError(null);
-      await qc.invalidateQueries({ queryKey: ["notes", noteId] });
-      await qc.invalidateQueries({ queryKey: ["notes"] });
-      await qc.invalidateQueries({ queryKey: ["possible-links", noteId] });
+      await qc.invalidateQueries({ queryKey: noteKeys.all });
       navigate(`/notes/${noteId}`);
     },
-    onError: (e: Error) => {
-      setError(e.message);
+    onError: (e: unknown) => {
+      setError(errorMessage(e));
     },
   });
 

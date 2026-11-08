@@ -33,7 +33,7 @@ export function ListRepeatMaterialsPage() {
   };
 
   const q = useQuery({
-    queryKey: ["materials", "repeat", query],
+    queryKey: materialKeys.repeat(query),
     placeholderData: keepPreviousData,
     queryFn: () => unwrap(api.GET("/api/v1/materials/repeat", { params: { query } })),
   });

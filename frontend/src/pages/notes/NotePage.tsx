@@ -2,7 +2,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo, useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
-import { api, PAGE_SIZE, unwrap } from "../../api/client";
+import { api, errorMessage, PAGE_SIZE, unwrap } from "../../api/client";
 import type { GetMaterialResponse, GetNoteLinksResponse, GetNoteResponse } from "../../api/schema";
 import { NetworkIframe } from "../../components/NetworkIframe";
 import { QueryStateFromResult } from "../../components/QueryState";
@@ -12,6 +12,7 @@ import { PageNav } from "../../components/PageNav";
 import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 import { useMaterial } from "../../materials/queries";
+import { noteKeys } from "../../notes/queries";
 
 export function NotePage() {
   const { noteId: noteIdParam } = useParams();
@@ -33,7 +34,7 @@ export function NotePage() {
   }, [noteIdParam, noteIdQuery]);
 
   const q = useQuery({
-    queryKey: ["notes", noteId],
+    queryKey: noteKeys.byId(noteId),
     enabled: Boolean(noteId),
     queryFn: () =>
       unwrap(api.GET("/api/v1/notes/{note_id}", { params: { path: { note_id: noteId } } })),
@@ -45,7 +46,7 @@ export function NotePage() {
   const linksNextToken = linksPagination.cursor;
 
   const noteLinksQ = useQuery({
-    queryKey: ["notes", "links", noteId, linksNextToken, linksPagination.order],
+    queryKey: noteKeys.links(noteId, linksNextToken, linksPagination.order),
     placeholderData: (previous, previousQuery) =>
       previousQuery?.queryKey[2] === noteId ? keepPreviousData(previous) : undefined,
     enabled: Boolean(noteId),
@@ -85,7 +86,7 @@ export function NotePage() {
       <QueryStateFromResult
         query={q}
         loading={<p>Loading note…</p>}
-        errorRenderer={(err) => <p className="error">Note error: {err instanceof Error ? err.message : String(err)}</p>}
+        errorRenderer={(err) => <p className="error">Note error: {errorMessage(err)}</p>}
       >
         {(noteResponse: GetNoteResponse | undefined) => {
           const note = noteResponse?.note;
@@ -158,7 +159,7 @@ export function NotePage() {
                   query={materialQ}
                   loading={<p className="medium-text">Loading material info…</p>}
                   errorRenderer={(err) => (
-                    <p className="error">Material error: {err instanceof Error ? err.message : String(err)}</p>
+                    <p className="error">Material error: {errorMessage(err)}</p>
                   )}
                 >
                   {( materialResponse: GetMaterialResponse | undefined ) => {

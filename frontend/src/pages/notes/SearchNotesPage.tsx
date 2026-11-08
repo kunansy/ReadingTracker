@@ -10,9 +10,13 @@ import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
 import { PageLoadError } from "../../components/PageLoadError";
 import { useNoteActions } from "./useNoteActions";
+import { noteKeys, useNotesMeta } from "../../notes/queries";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
+import { useDebounce } from "../../lib/debounce.ts";
 
 const SEARCH_PAGE_SIZE = 10;
+const AUTOCOMPLETE_LIMIT = 5;
+const AUTOCOMPLETE_DEBOUNCE_MS = 250;
 
 function groupNotesByMaterialAndChapter(notes: SearchNotesItem[]) {
   const order: string[] = [];
@@ -73,21 +77,14 @@ export function SearchNotesPage() {
   );
   const nextToken = pagination.cursor;
 
-  const [hintList, setHintList] = useState<string[]>([]);
-  const [hintError, setHintError] = useState<string | null>(null);
+  const [hintInput, setHintInput] = useState("");
+  const hintQuery = useDebounce(hintInput.trim(), AUTOCOMPLETE_DEBOUNCE_MS);
+  const isHintEnabled = hintQuery !== "";
 
-  const metaQ = useQuery({
-    queryKey: ["notes", "meta", materialId],
-    queryFn: () =>
-      unwrap(
-        api.GET("/api/v1/notes/meta", {
-          params: { query: { material_id: materialId || undefined } },
-        }),
-      ),
-  });
+  const metaQ = useNotesMeta(materialId);
 
   const searchQ = useQuery({
-    queryKey: ["notes", "search", materialId, query, tagsQuery, nextToken, pagination.order],
+    queryKey: noteKeys.search({ materialId, query, tagsQuery, nextToken, order: pagination.order }),
     placeholderData: keepPreviousData,
     queryFn: () =>
       unwrap(
@@ -198,22 +195,18 @@ export function SearchNotesPage() {
     [close, deleteNote, open, repeatNote, restoreNote],
   );
 
-  const onQueryKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    const v = e.currentTarget.value;
-    if (!v.trim()) {
-      return;
-    }
-    try {
-      const r = await unwrap(
-        api.GET("/api/v1/notes/autocompletion", { params: { query: { query: v, limit: 5 } } }),
-      );
-      setHintList(r.autocompletions);
-      setHintError(null);
-    } catch (err) {
-      setHintList([]);
-      setHintError(errorMessage(err));
-    }
-  }, []);
+  const hintsQ = useQuery({
+    queryKey: noteKeys.autocomplete(hintQuery),
+    enabled: isHintEnabled,
+    queryFn: () =>
+      unwrap(
+        api.GET("/api/v1/notes/autocompletion", {
+          params: { query: { query: hintQuery, limit: AUTOCOMPLETE_LIMIT } },
+        }),
+      ),
+  });
+  const hintList = isHintEnabled ? (hintsQ.data?.autocompletions ?? []) : [];
+  const hintError = isHintEnabled && hintsQ.error ? errorMessage(hintsQ.error) : null;
 
   useEffect(() => {
     const root = notesRootRef.current;
@@ -339,7 +332,9 @@ export function SearchNotesPage() {
             name="query"
             defaultValue={query}
             placeholder="Enter a query"
-            onKeyDown={onQueryKeyDown}
+            onChange={(e) => {
+              setHintInput(e.currentTarget.value);
+            }}
           />
           <datalist id="search-note-hints">
             {hintList.map((h) => (
