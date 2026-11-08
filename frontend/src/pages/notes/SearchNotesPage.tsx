@@ -154,7 +154,13 @@ export function SearchNotesPage() {
     return m;
   }, [grouped, pagination.offset]);
 
-  const { deleteNote, restoreNote, repeatNote, error: actionError } = useNoteActions();
+  const {
+    deleteNote,
+    restoreNote,
+    repeatNote,
+    error: actionError,
+    dismissError,
+  } = useNoteActions();
 
   const onNoteContextMenu = useCallback(
     (e: React.MouseEvent, note: {note_id: string, material_id: string, is_deleted?: boolean, has_cards?: boolean, cards_count?: number}) => {
@@ -308,7 +314,14 @@ export function SearchNotesPage() {
 
   return (
     <>
-      {actionError ? <p className="error">{actionError}</p> : null}
+      {actionError ? (
+        <p className="error" role="alert">
+          {actionError}{" "}
+          <button type="button" aria-label="Dismiss error" onClick={dismissError}>
+            ×
+          </button>
+        </p>
+      ) : null}
       <div className="form">
         <form
           key={`${materialId}|${query}|${tagsQuery}`}

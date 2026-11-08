@@ -45,7 +45,6 @@ async def _send_one(key: str, value: str, *, topic: str) -> None:
             )
             await producer.send_and_wait(topic, key=key.encode(), value=value.encode())
         except errors.KafkaError as exc:
-            logger.exception("Could not send message to %s", topic)
             raise KafkaSendError(f"Could not send message to {topic}: {exc!r}") from exc
 
         logger.debug("Message sent")

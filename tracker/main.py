@@ -16,6 +16,7 @@ from tracker.api.v1.system import router as api_v1_system_router
 from tracker.cards.spa import router as cards_spa_router
 from tracker.common import database, kafka, manticoresearch, settings
 from tracker.common.logger import logger
+from tracker.common.spa import SPA_DIR, SPA_INDEX, check_spa_bundle
 from tracker.materials.spa import router as materials_spa_router
 from tracker.notes.spa import router as notes_spa_router
 from tracker.reading_log.spa import router as reading_logs_spa_router
@@ -41,7 +42,8 @@ app.add_middleware(
 )
 app.add_route("/metrics", handle_metrics)
 
-app.mount("/static", StaticFiles(directory="static", check_dir=False), name="static")
+app.mount("/static/app-spa", StaticFiles(directory=SPA_DIR, check_dir=False), name="spa")
+check_spa_bundle(SPA_INDEX)
 
 app.include_router(api_v1_materials_router, prefix="/api/v1")
 app.include_router(api_v1_notes_router, prefix="/api/v1")
@@ -97,11 +99,11 @@ async def database_exception_handler(request: Request, exc: database.DatabaseExc
 
 @app.exception_handler(kafka.KafkaSendError)
 async def kafka_exception_handler(request: Request, exc: kafka.KafkaSendError):
-    logger.exception("Kafka exception occurred, (%s), %s", request.url, str(exc))
+    logger.error("Kafka exception occurred, (%s), %s", request.url, exc, exc_info=exc)
 
     return JSONResponse(
         status_code=503,
-        content={"detail": f"Kafka error: {exc}"},
+        content={"detail": "Kafka unavailable"},
     )
 
 

@@ -96,16 +96,16 @@ async def test_get_all_notes_count():
 _DELETE_RESTORE_NOTE_ID = UUID("40824c08-3e86-4fff-8ced-ee90ffee1e6c")
 
 
-async def test_get_note_api_hides_deleted_note():
+async def test_get_note_hides_deleted_note():
     note_id = _DELETE_RESTORE_NOTE_ID
-    assert (await db.get_note_api(note_id=note_id)).note_id == note_id
+    assert (await db.get_note(note_id=note_id)).note_id == note_id
 
     await db.delete_note(note_id=note_id)
     with pytest.raises(database.NotFoundException):
-        await db.get_note_api(note_id=note_id)
+        await db.get_note(note_id=note_id)
 
     await db.restore_note(note_id=note_id)
-    assert (await db.get_note_api(note_id=note_id)).note_id == note_id
+    assert (await db.get_note(note_id=note_id)).note_id == note_id
 
 
 async def test_delete_restore_are_idempotent():
@@ -116,7 +116,7 @@ async def test_delete_restore_are_idempotent():
     await db.restore_note(note_id=note_id)
     await db.restore_note(note_id=note_id)
 
-    assert (await db.get_note_api(note_id=note_id)).note_id == note_id
+    assert (await db.get_note(note_id=note_id)).note_id == note_id
 
 
 async def test_update_note_not_found():
@@ -288,7 +288,7 @@ async def test_get_sorted_tags_without_material():
 )
 async def test_get_links_from_page(note_id, expected):
     expected_notes = [
-        await db.get_note_api(note_id=UUID(exp_note_id)) for exp_note_id in expected
+        await db.get_note(note_id=UUID(exp_note_id)) for exp_note_id in expected
     ]
 
     result = await db.get_links_from_page(
