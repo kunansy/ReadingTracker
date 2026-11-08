@@ -160,15 +160,6 @@ async def test_update_that_matches_no_rows_raises_not_found(zero_rowcount_sessio
         await call(entity_id)
 
 
-async def test_set_material_index_that_matches_no_rows_raises_not_found():
-    with pytest.raises(database.NotFoundException, match="Material id=.*not found"):
-        await materials_db._set_material_index(
-            material_id=uuid.uuid4(),
-            index=1,
-            conn=_ZeroRowcountSession(),  # type: ignore[arg-type]
-        )
-
-
 STATE_TRANSITIONS = {
     "start_material": (
         lambda material_id: materials_db.start_material(

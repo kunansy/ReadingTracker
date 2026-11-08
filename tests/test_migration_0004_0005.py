@@ -31,6 +31,7 @@ def _load_migration(filename: str) -> ModuleType:
 MIGRATION_0004 = _load_migration("0004_material_status_columns.py")
 MIGRATION_0005 = _load_migration("0005_drop_statuses.py")
 MIGRATION_0006 = _load_migration("0006_materials_completed_at_index.py")
+MIGRATION_0007 = _load_migration("0007_drop_materials_index.py")
 
 MATERIAL_STATUSES = sa.text(
     "SELECT material_id, started_at, completed_at FROM materials "
@@ -207,6 +208,49 @@ async def test_0006_downgrade_drops_and_upgrade_restores_completed_at_index():
 
     assert dropped == []
     assert [index["column_names"] for index in restored] == [["completed_at"]]
+
+
+def _materials_columns(conn: Connection) -> set[str]:
+    return {column["name"] for column in sa.inspect(conn).get_columns("materials")}
+
+
+def _materials_unique_constraints(conn: Connection) -> set[str]:
+    return {
+        constraint["name"]
+        for constraint in sa.inspect(conn).get_unique_constraints("materials")
+    }
+
+
+async def test_0007_downgrade_restores_index_by_sort_key_and_upgrade_drops_it():
+    def check(conn: Connection) -> tuple[list[tuple], set[str], set[str], set[str]]:
+        _seed_materials(conn)
+        MIGRATION_0007.downgrade()
+        ordered = _rows(
+            conn,
+            sa.text(
+                'SELECT "index", row_number() OVER (ORDER BY sort_key) '
+                "FROM materials ORDER BY sort_key",
+            ),
+        )
+        constraints = _materials_unique_constraints(conn)
+        MIGRATION_0007.upgrade()
+        sequences = set(
+            conn.execute(
+                sa.text(
+                    "SELECT relname FROM pg_class "
+                    "WHERE relkind = 'S' AND relname = 'materials_index_seq'",
+                ),
+            ).scalars(),
+        )
+        return ordered, constraints, _materials_columns(conn), sequences
+
+    ordered, constraints, columns, sequences = await _in_rolled_back_migration(check)
+
+    assert ordered
+    assert all(index == position for index, position in ordered)
+    assert MIGRATION_0007.CONSTRAINT_NAME in constraints
+    assert MIGRATION_0007.COLUMN_NAME not in columns
+    assert sequences == set()
 
 
 def test_app_matview_matches_latest_migration():

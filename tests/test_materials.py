@@ -642,25 +642,18 @@ async def test_api_start_missing_material_raises_not_found(shared_session):
         await _api_start(uuid.uuid4())
 
 
-async def test_api_start_starts_queued_material(shared_session, mocker):
-    # swap_order opens its own transaction, which shared_session cannot nest
-    swap_order = mocker.patch.object(db, "swap_order", new=mocker.AsyncMock())
+async def test_api_start_starts_queued_material(shared_session):
     material_id = await insert_material()
     started_at = database.utc_today() - datetime.timedelta(days=1)
-    queue_start = await db.get_queue_start()
 
     await _api_start(material_id, started_at)
-
-    swap_order.assert_awaited_once_with(material_id, queue_start)
 
     material = await db.get_material_api(material_id=material_id)
     assert material.started_at is not None
     assert material.started_at.date() == started_at
 
 
-async def test_api_start_accepts_today(shared_session, mocker):
-    # swap_order opens its own transaction, which shared_session cannot nest
-    mocker.patch.object(db, "swap_order", new=mocker.AsyncMock())
+async def test_api_start_accepts_today(shared_session):
     material_id = await insert_material()
     today = database.utc_today()
 
@@ -773,7 +766,6 @@ def test_material_statistics_rejects_not_started_material():
         link=None,
         added_at=database.utcnow(),
         is_outlined=False,
-        index=1,
     )
 
     with pytest.raises(ValueError, match="is not started"):

@@ -14,7 +14,6 @@ from pydantic import ConfigDict, computed_field, field_validator
 from sqlalchemy import Integer, Text
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.engine import Row
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracker.common import database, pagination, schemas, settings, sort_keys
 from tracker.common.logger import logger
@@ -32,7 +31,6 @@ class Material(CustomBaseModel):
     model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
 
     material_id: UUID
-    index: int
     title: str
     authors: str
     pages: int
@@ -164,7 +162,7 @@ def _get_free_materials_stmt() -> sa.Select:
     return (
         sa.select(models.Materials)
         .where(models.MATERIAL_IS_QUEUED)
-        .order_by(models.Materials.c.index)
+        .order_by(models.Materials.c.sort_key)
     )
 
 
@@ -741,10 +739,7 @@ async def estimate_page(
 
     materials, next_cursor, total_count = await pagination.fetch_rows(
         _get_free_materials_stmt(),
-        cursor_expr=pagination.cursor(
-            pagination.int_part(models.Materials.c.index),
-            models.Materials.c.sort_key,
-        ),
+        cursor_expr=pagination.cursor(models.Materials.c.sort_key),
         request=request,
         to_item=lambda row: Material.model_validate(row, from_attributes=True),
     )
@@ -963,158 +958,6 @@ async def get_repeating_queue_page(
 
     logger.debug("Repeating queue page got, %s materials found", len(page.items))
     return page
-
-
-async def get_queue_start() -> int:
-    stmt = (
-        sa.select(models.Materials.c.index)
-        .where(models.MATERIAL_IS_QUEUED)
-        .order_by(models.Materials.c.index)
-        .limit(1)
-    )
-
-    async with database.session() as ses:
-        return await ses.scalar(stmt) or 1
-
-
-async def get_queue_end() -> int:
-    stmt = (
-        sa.select(models.Materials.c.index)
-        .where(models.MATERIAL_IS_QUEUED)
-        .order_by(models.Materials.c.index.desc())
-        .limit(1)
-    )
-
-    async with database.session() as ses:
-        return await ses.scalar(stmt) or 0
-
-
-def _get_material_index_uniqueness_constraint_name() -> str:
-    name: str | None = None
-
-    # closure to cache
-    def internal() -> str:
-        nonlocal name
-        if name:
-            return name
-
-        for constraint in models.Materials.constraints:
-            if constraint.deferrable and constraint.contains_column(  # type: ignore[attr-defined]
-                models.Materials.c.index,
-            ):
-                name = cast("str", constraint.name)
-                return name
-
-        raise ValueError("Deferrable material index constraint not found")
-
-    return internal()
-
-
-async def _set_unique_index_deferred(conn: AsyncSession) -> None:
-    constraint_name = _get_material_index_uniqueness_constraint_name()
-    await conn.execute(sa.text(f"SET CONSTRAINTS {constraint_name} DEFERRED"))
-
-
-async def _set_unique_index_immediate(conn: AsyncSession) -> None:
-    constraint_name = _get_material_index_uniqueness_constraint_name()
-    await conn.execute(sa.text(f"SET CONSTRAINTS {constraint_name} IMMEDIATE"))
-
-
-async def _shift_queue_down(*, conn: AsyncSession, start: int, stop: int) -> None:
-    shift_queue_stmt = (
-        models.Materials.update()
-        .values({"index": models.Materials.c.index + 1})
-        .where(models.Materials.c.index >= start)
-        .where(models.Materials.c.index < stop)
-    )
-
-    await conn.execute(shift_queue_stmt)
-
-
-async def _shift_queue_up(*, conn: AsyncSession, start: int, stop: int) -> None:
-    shift_queue_stmt = (
-        models.Materials.update()
-        .values({"index": models.Materials.c.index - 1})
-        .where(models.Materials.c.index > start)
-        .where(models.Materials.c.index <= stop)
-    )
-    await conn.execute(shift_queue_stmt)
-
-
-async def _get_material_index(material_id: UUID) -> int:
-    if not (material := await get_material(material_id=material_id)):
-        raise ValueError(f"Material id = {material_id} not found")
-
-    return material.index
-
-
-async def _set_material_index(
-    *,
-    material_id: UUID,
-    index: int,
-    conn: AsyncSession,
-) -> None:
-    logger.debug("Setting material_id=%s to index=%s", material_id, index)
-    if not conn.in_transaction():
-        raise ValueError("Could not update index outside a transaction")
-
-    stmt = (
-        models.Materials.update()
-        .values({"index": index})
-        .where(models.Materials.c.material_id == material_id)
-    )
-
-    result = await conn.execute(stmt)
-    database.check_updated_one(result, entity="Material", entity_id=material_id)
-
-    logger.debug("Index set")
-
-
-async def swap_order(material_id: UUID, new_material_index: int) -> None:
-    logger.info("Setting material=%s to %s index", material_id, new_material_index)
-
-    async with database.transaction() as conn:
-        old_material_index = await _get_material_index(material_id)
-        logger.debug("Old material index = %s", old_material_index)
-
-        if old_material_index == new_material_index:
-            logger.warning("Indexes are equal, terminating")
-            return
-
-        await _set_unique_index_deferred(conn)
-        # move to temporary index to save uniqueness
-        await _set_material_index(material_id=material_id, index=-1, conn=conn)
-
-        if old_material_index > new_material_index:
-            logger.info("Move material upper")
-
-            await _shift_queue_down(
-                conn=conn,
-                start=new_material_index,
-                stop=old_material_index,
-            )
-        elif old_material_index < new_material_index:
-            logger.info("Move material lower")
-
-            await _shift_queue_up(
-                conn=conn,
-                start=old_material_index,
-                stop=new_material_index,
-            )
-        else:
-            raise ValueError(
-                f"Wrong indexes got: {old_material_index}, "
-                f"{new_material_index}, {material_id=}",
-            )
-
-        # set the target index
-        await _set_material_index(
-            material_id=material_id,
-            index=new_material_index,
-            conn=conn,
-        )
-
-        await _set_unique_index_immediate(conn)
 
 
 async def is_reading(*, material_id: UUID) -> bool:
