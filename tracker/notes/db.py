@@ -157,7 +157,7 @@ async def search_notes_page(
     note_ids: Collection[UUID] | None,
     params: pagination.PageParams,
 ) -> pagination.Page[Note]:
-    """`note_ids` are the full-text search results of `query`."""
+    """`note_ids=None` applies no full-text filter, an empty one matches nothing."""
     logger.debug("Searching notes page material_id=%s", material_id)
     request = pagination.page_request(
         params,
