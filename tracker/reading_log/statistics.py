@@ -238,7 +238,7 @@ def _would_be_total(*, means: enums.MEANS, total_read_pages: int, lost_time: int
 
 
 async def _get_total_materials_completed() -> int:
-    stmt = sa.select(sa.func.count(1)).where(models.Statuses.c.completed_at != None)  # type: ignore[arg-type]
+    stmt = sa.select(sa.func.count(1)).where(models.Materials.c.completed_at != None)  # type: ignore[arg-type]
 
     async with database.session() as ses:
         return await ses.scalar(stmt) or 0
@@ -247,11 +247,7 @@ async def _get_total_materials_completed() -> int:
 async def _get_materials_completed() -> dict[enums.MaterialTypesEnum, int]:
     stmt = (
         sa.select(models.Materials.c.material_type, sa.func.count(1).label("cnt"))
-        .join(
-            models.Statuses,
-            models.Materials.c.material_id == models.Statuses.c.material_id,
-        )
-        .where(models.Statuses.c.completed_at != None)
+        .where(models.Materials.c.completed_at != None)
         .group_by(models.Materials.c.material_type)
     )  # type: ignore[arg-type]
 

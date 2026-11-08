@@ -98,13 +98,6 @@ INSERTS = {
         ),
         "Reading log",
     ),
-    "status": (
-        lambda: materials_db.start_material(
-            material_id=_material_id(),
-            started_at=datetime.date(2026, 1, 1),
-        ),
-        "Status",
-    ),
     "repeat": (
         lambda: materials_db.repeat_material(material_id=_material_id()),
         "Repeat",
@@ -151,12 +144,19 @@ UPDATES = {
         ),
         "Material",
     ),
+    "start_material": (
+        lambda material_id: materials_db.start_material(
+            material_id=material_id,
+            started_at=datetime.date(2026, 1, 1),
+        ),
+        "Not started material",
+    ),
     "complete_material": (
         lambda material_id: materials_db.complete_material(
             material_id=material_id,
             completed_at=datetime.date(2026, 1, 1),
         ),
-        "Material status",
+        "Reading material",
     ),
     "outline_material": (
         lambda material_id: materials_db.outline_material(material_id=material_id),

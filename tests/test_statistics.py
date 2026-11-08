@@ -249,7 +249,7 @@ async def test_would_be_total():
 async def test_get_total_materials_completed():
     materials = await st._get_total_materials_completed()
 
-    stmt = sa.select(sa.func.count(1)).where(models.Statuses.c.completed_at != None)
+    stmt = sa.select(sa.func.count(1)).where(models.Materials.c.completed_at != None)
 
     async with database.session() as ses:
         expected = await ses.scalar(stmt)

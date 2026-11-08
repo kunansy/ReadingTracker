@@ -67,7 +67,6 @@ class GetSpanReportResponse(CustomBaseModel):
 class BackupResponse(CustomBaseModel):
     materials_count: NonNegativeInt
     reading_log_count: NonNegativeInt
-    statuses_count: NonNegativeInt
     notes_count: NonNegativeInt
     cards_count: NonNegativeInt
     repeats_count: NonNegativeInt
@@ -77,7 +76,6 @@ class BackupResponse(CustomBaseModel):
 class RestoreResponse(CustomBaseModel):
     materials_count: NonNegativeInt
     reading_log_count: NonNegativeInt
-    statuses_count: NonNegativeInt
     notes_count: NonNegativeInt
     cards_count: NonNegativeInt
     repeats_count: NonNegativeInt

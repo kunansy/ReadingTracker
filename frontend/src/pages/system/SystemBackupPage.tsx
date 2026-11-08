@@ -36,7 +36,7 @@ export function SystemBackupPage() {
       {mut.data ? (
         <div>
           Success! Backup was created successfully. ({mut.data.materials_count} materials,{" "}
-          {mut.data.reading_log_count} logs, {mut.data.statuses_count} statuses,{" "}
+          {mut.data.reading_log_count} logs,{" "}
           {mut.data.notes_count} notes, {mut.data.cards_count} cards, {mut.data.repeats_count}{" "}
           repeats, {mut.data.note_repeats_history_count} note repeats)
         </div>

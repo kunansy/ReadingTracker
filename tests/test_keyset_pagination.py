@@ -274,12 +274,8 @@ async def test_completed_materials_pages(page_size):
     )
     stmt = (
         sa.select(models.Materials.c.material_id)
-        .join(
-            models.Statuses,
-            models.Statuses.c.material_id == models.Materials.c.material_id,
-        )
-        .where(models.Statuses.c.completed_at != None)
-        .order_by(models.Statuses.c.completed_at, models.Materials.c.sort_key)
+        .where(models.Materials.c.completed_at != None)
+        .order_by(models.Materials.c.completed_at, models.Materials.c.sort_key)
     )
 
     assert [stat.material.material_id for stat in items] == await _ids(stmt)
@@ -287,9 +283,9 @@ async def test_completed_materials_pages(page_size):
 
 async def test_completed_materials_pages_filter_by_tags():
     completed = await materials_db._get_completed_materials()
-    tagged = [m for m in completed if m.material.tags]
+    tagged = [m for m in completed if m.tags]
     assert tagged
-    tag = tagged[0].material.tags.split(", ")[0]
+    tag = tagged[0].tags.split(", ")[0]
 
     items = await _collect(
         lambda params: materials_db.completed_statistics_page(tags={tag}, params=params),
@@ -297,7 +293,7 @@ async def test_completed_materials_pages_filter_by_tags():
     )
 
     expected = {
-        m.material_id for m in completed if tag in (m.material.tags or "").split(", ")
+        m.material_id for m in completed if tag in (m.tags or "").split(", ")
     }
     assert {stat.material.material_id for stat in items} == expected
 
@@ -431,8 +427,8 @@ async def test_repeating_queue_pages(page_size, is_outlined):
             m.material_id,
         )
         for m in completed
-        if not (m.material.is_outlined and not notes_count.get(m.material_id))
-        and (not is_outlined or m.material.is_outlined)
+        if not (m.is_outlined and not notes_count.get(m.material_id))
+        and (not is_outlined or m.is_outlined)
         and analytics[m.material_id].priority_months >= 1
     ]
     expected.sort()

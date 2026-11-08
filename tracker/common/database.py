@@ -199,8 +199,8 @@ async def create_repeat_notes_matview(conn: AsyncSession | AsyncConnection) -> N
             CASE
                 -- in this case the note have no material
                 WHEN m IS NULL THEN 'completed'
-                WHEN s IS NULL THEN 'queue'
-                WHEN s.completed_at IS NULL THEN 'reading'
+                WHEN m.started_at IS NULL THEN 'queue'
+                WHEN m.completed_at IS NULL THEN 'reading'
                 ELSE 'completed'
             END AS material_status,
             r.repeated_at,
@@ -209,8 +209,8 @@ async def create_repeat_notes_matview(conn: AsyncSession | AsyncConnection) -> N
             sample_notes n
         JOIN oldest_notes ON n.note_id = ANY(oldest_notes.notes)
         LEFT JOIN materials m ON n.material_id = m.material_id
-        LEFT JOIN statuses s ON s.material_id = m.material_id
-        LEFT JOIN last_material_repeat r ON r.material_id = s.material_id
+        LEFT JOIN last_material_repeat r
+            ON r.material_id = m.material_id AND m.started_at IS NOT NULL
     WITH NO DATA;
     """
 

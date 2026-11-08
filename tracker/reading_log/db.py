@@ -111,14 +111,10 @@ async def get_log_record(*, log_id: UUID) -> LogRecord:
 async def get_completion_dates() -> dict[UUID | None, datetime.datetime]:
     logger.debug("Getting completion dates")
 
-    stmt = (
-        sa.select(models.Materials.c.material_id, models.Statuses.c.completed_at)
-        .join(
-            models.Statuses,
-            models.Materials.c.material_id == models.Statuses.c.material_id,
-        )
-        .where(models.Statuses.c.completed_at != None)
-    )
+    stmt = sa.select(
+        models.Materials.c.material_id,
+        models.Materials.c.completed_at,
+    ).where(models.Materials.c.completed_at != None)
 
     async with database.session() as ses:
         dates = {  # noqa: C416
@@ -300,19 +296,18 @@ async def check_record_correct(
         raise ValueError(f"No reading material id={material_id} found")
     material = materials[0]
 
-    st = material.status
-    if date < st.started_at.date() or (st.completed_at and date > st.completed_at.date()):
+    if material.started_at is None or date < material.started_at.date():
         raise ValueError(
             "Date is not inside the range. "
-            f"{date} not in [{st.started_at}; {st.completed_at}]",
+            f"{date} not in [{material.started_at}; {material.completed_at}]",
         )
 
     total_pages_read = sum(record.count for record in log_records_task.result())
-    if total_pages_read + count > material.material.pages:
+    if total_pages_read + count > material.pages:
         raise ValueError(
             "There are more pages than the material remains: "
             f"total pages read {total_pages_read}, "
-            f"material pages {material.material.pages}",
+            f"material pages {material.pages}",
         )
 
 
