@@ -339,12 +339,32 @@ async def test_update_material_not_found():
         )
 
 
-async def teststart_material():
-    pass
+async def test_start_material_stores_given_date(shared_session):
+    material_id, started_at = await start_material(days_ago=3)
+
+    material = await db.get_material_api(material_id=material_id)
+
+    assert material.started_at is not None
+    assert material.started_at.date() == started_at
+    assert material.completed_at is None
 
 
-async def testcomplete_material():
-    pass
+async def test_complete_material_stores_given_date(shared_session):
+    material_id, completed_at = await complete_material(completed_days_ago=1)
+
+    material = await db.get_material_api(material_id=material_id)
+
+    assert material.completed_at is not None
+    assert material.completed_at.date() == completed_at
+
+
+async def test_outline_material_sets_flag(shared_session):
+    material_id, _ = await complete_material()
+
+    await db.outline_material(material_id=material_id)
+
+    material = await db.get_material_api(material_id=material_id)
+    assert material.is_outlined is True
 
 
 @pytest.mark.parametrize(
@@ -611,7 +631,7 @@ async def test_api_start_rejects_future_date(shared_session):
         await _api_start(material_id, database.utc_today() + datetime.timedelta(days=1))
 
     assert e.value.status_code == 400
-    assert e.value.detail == "Start date must be less than today"
+    assert e.value.detail == "Start date must not be in the future"
     material = await db.get_material_api(material_id=material_id)
     assert material.started_at is None
 
@@ -635,6 +655,19 @@ async def test_api_start_starts_queued_material(shared_session, mocker):
     material = await db.get_material_api(material_id=material_id)
     assert material.started_at is not None
     assert material.started_at.date() == started_at
+
+
+async def test_api_start_accepts_today(shared_session, mocker):
+    # swap_order opens its own transaction, which shared_session cannot nest
+    mocker.patch.object(db, "swap_order", new=mocker.AsyncMock())
+    material_id = await insert_material()
+    today = database.utc_today()
+
+    await _api_start(material_id, today)
+
+    material = await db.get_material_api(material_id=material_id)
+    assert material.started_at is not None
+    assert material.started_at.date() == today
 
 
 async def test_api_complete_validates_dates_before_db_call(shared_session):

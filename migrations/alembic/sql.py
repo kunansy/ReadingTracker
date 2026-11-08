@@ -79,7 +79,7 @@ REPEAT_NOTES_MATVIEW = """
     WITH NO DATA;
     """
 
-# Revision 0004 moved started_at/completed_at from statuses to materials.
+# Same view, reading started_at/completed_at from materials (revision 0004+).
 REPEAT_NOTES_MATVIEW_V2 = """
     CREATE MATERIALIZED VIEW IF NOT EXISTS mvw_repeat_notes AS
         WITH sample_notes AS (

@@ -5,6 +5,7 @@ from collections.abc import Callable
 from pathlib import Path
 from types import ModuleType
 
+import pytest
 import sqlalchemy as sa
 from alembic.operations import Operations
 from alembic.runtime.migration import MigrationContext
@@ -161,3 +162,25 @@ async def test_downgrade_then_upgrade_keeps_statuses_and_matview():
     assert _seeded_rows(statuses_after, seeded) == {seeded["reading"], seeded["completed"]}
     assert legacy == matview_before
     assert matview_after == matview_before
+
+
+async def test_upgrade_aborts_on_orphan_status():
+    def check(conn: Connection) -> set[str]:
+        MIGRATION_0005.downgrade()
+        MIGRATION_0004.downgrade()
+        conn.execute(
+            sa.text(
+                "INSERT INTO statuses (status_id, material_id, started_at) "
+                "VALUES (gen_random_uuid(), gen_random_uuid(), :started_at)",
+            ),
+            {"started_at": STARTED_AT},
+        )
+
+        with pytest.raises(RuntimeError, match="reference missing materials"):
+            MIGRATION_0004.upgrade()
+
+        return {column["name"] for column in sa.inspect(conn).get_columns("materials")}
+
+    columns = await _in_rolled_back_migration(check)
+
+    assert {"started_at", "completed_at"}.isdisjoint(columns)

@@ -282,7 +282,10 @@ async def start_material(
     if material.started_at is not None:
         raise HTTPException(status_code=400, detail="Material is already started")
     if body.started_at and body.started_at > database.utc_today():
-        raise HTTPException(status_code=400, detail="Start date must be less than today")
+        raise HTTPException(
+            status_code=400,
+            detail="Start date must not be in the future",
+        )
 
     # TODO: rearch queue model
     if material.index != (queue_start := await db.get_queue_start()):
