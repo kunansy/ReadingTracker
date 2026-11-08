@@ -8,7 +8,7 @@ import pytest
 import sqlalchemy.sql as sa
 from starlette.requests import Request
 
-from tracker.common import database
+from tracker.common import database, sort_keys
 from tracker.api.v1.cards import list_cards
 from tracker.common.pagination import MAX_PAGE_SIZE, PageParams
 from tracker.materials import db
@@ -76,6 +76,34 @@ async def test_get_free_materials():
         material.material_id in expected_free_materials for material in free_materials
     )
 
+
+
+async def test_free_materials_follow_added_at_order(shared_session):
+    added_at_by_id = {
+        await insert_material(): datetime.datetime(2000, 1, day)  # noqa: DTZ001
+        for day in (2, 3, 1)
+    }
+    for material_id, added_at in added_at_by_id.items():
+        await shared_session.execute(
+            models.Materials.update()
+            .where(models.Materials.c.material_id == str(material_id))
+            .values(
+                added_at=added_at,
+                sort_key=sort_keys.material_sort_key(
+                    added_at=added_at,
+                    material_id=material_id,
+                ),
+            ),
+        )
+
+    free_materials = await db._get_free_materials()
+
+    queued_ids = [
+        material.material_id
+        for material in free_materials
+        if material.material_id in added_at_by_id
+    ]
+    assert queued_ids == sorted(added_at_by_id, key=added_at_by_id.__getitem__)
 
 def test_get_reading_materials_stmt():
     stmt = db._get_reading_materials_stmt()

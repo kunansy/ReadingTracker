@@ -35,14 +35,15 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.add_column("materials", sa.Column(COLUMN_NAME, _Serial, nullable=False))
     op.execute(
-        'UPDATE materials m SET "index" = ordered.position '
+        f'UPDATE materials m SET "{COLUMN_NAME}" = ordered.position '  # noqa: S608
         "FROM (SELECT material_id, row_number() OVER (ORDER BY sort_key) AS position "
         "FROM materials) ordered "
         "WHERE ordered.material_id = m.material_id",
     )
     op.execute(
-        "SELECT setval('materials_index_seq', coalesce(max(\"index\"), 1), "
-        'max("index") IS NOT NULL) FROM materials',
+        f"SELECT setval('materials_{COLUMN_NAME}_seq', "  # noqa: S608
+        f'coalesce(max("{COLUMN_NAME}"), 1), '
+        f'max("{COLUMN_NAME}") IS NOT NULL) FROM materials',
     )
     op.create_unique_constraint(
         CONSTRAINT_NAME,
