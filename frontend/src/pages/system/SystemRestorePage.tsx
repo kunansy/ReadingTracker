@@ -1,15 +1,12 @@
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
 
-import { apiFetch } from "../../api/system";
-import { RestoreResponse } from "../../types.ts";
+import { api, unwrap } from "../../api/client";
 
 export function SystemRestorePage() {
   const mut = useMutation({
     mutationFn: () =>
-      apiFetch<RestoreResponse>("/restore", {
-        method: "POST",
-      }),
+      unwrap(api.POST("/api/v1/system/restore")),
   });
 
   const didRunRef = useRef(false);

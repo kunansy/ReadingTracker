@@ -2,9 +2,8 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo, useEffect, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
-import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/notes";
-import { apiFetch as materialsApiFetch } from "../../api/materials";
-import { GetMaterialResponse, GetNoteLinksResponse, GetNoteResponse, MaterialType } from "../../types";
+import { api, PAGE_SIZE, unwrap } from "../../api/client";
+import type { GetMaterialResponse, GetNoteLinksResponse, GetNoteResponse } from "../../api/schema";
 import { NetworkIframe } from "../../components/NetworkIframe";
 import { QueryStateFromResult } from "../../components/QueryState";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
@@ -35,14 +34,19 @@ export function NotePage() {
   const q = useQuery({
     queryKey: ["notes", noteId],
     enabled: Boolean(noteId),
-    queryFn: () => apiFetch<GetNoteResponse>(`/${noteId}`),
+    queryFn: () =>
+      unwrap(api.GET("/api/v1/notes/{note_id}", { params: { path: { note_id: noteId } } })),
   });
 
   const materialQ = useQuery({
     queryKey: ["materials", q.data?.note.material_id],
     enabled: Boolean(q.data?.note.material_id),
     queryFn: () =>
-      materialsApiFetch<GetMaterialResponse>(`/${q.data?.note.material_id}`),
+      unwrap(
+        api.GET("/api/v1/materials/{material_id}", {
+          params: { path: { material_id: q.data?.note.material_id ?? "" } },
+        }),
+      ),
   });
 
   const linksPagination = useCursorPagination(PAGE_SIZE, noteId, "asc");
@@ -54,18 +58,27 @@ export function NotePage() {
       previousQuery?.queryKey[2] === noteId ? keepPreviousData(previous) : undefined,
     enabled: Boolean(noteId),
     queryFn: () =>
-      apiFetch<GetNoteLinksResponse>(
-        `/links${buildQuery({ note_id: noteId, next_token: linksNextToken, page_size: PAGE_SIZE, order: linksPagination.order })}`,
+      unwrap(
+        api.GET("/api/v1/notes/links", {
+          params: {
+            query: {
+              note_id: noteId,
+              next_token: linksNextToken,
+              page_size: PAGE_SIZE,
+              order: linksPagination.order,
+            },
+          },
+        }),
       ),
   });
 
   useEffect(() => {
-    const materialType = materialQ.data?.material.material_type || MaterialType.book;
+    const materialType = materialQ.data?.material.material_type || "book";
     setPageName("Page");
-    if (materialType === MaterialType.lecture || materialType === MaterialType.audiobook) {
+    if (materialType === "lecture" || materialType === "audiobook") {
       setPageName("Minute");
     }
-    if (materialType === MaterialType.course) {
+    if (materialType === "course") {
       setPageName("Lecture");
     }
   }, [materialQ.data?.material.material_type]);
@@ -87,15 +100,16 @@ export function NotePage() {
           if (!note) {
             return <p>Note not found</p>;
           }
+          const linkTo = noteLinksQ.data?.link_to;
 
           return (
             <>
               <div className="to-link">
-                {noteLinksQ.data?.link_to ? (
+                {linkTo ? (
                   <div
                     className="note-link"
-                    onClick={() => navigate(`/notes/${noteLinksQ.data?.link_to.note_id}`)}
-                    title={noteLinksQ.data.link_to.info}
+                    onClick={() => navigate(`/notes/${linkTo.note_id}`)}
+                    title={linkTo.info}
                   />
                 ) : null}
               </div>

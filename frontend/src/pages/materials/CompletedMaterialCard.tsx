@@ -2,14 +2,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { apiFetch } from "../../api/materials";
+import { api, unwrap } from "../../api/client";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
-import type { MaterialStatisticsJson } from "../../types";
+import type { MaterialStatistics } from "../../api/schema";
 
 interface CompletedMaterialCardProps {
-  stats: MaterialStatisticsJson;
+  stats: MaterialStatistics;
   /** 1-based position in the whole list, shown as "position / total". */
   position?: { index: number; total: number };
 }
@@ -22,7 +22,11 @@ export function CompletedMaterialCard({ stats: ms, position }: CompletedMaterial
 
   const outlineMut = useMutation({
     mutationFn: (materialId: string) =>
-      apiFetch(`/${materialId}/outline`, { method: "POST" }),
+      unwrap(
+        api.POST("/api/v1/materials/{material_id}/outline", {
+          params: { path: { material_id: materialId } },
+        }),
+      ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["materials"] });
     },

@@ -43,3 +43,57 @@ jobs:
         poetry run ruff check
         poetry run ruff format --check --quiet
         poetry run mypy .
+
+  frontend:
+    runs-on: ubuntu-latest
+    env:
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_NAME: tracker
+      DB_USERNAME: tracker
+      DB_PASSWORD: tracker
+      DRIVE_CREDS: '{}'
+      MANTICORE_MYSQL_HOST: localhost
+      BACKUP_HOST: localhost
+      BACKUP_PORT: 50051
+      YOUTUBE_API_KEY: dummy
+      KAFKA_REPEAT_NOTES_TOPIC: repeat
+      KAFKA_CACHE_NOTES_TOPIC: cache
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.14'
+    - uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Install required packages
+      run: |
+        sudo apt-get install -y portaudio19-dev libasound-dev
+
+    - name: Install backend dependencies
+      run: |
+        poetry config virtualenvs.create false
+        poetry install --no-interaction --no-root
+
+    - name: Install frontend dependencies
+      working-directory: frontend
+      run: npm install
+
+    - name: Check the generated API client is up to date
+      run: |
+        python -m tracker.openapi_dump frontend/openapi.json
+        npm --prefix frontend run gen:api
+        git diff --exit-code frontend/openapi.json frontend/src/api/schema.ts
+
+    - name: Typecheck and test
+      working-directory: frontend
+      run: |
+        npm run typecheck
+        npm test

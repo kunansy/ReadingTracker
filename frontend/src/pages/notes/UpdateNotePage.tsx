@@ -2,14 +2,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
-import { apiFetch, buildQuery } from "../../api/notes";
-import { apiFetch as materialsApiFetch } from "../../api/materials";
+import { api, unwrap } from "../../api/client";
+import type { UpdateNoteRequest } from "../../api/schema";
 import { CelebrateButton } from "../../components/CelebrateButton";
-import {
-  GetNoteResponse,
-  GetNoteTagsResponse,
-  ListMaterialsTitlesResponse, ListPossibleLinkResponse,
-} from "../../types.ts";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox.tsx";
 import {isUuid} from "../../utils/isUuid.ts";
 import {SpellTextarea} from "../../components/SpellTextrea.tsx";
@@ -47,21 +42,24 @@ export function UpdateNotePage() {
   const q = useQuery({
     queryKey: ["notes", noteId],
     enabled: Boolean(noteId),
-    queryFn: () => apiFetch<GetNoteResponse>(`/${noteId}`),
+    queryFn: () =>
+      unwrap(api.GET("/api/v1/notes/{note_id}", { params: { path: { note_id: noteId } } })),
   });
   const materialTitlesQ = useQuery({
     queryKey: ["materials", "titles"],
-    queryFn: () => materialsApiFetch<ListMaterialsTitlesResponse>(`/titles`),
+    queryFn: () => unwrap(api.GET("/api/v1/materials/titles")),
   });
   const noteTagsQ = useQuery({
     queryKey: ["notes", "tags", materialId],
     enabled: isUuid(materialId),
-    queryFn: () => apiFetch<GetNoteTagsResponse>(`/tags${buildQuery({material_id: materialId || undefined})}`),
+    queryFn: () =>
+      unwrap(api.GET("/api/v1/notes/tags", { params: { query: { material_id: materialId } } })),
   });
   const possibleLinksQ = useQuery({
     queryKey: ["possible-links", noteId],
     enabled: Boolean(noteId),
-    queryFn: () => apiFetch<ListPossibleLinkResponse>(`/possible-links${buildQuery({note_id: noteId})}`),
+    queryFn: () =>
+      unwrap(api.GET("/api/v1/notes/possible-links", { params: { query: { note_id: noteId } } })),
   });
 
   const updateMut = useMutation({
@@ -72,7 +70,7 @@ export function UpdateNotePage() {
       if (!isUuid(materialId)) {
         throw new Error("Choose a valid material (UUID)");
       }
-      const body: Record<string, unknown> = {
+      const body: UpdateNoteRequest = {
         material_id: materialId,
         title: title.trim() ? title.trim() : null,
         content,
@@ -81,10 +79,9 @@ export function UpdateNotePage() {
         chapter: chapter || "",
         page: page === "" ? 0 : Number(page),
       };
-      await apiFetch(`/${noteId}`, {
-        method: "PATCH",
-        body: JSON.stringify(body),
-      });
+      await unwrap(
+        api.PATCH("/api/v1/notes/{note_id}", { params: { path: { note_id: noteId } }, body }),
+      );
     },
     onSuccess: async () => {
       setError(null);
@@ -246,7 +243,7 @@ export function UpdateNotePage() {
                         lineHeight: "1.4",
                         fontSize: "14px",
                       }}
-                      title={link.title}
+                      title={link.title ?? undefined}
                       onClick={() => {
                         setLinkId(link.note_id);
                       }}

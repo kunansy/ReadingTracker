@@ -1,12 +1,11 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
-import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/materials";
+import { api, PAGE_SIZE, unwrap } from "../../api/client";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel } from "../../materials/format";
-import type { GetRepeatingQueueResponse } from "../../types";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
 import { PageLoadError } from "../../components/PageLoadError";
@@ -25,22 +24,26 @@ export function ListRepeatMaterialsPage() {
   const pagination = useCursorPagination(PAGE_SIZE, String(onlyOutlined), "asc");
   const nextToken = pagination.cursor;
 
-  const queryString = buildQuery({
-    only_outlined: onlyOutlined ? "true" : undefined,
+  const query = {
+    only_outlined: onlyOutlined || undefined,
     next_token: nextToken,
     page_size: PAGE_SIZE,
     order: pagination.order,
-  });
+  };
 
   const q = useQuery({
-    queryKey: ["materials", "repeat", queryString],
+    queryKey: ["materials", "repeat", query],
     placeholderData: keepPreviousData,
-    queryFn: () => apiFetch<GetRepeatingQueueResponse>(`/repeat${queryString}`),
+    queryFn: () => unwrap(api.GET("/api/v1/materials/repeat", { params: { query } })),
   });
 
   const repeatMut = useMutation({
     mutationFn: (materialId: string) =>
-      apiFetch(`/${materialId}/repeat`, { method: "POST" }),
+      unwrap(
+        api.POST("/api/v1/materials/{material_id}/repeat", {
+          params: { path: { material_id: materialId } },
+        }),
+      ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["materials"] });
     },

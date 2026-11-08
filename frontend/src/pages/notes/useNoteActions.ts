@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 
-import { apiFetch } from "../../api/notes";
+import { api, unwrap } from "../../api/client";
 
 export interface NoteActions {
   deleteNote: (noteId: string) => void;
@@ -42,7 +42,9 @@ export function useNoteActions(): NoteActions {
   const deleteMut = useMutation({
     ...common,
     mutationFn: async (noteId: string) => {
-      await apiFetch(`/${encodeURIComponent(noteId)}`, { method: "DELETE" });
+      await unwrap(
+        api.DELETE("/api/v1/notes/{note_id}", { params: { path: { note_id: noteId } } }),
+      );
     },
     onSettled: refreshNotes,
   });
@@ -50,7 +52,9 @@ export function useNoteActions(): NoteActions {
   const restoreMut = useMutation({
     ...common,
     mutationFn: async (noteId: string) => {
-      await apiFetch(`/${encodeURIComponent(noteId)}/restore`, { method: "POST" });
+      await unwrap(
+        api.POST("/api/v1/notes/{note_id}/restore", { params: { path: { note_id: noteId } } }),
+      );
     },
     onSettled: refreshNotes,
   });
@@ -58,7 +62,11 @@ export function useNoteActions(): NoteActions {
   const repeatMut = useMutation({
     ...common,
     mutationFn: async (noteId: string) => {
-      await apiFetch(`/${encodeURIComponent(noteId)}/repeat-queue`, { method: "POST" });
+      await unwrap(
+        api.POST("/api/v1/notes/{note_id}/repeat-queue", {
+          params: { path: { note_id: noteId } },
+        }),
+      );
     },
   });
 

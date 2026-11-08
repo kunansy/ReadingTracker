@@ -2,7 +2,8 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
-import { apiFetch, buildQuery } from "../../api/notes";
+import { api, unwrap } from "../../api/client";
+import type { SearchNotesItem } from "../../api/schema";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 import { ScrollArrows } from "../../components/ScrollArrows";
@@ -11,39 +12,7 @@ import { PageLoadError } from "../../components/PageLoadError";
 import { useNoteActions } from "./useNoteActions";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 
-type NoteListItem = {
-  note_id: string;
-  material_id: string;
-  title: string | null;
-  content_html: string;
-  tags_html: string;
-  link_html: string;
-  chapter: string;
-  chapter_int: number;
-  page: number;
-  links_count: number;
-  is_deleted?: boolean;
-};
-
-type SearchResponse = {
-  notes: NoteListItem[];
-  total_count: number;
-  titles: Record<string, string>;
-  material_types: Record<string, string>;
-  material_notes: Record<string, number>;
-  chapters: Record<string, string[]>;
-  query: string | null;
-  tags: string[];
-  tags_query: string | null;
-  next_token: string | null;
-  page_size: number;
-  material_id: string | null;
-};
-
-type MetaResponse = {
-  titles: Record<string, string>;
-  tags: string[];
-};
+type NoteListItem = SearchNotesItem;
 
 const PAGE_SIZE = 10;
 
@@ -111,22 +80,30 @@ export function SearchNotesPage() {
   const metaQ = useQuery({
     queryKey: ["notes", "meta", materialId],
     queryFn: () =>
-      apiFetch<MetaResponse>(`/meta${buildQuery({ material_id: materialId || undefined })}`),
+      unwrap(
+        api.GET("/api/v1/notes/meta", {
+          params: { query: { material_id: materialId || undefined } },
+        }),
+      ),
   });
 
   const searchQ = useQuery({
     queryKey: ["notes", "search", materialId, query, tagsQuery, nextToken, pagination.order],
     placeholderData: keepPreviousData,
     queryFn: () =>
-      apiFetch<SearchResponse>(
-        `/search${buildQuery({
-          material_id: materialId || undefined,
-          query: query || undefined,
-          tags_query: tagsQuery || undefined,
-          next_token: nextToken,
-          page_size: PAGE_SIZE,
-          order: pagination.order,
-        })}`,
+      unwrap(
+        api.GET("/api/v1/notes/search", {
+          params: {
+            query: {
+              material_id: materialId || undefined,
+              query: query || undefined,
+              tags_query: tagsQuery || undefined,
+              next_token: nextToken,
+              page_size: PAGE_SIZE,
+              order: pagination.order,
+            },
+          },
+        }),
       ),
   });
 
@@ -228,10 +205,10 @@ export function SearchNotesPage() {
       return;
     }
     try {
-      const r = await apiFetch<{ autocompletions: string[] }>(
-        `/autocompletion${buildQuery({ query: v, limit: 5 })}`,
+      const r = await unwrap(
+        api.GET("/api/v1/notes/autocompletion", { params: { query: { query: v, limit: 5 } } }),
       );
-      setHintList(r?.autocompletions ?? []);
+      setHintList(r.autocompletions);
     } catch {
       setHintList([]);
     }
@@ -259,10 +236,10 @@ export function SearchNotesPage() {
           return;
         }
         try {
-          const note = await apiFetch<{ content: string }>(
-            `/${linkId}`,
+          const { note } = await unwrap(
+            api.GET("/api/v1/notes/{note_id}", { params: { path: { note_id: linkId } } }),
           );
-          if (note?.content) {
+          if (note.content) {
             localStorage.setItem(cacheKey, note.content);
             el.title = note.content;
           }

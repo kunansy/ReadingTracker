@@ -1,62 +1,39 @@
+import createClient from "openapi-fetch";
+
+import type { paths } from "./schema";
+
 /** Server-side bounds: 1..100. */
 export const PAGE_SIZE = 20;
 
 export type ApiError = Error & { status?: number };
 
-function parseDetail(text: string, status: number): string {
-  try {
-    const j = JSON.parse(text) as { detail?: unknown };
-    if (typeof j.detail === "string") {
-      return j.detail;
-    }
-    if (j.detail !== undefined) {
-      return String(j.detail);
-    }
-  } catch {
-    return text.slice(0, 500) || `HTTP ${status}`;
+type FetchResult<T> = {
+  data?: T;
+  error?: unknown;
+  response: Response;
+};
+
+export const api = createClient<paths>({ credentials: "same-origin" });
+
+function errorDetail(error: unknown, status: number): string {
+  if (typeof error === "string") {
+    return error.slice(0, 500) || `HTTP ${status}`;
+  }
+  if (error !== null && typeof error === "object" && "detail" in error) {
+    const { detail } = error;
+    return typeof detail === "string" ? detail : JSON.stringify(detail);
   }
   return `HTTP ${status}`;
 }
 
-export function createApiFetch(apiBase: string) {
-  return async function apiFetch<T>(
-    path: string,
-    init?: RequestInit,
-  ): Promise<T | undefined> {
-    const headers: Record<string, string> = {
-      ...(init?.headers as Record<string, string> | undefined),
-    };
-    if (init?.body !== undefined) {
-      headers["Content-Type"] = "application/json";
-    }
-    const url = `${apiBase}${path.startsWith("/") ? path : `/${path}`}`;
-    const res = await fetch(url, {
-      credentials: "same-origin",
-      ...init,
-      headers,
-    });
-    const text = await res.text();
-    if (!res.ok) {
-      const err = new Error(parseDetail(text, res.status)) as ApiError;
-      err.status = res.status;
-      throw err;
-    }
-    if (res.status === 204 || !text) {
-      return undefined;
-    }
-    return JSON.parse(text) as T;
-  };
+/** Bridges openapi-fetch results to TanStack Query: data on 2xx, throw otherwise. */
+export async function unwrap<T>(request: Promise<FetchResult<T>>): Promise<T> {
+  const { data, error, response } = await request;
+  if (!response.ok) {
+    const err = new Error(errorDetail(error, response.status)) as ApiError;
+    err.status = response.status;
+    throw err;
+  }
+  return data as T;
 }
 
-export function buildQuery(
-  params: Record<string, string | number | undefined | null>,
-): string {
-  const q = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
-    if (v !== undefined && v !== null && v !== "") {
-      q.set(k, String(v));
-    }
-  }
-  const s = q.toString();
-  return s ? `?${s}` : "";
-}

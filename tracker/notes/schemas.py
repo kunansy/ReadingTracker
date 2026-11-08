@@ -17,6 +17,7 @@ from pydantic import (
 from tracker.common import settings
 from tracker.common.pagination import PageResponse
 from tracker.common.schemas import CustomBaseModel, skip_empty_value
+from tracker.models.enums import MaterialTypesEnum
 from tracker.models.models import MAX_CHAPTER_LENGTH
 
 
@@ -255,8 +256,35 @@ class GetNotesMetaResponse(CustomBaseModel):
 
 class GetNotesGraphResponse(CustomBaseModel):
     iframe_srcdoc: str
-    titles: dict[UUID, int]
+    titles: dict[UUID, str]
+    material_id: UUID | None
+
+
+class SearchNotesItem(CustomBaseModel):
+    note_id: UUID
     material_id: UUID
+    title: str | None
+    content_html: str
+    tags_html: str
+    link_html: str
+    chapter: str
+    chapter_int: int
+    page: int
+    links_count: int | None
+    is_deleted: bool
+
+
+class SearchNotesResponse(PageResponse):
+    notes: list[SearchNotesItem]
+    titles: dict[UUID, str]
+    material_types: dict[UUID, MaterialTypesEnum]
+    material_notes: dict[UUID, int]
+    chapters: dict[UUID, list[str]]
+    query: str | None
+    tags: list[str]
+    tags_query: str | None
+    page_size: int
+    material_id: str | None
 
 
 class ListPossibleLinksItem(CustomBaseModel):

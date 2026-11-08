@@ -38,10 +38,10 @@ def no_side_queries(mocker):
         "get_distinct_chapters",
         "get_material_with_notes_titles",
         "get_material_types",
-        "get_sorted_tags",
         "get_all_notes_count",
     ):
         mocker.patch.object(notes_db, name, mocker.AsyncMock(return_value={}))
+    mocker.patch.object(notes_db, "get_sorted_tags", mocker.AsyncMock(return_value=[]))
 
 
 def _empty_page() -> pagination.Page:

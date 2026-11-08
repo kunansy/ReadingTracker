@@ -1,9 +1,9 @@
 import { describe, expect, test } from "vitest";
 
-import { isMaterialType, MaterialType } from "./types.ts";
+import { isMaterialType, MaterialTypes } from "./types.ts";
 
 describe("isMaterialType", () => {
-  test.each(Object.values(MaterialType))("accepts '%s'", (value) => {
+  test.each(MaterialTypes)("accepts '%s'", (value) => {
     expect(isMaterialType(value)).toBe(true);
   });
 

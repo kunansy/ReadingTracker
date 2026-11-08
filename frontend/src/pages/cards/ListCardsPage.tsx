@@ -1,9 +1,7 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
-import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/cards.ts";
-import { apiFetch as materialsApiFetch } from "../../api/materials.ts";
-import {ListMaterialsTitlesResponse, ListCardsResponse} from "../../types.ts";
+import { api, PAGE_SIZE, unwrap } from "../../api/client";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
 import {useMemo} from "react";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
@@ -22,7 +20,7 @@ export function ListCardsPage() {
 
     const materialsTitlesQ = useQuery({
         queryKey: ["materials", "with_cards_titles"],
-        queryFn: () => materialsApiFetch<ListMaterialsTitlesResponse>("/with-cards-titles"),
+        queryFn: () => unwrap(api.GET("/api/v1/materials/with-cards-titles")),
         staleTime: 5 * 60 * 1000,
     });
 
@@ -30,12 +28,18 @@ export function ListCardsPage() {
         queryKey: ["cards", { materialId, nextToken, order: pagination.order }],
         placeholderData: keepPreviousData,
         queryFn: () =>
-            apiFetch<ListCardsResponse>(`/${buildQuery({
-                material_id: materialId || undefined,
-                next_token: nextToken,
-                page_size: PAGE_SIZE,
-                order: pagination.order,
-            })}`),
+            unwrap(
+                api.GET("/api/v1/cards/", {
+                    params: {
+                        query: {
+                            material_id: materialId || undefined,
+                            next_token: nextToken,
+                            page_size: PAGE_SIZE,
+                            order: pagination.order,
+                        },
+                    },
+                }),
+            ),
     });
 
     const materialsTitles = materialsTitlesQ.data?.items ?? {};

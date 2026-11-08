@@ -2,8 +2,8 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
-import { apiFetch } from "../../api/cards";
-import { apiFetch as notesApiFetch, buildQuery } from "../../api/notes";
+import { api, unwrap } from "../../api/client";
+import type { SearchNotesItem } from "../../api/schema";
 import { PageNav } from "../../components/PageNav";
 import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
@@ -17,33 +17,7 @@ import {isUuid} from "../../utils/isUuid.ts";
 import {SpellTextarea} from "../../components/SpellTextrea.tsx";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 
-type NoteListItem = {
-  note_id: string;
-  material_id: string;
-  content_html: string;
-  chapter: string;
-  page: number;
-};
-
-type NotesSearchResponse = {
-  notes: NoteListItem[];
-  total_count: number;
-  next_token: string | null;
-};
-
 const NOTES_PAGE_SIZE = 100;
-
-type NotesMetaResponse = {
-  titles: Record<string, string>;
-};
-
-type CreateCardResponse = {
-  card_id: string;
-};
-
-type NotesWithCardsResponse = {
-  items: string[];
-};
 
 
 function stripHtml(html: string): string {
@@ -78,7 +52,7 @@ export function AddCardPage() {
 
   const metaQ = useQuery({
     queryKey: ["notes", "meta"],
-    queryFn: () => notesApiFetch<NotesMetaResponse>("/meta"),
+    queryFn: () => unwrap(api.GET("/api/v1/notes/meta")),
     staleTime: 10 * 60 * 1000,
   });
 
@@ -90,23 +64,27 @@ export function AddCardPage() {
     queryKey: ["notes", "search", { materialId: notesMaterialId, nextToken: notesNextToken, order: notesPagination.order }],
     placeholderData: keepPreviousData,
     queryFn: () =>
-      notesApiFetch<NotesSearchResponse>(
-        `/search${buildQuery({
-          material_id: notesMaterialId || undefined,
-          next_token: notesNextToken,
-          page_size: NOTES_PAGE_SIZE,
-          order: notesPagination.order,
-        })}`,
+      unwrap(
+        api.GET("/api/v1/notes/search", {
+          params: {
+            query: {
+              material_id: notesMaterialId || undefined,
+              next_token: notesNextToken,
+              page_size: NOTES_PAGE_SIZE,
+              order: notesPagination.order,
+            },
+          },
+        }),
       ),
   });
 
   const notesWithCardsQ = useQuery({
     queryKey: ["cards", "notes-with-cards", { materialId }],
     queryFn: () =>
-      apiFetch<NotesWithCardsResponse>(
-        `/notes-with-cards${buildQuery({
-          ...(isUuid(materialId) ? { material_id: materialId } : {}),
-        })}`,
+      unwrap(
+        api.GET("/api/v1/cards/notes-with-cards", {
+          params: { query: isUuid(materialId) ? { material_id: materialId } : {} },
+        }),
       ),
     staleTime: 30_000,
   });
@@ -128,15 +106,16 @@ export function AddCardPage() {
         throw new Error("Question is required");
       }
 
-      return apiFetch<CreateCardResponse>("/", {
-        method: "POST",
-        body: JSON.stringify({
-          material_id: mid,
-          note_id: nid,
-          question: q,
-          answer: a || null,
+      return unwrap(
+        api.POST("/api/v1/cards/", {
+          body: {
+            material_id: mid,
+            note_id: nid,
+            question: q,
+            answer: a || null,
+          },
         }),
-      });
+      );
     },
     onSuccess: () => {
       setError(null);
@@ -164,7 +143,7 @@ export function AddCardPage() {
   }, [materialsTitles]);
 
   const notesById = useMemo(() => {
-    const m = new Map<string, NoteListItem>();
+    const m = new Map<string, SearchNotesItem>();
     for (const n of notes) m.set(n.note_id, n);
     return m;
   }, [notes]);

@@ -2,12 +2,11 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/materials";
+import { api, PAGE_SIZE, unwrap } from "../../api/client";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
-import type {ListReadingMaterialsResponse} from "../../types";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { dateInputValue } from "../../utils/dateInputValue";
 import { PageNav } from "../../components/PageNav";
@@ -28,17 +27,27 @@ export function ListReadingMaterialsPage() {
     queryKey: ["materials", "reading", { nextToken, order: pagination.order }],
     placeholderData: keepPreviousData,
     queryFn: () =>
-      apiFetch<ListReadingMaterialsResponse>(
-        `/reading${buildQuery({ next_token: nextToken, page_size: PAGE_SIZE, order: pagination.order })}`,
+      unwrap(
+        api.GET("/api/v1/materials/reading", {
+          params: {
+            query: {
+              next_token: nextToken,
+              page_size: PAGE_SIZE,
+              order: pagination.order,
+            },
+          },
+        }),
       ),
   });
 
   const completeMut = useMutation({
     mutationFn: (p: { materialId: string; completedAt: string }) =>
-      apiFetch(`/${p.materialId}/complete`, {
-        method: "POST",
-        body: JSON.stringify({ completed_at: p.completedAt }),
-      }),
+      unwrap(
+        api.POST("/api/v1/materials/{material_id}/complete", {
+          params: { path: { material_id: p.materialId } },
+          body: { completed_at: p.completedAt },
+        }),
+      ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["materials"] });
     },

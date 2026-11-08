@@ -2,11 +2,10 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import {useCallback, useEffect, useRef, useState} from "react";
 import { useNavigate } from "react-router-dom";
 
-import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/materials";
+import { api, PAGE_SIZE, unwrap } from "../../api/client";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
-import type {ListMaterialsQueueResponse} from "../../types";
 import {CelebrateButton} from "../../components/CelebrateButton.tsx";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { dateInputValue } from "../../utils/dateInputValue";
@@ -27,22 +26,28 @@ export function ListMaterialsQueuePage() {
   const q = useQuery({
     queryKey: ["materials", "queue", { nextToken, order: pagination.order }],
     queryFn: () =>
-      apiFetch<ListMaterialsQueueResponse>(
-        `/queue${buildQuery({
-          next_token: nextToken,
-          page_size: PAGE_SIZE,
-          order: pagination.order,
-        })}`,
+      unwrap(
+        api.GET("/api/v1/materials/queue", {
+          params: {
+            query: {
+              next_token: nextToken,
+              page_size: PAGE_SIZE,
+              order: pagination.order,
+            },
+          },
+        }),
       ),
     placeholderData: keepPreviousData,
   });
 
   const startMut = useMutation({
     mutationFn: (p: { materialId: string; startedAt: string}) =>
-      apiFetch(`/${p.materialId}/start`, {
-        method: "POST",
-        body: JSON.stringify({ started_at: p.startedAt }),
-      }),
+      unwrap(
+        api.POST("/api/v1/materials/{material_id}/start", {
+          params: { path: { material_id: p.materialId } },
+          body: { started_at: p.startedAt },
+        }),
+      ),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["materials"] });
     },

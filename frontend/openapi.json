@@ -1,0 +1,5019 @@
+{
+  "components": {
+    "schemas": {
+      "AddNoteRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "chapter": {
+            "$ref": "#/components/schemas/Chapter",
+            "default": ""
+          },
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "link_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link Id"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "page": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Page",
+            "type": "integer"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "material_id",
+          "content"
+        ],
+        "title": "AddNoteRequest",
+        "type": "object"
+      },
+      "AddNoteResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "note_id": {
+            "format": "uuid",
+            "title": "Note Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "note_id"
+        ],
+        "title": "AddNoteResponse",
+        "type": "object"
+      },
+      "AutocompletionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "autocompletions": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Autocompletions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "autocompletions"
+        ],
+        "title": "AutocompletionResponse",
+        "type": "object"
+      },
+      "BackupResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "cards_count": {
+            "minimum": 0.0,
+            "title": "Cards Count",
+            "type": "integer"
+          },
+          "materials_count": {
+            "minimum": 0.0,
+            "title": "Materials Count",
+            "type": "integer"
+          },
+          "note_repeats_history_count": {
+            "minimum": 0.0,
+            "title": "Note Repeats History Count",
+            "type": "integer"
+          },
+          "notes_count": {
+            "minimum": 0.0,
+            "title": "Notes Count",
+            "type": "integer"
+          },
+          "reading_log_count": {
+            "minimum": 0.0,
+            "title": "Reading Log Count",
+            "type": "integer"
+          },
+          "repeats_count": {
+            "minimum": 0.0,
+            "title": "Repeats Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "materials_count",
+          "reading_log_count",
+          "notes_count",
+          "cards_count",
+          "repeats_count",
+          "note_repeats_history_count"
+        ],
+        "title": "BackupResponse",
+        "type": "object"
+      },
+      "Chapter": {
+        "maxLength": 256,
+        "type": "string"
+      },
+      "CompleteMaterialRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          }
+        },
+        "title": "CompleteMaterialRequest",
+        "type": "object"
+      },
+      "CreateCardRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "note_id": {
+            "format": "uuid",
+            "title": "Note Id",
+            "type": "string"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "material_id",
+          "note_id",
+          "question"
+        ],
+        "title": "CreateCardRequest",
+        "type": "object"
+      },
+      "CreateCardResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "card_id": {
+            "format": "uuid",
+            "title": "Card Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "card_id"
+        ],
+        "title": "CreateCardResponse",
+        "type": "object"
+      },
+      "CreateMaterialRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "authors": {
+            "title": "Authors",
+            "type": "string"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 2083,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link"
+          },
+          "material_type": {
+            "$ref": "#/components/schemas/MaterialTypesEnum"
+          },
+          "pages": {
+            "exclusiveMinimum": 0.0,
+            "title": "Pages",
+            "type": "integer"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "authors",
+          "pages",
+          "material_type"
+        ],
+        "title": "CreateMaterialRequest",
+        "type": "object"
+      },
+      "CreateMaterialResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "material_id"
+        ],
+        "title": "CreateMaterialResponse",
+        "type": "object"
+      },
+      "CreateReadingLogsRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "exclusiveMinimum": 0.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "material_id",
+          "count",
+          "date"
+        ],
+        "title": "CreateReadingLogsRequest",
+        "type": "object"
+      },
+      "CreateReadingLogsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "log_id": {
+            "format": "uuid",
+            "title": "Log Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "log_id"
+        ],
+        "title": "CreateReadingLogsResponse",
+        "type": "object"
+      },
+      "GetAuthorsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "authors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Authors",
+            "type": "array"
+          }
+        },
+        "required": [
+          "authors"
+        ],
+        "title": "GetAuthorsResponse",
+        "type": "object"
+      },
+      "GetCompletedMaterialResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "statistics": {
+            "$ref": "#/components/schemas/MaterialStatistics"
+          }
+        },
+        "required": [
+          "statistics"
+        ],
+        "title": "GetCompletedMaterialResponse",
+        "type": "object"
+      },
+      "GetImageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "image": {
+            "title": "Image",
+            "type": "string"
+          }
+        },
+        "required": [
+          "image"
+        ],
+        "title": "GetImageResponse",
+        "type": "object"
+      },
+      "GetMaterialCompletionInfoResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "material_pages": {
+            "minimum": 0.0,
+            "title": "Material Pages",
+            "type": "integer"
+          },
+          "material_type": {
+            "$ref": "#/components/schemas/MaterialTypesEnum"
+          },
+          "pages_read": {
+            "minimum": 0.0,
+            "title": "Pages Read",
+            "type": "integer"
+          },
+          "read_days": {
+            "minimum": 0.0,
+            "title": "Read Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "material_pages",
+          "material_type",
+          "pages_read",
+          "read_days"
+        ],
+        "title": "GetMaterialCompletionInfoResponse",
+        "type": "object"
+      },
+      "GetMaterialItem": {
+        "additionalProperties": false,
+        "properties": {
+          "added_at": {
+            "format": "date-time",
+            "title": "Added At",
+            "type": "string"
+          },
+          "authors": {
+            "title": "Authors",
+            "type": "string"
+          },
+          "is_outlined": {
+            "title": "Is Outlined",
+            "type": "boolean"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 2083,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "material_type": {
+            "$ref": "#/components/schemas/MaterialTypesEnum"
+          },
+          "pages": {
+            "minimum": 0.0,
+            "title": "Pages",
+            "type": "integer"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "material_id",
+          "title",
+          "authors",
+          "pages",
+          "material_type",
+          "added_at",
+          "is_outlined"
+        ],
+        "title": "GetMaterialItem",
+        "type": "object"
+      },
+      "GetMaterialReadingNowResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "material_id"
+        ],
+        "title": "GetMaterialReadingNowResponse",
+        "type": "object"
+      },
+      "GetMaterialResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "material": {
+            "$ref": "#/components/schemas/GetMaterialItem"
+          }
+        },
+        "required": [
+          "material"
+        ],
+        "title": "GetMaterialResponse",
+        "type": "object"
+      },
+      "GetMaterialTagsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array",
+            "uniqueItems": true
+          }
+        },
+        "required": [
+          "tags"
+        ],
+        "title": "GetMaterialTagsResponse",
+        "type": "object"
+      },
+      "GetNoteLinksItem": {
+        "additionalProperties": false,
+        "properties": {
+          "info": {
+            "default": "",
+            "title": "Info",
+            "type": "string"
+          },
+          "note_id": {
+            "format": "uuid",
+            "title": "Note Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "note_id"
+        ],
+        "title": "GetNoteLinksItem",
+        "type": "object"
+      },
+      "GetNoteLinksResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "link_to": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GetNoteLinksItem"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "links_from": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/GetNoteLinksItem"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Links From"
+          },
+          "next_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Token"
+          },
+          "total_count": {
+            "title": "Total Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "next_token",
+          "total_count",
+          "link_to",
+          "links_from"
+        ],
+        "title": "GetNoteLinksResponse",
+        "type": "object"
+      },
+      "GetNoteResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "note": {
+            "$ref": "#/components/schemas/NoteJson"
+          }
+        },
+        "required": [
+          "note"
+        ],
+        "title": "GetNoteResponse",
+        "type": "object"
+      },
+      "GetNotesGraphResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "iframe_srcdoc": {
+            "title": "Iframe Srcdoc",
+            "type": "string"
+          },
+          "material_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Id"
+          },
+          "titles": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "format": "uuid"
+            },
+            "title": "Titles",
+            "type": "object"
+          }
+        },
+        "required": [
+          "iframe_srcdoc",
+          "titles",
+          "material_id"
+        ],
+        "title": "GetNotesGraphResponse",
+        "type": "object"
+      },
+      "GetNotesMetaResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "titles": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "format": "uuid"
+            },
+            "title": "Titles",
+            "type": "object"
+          }
+        },
+        "required": [
+          "tags",
+          "titles"
+        ],
+        "title": "GetNotesMetaResponse",
+        "type": "object"
+      },
+      "GetSpanReportRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "start": {
+            "format": "date",
+            "title": "Start",
+            "type": "string"
+          },
+          "stop": {
+            "format": "date",
+            "title": "Stop",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start"
+        ],
+        "title": "GetSpanReportRequest",
+        "type": "object"
+      },
+      "GetSpanReportResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_materials": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/MaterialTypesEnum"
+            },
+            "title": "Completed Materials",
+            "type": "object"
+          },
+          "notes": {
+            "$ref": "#/components/schemas/_SpanStats"
+          },
+          "read_items": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/MaterialTypesEnum"
+            },
+            "title": "Read Items",
+            "type": "object"
+          },
+          "reading": {
+            "$ref": "#/components/schemas/_SpanStats"
+          },
+          "repeat_materials_count": {
+            "title": "Repeat Materials Count",
+            "type": "integer"
+          },
+          "repeats_total": {
+            "title": "Repeats Total",
+            "type": "integer"
+          },
+          "total_materials_completed": {
+            "title": "Total Materials Completed",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "completed_materials",
+          "total_materials_completed",
+          "read_items",
+          "reading",
+          "notes",
+          "repeats_total",
+          "repeat_materials_count"
+        ],
+        "title": "GetSpanReportResponse",
+        "type": "object"
+      },
+      "GetSystemSummaryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_materials_trend": {
+            "$ref": "#/components/schemas/_SpanStatsResponse"
+          },
+          "notes_trend": {
+            "$ref": "#/components/schemas/_SpanStatsResponse"
+          },
+          "outlined_materials_trend": {
+            "$ref": "#/components/schemas/_SpanStatsResponse"
+          },
+          "reading_trend": {
+            "$ref": "#/components/schemas/_SpanStatsResponse"
+          },
+          "repeated_materials_trend": {
+            "$ref": "#/components/schemas/_SpanStatsResponse"
+          },
+          "tracker_statistics": {
+            "$ref": "#/components/schemas/TrackerStatistics"
+          }
+        },
+        "required": [
+          "tracker_statistics",
+          "reading_trend",
+          "notes_trend",
+          "completed_materials_trend",
+          "repeated_materials_trend",
+          "outlined_materials_trend"
+        ],
+        "title": "GetSystemSummaryResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "IsMaterialReadingResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "is_reading": {
+            "title": "Is Reading",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "is_reading"
+        ],
+        "title": "IsMaterialReadingResponse",
+        "type": "object"
+      },
+      "ListCardsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/_ListCardsItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Token"
+          },
+          "total_count": {
+            "title": "Total Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "next_token",
+          "total_count",
+          "items"
+        ],
+        "title": "ListCardsResponse",
+        "type": "object"
+      },
+      "ListCompletedMaterialsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "next_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Token"
+          },
+          "statistics": {
+            "items": {
+              "$ref": "#/components/schemas/MaterialStatistics"
+            },
+            "title": "Statistics",
+            "type": "array"
+          },
+          "total_count": {
+            "title": "Total Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "next_token",
+          "total_count",
+          "statistics"
+        ],
+        "title": "ListCompletedMaterialsResponse",
+        "type": "object"
+      },
+      "ListMaterialTitlesResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "format": "uuid"
+            },
+            "title": "Items",
+            "type": "object"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ListMaterialTitlesResponse",
+        "type": "object"
+      },
+      "ListMaterialsQueueResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "estimates": {
+            "items": {
+              "$ref": "#/components/schemas/MaterialEstimate"
+            },
+            "title": "Estimates",
+            "type": "array"
+          },
+          "mean": {
+            "additionalProperties": {
+              "type": "number"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/MaterialTypesEnum"
+            },
+            "title": "Mean",
+            "type": "object"
+          },
+          "next_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Token"
+          },
+          "total_count": {
+            "title": "Total Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "next_token",
+          "total_count",
+          "estimates",
+          "mean"
+        ],
+        "title": "ListMaterialsQueueResponse",
+        "type": "object"
+      },
+      "ListNotesWithCardsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ListNotesWithCardsResponse",
+        "type": "object"
+      },
+      "ListPossibleLinksItem": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "note_id": {
+            "format": "uuid",
+            "title": "Note Id",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array",
+            "uniqueItems": true
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "note_id",
+          "title",
+          "content",
+          "tags"
+        ],
+        "title": "ListPossibleLinksItem",
+        "type": "object"
+      },
+      "ListPossibleNoteLinksResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ListPossibleLinksItem"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "ListPossibleNoteLinksResponse",
+        "type": "object"
+      },
+      "ListReadingLogsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/_ListLogRecordItem"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "next_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Token"
+          },
+          "total_count": {
+            "title": "Total Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "next_token",
+          "total_count",
+          "items"
+        ],
+        "title": "ListReadingLogsResponse",
+        "type": "object"
+      },
+      "ListReadingMaterialsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "next_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Token"
+          },
+          "statistics": {
+            "items": {
+              "$ref": "#/components/schemas/MaterialStatistics"
+            },
+            "title": "Statistics",
+            "type": "array"
+          },
+          "total_count": {
+            "title": "Total Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "next_token",
+          "total_count",
+          "statistics"
+        ],
+        "title": "ListReadingMaterialsResponse",
+        "type": "object"
+      },
+      "ListRepeatingQueueResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "next_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Token"
+          },
+          "repeating_queue": {
+            "items": {
+              "$ref": "#/components/schemas/RepeatingQueueItem"
+            },
+            "title": "Repeating Queue",
+            "type": "array"
+          },
+          "total_count": {
+            "title": "Total Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "next_token",
+          "total_count",
+          "repeating_queue"
+        ],
+        "title": "ListRepeatingQueueResponse",
+        "type": "object"
+      },
+      "MaterialEstimate": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_duration": {
+            "exclusiveMinimum": 0.0,
+            "title": "Expected Duration",
+            "type": "integer"
+          },
+          "material": {
+            "$ref": "#/components/schemas/GetMaterialItem"
+          },
+          "will_be_completed": {
+            "format": "date",
+            "title": "Will Be Completed",
+            "type": "string"
+          },
+          "will_be_started": {
+            "format": "date",
+            "title": "Will Be Started",
+            "type": "string"
+          }
+        },
+        "required": [
+          "material",
+          "will_be_started",
+          "will_be_completed",
+          "expected_duration"
+        ],
+        "title": "MaterialEstimate",
+        "type": "object"
+      },
+      "MaterialStatistics": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "duration": {
+            "title": "Duration",
+            "type": "integer"
+          },
+          "lost_time": {
+            "minimum": 0.0,
+            "title": "Lost Time",
+            "type": "integer"
+          },
+          "material": {
+            "$ref": "#/components/schemas/GetMaterialItem"
+          },
+          "max_record": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/tracker__common__schemas__MinMax"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mean": {
+            "minimum": 0.0,
+            "title": "Mean",
+            "type": "integer"
+          },
+          "min_record": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/tracker__common__schemas__MinMax"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes_count": {
+            "minimum": 0.0,
+            "title": "Notes Count",
+            "type": "integer"
+          },
+          "percent_completed": {
+            "title": "Percent Completed",
+            "type": "number"
+          },
+          "remaining_days": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remaining Days"
+          },
+          "remaining_pages": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remaining Pages"
+          },
+          "started_at": {
+            "format": "date",
+            "title": "Started At",
+            "type": "string"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "total_reading_duration": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Reading Duration"
+          },
+          "would_be_completed": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Would Be Completed"
+          }
+        },
+        "required": [
+          "material",
+          "started_at",
+          "duration",
+          "lost_time",
+          "total",
+          "min_record",
+          "max_record",
+          "mean",
+          "notes_count",
+          "percent_completed"
+        ],
+        "title": "MaterialStatistics",
+        "type": "object"
+      },
+      "MaterialTypesEnum": {
+        "enum": [
+          "book",
+          "article",
+          "course",
+          "lecture",
+          "audiobook"
+        ],
+        "title": "MaterialTypesEnum",
+        "type": "string"
+      },
+      "NoteJson": {
+        "additionalProperties": false,
+        "properties": {
+          "added_at": {
+            "title": "Added At",
+            "type": "string"
+          },
+          "chapter": {
+            "title": "Chapter",
+            "type": "string"
+          },
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "is_deleted": {
+            "title": "Is Deleted",
+            "type": "boolean"
+          },
+          "link_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link Id"
+          },
+          "links_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Links Count"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "note_id": {
+            "format": "uuid",
+            "title": "Note Id",
+            "type": "string"
+          },
+          "note_number": {
+            "title": "Note Number",
+            "type": "integer"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array",
+            "uniqueItems": true
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "note_id",
+          "link_id",
+          "material_id",
+          "title",
+          "content",
+          "added_at",
+          "chapter",
+          "page",
+          "tags",
+          "is_deleted",
+          "note_number",
+          "links_count"
+        ],
+        "title": "NoteJson",
+        "type": "object"
+      },
+      "NoteTagsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          }
+        },
+        "required": [
+          "tags"
+        ],
+        "title": "NoteTagsResponse",
+        "type": "object"
+      },
+      "Order": {
+        "enum": [
+          "asc",
+          "desc"
+        ],
+        "title": "Order",
+        "type": "string"
+      },
+      "ParseLinkRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "link": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Link",
+            "type": "string"
+          }
+        },
+        "required": [
+          "link"
+        ],
+        "title": "ParseLinkRequest",
+        "type": "object"
+      },
+      "ParsedMaterialResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "authors": {
+            "title": "Authors",
+            "type": "string"
+          },
+          "duration": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration"
+          },
+          "link": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Link",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "authors",
+          "title",
+          "type",
+          "link"
+        ],
+        "title": "ParsedMaterialResponse",
+        "type": "object"
+      },
+      "RepeatingQueueItem": {
+        "additionalProperties": false,
+        "properties": {
+          "cards_count": {
+            "minimum": 0.0,
+            "title": "Cards Count",
+            "type": "integer"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "is_outlined": {
+            "title": "Is Outlined",
+            "type": "boolean"
+          },
+          "last_repeated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Repeated At"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "material_type": {
+            "$ref": "#/components/schemas/MaterialTypesEnum"
+          },
+          "notes_count": {
+            "minimum": 0.0,
+            "title": "Notes Count",
+            "type": "integer"
+          },
+          "pages": {
+            "minimum": 0.0,
+            "title": "Pages",
+            "type": "integer"
+          },
+          "priority_days": {
+            "title": "Priority Days",
+            "type": "integer"
+          },
+          "priority_months": {
+            "title": "Priority Months",
+            "type": "number"
+          },
+          "repeats_count": {
+            "minimum": 0.0,
+            "title": "Repeats Count",
+            "type": "integer"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "material_id",
+          "title",
+          "pages",
+          "material_type",
+          "is_outlined",
+          "notes_count",
+          "cards_count",
+          "repeats_count",
+          "completed_at",
+          "last_repeated_at",
+          "priority_days",
+          "priority_months"
+        ],
+        "title": "RepeatingQueueItem",
+        "type": "object"
+      },
+      "RestoreResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "cards_count": {
+            "minimum": 0.0,
+            "title": "Cards Count",
+            "type": "integer"
+          },
+          "materials_count": {
+            "minimum": 0.0,
+            "title": "Materials Count",
+            "type": "integer"
+          },
+          "note_repeats_history_count": {
+            "minimum": 0.0,
+            "title": "Note Repeats History Count",
+            "type": "integer"
+          },
+          "notes_count": {
+            "minimum": 0.0,
+            "title": "Notes Count",
+            "type": "integer"
+          },
+          "reading_log_count": {
+            "minimum": 0.0,
+            "title": "Reading Log Count",
+            "type": "integer"
+          },
+          "repeats_count": {
+            "minimum": 0.0,
+            "title": "Repeats Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "materials_count",
+          "reading_log_count",
+          "notes_count",
+          "cards_count",
+          "repeats_count",
+          "note_repeats_history_count"
+        ],
+        "title": "RestoreResponse",
+        "type": "object"
+      },
+      "SearchNotesItem": {
+        "additionalProperties": false,
+        "properties": {
+          "chapter": {
+            "title": "Chapter",
+            "type": "string"
+          },
+          "chapter_int": {
+            "title": "Chapter Int",
+            "type": "integer"
+          },
+          "content_html": {
+            "title": "Content Html",
+            "type": "string"
+          },
+          "is_deleted": {
+            "title": "Is Deleted",
+            "type": "boolean"
+          },
+          "link_html": {
+            "title": "Link Html",
+            "type": "string"
+          },
+          "links_count": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Links Count"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "note_id": {
+            "format": "uuid",
+            "title": "Note Id",
+            "type": "string"
+          },
+          "page": {
+            "title": "Page",
+            "type": "integer"
+          },
+          "tags_html": {
+            "title": "Tags Html",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "note_id",
+          "material_id",
+          "title",
+          "content_html",
+          "tags_html",
+          "link_html",
+          "chapter",
+          "chapter_int",
+          "page",
+          "links_count",
+          "is_deleted"
+        ],
+        "title": "SearchNotesItem",
+        "type": "object"
+      },
+      "SearchNotesResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "chapters": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "propertyNames": {
+              "format": "uuid"
+            },
+            "title": "Chapters",
+            "type": "object"
+          },
+          "material_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Id"
+          },
+          "material_notes": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "format": "uuid"
+            },
+            "title": "Material Notes",
+            "type": "object"
+          },
+          "material_types": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/MaterialTypesEnum"
+            },
+            "propertyNames": {
+              "format": "uuid"
+            },
+            "title": "Material Types",
+            "type": "object"
+          },
+          "next_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Token"
+          },
+          "notes": {
+            "items": {
+              "$ref": "#/components/schemas/SearchNotesItem"
+            },
+            "title": "Notes",
+            "type": "array"
+          },
+          "page_size": {
+            "title": "Page Size",
+            "type": "integer"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Query"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "tags_query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags Query"
+          },
+          "titles": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "format": "uuid"
+            },
+            "title": "Titles",
+            "type": "object"
+          },
+          "total_count": {
+            "title": "Total Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "next_token",
+          "total_count",
+          "notes",
+          "titles",
+          "material_types",
+          "material_notes",
+          "chapters",
+          "query",
+          "tags",
+          "tags_query",
+          "page_size",
+          "material_id"
+        ],
+        "title": "SearchNotesResponse",
+        "type": "object"
+      },
+      "StartMaterialRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          }
+        },
+        "title": "StartMaterialRequest",
+        "type": "object"
+      },
+      "Tags": {
+        "items": {
+          "pattern": "^(\\w+)$",
+          "type": "string"
+        },
+        "type": "array"
+      },
+      "TrackerStatistics": {
+        "additionalProperties": false,
+        "properties": {
+          "duration": {
+            "title": "Duration",
+            "type": "integer"
+          },
+          "duration_period": {
+            "readOnly": true,
+            "title": "Duration Period",
+            "type": "string"
+          },
+          "finished_at": {
+            "format": "date",
+            "title": "Finished At",
+            "type": "string"
+          },
+          "lost_time": {
+            "title": "Lost Time",
+            "type": "integer"
+          },
+          "lost_time_percent": {
+            "readOnly": true,
+            "title": "Lost Time Percent",
+            "type": "number"
+          },
+          "lost_time_period": {
+            "readOnly": true,
+            "title": "Lost Time Period",
+            "type": "string"
+          },
+          "materials_completed": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/MaterialTypesEnum"
+            },
+            "title": "Materials Completed",
+            "type": "object"
+          },
+          "max_log_record": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/tracker__common__database__MinMax"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "mean": {
+            "title": "Mean",
+            "type": "number"
+          },
+          "median": {
+            "title": "Median",
+            "type": "number"
+          },
+          "min_log_record": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/tracker__common__database__MinMax"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "pages_read": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "$ref": "#/components/schemas/MaterialTypesEnum"
+            },
+            "title": "Pages Read",
+            "type": "object"
+          },
+          "started_at": {
+            "format": "date",
+            "title": "Started At",
+            "type": "string"
+          },
+          "total_materials_completed": {
+            "title": "Total Materials Completed",
+            "type": "integer"
+          },
+          "total_pages_read": {
+            "readOnly": true,
+            "title": "Total Pages Read",
+            "type": "integer"
+          },
+          "would_be_total": {
+            "title": "Would Be Total",
+            "type": "integer"
+          },
+          "would_be_total_percent": {
+            "description": "How much would be total more than the current total pages count in percent.",
+            "readOnly": true,
+            "title": "Would Be Total Percent",
+            "type": "number"
+          }
+        },
+        "required": [
+          "started_at",
+          "finished_at",
+          "duration",
+          "lost_time",
+          "mean",
+          "median",
+          "pages_read",
+          "materials_completed",
+          "total_materials_completed",
+          "would_be_total",
+          "min_log_record",
+          "max_log_record",
+          "duration_period",
+          "total_pages_read",
+          "lost_time_period",
+          "lost_time_percent",
+          "would_be_total_percent"
+        ],
+        "title": "TrackerStatistics",
+        "type": "object"
+      },
+      "UpdateMaterialRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "authors": {
+            "title": "Authors",
+            "type": "string"
+          },
+          "link": {
+            "anyOf": [
+              {
+                "format": "uri",
+                "maxLength": 2083,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "material_type": {
+            "$ref": "#/components/schemas/MaterialTypesEnum"
+          },
+          "pages": {
+            "exclusiveMinimum": 0.0,
+            "title": "Pages",
+            "type": "integer"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "title",
+          "authors",
+          "pages",
+          "material_type",
+          "material_id"
+        ],
+        "title": "UpdateMaterialRequest",
+        "type": "object"
+      },
+      "UpdateNoteRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "chapter": {
+            "$ref": "#/components/schemas/Chapter",
+            "default": "0"
+          },
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "link_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link Id"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "page": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Page",
+            "type": "integer"
+          },
+          "tags": {
+            "$ref": "#/components/schemas/Tags"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "material_id",
+          "link_id",
+          "title",
+          "content"
+        ],
+        "title": "UpdateNoteRequest",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      },
+      "_ListCardsItem": {
+        "additionalProperties": false,
+        "properties": {
+          "added_at": {
+            "format": "date-time",
+            "title": "Added At",
+            "type": "string"
+          },
+          "answer": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answer"
+          },
+          "card_id": {
+            "format": "uuid",
+            "title": "Card Id",
+            "type": "string"
+          },
+          "material_authors": {
+            "title": "Material Authors",
+            "type": "string"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "material_title": {
+            "title": "Material Title",
+            "type": "string"
+          },
+          "material_type": {
+            "$ref": "#/components/schemas/MaterialTypesEnum"
+          },
+          "note_chapter": {
+            "title": "Note Chapter",
+            "type": "string"
+          },
+          "note_content": {
+            "title": "Note Content",
+            "type": "string"
+          },
+          "note_id": {
+            "format": "uuid",
+            "title": "Note Id",
+            "type": "string"
+          },
+          "note_page": {
+            "title": "Note Page",
+            "type": "integer"
+          },
+          "note_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note Title"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "card_id",
+          "note_id",
+          "material_id",
+          "question",
+          "answer",
+          "added_at",
+          "note_title",
+          "note_content",
+          "note_chapter",
+          "note_page",
+          "material_title",
+          "material_authors",
+          "material_type"
+        ],
+        "title": "_ListCardsItem",
+        "type": "object"
+      },
+      "_ListLogRecordItem": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "minimum": 0.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "log_id": {
+            "format": "uuid",
+            "title": "Log Id",
+            "type": "string"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "log_id",
+          "material_id",
+          "count",
+          "date"
+        ],
+        "title": "_ListLogRecordItem",
+        "type": "object"
+      },
+      "_MinMaxRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "minimum": 0.0,
+            "title": "Amount",
+            "type": "integer"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          }
+        },
+        "required": [
+          "date",
+          "amount"
+        ],
+        "title": "_MinMaxRecord",
+        "type": "object"
+      },
+      "_SpanStats": {
+        "additionalProperties": false,
+        "properties": {
+          "lost_count": {
+            "title": "Lost Count",
+            "type": "integer"
+          },
+          "mean": {
+            "title": "Mean",
+            "type": "number"
+          },
+          "median": {
+            "title": "Median",
+            "type": "number"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          },
+          "would_be_total": {
+            "title": "Would Be Total",
+            "type": "integer"
+          },
+          "zero_days": {
+            "title": "Zero Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "median",
+          "mean",
+          "lost_count",
+          "zero_days",
+          "would_be_total"
+        ],
+        "title": "_SpanStats",
+        "type": "object"
+      },
+      "_SpanStatsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "max_record": {
+            "$ref": "#/components/schemas/_MinMaxRecord"
+          },
+          "mean": {
+            "title": "Mean",
+            "type": "number"
+          },
+          "median": {
+            "minimum": 0.0,
+            "title": "Median",
+            "type": "number"
+          },
+          "min_record": {
+            "$ref": "#/components/schemas/_MinMaxRecord"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          },
+          "would_be_total": {
+            "minimum": 0.0,
+            "title": "Would Be Total",
+            "type": "integer"
+          },
+          "zero_days": {
+            "minimum": 0.0,
+            "title": "Zero Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "would_be_total",
+          "zero_days",
+          "mean",
+          "median",
+          "max_record",
+          "min_record"
+        ],
+        "title": "_SpanStatsResponse",
+        "type": "object"
+      },
+      "tracker__common__database__MinMax": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "log_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "",
+            "title": "Log Id"
+          },
+          "material_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "",
+            "title": "Material Id"
+          },
+          "material_title": {
+            "default": "",
+            "title": "Material Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "count",
+          "date"
+        ],
+        "title": "MinMax",
+        "type": "object"
+      },
+      "tracker__common__schemas__MinMax": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "minimum": 0.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "date": {
+            "format": "date",
+            "title": "Date",
+            "type": "string"
+          },
+          "log_id": {
+            "format": "uuid",
+            "title": "Log Id",
+            "type": "string"
+          },
+          "material_id": {
+            "format": "uuid",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "material_title": {
+            "title": "Material Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "log_id",
+          "material_id",
+          "material_title",
+          "count",
+          "date"
+        ],
+        "title": "MinMax",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Reading queue, logging the reading, keep some notes",
+    "title": "Reading Tracker",
+    "version": "v1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/cards/": {
+      "get": {
+        "operationId": "list_cards_api_v1_cards__get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "material_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Material Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "next_token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 4096,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Next Token"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Order"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Order"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListCardsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Cards",
+        "tags": [
+          "cards-api"
+        ]
+      },
+      "post": {
+        "operationId": "create_card_api_v1_cards__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCardRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateCardResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Card",
+        "tags": [
+          "cards-api"
+        ]
+      }
+    },
+    "/api/v1/cards/notes-with-cards": {
+      "get": {
+        "operationId": "list_notes_with_cards_api_v1_cards_notes_with_cards_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "material_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Material Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListNotesWithCardsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Notes With Cards",
+        "tags": [
+          "cards-api"
+        ]
+      }
+    },
+    "/api/v1/materials/": {
+      "post": {
+        "operationId": "create_material_api_v1_materials__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateMaterialRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateMaterialResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Material",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/authors": {
+      "get": {
+        "operationId": "get_authors_api_v1_materials_authors_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetAuthorsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Authors",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/completed": {
+      "get": {
+        "operationId": "list_completed_materials_api_v1_materials_completed_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "material_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/MaterialTypesEnum"
+                },
+                {
+                  "const": "",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Material Type"
+            }
+          },
+          {
+            "in": "query",
+            "name": "outlined",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "outlined",
+                    "not_outlined",
+                    "all"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Outlined"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tags_query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tags Query"
+            }
+          },
+          {
+            "in": "query",
+            "name": "next_token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 4096,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Next Token"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Order"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Order"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListCompletedMaterialsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Completed Materials",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/completed/{material_id}": {
+      "get": {
+        "operationId": "get_completed_material_api_v1_materials_completed__material_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "material_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Material Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetCompletedMaterialResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Completed Material",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/is-reading": {
+      "get": {
+        "operationId": "is_material_reading_api_v1_materials_is_reading_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "material_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Material Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IsMaterialReadingResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Is Material Reading",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/parse/habr": {
+      "post": {
+        "operationId": "parse_habr_api_v1_materials_parse_habr_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParseLinkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParsedMaterialResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Parse Habr",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/parse/youtube": {
+      "post": {
+        "operationId": "parse_youtube_api_v1_materials_parse_youtube_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ParseLinkRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParsedMaterialResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Parse Youtube",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/queue": {
+      "get": {
+        "operationId": "list_materials_queue_api_v1_materials_queue_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "start_date",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Start Date"
+            }
+          },
+          {
+            "in": "query",
+            "name": "next_token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 4096,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Next Token"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Order"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Order"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListMaterialsQueueResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Materials Queue",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/read-titles": {
+      "get": {
+        "description": "List all started materials titles",
+        "operationId": "list_read_materials_titles_api_v1_materials_read_titles_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListMaterialTitlesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Read Materials Titles",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/reading": {
+      "get": {
+        "operationId": "list_reading_materials_api_v1_materials_reading_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "next_token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 4096,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Next Token"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Order"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Order"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListReadingMaterialsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Reading Materials",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/reading-titles": {
+      "get": {
+        "description": "List titles of materials reading now",
+        "operationId": "list_reading_materials_titles_api_v1_materials_reading_titles_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListMaterialTitlesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Reading Materials Titles",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/repeat": {
+      "get": {
+        "operationId": "list_repeating_queue_api_v1_materials_repeat_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "only_outlined",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Only Outlined",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "next_token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 4096,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Next Token"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Order"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Order"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListRepeatingQueueResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Repeating Queue",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/tags": {
+      "get": {
+        "operationId": "get_tags_api_v1_materials_tags_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetMaterialTagsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Tags",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/titles": {
+      "get": {
+        "description": "List all materials titles",
+        "operationId": "list_titles_api_v1_materials_titles_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListMaterialTitlesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Titles",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/with-cards-titles": {
+      "get": {
+        "description": "List titles of materials with cards",
+        "operationId": "list_materials_with_cards_api_v1_materials_with_cards_titles_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListMaterialTitlesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Materials With Cards",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/{material_id}": {
+      "get": {
+        "operationId": "get_material_api_v1_materials__material_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "material_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Material Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetMaterialResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Material",
+        "tags": [
+          "materials-api"
+        ]
+      },
+      "patch": {
+        "operationId": "update_material_api_v1_materials__material_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "material_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Material Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateMaterialRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Material",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/{material_id}/complete": {
+      "post": {
+        "operationId": "complete_material_api_v1_materials__material_id__complete_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "material_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Material Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteMaterialRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Complete Material",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/{material_id}/completion-info": {
+      "get": {
+        "operationId": "get_material_completion_info_api_v1_materials__material_id__completion_info_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "material_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Material Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetMaterialCompletionInfoResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Material Completion Info",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/{material_id}/outline": {
+      "post": {
+        "operationId": "outline_material_api_v1_materials__material_id__outline_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "material_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Material Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Outline Material",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/{material_id}/repeat": {
+      "post": {
+        "operationId": "repeat_material_api_v1_materials__material_id__repeat_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "material_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Material Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Repeat Material",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/materials/{material_id}/start": {
+      "post": {
+        "operationId": "start_material_api_v1_materials__material_id__start_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "material_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Material Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartMaterialRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Material",
+        "tags": [
+          "materials-api"
+        ]
+      }
+    },
+    "/api/v1/notes/add": {
+      "post": {
+        "operationId": "add_note_api_v1_notes_add_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddNoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AddNoteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Note",
+        "tags": [
+          "notes-api"
+        ]
+      }
+    },
+    "/api/v1/notes/autocompletion": {
+      "get": {
+        "operationId": "get_autocompletion_api_v1_notes_autocompletion_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "query",
+            "required": true,
+            "schema": {
+              "title": "Query",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 10,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutocompletionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Autocompletion",
+        "tags": [
+          "notes-api"
+        ]
+      }
+    },
+    "/api/v1/notes/graph": {
+      "get": {
+        "operationId": "notes_graph_json_api_v1_notes_graph_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "material_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Material Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetNotesGraphResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Notes Graph Json",
+        "tags": [
+          "notes-api"
+        ]
+      }
+    },
+    "/api/v1/notes/links": {
+      "get": {
+        "operationId": "get_note_links_api_v1_notes_links_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Note Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "next_token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 4096,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Next Token"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Order"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Order"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetNoteLinksResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Note Links",
+        "tags": [
+          "notes-api"
+        ]
+      }
+    },
+    "/api/v1/notes/links-network": {
+      "get": {
+        "operationId": "get_note_links_network_api_v1_notes_links_network_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Note Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Note Links Network",
+        "tags": [
+          "notes-api"
+        ]
+      }
+    },
+    "/api/v1/notes/meta": {
+      "get": {
+        "deprecated": true,
+        "operationId": "get_notes_meta_api_v1_notes_meta_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "material_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Material Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetNotesMetaResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Notes Meta",
+        "tags": [
+          "notes-api"
+        ]
+      }
+    },
+    "/api/v1/notes/possible-links": {
+      "get": {
+        "operationId": "list_possible_note_links_api_v1_notes_possible_links_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Note Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListPossibleNoteLinksResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Possible Note Links",
+        "tags": [
+          "notes-api"
+        ]
+      }
+    },
+    "/api/v1/notes/search": {
+      "get": {
+        "operationId": "notes_search_json_api_v1_notes_search_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "material_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Material Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Query"
+            }
+          },
+          {
+            "in": "query",
+            "name": "tags_query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tags Query"
+            }
+          },
+          {
+            "in": "query",
+            "name": "next_token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 4096,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Next Token"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Order"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Order"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchNotesResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Notes Search Json",
+        "tags": [
+          "notes-api"
+        ]
+      }
+    },
+    "/api/v1/notes/tags": {
+      "get": {
+        "operationId": "get_note_tags_api_v1_notes_tags_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "material_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Material Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NoteTagsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Note Tags",
+        "tags": [
+          "notes-api"
+        ]
+      }
+    },
+    "/api/v1/notes/{note_id}": {
+      "delete": {
+        "operationId": "delete_note_api_v1_notes__note_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Note Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Note",
+        "tags": [
+          "notes-api"
+        ]
+      },
+      "get": {
+        "operationId": "get_note_api_v1_notes__note_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Note Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetNoteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Note",
+        "tags": [
+          "notes-api"
+        ]
+      },
+      "patch": {
+        "operationId": "update_note_api_v1_notes__note_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Note Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateNoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Note",
+        "tags": [
+          "notes-api"
+        ]
+      }
+    },
+    "/api/v1/notes/{note_id}/repeat-queue": {
+      "post": {
+        "operationId": "insert_to_repeat_queue_api_v1_notes__note_id__repeat_queue_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Note Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Insert To Repeat Queue",
+        "tags": [
+          "notes-api"
+        ]
+      }
+    },
+    "/api/v1/notes/{note_id}/restore": {
+      "post": {
+        "operationId": "restore_note_api_v1_notes__note_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "note_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Note Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore Note",
+        "tags": [
+          "notes-api"
+        ]
+      }
+    },
+    "/api/v1/reading_logs/": {
+      "get": {
+        "operationId": "list_reading_logs_api_v1_reading_logs__get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "material_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Material Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "next_token",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 4096,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Next Token"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "order",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/Order"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Order"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListReadingLogsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Reading Logs",
+        "tags": [
+          "reading-logs-api"
+        ]
+      },
+      "post": {
+        "operationId": "create_log_record_api_v1_reading_logs__post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateReadingLogsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateReadingLogsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Log Record",
+        "tags": [
+          "reading-logs-api"
+        ]
+      }
+    },
+    "/api/v1/reading_logs/material-reading-now": {
+      "get": {
+        "operationId": "get_material_reading_now_api_v1_reading_logs_material_reading_now_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetMaterialReadingNowResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Material Reading Now",
+        "tags": [
+          "reading-logs-api"
+        ]
+      }
+    },
+    "/api/v1/system/backup": {
+      "post": {
+        "operationId": "backup_api_api_v1_system_backup_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Backup Api",
+        "tags": [
+          "system-api"
+        ]
+      }
+    },
+    "/api/v1/system/graphics/completed-materials-trend": {
+      "get": {
+        "operationId": "graphic_completed_materials_trend_api_v1_system_graphics_completed_materials_trend_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "last_days",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Last Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetImageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Graphic Completed Materials Trend",
+        "tags": [
+          "system-api"
+        ]
+      }
+    },
+    "/api/v1/system/graphics/notes-trend": {
+      "get": {
+        "operationId": "graphic_notes_trend_api_v1_system_graphics_notes_trend_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "last_days",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Last Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetImageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Graphic Notes Trend",
+        "tags": [
+          "system-api"
+        ]
+      }
+    },
+    "/api/v1/system/graphics/outline-percentage": {
+      "get": {
+        "operationId": "graphic_outline_percentage_api_v1_system_graphics_outline_percentage_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetImageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Graphic Outline Percentage",
+        "tags": [
+          "system-api"
+        ]
+      }
+    },
+    "/api/v1/system/graphics/outlined-materials-trend": {
+      "get": {
+        "operationId": "graphic_outlined_materials_trend_api_v1_system_graphics_outlined_materials_trend_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "last_days",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Last Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetImageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Graphic Outlined Materials Trend",
+        "tags": [
+          "system-api"
+        ]
+      }
+    },
+    "/api/v1/system/graphics/reading-progress": {
+      "get": {
+        "operationId": "graphic_reading_progress_api_v1_system_graphics_reading_progress_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "material_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Material Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "last_days",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Last Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetImageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Graphic Reading Progress",
+        "tags": [
+          "system-api"
+        ]
+      }
+    },
+    "/api/v1/system/graphics/reading-trend": {
+      "get": {
+        "operationId": "graphic_reading_trend_api_v1_system_graphics_reading_trend_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "last_days",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Last Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetImageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Graphic Reading Trend",
+        "tags": [
+          "system-api"
+        ]
+      }
+    },
+    "/api/v1/system/graphics/repeated-materials-trend": {
+      "get": {
+        "operationId": "graphic_repeated_materials_trend_api_v1_system_graphics_repeated_materials_trend_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "last_days",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Last Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetImageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Graphic Repeated Materials Trend",
+        "tags": [
+          "system-api"
+        ]
+      }
+    },
+    "/api/v1/system/graphics/total-read": {
+      "get": {
+        "operationId": "graphic_total_read_api_v1_system_graphics_total_read_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "last_days",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Last Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetImageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Graphic Total Read",
+        "tags": [
+          "system-api"
+        ]
+      }
+    },
+    "/api/v1/system/report": {
+      "post": {
+        "description": "Get analytics for the time span",
+        "operationId": "get_span_report_api_v1_system_report_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GetSpanReportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSpanReportResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Span Report",
+        "tags": [
+          "system-api"
+        ]
+      }
+    },
+    "/api/v1/system/restore": {
+      "post": {
+        "operationId": "restore_api_api_v1_system_restore_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestoreResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Restore Api",
+        "tags": [
+          "system-api"
+        ]
+      }
+    },
+    "/api/v1/system/summary": {
+      "get": {
+        "operationId": "get_system_summary_api_v1_system_summary_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "last_days",
+            "required": true,
+            "schema": {
+              "exclusiveMinimum": 0,
+              "title": "Last Days",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GetSystemSummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get System Summary",
+        "tags": [
+          "system-api"
+        ]
+      }
+    }
+  }
+}
