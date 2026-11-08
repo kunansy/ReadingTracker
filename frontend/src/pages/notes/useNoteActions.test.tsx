@@ -80,7 +80,7 @@ describe("useNoteActions", () => {
     },
   );
 
-  it("clears the previous error when a new action starts", async () => {
+  it("clears the error when a later action succeeds", async () => {
     apiFetchMock.mockRejectedValueOnce(new Error("boom")).mockResolvedValueOnce(undefined);
     const { result } = setup();
 
@@ -97,5 +97,87 @@ describe("useNoteActions", () => {
     await waitFor(() => {
       expect(result.current.error).toBeNull();
     });
+  });
+
+  it("keeps the error visible while a later action is still running", async () => {
+    apiFetchMock
+      .mockRejectedValueOnce(new Error("boom"))
+      .mockReturnValueOnce(new Promise(() => {}));
+    const { result } = setup();
+
+    act(() => {
+      result.current.deleteNote("n1");
+    });
+    await waitFor(() => {
+      expect(result.current.error).toBe("boom");
+    });
+
+    act(() => {
+      result.current.restoreNote("n1");
+    });
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledTimes(2);
+    });
+    expect(result.current.error).toBe("boom");
+  });
+
+  it("keeps the error of an earlier action that fails after a later success", async () => {
+    let rejectDelete: (err: Error) => void = () => {};
+    apiFetchMock
+      .mockReturnValueOnce(
+        new Promise((_, reject) => {
+          rejectDelete = reject;
+        }),
+      )
+      .mockResolvedValueOnce(undefined);
+    const { result } = setup();
+
+    act(() => {
+      result.current.deleteNote("n1");
+    });
+    act(() => {
+      result.current.restoreNote("n2");
+    });
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledTimes(2);
+    });
+
+    act(() => {
+      rejectDelete(new Error("delete failed"));
+    });
+    await waitFor(() => {
+      expect(result.current.error).toBe("delete failed");
+    });
+  });
+
+  it("dismissError clears the error", async () => {
+    apiFetchMock.mockRejectedValueOnce(new Error("boom"));
+    const { result } = setup();
+
+    act(() => {
+      result.current.deleteNote("n1");
+    });
+    await waitFor(() => {
+      expect(result.current.error).toBe("boom");
+    });
+
+    act(() => {
+      result.current.dismissError();
+    });
+    expect(result.current.error).toBeNull();
+  });
+
+  it("repeatNote does not refresh the notes list", async () => {
+    apiFetchMock.mockResolvedValue(undefined);
+    const { result, invalidate } = setup();
+
+    act(() => {
+      result.current.repeatNote("n1");
+    });
+    await waitFor(() => {
+      expect(apiFetchMock).toHaveBeenCalledTimes(1);
+    });
+
+    expect(invalidate).not.toHaveBeenCalled();
   });
 });

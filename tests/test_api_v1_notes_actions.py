@@ -61,7 +61,7 @@ async def test_restore_missing_note_is_404(client, mocker):
 
 async def test_insert_note_to_repeat_queue(client, mocker):
     note_id = uuid.uuid4()
-    mocker.patch.object(notes_db, "get_note_api", mocker.AsyncMock())
+    mocker.patch.object(notes_db, "get_note", mocker.AsyncMock())
     repeat_note = mocker.patch.object(notes_api.kafka, "repeat_note", mocker.AsyncMock())
 
     response = await client.post(f"/api/v1/notes/{note_id}/repeat-queue")
@@ -71,7 +71,7 @@ async def test_insert_note_to_repeat_queue(client, mocker):
 
 
 async def test_insert_missing_note_to_repeat_queue_is_404(client, mocker):
-    mocker.patch.object(notes_db, "get_note_api", _not_found(mocker))
+    mocker.patch.object(notes_db, "get_note", _not_found(mocker))
     repeat_note = mocker.patch.object(notes_api.kafka, "repeat_note", mocker.AsyncMock())
 
     response = await client.post(f"/api/v1/notes/{uuid.uuid4()}/repeat-queue")
@@ -80,8 +80,8 @@ async def test_insert_missing_note_to_repeat_queue_is_404(client, mocker):
     repeat_note.assert_not_awaited()
 
 
-async def test_repeat_queue_kafka_failure_is_503(client, mocker):
-    mocker.patch.object(notes_db, "get_note_api", mocker.AsyncMock())
+async def test_repeat_queue_kafka_failure_is_503(client, mocker, caplog):
+    mocker.patch.object(notes_db, "get_note", mocker.AsyncMock())
     mocker.patch.object(
         notes_api.kafka,
         "repeat_note",
@@ -91,7 +91,10 @@ async def test_repeat_queue_kafka_failure_is_503(client, mocker):
     response = await client.post(f"/api/v1/notes/{uuid.uuid4()}/repeat-queue")
 
     assert response.status_code == 503
-    assert "broker down" in response.json()["detail"]
+    assert response.json() == {"detail": "Kafka unavailable"}
+    errors = _tracker_errors(caplog)
+    assert len(errors) == 1
+    assert "broker down" in errors[0].getMessage()
 
 
 def _tracker_errors(caplog) -> list[logging.LogRecord]:

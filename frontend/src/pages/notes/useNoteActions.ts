@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { apiFetch } from "../../api/notes";
 
@@ -8,6 +8,12 @@ export interface NoteActions {
   restoreNote: (noteId: string) => void;
   repeatNote: (noteId: string) => void;
   error: string | null;
+  dismissError: () => void;
+}
+
+interface Failure {
+  seq: number;
+  message: string;
 }
 
 function errorMessage(err: unknown): string {
@@ -16,14 +22,17 @@ function errorMessage(err: unknown): string {
 
 export function useNoteActions(): NoteActions {
   const qc = useQueryClient();
-  const [error, setError] = useState<string | null>(null);
+  const seq = useRef(0);
+  const [failure, setFailure] = useState<Failure | null>(null);
 
+  // A failure stays visible until an action started after it succeeds.
   const common = {
-    onMutate: () => {
-      setError(null);
+    onMutate: () => ++seq.current,
+    onError: (err: unknown, _noteId: string, started: number | undefined) => {
+      setFailure({ seq: started ?? seq.current, message: errorMessage(err) });
     },
-    onError: (err: unknown) => {
-      setError(errorMessage(err));
+    onSuccess: (_data: void, _noteId: string, started: number) => {
+      setFailure((prev) => (prev && prev.seq < started ? null : prev));
     },
   };
   const refreshNotes = () => {
@@ -57,6 +66,9 @@ export function useNoteActions(): NoteActions {
     deleteNote: deleteMut.mutate,
     restoreNote: restoreMut.mutate,
     repeatNote: repeatMut.mutate,
-    error,
+    error: failure?.message ?? null,
+    dismissError: () => {
+      setFailure(null);
+    },
   };
 }

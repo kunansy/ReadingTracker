@@ -284,7 +284,7 @@ async def get_notes(*, material_id: UUID | str | None = None) -> list[Note]:
     return notes
 
 
-async def get_note_api(*, note_id: UUID) -> Note:
+async def get_note(*, note_id: UUID) -> Note:
     logger.debug("Getting note_id='%s'", note_id)
 
     stmt = _get_note_stmt(note_id=note_id)

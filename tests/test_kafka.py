@@ -1,7 +1,9 @@
+import logging
+
 import pytest
 from aiokafka import errors
 
-from tracker.common import kafka
+from tracker.common import kafka, settings
 
 
 @pytest.fixture
@@ -28,6 +30,19 @@ async def test_repeat_note_raises_when_send_fails(producer):
         await kafka.repeat_note("note-id")
 
     producer.stop.assert_awaited_once()
+
+
+async def test_send_failure_is_left_to_the_caller_to_log(producer, caplog):
+    producer.send_and_wait.side_effect = errors.KafkaError("boom")
+
+    with pytest.raises(kafka.KafkaSendError):
+        await kafka.repeat_note("note-id")
+
+    assert not [
+        r
+        for r in caplog.records
+        if r.name == settings.LOGGER_NAME and r.levelno >= logging.ERROR
+    ]
 
 
 async def test_repeat_note_raises_when_broker_is_unreachable(producer):

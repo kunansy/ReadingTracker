@@ -100,8 +100,12 @@ async def _to_notify(payload: Record) -> None:
     logger.info("To notify: note_id=%s", payload.note_id)
     try:
         await kafka.repeat_note(payload.note_id)
-    except kafka.KafkaSendError:
-        logger.exception("Could not notify about note_id=%s", payload.note_id)
+    except kafka.KafkaSendError as exc:
+        logger.error(
+            "Could not notify, notification dropped: note_id=%s, %s",
+            payload.note_id,
+            exc,
+        )
         return
     logger.info("Sent")
 
@@ -129,4 +133,5 @@ async def parse():
             await _to_notify(msg)
 
 
-asyncio.run(parse())
+if __name__ == "__main__":
+    asyncio.run(parse())

@@ -180,7 +180,7 @@ async def get_note_tags(material_id: UUID | None = None):
 
 @router.get("/possible-links", response_model=schemas.ListPossibleNoteLinksResponse)
 async def list_possible_note_links(note_id: UUID):
-    if not (note := await db.get_note_api(note_id=note_id)):
+    if not (note := await db.get_note(note_id=note_id)):
         raise HTTPException(status_code=404, detail="Note not found")
 
     possible_links = await db.get_possible_links(note_id=note_id, note_tags=note.tags)
@@ -198,7 +198,7 @@ async def get_note_links_network(note_id: UUID):
 
 @router.get("/links", response_model=schemas.GetNoteLinksResponse)
 async def get_note_links(note_id: UUID, params: Annotated[PageParams, Depends()]):
-    note = await db.get_note_api(note_id=note_id)
+    note = await db.get_note(note_id=note_id)
 
     async with asyncio.TaskGroup() as tg:
         get_links_from_task = tg.create_task(
@@ -206,7 +206,7 @@ async def get_note_links(note_id: UUID, params: Annotated[PageParams, Depends()]
         )
         if note.link_id:
             get_link_to_task: asyncio.Task[db.Note | None] = tg.create_task(
-                db.get_note_api(note_id=note.link_id),
+                db.get_note(note_id=note.link_id),
             )
         else:
             get_link_to_task = tg.create_task(asyncio.sleep(1 / 1000, result=None))
@@ -222,7 +222,7 @@ async def get_note_links(note_id: UUID, params: Annotated[PageParams, Depends()]
 
 @router.get("/{note_id}", response_model=schemas.GetNoteResponse)
 async def get_note(note_id: UUID):
-    note = await db.get_note_api(note_id=note_id)
+    note = await db.get_note(note_id=note_id)
 
     return {"note": note}
 
@@ -239,5 +239,5 @@ async def restore_note(note_id: UUID):
 
 @router.post("/{note_id}/repeat-queue", status_code=204)
 async def insert_to_repeat_queue(note_id: UUID):
-    await db.get_note_api(note_id=note_id)
+    await db.get_note(note_id=note_id)
     await kafka.repeat_note(note_id)
