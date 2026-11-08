@@ -4,18 +4,19 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { unwrap } from "../../api/client";
+import { unwrapEmpty } from "../../api/client";
 import { useNoteActions } from "./useNoteActions";
 
-vi.mock("../../api/client", () => ({
+vi.mock("../../api/client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../api/client")>()),
   api: {
     DELETE: (path: string, init: unknown) => ({ method: "DELETE", path, init }),
     POST: (path: string, init: unknown) => ({ method: "POST", path, init }),
   },
-  unwrap: vi.fn(),
+  unwrapEmpty: vi.fn(),
 }));
 
-const unwrapMock = vi.mocked(unwrap);
+const unwrapMock = vi.mocked(unwrapEmpty);
 
 function setup() {
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });

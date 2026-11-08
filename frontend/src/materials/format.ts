@@ -1,4 +1,6 @@
-export function itemsLabel(materialType: string): string {
+import type { MaterialTypesEnum } from "../api/schema";
+
+export function itemsLabel(materialType: MaterialTypesEnum): string {
   if (materialType === "lecture") {
     return "Minutes";
   }
@@ -8,6 +10,6 @@ export function itemsLabel(materialType: string): string {
   return "Pages";
 }
 
-export function itemsLabelLower(materialType: string): string {
+export function itemsLabelLower(materialType: MaterialTypesEnum): string {
   return itemsLabel(materialType).toLowerCase();
 }

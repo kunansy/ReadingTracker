@@ -12,11 +12,9 @@ import { PageLoadError } from "../../components/PageLoadError";
 import { useNoteActions } from "./useNoteActions";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 
-type NoteListItem = SearchNotesItem;
+const SEARCH_PAGE_SIZE = 10;
 
-const PAGE_SIZE = 10;
-
-function groupNotesByMaterialAndChapter(notes: NoteListItem[]) {
+function groupNotesByMaterialAndChapter(notes: SearchNotesItem[]) {
   const order: string[] = [];
   const seen = new Set<string>();
   for (const n of notes) {
@@ -27,11 +25,11 @@ function groupNotesByMaterialAndChapter(notes: NoteListItem[]) {
   }
   const out: {
     materialId: string;
-    chapters: { chapter: string; notes: NoteListItem[] }[];
+    chapters: { chapter: string; notes: SearchNotesItem[] }[];
   }[] = [];
   for (const materialId of order) {
     const matNotes = notes.filter((x) => x.material_id === materialId);
-    const byChapter = new Map<number, NoteListItem[]>();
+    const byChapter = new Map<number, SearchNotesItem[]>();
     for (const n of matNotes) {
       const k = n.chapter_int;
       const arr = byChapter.get(k) ?? [];
@@ -69,7 +67,7 @@ export function SearchNotesPage() {
   const tagsQuery = searchParams.get("tags_query") ?? "";
   const navigate = useNavigate();
   const pagination = useCursorPagination(
-    PAGE_SIZE,
+    SEARCH_PAGE_SIZE,
     JSON.stringify([materialId, query, tagsQuery]),
     "asc",
   );
@@ -99,7 +97,7 @@ export function SearchNotesPage() {
               query: query || undefined,
               tags_query: tagsQuery || undefined,
               next_token: nextToken,
-              page_size: PAGE_SIZE,
+              page_size: SEARCH_PAGE_SIZE,
               order: pagination.order,
             },
           },
@@ -263,7 +261,7 @@ export function SearchNotesPage() {
     return <p>Loading…</p>;
   }
   if (metaQ.error) {
-    return <p className="error">{(metaQ.error as Error).message}</p>;
+    return <p className="error">{metaQ.error.message}</p>;
   }
   if (!hasTitles) {
     return (

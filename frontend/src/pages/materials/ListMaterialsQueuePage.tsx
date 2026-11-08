@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import {useCallback, useEffect, useRef, useState} from "react";
 import { useNavigate } from "react-router-dom";
 
-import { api, PAGE_SIZE, unwrap } from "../../api/client";
+import { api, errorMessage, PAGE_SIZE, unwrap, unwrapEmpty } from "../../api/client";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
@@ -42,7 +42,7 @@ export function ListMaterialsQueuePage() {
 
   const startMut = useMutation({
     mutationFn: (p: { materialId: string; startedAt: string}) =>
-      unwrap(
+      unwrapEmpty(
         api.POST("/api/v1/materials/{material_id}/start", {
           params: { path: { material_id: p.materialId } },
           body: { started_at: p.startedAt },
@@ -117,7 +117,7 @@ export function ListMaterialsQueuePage() {
         const material = estimate.material;
         const il = itemsLabel(material.material_type);
         const ill = itemsLabelLower(material.material_type);
-        const mean = data.mean[material.material_type] ?? 1;
+        const mean = data.mean[material.material_type];
         return (
           <div
             key={material.material_id}
@@ -144,7 +144,7 @@ export function ListMaterialsQueuePage() {
             <p> Expected duration: {estimate.expected_duration} days </p>
             <p>
               {" "}
-              Expected mean: {Math.ceil(mean)} {ill} per day{" "}
+              Expected mean: {mean === undefined ? "n/a" : `${Math.ceil(mean)} ${ill} per day`}{" "}
             </p>
             <div
                 className="form start"
@@ -209,7 +209,7 @@ export function ListMaterialsQueuePage() {
                         dialogRef.current?.close();
                         navigate("/materials/reading#header");
                       } catch (err) {
-                        window.alert((err as Error).message);
+                        window.alert(errorMessage(err));
                       }
                     }}
                 >

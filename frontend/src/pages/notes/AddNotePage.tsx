@@ -3,14 +3,21 @@ import {useState, useCallback, useMemo, useEffect} from "react";
 import { useSearchParams } from "react-router-dom";
 
 import { api, unwrap } from "../../api/client";
-import type { AddNoteRequest as AddNoteBody } from "../../api/schema";
+import type { AddNoteRequest } from "../../api/schema";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox.tsx";
-import type { AddNoteRequest } from "../../types.ts";
 import {isUuid} from "../../utils/isUuid.ts";
 import {SpellTextarea} from "../../components/SpellTextrea.tsx";
 import { loadWithTtl, saveWithTtl } from "../../lib/ttlStorage.ts";
 import { NoteDraft, parseNoteDraft, resolveNoteDraft } from "./noteDraft.ts";
+import { useMaterialTitles } from "../../materials/queries";
+
+type AddNoteForm = NoteDraft & {
+  title: string;
+  content: string;
+  tags: string[];
+  linkId: string;
+};
 
 const NOTE_DRAFT_KEY = "add-note-draft";
 const NOTE_DRAFT_TTL_MS = 12 * 60 * 60 * 1000;
@@ -22,7 +29,7 @@ export function AddNotePage() {
   const [pageName, setPageName] = useState("page number");
   const [chapterName, setChapterName] = useState("chapter");
 
-  const [formData, setFormData] = useState<AddNoteRequest>(() => ({
+  const [formData, setFormData] = useState<AddNoteForm>(() => ({
     ...resolveNoteDraft(initialMaterial, parseNoteDraft(loadWithTtl(NOTE_DRAFT_KEY))),
     title: "",
     content: "",
@@ -32,10 +39,7 @@ export function AddNotePage() {
   const [successId, setSuccessId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const titlesQ = useQuery({
-    queryKey: ["materials", "titles"],
-    queryFn: () => unwrap(api.GET("/api/v1/materials/titles")),
-  });
+  const titlesQ = useMaterialTitles();
 
   const tagListQ = useQuery({
     queryKey: ["tags", formData.materialId],
@@ -71,18 +75,18 @@ export function AddNotePage() {
     }
   }, [materialQ.data?.material.material_type]);
 
-  const updateFormData = useCallback((updates: Partial<AddNoteRequest>) => {
+  const updateFormData = useCallback((updates: Partial<AddNoteForm>) => {
     setFormData(prev => ({ ...prev, ...updates }));
     setError(null);
   }, []);
 
   const addMut = useMutation({
-    mutationFn: async (request: AddNoteRequest) => {
+    mutationFn: async (request: AddNoteForm) => {
       if (!isUuid(request.materialId)) {
         throw new Error("Choose a valid material (UUID)");
       }
       const linkId = request.linkId.trim();
-      const body: AddNoteBody = {
+      const body: AddNoteRequest = {
         material_id: request.materialId,
         content: request.content,
         chapter: request.chapter || "",
@@ -126,8 +130,9 @@ export function AddNotePage() {
     );
   }, [titlesQ]);
 
-  if (titlesQ.error || tagListQ.error) {
-    return <p className="error">{((titlesQ.error || tagListQ.error) as Error).message}</p>;
+  const loadError = titlesQ.error || tagListQ.error;
+  if (loadError) {
+    return <p className="error">{loadError.message}</p>;
   }
 
   if (!titlesQ.isLoading && !hasTitles) {

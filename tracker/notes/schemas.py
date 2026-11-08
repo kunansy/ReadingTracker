@@ -197,7 +197,7 @@ class UpdateNoteRequest(CustomBaseModel):
 
 
 class SearchParams(CustomBaseModel):
-    material_id: UUID | str | None = None
+    material_id: UUID | None = None
     query: str | None = None
     tags_query: str | None = None
 
@@ -284,7 +284,7 @@ class SearchNotesResponse(PageResponse):
     tags: list[str]
     tags_query: str | None
     page_size: int
-    material_id: str | None
+    material_id: UUID | None
 
 
 class ListPossibleLinksItem(CustomBaseModel):

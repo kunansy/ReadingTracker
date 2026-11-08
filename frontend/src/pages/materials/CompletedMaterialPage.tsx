@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 
-import { api, type ApiError, unwrap } from "../../api/client";
+import { api, ApiError, unwrap } from "../../api/client";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { isUuid } from "../../utils/isUuid.ts";
@@ -31,7 +31,7 @@ export function CompletedMaterialPage() {
     return <p>Loading…</p>;
   }
   if (q.error) {
-    if ((q.error as ApiError).status === HTTP_NOT_FOUND) {
+    if (q.error instanceof ApiError && q.error.status === HTTP_NOT_FOUND) {
       return <NotFoundMaterials kind="completed material" />;
     }
     return <p className="error">{q.error.message}</p>;

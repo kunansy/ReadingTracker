@@ -33,7 +33,7 @@ export function GraphPage() {
     return <p>Loading…</p>;
   }
   if (q.error) {
-    return <p className="error">{(q.error as Error).message}</p>;
+    return <p className="error">{q.error.message}</p>;
   }
 
   const data = q.data;

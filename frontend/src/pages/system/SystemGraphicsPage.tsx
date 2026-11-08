@@ -5,6 +5,7 @@ import { useSearchParams } from "react-router-dom";
 import { api, unwrap } from "../../api/client";
 import type { GetImageResponse, SpanStatsResponse } from "../../api/schema";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox";
+import { useMaterialReadingNow, useReadMaterialTitles } from "../../materials/queries";
 
 function SvgImg({ b64, title }: { b64: string; title: string }) {
   return (
@@ -65,7 +66,7 @@ function GraphicBlock({
       <h3 id={`graphic-header-${title.toLowerCase().replace(/\s+/g, '-')}`} className="header">{title}</h3>
       <div role="status" aria-live="polite">
         {q.isLoading ? <p>Loading graphic…</p> : null}
-        {q.error ? <p className="error" role="alert">Error: {(q.error as Error).message}</p> : null}
+        {q.error ? <p className="error" role="alert">Error: {q.error.message}</p> : null}
       </div>
       {q.data?.image ? <SvgImg b64={q.data.image} title={title} /> : <p>No graphic data available</p>}
       {spanSummary ? <SpanStatsBlock s={spanSummary} /> : null}
@@ -78,16 +79,9 @@ export function SystemGraphicsPage() {
   const materialId = (searchParams.get("material_id") ?? "").trim();
   const lastDays = Number(searchParams.get("last_days") ?? "7") || 7;
 
-  const materialReadingNowQ = useQuery({
-    queryKey: ["system-graphics", "materials", "reading_now"],
-    queryFn: () => unwrap(api.GET("/api/v1/reading_logs/material-reading-now")),
-  });
+  const materialReadingNowQ = useMaterialReadingNow();
 
-  const materialsTitlesQ = useQuery({
-    queryKey: ["system-graphics", "materials", "read_titles"],
-    queryFn: () => unwrap(api.GET("/api/v1/materials/read-titles")),
-    staleTime: 5 * 60 * 1000,
-  });
+  const materialsTitlesQ = useReadMaterialTitles();
 
   const effectiveMaterialId = useMemo(() => {
     return materialId || materialReadingNowQ.data?.material_id || "";
@@ -123,10 +117,15 @@ export function SystemGraphicsPage() {
   }, [searchParams, setSearchParams]);
 
   if (materialReadingNowQ.isLoading) return <p role="status">Loading material…</p>;
-  if (materialReadingNowQ.error) return <p className="error" role="alert">{(materialReadingNowQ.error as Error).message}</p>;
+  if (materialReadingNowQ.error) return <p className="error" role="alert">{materialReadingNowQ.error.message}</p>;
 
   return (
     <>
+      {materialsTitlesQ.error ? (
+        <p className="error" role="alert">
+          Failed to load materials: {materialsTitlesQ.error.message}
+        </p>
+      ) : null}
       <section className="form" aria-labelledby="filters-header">
         <form
           onSubmit={(e) => {
@@ -164,7 +163,7 @@ export function SystemGraphicsPage() {
 
       <section role="status" aria-live="polite">
         {summaryQ.isLoading ? <p>Loading statistics…</p> : null}
-        {summaryQ.error ? <p className="error" role="alert">{(summaryQ.error as Error).message}</p> : null}
+        {summaryQ.error ? <p className="error" role="alert">{summaryQ.error.message}</p> : null}
       </section>
 
       {summaryQ.data && (

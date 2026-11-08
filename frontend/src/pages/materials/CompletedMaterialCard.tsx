@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { api, unwrap } from "../../api/client";
+import { api, unwrapEmpty } from "../../api/client";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
@@ -22,7 +22,7 @@ export function CompletedMaterialCard({ stats: ms, position }: CompletedMaterial
 
   const outlineMut = useMutation({
     mutationFn: (materialId: string) =>
-      unwrap(
+      unwrapEmpty(
         api.POST("/api/v1/materials/{material_id}/outline", {
           params: { path: { material_id: materialId } },
         }),
@@ -120,6 +120,11 @@ export function CompletedMaterialCard({ stats: ms, position }: CompletedMaterial
           </CelebrateButton>
         </form>
       )}
+      {outlineMut.error ? (
+        <p className="error" role="alert">
+          Outline failed: {outlineMut.error.message}
+        </p>
+      ) : null}
     </div>
   );
 }

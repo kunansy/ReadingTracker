@@ -192,15 +192,15 @@ async def get_distinct_chapters(
     return chapters
 
 
-async def get_material_types() -> dict[str, enums.MaterialTypesEnum]:
+async def get_material_types() -> dict[UUID, enums.MaterialTypesEnum]:
     logger.debug("Getting material types")
 
     stmt = sa.select(models.Materials.c.material_id, models.Materials.c.material_type)
 
     async with database.session() as ses:
         types = {
-            str(material_id): material_type
-            for material_id, material_type in await ses.execute(stmt)
+            row.material_id: row.material_type
+            for row in (await ses.execute(stmt)).mappings().all()
         }
 
     logger.debug("Material types got")

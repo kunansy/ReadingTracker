@@ -1,5 +1,8 @@
+import datetime
 import uuid
+from collections import defaultdict
 from collections.abc import AsyncGenerator
+from decimal import Decimal
 
 import httpx
 import pytest
@@ -8,6 +11,7 @@ from tracker.cards import db as cards_db
 from tracker.common import pagination
 from tracker.main import app
 from tracker.materials import db as materials_db
+from tracker.models import enums
 from tracker.notes import db as notes_db
 from tracker.reading_log import db as reading_log_db
 
@@ -188,3 +192,138 @@ async def test_notes_search_filters_reach_db(client, no_side_queries, mocker):
     assert str(kwargs["material_id"]) == str(material_id)
     assert kwargs["tags"] == {"x", "y"}
     assert kwargs["note_ids"] is None
+
+
+def _note(material_id: uuid.UUID, **fields) -> notes_db.Note:
+    return notes_db.Note(
+        note_id=uuid.uuid4(),
+        material_id=material_id,
+        content="content #tag",
+        added_at=datetime.datetime(2026, 1, 1, tzinfo=datetime.UTC),
+        chapter="1",
+        page=10,
+        tags={"tag"},
+        is_deleted=False,
+        note_number=1,
+        **fields,
+    )
+
+
+async def test_notes_search_serializes_a_non_empty_page(client, mocker):
+    material_id = uuid.uuid4()
+    titled = _note(material_id, title="title", links_count=2)
+    untitled = _note(material_id)
+    mocker.patch.object(
+        notes_db,
+        "search_notes_page",
+        mocker.AsyncMock(
+            return_value=pagination.Page(
+                items=[titled, untitled], next_token=None, total_count=2
+            ),
+        ),
+    )
+    chapters: defaultdict[uuid.UUID, list[str]] = defaultdict(list)
+    chapters[material_id].append("1")
+    side_queries = {
+        "get_distinct_chapters": chapters,
+        "get_material_with_notes_titles": {material_id: "Material"},
+        "get_material_types": {material_id: enums.MaterialTypesEnum.book},
+        "get_all_notes_count": {material_id: 2},
+        "get_sorted_tags": ["tag"],
+    }
+    for name, value in side_queries.items():
+        mocker.patch.object(notes_db, name, mocker.AsyncMock(return_value=value))
+
+    response = await client.get(
+        "/api/v1/notes/search", params={"material_id": str(material_id)}
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    key = str(material_id)
+    assert body["material_id"] == key
+    assert body["titles"] == {key: "Material"}
+    assert body["material_types"] == {key: "book"}
+    assert body["material_notes"] == {key: 2}
+    assert body["chapters"] == {key: ["1"]}
+    assert body["tags"] == ["tag"]
+    assert [n["note_id"] for n in body["notes"]] == [
+        str(titled.note_id),
+        str(untitled.note_id),
+    ]
+    assert body["notes"][0]["title"] == "title"
+    assert body["notes"][0]["links_count"] == 2
+    assert body["notes"][1]["title"] is None
+    assert body["notes"][1]["links_count"] is None
+    assert all(n["is_deleted"] is False for n in body["notes"])
+
+
+async def test_notes_search_rejects_a_malformed_material_id(client, no_side_queries):
+    response = await client.get(
+        "/api/v1/notes/search", params={"material_id": "not-a-uuid"}
+    )
+
+    assert response.status_code == 422
+
+
+@pytest.fixture
+def graph_queries(mocker):
+    material_id = uuid.uuid4()
+    note = _note(material_id)
+    get_notes = mocker.patch.object(
+        notes_db, "get_notes", mocker.AsyncMock(return_value=[note])
+    )
+    mocker.patch.object(
+        notes_db,
+        "get_material_titles",
+        mocker.AsyncMock(return_value={material_id: "Material"}),
+    )
+    mocker.patch.object(notes_db, "create_graphic", return_value="<html></html>")
+    return material_id, get_notes
+
+
+async def test_notes_graph_for_all_notes(client, graph_queries, mocker):
+    material_id, _ = graph_queries
+    link_all = mocker.spy(notes_db, "link_all_notes")
+
+    response = await client.get("/api/v1/notes/graph")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "iframe_srcdoc": "<html></html>",
+        "titles": {str(material_id): "Material"},
+        "material_id": None,
+    }
+    link_all.assert_called_once()
+
+
+async def test_notes_graph_for_one_material(client, graph_queries, mocker):
+    material_id, get_notes = graph_queries
+    material_graph = mocker.spy(notes_db, "create_material_graph")
+
+    response = await client.get(
+        "/api/v1/notes/graph", params={"material_id": str(material_id)}
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["material_id"] == str(material_id)
+    assert body["titles"] == {str(material_id): "Material"}
+    material_graph.assert_called_once()
+    get_notes.assert_any_await(material_id=material_id)
+
+
+async def test_materials_queue_mean_is_a_json_number(client, mocker):
+    mocker.patch.object(
+        materials_db, "estimate_page", mocker.AsyncMock(return_value=_empty_page())
+    )
+    mocker.patch.object(
+        materials_db,
+        "get_means",
+        mocker.AsyncMock(return_value={enums.MaterialTypesEnum.book: Decimal("1.50")}),
+    )
+
+    response = await client.get("/api/v1/materials/queue")
+
+    assert response.status_code == 200
+    assert response.json()["mean"] == {"book": 1.5}

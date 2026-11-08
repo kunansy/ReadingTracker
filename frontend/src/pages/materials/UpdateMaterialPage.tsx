@@ -2,11 +2,17 @@ import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {useEffect, useRef, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 
-import { api, unwrap } from "../../api/client";
-import type { GetMaterialResponse, UpdateMaterialRequest } from "../../api/schema";
+import { api, unwrap, unwrapEmpty } from "../../api/client";
+import {
+  type GetMaterialResponse,
+  type MaterialTypesEnum,
+  materialTypesEnumValues,
+  type UpdateMaterialRequest,
+} from "../../api/schema";
 import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
-import { isMaterialType, type MaterialType, MaterialTypes } from "../../types";
+import { isMaterialType } from "../../types";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox";
+import { materialKeys, useMaterialTags } from "../../materials/queries";
 
 export function UpdateMaterialPage() {
   const [searchParams] = useSearchParams();
@@ -17,7 +23,7 @@ export function UpdateMaterialPage() {
   useAltchHotkeys(titleRef, title, setTitle);
   const [authors, setAuthors] = useState("");
   const [pages, setPages] = useState("");
-  const [materialType, setMaterialType] = useState<MaterialType>("book");
+  const [materialType, setMaterialType] = useState<MaterialTypesEnum>("book");
   const [tags, setTags] = useState<string[]>([]);
   const [link, setLink] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -39,11 +45,7 @@ export function UpdateMaterialPage() {
         }),
       ),
   });
-  const materialTagsQ = useQuery({
-    queryKey: ["materials", "tags"],
-    queryFn: () => unwrap(api.GET("/api/v1/materials/tags")),
-    staleTime: 5 * 60 * 1000,
-  });
+  const materialTagsQ = useMaterialTags();
 
   useEffect(() => {
     const m = q.data?.material;
@@ -72,7 +74,7 @@ export function UpdateMaterialPage() {
         tags: tags.join(", "),
         link: link.trim() || null,
       };
-      await unwrap(
+      await unwrapEmpty(
         api.PATCH("/api/v1/materials/{material_id}", {
           params: { path: { material_id: materialId } },
           body,
@@ -100,8 +102,7 @@ export function UpdateMaterialPage() {
         };
       });
 
-      void qc.invalidateQueries({ queryKey: ["materials"] });
-      void qc.invalidateQueries({ queryKey: ["materials", "tags"], });
+      void qc.invalidateQueries({ queryKey: materialKeys.all });
       navigate(from);
     },
   });
@@ -115,7 +116,7 @@ export function UpdateMaterialPage() {
   }
   const err = q.error || materialTagsQ.error;
   if (err) {
-    return <p className="error">{(err as Error).message}</p>;
+    return <p className="error">{err.message}</p>;
   }
 
   const materialTags = materialTagsQ.data?.tags ?? [];
@@ -175,7 +176,7 @@ export function UpdateMaterialPage() {
                     setMaterialType(value);
                   }
                 }}
-                options={MaterialTypes ?? []}
+                options={materialTypesEnumValues}
             >
               <ComboboxInput placeholder="Enter a material type" />
               <ComboboxList />
