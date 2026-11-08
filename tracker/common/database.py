@@ -97,6 +97,12 @@ def check_updated_one(result: Result[Any], *, entity: str, entity_id: object) ->
         raise NotFoundException(msg)
 
 
+def check_state_changed(result: Result[Any], *, msg: str) -> None:
+    if affected_rows(result) != 1:
+        logger.info(msg)
+        raise ConflictException(msg)
+
+
 @asynccontextmanager
 async def session(**kwargs) -> AsyncGenerator[AsyncSession]:
     new_session = AsyncSession(**kwargs, bind=engine)
@@ -141,9 +147,8 @@ def _compile_drop_table(element, compiler, **kwargs) -> str:  # noqa: ANN001, AR
     return compiler.visit_drop_table(element) + " CASCADE"
 
 
-async def create_repeat_notes_matview(conn: AsyncSession | AsyncConnection) -> None:
-    # repeat notes that were repeated the longest ago
-    query = """
+# repeat notes that were repeated the longest ago
+REPEAT_NOTES_MATVIEW_QUERY: Final[str] = """
     CREATE MATERIALIZED VIEW IF NOT EXISTS mvw_repeat_notes AS
         WITH sample_notes AS (
             SELECT
@@ -220,9 +225,11 @@ async def create_repeat_notes_matview(conn: AsyncSession | AsyncConnection) -> N
         LEFT JOIN last_material_repeat r
             ON r.material_id = m.material_id AND m.started_at IS NOT NULL
     WITH NO DATA;
-    """
+"""
 
-    await conn.execute(sa.text(query))
+
+async def create_repeat_notes_matview(conn: AsyncSession | AsyncConnection) -> None:
+    await conn.execute(sa.text(REPEAT_NOTES_MATVIEW_QUERY))
 
 
 async def recreate_db() -> None:

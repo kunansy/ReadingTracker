@@ -11,6 +11,7 @@ from alembic.operations import Operations
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy.engine import Connection
 
+from migrations.alembic.sql import REPEAT_NOTES_MATVIEW_V2
 from tracker.common import database, sort_keys
 from tracker.models import enums, models
 
@@ -29,6 +30,7 @@ def _load_migration(filename: str) -> ModuleType:
 
 MIGRATION_0004 = _load_migration("0004_material_status_columns.py")
 MIGRATION_0005 = _load_migration("0005_drop_statuses.py")
+MIGRATION_0006 = _load_migration("0006_materials_completed_at_index.py")
 
 MATERIAL_STATUSES = sa.text(
     "SELECT material_id, started_at, completed_at FROM materials "
@@ -184,3 +186,33 @@ async def test_upgrade_aborts_on_orphan_status():
     columns = await _in_rolled_back_migration(check)
 
     assert {"started_at", "completed_at"}.isdisjoint(columns)
+
+
+def _completed_at_index(conn: Connection) -> list[dict]:
+    return [
+        index
+        for index in sa.inspect(conn).get_indexes("materials")
+        if index["name"] == MIGRATION_0006.INDEX_NAME
+    ]
+
+
+async def test_0006_downgrade_drops_and_upgrade_restores_completed_at_index():
+    def check(conn: Connection) -> tuple[list[dict], list[dict]]:
+        MIGRATION_0006.downgrade()
+        dropped = _completed_at_index(conn)
+        MIGRATION_0006.upgrade()
+        return dropped, _completed_at_index(conn)
+
+    dropped, restored = await _in_rolled_back_migration(check)
+
+    assert dropped == []
+    assert [index["column_names"] for index in restored] == [["completed_at"]]
+
+
+def test_app_matview_matches_latest_migration():
+    def normalize(sql: str) -> str:
+        return " ".join(sql.split())
+
+    assert normalize(database.REPEAT_NOTES_MATVIEW_QUERY) == normalize(
+        REPEAT_NOTES_MATVIEW_V2,
+    )

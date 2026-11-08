@@ -296,8 +296,9 @@ async def check_record_correct(
         raise ValueError(f"No reading material id={material_id} found")
     material = materials[0]
 
-    started_at = material.started_at
-    if started_at is None or date < started_at.date():
+    if (started_at := material.started_at) is None:
+        raise ValueError(f"Material id={material_id} is not started")
+    if date < started_at.date():
         raise ValueError(f"Date {date} is before the material start {started_at}")
 
     total_pages_read = sum(record.count for record in log_records_task.result())

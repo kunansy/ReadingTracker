@@ -76,15 +76,9 @@ def _fold_legacy_statuses(dump_data: DUMP_TYPE) -> DUMP_TYPE:
         logger.warning("%s legacy statuses reference missing materials, skipped", orphans)
 
     status_by_material = {status["material_id"]: status for status in statuses}
-    no_status: dict[str, JSON_FIELD_TYPES] = {}
     folded_materials = [
-        {
-            **material,
-            "started_at": status.get("started_at", material.get("started_at")),
-            "completed_at": status.get("completed_at", material.get("completed_at")),
-        }
+        _fold_status(material, status_by_material.get(material["material_id"], {}))
         for material in materials
-        for status in [status_by_material.get(material["material_id"], no_status)]
     ]
 
     return {
@@ -95,6 +89,17 @@ def _fold_legacy_statuses(dump_data: DUMP_TYPE) -> DUMP_TYPE:
         },
         # JSON dumps carry nulls, DUMP_TYPE does not model them.
         models.Materials.name: folded_materials,  # type: ignore[dict-item]
+    }
+
+
+def _fold_status(
+    material: dict[str, JSON_FIELD_TYPES],
+    status: dict[str, JSON_FIELD_TYPES],
+) -> dict[str, JSON_FIELD_TYPES | None]:
+    return {
+        **material,
+        "started_at": status.get("started_at", material.get("started_at")),
+        "completed_at": status.get("completed_at", material.get("completed_at")),
     }
 
 
