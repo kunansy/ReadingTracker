@@ -8,22 +8,30 @@ from aiokafka import AIOKafkaProducer, errors
 from tracker.common import logger, settings
 
 
+class KafkaSendError(Exception):
+    pass
+
+
 @asynccontextmanager
 async def _kafka_producer() -> AsyncIterator[AIOKafkaProducer]:
     producer = AIOKafkaProducer(
         bootstrap_servers=settings.KAFKA_URL,
         enable_idempotence=True,
     )
-    async with asyncio.timeout(settings.KAFKA_CONNECT_TIMEOUT):
-        await producer.start()
+    try:
+        async with asyncio.timeout(settings.KAFKA_CONNECT_TIMEOUT):
+            await producer.start()
+    except (errors.KafkaError, TimeoutError) as exc:
+        raise KafkaSendError(f"Could not connect to kafka: {exc!r}") from exc
 
     try:
         yield producer
-    except errors.KafkaError:
-        logger.exception("Error with kafka producer")
     finally:
-        async with asyncio.timeout(settings.KAFKA_CONNECT_TIMEOUT):
-            await producer.stop()
+        try:
+            async with asyncio.timeout(settings.KAFKA_CONNECT_TIMEOUT):
+                await producer.stop()
+        except (errors.KafkaError, TimeoutError):
+            logger.exception("Could not stop kafka producer")
 
 
 async def _send_one(key: str, value: str, *, topic: str) -> None:
@@ -36,10 +44,11 @@ async def _send_one(key: str, value: str, *, topic: str) -> None:
                 topic,
             )
             await producer.send_and_wait(topic, key=key.encode(), value=value.encode())
-        except errors.KafkaError:
-            logger.exception("Could not send message")
-        else:
-            logger.debug("Message sent")
+        except errors.KafkaError as exc:
+            logger.exception("Could not send message to %s", topic)
+            raise KafkaSendError(f"Could not send message to {topic}: {exc!r}") from exc
+
+        logger.debug("Message sent")
 
 
 async def repeat_note(note_id: uuid.UUID | str) -> None:

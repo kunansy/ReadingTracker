@@ -1,5 +1,6 @@
 import asyncio
 import os
+from http import HTTPStatus
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException, RequestValidationError
@@ -13,7 +14,7 @@ from tracker.api.v1.notes import router as api_v1_notes_router
 from tracker.api.v1.reading_logs import router as api_v1_reading_logs_router
 from tracker.api.v1.system import router as api_v1_system_router
 from tracker.cards.spa import router as cards_spa_router
-from tracker.common import database, manticoresearch, settings
+from tracker.common import database, kafka, manticoresearch, settings
 from tracker.common.logger import logger
 from tracker.materials.spa import router as materials_spa_router
 from tracker.notes.spa import router as notes_spa_router
@@ -70,32 +71,37 @@ def _validation_detail(exc: RequestValidationError) -> str:
     return "; ".join(parts) if parts else repr(exc)
 
 
+_CLIENT_DATABASE_ERRORS: dict[type[database.DatabaseException], tuple[int, str]] = {
+    database.InvalidNextTokenException: (422, "InvalidNextToken"),
+    database.AlreadyExistsException: (409, "AlreadyExistsError"),
+    database.NotFoundException: (404, "NotFoundError"),
+}
+
+
 @app.exception_handler(database.DatabaseException)
 async def database_exception_handler(request: Request, exc: database.DatabaseException):
-    if isinstance(exc, database.InvalidNextTokenException):
-        logger.info("Invalid next token, (%s), %s", request.url, str(exc))
-    else:
-        logger.exception("Database exception occurred, (%s), %s", request.url, str(exc))
+    for exc_type, (status_code, prefix) in _CLIENT_DATABASE_ERRORS.items():
+        if isinstance(exc, exc_type):
+            logger.info("%s, (%s), %s", prefix, request.url, str(exc))
+            return JSONResponse(
+                status_code=status_code,
+                content={"detail": f"{prefix}: {exc}"},
+            )
 
-    if isinstance(exc, database.InvalidNextTokenException):
-        return JSONResponse(
-            status_code=422,
-            content={"detail": f"InvalidNextToken: {exc}"},
-        )
-    if isinstance(exc, database.AlreadyExistsException):
-        return JSONResponse(
-            status_code=409,
-            content={"detail": f"AlreadyExistsError: {exc}"},
-        )
-    if isinstance(exc, database.NotFoundException):
-        return JSONResponse(
-            status_code=404,
-            content={"detail": f"NotFoundError: {exc}"},
-        )
-
+    logger.exception("Database exception occurred, (%s), %s", request.url, str(exc))
     return JSONResponse(
         status_code=500,
         content={"detail": f"Database error: {exc}"},
+    )
+
+
+@app.exception_handler(kafka.KafkaSendError)
+async def kafka_exception_handler(request: Request, exc: kafka.KafkaSendError):
+    logger.exception("Kafka exception occurred, (%s), %s", request.url, str(exc))
+
+    return JSONResponse(
+        status_code=503,
+        content={"detail": f"Kafka error: {exc}"},
     )
 
 
@@ -118,7 +124,7 @@ async def manticore_exception_handler(
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    logger.exception("Validation error occurred, (%s), %s", request.url, str(exc))
+    logger.info("Validation error occurred, (%s), %s", request.url, str(exc))
 
     return JSONResponse(
         status_code=422,
@@ -128,7 +134,10 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
-    logger.exception("HTTP exception occurred, (%s), %s", request.url, str(exc))
+    if exc.status_code < HTTPStatus.INTERNAL_SERVER_ERROR:
+        logger.info("HTTP exception occurred, (%s), %s", request.url, str(exc))
+    else:
+        logger.error("HTTP exception occurred, (%s), %s", request.url, str(exc))
 
     return JSONResponse(
         status_code=exc.status_code,

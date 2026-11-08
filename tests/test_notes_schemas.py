@@ -258,6 +258,15 @@ def test_link_html_is_empty_without_link():
     assert _note(None).link_html == ""
 
 
+def test_note_json_dump_keeps_native_types():
+    note = _note(None).model_copy(update={"tags": {"b", "a"}})
+
+    dumped = note.model_dump(mode="json")
+
+    assert sorted(dumped["tags"]) == ["a", "b"]
+    assert dumped["is_deleted"] is False
+
+
 CHAPTER_REQUESTS = [
     lambda chapter: schemas.AddNoteRequest(
         material_id=uuid.uuid4(),

@@ -1,11 +1,13 @@
 import uuid
 from collections.abc import AsyncGenerator
 
+import logging
+
 import httpx
 import pytest
 
 from tracker.api.v1 import notes as notes_api
-from tracker.common import database
+from tracker.common import database, kafka, settings
 from tracker.main import app
 from tracker.notes import db as notes_db
 
@@ -76,6 +78,57 @@ async def test_insert_missing_note_to_repeat_queue_is_404(client, mocker):
 
     assert response.status_code == 404
     repeat_note.assert_not_awaited()
+
+
+async def test_repeat_queue_kafka_failure_is_503(client, mocker):
+    mocker.patch.object(notes_db, "get_note_api", mocker.AsyncMock())
+    mocker.patch.object(
+        notes_api.kafka,
+        "repeat_note",
+        mocker.AsyncMock(side_effect=kafka.KafkaSendError("broker down")),
+    )
+
+    response = await client.post(f"/api/v1/notes/{uuid.uuid4()}/repeat-queue")
+
+    assert response.status_code == 503
+    assert "broker down" in response.json()["detail"]
+
+
+def _tracker_errors(caplog) -> list[logging.LogRecord]:
+    return [
+        r
+        for r in caplog.records
+        if r.name == settings.LOGGER_NAME and r.levelno >= logging.ERROR
+    ]
+
+
+async def test_not_found_is_not_logged_as_error(client, mocker, caplog):
+    mocker.patch.object(notes_db, "delete_note", _not_found(mocker))
+
+    with caplog.at_level(logging.INFO, logger=settings.LOGGER_NAME):
+        response = await client.delete(f"/api/v1/notes/{uuid.uuid4()}")
+
+    assert response.status_code == 404
+    assert _tracker_errors(caplog) == []
+
+
+async def test_validation_error_is_not_logged_as_error(client, caplog):
+    with caplog.at_level(logging.INFO, logger=settings.LOGGER_NAME):
+        response = await client.delete("/api/v1/notes/not-a-uuid")
+
+    assert response.status_code == 422
+    assert _tracker_errors(caplog) == []
+
+
+async def test_http_4xx_is_not_logged_as_error(client, caplog):
+    with caplog.at_level(logging.INFO, logger=settings.LOGGER_NAME):
+        response = await client.post(
+            "/api/v1/materials/parse/habr",
+            json={"link": "https://example.com/post"},
+        )
+
+    assert response.status_code == 400
+    assert _tracker_errors(caplog) == []
 
 
 @pytest.mark.parametrize(

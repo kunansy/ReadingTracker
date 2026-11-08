@@ -1,4 +1,4 @@
-import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
@@ -8,6 +8,7 @@ import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
 import { PageLoadError } from "../../components/PageLoadError";
+import { useNoteActions } from "./useNoteActions";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 
 type NoteListItem = {
@@ -90,7 +91,6 @@ function labelsForMaterialType(t: string | undefined) {
 }
 
 export function SearchNotesPage() {
-  const qc = useQueryClient();
   const { open, close } = useContextMenu();
   const [searchParams, setSearchParams] = useSearchParams();
   const notesRootRef = useRef<HTMLDivElement>(null);
@@ -154,23 +154,7 @@ export function SearchNotesPage() {
     return m;
   }, [grouped, pagination.offset]);
 
-  const deleteMut = useMutation({
-    mutationFn: async (noteId: string) => {
-      await apiFetch(`/${encodeURIComponent(noteId)}`, { method: "DELETE" });
-    },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["notes"] });
-    },
-  });
-
-  const restoreMut = useMutation({
-    mutationFn: async (noteId: string) => {
-      await apiFetch(`/${encodeURIComponent(noteId)}/restore`, { method: "POST" });
-    },
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["notes"] });
-    },
-  });
+  const { deleteNote, restoreNote, repeatNote, error: actionError } = useNoteActions();
 
   const onNoteContextMenu = useCallback(
     (e: React.MouseEvent, note: {note_id: string, material_id: string, is_deleted?: boolean, has_cards?: boolean, cards_count?: number}) => {
@@ -194,15 +178,15 @@ export function SearchNotesPage() {
         if (note.is_deleted) {
           items.push({
             label: "Restore",
-            action: async () => {
-              await restoreMut.mutateAsync(note.note_id);
+            action: () => {
+              restoreNote(note.note_id);
             },
           });
         } else {
           items.push({
             label: "Delete",
-            action: async () => {
-              await deleteMut.mutateAsync(note.note_id);
+            action: () => {
+              deleteNote(note.note_id);
             },
           });
         }
@@ -222,20 +206,14 @@ export function SearchNotesPage() {
         }
         items.push({
           label: "Insert to repeat queue",
-          action: async () => {
-            try {
-              await apiFetch(`/${encodeURIComponent(note.note_id)}/repeat-queue`, {
-                method: "POST",
-              });
-            } catch (err) {
-              console.error(err);
-            }
+          action: () => {
+            repeatNote(note.note_id);
           },
         });
         open(e.clientX, e.clientY, items);
       })();
     },
-    [close, deleteMut, open, restoreMut],
+    [close, deleteNote, open, repeatNote, restoreNote],
   );
 
   const onQueryKeyDown = useCallback(async (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -330,6 +308,7 @@ export function SearchNotesPage() {
 
   return (
     <>
+      {actionError ? <p className="error">{actionError}</p> : null}
       <div className="form">
         <form
           key={`${materialId}|${query}|${tagsQuery}`}

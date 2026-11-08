@@ -46,16 +46,6 @@ class Note(CustomBaseModel):
             return set(orjson.loads(tags))
         return tags
 
-    @field_serializer("tags", when_used="json")
-    def serialize_tags(self, tags: set[str]) -> bytes:
-        # for cache
-        return orjson.dumps(sorted(tags))
-
-    @field_serializer("is_deleted", when_used="json")
-    def serialize_is_deleted(self, is_deleted: bool) -> int:  # noqa: FBT001
-        # for cache
-        return int(is_deleted)
-
     @field_serializer("added_at")
     def serialize_added_at(self, added_at: datetime.datetime) -> str:
         return added_at.strftime(settings.DATETIME_FORMAT)
@@ -292,20 +282,6 @@ async def get_notes(*, material_id: UUID | str | None = None) -> list[Note]:
         ]
     logger.debug("%s notes got", len(notes))
     return notes
-
-
-async def get_note(*, note_id: UUID | str) -> Note | None:
-    logger.debug("Getting note_id='%s'", note_id)
-
-    stmt = _get_note_stmt(note_id=note_id)
-
-    async with database.session() as ses:
-        if note := (await ses.execute(stmt)).one_or_none():
-            logger.debug("Note got")
-            return Note.model_validate(note, from_attributes=True)
-
-    logger.debug("Note_id='%s' not found", note_id)
-    return None
 
 
 async def get_note_api(*, note_id: UUID) -> Note:
