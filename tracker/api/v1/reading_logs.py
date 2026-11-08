@@ -45,9 +45,4 @@ async def create_log_record(log: schemas.CreateReadingLogsRequest):
 
 @router.get("/material-reading-now", response_model=schemas.GetMaterialReadingNowResponse)
 async def get_material_reading_now():
-    if material_id := await db.get_material_reading_now():
-        return {
-            "material_id": material_id,
-        }
-
-    raise HTTPException(status_code=404, detail="No materials reading now found")
+    return {"material_id": await db.get_material_reading_now()}

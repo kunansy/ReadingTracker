@@ -470,9 +470,16 @@
         "additionalProperties": false,
         "properties": {
           "material_id": {
-            "format": "uuid",
-            "title": "Material Id",
-            "type": "string"
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Material Id"
           }
         },
         "required": [
