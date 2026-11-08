@@ -13,7 +13,7 @@ import sqlalchemy.sql as sa
 from pydantic import ConfigDict, computed_field, field_validator
 from sqlalchemy import Integer, Text
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.engine import CursorResult, Row
+from sqlalchemy.engine import Row
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracker.common import database, pagination, schemas, settings, sort_keys
@@ -643,12 +643,9 @@ async def update_material(
     )
 
     async with database.session() as ses:
-        result = cast("CursorResult[Any]", await ses.execute(stmt))
+        result = await ses.execute(stmt)
 
-    if result.rowcount != 1:
-        msg = f"Material id={material_id!r} not found"
-        logger.info(msg)
-        raise database.NotFoundException(msg)
+    database.check_updated_one(result, entity="Material", entity_id=material_id)
 
     logger.debug("Material updated")
 
@@ -668,7 +665,9 @@ async def start_material(
     stmt = models.Statuses.insert().values(values)
 
     async with database.session() as ses:
-        await ses.execute(stmt)
+        result = await ses.execute(stmt)
+
+    database.check_inserted_one(result, entity="Status")
 
     logger.debug("Material started")
 
@@ -716,7 +715,9 @@ async def complete_material(
     )
 
     async with database.session() as ses:
-        await ses.execute(stmt)
+        result = await ses.execute(stmt)
+
+    database.check_updated_one(result, entity="Material status", entity_id=material_id)
 
     logger.debug("Material completed at %s", completed_at)
 
@@ -733,7 +734,9 @@ async def outline_material(*, material_id: UUID) -> None:
     )
 
     async with database.session() as ses:
-        await ses.execute(stmt)
+        result = await ses.execute(stmt)
+
+    database.check_updated_one(result, entity="Material", entity_id=material_id)
 
     logger.info("Material outlined")
 
@@ -745,7 +748,9 @@ async def repeat_material(*, material_id: UUID) -> None:
     stmt = models.Repeats.insert().values(values)
 
     async with database.session() as ses:
-        await ses.execute(stmt)
+        result = await ses.execute(stmt)
+
+    database.check_inserted_one(result, entity="Repeat")
 
     logger.debug("Material repeated")
 
@@ -1109,7 +1114,8 @@ async def _set_material_index(
         .where(models.Materials.c.material_id == material_id)
     )
 
-    await conn.execute(stmt)
+    result = await conn.execute(stmt)
+    database.check_updated_one(result, entity="Material", entity_id=material_id)
 
     logger.debug("Index set")
 

@@ -82,6 +82,13 @@ def check_inserted_one(result: Result[Any], *, entity: str) -> None:
         raise DatabaseException(msg)
 
 
+def check_updated_one(result: Result[Any], *, entity: str, entity_id: object) -> None:
+    if cast("CursorResult[Any]", result).rowcount != 1:
+        msg = f"{entity} id={entity_id!r} not found"
+        logger.info(msg)
+        raise NotFoundException(msg)
+
+
 @asynccontextmanager
 async def session(**kwargs) -> AsyncGenerator[AsyncSession]:
     new_session = AsyncSession(**kwargs, bind=engine)
