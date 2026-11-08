@@ -1,5 +1,8 @@
 import logging
+from collections.abc import AsyncGenerator
 
+import httpx
+import pytest
 from starlette.routing import Mount
 
 from tracker.common import settings, spa
@@ -39,3 +42,42 @@ def test_only_the_spa_bundle_is_mounted():
 
     assert "/static/app-spa" in mounts
     assert "/static" not in mounts
+
+
+@pytest.fixture
+async def client(tmp_path, monkeypatch) -> AsyncGenerator[httpx.AsyncClient]:
+    index = tmp_path / "index.html"
+    index.write_text("<html>spa</html>")
+    monkeypatch.setattr(spa, "SPA_INDEX", index)
+
+    transport = httpx.ASGITransport(app=app)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+        yield client
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["/", "/notes", "/notes/123/update", "/materials/reading", "/new-section/page"],
+)
+async def test_client_routes_get_spa_index(client, path):
+    response = await client.get(path)
+
+    assert response.status_code == 200
+    assert response.text == "<html>spa</html>"
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["/api/v1/unknown", "/api", "/static/style.css", "/static/app-spa/missing.js"],
+)
+async def test_api_and_static_paths_are_not_served_the_spa(client, path):
+    response = await client.get(path)
+
+    assert response.status_code == 404
+    assert "spa" not in response.text
+
+
+async def test_service_routes_are_not_shadowed(client):
+    response = await client.get("/readiness")
+
+    assert response.headers["content-type"].startswith("application/json")
