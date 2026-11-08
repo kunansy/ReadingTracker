@@ -136,7 +136,6 @@ def _tables_stat(stat: dict[str, int]) -> dict[str, int]:
     return {
         "materials_count": stat["materials_count"],
         "reading_log_count": stat["reading_log_count"],
-        "statuses_count": stat["statuses_count"],
         "notes_count": stat["notes_count"],
         "cards_count": stat["cards_count"],
         "repeats_count": stat["repeats_count"],

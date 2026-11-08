@@ -256,12 +256,12 @@ async def _calculate_span_completed_materials_statistics(
 
     stmt = (
         sa.select(
-            sa.func.date(models.Statuses.c.completed_at).label("date"),
-            sa.func.count(models.Statuses.c.material_id).label("cnt"),
+            sa.func.date(models.Materials.c.completed_at).label("date"),
+            sa.func.count(models.Materials.c.material_id).label("cnt"),
         )
-        .group_by(sa.func.date(models.Statuses.c.completed_at))
-        .where(sa.func.date(models.Statuses.c.completed_at) >= span.start)
-        .where(sa.func.date(models.Statuses.c.completed_at) <= span.stop)
+        .group_by(sa.func.date(models.Materials.c.completed_at))
+        .where(sa.func.date(models.Materials.c.completed_at) >= span.start)
+        .where(sa.func.date(models.Materials.c.completed_at) <= span.stop)
     )
 
     async with database.session() as ses:
@@ -450,9 +450,8 @@ async def _materials_analytics(span: TimeSpan) -> _MaterialAnalytics:
             models.Materials.c.material_type,
             sa.func.count(models.Materials.c.material_id.distinct()).label("cnt"),
         )
-        .join(models.Statuses)
-        .where(sa.func.date(models.Statuses.c.completed_at) >= span.start)
-        .where(sa.func.date(models.Statuses.c.completed_at) <= span.stop)
+        .where(sa.func.date(models.Materials.c.completed_at) >= span.start)
+        .where(sa.func.date(models.Materials.c.completed_at) <= span.stop)
         .group_by(models.Materials.c.material_type)
     )
 

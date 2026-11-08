@@ -24,11 +24,12 @@ async def get_materials() -> list[db.Material]:
         return [db.Material(**row) for row in (await ses.execute(stmt)).mappings().all()]
 
 
-async def get_statuses() -> list[db.Status]:
-    stmt = sa.select(models.Statuses)
-
-    async with database.session() as ses:
-        return [db.Status(**row) for row in (await ses.execute(stmt)).mappings().all()]
+async def get_started_materials() -> dict[uuid.UUID, db.Material]:
+    return {
+        material.material_id: material
+        for material in await get_materials()
+        if material.started_at is not None
+    }
 
 
 async def test_get_means():
@@ -60,8 +61,7 @@ async def test_get_free_materials():
     free_materials = await db._get_free_materials()
 
     materials = await get_materials()
-    statuses = await get_statuses()
-    status_ids = {status.material_id for status in statuses}
+    status_ids = set(await get_started_materials())
 
     expected_free_materials = {
         material.material_id
@@ -88,13 +88,13 @@ def test_get_completed_materials_stmt():
 
 
 @pytest.mark.parametrize("is_completed", [True, False])
-async def test_parse_material_status_response(is_completed):
+async def test_parse_materials_response(is_completed):
     if is_completed:
         stmt = db._get_completed_materials_stmt()
     else:
         stmt = db._get_reading_materials_stmt()
 
-    result = await db._parse_material_status_response(stmt=stmt)
+    result = await db._parse_materials_response(stmt=stmt)
     assert result
 
 
@@ -102,7 +102,7 @@ async def test_get_reading_materials():
     reading_materials = await db.get_reading_materials()
 
     materials = {material.material_id: material for material in await get_materials()}
-    statuses = {status.material_id: status for status in await get_statuses()}
+    statuses = await get_started_materials()
 
     expected = {
         material_id
@@ -113,21 +113,14 @@ async def test_get_reading_materials():
     assert len(reading_materials) == len(expected)
     assert all(material.material_id in expected for material in reading_materials)
 
-    assert all(
-        material.material == materials[material.material_id]
-        for material in reading_materials
-    )
-    assert all(
-        material.status == statuses[material.material_id]
-        for material in reading_materials
-    )
+    assert all(material == materials[material.material_id] for material in reading_materials)
 
 
 async def test_get_completed_materials():
     completed_materials = await db._get_completed_materials()
 
     materials = {material.material_id: material for material in await get_materials()}
-    statuses = {status.material_id: status for status in await get_statuses()}
+    statuses = await get_started_materials()
 
     expected = {
         material_id
@@ -138,14 +131,7 @@ async def test_get_completed_materials():
     assert len(completed_materials) == len(expected)
     assert all(material.material_id in expected for material in completed_materials)
 
-    assert all(
-        material.material == materials[material.material_id]
-        for material in completed_materials
-    )
-    assert all(
-        material.status == statuses[material.material_id]
-        for material in completed_materials
-    )
+    assert all(material == materials[material.material_id] for material in completed_materials)
 
 
 async def test_get_last_material_started():
@@ -154,17 +140,14 @@ async def test_get_last_material_started():
     stmt = (
         sa.select(models.Materials.c.material_id)
         .join(
-            models.Statuses,
-            models.Statuses.c.material_id == models.Materials.c.material_id,
-        )
-        .join(
             models.ReadingLog,
             models.ReadingLog.c.material_id == models.Materials.c.material_id,
             isouter=True,
         )
-        .where(models.Statuses.c.completed_at == None)
+        .where(models.Materials.c.started_at != None)
+        .where(models.Materials.c.completed_at == None)
         .order_by(models.ReadingLog.c.date.desc())
-        .order_by(models.Statuses.c.started_at.desc())
+        .order_by(models.Materials.c.started_at.desc())
         .limit(1)
     )
 
@@ -172,38 +155,6 @@ async def test_get_last_material_started():
         expected = await ses.scalar(stmt)
 
     assert expected == material_id
-
-
-@pytest.mark.parametrize("material_status", ["completed", "started", "not started"])
-async def test_get_status(
-    material_status: Literal["completed", "started", "not started"],
-):
-    materials = {material.material_id: material for material in await get_materials()}
-    statuses = {status.material_id: status for status in await get_statuses()}
-
-    if material_status == "not started":
-        material_id = random.choice(
-            [material_id for material_id in materials if material_id not in statuses],
-        )
-    elif material_status == "completed":
-        material_id = random.choice(
-            [
-                material_id
-                for material_id in materials
-                if material_id in statuses and statuses[material_id].completed_at
-            ],
-        )
-    elif material_status == "started":
-        material_id = random.choice(
-            [
-                material_id
-                for material_id in materials
-                if material_id in statuses and not statuses[material_id].completed_at
-            ],
-        )
-
-    status = await db._get_status(material_id=material_id)
-    assert status == statuses.get(material_id)
 
 
 @pytest.mark.parametrize(
@@ -254,21 +205,15 @@ async def test_get_material_statistics_unread():
     assert materials
 
     material = random.choice(materials)
-    material_status = db.MaterialStatus(
-        material=material,
-        status=db.Status(
-            status_id=uuid.uuid4(),
-            material_id=material.material_id,
-            started_at=database.utcnow().date(),
-        ),
-    )
+    started_at = datetime.datetime.combine(database.utcnow().date(), datetime.time())
+    started_material = material.model_copy(update={"started_at": started_at})
     mean_total = Decimal(50)
     m_log_st = await statistics.calculate_materials_stat(
         material_ids={material.material_id},
     )
 
     result = db._get_material_statistics(
-        material_status=material_status,
+        material=started_material,
         notes_count=10,
         mean_total=mean_total,
         log_stats={material.material_id: m_log_st},
@@ -323,7 +268,7 @@ async def test_reading_statistics():
     reading_materials_stmt = db._get_reading_materials_stmt().where(log_exists)
 
     materials = list(
-        await db._parse_material_status_response(
+        await db._parse_materials_response(
             stmt=reading_materials_stmt,
         ),
     )
@@ -419,11 +364,12 @@ async def test_complete_material():
     ],
 )
 async def test_complete_material_invalid_materials(
+    shared_session,
     material_status: Literal["completed", "not started"],
     exc,
 ):
     materials = {material.material_id: material for material in await get_materials()}
-    statuses = {status.material_id: status for status in await get_statuses()}
+    statuses = await get_started_materials()
 
     if material_status == "not started":
         material_id = random.choice(
@@ -439,14 +385,14 @@ async def test_complete_material_invalid_materials(
         )
 
     with pytest.raises(ValueError) as e:
-        await db.complete_material(material_id=material_id)
+        await db.is_completion_request_valid(material_id=material_id)
 
     assert exc == str(e.value)
 
 
-async def test_complete_material_invalid_date():
+async def test_complete_material_invalid_date(shared_session):
     materials = {material.material_id: material for material in await get_materials()}
-    statuses = {status.material_id: status for status in await get_statuses()}
+    statuses = await get_started_materials()
 
     material_id = random.choice(
         [
@@ -459,7 +405,7 @@ async def test_complete_material_invalid_date():
     date = (statuses[material_id].started_at - datetime.timedelta(days=1)).date()
 
     with pytest.raises(ValueError) as e:
-        await db.complete_material(material_id=material_id, completed_at=date)
+        await db.is_completion_request_valid(material_id=material_id, completed_at=date)
 
     assert str(e.value) == "Completion date must be greater than start date"
 
@@ -582,3 +528,74 @@ async def test_api_rejects_invalid_next_token():
 
     response = await database_exception_handler(_api_request("/api/v1/cards/"), e.value)
     assert response.status_code == 422
+
+
+async def _insert_material() -> uuid.UUID:
+    return await db.insert_material(
+        title=f"CAS material {uuid.uuid4()}",
+        authors="Author",
+        pages=10,
+        material_type=enums.MaterialTypesEnum.book,
+        tags=None,
+        link=None,
+    )
+
+
+async def test_start_material_twice_raises_not_found(shared_session):
+    material_id = await _insert_material()
+    started_at = database.utcnow().date() - datetime.timedelta(days=2)
+    await db.start_material(material_id=material_id, started_at=started_at)
+
+    with pytest.raises(database.NotFoundException, match="Not started material"):
+        await db.start_material(material_id=material_id)
+
+    material = await db.get_material_api(material_id=material_id)
+    assert material.started_at is not None
+    assert material.started_at.date() == started_at
+
+
+async def test_complete_material_twice_raises_not_found(shared_session):
+    material_id = await _insert_material()
+    today = database.utcnow().date()
+    await db.start_material(material_id=material_id, started_at=today)
+    await db.complete_material(material_id=material_id, completed_at=today)
+
+    with pytest.raises(database.NotFoundException, match="Reading material"):
+        await db.complete_material(
+            material_id=material_id,
+            completed_at=today + datetime.timedelta(days=1),
+        )
+
+    material = await db.get_material_api(material_id=material_id)
+    assert material.completed_at is not None
+    assert material.completed_at.date() == today
+
+
+async def test_complete_not_started_material_raises_not_found(shared_session):
+    material_id = await _insert_material()
+
+    with pytest.raises(database.NotFoundException, match="Reading material"):
+        await db.complete_material(material_id=material_id)
+
+    material = await db.get_material_api(material_id=material_id)
+    assert material.completed_at is None
+
+
+async def test_complete_material_defaults_to_today(shared_session):
+    material_id = await _insert_material()
+    await db.start_material(material_id=material_id)
+    await db.complete_material(material_id=material_id)
+
+    material = await db.get_material_api(material_id=material_id)
+    assert material.completed_at is not None
+    assert material.completed_at.date() == database.utcnow().date()
+
+
+async def test_started_material_leaves_queue(shared_session):
+    material_id = await _insert_material()
+    assert material_id in {m.material_id for m in await db._get_free_materials()}
+
+    await db.start_material(material_id=material_id)
+
+    assert material_id not in {m.material_id for m in await db._get_free_materials()}
+    assert await db.is_reading(material_id=material_id)

@@ -41,24 +41,8 @@ class Material(CustomBaseModel):
     link: str | None
     added_at: datetime.datetime
     is_outlined: bool
-
-
-class Status(CustomBaseModel):
-    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
-
-    status_id: UUID
-    material_id: UUID
-    started_at: datetime.datetime
+    started_at: datetime.datetime | None = None
     completed_at: datetime.datetime | None = None
-
-
-class MaterialStatus(CustomBaseModel):
-    material: Material
-    status: Status
-
-    @property
-    def material_id(self) -> UUID:
-        return self.material.material_id
 
 
 class MaterialEstimate(CustomBaseModel):
@@ -177,15 +161,9 @@ async def get_materials() -> list[Material]:
 
 
 def _get_free_materials_stmt() -> sa.Select:
-    assigned_condition = (
-        sa.select(1)
-        .select_from(models.Statuses)
-        .where(models.Statuses.c.material_id == models.Materials.c.material_id)
-    )
-
     return (
         sa.select(models.Materials)
-        .where(~sa.exists(assigned_condition))
+        .where(models.Materials.c.started_at == None)
         .order_by(models.Materials.c.index)
     )
 
@@ -217,20 +195,17 @@ def _get_reading_materials_stmt() -> sa.Select:
 
     last_read_at = sa.func.coalesce(
         reading_logs_cte.c.date,
-        sa.func.date(models.Statuses.c.started_at),
+        sa.func.date(models.Materials.c.started_at),
     )
     return (
-        sa.select(models.Materials, models.Statuses, last_read_at.label("last_read_at"))
-        .join(
-            models.Statuses,
-            models.Materials.c.material_id == models.Statuses.c.material_id,
-        )
+        sa.select(models.Materials, last_read_at.label("last_read_at"))
         .join(
             reading_logs_cte,
             reading_logs_cte.c.material_id == models.Materials.c.material_id,
             isouter=True,
         )
-        .where(models.Statuses.c.completed_at == None)
+        .where(models.Materials.c.started_at != None)
+        .where(models.Materials.c.completed_at == None)
         .order_by(reading_logs_cte.c.date.desc())
     )
 
@@ -242,13 +217,9 @@ def _get_completed_materials_stmt(
     tags: set[str] | None = None,
 ) -> sa.Select:
     stmt = (
-        sa.select(models.Materials, models.Statuses)
-        .join(
-            models.Statuses,
-            models.Materials.c.material_id == models.Statuses.c.material_id,
-        )
-        .where(models.Statuses.c.completed_at != None)
-        .order_by(models.Statuses.c.completed_at)
+        sa.select(models.Materials)
+        .where(models.Materials.c.completed_at != None)
+        .order_by(models.Materials.c.completed_at)
     )
     if material_type:
         stmt = stmt.where(models.Materials.c.material_type == material_type)
@@ -264,25 +235,20 @@ def _get_completed_materials_stmt(
     return stmt
 
 
-def _to_material_status(row: Mapping[Any, Any]) -> MaterialStatus:
-    return MaterialStatus(
-        material=Material.model_validate(row, from_attributes=True),
-        status=Status.model_validate(row, from_attributes=True),
-    )
+def _to_material(row: Mapping[Any, Any]) -> Material:
+    return Material.model_validate(row, from_attributes=True)
 
 
-async def _parse_material_status_response(*, stmt: sa.Select) -> list[MaterialStatus]:
+async def _parse_materials_response(*, stmt: sa.Select) -> list[Material]:
     async with database.session() as ses:
-        return [
-            _to_material_status(row) for row in (await ses.execute(stmt)).mappings().all()
-        ]
+        return [_to_material(row) for row in (await ses.execute(stmt)).mappings().all()]
 
 
-async def get_reading_materials() -> list[MaterialStatus]:
+async def get_reading_materials() -> list[Material]:
     logger.info("Getting reading materials")
 
     reading_materials_stmt = _get_reading_materials_stmt()
-    reading_materials = await _parse_material_status_response(stmt=reading_materials_stmt)
+    reading_materials = await _parse_materials_response(stmt=reading_materials_stmt)
 
     logger.info("%s reading materials found", len(reading_materials))
     return reading_materials
@@ -293,7 +259,7 @@ async def _get_completed_materials(
     material_type: enums.MaterialTypesEnum | None = None,
     is_outlined: bool | None = None,
     tags: set[str] | None = None,
-) -> list[MaterialStatus]:
+) -> list[Material]:
     logger.info("Getting completed materials")
 
     completed_materials_stmt = _get_completed_materials_stmt(
@@ -301,7 +267,7 @@ async def _get_completed_materials(
         is_outlined=is_outlined,
         tags=tags,
     )
-    completed_materials = await _parse_material_status_response(
+    completed_materials = await _parse_materials_response(
         stmt=completed_materials_stmt,
     )
 
@@ -315,7 +281,7 @@ async def get_last_material_started() -> UUID | None:
 
     stmt = (
         _get_reading_materials_stmt()
-        .order_by(models.Statuses.c.started_at.desc())
+        .order_by(models.Materials.c.started_at.desc())
         .limit(1)
     )
 
@@ -325,20 +291,6 @@ async def get_last_material_started() -> UUID | None:
             return material.material_id
 
     logger.debug("The last material started not found")
-    return None
-
-
-async def _get_status(*, material_id: UUID) -> Status | None:
-    logger.debug("Getting status for material_id=%s", material_id)
-
-    stmt = sa.select(models.Statuses).where(models.Statuses.c.material_id == material_id)
-
-    async with database.session() as ses:
-        if status := (await ses.execute(stmt)).one_or_none():
-            logger.debug("Status got")
-            return Status.model_validate(status, from_attributes=True)
-
-    logger.debug("Status not found")
     return None
 
 
@@ -372,14 +324,16 @@ def _get_total_reading_duration(
 
 def _get_material_statistics(
     *,
-    material_status: MaterialStatus,
+    material: Material,
     notes_count: int,
     mean_total: Decimal,
     log_stats: dict[UUID, Any],
 ) -> MaterialStatistics:
     """Calculate statistics for reading or completed material."""
-    material, status = material_status.material, material_status.status
     material_id = material.material_id
+    if (started_at := material.started_at) is None:
+        msg = f"Material id={material_id!r} is not started"
+        raise ValueError(msg)
 
     if log_st := log_stats.get(material_id):
         mean, total = log_st.mean, log_st.total
@@ -391,7 +345,7 @@ def _get_material_statistics(
         total = duration = lost_time = 0
         max_record = min_record = None
 
-    if status.completed_at is None:
+    if material.completed_at is None:
         remaining_pages = material.pages - total
         remaining_days = round(remaining_pages / mean)
         would_be_completed: datetime.date | None = (
@@ -404,14 +358,14 @@ def _get_material_statistics(
         would_be_completed = remaining_days = remaining_pages = None
 
     total_reading_duration = _get_total_reading_duration(
-        started_at=status.started_at,
-        completed_at=status.completed_at,
+        started_at=started_at,
+        completed_at=material.completed_at,
     )
 
     return MaterialStatistics(
         material=material,
-        started_at=status.started_at,
-        completed_at=status.completed_at,
+        started_at=started_at,
+        completed_at=material.completed_at,
         total_reading_duration=total_reading_duration,
         duration=duration,
         lost_time=lost_time,
@@ -427,7 +381,7 @@ def _get_material_statistics(
 
 
 async def _get_materials_statistics(
-    material_statuses: list[MaterialStatus],
+    materials: list[Material],
 ) -> list[MaterialStatistics]:
     from tracker.reading_log.statistics import calculate_materials_stat
 
@@ -437,22 +391,22 @@ async def _get_materials_statistics(
         mean_read_pages_task = tg.create_task(get_means())
         all_notes_count_task = tg.create_task(notes_db.get_all_notes_count())
 
-    ids = {ms.material_id for ms in material_statuses}
+    ids = {material.material_id for material in materials}
     log_stats = await calculate_materials_stat(ids)
     all_notes_count = all_notes_count_task.result()
     mean_read_pages = mean_read_pages_task.result()
 
     result = [
         _get_material_statistics(
-            material_status=material_status,
-            notes_count=all_notes_count.get(material_status.material_id, 0),
+            material=material,
+            notes_count=all_notes_count.get(material.material_id, 0),
             mean_total=mean_read_pages.get(
-                material_status.material.material_type,
+                material.material_type,
                 Decimal(1),
             ),
             log_stats=log_stats,
         )
-        for material_status in material_statuses
+        for material in materials
     ]
 
     exec_time = round(time.perf_counter() - start, 2)
@@ -485,11 +439,11 @@ async def completed_statistics_page(
     page = await pagination.fetch_page(
         stmt,
         cursor_expr=pagination.cursor(
-            pagination.datetime_part(models.Statuses.c.completed_at),
+            pagination.datetime_part(models.Materials.c.completed_at),
             models.Materials.c.sort_key,
         ),
         request=request,
-        to_item=lambda row: _to_material_status(row._asdict()),
+        to_item=lambda row: _to_material(row._asdict()),
     )
 
     return page.with_items(await _get_materials_statistics(page.items))
@@ -501,20 +455,20 @@ async def get_completed_statistics(*, material_id: UUID) -> MaterialStatistics:
     stmt = _get_completed_materials_stmt().where(
         models.Materials.c.material_id == str(material_id),
     )
-    if not (material_statuses := await _parse_material_status_response(stmt=stmt)):
+    if not (materials := await _parse_materials_response(stmt=stmt)):
         msg = f"Completed material id={material_id!r} not found"
         logger.info(msg)
         raise database.NotFoundException(msg)
 
-    [statistics] = await _get_materials_statistics(material_statuses)
+    [statistics] = await _get_materials_statistics(materials)
     return statistics
 
 
 async def reading_statistics() -> list[MaterialStatistics]:
     logger.info("Calculating reading materials statistics")
 
-    material_statuses = await get_reading_materials()
-    return await _get_materials_statistics(material_statuses)
+    materials = await get_reading_materials()
+    return await _get_materials_statistics(materials)
 
 
 async def reading_statistics_page(
@@ -532,7 +486,7 @@ async def reading_statistics_page(
             models.Materials.c.sort_key,
         ),
         request=pagination.page_request(params, default_order=pagination.Order.DESC),
-        to_item=lambda row: _to_material_status(row._asdict()),
+        to_item=lambda row: _to_material(row._asdict()),
     )
 
     return page.with_items(await _get_materials_statistics(page.items))
@@ -661,13 +615,21 @@ async def start_material(
     if started_at > database.utcnow().date():
         raise ValueError("Start date must be less than today")
 
-    values = {"material_id": material_id, "started_at": started_at}
-    stmt = models.Statuses.insert().values(values)
+    stmt = (
+        models.Materials.update()
+        .values(started_at=started_at)
+        .where(models.Materials.c.material_id == material_id)
+        .where(models.Materials.c.started_at == None)
+    )
 
     async with database.session() as ses:
         result = await ses.execute(stmt)
 
-    database.check_inserted_one(result, entity="Status")
+    database.check_updated_one(
+        result,
+        entity="Not started material",
+        entity_id=material_id,
+    )
 
     logger.debug("Material started")
 
@@ -680,7 +642,6 @@ async def is_completion_request_valid(
     from tracker.reading_log.db import list_log_records
 
     async with asyncio.TaskGroup() as tg:
-        get_status_task = tg.create_task(_get_status(material_id=material_id))
         get_logs_task = tg.create_task(list_log_records(material_id=material_id))
         get_material_task = tg.create_task(get_material(material_id=material_id))
 
@@ -688,11 +649,11 @@ async def is_completion_request_valid(
 
     if not (material := get_material_task.result()):
         raise ValueError(f"{material_id=!r} not found")
-    if not (status := get_status_task.result()):
+    if material.started_at is None:
         raise ValueError("Material is not started")
-    if status.completed_at is not None:
+    if material.completed_at is not None:
         raise ValueError("Material is already completed")
-    if status.started_at.date() > completed_at:
+    if material.started_at.date() > completed_at:
         raise ValueError("Completion date must be greater than start date")
     if not (reading_logs := get_logs_task.result()):
         raise ValueError("Reading logs not found")
@@ -707,17 +668,23 @@ async def complete_material(
 ) -> None:
     logger.debug("Completing material_id=%s", material_id)
 
-    values = {"completed_at": completed_at}
+    completed_at = completed_at or database.utcnow().date()
     stmt = (
-        models.Statuses.update()
-        .values(values)
-        .where(models.Statuses.c.material_id == material_id)
+        models.Materials.update()
+        .values(completed_at=completed_at)
+        .where(models.Materials.c.material_id == material_id)
+        .where(models.Materials.c.started_at != None)
+        .where(models.Materials.c.completed_at == None)
     )
 
     async with database.session() as ses:
         result = await ses.execute(stmt)
 
-    database.check_updated_one(result, entity="Material status", entity_id=material_id)
+    database.check_updated_one(
+        result,
+        entity="Reading material",
+        entity_id=material_id,
+    )
 
     logger.debug("Material completed at %s", completed_at)
 
@@ -852,22 +819,23 @@ async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
     last_repeated_at = sa.func.max(models.Repeats.c.repeated_at).label("last_repeated_at")
     repet_or_compl_date = sa.func.coalesce(
         last_repeated_at,
-        sa.func.max(models.Statuses.c.completed_at),
+        sa.func.max(models.Materials.c.completed_at),
     )
     _dt = sa.func.date
     stmt = (
         sa.select(
-            models.Statuses.c.material_id,
+            models.Materials.c.material_id,
             sa.func.count(models.Repeats.c.repeat_id).label("repeats_count"),
             last_repeated_at,
             (_dt(sa.func.now()) - _dt(repet_or_compl_date)).label("priority_days"),
         )
         .join(
             models.Repeats,
-            models.Repeats.c.material_id == models.Statuses.c.material_id,
+            models.Repeats.c.material_id == models.Materials.c.material_id,
             isouter=True,
         )
-        .group_by(models.Statuses.c.material_id)
+        .where(models.Materials.c.started_at != None)
+        .group_by(models.Materials.c.material_id)
     )
 
     async with database.session() as ses:
@@ -915,7 +883,7 @@ def _get_repeating_queue_stmt(*, is_outlined: bool) -> tuple[sa.Select, sa.Colum
     repeats_count = sa.func.coalesce(repeats.c.repeats_count, 0)
     notes_count = sa.func.coalesce(notes.c.notes_count, 0)
     last_seen_at = sa.func.date(
-        sa.func.coalesce(repeats.c.last_repeated_at, models.Statuses.c.completed_at),
+        sa.func.coalesce(repeats.c.last_repeated_at, models.Materials.c.completed_at),
     )
     priority_days = sa.func.date(sa.func.now()) - last_seen_at
     repeat_at = last_seen_at + REPEAT_PERIOD_DAYS * sa.cast(repeats_count, Integer)
@@ -927,16 +895,12 @@ def _get_repeating_queue_stmt(*, is_outlined: bool) -> tuple[sa.Select, sa.Colum
             models.Materials.c.pages,
             models.Materials.c.material_type,
             models.Materials.c.is_outlined,
-            models.Statuses.c.completed_at,
+            models.Materials.c.completed_at,
             repeats.c.last_repeated_at,
             repeats_count.label("repeats_count"),
             notes_count.label("notes_count"),
             sa.func.coalesce(cards.c.cards_count, 0).label("cards_count"),
             priority_days.label("priority_days"),
-        )
-        .join(
-            models.Statuses,
-            models.Statuses.c.material_id == models.Materials.c.material_id,
         )
         .join(
             repeats,
@@ -945,7 +909,7 @@ def _get_repeating_queue_stmt(*, is_outlined: bool) -> tuple[sa.Select, sa.Colum
         )
         .join(notes, notes.c.material_id == models.Materials.c.material_id, isouter=True)
         .join(cards, cards.c.material_id == models.Materials.c.material_id, isouter=True)
-        .where(models.Statuses.c.completed_at != None)
+        .where(models.Materials.c.completed_at != None)
         # skip materials without notes and notwithstanding outlined
         .where(~(models.Materials.c.is_outlined & (notes_count == 0)))
         # at least a month of priority
@@ -1008,12 +972,7 @@ async def get_repeating_queue_page(
 async def get_queue_start() -> int:
     stmt = (
         sa.select(models.Materials.c.index)
-        .join(
-            models.Statuses,
-            models.Materials.c.material_id == models.Statuses.c.material_id,
-            isouter=True,
-        )
-        .where(models.Statuses.c.status_id == None)
+        .where(models.Materials.c.started_at == None)
         .order_by(models.Materials.c.index)
         .limit(1)
     )
@@ -1025,12 +984,7 @@ async def get_queue_start() -> int:
 async def get_queue_end() -> int:
     stmt = (
         sa.select(models.Materials.c.index)
-        .join(
-            models.Statuses,
-            models.Materials.c.material_id == models.Statuses.c.material_id,
-            isouter=True,
-        )
-        .where(models.Statuses.c.status_id == None)
+        .where(models.Materials.c.started_at == None)
         .order_by(models.Materials.c.index.desc())
         .limit(1)
     )
@@ -1170,9 +1124,10 @@ async def swap_order(material_id: UUID, new_material_index: int) -> None:
 async def is_reading(*, material_id: UUID) -> bool:
     stmt = (
         sa.select(sa.func.count(1) == 1)  # type: ignore[arg-type]
-        .select_from(models.Statuses)
-        .where(models.Statuses.c.material_id == material_id)
-        .where(models.Statuses.c.completed_at == None)
+        .select_from(models.Materials)
+        .where(models.Materials.c.material_id == material_id)
+        .where(models.Materials.c.started_at != None)
+        .where(models.Materials.c.completed_at == None)
     )
 
     async with database.session() as ses:
@@ -1276,9 +1231,8 @@ async def get_read_material_titles() -> dict[UUID, str]:
     """Get titles for materials even been read."""
     logger.debug("Getting read material titles")
 
-    stmt = sa.select(models.Materials.c.material_id, models.Materials.c.title).join(
-        models.Statuses,
-        models.Materials.c.material_id == models.Statuses.c.material_id,
+    stmt = sa.select(models.Materials.c.material_id, models.Materials.c.title).where(
+        models.Materials.c.started_at != None,
     )
 
     async with database.session() as ses:
@@ -1296,11 +1250,8 @@ async def get_reading_material_titles() -> dict[UUID, str]:
 
     stmt = (
         sa.select(models.Materials.c.material_id, models.Materials.c.title)
-        .join(
-            models.Statuses,
-            models.Materials.c.material_id == models.Statuses.c.material_id,
-        )
-        .where(models.Statuses.c.completed_at == None)
+        .where(models.Materials.c.started_at != None)
+        .where(models.Materials.c.completed_at == None)
     )
 
     async with database.session() as ses:

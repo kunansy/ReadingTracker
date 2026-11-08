@@ -206,7 +206,6 @@ export type GraphicResponse = { image: string };
 export type BackupResponse = {
   materials_count: number;
   reading_log_count: number;
-  statuses_count: number;
   notes_count: number;
   cards_count: number;
   repeats_count: number;
@@ -216,7 +215,6 @@ export type BackupResponse = {
 export type RestoreResponse = {
   materials_count: number;
   reading_log_count: number;
-  statuses_count: number;
   notes_count: number;
   cards_count: number;
   repeats_count: number;

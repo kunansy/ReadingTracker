@@ -94,11 +94,7 @@ async def _calculate_outline_percentage() -> dict[
             models.Materials.c.is_outlined,
             sa.func.count(1),
         )
-        .join(
-            models.Statuses,
-            models.Statuses.c.material_id == models.Materials.c.material_id,
-        )
-        .where(models.Statuses.c.completed_at != None)
+        .where(models.Materials.c.completed_at != None)
         .group_by(models.Materials.c.material_type, models.Materials.c.is_outlined)
     )
 

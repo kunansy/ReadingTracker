@@ -38,11 +38,8 @@ async def test_get_log_records():
 async def test_get_reading_material_titles():
     stmt = (
         sa.select(models.Materials.c.material_id, models.Materials.c.title)
-        .join(
-            models.Statuses,
-            models.Statuses.c.material_id == models.Materials.c.material_id,
-        )
-        .where(models.Statuses.c.completed_at == None)
+        .where(models.Materials.c.started_at != None)
+        .where(models.Materials.c.completed_at == None)
     )
 
     async with database.session() as ses:
@@ -60,12 +57,8 @@ async def test_get_completion_dates():
     dates = await db.get_completion_dates()
 
     stmt = (
-        sa.select(models.Materials.c.material_id, models.Statuses.c.completed_at)
-        .join(
-            models.Statuses,
-            models.Statuses.c.material_id == models.Materials.c.material_id,
-        )
-        .where(models.Statuses.c.completed_at != None)
+        sa.select(models.Materials.c.material_id, models.Materials.c.completed_at)
+        .where(models.Materials.c.completed_at != None)
     )
 
     async with database.session() as ses:

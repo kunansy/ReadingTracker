@@ -14,11 +14,11 @@ from tracker.common import database, sort_keys
 from tracker.models import models
 
 
-MIGRATION_PATH = Path(__file__).parents[1] / "migrations/alembic/versions/0003_chapter_length.py"
+VERSIONS = Path(__file__).parents[1] / "migrations/alembic/versions"
 
 
-def _load_migration() -> ModuleType:
-    spec = importlib.util.spec_from_file_location("migration_0003", MIGRATION_PATH)
+def _load_migration(filename: str) -> ModuleType:
+    spec = importlib.util.spec_from_file_location(filename, VERSIONS / filename)
     assert spec is not None
     assert spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -26,7 +26,16 @@ def _load_migration() -> ModuleType:
     return module
 
 
-MIGRATION = _load_migration()
+MIGRATION = _load_migration("0003_chapter_length.py")
+LATER_MIGRATIONS = (
+    _load_migration("0005_drop_statuses.py"),
+    _load_migration("0004_material_status_columns.py"),
+)
+
+
+def _downgrade_to_0003() -> None:
+    for migration in LATER_MIGRATIONS:
+        migration.downgrade()
 
 
 async def _in_rolled_back_migration[T](check: Callable[[Connection], T]) -> T:
@@ -74,6 +83,7 @@ def _insert_note(conn: Connection, chapter: str) -> None:
 
 async def test_downgrade_restores_old_chapter_length():
     def check(conn: Connection) -> int:
+        _downgrade_to_0003()
         MIGRATION.downgrade()
         return _chapter_length(conn)
 
@@ -82,6 +92,7 @@ async def test_downgrade_restores_old_chapter_length():
 
 async def test_upgrade_refuses_chapters_over_the_limit():
     def check(conn: Connection) -> int:
+        _downgrade_to_0003()
         MIGRATION.downgrade()
         _insert_note(conn, "1" * (MIGRATION.MAX_CHAPTER_LENGTH + 1))
 
@@ -94,6 +105,7 @@ async def test_upgrade_refuses_chapters_over_the_limit():
 
 async def test_upgrade_keeps_chapters_at_the_limit():
     def check(conn: Connection) -> tuple[int, bool]:
+        _downgrade_to_0003()
         MIGRATION.downgrade()
         _insert_note(conn, "1" * MIGRATION.MAX_CHAPTER_LENGTH)
 

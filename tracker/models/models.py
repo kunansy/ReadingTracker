@@ -78,6 +78,8 @@ Materials = Table(
     Column("link", Unicode(2048), nullable=True),
     Column("added_at", DateTime, default=_utc_now),
     Column("is_outlined", Boolean, default=False),
+    Column("started_at", DateTime, nullable=True),
+    Column("completed_at", DateTime, nullable=True),
     Column("index", Serial),
     SortKey(),
     UniqueConstraint("title", "material_type", name="uix_material"),
@@ -95,15 +97,6 @@ ReadingLog = Table(
     Column("date", Date, default=_utc_now),
     SortKey(),
     UniqueConstraint("material_id", "date", name="uix_reading_log"),
-)
-
-Statuses = Table(
-    "statuses",
-    metadata,
-    PrimaryKey("status_id"),
-    Column("material_id", UUID, unique=True, index=True),
-    Column("started_at", DateTime),
-    Column("completed_at", DateTime, nullable=True),
 )
 
 Notes = Table(

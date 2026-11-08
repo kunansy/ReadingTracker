@@ -1,6 +1,6 @@
 import datetime
 from pathlib import Path
-from typing import NamedTuple
+from typing import Final, NamedTuple
 
 import sqlalchemy.sql as sa
 from sqlalchemy import Date, DateTime
@@ -14,6 +14,8 @@ from tracker.models import models
 JSON_FIELD_TYPES = str | int
 DATE_TYPES = datetime.date | datetime.datetime | str
 DUMP_TYPE = dict[str, list[dict[str, JSON_FIELD_TYPES]]]
+# Dumps made before revision 0004 keep the material start and completion dates here.
+LEGACY_STATUSES_TABLE: Final[str] = "statuses"
 
 
 class TableSnapshot(NamedTuple):
@@ -38,7 +40,7 @@ class DBSnapshot(NamedTuple):
     @classmethod
     def from_dump(cls, dump_data: DUMP_TYPE) -> DBSnapshot:
         tables = []
-        for table_name, values in dump_data.items():
+        for table_name, values in _fold_legacy_statuses(dump_data).items():
             date_columns = _date_columns(table_name)
             rows = [
                 {
@@ -56,13 +58,44 @@ class DBSnapshot(NamedTuple):
 
 TABLES = {
     models.Materials.name: models.Materials,
-    models.Statuses.name: models.Statuses,
     models.ReadingLog.name: models.ReadingLog,
     models.Notes.name: models.Notes,
     models.Cards.name: models.Cards,
     models.Repeats.name: models.Repeats,
     models.NoteRepeatsHistory.name: models.NoteRepeatsHistory,
 }
+
+
+def _fold_legacy_statuses(dump_data: DUMP_TYPE) -> DUMP_TYPE:
+    if (statuses := dump_data.get(LEGACY_STATUSES_TABLE)) is None:
+        return dump_data
+
+    materials = dump_data.get(models.Materials.name, [])
+    material_ids = {material["material_id"] for material in materials}
+    if orphans := sum(status["material_id"] not in material_ids for status in statuses):
+        logger.warning("%s legacy statuses reference missing materials, skipped", orphans)
+
+    status_by_material = {status["material_id"]: status for status in statuses}
+    no_status: dict[str, JSON_FIELD_TYPES] = {}
+    folded_materials = [
+        {
+            **material,
+            "started_at": status.get("started_at"),
+            "completed_at": status.get("completed_at"),
+        }
+        for material in materials
+        for status in [status_by_material.get(material["material_id"], no_status)]
+    ]
+
+    return {
+        **{
+            table_name: rows
+            for table_name, rows in dump_data.items()
+            if table_name != LEGACY_STATUSES_TABLE
+        },
+        # JSON dumps carry nulls, DUMP_TYPE does not model them.
+        models.Materials.name: folded_materials,  # type: ignore[dict-item]
+    }
 
 
 def _date_columns(table_name: str) -> dict[str, type[datetime.date]]:
