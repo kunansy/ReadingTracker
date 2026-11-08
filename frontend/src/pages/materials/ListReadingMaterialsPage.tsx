@@ -252,10 +252,10 @@ export function ListReadingMaterialsPage() {
                   completedAt: dateStr,
                 });
                 dialogRef.current?.close();
+                navigate(`/materials/completed/${completeId}`);
               } catch (err) {
                 window.alert((err as Error).message);
               }
-              navigate(`/materials/completed/${completeId}`);
             }}
           >
             Complete

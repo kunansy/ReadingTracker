@@ -266,10 +266,10 @@ export function ListMaterialsQueuePage() {
                           startedAt: dateStr,
                         });
                         dialogRef.current?.close();
+                        navigate("/materials/reading#header");
                       } catch (err) {
                         window.alert((err as Error).message);
                       }
-                      navigate("/materials/reading#header");
                     }}
                 >
                   Start
