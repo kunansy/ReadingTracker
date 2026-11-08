@@ -42,8 +42,12 @@ class DBSnapshot(NamedTuple):
         tables = []
         for table_name, values in _fold_legacy_statuses(dump_data).items():
             if (table := TABLES.get(table_name)) is None:
-                rows = [dict(row) for row in values]
-                tables.append(TableSnapshot(table_name=table_name, rows=rows))
+                tables.append(
+                    TableSnapshot(
+                        table_name=table_name,
+                        rows=[dict(row) for row in values],
+                    ),
+                )
                 continue
 
             date_columns = _date_columns(table)
