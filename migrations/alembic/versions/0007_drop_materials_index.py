@@ -29,8 +29,6 @@ class _Serial(UserDefinedType):
 
 
 def upgrade() -> None:
-    op.drop_constraint(CONSTRAINT_NAME, "materials", type_="unique")
-    # The owned materials_index_seq is dropped with the column.
     op.drop_column("materials", COLUMN_NAME)
 
 

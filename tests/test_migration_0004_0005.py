@@ -221,8 +221,21 @@ def _materials_unique_constraints(conn: Connection) -> set[str]:
     }
 
 
+def _index_column_nullable(conn: Connection) -> bool:
+    [column] = [
+        column
+        for column in sa.inspect(conn).get_columns("materials")
+        if column["name"] == MIGRATION_0007.COLUMN_NAME
+    ]
+    return column["nullable"]
+
+
+def _next_index(conn: Connection) -> int:
+    return conn.execute(sa.text("SELECT nextval('materials_index_seq')")).scalar_one()
+
+
 async def test_0007_downgrade_restores_index_by_sort_key_and_upgrade_drops_it():
-    def check(conn: Connection) -> tuple[list[tuple], set[str], set[str], set[str]]:
+    def check(conn: Connection) -> tuple:
         _seed_materials(conn)
         MIGRATION_0007.downgrade()
         ordered = _rows(
@@ -233,6 +246,11 @@ async def test_0007_downgrade_restores_index_by_sort_key_and_upgrade_drops_it():
             ),
         )
         constraints = _materials_unique_constraints(conn)
+        nullable = _index_column_nullable(conn)
+        max_index = conn.execute(
+            sa.text('SELECT max("index") FROM materials'),
+        ).scalar_one()
+        next_index = _next_index(conn)
         MIGRATION_0007.upgrade()
         sequences = set(
             conn.execute(
@@ -242,15 +260,47 @@ async def test_0007_downgrade_restores_index_by_sort_key_and_upgrade_drops_it():
                 ),
             ).scalars(),
         )
-        return ordered, constraints, _materials_columns(conn), sequences
+        return (
+            ordered,
+            constraints,
+            nullable,
+            max_index,
+            next_index,
+            _materials_columns(conn),
+            _materials_unique_constraints(conn),
+            sequences,
+        )
 
-    ordered, constraints, columns, sequences = await _in_rolled_back_migration(check)
+    (
+        ordered,
+        constraints,
+        nullable,
+        max_index,
+        next_index,
+        columns,
+        constraints_after,
+        sequences,
+    ) = await _in_rolled_back_migration(check)
 
     assert ordered
     assert all(index == position for index, position in ordered)
     assert MIGRATION_0007.CONSTRAINT_NAME in constraints
+    assert nullable is False
+    assert next_index == max_index + 1
     assert MIGRATION_0007.COLUMN_NAME not in columns
+    assert MIGRATION_0007.CONSTRAINT_NAME not in constraints_after
     assert sequences == set()
+
+
+async def test_0007_downgrade_on_empty_materials_starts_sequence_at_one():
+    def check(conn: Connection) -> int:
+        conn.execute(sa.text("TRUNCATE materials CASCADE"))
+        MIGRATION_0007.downgrade()
+        next_index = _next_index(conn)
+        MIGRATION_0007.upgrade()
+        return next_index
+
+    assert await _in_rolled_back_migration(check) == 1
 
 
 def test_app_matview_matches_latest_migration():

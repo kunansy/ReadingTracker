@@ -42,14 +42,14 @@ class DBSnapshot(NamedTuple):
         tables = []
         for table_name, values in _fold_legacy_statuses(dump_data).items():
             date_columns = _date_columns(table_name)
-            dropped_columns = _dropped_columns(table_name, values)
+            known_columns = _known_columns(table_name)
             rows = [
                 {
                     key: _parse_date(value, date_columns[key])
                     if key in date_columns
                     else value
                     for key, value in row.items()
-                    if key not in dropped_columns
+                    if known_columns is None or key in known_columns
                 }
                 for row in values
             ]
@@ -105,16 +105,11 @@ def _fold_status(
     }
 
 
-def _dropped_columns(
-    table_name: str,
-    rows: list[dict[str, JSON_FIELD_TYPES]],
-) -> frozenset[str]:
-    """Columns of a known table that legacy dumps carry but the schema no longer has."""
+def _known_columns(table_name: str) -> frozenset[str] | None:
+    """Column names of a known table; None for a table the schema does not have."""
     if (table := TABLES.get(table_name)) is None:
-        return frozenset()
-
-    dumped = {key for row in rows for key in row}
-    return frozenset(dumped - set(table.columns.keys()))
+        return None
+    return frozenset(table.columns.keys())
 
 
 def _date_columns(table_name: str) -> dict[str, type[datetime.date]]:

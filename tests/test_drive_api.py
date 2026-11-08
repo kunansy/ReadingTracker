@@ -1,8 +1,11 @@
+from contextlib import asynccontextmanager
+
 import orjson
 import pytest
 
 from tracker.common import settings
 from tracker.google_drive import drive_api
+from tracker.google_drive.db import DBSnapshot
 from tracker.protos import backup_pb2
 
 
@@ -94,3 +97,35 @@ async def test_restore_unknown_format_fails(mocker):
         await drive_api._restore_from_service(stub)
 
     assert not stub.restore_requests
+
+
+async def test_restore_legacy_recreates_db_restores_snapshot_and_sets_notes_seq(mocker):
+    ses = mocker.sentinel.session
+
+    @asynccontextmanager
+    async def transaction():
+        yield ses
+
+    mocker.patch.object(drive_api.database, "transaction", transaction)
+    calls = mocker.Mock()
+    for owner, name in [
+        (drive_api.database, "recreate_db"),
+        (drive_api.db, "restore_db"),
+        (drive_api.db, "set_notes_seq_value"),
+        (drive_api.database, "create_repeat_notes_matview"),
+    ]:
+        calls.attach_mock(mocker.patch.object(owner, name, mocker.AsyncMock()), name)
+    dump = {
+        "materials": [{"material_id": "m1", "title": "t"}],
+        "notes": [{"note_id": "n1", "note_number": 7}],
+    }
+    snapshot = DBSnapshot.from_dump(dump)
+
+    await drive_api._restore_legacy(dump)
+
+    assert calls.mock_calls == [
+        mocker.call.recreate_db(),
+        mocker.call.restore_db(conn=ses, snapshot=snapshot),
+        mocker.call.set_notes_seq_value(snapshot.to_dict()["notes"], ses),
+        mocker.call.create_repeat_notes_matview(ses),
+    ]
