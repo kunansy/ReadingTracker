@@ -10,7 +10,7 @@ import {isUuid} from "../../utils/isUuid.ts";
 import {SpellTextarea} from "../../components/SpellTextrea.tsx";
 import { loadWithTtl, saveWithTtl } from "../../lib/ttlStorage.ts";
 import { NoteDraft, parseNoteDraft, resolveNoteDraft } from "./noteDraft.ts";
-import { useMaterialTitles } from "../../materials/queries";
+import { useMaterial, useMaterialTitles } from "../../materials/queries";
 
 type AddNoteForm = NoteDraft & {
   title: string;
@@ -51,16 +51,7 @@ export function AddNotePage() {
       ),
   });
   const materialId = initialMaterial || formData.materialId;
-  const materialQ = useQuery({
-    queryKey: ["materials", materialId],
-    enabled: !!materialId,
-    queryFn: () =>
-      unwrap(
-        api.GET("/api/v1/materials/{material_id}", {
-          params: { path: { material_id: materialId } },
-        }),
-      ),
-  });
+  const materialQ = useMaterial(materialId);
 
   useEffect(() => {
     const materialType = materialQ.data?.material.material_type || "book";
@@ -141,6 +132,9 @@ export function AddNotePage() {
 
   return (
       <>
+        {materialQ.error ? (
+            <p className="error" role="alert">Failed to load material: {materialQ.error.message}</p>
+        ) : null}
         {successId ? (
             <div className="alert success hover add-note-alert" id={successId}>
               {successId === "optimistic" ? "Pending..." : `Note '${successId}' created`}

@@ -7,7 +7,7 @@ import { CelebrateButton } from "../../components/CelebrateButton";
 import {isUuid} from "../../utils/isUuid.ts";
 import {dateInputValue} from "../../utils/dateInputValue.ts";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
-import { useMaterialReadingNow } from "../../materials/queries";
+import { materialKeys, useMaterialReadingNow, useReadingMaterialTitles } from "../../materials/queries";
 
 interface HintButtonProps {
   label: string;
@@ -61,11 +61,7 @@ export function AddReadingLogPage() {
     enabled: !!materialId && isUuid(materialId),
   });
 
-  const readingMaterialsTitlesQ = useQuery({
-    queryKey: ["materials", "reading_titles"],
-    queryFn: () => unwrap(api.GET("/api/v1/materials/reading-titles")),
-    staleTime: 5 * 60 * 1000,
-  });
+  const readingMaterialsTitlesQ = useReadingMaterialTitles();
 
   const materialCompletionInfo = completionQ.data;
   const readingMaterialsTitles = readingMaterialsTitlesQ.data;
@@ -97,7 +93,7 @@ export function AddReadingLogPage() {
       setDate("");
 
       void qc.invalidateQueries({ queryKey: ["reading_logs", "list"] });
-      void qc.invalidateQueries({ queryKey: ["materials", "reading"] });
+      void qc.invalidateQueries({ queryKey: materialKeys.reading });
       void qc.invalidateQueries({ queryKey: ["materials", materialId, "completion-info"] });
       navigate(from);
     },

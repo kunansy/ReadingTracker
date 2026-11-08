@@ -12,6 +12,7 @@ import { dateInputValue } from "../../utils/dateInputValue";
 import { PageNav } from "../../components/PageNav";
 import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
+import { materialKeys } from "../../materials/queries";
 
 export function ListReadingMaterialsPage() {
   const qc = useQueryClient();
@@ -24,7 +25,7 @@ export function ListReadingMaterialsPage() {
   const nextToken = pagination.cursor;
 
   const q = useQuery({
-    queryKey: ["materials", "reading", { nextToken, order: pagination.order }],
+    queryKey: [...materialKeys.reading, { nextToken, order: pagination.order }],
     placeholderData: keepPreviousData,
     queryFn: () =>
       unwrap(
@@ -49,7 +50,7 @@ export function ListReadingMaterialsPage() {
         }),
       ),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["materials"] });
+      void qc.invalidateQueries({ queryKey: materialKeys.all });
     },
   });
 

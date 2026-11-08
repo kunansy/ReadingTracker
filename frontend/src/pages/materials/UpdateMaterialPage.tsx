@@ -1,8 +1,8 @@
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {useEffect, useRef, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 
-import { api, unwrap, unwrapEmpty } from "../../api/client";
+import { api, unwrapEmpty } from "../../api/client";
 import {
   type GetMaterialResponse,
   type MaterialTypesEnum,
@@ -12,7 +12,7 @@ import {
 import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
 import { isMaterialType } from "../../types";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox";
-import { materialKeys, useMaterialTags } from "../../materials/queries";
+import { materialKeys, useMaterial, useMaterialTags } from "../../materials/queries";
 
 export function UpdateMaterialPage() {
   const [searchParams] = useSearchParams();
@@ -35,16 +35,7 @@ export function UpdateMaterialPage() {
 
   const from = location.state?.from || "/materials/queue";
 
-  const q = useQuery({
-    queryKey: ["material", materialId],
-    enabled: Boolean(materialId),
-    queryFn: () =>
-      unwrap(
-        api.GET("/api/v1/materials/{material_id}", {
-          params: { path: { material_id: materialId ?? "" } },
-        }),
-      ),
-  });
+  const q = useMaterial(materialId);
   const materialTagsQ = useMaterialTags();
 
   useEffect(() => {
@@ -85,7 +76,7 @@ export function UpdateMaterialPage() {
       setMessage("Material updated successfully.");
       setError(null);
 
-      qc.setQueryData<GetMaterialResponse>(["material", materialId], (old) => {
+      qc.setQueryData<GetMaterialResponse>(materialKeys.byId(materialId ?? ""), (old) => {
         if (!old) return old;
 
         return {

@@ -897,6 +897,7 @@
           },
           "mean": {
             "additionalProperties": {
+              "minimum": 0.0,
               "type": "number"
             },
             "propertyNames": {
@@ -2311,6 +2312,7 @@
             "$ref": "#/components/schemas/_MinMaxRecord"
           },
           "mean": {
+            "minimum": 0.0,
             "title": "Mean",
             "type": "number"
           },
@@ -4057,6 +4059,7 @@
             "schema": {
               "anyOf": [
                 {
+                  "maxLength": 512,
                   "type": "string"
                 },
                 {
@@ -4073,6 +4076,7 @@
             "schema": {
               "anyOf": [
                 {
+                  "maxLength": 512,
                   "type": "string"
                 },
                 {

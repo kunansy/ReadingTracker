@@ -52,8 +52,8 @@ export function useSpellChecker(
                         }))
                     );
                 }
-            } catch (e: any) {
-                if (e?.name !== "AbortError") setSpellErrors([]);
+            } catch (e: unknown) {
+                if (!(e instanceof DOMException && e.name === "AbortError")) setSpellErrors([]);
             } finally {
                 if (spellAbortRef.current === controller) spellAbortRef.current = null;
             }

@@ -215,6 +215,11 @@ export function UpdateNotePage() {
           </form>
         </div>
 
+        {possibleLinksQ.error ? (
+            <p className="error" role="alert">
+              Failed to load possible links: {possibleLinksQ.error.message}
+            </p>
+        ) : null}
         {possibleLinksQ.data?.items.length ? (
             <div
                 className="links-list"

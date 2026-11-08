@@ -2,7 +2,7 @@ import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
-import { api, unwrap } from "../../api/client";
+import { api, errorMessage, unwrap } from "../../api/client";
 import type { SearchNotesItem } from "../../api/schema";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
@@ -74,6 +74,7 @@ export function SearchNotesPage() {
   const nextToken = pagination.cursor;
 
   const [hintList, setHintList] = useState<string[]>([]);
+  const [hintError, setHintError] = useState<string | null>(null);
 
   const metaQ = useQuery({
     queryKey: ["notes", "meta", materialId],
@@ -207,8 +208,10 @@ export function SearchNotesPage() {
         api.GET("/api/v1/notes/autocompletion", { params: { query: { query: v, limit: 5 } } }),
       );
       setHintList(r.autocompletions);
-    } catch {
+      setHintError(null);
+    } catch (err) {
       setHintList([]);
+      setHintError(errorMessage(err));
     }
   }, []);
 
@@ -241,8 +244,8 @@ export function SearchNotesPage() {
             localStorage.setItem(cacheKey, note.content);
             el.title = note.content;
           }
-        } catch {
-          /* ignore */
+        } catch (err) {
+          el.title = `Preview unavailable: ${errorMessage(err)}`;
         }
       };
       el.addEventListener("mouseenter", onEnter);
@@ -343,6 +346,9 @@ export function SearchNotesPage() {
               <option key={h} value={h} />
             ))}
           </datalist>
+          {hintError ? (
+            <p className="error" role="alert">Autocomplete unavailable: {hintError}</p>
+          ) : null}
           <input
             className="input"
             list="tags"

@@ -206,7 +206,7 @@ describe("SearchNotesPage query autocompletion", () => {
   it.each([
     ["a failed request", { status: 500, body: { detail: "boom" } }],
     ["an empty body", { status: 200 }],
-  ])("clears the suggestions after %s", async (_name, failure: Reply) => {
+  ])("clears the suggestions and reports %s", async (_name, failure: Reply) => {
     const actions: ActionReplies = {
       "GET /autocompletion": { status: 200, body: { autocompletions: ["alpha"] } },
     };
@@ -222,6 +222,24 @@ describe("SearchNotesPage query autocompletion", () => {
 
     await waitFor(() => {
       expect(hints()).toEqual([]);
+    });
+    expect((await screen.findByRole("alert")).textContent).toContain("Autocomplete unavailable");
+  });
+
+  it("hides the autocomplete error after a successful request", async () => {
+    const actions: ActionReplies = {
+      "GET /autocompletion": { status: 500, body: { detail: "boom" } },
+    };
+    stubFetch(actions);
+    renderPage();
+    await typeQuery("al");
+    expect((await screen.findByRole("alert")).textContent).toContain("boom");
+
+    actions["GET /autocompletion"] = { status: 200, body: { autocompletions: ["alpha"] } };
+    await typeQuery("alp");
+
+    await waitFor(() => {
+      expect(hints()).toEqual(["alpha"]);
     });
     expect(screen.queryByRole("alert")).toBeNull();
   });

@@ -11,6 +11,11 @@ export const materialKeys = {
   titles: ["materials", "titles"],
   readTitles: ["materials", "read_titles"],
   readingNow: ["materials", "reading_now"],
+  readingTitles: ["materials", "reading_titles"],
+  withCardsTitles: ["materials", "with_cards_titles"],
+  queue: ["materials", "queue"],
+  reading: ["materials", "reading"],
+  byId: (materialId: string) => ["materials", materialId] as const,
 } as const;
 
 export function useMaterialTags() {
@@ -48,5 +53,34 @@ export function useMaterialReadingNow() {
   return useQuery({
     queryKey: materialKeys.readingNow,
     queryFn: () => unwrap(api.GET("/api/v1/reading_logs/material-reading-now")),
+  });
+}
+
+export function useReadingMaterialTitles() {
+  return useQuery({
+    queryKey: materialKeys.readingTitles,
+    queryFn: () => unwrap(api.GET("/api/v1/materials/reading-titles")),
+    staleTime: LOOKUP_STALE_TIME_MS,
+  });
+}
+
+export function useMaterialsWithCardsTitles() {
+  return useQuery({
+    queryKey: materialKeys.withCardsTitles,
+    queryFn: () => unwrap(api.GET("/api/v1/materials/with-cards-titles")),
+    staleTime: LOOKUP_STALE_TIME_MS,
+  });
+}
+
+export function useMaterial(materialId: string | null | undefined) {
+  return useQuery({
+    queryKey: materialKeys.byId(materialId ?? ""),
+    enabled: Boolean(materialId),
+    queryFn: () =>
+      unwrap(
+        api.GET("/api/v1/materials/{material_id}", {
+          params: { path: { material_id: materialId ?? "" } },
+        }),
+      ),
   });
 }

@@ -98,7 +98,7 @@ class _SpanStatsResponse(CustomBaseModel):
     total: NonNegativeInt
     would_be_total: NonNegativeInt
     zero_days: NonNegativeInt
-    mean: float
+    mean: NonNegativeFloat
     median: NonNegativeFloat
     max_record: _MinMaxRecord
     min_record: _MinMaxRecord

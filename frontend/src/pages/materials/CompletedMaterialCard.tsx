@@ -6,6 +6,7 @@ import { api, unwrapEmpty } from "../../api/client";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import { itemsLabel, itemsLabelLower } from "../../materials/format";
+import { materialKeys } from "../../materials/queries";
 import type { MaterialStatistics } from "../../api/schema";
 
 interface CompletedMaterialCardProps {
@@ -28,7 +29,7 @@ export function CompletedMaterialCard({ stats: ms, position }: CompletedMaterial
         }),
       ),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["materials"] });
+      void qc.invalidateQueries({ queryKey: materialKeys.all });
     },
   });
 

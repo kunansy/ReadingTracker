@@ -17,6 +17,7 @@ async def test_get_material_types():
     types = await db.get_material_types()
     type_values = set(types.values())
 
+    assert all(isinstance(material_id, UUID) for material_id in types)
     assert all(enums.MaterialTypesEnum(type_) for type_ in type_values)
 
 
