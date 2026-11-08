@@ -15,7 +15,7 @@ type ComboboxContextType = {
     input: string;
     setInput: (v: string) => void;
 
-    options: string[];
+    options: readonly string[];
     filtered: string[];
     getOptionLabel: (opt: string) => string;
 
@@ -42,7 +42,7 @@ function useComboboxCtx() {
 
 type BaseProps = {
     children: ReactNode;
-    options: string[];
+    options: readonly string[];
     getOptionLabel?: (opt: string) => string;
     allowCreate?: boolean;
 };

@@ -1,6 +1,5 @@
 import datetime
 import typing
-from decimal import Decimal
 from typing import Literal
 from uuid import UUID
 
@@ -68,7 +67,7 @@ class RepeatingQueueItem(CustomBaseModel):
 
 class ListMaterialsQueueResponse(PageResponse):
     estimates: list[MaterialEstimate]
-    mean: dict[MaterialTypesEnum, Decimal]
+    mean: dict[MaterialTypesEnum, float]
 
 
 class ListReadingMaterialsResponse(PageResponse):

@@ -1,15 +1,10 @@
 import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {useState} from "react";
 
-import {apiFetch} from "../../api/materials";
+import { api, unwrap } from "../../api/client";
+import type { CreateMaterialRequest } from "../../api/schema";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox";
-import {
-  MaterialType,
-  MaterialTagsResponse,
-  MaterialTypes,
-  MaterialAuthorsResponse,
-  ParsedMaterialResponse,
-} from "../../types";
+import { isMaterialType, type MaterialType, MaterialTypes } from "../../types";
 import {CelebrateButton} from "../../components/CelebrateButton.tsx";
 
 
@@ -26,35 +21,29 @@ export function AddMaterialPage() {
 
   const materialTagsQ = useQuery({
     queryKey: ["materials", "tags"],
-    queryFn: () => apiFetch<MaterialTagsResponse>(`/tags`),
+    queryFn: () => unwrap(api.GET("/api/v1/materials/tags")),
     staleTime: 5 * 60 * 1000,
   });
   const materialAuthorsQ = useQuery({
     queryKey: ["materials", "authors"],
-    queryFn: () => apiFetch<MaterialAuthorsResponse>(`/authors`),
+    queryFn: () => unwrap(api.GET("/api/v1/materials/authors")),
     staleTime: 5 * 60 * 1000,
   });
 
   const parseMut = useMutation({
     mutationFn: async (url: string) => {
       const endpoint = url.includes("habr")
-        ? "/parse/habr"
-        : "/parse/youtube";
-      return apiFetch<ParsedMaterialResponse>(endpoint, {
-        method: "POST",
-        body: JSON.stringify({ link: url }),
-      });
+        ? "/api/v1/materials/parse/habr"
+        : "/api/v1/materials/parse/youtube";
+      return unwrap(api.POST(endpoint, { body: { link: url } }));
     },
     onSuccess: (data) => {
-      if (!data) {
-        return;
-      }
       setTitle(data.title);
       setAuthors([data.authors]);
       if (data.duration != null) {
         setPages(String(data.duration));
       }
-      setMaterialType((data.type as MaterialType) ?? MaterialType.book);
+      setMaterialType(isMaterialType(data.type) ? data.type : "book");
       setLink(data.link);
     },
     onError: (e: Error) => {
@@ -64,22 +53,18 @@ export function AddMaterialPage() {
 
   const addMut = useMutation({
     mutationFn: async () => {
-      const body: Record<string, unknown> = {
+      if (materialType === null) {
+        throw new Error("Choose the material type");
+      }
+      const body: CreateMaterialRequest = {
         title,
         authors: authors.join(", "),
         pages: Number(pages),
         material_type: materialType,
+        tags: tags.length ? tags.join(", ") : undefined,
+        link: link.trim() || undefined,
       };
-      if (tags.length) {
-        body.tags = tags.join(", ");
-      }
-      if (link.trim()) {
-        body.link = link.trim();
-      }
-      await apiFetch("/", {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
+      await unwrap(api.POST("/api/v1/materials/", { body }));
     },
     onSuccess: () => {
       setTitle("");
@@ -195,7 +180,7 @@ export function AddMaterialPage() {
             <ComboboxRoot
                 value={materialType ?? ""}
                 onChange={(v) => {
-                  setMaterialType(v as MaterialType);
+                  setMaterialType(isMaterialType(v) ? v : null);
                 }}
                 options={MaterialTypes}
             >

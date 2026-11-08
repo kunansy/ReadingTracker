@@ -1,11 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "react-router-dom";
 
-import type { ApiError } from "../../api/client";
-import { apiFetch } from "../../api/materials";
+import { api, type ApiError, unwrap } from "../../api/client";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { ScrollArrows } from "../../components/ScrollArrows";
-import type { GetCompletedMaterialResponse } from "../../types";
 import { isUuid } from "../../utils/isUuid.ts";
 import { CompletedMaterialCard } from "./CompletedMaterialCard";
 
@@ -19,7 +17,11 @@ export function CompletedMaterialPage() {
     queryKey: ["materials", "completed", "item", materialId],
     enabled: isValidId,
     queryFn: () =>
-      apiFetch<GetCompletedMaterialResponse>(`/completed/${encodeURIComponent(materialId)}`),
+      unwrap(
+        api.GET("/api/v1/materials/completed/{material_id}", {
+          params: { path: { material_id: materialId } },
+        }),
+      ),
   });
 
   if (!isValidId) {

@@ -7,6 +7,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { ContextMenuProvider } from "../../contexts/ContextMenuContext";
 import { SearchNotesPage } from "./SearchNotesPage";
 
+vi.mock("../../api/client", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../api/client")>();
+  const { default: createClient } = await import("openapi-fetch");
+  return {
+    ...actual,
+    api: createClient<import("../../api/schema").paths>({
+      baseUrl: "http://localhost",
+      fetch: (request) => globalThis.fetch(request),
+    }),
+  };
+});
+
 const MATERIAL_ID = "m1";
 const ACTIVE_NOTE_ID = "note-active";
 const DELETED_NOTE_ID = "note-deleted";
@@ -47,25 +59,23 @@ const SEARCH_RESPONSE = {
 
 const META_RESPONSE = { titles: { [MATERIAL_ID]: "Material" }, tags: [] };
 
-function reply({ status, body }: Reply) {
-  const text = body === undefined ? "" : JSON.stringify(body);
-  return Promise.resolve({
-    ok: status >= 200 && status < 300,
-    status,
-    text: () => Promise.resolve(text),
-  });
+function reply({ status, body }: Reply): Promise<Response> {
+  const payload = body === undefined ? null : JSON.stringify(body);
+  return Promise.resolve(
+    new Response(payload, { status, headers: { "Content-Type": "application/json" } }),
+  );
 }
 
 function stubFetch(actions: ActionReplies = {}) {
-  const fetchMock = vi.fn((url: string, init?: RequestInit) => {
-    const path = url.replace(/^\/api\/v1\/notes/, "").split("?")[0];
+  const fetchMock = vi.fn((request: Request) => {
+    const path = new URL(request.url).pathname.replace(/^\/api\/v1\/notes/, "");
     if (path === "/meta") {
       return reply({ status: 200, body: META_RESPONSE });
     }
     if (path === "/search") {
       return reply({ status: 200, body: SEARCH_RESPONSE });
     }
-    return reply(actions[`${init?.method ?? "GET"} ${path}`] ?? { status: 204 });
+    return reply(actions[`${request.method} ${path}`] ?? { status: 204 });
   });
   vi.stubGlobal("fetch", fetchMock);
   return fetchMock;
@@ -96,8 +106,9 @@ async function pickMenuItem(noteId: string, label: string) {
 
 function actionCalls(fetchMock: ReturnType<typeof stubFetch>) {
   return fetchMock.mock.calls
-    .filter(([, init]) => init?.method !== undefined)
-    .map(([url, init]) => `${init?.method} ${url}`);
+    .map(([request]) => request)
+    .filter((request) => request.method !== "GET")
+    .map((request) => `${request.method} ${new URL(request.url).pathname}`);
 }
 
 class NoopResizeObserver {

@@ -2,17 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { apiFetch, buildQuery } from "../../api/system";
-import { apiFetch as readingLogsApiFetch } from "../../api/readingLog";
-import { apiFetch as materialsApiFetch } from "../../api/materials";
+import { api, unwrap } from "../../api/client";
+import type { GetImageResponse, SpanStatsResponse } from "../../api/schema";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox";
-import {
-    GetMaterialReadingNowResponse,
-    GraphicResponse,
-    ListMaterialsTitlesResponse,
-    SpanSummary,
-    SystemSummaryResponse
-} from "../../types.ts";
 
 function SvgImg({ b64, title }: { b64: string; title: string }) {
   return (
@@ -33,7 +25,7 @@ function SvgImg({ b64, title }: { b64: string; title: string }) {
   );
 }
 
-function SpanStatsBlock({ s }: { s: SpanSummary }) {
+function SpanStatsBlock({ s }: { s: SpanStatsResponse }) {
   return (
     <div className="statistics" role="group" aria-label="Span statistics">
       <p>Total: {s.total}</p>
@@ -54,17 +46,17 @@ function SpanStatsBlock({ s }: { s: SpanSummary }) {
 function GraphicBlock({
   title,
   queryKey,
-  path,
+  load,
   spanSummary,
 }: {
   title: string;
   queryKey: unknown[];
-  path: string;
-  spanSummary?: SpanSummary;
+  load: () => Promise<GetImageResponse>;
+  spanSummary?: SpanStatsResponse;
 }) {
   const q = useQuery({
     queryKey,
-    queryFn: () => apiFetch<GraphicResponse>(path),
+    queryFn: load,
     staleTime: 60_000,
   });
 
@@ -88,12 +80,12 @@ export function SystemGraphicsPage() {
 
   const materialReadingNowQ = useQuery({
     queryKey: ["system-graphics", "materials", "reading_now"],
-    queryFn: () => readingLogsApiFetch<GetMaterialReadingNowResponse>("/material-reading-now"),
+    queryFn: () => unwrap(api.GET("/api/v1/reading_logs/material-reading-now")),
   });
 
   const materialsTitlesQ = useQuery({
     queryKey: ["system-graphics", "materials", "read_titles"],
-    queryFn: () => materialsApiFetch<ListMaterialsTitlesResponse>("/read-titles"),
+    queryFn: () => unwrap(api.GET("/api/v1/materials/read-titles")),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -104,9 +96,7 @@ export function SystemGraphicsPage() {
   const summaryQ = useQuery({
     queryKey: ["system-graphics", "summary", { lastDays }],
     queryFn: () =>
-      apiFetch<SystemSummaryResponse>(
-        `/summary${buildQuery({ last_days: lastDays })}`,
-      ),
+      unwrap(api.GET("/api/v1/system/summary", { params: { query: { last_days: lastDays } } })),
     staleTime: 30_000,
   });
 
@@ -235,59 +225,100 @@ export function SystemGraphicsPage() {
             })()}
           </section>
 
-          <GraphicBlock
-            title="Reading progress"
-            queryKey={["system-graphics", "reading-progress", { effectiveMaterialId, lastDays }]}
-            path={`/graphics/reading-progress${buildQuery({
-              material_id: effectiveMaterialId,
-              last_days: lastDays,
-            })}`}
-          />
+          {effectiveMaterialId ? (
+            <GraphicBlock
+              title="Reading progress"
+              queryKey={["system-graphics", "reading-progress", { effectiveMaterialId, lastDays }]}
+              load={() =>
+                unwrap(
+                  api.GET("/api/v1/system/graphics/reading-progress", {
+                    params: { query: { material_id: effectiveMaterialId, last_days: lastDays } },
+                  }),
+                )
+              }
+            />
+          ) : null}
 
           <GraphicBlock
             title="Read pages"
             queryKey={["system-graphics", "reading-trend", { lastDays }]}
-            path={`/graphics/reading-trend${buildQuery({ last_days: lastDays })}`}
+            load={() =>
+              unwrap(
+                api.GET("/api/v1/system/graphics/reading-trend", {
+                  params: { query: { last_days: lastDays } },
+                }),
+              )
+            }
             spanSummary={summaryQ.data.reading_trend}
           />
 
           <GraphicBlock
             title="Total read"
             queryKey={["system-graphics", "total-read", { lastDays }]}
-            path={`/graphics/total-read${buildQuery({ last_days: lastDays })}`}
+            load={() =>
+              unwrap(
+                api.GET("/api/v1/system/graphics/total-read", {
+                  params: { query: { last_days: lastDays } },
+                }),
+              )
+            }
           />
 
           <GraphicBlock
             title="Outline percentage"
             queryKey={["system-graphics", "outline-percentage"]}
-            path="/graphics/outline-percentage"
+            load={() => unwrap(api.GET("/api/v1/system/graphics/outline-percentage"))}
           />
 
           <GraphicBlock
             title="Inserted notes"
             queryKey={["system-graphics", "notes-trend", { lastDays }]}
-            path={`/graphics/notes-trend${buildQuery({ last_days: lastDays })}`}
+            load={() =>
+              unwrap(
+                api.GET("/api/v1/system/graphics/notes-trend", {
+                  params: { query: { last_days: lastDays } },
+                }),
+              )
+            }
             spanSummary={summaryQ.data.notes_trend}
           />
 
           <GraphicBlock
             title="Completed materials"
             queryKey={["system-graphics", "completed-materials-trend", { lastDays }]}
-            path={`/graphics/completed-materials-trend${buildQuery({ last_days: lastDays })}`}
+            load={() =>
+              unwrap(
+                api.GET("/api/v1/system/graphics/completed-materials-trend", {
+                  params: { query: { last_days: lastDays } },
+                }),
+              )
+            }
             spanSummary={summaryQ.data.completed_materials_trend}
           />
 
           <GraphicBlock
             title="Repeated materials"
             queryKey={["system-graphics", "repeated-materials-trend", { lastDays }]}
-            path={`/graphics/repeated-materials-trend${buildQuery({ last_days: lastDays })}`}
+            load={() =>
+              unwrap(
+                api.GET("/api/v1/system/graphics/repeated-materials-trend", {
+                  params: { query: { last_days: lastDays } },
+                }),
+              )
+            }
             spanSummary={summaryQ.data.repeated_materials_trend}
           />
 
           <GraphicBlock
             title="Outlined materials"
             queryKey={["system-graphics", "outlined-materials-trend", { lastDays }]}
-            path={`/graphics/outlined-materials-trend${buildQuery({ last_days: lastDays })}`}
+            load={() =>
+              unwrap(
+                api.GET("/api/v1/system/graphics/outlined-materials-trend", {
+                  params: { query: { last_days: lastDays } },
+                }),
+              )
+            }
             spanSummary={summaryQ.data.outlined_materials_trend}
           />
         </>

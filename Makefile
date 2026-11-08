@@ -46,8 +46,12 @@ cov-show:
 init:
 	PYTHONPATH=. python3 tracker/main.py
 
+gen-api:
+	python -m tracker.openapi_dump frontend/openapi.json
+	npm --prefix frontend run gen:api
+
 run:
 	PYTHONPATH=. gunicorn tracker.main:app --bind 127.0.0.1:9999 --worker-class asgi --asgi-loop uvloop --reload
 
 .PHONY: all
-all: lint test lint-format lint-mypy lint-ruff fmt patch cov cov-show init run
+all: lint test lint-format lint-mypy lint-ruff fmt patch cov cov-show init run gen-api

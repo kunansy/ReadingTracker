@@ -2,9 +2,7 @@ import { useMemo } from "react";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useSearchParams } from "react-router-dom";
 
-import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/readingLog.ts";
-import { apiFetch as materialsApiFetch } from "../../api/materials.ts";
-import {ListMaterialsTitlesResponse, ListReadingLogsResponse} from "../../types.ts";
+import { api, PAGE_SIZE, unwrap } from "../../api/client";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
@@ -19,21 +17,26 @@ export function ListReadingLogsPage() {
 
     const materialsTitlesQ = useQuery({
         queryKey: ["materials", "read_titles"],
-        queryFn: () => materialsApiFetch<ListMaterialsTitlesResponse>("/read-titles"),
+        queryFn: () => unwrap(api.GET("/api/v1/materials/read-titles")),
         staleTime: 5 * 60 * 1000,
     });
 
     const logsQ = useQuery({
         queryKey: ["logs", { materialId, nextToken, order: pagination.order }],
         placeholderData: keepPreviousData,
-        queryFn: () => {
-            return apiFetch<ListReadingLogsResponse>(`/${buildQuery({
-                material_id: materialId || undefined,
-                next_token: nextToken,
-                page_size: PAGE_SIZE,
-                order: pagination.order,
-            })}`);
-        },
+        queryFn: () =>
+            unwrap(
+                api.GET("/api/v1/reading_logs/", {
+                    params: {
+                        query: {
+                            material_id: materialId || undefined,
+                            next_token: nextToken,
+                            page_size: PAGE_SIZE,
+                            order: pagination.order,
+                        },
+                    },
+                }),
+            ),
     });
 
     const materialsTitles = materialsTitlesQ.data?.items ?? {};

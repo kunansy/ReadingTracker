@@ -2,13 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { FormEvent } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { apiFetch, buildQuery } from "../../api/notes";
-
-type GraphResponse = {
-  iframe_srcdoc: string;
-  titles: Record<string, string>;
-  material_id: string | null;
-};
+import { api, unwrap } from "../../api/client";
 
 export function GraphPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -17,8 +11,10 @@ export function GraphPage() {
   const q = useQuery({
     queryKey: ["notes", "graph", materialId],
     queryFn: () =>
-      apiFetch<GraphResponse>(
-        `/graph${buildQuery({ material_id: materialId || undefined })}`,
+      unwrap(
+        api.GET("/api/v1/notes/graph", {
+          params: { query: { material_id: materialId || undefined } },
+        }),
       ),
   });
 

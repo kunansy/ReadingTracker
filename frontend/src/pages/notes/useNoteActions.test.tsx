@@ -4,12 +4,18 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { apiFetch } from "../../api/notes";
+import { unwrap } from "../../api/client";
 import { useNoteActions } from "./useNoteActions";
 
-vi.mock("../../api/notes", () => ({ apiFetch: vi.fn() }));
+vi.mock("../../api/client", () => ({
+  api: {
+    DELETE: (path: string, init: unknown) => ({ method: "DELETE", path, init }),
+    POST: (path: string, init: unknown) => ({ method: "POST", path, init }),
+  },
+  unwrap: vi.fn(),
+}));
 
-const apiFetchMock = vi.mocked(apiFetch);
+const unwrapMock = vi.mocked(unwrap);
 
 function setup() {
   const qc = new QueryClient({ defaultOptions: { mutations: { retry: false } } });
@@ -22,7 +28,7 @@ function setup() {
 }
 
 beforeEach(() => {
-  apiFetchMock.mockReset();
+  unwrapMock.mockReset();
 });
 
 afterEach(() => {
@@ -31,11 +37,11 @@ afterEach(() => {
 
 describe("useNoteActions", () => {
   it.each([
-    ["deleteNote", "/n1", "DELETE"],
-    ["restoreNote", "/n1/restore", "POST"],
-    ["repeatNote", "/n1/repeat-queue", "POST"],
+    ["deleteNote", "/api/v1/notes/{note_id}", "DELETE"],
+    ["restoreNote", "/api/v1/notes/{note_id}/restore", "POST"],
+    ["repeatNote", "/api/v1/notes/{note_id}/repeat-queue", "POST"],
   ] as const)("%s calls the API and keeps error empty", async (action, path, method) => {
-    apiFetchMock.mockResolvedValue(undefined);
+    unwrapMock.mockResolvedValue(undefined);
     const { result } = setup();
 
     act(() => {
@@ -43,7 +49,11 @@ describe("useNoteActions", () => {
     });
 
     await waitFor(() => {
-      expect(apiFetchMock).toHaveBeenCalledWith(path, { method });
+      expect(unwrapMock).toHaveBeenCalledWith({
+        method,
+        path,
+        init: { params: { path: { note_id: "n1" } } },
+      });
     });
     expect(result.current.error).toBeNull();
   });
@@ -51,7 +61,7 @@ describe("useNoteActions", () => {
   it.each(["deleteNote", "restoreNote", "repeatNote"] as const)(
     "%s exposes the API error message",
     async (action) => {
-      apiFetchMock.mockRejectedValue(new Error("NotFoundError: gone"));
+      unwrapMock.mockRejectedValue(new Error("NotFoundError: gone"));
       const { result } = setup();
 
       act(() => {
@@ -67,7 +77,7 @@ describe("useNoteActions", () => {
   it.each(["deleteNote", "restoreNote"] as const)(
     "%s refreshes the notes list even when it fails",
     async (action) => {
-      apiFetchMock.mockRejectedValue(new Error("boom"));
+      unwrapMock.mockRejectedValue(new Error("boom"));
       const { result, invalidate } = setup();
 
       act(() => {
@@ -81,7 +91,7 @@ describe("useNoteActions", () => {
   );
 
   it("clears the error when a later action succeeds", async () => {
-    apiFetchMock.mockRejectedValueOnce(new Error("boom")).mockResolvedValueOnce(undefined);
+    unwrapMock.mockRejectedValueOnce(new Error("boom")).mockResolvedValueOnce(undefined);
     const { result } = setup();
 
     act(() => {
@@ -100,7 +110,7 @@ describe("useNoteActions", () => {
   });
 
   it("keeps the error visible while a later action is still running", async () => {
-    apiFetchMock
+    unwrapMock
       .mockRejectedValueOnce(new Error("boom"))
       .mockReturnValueOnce(new Promise(() => {}));
     const { result } = setup();
@@ -116,14 +126,14 @@ describe("useNoteActions", () => {
       result.current.restoreNote("n1");
     });
     await waitFor(() => {
-      expect(apiFetchMock).toHaveBeenCalledTimes(2);
+      expect(unwrapMock).toHaveBeenCalledTimes(2);
     });
     expect(result.current.error).toBe("boom");
   });
 
   it("keeps the error of an earlier action that fails after a later success", async () => {
     let rejectDelete: (err: Error) => void = () => {};
-    apiFetchMock
+    unwrapMock
       .mockReturnValueOnce(
         new Promise((_, reject) => {
           rejectDelete = reject;
@@ -139,7 +149,7 @@ describe("useNoteActions", () => {
       result.current.restoreNote("n2");
     });
     await waitFor(() => {
-      expect(apiFetchMock).toHaveBeenCalledTimes(2);
+      expect(unwrapMock).toHaveBeenCalledTimes(2);
     });
 
     act(() => {
@@ -151,7 +161,7 @@ describe("useNoteActions", () => {
   });
 
   it("dismissError clears the error", async () => {
-    apiFetchMock.mockRejectedValueOnce(new Error("boom"));
+    unwrapMock.mockRejectedValueOnce(new Error("boom"));
     const { result } = setup();
 
     act(() => {
@@ -168,14 +178,14 @@ describe("useNoteActions", () => {
   });
 
   it("repeatNote does not refresh the notes list", async () => {
-    apiFetchMock.mockResolvedValue(undefined);
+    unwrapMock.mockResolvedValue(undefined);
     const { result, invalidate } = setup();
 
     act(() => {
       result.current.repeatNote("n1");
     });
     await waitFor(() => {
-      expect(apiFetchMock).toHaveBeenCalledTimes(1);
+      expect(unwrapMock).toHaveBeenCalledTimes(1);
     });
 
     expect(invalidate).not.toHaveBeenCalled();

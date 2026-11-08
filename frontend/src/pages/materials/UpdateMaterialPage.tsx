@@ -2,9 +2,10 @@ import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
 import {useEffect, useRef, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 
-import {apiFetch} from "../../api/materials";
+import { api, unwrap } from "../../api/client";
+import type { GetMaterialResponse, UpdateMaterialRequest } from "../../api/schema";
 import {useAltchHotkeys} from "../../hooks/useAltchHotkeys";
-import {GetMaterialResponse, isMaterialType, MaterialTagsResponse, MaterialType, MaterialTypes} from "../../types";
+import { isMaterialType, type MaterialType, MaterialTypes } from "../../types";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox";
 
 export function UpdateMaterialPage() {
@@ -16,7 +17,7 @@ export function UpdateMaterialPage() {
   useAltchHotkeys(titleRef, title, setTitle);
   const [authors, setAuthors] = useState("");
   const [pages, setPages] = useState("");
-  const [materialType, setMaterialType] = useState<MaterialType>(MaterialType.book);
+  const [materialType, setMaterialType] = useState<MaterialType>("book");
   const [tags, setTags] = useState<string[]>([]);
   const [link, setLink] = useState("");
   const [message, setMessage] = useState<string | null>(null);
@@ -31,11 +32,16 @@ export function UpdateMaterialPage() {
   const q = useQuery({
     queryKey: ["material", materialId],
     enabled: Boolean(materialId),
-    queryFn: () => apiFetch<GetMaterialResponse>(`/${materialId}`),
+    queryFn: () =>
+      unwrap(
+        api.GET("/api/v1/materials/{material_id}", {
+          params: { path: { material_id: materialId ?? "" } },
+        }),
+      ),
   });
   const materialTagsQ = useQuery({
     queryKey: ["materials", "tags"],
-    queryFn: () => apiFetch<MaterialTagsResponse>(`/tags`),
+    queryFn: () => unwrap(api.GET("/api/v1/materials/tags")),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -57,7 +63,7 @@ export function UpdateMaterialPage() {
       if (!materialId) {
         throw new Error("Missing material_id");
       }
-      const body: Record<string, unknown> = {
+      const body: UpdateMaterialRequest = {
         material_id: materialId,
         title,
         authors,
@@ -66,16 +72,18 @@ export function UpdateMaterialPage() {
         tags: tags.join(", "),
         link: link.trim() || null,
       };
-      await apiFetch(`/${materialId}`, {
-        method: "PATCH",
-        body: JSON.stringify(body),
-      });
+      await unwrap(
+        api.PATCH("/api/v1/materials/{material_id}", {
+          params: { path: { material_id: materialId } },
+          body,
+        }),
+      );
     },
     onSuccess: () => {
       setMessage("Material updated successfully.");
       setError(null);
 
-      qc.setQueryData(["material", materialId], (old: any) => {
+      qc.setQueryData<GetMaterialResponse>(["material", materialId], (old) => {
         if (!old) return old;
 
         return {

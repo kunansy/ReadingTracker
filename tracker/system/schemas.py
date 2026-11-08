@@ -1,5 +1,4 @@
 import datetime
-from decimal import Decimal
 from uuid import UUID
 
 from pydantic import Field, NonNegativeFloat, NonNegativeInt, PositiveInt, field_validator
@@ -99,7 +98,7 @@ class _SpanStatsResponse(CustomBaseModel):
     total: NonNegativeInt
     would_be_total: NonNegativeInt
     zero_days: NonNegativeInt
-    mean: Decimal
+    mean: float
     median: NonNegativeFloat
     max_record: _MinMaxRecord
     min_record: _MinMaxRecord

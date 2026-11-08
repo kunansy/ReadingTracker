@@ -1,5 +1,4 @@
 import asyncio
-from collections import defaultdict
 from typing import Annotated, Any
 from uuid import UUID
 
@@ -8,7 +7,6 @@ from fastapi.responses import HTMLResponse
 
 from tracker.common import database, kafka, manticoresearch
 from tracker.common.pagination import PageParams
-from tracker.models import enums
 from tracker.notes import db, schemas
 from tracker.notes.listing import build_notes_search_result
 
@@ -33,22 +31,8 @@ def _note_list_item(note: db.Note) -> dict[str, Any]:
     }
 
 
-def _serialize_chapters(chapters: defaultdict[UUID, list[str]]) -> dict[str, list[str]]:
-    return {str(k): v for k, v in chapters.items()}
-
-
-def _serialize_material_types(
-    types_: dict[str, enums.MaterialTypesEnum],
-) -> dict[str, str]:
-    return dict(types_.items())
-
-
-def _serialize_material_notes(counts: dict[UUID, int]) -> dict[str, int]:
-    return {str(k): v for k, v in counts.items()}
-
-
 # TODO: split the request
-@router.get("/search")
+@router.get("/search", response_model=schemas.SearchNotesResponse)
 async def notes_search_json(
     search: Annotated[schemas.SearchParams, Depends()],
     params: Annotated[PageParams, Depends()],
@@ -65,9 +49,9 @@ async def notes_search_json(
         "notes": [_note_list_item(n) for n in notes],
         "total_count": ctx["total_count"],
         "titles": titles,
-        "material_types": _serialize_material_types(material_types),
-        "material_notes": _serialize_material_notes(material_notes),
-        "chapters": _serialize_chapters(chapters),
+        "material_types": material_types,
+        "material_notes": material_notes,
+        "chapters": chapters,
         "query": ctx["query"],
         "tags": ctx["tags"],
         "tags_query": ctx["tags_query"],
@@ -77,7 +61,7 @@ async def notes_search_json(
     }
 
 
-@router.get("/graph")
+@router.get("/graph", response_model=schemas.GetNotesGraphResponse)
 async def notes_graph_json(material_id: UUID | None = None):
     async with asyncio.TaskGroup() as tg:
         get_notes_task = tg.create_task(db.get_notes())

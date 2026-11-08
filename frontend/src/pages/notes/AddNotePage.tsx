@@ -2,11 +2,11 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import {useState, useCallback, useMemo, useEffect} from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { apiFetch, buildQuery } from "../../api/notes";
-import { apiFetch as materialsApiFetch } from "../../api/materials";
+import { api, unwrap } from "../../api/client";
+import type { AddNoteRequest as AddNoteBody } from "../../api/schema";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox.tsx";
-import {ListMaterialsTitlesResponse, AddNoteRequest, MaterialType, GetMaterialResponse} from "../../types.ts";
+import type { AddNoteRequest } from "../../types.ts";
 import {isUuid} from "../../utils/isUuid.ts";
 import {SpellTextarea} from "../../components/SpellTextrea.tsx";
 import { loadWithTtl, saveWithTtl } from "../../lib/ttlStorage.ts";
@@ -34,29 +34,38 @@ export function AddNotePage() {
 
   const titlesQ = useQuery({
     queryKey: ["materials", "titles"],
-    queryFn: () => materialsApiFetch<ListMaterialsTitlesResponse>(`/titles`),
+    queryFn: () => unwrap(api.GET("/api/v1/materials/titles")),
   });
 
   const tagListQ = useQuery({
     queryKey: ["tags", formData.materialId],
-    queryFn: () => apiFetch<{ tags: string[] }>(`/tags${buildQuery({ material_id: formData.materialId || undefined })}`),
+    queryFn: () =>
+      unwrap(
+        api.GET("/api/v1/notes/tags", {
+          params: { query: { material_id: formData.materialId || undefined } },
+        }),
+      ),
   });
   const materialId = initialMaterial || formData.materialId;
   const materialQ = useQuery({
     queryKey: ["materials", materialId],
     enabled: !!materialId,
     queryFn: () =>
-        materialsApiFetch<GetMaterialResponse>(`/${materialId}`),
+      unwrap(
+        api.GET("/api/v1/materials/{material_id}", {
+          params: { path: { material_id: materialId } },
+        }),
+      ),
   });
 
   useEffect(() => {
-    const materialType = materialQ.data?.material.material_type || MaterialType.book;
+    const materialType = materialQ.data?.material.material_type || "book";
     setPageName("Page");
     setChapterName("Chapter");
-    if (materialType === MaterialType.lecture || materialType === MaterialType.audiobook) {
+    if (materialType === "lecture" || materialType === "audiobook") {
       setPageName("Minute");
     }
-    if (materialType === MaterialType.course) {
+    if (materialType === "course") {
       setPageName("Lecture");
       setChapterName("Block");
     }
@@ -72,30 +81,24 @@ export function AddNotePage() {
       if (!isUuid(request.materialId)) {
         throw new Error("Choose a valid material (UUID)");
       }
-      const body: Record<string, unknown> = {
+      const linkId = request.linkId.trim();
+      const body: AddNoteBody = {
         material_id: request.materialId,
         content: request.content,
         chapter: request.chapter || "",
         page: request.page,
         tags: request.tags,
+        title: request.title.trim() || undefined,
+        link_id: isUuid(linkId) ? linkId : undefined,
       };
-      if (request.title.trim()) {
-        body.title = request.title.trim();
-      }
-      if (request.linkId.trim() && isUuid(request.linkId.trim())) {
-        body.link_id = request.linkId.trim();
-      }
-      return apiFetch<{ note_id: string }>("/add", {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
+      return unwrap(api.POST("/api/v1/notes/add", { body }));
     },
     onMutate: async () => {
       await new Promise(resolve => setTimeout(resolve, 0));
       setSuccessId("optimistic");
     },
     onSuccess: (data, request) => {
-      setSuccessId(data?.note_id ?? null);
+      setSuccessId(data.note_id);
       const { materialId, chapter, page } = request;
       saveWithTtl<NoteDraft>(NOTE_DRAFT_KEY, { materialId, chapter, page }, NOTE_DRAFT_TTL_MS);
       // Fields edited while the request was in flight were not submitted, so they are kept.

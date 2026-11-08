@@ -7,7 +7,7 @@ import {
 } from "react";
 import { useSearchParams } from "react-router-dom";
 
-import { apiFetch, buildQuery, PAGE_SIZE } from "../../api/materials";
+import { api, PAGE_SIZE, unwrap } from "../../api/client";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { PageNav } from "../../components/PageNav";
 import { PageLoadError } from "../../components/PageLoadError";
@@ -15,15 +15,14 @@ import { useDebounce } from "../../lib/debounce.ts";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 import { CompletedMaterialCard } from "./CompletedMaterialCard";
-import {
-    ListCompletedMaterialsResponse,
-    MaterialTagsResponse,
-    MaterialTypes,
-} from "../../types";
+import { isMaterialType, MaterialTypes } from "../../types";
 import {
   ComboboxInput, ComboboxList, ComboboxRoot,
 } from "../../components/Combobox";
 
+function isOutlinedFilter(value: string): value is "outlined" | "not_outlined" {
+  return value === "outlined" || value === "not_outlined";
+}
 
 export function ListCompletedMaterialsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -49,26 +48,35 @@ export function ListCompletedMaterialsPage() {
   const debouncedForm = useDebounce(formState, 300);
 
   const filters = useMemo(() => ({
-      material_type: debouncedForm.material_type || undefined,
+      material_type: isMaterialType(debouncedForm.material_type) ? debouncedForm.material_type : undefined,
       tags_query: debouncedForm.tags_query.length ? debouncedForm.tags_query.join(" ") : undefined,
-      outlined: debouncedForm.outlined === "all" ? undefined : debouncedForm.outlined,
+      outlined: isOutlinedFilter(debouncedForm.outlined) ? debouncedForm.outlined : undefined,
   }), [debouncedForm]);
-  const filtersQuery = buildQuery(filters);
+  const filtersKey = JSON.stringify(filters);
 
-  const pagination = useCursorPagination(PAGE_SIZE, filtersQuery, "desc");
+  const pagination = useCursorPagination(PAGE_SIZE, filtersKey, "desc");
   const nextToken = pagination.cursor;
 
   const q = useQuery({
-    queryKey: ["materials", "completed", "list", filtersQuery, nextToken, pagination.order],
+    queryKey: ["materials", "completed", "list", filtersKey, nextToken, pagination.order],
     placeholderData: keepPreviousData,
     queryFn: () =>
-      apiFetch<ListCompletedMaterialsResponse>(
-        `/completed${buildQuery({ ...filters, next_token: nextToken, page_size: PAGE_SIZE, order: pagination.order })}`,
+      unwrap(
+        api.GET("/api/v1/materials/completed", {
+          params: {
+            query: {
+              ...filters,
+              next_token: nextToken,
+              page_size: PAGE_SIZE,
+              order: pagination.order,
+            },
+          },
+        }),
       ),
   });
   const materialTagsQ = useQuery({
     queryKey: ["materials", "tags"],
-    queryFn: () => apiFetch<MaterialTagsResponse>(`/tags`),
+    queryFn: () => unwrap(api.GET("/api/v1/materials/tags")),
     staleTime: 5 * 60 * 1000,
   });
 

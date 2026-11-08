@@ -2,14 +2,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {useEffect, useMemo, useState} from "react";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 
-import { apiFetch } from "../../api/readingLog";
-import { apiFetch as materialsApiFetch } from "../../api/materials.ts";
+import { api, unwrap } from "../../api/client";
 import { CelebrateButton } from "../../components/CelebrateButton";
-import {
-  GetMaterialCompletionInfoResponse,
-  GetMaterialReadingNowResponse,
-  ListMaterialsTitlesResponse,
-} from "../../types.ts";
 import {isUuid} from "../../utils/isUuid.ts";
 import {dateInputValue} from "../../utils/dateInputValue.ts";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
@@ -56,18 +50,23 @@ export function AddReadingLogPage() {
   const materialReadingNowQ = useQuery({
     queryKey: ["materials", "reading_now"],
     queryFn: () =>
-        apiFetch<GetMaterialReadingNowResponse>("/material-reading-now"),
+        unwrap(api.GET("/api/v1/reading_logs/material-reading-now")),
   });
 
   const completionQ = useQuery({
     queryKey: ["materials", materialId, "completion-info"],
-    queryFn: () => materialsApiFetch<GetMaterialCompletionInfoResponse>(`/${materialId}/completion-info`),
+    queryFn: () =>
+      unwrap(
+        api.GET("/api/v1/materials/{material_id}/completion-info", {
+          params: { path: { material_id: materialId ?? "" } },
+        }),
+      ),
     enabled: !!materialId && isUuid(materialId),
   });
 
   const readingMaterialsTitlesQ = useQuery({
     queryKey: ["materials", "reading_titles"],
-    queryFn: () => materialsApiFetch<ListMaterialsTitlesResponse>("/reading-titles"),
+    queryFn: () => unwrap(api.GET("/api/v1/materials/reading-titles")),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -86,18 +85,14 @@ export function AddReadingLogPage() {
 
   const addMut = useMutation({
     mutationFn: async () => {
-      if (materialId && !isUuid(materialId)) {
+      if (!materialId || !isUuid(materialId)) {
         throw new Error("Choose a valid material (UUID)");
       }
-      const body: Record<string, unknown> = {
-        material_id: materialId,
-        date,
-        count: Number(count),
-      };
-      return apiFetch<{log_id: string }>("/", {
-        method: "POST",
-        body: JSON.stringify(body),
-      });
+      return unwrap(
+        api.POST("/api/v1/reading_logs/", {
+          body: { material_id: materialId, date, count: Number(count) },
+        }),
+      );
     },
     onSuccess: (_) => {
       setError(null);
