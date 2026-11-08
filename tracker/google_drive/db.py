@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Final, NamedTuple
 
 import sqlalchemy.sql as sa
-from sqlalchemy import Date, DateTime
+from sqlalchemy import Date, DateTime, Table
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from tracker.common import database, settings
@@ -41,15 +41,20 @@ class DBSnapshot(NamedTuple):
     def from_dump(cls, dump_data: DUMP_TYPE) -> DBSnapshot:
         tables = []
         for table_name, values in _fold_legacy_statuses(dump_data).items():
-            date_columns = _date_columns(table_name)
-            known_columns = _known_columns(table_name)
+            if (table := TABLES.get(table_name)) is None:
+                rows = [dict(row) for row in values]
+                tables.append(TableSnapshot(table_name=table_name, rows=rows))
+                continue
+
+            date_columns = _date_columns(table)
+            known_columns = frozenset(table.columns.keys())
             rows = [
                 {
                     key: _parse_date(value, date_columns[key])
                     if key in date_columns
                     else value
                     for key, value in row.items()
-                    if known_columns is None or key in known_columns
+                    if key in known_columns
                 }
                 for row in values
             ]
@@ -105,18 +110,8 @@ def _fold_status(
     }
 
 
-def _known_columns(table_name: str) -> frozenset[str] | None:
-    """Column names of a known table; None for a table the schema does not have."""
-    if (table := TABLES.get(table_name)) is None:
-        return None
-    return frozenset(table.columns.keys())
-
-
-def _date_columns(table_name: str) -> dict[str, type[datetime.date]]:
-    """Columns of a known table that the dump stores as date or datetime strings."""
-    table = TABLES.get(table_name)
-    if table is None:
-        return {}
+def _date_columns(table: Table) -> dict[str, type[datetime.date]]:
+    """Columns that the dump stores as date or datetime strings."""
     return {
         column.name: column.type.python_type
         for column in table.columns
