@@ -147,3 +147,34 @@ async def test_legacy_note_writes_are_gone(client, method, path):
     response = await client.request(method, path)
 
     assert response.status_code in {404, 405}
+
+
+_EXISTING_NOTE_ID = uuid.UUID("40824c08-3e86-4fff-8ced-ee90ffee1e6c")
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/api/v1/notes/{note_id}",
+        "/api/v1/notes/links?note_id={note_id}",
+        "/api/v1/notes/possible-links?note_id={note_id}",
+    ],
+)
+async def test_note_reads_of_missing_note_are_404(client, path):
+    response = await client.get(path.format(note_id=uuid.uuid4()))
+
+    assert response.status_code == 404
+    assert response.json()["detail"].startswith("NotFoundError")
+
+
+async def test_deleted_note_is_404_until_restored(client, shared_session):
+    path = f"/api/v1/notes/{_EXISTING_NOTE_ID}"
+    assert (await client.get(path)).status_code == 200
+
+    assert (await client.delete(path)).status_code == 204
+    response = await client.get(path)
+    assert response.status_code == 404
+    assert response.json()["detail"].startswith("NotFoundError")
+
+    assert (await client.post(f"{path}/restore")).status_code == 204
+    assert (await client.get(path)).status_code == 200

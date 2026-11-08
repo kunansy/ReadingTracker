@@ -52,11 +52,35 @@ async def test_repeat_note_raises_when_broker_is_unreachable(producer):
         await kafka.repeat_note("note-id")
 
     producer.send_and_wait.assert_not_awaited()
+    producer.stop.assert_awaited_once()
 
 
-async def test_stop_failure_does_not_mask_send_error(producer):
-    producer.send_and_wait.side_effect = errors.KafkaError("boom")
-    producer.stop.side_effect = errors.KafkaError("stop failed")
+async def test_repeat_note_raises_when_connect_times_out(producer):
+    producer.start.side_effect = TimeoutError()
 
     with pytest.raises(kafka.KafkaSendError):
         await kafka.repeat_note("note-id")
+
+    producer.send_and_wait.assert_not_awaited()
+    producer.stop.assert_awaited_once()
+
+
+async def test_stop_failure_after_connect_failure_is_suppressed(producer):
+    producer.start.side_effect = errors.KafkaConnectionError("down")
+    producer.stop.side_effect = errors.KafkaError("stop failed")
+
+    with pytest.raises(kafka.KafkaSendError, match="Could not connect"):
+        await kafka.repeat_note("note-id")
+
+
+async def test_stop_failure_does_not_mask_send_error(producer, caplog):
+    producer.send_and_wait.side_effect = errors.KafkaError("boom")
+    producer.stop.side_effect = errors.KafkaError("stop failed")
+
+    with pytest.raises(kafka.KafkaSendError, match="Could not send"):
+        await kafka.repeat_note("note-id")
+
+    assert any(
+        r.name == settings.LOGGER_NAME and r.getMessage() == "Could not stop kafka producer"
+        for r in caplog.records
+    )

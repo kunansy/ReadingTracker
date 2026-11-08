@@ -1,4 +1,3 @@
-import logging
 import uuid
 
 import pytest
@@ -47,18 +46,55 @@ async def test_to_notify_skips_deleted_note(repeat_note):
     repeat_note.assert_not_awaited()
 
 
-async def test_to_notify_drops_notification_when_kafka_fails(repeat_note, caplog):
-    note_id = uuid.uuid4()
+async def test_to_notify_propagates_kafka_failure(repeat_note):
     repeat_note.side_effect = kafka.KafkaSendError("broker down")
-    record = debezium_parser.Record(after=_note_payload(note_id=note_id))
+    record = debezium_parser.Record(after=_note_payload(note_id=uuid.uuid4()))
 
-    await debezium_parser._to_notify(record)
+    with pytest.raises(kafka.KafkaSendError):
+        await debezium_parser._to_notify(record)
 
-    errors = [
-        r
-        for r in caplog.records
-        if r.name == settings.LOGGER_NAME and r.levelno >= logging.ERROR
+
+@pytest.fixture
+def two_records(mocker) -> dict:
+    records = [
+        debezium_parser.Record(after=_note_payload(note_id=uuid.uuid4())) for _ in range(2)
     ]
-    assert len(errors) == 1
-    assert str(note_id) in errors[0].getMessage()
-    assert errors[0].exc_info is None
+    state = {"records": records, "closed": False}
+
+    async def _iter_updates():
+        try:
+            for record in records:
+                yield record
+        finally:
+            state["closed"] = True
+
+    mocker.patch.object(debezium_parser, "iter_updates", _iter_updates)
+    mocker.patch.object(settings, "EX_ENABLE_KAFKA_TO_NOTIFY", True)
+    return state
+
+
+async def test_parse_processes_every_record(two_records, repeat_note, mocker):
+    to_search_engine = mocker.patch.object(
+        debezium_parser, "_to_search_engine", mocker.AsyncMock()
+    )
+
+    await debezium_parser.parse()
+
+    records = two_records["records"]
+    assert to_search_engine.await_args_list == [mocker.call(r) for r in records]
+    assert repeat_note.await_args_list == [mocker.call(r.note_id) for r in records]
+
+
+async def test_parse_stops_on_notify_failure_and_closes_the_stream(
+    two_records, repeat_note, mocker
+):
+    to_search_engine = mocker.patch.object(
+        debezium_parser, "_to_search_engine", mocker.AsyncMock()
+    )
+    repeat_note.side_effect = kafka.KafkaSendError("broker down")
+
+    with pytest.raises(kafka.KafkaSendError):
+        await debezium_parser.parse()
+
+    to_search_engine.assert_awaited_once_with(two_records["records"][0])
+    assert two_records["closed"]

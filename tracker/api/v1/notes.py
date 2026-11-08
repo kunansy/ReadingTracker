@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from fastapi.responses import HTMLResponse
 
 from tracker.common import database, kafka, manticoresearch
@@ -180,8 +180,7 @@ async def get_note_tags(material_id: UUID | None = None):
 
 @router.get("/possible-links", response_model=schemas.ListPossibleNoteLinksResponse)
 async def list_possible_note_links(note_id: UUID):
-    if not (note := await db.get_note(note_id=note_id)):
-        raise HTTPException(status_code=404, detail="Note not found")
+    note = await db.get_note(note_id=note_id)
 
     possible_links = await db.get_possible_links(note_id=note_id, note_tags=note.tags)
 
