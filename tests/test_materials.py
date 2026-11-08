@@ -15,6 +15,7 @@ from tracker.materials import db
 from tracker.models import enums
 from tracker.models import models
 from tracker.reading_log import statistics
+from tests.material_factory import complete_material, insert_material, start_material
 
 
 async def get_materials() -> list[db.Material]:
@@ -338,21 +339,11 @@ async def test_update_material_not_found():
         )
 
 
-async def test_start_material():
+async def teststart_material():
     pass
 
 
-async def test_start_material_invalid_date():
-    material_id = uuid.UUID("44582686-ff27-4e4b-8d32-8bfdccc085b7")
-    date = (database.utcnow() + datetime.timedelta(days=1)).date()
-
-    with pytest.raises(ValueError) as e:
-        await db.start_material(material_id=material_id, started_at=date)
-
-    assert str(e.value) == "Start date must be less than today"
-
-
-async def test_complete_material():
+async def testcomplete_material():
     pass
 
 
@@ -494,8 +485,25 @@ async def test_get_repeats_analytics_only_repeated():
                 database.utcnow().date() - valid_repeat.last_repeated_at.date()).days
 
 
-async def test_get_repeats_analytics_only_not_repeated():
-    pass
+async def test_get_repeats_analytics_only_not_repeated(shared_session):
+    queued_id = await insert_material()
+    reading_id, _ = await start_material(days_ago=5)
+    completed_id, completed_at = await complete_material(
+        started_days_ago=20,
+        completed_days_ago=10,
+    )
+
+    analytics = await db.get_repeats_analytics()
+
+    assert queued_id not in analytics
+    assert analytics[reading_id].repeats_count == 0
+    assert analytics[reading_id].last_repeated_at is None
+    assert analytics[reading_id].priority_days == 0
+
+    completed = analytics[completed_id]
+    assert completed.repeats_count == 0
+    assert completed.last_repeated_at is None
+    assert completed.priority_days == (database.utcnow().date() - completed_at).days
 
 
 @pytest.mark.parametrize(
@@ -530,59 +538,152 @@ async def test_api_rejects_invalid_next_token():
     assert response.status_code == 422
 
 
-async def _insert_material() -> uuid.UUID:
-    return await db.insert_material(
-        title=f"CAS material {uuid.uuid4()}",
-        authors="Author",
-        pages=10,
-        material_type=enums.MaterialTypesEnum.book,
-        tags=None,
-        link=None,
+@pytest.mark.parametrize("state", ["started", "completed"])
+async def test_start_not_queued_material_raises_conflict(shared_session, state):
+    if state == "started":
+        material_id, _ = await start_material()
+    else:
+        material_id, _ = await complete_material()
+    before = await db.get_material_api(material_id=material_id)
+
+    with pytest.raises(database.ConflictException, match="is not in the queue"):
+        await db.start_material(material_id=material_id)
+
+    assert await db.get_material_api(material_id=material_id) == before
+
+
+@pytest.mark.parametrize("state", ["queued", "completed"])
+async def test_complete_not_reading_material_raises_conflict(shared_session, state):
+    if state == "queued":
+        material_id = await insert_material()
+    else:
+        material_id, _ = await complete_material()
+    before = await db.get_material_api(material_id=material_id)
+
+    with pytest.raises(database.ConflictException, match="is not being read"):
+        await db.complete_material(material_id=material_id)
+
+    assert await db.get_material_api(material_id=material_id) == before
+
+
+async def test_api_maps_conflict_to_409():
+    from tracker.main import database_exception_handler
+
+    response = await database_exception_handler(
+        _api_request("/api/v1/materials/start"),
+        database.ConflictException("Material is not in the queue"),
+    )
+
+    assert response.status_code == 409
+
+
+async def _api_start(material_id: uuid.UUID, started_at: datetime.date | None = None):
+    from tracker.api.v1 import materials as materials_api
+    from tracker.materials import schemas as materials_schemas
+
+    await materials_api.start_material(
+        material_id=material_id,
+        body=materials_schemas.StartMaterialRequest(started_at=started_at),
     )
 
 
-async def test_start_material_twice_raises_not_found(shared_session):
-    material_id = await _insert_material()
-    started_at = database.utcnow().date() - datetime.timedelta(days=2)
-    await db.start_material(material_id=material_id, started_at=started_at)
+async def test_api_start_rejects_started_material(shared_session):
+    from fastapi import HTTPException
 
-    with pytest.raises(database.NotFoundException, match="Not started material"):
-        await db.start_material(material_id=material_id)
+    material_id, started_at = await start_material()
+
+    with pytest.raises(HTTPException) as e:
+        await _api_start(material_id)
+
+    assert e.value.status_code == 400
+    assert e.value.detail == "Material is already started"
+    material = await db.get_material_api(material_id=material_id)
+    assert material.started_at is not None
+    assert material.started_at.date() == started_at
+
+
+async def test_api_start_rejects_future_date(shared_session):
+    from fastapi import HTTPException
+
+    material_id = await insert_material()
+
+    with pytest.raises(HTTPException) as e:
+        await _api_start(material_id, database.utc_today() + datetime.timedelta(days=1))
+
+    assert e.value.status_code == 400
+    assert e.value.detail == "Start date must be less than today"
+    material = await db.get_material_api(material_id=material_id)
+    assert material.started_at is None
+
+
+async def test_api_start_missing_material_raises_not_found(shared_session):
+    with pytest.raises(database.NotFoundException):
+        await _api_start(uuid.uuid4())
+
+
+async def test_api_start_starts_queued_material(shared_session, mocker):
+    # swap_order opens its own transaction, which shared_session cannot nest
+    swap_order = mocker.patch.object(db, "swap_order", new=mocker.AsyncMock())
+    material_id = await insert_material()
+    started_at = database.utc_today() - datetime.timedelta(days=1)
+    queue_start = await db.get_queue_start()
+
+    await _api_start(material_id, started_at)
+
+    swap_order.assert_awaited_once_with(material_id, queue_start)
 
     material = await db.get_material_api(material_id=material_id)
     assert material.started_at is not None
     assert material.started_at.date() == started_at
 
 
-async def test_complete_material_twice_raises_not_found(shared_session):
-    material_id = await _insert_material()
-    today = database.utcnow().date()
-    await db.start_material(material_id=material_id, started_at=today)
-    await db.complete_material(material_id=material_id, completed_at=today)
+async def test_api_complete_validates_dates_before_db_call(shared_session):
+    from fastapi import HTTPException
 
-    with pytest.raises(database.NotFoundException, match="Reading material"):
-        await db.complete_material(
+    from tracker.api.v1 import materials as materials_api
+    from tracker.materials import schemas as materials_schemas
+
+    material_id, started_at = await start_material()
+
+    with pytest.raises(HTTPException) as e:
+        await materials_api.complete_material(
             material_id=material_id,
-            completed_at=today + datetime.timedelta(days=1),
+            body=materials_schemas.CompleteMaterialRequest(
+                completed_at=started_at - datetime.timedelta(days=1),
+            ),
         )
 
-    material = await db.get_material_api(material_id=material_id)
-    assert material.completed_at is not None
-    assert material.completed_at.date() == today
-
-
-async def test_complete_not_started_material_raises_not_found(shared_session):
-    material_id = await _insert_material()
-
-    with pytest.raises(database.NotFoundException, match="Reading material"):
-        await db.complete_material(material_id=material_id)
-
+    assert e.value.status_code == 400
+    assert e.value.detail == "Completion date must be greater than start date"
     material = await db.get_material_api(material_id=material_id)
     assert material.completed_at is None
 
 
+def test_material_statistics_rejects_not_started_material():
+    material = db.Material(
+        material_id=uuid.uuid4(),
+        title="Queued",
+        authors="Author",
+        pages=10,
+        material_type=enums.MaterialTypesEnum.book,
+        tags=None,
+        link=None,
+        added_at=database.utcnow(),
+        is_outlined=False,
+        index=1,
+    )
+
+    with pytest.raises(ValueError, match="is not started"):
+        db._get_material_statistics(
+            material=material,
+            notes_count=0,
+            mean_total=Decimal(1),
+            log_stats={},
+        )
+
+
 async def test_complete_material_defaults_to_today(shared_session):
-    material_id = await _insert_material()
+    material_id = await insert_material()
     await db.start_material(material_id=material_id)
     await db.complete_material(material_id=material_id)
 
@@ -592,7 +693,7 @@ async def test_complete_material_defaults_to_today(shared_session):
 
 
 async def test_started_material_leaves_queue(shared_session):
-    material_id = await _insert_material()
+    material_id = await insert_material()
     assert material_id in {m.material_id for m in await db._get_free_materials()}
 
     await db.start_material(material_id=material_id)

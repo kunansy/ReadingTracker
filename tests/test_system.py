@@ -9,6 +9,8 @@ from tracker.reading_log import (
     statistics,
 )
 from tracker.system import db
+from tests.material_factory import complete_material, start_material
+from tracker.models import enums
 
 
 @pytest.mark.parametrize(
@@ -95,3 +97,19 @@ async def test_create_reading_graphic_material_not_found():
         str(e.value)
         == "'material_id=UUID('d012fba9-efe0-4171-b3e7-730c3c3b2666')' not found"
     )
+
+
+async def test_outline_percentage_counts_only_completed_materials(shared_session):
+    def count(stat, *, is_outlined: bool) -> int:
+        return stat.get(enums.MaterialTypesEnum.book, {}).get(is_outlined, 0)
+
+    before = await db._calculate_outline_percentage()
+    await start_material()
+    outlined_id, _ = await complete_material()
+    await materials_db.outline_material(material_id=outlined_id)
+    await complete_material()
+
+    after = await db._calculate_outline_percentage()
+
+    assert count(after, is_outlined=True) == count(before, is_outlined=True) + 1
+    assert count(after, is_outlined=False) == count(before, is_outlined=False) + 1

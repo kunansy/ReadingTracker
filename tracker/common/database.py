@@ -37,6 +37,10 @@ class NotFoundException(DatabaseException):
     pass
 
 
+class ConflictException(DatabaseException):
+    pass
+
+
 class InvalidNextTokenException(DatabaseException):
     pass
 
@@ -82,8 +86,12 @@ def check_inserted_one(result: Result[Any], *, entity: str) -> None:
         raise DatabaseException(msg)
 
 
+def affected_rows(result: Result[Any]) -> int:
+    return cast("CursorResult[Any]", result).rowcount
+
+
 def check_updated_one(result: Result[Any], *, entity: str, entity_id: object) -> None:
-    if cast("CursorResult[Any]", result).rowcount != 1:
+    if affected_rows(result) != 1:
         msg = f"{entity} id={entity_id!r} not found"
         logger.info(msg)
         raise NotFoundException(msg)

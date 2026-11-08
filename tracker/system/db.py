@@ -94,7 +94,7 @@ async def _calculate_outline_percentage() -> dict[
             models.Materials.c.is_outlined,
             sa.func.count(1),
         )
-        .where(models.Materials.c.completed_at != None)
+        .where(models.MATERIAL_IS_COMPLETED)
         .group_by(models.Materials.c.material_type, models.Materials.c.is_outlined)
     )
 
