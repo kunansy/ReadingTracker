@@ -391,3 +391,14 @@ async def test_system_summary_means_are_json_numbers(client, mocker):
     for field in SPAN_TRENDS.values():
         assert body[field]["mean"] == 0.67
         assert isinstance(body[field]["mean"], float)
+
+
+async def test_material_reading_now_is_null_when_nothing_is_read(client, mocker):
+    mocker.patch.object(
+        reading_log_db, "get_material_reading_now", mocker.AsyncMock(return_value=None)
+    )
+
+    response = await client.get("/api/v1/reading_logs/material-reading-now")
+
+    assert response.status_code == 200
+    assert response.json() == {"material_id": None}

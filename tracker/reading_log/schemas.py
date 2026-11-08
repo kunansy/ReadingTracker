@@ -34,4 +34,4 @@ class GetReadingLogResponse(CustomBaseModel):
 
 
 class GetMaterialReadingNowResponse(CustomBaseModel):
-    material_id: UUID
+    material_id: UUID | None

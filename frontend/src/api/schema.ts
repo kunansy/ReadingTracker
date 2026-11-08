@@ -1042,11 +1042,8 @@ export interface components {
         };
         /** GetMaterialReadingNowResponse */
         GetMaterialReadingNowResponse: {
-            /**
-             * Material Id
-             * Format: uuid
-             */
-            material_id: string;
+            /** Material Id */
+            material_id: string | null;
         };
         /** GetMaterialResponse */
         GetMaterialResponse: {
