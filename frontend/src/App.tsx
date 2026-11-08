@@ -26,6 +26,7 @@ import { SystemLayout } from "./components/SystemLayout.tsx";
 import { SystemGraphicsPage } from "./pages/system/SystemGraphicsPage.tsx";
 import { SystemBackupPage } from "./pages/system/SystemBackupPage.tsx";
 import { SystemRestorePage } from "./pages/system/SystemRestorePage.tsx";
+import { NotFoundPage } from "./pages/NotFoundPage.tsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -40,6 +41,7 @@ export function App() {
     <QueryClientProvider client={queryClient}>
       <ContextMenuProvider>
         <Routes>
+          <Route path="/" element={<Navigate to="/materials" replace />} />
           <Route path="/materials" element={<MaterialsLayout />}>
             <Route index element={<Navigate to="reading" replace />} />
             <Route path="queue" element={<ListMaterialsQueuePage />} />
@@ -71,6 +73,7 @@ export function App() {
             <Route path="backup" element={<SystemBackupPage />} />
             <Route path="restore" element={<SystemRestorePage />} />
           </Route>
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </ContextMenuProvider>
     </QueryClientProvider>

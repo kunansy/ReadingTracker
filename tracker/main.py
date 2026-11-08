@@ -13,14 +13,14 @@ from tracker.api.v1.materials import router as api_v1_materials_router
 from tracker.api.v1.notes import router as api_v1_notes_router
 from tracker.api.v1.reading_logs import router as api_v1_reading_logs_router
 from tracker.api.v1.system import router as api_v1_system_router
-from tracker.cards.spa import router as cards_spa_router
 from tracker.common import database, kafka, manticoresearch, settings
 from tracker.common.logger import logger
-from tracker.common.spa import SPA_DIR, SPA_INDEX, check_spa_bundle
-from tracker.materials.spa import router as materials_spa_router
-from tracker.notes.spa import router as notes_spa_router
-from tracker.reading_log.spa import router as reading_logs_spa_router
-from tracker.system.spa import router as system_spa_router
+from tracker.common.spa import (
+    SPA_DIR,
+    SPA_INDEX,
+    check_spa_bundle,
+    router as spa_router,
+)
 
 
 app = FastAPI(
@@ -50,11 +50,6 @@ app.include_router(api_v1_notes_router, prefix="/api/v1")
 app.include_router(api_v1_reading_logs_router, prefix="/api/v1")
 app.include_router(api_v1_cards_router, prefix="/api/v1")
 app.include_router(api_v1_system_router, prefix="/api/v1")
-app.include_router(notes_spa_router)
-app.include_router(materials_spa_router)
-app.include_router(reading_logs_spa_router)
-app.include_router(cards_spa_router)
-app.include_router(system_spa_router)
 
 
 def _http_detail(exc: HTTPException) -> str:
@@ -173,6 +168,9 @@ async def readiness():
 async def init() -> None:
     await database.create_db()
     await manticoresearch.init()
+
+
+app.include_router(spa_router)
 
 
 if __name__ == "__main__":
