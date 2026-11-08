@@ -77,3 +77,17 @@ async def test_insert_missing_note_to_repeat_queue_is_404(client, mocker):
     assert response.status_code == 404
     repeat_note.assert_not_awaited()
 
+
+@pytest.mark.parametrize(
+    ("method", "path"),
+    [
+        ("DELETE", "/notes/delete"),
+        ("POST", "/notes/restore"),
+        ("POST", "/notes/repeat-queue/insert"),
+        ("POST", "/notes/update"),
+    ],
+)
+async def test_legacy_note_writes_are_gone(client, method, path):
+    response = await client.request(method, path)
+
+    assert response.status_code in {404, 405}

@@ -1,8 +1,0 @@
-{%- macro submenu() -%}
-    {{ caller() }}
-    <nav class="subnavbar">
-        {%- for name, link in varargs -%}
-            <a href="{{ link }}" class="{{ name | lower}}-nav"> {{ name }} </a>
-        {% endfor -%}
-    </nav>
-{%- endmacro -%}

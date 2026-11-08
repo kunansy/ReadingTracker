@@ -4,16 +4,16 @@ import { BrowserRouter } from "react-router-dom";
 
 import { App } from "./App";
 
-import "../../static/style.css";
-import "../../static/materials/reading.css";
-import "../../static/materials/completed.css";
-import "../../static/materials/repeating_queue.css";
-import "../../static/materials/add_material.css";
-import "../../static/notes/notes.css";
-import "../../static/notes/add_note.css";
-import "../../static/cards/cards_list.css";
-import "../../static/cards/add_card.css";
-import "../../static/system/system.css";
+import "./styles/style.css";
+import "./styles/materials/reading.css";
+import "./styles/materials/completed.css";
+import "./styles/materials/repeating_queue.css";
+import "./styles/materials/add_material.css";
+import "./styles/notes/notes.css";
+import "./styles/notes/add_note.css";
+import "./styles/cards/cards_list.css";
+import "./styles/cards/add_card.css";
+import "./styles/system/system.css";
 
 const rootEl = document.getElementById("root");
 if (!rootEl) {

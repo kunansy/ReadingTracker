@@ -22,7 +22,7 @@ from tracker.notes import schemas
 
 
 _TAG_PATTERN = r"(\B)#({tag})(\b)"
-_NOTES_SEARCH_PATH = "/notes/"
+_NOTES_PATH = "/notes/"
 
 
 class Note(CustomBaseModel):
@@ -81,9 +81,6 @@ class Note(CustomBaseModel):
     def chapter_int(self) -> int:
         return sort_keys.chapter_int(self.chapter)
 
-    def get_material_id(self) -> str:
-        return str(self.material_id)
-
     def highlight(self, from_: str, to: str) -> None:
         self.content = self.content.replace(from_, to)
 
@@ -93,7 +90,7 @@ class Note(CustomBaseModel):
     @classmethod
     def _mark_tags_with_ref(cls, text: str, tags: set[str]) -> str:
         link_text_template = (
-            f"<a href={settings.TRACKER_URL}{_NOTES_SEARCH_PATH}?"
+            f"<a href={settings.TRACKER_URL}{_NOTES_PATH}?"
             'tags_query={tag} target="_blank">#{tag}</a>'
         )
 
@@ -109,12 +106,9 @@ class Note(CustomBaseModel):
         if not self.link_id:
             return ""
 
-        from tracker.notes.routes import get_note, router
-
-        note_url = router.url_path_for(get_note.__name__)
         link_text = f"[[{self.link_id}]]"
 
-        return f'<a class="link-ref" href={settings.TRACKER_URL}{note_url}?note_id={self.link_id} target="_blank">{link_text}</a>'  # noqa: E501
+        return f'<a class="link-ref" href={settings.TRACKER_URL}{_NOTES_PATH}{self.link_id} target="_blank">{link_text}</a>'  # noqa: E501
 
     @property
     def content_html(self) -> str:
@@ -206,24 +200,6 @@ async def get_distinct_chapters(
 
     logger.debug("Distinct chapters got")
     return chapters
-
-
-async def get_material_type(*, material_id: UUID | str) -> str | None:
-    logger.debug("Getting material_id=%s type", material_id)
-    if not material_id:
-        return None
-
-    stmt = sa.select(models.Materials.c.material_type).where(
-        models.Materials.c.material_id == str(material_id),
-    )
-
-    async with database.session() as ses:
-        if material_type := await ses.scalar(stmt):
-            logger.debug("Material type got: %s", material_type)
-            return material_type
-
-    logger.debug("Material=%s has no type", material_id)
-    return None
 
 
 async def get_material_types() -> dict[str, enums.MaterialTypesEnum]:
@@ -727,17 +703,6 @@ async def get_sorted_tags(*, material_id: str | UUID | None) -> list[str]:
     return result
 
 
-async def get_links_from(*, note_id: UUID | str) -> list[Note]:
-    """Get notes which linked to the given one."""
-    stmt = _get_note_stmt(link_id=note_id)
-
-    async with database.session() as ses:
-        return [
-            Note.model_validate(row, from_attributes=True)
-            for row in (await ses.execute(stmt)).all()
-        ]
-
-
 async def get_links_from_page(
     *,
     note_id: UUID | str,
@@ -758,15 +723,3 @@ async def get_links_from_page(
         ),
         to_item=_to_note,
     )
-
-
-async def is_deleted(note_id: str) -> bool:
-    stmt = sa.select(models.Notes.c.is_deleted).where(
-        models.Notes.c.note_id == note_id,
-    )
-
-    async with database.session() as ses:
-        if (r := await ses.scalar(stmt)) is None:
-            raise ValueError(f"Note id={note_id} not found")
-
-    return r

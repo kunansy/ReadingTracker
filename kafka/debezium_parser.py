@@ -7,7 +7,7 @@ import orjson
 from aiokafka import AIOKafkaConsumer
 from pydantic import field_validator
 
-from tracker.common import kafka, keydb_api, manticoresearch, settings
+from tracker.common import kafka, manticoresearch, settings
 from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.notes.db import Note
@@ -62,11 +62,6 @@ class Record(CustomBaseModel):
     def is_delete(self) -> bool:
         return not self.after or self.after.is_deleted
 
-    def dump_after(self) -> dict:
-        if not self.after:
-            raise ValueError("Could not dump none")
-        return self.after.model_dump(mode="json", exclude_none=True)
-
 
 async def iter_updates() -> AsyncIterable[Record]:
     consumer = AIOKafkaConsumer(
@@ -97,18 +92,6 @@ async def iter_updates() -> AsyncIterable[Record]:
         await consumer.stop()
 
 
-async def _to_notes_cache(payload: Record) -> None:
-    logger.info("To cache: note_id=%s", payload.note_id)
-
-    if payload.is_delete():
-        logger.info("Deleting the note")
-        await keydb_api.delete_note(payload.note_id)
-        return
-
-    logger.info("Updating the note")
-    await keydb_api.set_note(payload.dump_after())
-
-
 async def _to_notify(payload: Record) -> None:
     if payload.is_delete():
         logger.info("The note has been deleted, don't notify")
@@ -136,7 +119,6 @@ async def _to_search_engine(payload: Record) -> None:
 
 async def parse():
     async for msg in iter_updates():
-        await _to_notes_cache(msg)
         await _to_search_engine(msg)
 
         if settings.EX_ENABLE_KAFKA_TO_NOTIFY:

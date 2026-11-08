@@ -1,12 +1,10 @@
 import asyncio
 import os
-from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from starlette_exporter import PrometheusMiddleware, handle_metrics
 
 from tracker.api.v1.cards import router as api_v1_cards_router
@@ -15,38 +13,12 @@ from tracker.api.v1.notes import router as api_v1_notes_router
 from tracker.api.v1.reading_logs import router as api_v1_reading_logs_router
 from tracker.api.v1.system import router as api_v1_system_router
 from tracker.cards.spa import router as cards_spa_router
-from tracker.common import database, keydb_api, manticoresearch, settings
+from tracker.common import database, manticoresearch, settings
 from tracker.common.logger import logger
 from tracker.materials.spa import router as materials_spa_router
-from tracker.notes.action_routes import router as notes_action_router
-from tracker.notes.html_routes import (
-    router as notes_html_router,
-)
 from tracker.notes.spa import router as notes_spa_router
 from tracker.reading_log.spa import router as reading_logs_spa_router
 from tracker.system.spa import router as system_spa_router
-
-
-async def _init_cache():
-    if not await keydb_api.healthcheck():
-        logger.info("Keydb is offline")
-
-    # TODO: remove keydb integration
-
-
-async def startup():
-    logger.info("Init cache")
-    async with asyncio.timeout(10):
-        await _init_cache()
-    logger.info("Complete init")
-
-
-@asynccontextmanager
-async def lifespan(_: FastAPI):
-    if not settings.DEBUG_MODE:
-        await startup()
-
-    yield
 
 
 app = FastAPI(
@@ -54,7 +26,6 @@ app = FastAPI(
     description="Reading queue, logging the reading, keep some notes",
     version=settings.API_VERSION,
     debug=settings.API_DEBUG,
-    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -69,33 +40,28 @@ app.add_middleware(
 )
 app.add_route("/metrics", handle_metrics)
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="static", check_dir=False), name="static")
 
 app.include_router(api_v1_materials_router, prefix="/api/v1")
 app.include_router(api_v1_notes_router, prefix="/api/v1")
 app.include_router(api_v1_reading_logs_router, prefix="/api/v1")
 app.include_router(api_v1_cards_router, prefix="/api/v1")
 app.include_router(api_v1_system_router, prefix="/api/v1")
-app.include_router(notes_action_router)
-if settings.APP_SPA_ENABLED:
-    app.include_router(notes_spa_router)
-    app.include_router(materials_spa_router)
-    app.include_router(reading_logs_spa_router)
-    app.include_router(cards_spa_router)
-    app.include_router(system_spa_router)
-else:
-    app.include_router(notes_html_router)
+app.include_router(notes_spa_router)
+app.include_router(materials_spa_router)
+app.include_router(reading_logs_spa_router)
+app.include_router(cards_spa_router)
+app.include_router(system_spa_router)
 
 
-def _api_v1_json_detail(exc: HTTPException) -> str:
+def _http_detail(exc: HTTPException) -> str:
     detail = exc.detail
     if isinstance(detail, str):
         return detail
     return str(detail)
 
 
-def _api_v1_validation_detail(exc: RequestValidationError) -> str:
+def _validation_detail(exc: RequestValidationError) -> str:
     parts = []
     for err in exc.errors():
         loc = ".".join(str(x) for x in err.get("loc", ()))
@@ -111,38 +77,26 @@ async def database_exception_handler(request: Request, exc: database.DatabaseExc
     else:
         logger.exception("Database exception occurred, (%s), %s", request.url, str(exc))
 
-    if request.url.path.startswith("/api/v1"):
-        if isinstance(exc, database.InvalidNextTokenException):
-            return JSONResponse(
-                status_code=422,
-                content={"detail": f"InvalidNextToken: {exc}"},
-            )
-        if isinstance(exc, database.AlreadyExistsException):
-            return JSONResponse(
-                status_code=409,
-                content={"detail": f"AlreadyExistsError: {exc}"},
-            )
-        if isinstance(exc, database.NotFoundException):
-            return JSONResponse(
-                status_code=404,
-                content={"detail": f"NotFoundError: {exc}"},
-            )
-
+    if isinstance(exc, database.InvalidNextTokenException):
         return JSONResponse(
-            status_code=500,
-            content={"detail": f"Database error: {exc}"},
+            status_code=422,
+            content={"detail": f"InvalidNextToken: {exc}"},
+        )
+    if isinstance(exc, database.AlreadyExistsException):
+        return JSONResponse(
+            status_code=409,
+            content={"detail": f"AlreadyExistsError: {exc}"},
+        )
+    if isinstance(exc, database.NotFoundException):
+        return JSONResponse(
+            status_code=404,
+            content={"detail": f"NotFoundError: {exc}"},
         )
 
-    context = {
-        "request": request,
-        "error": {
-            "type": exc.__class__.__name__,
-            "args": exc.args,
-            "json": f"Database exception: {exc}",
-        },
-    }
-
-    return templates.TemplateResponse(request, "errors/500.html", context)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Database error: {exc}"},
+    )
 
 
 @app.exception_handler(manticoresearch.ManticoreException)
@@ -156,55 +110,30 @@ async def manticore_exception_handler(
         str(exc),
     )
 
-    if request.url.path.startswith("/api/v1"):
-        return JSONResponse(
-            status_code=500,
-            content={"detail": f"Manticoresearch error: {exc}"},
-        )
-
-    context = {
-        "request": request,
-        "error": {
-            "type": exc.__class__.__name__,
-            "args": exc.args,
-            "json": f"Manticoresearch exception: {exc}",
-        },
-    }
-
-    return templates.TemplateResponse(request, "errors/500.html", context)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Manticoresearch error: {exc}"},
+    )
 
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     logger.exception("Validation error occurred, (%s), %s", request.url, str(exc))
 
-    if request.url.path.startswith("/api/v1"):
-        return JSONResponse(
-            status_code=422,
-            content={"detail": _api_v1_validation_detail(exc)},
-        )
-
-    context = {
-        "request": request,
-        "error": {"type": exc.__class__.__name__, "args": exc.args, "json": repr(exc)},
-    }
-
-    return templates.TemplateResponse(request, "errors/500.html", context)
+    return JSONResponse(
+        status_code=422,
+        content={"detail": _validation_detail(exc)},
+    )
 
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException):
     logger.exception("HTTP exception occurred, (%s), %s", request.url, str(exc))
 
-    if request.url.path.startswith("/api/v1"):
-        return JSONResponse(
-            status_code=exc.status_code,
-            content={"detail": _api_v1_json_detail(exc)},
-        )
-
-    context = {"request": request, "what": repr(exc)}
-
-    return templates.TemplateResponse(request, "errors/404.html", context)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": _http_detail(exc)},
+    )
 
 
 @app.get("/liveness", include_in_schema=False)
