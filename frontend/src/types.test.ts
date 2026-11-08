@@ -1,9 +1,10 @@
 import { describe, expect, test } from "vitest";
 
-import { isMaterialType, MaterialTypes } from "./types.ts";
+import { materialTypesEnumValues } from "./api/schema";
+import { isMaterialType } from "./types.ts";
 
 describe("isMaterialType", () => {
-  test.each(MaterialTypes)("accepts '%s'", (value) => {
+  test.each(materialTypesEnumValues)("accepts '%s'", (value) => {
     expect(isMaterialType(value)).toBe(true);
   });
 

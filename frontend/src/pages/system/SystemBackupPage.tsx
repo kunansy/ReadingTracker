@@ -38,7 +38,7 @@ export function SystemBackupPage() {
           repeats, {mut.data.note_repeats_history_count} note repeats)
         </div>
       ) : null}
-      {mut.error ? <div>Error! Backup failed. Reason: {(mut.error as Error).message}</div> : null}
+      {mut.error ? <div>Error! Backup failed. Reason: {mut.error.message}</div> : null}
     </div>
   );
 }

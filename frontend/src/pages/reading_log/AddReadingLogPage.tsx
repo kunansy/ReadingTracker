@@ -7,6 +7,7 @@ import { CelebrateButton } from "../../components/CelebrateButton";
 import {isUuid} from "../../utils/isUuid.ts";
 import {dateInputValue} from "../../utils/dateInputValue.ts";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox.tsx";
+import { useMaterialReadingNow } from "../../materials/queries";
 
 interface HintButtonProps {
   label: string;
@@ -47,11 +48,7 @@ export function AddReadingLogPage() {
   const navigate = useNavigate();
   const from = location.state?.from || "/materials/reading";
 
-  const materialReadingNowQ = useQuery({
-    queryKey: ["materials", "reading_now"],
-    queryFn: () =>
-        unwrap(api.GET("/api/v1/reading_logs/material-reading-now")),
-  });
+  const materialReadingNowQ = useMaterialReadingNow();
 
   const completionQ = useQuery({
     queryKey: ["materials", materialId, "completion-info"],
@@ -131,7 +128,7 @@ export function AddReadingLogPage() {
   if (hasError) {
     return (
         <p className="error">
-          {(hasError as Error).message || "Failed to load data"}
+          {hasError.message || "Failed to load data"}
         </p>
     );
   }

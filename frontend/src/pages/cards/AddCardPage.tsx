@@ -162,10 +162,11 @@ export function AddCardPage() {
   if (metaQ.isLoading || notesQ.isLoading || notesWithCardsQ.isLoading) {
     return <p>Loading…</p>;
   }
-  if (metaQ.error || notesWithCardsQ.error) {
+  const loadError = metaQ.error || notesWithCardsQ.error;
+  if (loadError) {
     return (
       <p className="error">
-        {((metaQ.error || notesWithCardsQ.error) as Error)?.message || "Failed to load data"}
+        {loadError.message || "Failed to load data"}
       </p>
     );
   }

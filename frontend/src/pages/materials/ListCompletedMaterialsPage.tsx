@@ -15,10 +15,12 @@ import { useDebounce } from "../../lib/debounce.ts";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 import { CompletedMaterialCard } from "./CompletedMaterialCard";
-import { isMaterialType, MaterialTypes } from "../../types";
+import { materialTypesEnumValues } from "../../api/schema";
+import { isMaterialType } from "../../types";
 import {
   ComboboxInput, ComboboxList, ComboboxRoot,
 } from "../../components/Combobox";
+import { useMaterialTags } from "../../materials/queries";
 
 function isOutlinedFilter(value: string): value is "outlined" | "not_outlined" {
   return value === "outlined" || value === "not_outlined";
@@ -74,11 +76,7 @@ export function ListCompletedMaterialsPage() {
         }),
       ),
   });
-  const materialTagsQ = useQuery({
-    queryKey: ["materials", "tags"],
-    queryFn: () => unwrap(api.GET("/api/v1/materials/tags")),
-    staleTime: 5 * 60 * 1000,
-  });
+  const materialTagsQ = useMaterialTags();
 
   const updateURL = useCallback(
       (state: typeof formState) => {
@@ -109,7 +107,7 @@ export function ListCompletedMaterialsPage() {
   if (q.isLoading || materialTagsQ.isLoading) return <p>Loading…</p>;
 
   if (materialTagsQ.error)
-      return <p className="error">{(materialTagsQ.error as Error).message}</p>;
+      return <p className="error">{materialTagsQ.error.message}</p>;
 
   const stats = q.data?.statistics ?? [];
   const materialTags = materialTagsQ.data?.tags ?? [];
@@ -123,7 +121,7 @@ export function ListCompletedMaterialsPage() {
                       onChange={(v) =>
                           setFormState((p) => ({ ...p, material_type: v }))
                       }
-                      options={MaterialTypes ?? []}
+                      options={materialTypesEnumValues}
                   >
                       <ComboboxInput placeholder="Enter a material type" />
                       <ComboboxList />

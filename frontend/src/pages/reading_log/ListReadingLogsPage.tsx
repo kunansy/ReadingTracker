@@ -8,6 +8,7 @@ import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
 import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
+import { useReadMaterialTitles } from "../../materials/queries";
 
 export function ListReadingLogsPage() {
     const [searchParams, setSearchParams] = useSearchParams();
@@ -15,11 +16,7 @@ export function ListReadingLogsPage() {
     const pagination = useCursorPagination(PAGE_SIZE, materialId, "desc");
     const nextToken = pagination.cursor;
 
-    const materialsTitlesQ = useQuery({
-        queryKey: ["materials", "read_titles"],
-        queryFn: () => unwrap(api.GET("/api/v1/materials/read-titles")),
-        staleTime: 5 * 60 * 1000,
-    });
+    const materialsTitlesQ = useReadMaterialTitles();
 
     const logsQ = useQuery({
         queryKey: ["logs", { materialId, nextToken, order: pagination.order }],
@@ -53,7 +50,7 @@ export function ListReadingLogsPage() {
     }
 
     if (materialsTitlesQ.error) {
-        return <p className="error">Error: {(materialsTitlesQ.error as Error).message}</p>;
+        return <p className="error">Error: {materialsTitlesQ.error.message}</p>;
     }
 
     return (

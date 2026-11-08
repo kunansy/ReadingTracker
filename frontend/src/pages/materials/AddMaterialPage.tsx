@@ -1,34 +1,27 @@
-import {useMutation, useQuery, useQueryClient} from "@tanstack/react-query";
+import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {useState} from "react";
 
 import { api, unwrap } from "../../api/client";
-import type { CreateMaterialRequest } from "../../api/schema";
+import { type CreateMaterialRequest, type MaterialTypesEnum, materialTypesEnumValues } from "../../api/schema";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox";
-import { isMaterialType, type MaterialType, MaterialTypes } from "../../types";
+import { isMaterialType } from "../../types";
 import {CelebrateButton} from "../../components/CelebrateButton.tsx";
+import { materialKeys, useMaterialAuthors, useMaterialTags } from "../../materials/queries";
 
 
 export function AddMaterialPage() {
   const [title, setTitle] = useState("");
   const [authors, setAuthors] = useState<string[]>([]);
   const [pages, setPages] = useState("");
-  const [materialType, setMaterialType] = useState<MaterialType | null>(null);
+  const [materialType, setMaterialType] = useState<MaterialTypesEnum | null>(null);
   const [tags, setTags] = useState<string[]>([]);
   const [link, setLink] = useState("");
   const [parseUrl, setParseUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
   const qc = useQueryClient();
 
-  const materialTagsQ = useQuery({
-    queryKey: ["materials", "tags"],
-    queryFn: () => unwrap(api.GET("/api/v1/materials/tags")),
-    staleTime: 5 * 60 * 1000,
-  });
-  const materialAuthorsQ = useQuery({
-    queryKey: ["materials", "authors"],
-    queryFn: () => unwrap(api.GET("/api/v1/materials/authors")),
-    staleTime: 5 * 60 * 1000,
-  });
+  const materialTagsQ = useMaterialTags();
+  const materialAuthorsQ = useMaterialAuthors();
 
   const parseMut = useMutation({
     mutationFn: async (url: string) => {
@@ -76,10 +69,10 @@ export function AddMaterialPage() {
       setParseUrl("");
       setError(null);
 
-      void qc.invalidateQueries({ queryKey: ["materials", "queue"], });
+      void qc.invalidateQueries({ queryKey: ["materials", "queue"] });
       // todo: invalidate if new ones added only
-      void qc.invalidateQueries({ queryKey: ["materials", "tags"], });
-      void qc.invalidateQueries({ queryKey: ["materials", "authors"], });
+      void qc.invalidateQueries({ queryKey: materialKeys.tags });
+      void qc.invalidateQueries({ queryKey: materialKeys.authors });
     },
     onError: (e: Error) => {
       setError(e.message);
@@ -92,7 +85,7 @@ export function AddMaterialPage() {
   }
   const err = materialTagsQ.error || materialAuthorsQ.error;
   if (err) {
-    return <p className="error">{(err as Error).message}</p>;
+    return <p className="error">{err.message}</p>;
   }
 
   const materialTags = materialTagsQ.data?.tags ?? [];
@@ -182,7 +175,7 @@ export function AddMaterialPage() {
                 onChange={(v) => {
                   setMaterialType(isMaterialType(v) ? v : null);
                 }}
-                options={MaterialTypes}
+                options={materialTypesEnumValues}
             >
               <ComboboxInput placeholder="Enter a material type" />
               <ComboboxList />

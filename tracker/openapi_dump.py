@@ -6,7 +6,7 @@ import orjson
 from tracker.main import app
 
 
-# Pinned instead of VERSION so a release bump does not show up as spec drift.
+# Pinned instead of settings.API_VERSION so release bumps do not show up as spec drift.
 SPEC_VERSION = "v1"
 
 

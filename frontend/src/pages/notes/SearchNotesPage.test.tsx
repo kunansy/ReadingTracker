@@ -177,3 +177,52 @@ describe("SearchNotesPage note actions", () => {
     });
   });
 });
+
+describe("SearchNotesPage query autocompletion", () => {
+  async function typeQuery(value: string) {
+    const input = await screen.findByPlaceholderText("Enter a query");
+    fireEvent.change(input, { target: { value } });
+    fireEvent.keyDown(input, { key: "a" });
+  }
+
+  function hints(): string[] {
+    const options = document.querySelectorAll("#search-note-hints option");
+    return Array.from(options, (option) => option.getAttribute("value") ?? "");
+  }
+
+  it("lists the suggestions", async () => {
+    stubFetch({
+      "GET /autocompletion": { status: 200, body: { autocompletions: ["alpha", "beta"] } },
+    });
+    renderPage();
+
+    await typeQuery("al");
+
+    await waitFor(() => {
+      expect(hints()).toEqual(["alpha", "beta"]);
+    });
+  });
+
+  it.each([
+    ["a failed request", { status: 500, body: { detail: "boom" } }],
+    ["an empty body", { status: 200 }],
+  ])("clears the suggestions after %s", async (_name, failure: Reply) => {
+    const actions: ActionReplies = {
+      "GET /autocompletion": { status: 200, body: { autocompletions: ["alpha"] } },
+    };
+    stubFetch(actions);
+    renderPage();
+    await typeQuery("al");
+    await waitFor(() => {
+      expect(hints()).toEqual(["alpha"]);
+    });
+
+    actions["GET /autocompletion"] = failure;
+    await typeQuery("alp");
+
+    await waitFor(() => {
+      expect(hints()).toEqual([]);
+    });
+    expect(screen.queryByRole("alert")).toBeNull();
+  });
+});

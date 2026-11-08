@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
 
-import { api, unwrap } from "../../api/client";
+import { api, errorMessage, unwrapEmpty } from "../../api/client";
 
 export interface NoteActions {
   deleteNote: (noteId: string) => void;
@@ -14,10 +14,6 @@ export interface NoteActions {
 interface Failure {
   seq: number;
   message: string;
-}
-
-function errorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : "Unexpected error";
 }
 
 export function useNoteActions(): NoteActions {
@@ -42,7 +38,7 @@ export function useNoteActions(): NoteActions {
   const deleteMut = useMutation({
     ...common,
     mutationFn: async (noteId: string) => {
-      await unwrap(
+      await unwrapEmpty(
         api.DELETE("/api/v1/notes/{note_id}", { params: { path: { note_id: noteId } } }),
       );
     },
@@ -52,7 +48,7 @@ export function useNoteActions(): NoteActions {
   const restoreMut = useMutation({
     ...common,
     mutationFn: async (noteId: string) => {
-      await unwrap(
+      await unwrapEmpty(
         api.POST("/api/v1/notes/{note_id}/restore", { params: { path: { note_id: noteId } } }),
       );
     },
@@ -62,7 +58,7 @@ export function useNoteActions(): NoteActions {
   const repeatMut = useMutation({
     ...common,
     mutationFn: async (noteId: string) => {
-      await unwrap(
+      await unwrapEmpty(
         api.POST("/api/v1/notes/{note_id}/repeat-queue", {
           params: { path: { note_id: noteId } },
         }),

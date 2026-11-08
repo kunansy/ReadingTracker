@@ -57,6 +57,11 @@ export function ListCardsPage() {
 
     return (
         <>
+            {materialsTitlesQ.error ? (
+                <p className="error" role="alert">
+                    Failed to load materials: {materialsTitlesQ.error.message}
+                </p>
+            ) : null}
             <div className="form">
                 <form
                     id="search-cards-form"

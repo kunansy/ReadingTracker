@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tansta
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { api, PAGE_SIZE, unwrap } from "../../api/client";
+import { api, errorMessage, PAGE_SIZE, unwrap, unwrapEmpty } from "../../api/client";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
@@ -42,7 +42,7 @@ export function ListReadingMaterialsPage() {
 
   const completeMut = useMutation({
     mutationFn: (p: { materialId: string; completedAt: string }) =>
-      unwrap(
+      unwrapEmpty(
         api.POST("/api/v1/materials/{material_id}/complete", {
           params: { path: { material_id: p.materialId } },
           body: { completed_at: p.completedAt },
@@ -263,7 +263,7 @@ export function ListReadingMaterialsPage() {
                 dialogRef.current?.close();
                 navigate(`/materials/completed/${completeId}`);
               } catch (err) {
-                window.alert((err as Error).message);
+                window.alert(errorMessage(err));
               }
             }}
           >

@@ -57,7 +57,7 @@ async def notes_search_json(
         "tags_query": ctx["tags_query"],
         "next_token": ctx["next_token"],
         "page_size": ctx["page_size"],
-        "material_id": str(ctx["material_id"]) if ctx["material_id"] else None,
+        "material_id": ctx["material_id"],
     }
 
 
@@ -93,7 +93,7 @@ async def notes_graph_json(material_id: UUID | None = None):
     return {
         "iframe_srcdoc": iframe_srcdoc,
         "titles": titles,
-        "material_id": str(material_id) if material_id else None,
+        "material_id": material_id,
     }
 
 

@@ -1,7 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {useNavigate, useSearchParams} from "react-router-dom";
 
-import { api, PAGE_SIZE, unwrap } from "../../api/client";
+import { api, PAGE_SIZE, unwrap, unwrapEmpty } from "../../api/client";
 import { CelebrateButton } from "../../components/CelebrateButton";
 import { NotFoundMaterials } from "../../components/NotFoundMaterials";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
@@ -39,7 +39,7 @@ export function ListRepeatMaterialsPage() {
 
   const repeatMut = useMutation({
     mutationFn: (materialId: string) =>
-      unwrap(
+      unwrapEmpty(
         api.POST("/api/v1/materials/{material_id}/repeat", {
           params: { path: { material_id: materialId } },
         }),
@@ -170,6 +170,11 @@ export function ListRepeatMaterialsPage() {
                   </CelebrateButton>
                 </form>
               </div>
+              {repeatMut.error && repeatMut.variables === repeat.material_id ? (
+                <p className="error" role="alert">
+                  Repeat failed: {repeatMut.error.message}
+                </p>
+              ) : null}
             </div>
           );
         })
