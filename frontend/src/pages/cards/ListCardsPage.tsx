@@ -9,6 +9,7 @@ import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
 import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
+import { cardKeys } from "../../cards/queries";
 import { useMaterialsWithCardsTitles } from "../../materials/queries";
 
 
@@ -22,7 +23,7 @@ export function ListCardsPage() {
     const materialsTitlesQ = useMaterialsWithCardsTitles();
 
     const cardsQ = useQuery({
-        queryKey: ["cards", { materialId, nextToken, order: pagination.order }],
+        queryKey: cardKeys.list({ materialId, nextToken, order: pagination.order }),
         placeholderData: keepPreviousData,
         queryFn: () =>
             unwrap(

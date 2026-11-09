@@ -2,7 +2,7 @@ import {useMutation, useQueryClient} from "@tanstack/react-query";
 import {useEffect, useRef, useState} from "react";
 import {useLocation, useNavigate, useSearchParams} from "react-router-dom";
 
-import { api, unwrapEmpty } from "../../api/client";
+import { api, errorMessage, unwrapEmpty } from "../../api/client";
 import {
   type GetMaterialResponse,
   type MaterialTypesEnum,
@@ -95,6 +95,10 @@ export function UpdateMaterialPage() {
 
       void qc.invalidateQueries({ queryKey: materialKeys.all });
       navigate(from);
+    },
+    onError: (e: unknown) => {
+      setMessage(null);
+      setError(errorMessage(e));
     },
   });
 

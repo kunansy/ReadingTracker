@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import {useState, useCallback, useMemo, useEffect} from "react";
 import { useSearchParams } from "react-router-dom";
 
@@ -11,7 +11,7 @@ import {SpellTextarea} from "../../components/SpellTextrea.tsx";
 import { loadWithTtl, saveWithTtl } from "../../lib/ttlStorage.ts";
 import { NoteDraft, parseNoteDraft, resolveNoteDraft } from "./noteDraft.ts";
 import { useMaterial, useMaterialTitles } from "../../materials/queries";
-import { noteKeys } from "../../notes/queries";
+import { useNoteTags } from "../../notes/queries";
 
 type AddNoteForm = NoteDraft & {
   title: string;
@@ -42,15 +42,7 @@ export function AddNotePage() {
 
   const titlesQ = useMaterialTitles();
 
-  const tagListQ = useQuery({
-    queryKey: noteKeys.tags(formData.materialId),
-    queryFn: () =>
-      unwrap(
-        api.GET("/api/v1/notes/tags", {
-          params: { query: { material_id: formData.materialId || undefined } },
-        }),
-      ),
-  });
+  const tagListQ = useNoteTags(formData.materialId);
   const materialId = initialMaterial || formData.materialId;
   const materialQ = useMaterial(materialId);
 

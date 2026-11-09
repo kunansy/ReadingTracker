@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 
 import { api, errorMessage, unwrap } from "../../api/client";
+import { cardKeys } from "../../cards/queries";
 import { noteKeys, useNotesMeta } from "../../notes/queries";
 import type { SearchNotesItem } from "../../api/schema";
 import { PageNav } from "../../components/PageNav";
@@ -76,7 +77,7 @@ export function AddCardPage() {
   });
 
   const notesWithCardsQ = useQuery({
-    queryKey: ["cards", "notes-with-cards", { materialId }],
+    queryKey: cardKeys.notesWithCards(materialId),
     queryFn: () =>
       unwrap(
         api.GET("/api/v1/cards/notes-with-cards", {
@@ -119,7 +120,7 @@ export function AddCardPage() {
       setQuestion("");
       setAnswer("");
 
-      void qc.invalidateQueries({ queryKey: ["cards"] });
+      void qc.invalidateQueries({ queryKey: cardKeys.all });
       navigate(from);
     },
     onError: (e: unknown) => {

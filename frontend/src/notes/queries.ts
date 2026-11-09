@@ -1,6 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
+import { skipToken, useQuery } from "@tanstack/react-query";
 
 import { api, unwrap } from "../api/client";
+import { isUuid } from "../utils/isUuid.ts";
 
 const META_STALE_TIME_MS = 10 * 60 * 1000;
 
@@ -17,6 +18,10 @@ export const noteKeys = {
   autocomplete: (query: string) => ["notes", "autocomplete", query] as const,
 } as const;
 
+export function isLinksKeyOf(queryKey: readonly unknown[], noteId: string): boolean {
+  return queryKey[0] === "notes" && queryKey[1] === "links" && queryKey[2] === noteId;
+}
+
 /** An empty `materialId` loads the meta of all materials. */
 export function useNotesMeta(materialId = "") {
   return useQuery({
@@ -28,5 +33,30 @@ export function useNotesMeta(materialId = "") {
         }),
       ),
     staleTime: META_STALE_TIME_MS,
+  });
+}
+
+export function useNote(noteId: string) {
+  return useQuery({
+    queryKey: noteKeys.byId(noteId),
+    queryFn: noteId
+      ? () => unwrap(api.GET("/api/v1/notes/{note_id}", { params: { path: { note_id: noteId } } }))
+      : skipToken,
+  });
+}
+
+/** An empty `materialId` loads the tags of all materials unless `requireMaterial` is set. */
+export function useNoteTags(materialId: string, { requireMaterial = false } = {}) {
+  const isSkipped = requireMaterial && !isUuid(materialId);
+  return useQuery({
+    queryKey: noteKeys.tags(materialId),
+    queryFn: isSkipped
+      ? skipToken
+      : () =>
+          unwrap(
+            api.GET("/api/v1/notes/tags", {
+              params: { query: { material_id: materialId || undefined } },
+            }),
+          ),
   });
 }

@@ -12,7 +12,7 @@ import { PageNav } from "../../components/PageNav";
 import { PageLoadError } from "../../components/PageLoadError";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 import { useMaterial } from "../../materials/queries";
-import { noteKeys } from "../../notes/queries";
+import { isLinksKeyOf, noteKeys, useNote } from "../../notes/queries";
 
 export function NotePage() {
   const { noteId: noteIdParam } = useParams();
@@ -33,12 +33,7 @@ export function NotePage() {
     return "";
   }, [noteIdParam, noteIdQuery]);
 
-  const q = useQuery({
-    queryKey: noteKeys.byId(noteId),
-    enabled: Boolean(noteId),
-    queryFn: () =>
-      unwrap(api.GET("/api/v1/notes/{note_id}", { params: { path: { note_id: noteId } } })),
-  });
+  const q = useNote(noteId);
 
   const materialQ = useMaterial(q.data?.note.material_id);
 
@@ -48,7 +43,7 @@ export function NotePage() {
   const noteLinksQ = useQuery({
     queryKey: noteKeys.links(noteId, linksNextToken, linksPagination.order),
     placeholderData: (previous, previousQuery) =>
-      previousQuery?.queryKey[2] === noteId ? keepPreviousData(previous) : undefined,
+      previousQuery && isLinksKeyOf(previousQuery.queryKey, noteId) ? keepPreviousData(previous) : undefined,
     enabled: Boolean(noteId),
     queryFn: () =>
       unwrap(
