@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { skipToken, useQuery } from "@tanstack/react-query";
 
 import { api, unwrap } from "../api/client";
 
@@ -14,7 +14,11 @@ export const materialKeys = {
   readingTitles: ["materials", "reading_titles"],
   withCardsTitles: ["materials", "with_cards_titles"],
   queue: ["materials", "queue"],
+  queueList: (nextToken: string | undefined, order: string) =>
+    ["materials", "queue", nextToken, order] as const,
   reading: ["materials", "reading"],
+  readingList: (nextToken: string | undefined, order: string) =>
+    ["materials", "reading", nextToken, order] as const,
   byId: (materialId: string) => ["materials", materialId] as const,
   completionInfo: (materialId: string) => ["materials", materialId, "completion-info"] as const,
   repeat: (query: object) => ["materials", "repeat", query] as const,
@@ -80,12 +84,13 @@ export function useMaterialsWithCardsTitles() {
 export function useMaterial(materialId: string | null | undefined) {
   return useQuery({
     queryKey: materialKeys.byId(materialId ?? ""),
-    enabled: Boolean(materialId),
-    queryFn: () =>
-      unwrap(
-        api.GET("/api/v1/materials/{material_id}", {
-          params: { path: { material_id: materialId ?? "" } },
-        }),
-      ),
+    queryFn: materialId
+      ? () =>
+          unwrap(
+            api.GET("/api/v1/materials/{material_id}", {
+              params: { path: { material_id: materialId } },
+            }),
+          )
+      : skipToken,
   });
 }

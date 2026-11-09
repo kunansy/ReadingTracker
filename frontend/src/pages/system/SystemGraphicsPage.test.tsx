@@ -151,6 +151,24 @@ describe("SystemGraphicsPage reading progress", () => {
   });
 });
 
+describe("SystemGraphicsPage graphics", () => {
+  it("shows a failed graphic as an error, not as missing data", async () => {
+    stubFetch({
+      "/api/v1/system/graphics/outline-percentage": { status: 500, body: { detail: "boom" } },
+    });
+    renderPage();
+
+    const section = (await screen.findByText("Outline percentage")).closest("section");
+    if (!section) {
+      throw new Error("graphic section not found");
+    }
+    await waitFor(() => {
+      expect(section.textContent).toContain("Error: boom");
+    });
+    expect(section.textContent).not.toContain("No graphic data available");
+  });
+});
+
 describe("SystemGraphicsPage material titles", () => {
   it("reports a failed titles request and still renders the statistics", async () => {
     stubFetch({

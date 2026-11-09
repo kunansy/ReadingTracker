@@ -9,7 +9,7 @@ import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Comb
 import {isUuid} from "../../utils/isUuid.ts";
 import {SpellTextarea} from "../../components/SpellTextrea.tsx";
 import { useMaterialTitles } from "../../materials/queries";
-import { noteKeys } from "../../notes/queries";
+import { noteKeys, useNote, useNoteTags } from "../../notes/queries";
 
 
 export function UpdateNotePage() {
@@ -41,19 +41,9 @@ export function UpdateNotePage() {
     return "";
   }, [noteIdParam, noteIdQuery]);
 
-  const q = useQuery({
-    queryKey: noteKeys.byId(noteId),
-    enabled: Boolean(noteId),
-    queryFn: () =>
-      unwrap(api.GET("/api/v1/notes/{note_id}", { params: { path: { note_id: noteId } } })),
-  });
+  const q = useNote(noteId);
   const materialTitlesQ = useMaterialTitles();
-  const noteTagsQ = useQuery({
-    queryKey: noteKeys.tags(materialId),
-    enabled: isUuid(materialId),
-    queryFn: () =>
-      unwrap(api.GET("/api/v1/notes/tags", { params: { query: { material_id: materialId } } })),
-  });
+  const noteTagsQ = useNoteTags(materialId, { requireMaterial: true });
   const possibleLinksQ = useQuery({
     queryKey: noteKeys.possibleLinks(noteId),
     enabled: Boolean(noteId),

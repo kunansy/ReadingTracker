@@ -25,7 +25,7 @@ export function ListMaterialsQueuePage() {
   const nextToken = pagination.cursor;
 
   const q = useQuery({
-    queryKey: [...materialKeys.queue, { nextToken, order: pagination.order }],
+    queryKey: materialKeys.queueList(nextToken, pagination.order),
     queryFn: () =>
       unwrap(
         api.GET("/api/v1/materials/queue", {

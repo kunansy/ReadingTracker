@@ -261,9 +261,12 @@ async def test_notes_search_serializes_a_non_empty_page(client, mocker):
     assert all(n["is_deleted"] is False for n in body["notes"])
 
 
-async def test_notes_search_rejects_a_malformed_material_id(client, no_side_queries):
+@pytest.mark.parametrize("material_id", ["not-a-uuid", ""])
+async def test_notes_search_rejects_a_malformed_material_id(
+    client, no_side_queries, material_id
+):
     response = await client.get(
-        "/api/v1/notes/search", params={"material_id": "not-a-uuid"}
+        "/api/v1/notes/search", params={"material_id": material_id}
     )
 
     assert response.status_code == 422

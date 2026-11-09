@@ -25,7 +25,7 @@ export function ListReadingMaterialsPage() {
   const nextToken = pagination.cursor;
 
   const q = useQuery({
-    queryKey: [...materialKeys.reading, { nextToken, order: pagination.order }],
+    queryKey: materialKeys.readingList(nextToken, pagination.order),
     placeholderData: keepPreviousData,
     queryFn: () =>
       unwrap(

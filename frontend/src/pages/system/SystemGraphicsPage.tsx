@@ -6,6 +6,7 @@ import { api, unwrap } from "../../api/client";
 import type { GetImageResponse, SpanStatsResponse } from "../../api/schema";
 import { ComboboxInput, ComboboxList, ComboboxRoot } from "../../components/Combobox";
 import { useMaterialReadingNow, useReadMaterialTitles } from "../../materials/queries";
+import { systemKeys } from "../../system/queries";
 
 function SvgImg({ b64, title }: { b64: string; title: string }) {
   return (
@@ -51,7 +52,7 @@ function GraphicBlock({
   spanSummary,
 }: {
   title: string;
-  queryKey: unknown[];
+  queryKey: readonly unknown[];
   load: () => Promise<GetImageResponse>;
   spanSummary?: SpanStatsResponse;
 }) {
@@ -68,7 +69,8 @@ function GraphicBlock({
         {q.isLoading ? <p>Loading graphic…</p> : null}
         {q.error ? <p className="error" role="alert">Error: {q.error.message}</p> : null}
       </div>
-      {q.data?.image ? <SvgImg b64={q.data.image} title={title} /> : <p>No graphic data available</p>}
+      {q.data?.image ? <SvgImg b64={q.data.image} title={title} /> : null}
+      {!q.isLoading && !q.error && !q.data?.image ? <p>No graphic data available</p> : null}
       {spanSummary ? <SpanStatsBlock s={spanSummary} /> : null}
     </section>
   );
@@ -88,7 +90,7 @@ export function SystemGraphicsPage() {
   }, [materialId, materialReadingNowQ.data?.material_id]);
 
   const summaryQ = useQuery({
-    queryKey: ["system-graphics", "summary", { lastDays }],
+    queryKey: systemKeys.summary(lastDays),
     queryFn: () =>
       unwrap(api.GET("/api/v1/system/summary", { params: { query: { last_days: lastDays } } })),
     staleTime: 30_000,
@@ -227,7 +229,7 @@ export function SystemGraphicsPage() {
           {effectiveMaterialId ? (
             <GraphicBlock
               title="Reading progress"
-              queryKey={["system-graphics", "reading-progress", { effectiveMaterialId, lastDays }]}
+              queryKey={systemKeys.graphic("reading-progress", { effectiveMaterialId, lastDays })}
               load={() =>
                 unwrap(
                   api.GET("/api/v1/system/graphics/reading-progress", {
@@ -245,7 +247,7 @@ export function SystemGraphicsPage() {
 
           <GraphicBlock
             title="Read pages"
-            queryKey={["system-graphics", "reading-trend", { lastDays }]}
+            queryKey={systemKeys.graphic("reading-trend", { lastDays })}
             load={() =>
               unwrap(
                 api.GET("/api/v1/system/graphics/reading-trend", {
@@ -258,7 +260,7 @@ export function SystemGraphicsPage() {
 
           <GraphicBlock
             title="Total read"
-            queryKey={["system-graphics", "total-read", { lastDays }]}
+            queryKey={systemKeys.graphic("total-read", { lastDays })}
             load={() =>
               unwrap(
                 api.GET("/api/v1/system/graphics/total-read", {
@@ -270,13 +272,13 @@ export function SystemGraphicsPage() {
 
           <GraphicBlock
             title="Outline percentage"
-            queryKey={["system-graphics", "outline-percentage"]}
+            queryKey={systemKeys.graphic("outline-percentage")}
             load={() => unwrap(api.GET("/api/v1/system/graphics/outline-percentage"))}
           />
 
           <GraphicBlock
             title="Inserted notes"
-            queryKey={["system-graphics", "notes-trend", { lastDays }]}
+            queryKey={systemKeys.graphic("notes-trend", { lastDays })}
             load={() =>
               unwrap(
                 api.GET("/api/v1/system/graphics/notes-trend", {
@@ -289,7 +291,7 @@ export function SystemGraphicsPage() {
 
           <GraphicBlock
             title="Completed materials"
-            queryKey={["system-graphics", "completed-materials-trend", { lastDays }]}
+            queryKey={systemKeys.graphic("completed-materials-trend", { lastDays })}
             load={() =>
               unwrap(
                 api.GET("/api/v1/system/graphics/completed-materials-trend", {
@@ -302,7 +304,7 @@ export function SystemGraphicsPage() {
 
           <GraphicBlock
             title="Repeated materials"
-            queryKey={["system-graphics", "repeated-materials-trend", { lastDays }]}
+            queryKey={systemKeys.graphic("repeated-materials-trend", { lastDays })}
             load={() =>
               unwrap(
                 api.GET("/api/v1/system/graphics/repeated-materials-trend", {
@@ -315,7 +317,7 @@ export function SystemGraphicsPage() {
 
           <GraphicBlock
             title="Outlined materials"
-            queryKey={["system-graphics", "outlined-materials-trend", { lastDays }]}
+            queryKey={systemKeys.graphic("outlined-materials-trend", { lastDays })}
             load={() =>
               unwrap(
                 api.GET("/api/v1/system/graphics/outlined-materials-trend", {

@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { skipToken, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {useEffect, useMemo, useState} from "react";
 import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 
@@ -53,13 +53,15 @@ export function AddReadingLogPage() {
 
   const completionQ = useQuery({
     queryKey: materialKeys.completionInfo(materialId ?? ""),
-    queryFn: () =>
-      unwrap(
-        api.GET("/api/v1/materials/{material_id}/completion-info", {
-          params: { path: { material_id: materialId ?? "" } },
-        }),
-      ),
-    enabled: !!materialId && isUuid(materialId),
+    queryFn:
+      materialId && isUuid(materialId)
+        ? () =>
+            unwrap(
+              api.GET("/api/v1/materials/{material_id}/completion-info", {
+                params: { path: { material_id: materialId } },
+              }),
+            )
+        : skipToken,
   });
 
   const readingMaterialsTitlesQ = useReadingMaterialTitles();
