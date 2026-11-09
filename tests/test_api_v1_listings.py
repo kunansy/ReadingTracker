@@ -148,7 +148,7 @@ async def test_completed_filters_reach_db(client, mocker):
 
     response = await client.get(
         "/api/v1/materials/completed",
-        params={"material_type": "book", "outlined": "outlined", "tags_query": "a b"},
+        params={"material_type": "book", "is_outlined": "true", "tags_query": "a b"},
     )
 
     assert response.status_code == 200
@@ -156,6 +156,41 @@ async def test_completed_filters_reach_db(client, mocker):
     assert kwargs["material_type"] == "book"
     assert kwargs["is_outlined"] is True
     assert kwargs["tags"] == {"a", "b"}
+
+
+@pytest.mark.parametrize(
+    ("params", "expected"),
+    (
+        ({"is_outlined": "false"}, False),
+        ({}, None),
+    ),
+)
+async def test_completed_outlined_filter_reaches_db(client, mocker, params, expected):
+    get_page = mocker.patch.object(
+        materials_db,
+        "completed_statistics_page",
+        mocker.AsyncMock(return_value=_empty_page()),
+    )
+
+    response = await client.get("/api/v1/materials/completed", params=params)
+
+    assert response.status_code == 200
+    assert get_page.await_args.kwargs["is_outlined"] is expected
+
+
+async def test_completed_rejects_invalid_outlined_filter(client, mocker):
+    mocker.patch.object(
+        materials_db,
+        "completed_statistics_page",
+        mocker.AsyncMock(return_value=_empty_page()),
+    )
+
+    response = await client.get(
+        "/api/v1/materials/completed",
+        params={"is_outlined": "maybe"},
+    )
+
+    assert response.status_code == 422
 
 
 async def test_page_params_reach_db(client, mocker):

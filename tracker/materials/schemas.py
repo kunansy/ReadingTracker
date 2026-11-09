@@ -17,6 +17,8 @@ class GetMaterialItem(CustomBaseModel):
     authors: str
     pages: NonNegativeInt
     material_type: enums.MaterialTypesEnum
+    # TODO: store material tags as a list (JSONB/ARRAY) and expose list[str]
+    #  in the API, like note tags.
     tags: str | None = None
     link: HttpUrl | None = None
     added_at: datetime.datetime
@@ -126,19 +128,8 @@ class ParsedMaterialResponse(CustomBaseModel):
 
 class SearchParams(CustomBaseModel):
     material_type: enums.MaterialTypesEnum | None | Literal[""] = None
-    outlined: Literal["outlined", "not_outlined", "all"] | None = None
+    is_outlined: bool | None = None
     tags_query: str | None = None
-
-    @property
-    def is_outlined(self) -> bool | None:
-        if self.outlined == "outlined":
-            return True
-        if self.outlined == "not_outlined":
-            return False
-        if self.outlined in ("all", None):
-            return None
-
-        raise ValueError(f"Invalid outline: {self.outlined!r}")
 
     def requested_tags(self) -> set[str]:
         if not (tags_query := self.tags_query):
