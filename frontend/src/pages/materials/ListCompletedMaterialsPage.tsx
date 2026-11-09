@@ -22,8 +22,10 @@ import {
 } from "../../components/Combobox";
 import { materialKeys, useMaterialTags } from "../../materials/queries";
 
-function isOutlinedFilter(value: string): value is "outlined" | "not_outlined" {
-  return value === "outlined" || value === "not_outlined";
+type OutlinedParam = "true" | "false" | "";
+
+function readOutlinedParam(value: string | null): OutlinedParam {
+  return value === "true" || value === "false" ? value : "";
 }
 
 export function ListCompletedMaterialsPage() {
@@ -34,7 +36,7 @@ export function ListCompletedMaterialsPage() {
     tags_query: searchParams.get("tags_query")
       ? searchParams.get("tags_query")!.split(" ")
       : [],
-    outlined: searchParams.get("outlined") ?? "all",
+    is_outlined: readOutlinedParam(searchParams.get("is_outlined")),
   });
 
   useEffect(() => {
@@ -43,7 +45,7 @@ export function ListCompletedMaterialsPage() {
       tags_query: searchParams.get("tags_query")
         ? searchParams.get("tags_query")!.split(" ")
         : [],
-      outlined: searchParams.get("outlined") ?? "all",
+      is_outlined: readOutlinedParam(searchParams.get("is_outlined")),
       });
   }, [searchParams]);
 
@@ -52,7 +54,7 @@ export function ListCompletedMaterialsPage() {
   const filters = useMemo(() => ({
       material_type: isMaterialType(debouncedForm.material_type) ? debouncedForm.material_type : undefined,
       tags_query: debouncedForm.tags_query.length ? debouncedForm.tags_query.join(" ") : undefined,
-      outlined: isOutlinedFilter(debouncedForm.outlined) ? debouncedForm.outlined : undefined,
+      is_outlined: debouncedForm.is_outlined ? debouncedForm.is_outlined === "true" : undefined,
   }), [debouncedForm]);
   const filtersKey = JSON.stringify(filters);
 
@@ -86,9 +88,7 @@ export function ListCompletedMaterialsPage() {
           if (state.tags_query.length) {
               next.tags_query = state.tags_query.join(" ");
           }
-          if (state.outlined && state.outlined !== "all") {
-              next.outlined = state.outlined;
-          }
+          if (state.is_outlined) next.is_outlined = state.is_outlined;
 
           setSearchParams(next);
       },
@@ -100,8 +100,8 @@ export function ListCompletedMaterialsPage() {
       updateURL(formState);
   };
 
-  const handleOutlinedChange = (value: string) => {
-      setFormState((prev) => ({ ...prev, outlined: value }));
+  const handleOutlinedChange = (value: OutlinedParam) => {
+      setFormState((prev) => ({ ...prev, is_outlined: value }));
   };
 
   if (q.isLoading || materialTagsQ.isLoading) return <p>Loading…</p>;
@@ -144,8 +144,8 @@ export function ListCompletedMaterialsPage() {
                       <label>
                           <input
                               type="radio"
-                              checked={formState.outlined === "outlined"}
-                              onChange={() => handleOutlinedChange("outlined")}
+                              checked={formState.is_outlined === "true"}
+                              onChange={() => handleOutlinedChange("true")}
                           />
                           Outlined only
                       </label>
@@ -155,8 +155,8 @@ export function ListCompletedMaterialsPage() {
                       <label>
                           <input
                               type="radio"
-                              checked={formState.outlined === "not_outlined"}
-                              onChange={() => handleOutlinedChange("not_outlined")}
+                              checked={formState.is_outlined === "false"}
+                              onChange={() => handleOutlinedChange("false")}
                           />
                           Not outlined only
                       </label>
@@ -166,8 +166,8 @@ export function ListCompletedMaterialsPage() {
                       <label>
                           <input
                               type="radio"
-                              checked={formState.outlined === "all"}
-                              onChange={() => handleOutlinedChange("all")}
+                              checked={formState.is_outlined === ""}
+                              onChange={() => handleOutlinedChange("")}
                           />
                           All
                       </label>

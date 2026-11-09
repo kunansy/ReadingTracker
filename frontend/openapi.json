@@ -2729,23 +2729,18 @@
           },
           {
             "in": "query",
-            "name": "outlined",
+            "name": "is_outlined",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "enum": [
-                    "outlined",
-                    "not_outlined",
-                    "all"
-                  ],
-                  "type": "string"
+                  "type": "boolean"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "title": "Outlined"
+              "title": "Is Outlined"
             }
           },
           {

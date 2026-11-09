@@ -1956,7 +1956,7 @@ export interface operations {
         parameters: {
             query?: {
                 material_type?: components["schemas"]["MaterialTypesEnum"] | "" | null;
-                outlined?: ("outlined" | "not_outlined" | "all") | null;
+                is_outlined?: boolean | null;
                 tags_query?: string | null;
                 next_token?: string | null;
                 page_size?: number;
@@ -3415,6 +3415,5 @@ type ReadonlyArray<T> = [
 ] extends [
     unknown[]
 ] ? Readonly<Exclude<T, undefined>> : Readonly<Exclude<T, undefined>[]>;
-export const pathsApiV1MaterialsCompletedGetParametersQueryOutlinedAnyOf0Values: ReadonlyArray<FlattenedDeepRequired<paths>["/api/v1/materials/completed"]["get"]["parameters"]["query"]["outlined"]> = ["outlined", "not_outlined", "all"];
 export const materialTypesEnumValues: ReadonlyArray<FlattenedDeepRequired<components>["schemas"]["MaterialTypesEnum"]> = ["book", "article", "course", "lecture", "audiobook"];
 export const orderValues: ReadonlyArray<FlattenedDeepRequired<components>["schemas"]["Order"]> = ["asc", "desc"];
