@@ -6,6 +6,17 @@ lint:
 test:
 	pytest -vvvv
 
+test-unit:
+	pytest tests/unit
+
+# needs a running Docker daemon: starts throwaway PostgreSQL and Manticore containers
+test-integration:
+	pytest tests/integration
+
+# calls the real habr.com and YouTube API
+test-network:
+	pytest tests/network -m network
+
 lint-mypy:
 	@mypy .
 
@@ -38,7 +49,8 @@ deploy:
 	@ssh tracker "cd tracker; sed -i -E '${IMAGE_LINE} s/:[0-9]+/:${CURRENT_TAG}/' docker-compose.yml; docker compose up -d --build --force-recreate tracker-app; sleep 2; docker ps --filter name=tracker-app --format json | jq '.Image,.State,.Status'"
 
 cov:
-	coverage run -m pytest .
+	coverage run -m pytest
+	coverage report
 
 cov-show:
 	coverage report -m
@@ -54,4 +66,4 @@ run:
 	PYTHONPATH=. gunicorn tracker.main:app --bind 127.0.0.1:9999 --worker-class asgi --asgi-loop uvloop --reload
 
 .PHONY: all
-all: lint test lint-format lint-mypy lint-ruff fmt patch cov cov-show init run gen-api
+all: lint test test-unit test-integration test-network lint-format lint-mypy lint-ruff fmt patch cov cov-show init run gen-api
