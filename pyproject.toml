@@ -103,6 +103,7 @@ filterwarnings = [
 
 [tool.coverage.run]
 branch = true
+relative_files = true
 source = ["."]
 omit = [
     "tests/*",

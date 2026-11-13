@@ -46,6 +46,9 @@ jobs:
 
   tests:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-python@v4
@@ -72,6 +75,12 @@ jobs:
       run: |
         coverage run -m pytest -p no:sugar
         coverage report
+
+    # pushes to master update the badge data branch; pull requests get a coverage comment
+    - name: Publish coverage badge
+      uses: py-cov-action/python-coverage-comment-action@v4.6
+      with:
+        GITHUB_TOKEN: ${{ github.token }}
 
   frontend:
     runs-on: ubuntu-latest
