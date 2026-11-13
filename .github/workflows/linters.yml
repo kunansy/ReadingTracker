@@ -76,7 +76,6 @@ jobs:
         coverage run -m pytest -p no:sugar
         coverage report
 
-    # pushes to master update the badge data branch; pull requests get a coverage comment
     - name: Publish coverage badge
       uses: py-cov-action/python-coverage-comment-action@v4.6
       with:
