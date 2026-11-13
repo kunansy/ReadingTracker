@@ -5,7 +5,6 @@ from collections.abc import Generator, Iterator
 from decimal import Decimal
 from typing import Any
 
-import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa
 from matplotlib import ticker
 from pydantic import NonNegativeInt, computed_field, model_validator
@@ -15,8 +14,7 @@ from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
 from tracker.reading_log import db as logs_db
-from tracker.system import schemas
-from tracker.system.figures import render_svg_base64
+from tracker.system import figures, schemas
 
 
 class TrendException(database.DatabaseException):
@@ -531,12 +529,12 @@ def _create_graphic(
     # set completion dates color to green
     colors = _get_colors(completion_dates, days)
 
-    fig, ax = plt.subplots(figsize=(12, 10))
+    fig, ax = figures.create_figure()
     bar = ax.barh(days, stat.values, edgecolor="white", color=colors)
     ax.bar_label(bar)
 
     if show_mean_line:
-        line = plt.axvline(x=float(stat.mean), color="black", linestyle="-")
+        line = ax.axvline(x=float(stat.mean), color="black", linestyle="-")
         line.set_label(f"Mean {stat.mean} items")
 
     a_percent = stat.max_record.amount / 100
@@ -548,9 +546,9 @@ def _create_graphic(
     ax.set_xlim(xlim)
     if show_mean_line:
         ax.legend()
-    plt.gca().invert_yaxis()
+    ax.invert_yaxis()
 
-    image = render_svg_base64(fig)
+    image = figures.render_svg_base64(fig)
 
     logger.debug("Creating graphic completed")
     return image
@@ -608,7 +606,7 @@ def create_total_read_graphic(
     logger.info("Creating total pages read graphic")
 
     keys = [d.strftime(settings.DATE_FORMAT) for d in stat]
-    fig, ax = plt.subplots(figsize=(12, 10))
+    fig, ax = figures.create_figure()
     ax.plot(keys, list(stat.values()))
     ax.set_yscale("log")
 
@@ -619,7 +617,7 @@ def create_total_read_graphic(
 
     ax.legend()
 
-    image = render_svg_base64(fig)
+    image = figures.render_svg_base64(fig)
 
     logger.debug("Creating graphic completed")
     return image

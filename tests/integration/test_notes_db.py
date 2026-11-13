@@ -1109,13 +1109,16 @@ async def test_create_material_graph_highlights_notes_of_other_materials(
     }
 
 
-@pytest.mark.parametrize("empty", ["material_notes", "notes"])
-async def test_create_material_graph_requires_notes(linked_notes, material_id, empty):
-    kwargs = {"material_notes": {linked_notes["root"]}, "notes": await _notes_by_id()}
-    kwargs[empty] = type(kwargs[empty])()
+async def test_create_material_graph_of_a_material_without_notes_is_empty(
+    linked_notes, material_id
+):
+    graph = notes_db.create_material_graph(
+        material_id=material_id,
+        material_notes=set(),
+        notes=await _notes_by_id(),
+    )
 
-    with pytest.raises(ValueError, match="No notes passed"):
-        notes_db.create_material_graph(material_id=material_id, **kwargs)
+    assert (len(graph.nodes), len(graph.edges)) == (0, 0)
 
 
 async def test_create_graphic_renders_the_graph_of_stored_notes(linked_notes):

@@ -239,20 +239,25 @@ class TestLinkAllNotes:
 
 class TestCreateMaterialGraph:
     @pytest.mark.parametrize(
-        ("material_notes", "notes"),
-        [
-            (set(), by_id(build_note(1))),
-            ({note_id(1)}, {}),
-            (set(), {}),
-        ],
-        ids=["no-material-notes", "no-notes", "nothing"],
+        "notes",
+        [by_id(build_note(1)), {}],
+        ids=["other-notes", "nothing"],
     )
-    def test_no_notes_raise_value_error(self, material_notes, notes):
-        with pytest.raises(ValueError, match="No notes passed"):
+    def test_material_without_notes_gives_an_empty_graph(self, notes):
+        graph = db.create_material_graph(
+            material_id=MATERIAL_ID,
+            material_notes=set(),
+            notes=notes,
+        )
+
+        assert (len(graph.nodes), len(graph.edges)) == (0, 0)
+
+    def test_material_note_missing_from_the_notes_is_a_key_error(self):
+        with pytest.raises(KeyError):
             db.create_material_graph(
                 material_id=MATERIAL_ID,
-                material_notes=material_notes,
-                notes=notes,
+                material_notes={note_id(1)},
+                notes={},
             )
 
     def test_components_of_every_material_note_are_composed(self):

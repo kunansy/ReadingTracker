@@ -647,9 +647,6 @@ def create_material_graph(
     material_notes: set[UUID],
     notes: dict[UUID, Note],
 ) -> nx.DiGraph:
-    if not (material_notes and notes):
-        raise ValueError("No notes passed")
-
     graph = nx.DiGraph()
     while material_notes:
         note_id = material_notes.pop()

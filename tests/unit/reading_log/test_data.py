@@ -255,13 +255,12 @@ async def test_empty_log_in_the_database_gives_nothing(db_lookups):
     get_completion_dates.assert_not_awaited()
 
 
-async def test_failed_completion_dates_lookup_is_treated_as_nothing_completed(db_lookups):
+async def test_failed_completion_dates_lookup_is_propagated(db_lookups):
     _, get_completion_dates = db_lookups
     get_completion_dates.side_effect = RuntimeError("database is down")
 
-    days = await _days([_log(A, -2), _log(B, -1)], None)
-
-    assert days == [(day(-2), A, 10), (day(-1), B, 10), (day(0), B, 0)]
+    with pytest.raises(RuntimeError, match="database is down"):
+        await _days([_log(A, -2), _log(B, -1)], None)
 
 
 async def test_explicit_empty_log_gives_nothing_without_reading_the_database(db_lookups):

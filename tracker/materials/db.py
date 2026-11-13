@@ -13,7 +13,7 @@ import sqlalchemy.sql as sa
 from pydantic import ConfigDict, computed_field, field_validator
 from sqlalchemy import Date, Integer, Text
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.engine import Result, Row
+from sqlalchemy.engine import Row
 
 from tracker.common import database, pagination, schemas, settings, sort_keys
 from tracker.common.logger import logger
@@ -609,21 +609,6 @@ async def update_material(
     logger.debug("Material updated")
 
 
-async def _check_material_transition(
-    result: Result[Any],
-    *,
-    material_id: UUID,
-    conflict_msg: str,
-) -> None:
-    if database.affected_rows(result) == 1:
-        return
-    if await get_material(material_id=material_id) is None:
-        msg = f"Material id={material_id!r} not found"
-        logger.info(msg)
-        raise database.NotFoundException(msg)
-    database.check_state_changed(result, msg=conflict_msg)
-
-
 async def start_material(
     *,
     material_id: UUID,
@@ -642,10 +627,9 @@ async def start_material(
     async with database.session() as ses:
         result = await ses.execute(stmt)
 
-    await _check_material_transition(
+    database.check_state_changed(
         result,
-        material_id=material_id,
-        conflict_msg=f"Material id={material_id!r} is not in the queue",
+        msg=f"Material id={material_id!r} is not in the queue",
     )
 
     logger.debug("Material started")
@@ -699,10 +683,9 @@ async def complete_material(
     async with database.session() as ses:
         result = await ses.execute(stmt)
 
-    await _check_material_transition(
+    database.check_state_changed(
         result,
-        material_id=material_id,
-        conflict_msg=f"Material id={material_id!r} is not being read",
+        msg=f"Material id={material_id!r} is not being read",
     )
 
     logger.debug("Material completed at %s", completed_at)

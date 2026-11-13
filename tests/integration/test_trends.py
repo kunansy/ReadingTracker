@@ -509,7 +509,7 @@ async def test_reading_graphic_without_completion_dates_uses_the_default_colour(
     await _seed_reading_log()
     stat = await trends.get_span_reading_statistics(span_size=SPAN_SIZE)
     barh = mocker.spy(Axes, "barh")
-    axvline = mocker.spy(trends.plt, "axvline")
+    axvline = mocker.spy(Axes, "axvline")
 
     image = trends.create_reading_graphic(stat, completion_dates=completion_dates)
 
@@ -619,7 +619,7 @@ def test_report_request_defaults_to_today_and_shifts_back():
 async def test_graphic_without_the_mean_line_has_no_legend(mocker):
     await _seed_reading_log()
     stat = await trends.get_span_reading_statistics(span_size=SPAN_SIZE)
-    axvline = mocker.spy(trends.plt, "axvline")
+    axvline = mocker.spy(Axes, "axvline")
     legend = mocker.spy(Axes, "legend")
 
     image = trends._create_graphic(stat=stat, show_mean_line=False)

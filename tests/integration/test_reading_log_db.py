@@ -419,22 +419,17 @@ async def test_data_uses_the_given_records_and_completion_dates_without_reading_
     ]
 
 
-async def test_data_keeps_going_when_completion_dates_cannot_be_read(clock, mocker):
+async def test_data_fails_when_completion_dates_cannot_be_read(clock, mocker):
     material_id = await h.completed(clock, started=h.day(3), finished=h.day(2))
-    log_id = await db.insert_log_record(material_id=material_id, count=100, date=h.day(2))
+    await db.insert_log_record(material_id=material_id, count=100, date=h.day(2))
     mocker.patch.object(
         db,
         "get_completion_dates",
         side_effect=database.DatabaseException("down"),
     )
 
-    rows = await collect_data()
-
-    assert rows == [
-        (h.day(2), material_id, 100, log_id),
-        (h.day(1), material_id, 0, None),
-        (h.day(0), material_id, 0, None),
-    ]
+    with pytest.raises(database.DatabaseException, match="down"):
+        await collect_data()
 
 
 async def test_data_yields_nothing_when_every_log_is_after_today_current_behaviour(clock):
