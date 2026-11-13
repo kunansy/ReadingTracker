@@ -151,6 +151,30 @@ describe("SystemGraphicsPage reading progress", () => {
   });
 });
 
+describe("SystemGraphicsPage tracker statistics", () => {
+  it("shows the statistics of a non-empty reading log", async () => {
+    stubFetch();
+    renderPage();
+
+    expect(await screen.findByText("First record date: 2026-01-01")).not.toBeNull();
+    expect(screen.queryByText("Reading log is empty.")).toBeNull();
+  });
+
+  it("says the reading log is empty when there are no statistics", async () => {
+    stubFetch({
+      "/api/v1/system/summary": {
+        status: 200,
+        body: { ...SUMMARY_RESPONSE, tracker_statistics: null },
+      },
+    });
+    renderPage();
+
+    expect(await screen.findByText("Reading log is empty.")).not.toBeNull();
+    expect(screen.getByText("Tracker statistics")).not.toBeNull();
+    expect(screen.queryByText(/First record date/)).toBeNull();
+  });
+});
+
 describe("SystemGraphicsPage graphics", () => {
   it("shows a failed graphic as an error, not as missing data", async () => {
     stubFetch({

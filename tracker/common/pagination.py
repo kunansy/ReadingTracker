@@ -1,9 +1,11 @@
 import base64
+import datetime
 import json
+import re
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Annotated, Final, TypeGuard
+from typing import Annotated, Any, Final, TypeGuard
 
 import sqlalchemy.sql as sa
 from pydantic import Field
@@ -25,6 +27,8 @@ _MAX_ITEMS_PARAM: Final[str] = "max_items"
 _CONTINUE_CURSOR_KEY: Final[str] = "cursor"
 _PARAMS_KEY: Final[str] = "params"
 _CONTINUE_FROM_KEY: Final[str] = "continue_from"
+_INT4_PATTERN: Final = re.compile(r"[0-9]+")
+_MAX_INT4: Final[int] = 2**31 - 1
 
 
 class Order(StrEnum):
@@ -41,10 +45,20 @@ def encode_next_token(params: TokenMap, continue_from: TokenMap) -> str:
     return base64.urlsafe_b64encode(raw.encode()).decode()
 
 
+def _is_postgres_text(value: str) -> bool:
+    # Postgres rejects NUL in text parameters, and asyncpg cannot encode lone surrogates.
+    if "\x00" in value:
+        return False
+    try:
+        value.encode("utf-8")
+    except UnicodeEncodeError:
+        return False
+    return True
+
+
 def _is_token_map(value: object) -> TypeGuard[TokenMap]:
-    # Postgres rejects NUL in text parameters.
     return isinstance(value, dict) and all(
-        isinstance(key, str) and isinstance(val, str) and "\x00" not in val
+        isinstance(key, str) and isinstance(val, str) and _is_postgres_text(val)
         for key, val in value.items()
     )
 
@@ -170,13 +184,96 @@ def cursor(*parts: sa.ColumnElement) -> sa.ColumnElement[str]:
     return expr.collate(COLLATION)
 
 
+@dataclass(frozen=True, slots=True)
+class KeyPart:
+    column: sa.ColumnElement[Any]
+    text: sa.ColumnElement[str]
+    parse: Callable[[str], object]
+
+
+def date_key(column: sa.ColumnElement[Any]) -> KeyPart:
+    return KeyPart(column, date_part(column), datetime.date.fromisoformat)
+
+
+def datetime_key(column: sa.ColumnElement[Any]) -> KeyPart:
+    return KeyPart(column, datetime_part(column), datetime.datetime.fromisoformat)
+
+
+def _parse_int4(value: str) -> int:
+    # int() would also take "+1", " 1" and "1_0"; the column is a 4-byte integer
+    if not _INT4_PATTERN.fullmatch(value) or int(value) > _MAX_INT4:
+        raise ValueError(f"Invalid integer cursor part {value!r}")
+    return int(value)
+
+
+def int_key(column: sa.ColumnElement[Any]) -> KeyPart:
+    return KeyPart(column, int_part(column), _parse_int4)
+
+
+def text_key(column: sa.ColumnElement[str]) -> KeyPart:
+    return KeyPart(column, column, str)
+
+
+@dataclass(frozen=True, slots=True)
+class Keyset:
+    """A cursor over several columns, compared as a row value of the columns.
+
+    The token keeps the joined text of the parts, as `cursor()` builds it; the query
+    compares and orders by the columns themselves, so a composite index serves the page.
+    Every part but the last must not contain the separator.
+    """
+
+    parts: tuple[KeyPart, ...]
+
+    @property
+    def text(self) -> sa.ColumnElement[str]:
+        return cursor(*(part.text for part in self.parts))
+
+    def start(self, cursor_value: str) -> tuple[object, ...]:
+        values = cursor_value.split(sort_keys.SEPARATOR, len(self.parts) - 1)
+        if len(values) != len(self.parts):
+            raise database.InvalidNextTokenException("next_token has no valid cursor")
+        try:
+            return tuple(
+                part.parse(value) for part, value in zip(self.parts, values, strict=True)
+            )
+        except ValueError as e:
+            raise database.InvalidNextTokenException(
+                "next_token has no valid cursor",
+            ) from e
+
+
+def keyset(*parts: KeyPart) -> Keyset:
+    return Keyset(parts)
+
+
+def _paginate_keyset(stmt: sa.Select, *, key: Keyset, request: PageRequest) -> sa.Select:
+    is_desc = request.order == Order.DESC
+    stmt = stmt.add_columns(key.text.label(_CURSOR_COLUMN)).order_by(None)
+    if (start := request.cursor) is not None:
+        columns = sa.tuple_(*(part.column for part in key.parts))
+        values = sa.tuple_(
+            *(
+                sa.bindparam(None, value, type_=part.column.type)
+                for part, value in zip(key.parts, key.start(start), strict=True)
+            ),
+        )
+        stmt = stmt.where(columns <= values if is_desc else columns >= values)
+
+    order = [part.column.desc() if is_desc else part.column.asc() for part in key.parts]
+    return stmt.order_by(*order).limit(request.page_size + 1)
+
+
 def paginate(
     stmt: sa.Select,
     *,
-    cursor_expr: sa.ColumnElement[str],
+    cursor_expr: sa.ColumnElement[str] | Keyset,
     request: PageRequest,
 ) -> sa.Select:
     """Rows from the cursor inclusive, plus one extra row for the next cursor."""
+    if isinstance(cursor_expr, Keyset):
+        return _paginate_keyset(stmt, key=cursor_expr, request=request)
+
     is_desc = request.order == Order.DESC
     stmt = stmt.add_columns(cursor_expr.label(_CURSOR_COLUMN)).order_by(None)
     if (start := request.cursor) is not None:
@@ -209,7 +306,7 @@ async def count(ses: AsyncSession, stmt: sa.Select) -> int:
 async def fetch_rows[T](
     stmt: sa.Select,
     *,
-    cursor_expr: sa.ColumnElement[str],
+    cursor_expr: sa.ColumnElement[str] | Keyset,
     request: PageRequest,
     to_item: Callable[[Row], T],
 ) -> tuple[list[T], str | None, int]:
@@ -227,7 +324,7 @@ async def fetch_rows[T](
 async def fetch_page[T](
     stmt: sa.Select,
     *,
-    cursor_expr: sa.ColumnElement[str],
+    cursor_expr: sa.ColumnElement[str] | Keyset,
     request: PageRequest,
     to_item: Callable[[Row], T],
 ) -> Page[T]:

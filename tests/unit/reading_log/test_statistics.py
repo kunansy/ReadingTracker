@@ -512,13 +512,12 @@ async def test_tracker_statistics_of_a_single_log_day(tracker_sources):
     assert stat.would_be_total_percent == 100.0
 
 
-async def test_tracker_statistics_of_empty_log_raise_current_behaviour(tracker_sources):
+async def test_tracker_statistics_of_empty_log_are_none(tracker_sources):
     tracker_sources.list_log_records.return_value = []
-    tracker_sources.get_means.return_value = {}
-    tracker_sources.get_read_pages.return_value = {}
 
-    with pytest.raises(ValueError, match="^Could not find start date, no records found$"):
-        await st.get_tracker_statistics()
+    assert await st.get_tracker_statistics() is None
+    tracker_sources.get_means.assert_not_awaited()
+    tracker_sources.get_read_pages.assert_not_awaited()
 
 
 async def test_tracker_statistics_without_means_divide_by_zero_current_behaviour(

@@ -41,10 +41,11 @@ class Note(CustomBaseModel):
     links_count: int | None = None
 
     @field_validator("tags", mode="before")
-    def load_tags(cls, tags: set[str] | str) -> set[str]:
+    def load_tags(cls, tags: set[str] | list[str] | str | None) -> Any:
+        # the column is nullable: SQL NULL arrives as None, a JSON null as "null"
         if isinstance(tags, str):
-            return set(orjson.loads(tags))
-        return tags
+            tags = orjson.loads(tags)
+        return tags or set()
 
     @field_serializer("added_at")
     def serialize_added_at(self, added_at: datetime.datetime) -> str:
@@ -405,6 +406,47 @@ async def _del_or_restore(*, note_id: UUID, is_deleted: bool) -> None:
     database.check_updated_one(result, entity="Note", entity_id=note_id)
 
 
+async def is_link_cyclic(*, note_id: UUID, link_id: UUID) -> bool:
+    """Whether linking `note_id` to `link_id` closes a cycle of links.
+
+    Deleted notes are followed too: restoring one must not bring a cycle back.
+    """
+    logger.debug(
+        "Checking link note_id='%s' -> link_id='%s' for a cycle",
+        note_id,
+        link_id,
+    )
+
+    stmt = sa.select(models.Notes.c.link_id).where(
+        models.Notes.c.note_id == sa.bindparam("id"),
+    )
+    visited: set[UUID] = set()
+    current: UUID | None = link_id
+
+    async with database.session() as ses:
+        while current is not None and current not in visited:
+            if current == note_id:
+                return True
+            visited.add(current)
+            current = await ses.scalar(stmt, {"id": current})
+
+    return False
+
+
+async def count_links_to(*, note_id: UUID) -> int:
+    logger.debug("Counting notes linked to note_id='%s'", note_id)
+
+    stmt = (
+        sa.select(sa.func.count(1))  # type: ignore[arg-type]
+        .select_from(models.Notes)
+        .where(models.Notes.c.link_id == note_id)
+        .where(~models.Notes.c.is_deleted)
+    )
+
+    async with database.session() as ses:
+        return await ses.scalar(stmt) or 0
+
+
 async def delete_note(*, note_id: UUID) -> None:
     logger.debug("Deleting note_id='%s'", note_id)
     await _del_or_restore(note_id=note_id, is_deleted=True)
@@ -417,13 +459,18 @@ async def restore_note(*, note_id: UUID) -> None:
     logger.debug("Note restored")
 
 
+def _flatten_tags(rows: Iterable[list[str] | None]) -> list[str]:
+    # a JSON null passes `tags != []`
+    return [tag for tags in rows if tags for tag in tags]
+
+
 async def _get_tags() -> set[str]:
     logger.debug("Getting tags")
 
     stmt = sa.select(models.Notes.c.tags).where(models.Notes.c.tags != [])
 
     async with database.session() as ses:
-        tags: list[str] = sum((await ses.scalars(stmt)).all(), [])
+        tags = _flatten_tags((await ses.scalars(stmt)).all())
 
     tags_set = set(tags)
     logger.debug("Total %s unique tags got", len(tags_set))
@@ -441,7 +488,7 @@ async def _get_material_tags(material_id: str | UUID) -> list[str]:
     )
 
     async with database.session() as ses:
-        tags: list[str] = sum((await ses.scalars(stmt)).all(), [])
+        tags = _flatten_tags((await ses.scalars(stmt)).all())
 
     tags_counter = Counter(tags)
     logger.debug("Total %s unique tags got", len(tags_counter))
@@ -507,7 +554,8 @@ def _add_links_to(
     note_id: UUID,
     even_added_notes: set[UUID],
 ) -> None:
-    if not (link_id := notes[note_id].link_id) or link_id in even_added_notes:
+    link_id = notes[note_id].link_id
+    if not link_id or link_id in even_added_notes or link_id not in notes:
         return
 
     # to resolve circular recursion
@@ -529,18 +577,18 @@ def _link_cohesive_notes(
     """Iterate over graph and find all note links."""
     if note_id in visited:
         return
+    # before following the link, so a cycle already in the data terminates
+    visited.add(note_id)
 
     link_id = notes[note_id].link_id
     links_from = _get_links_from(note_id=note_id, notes=notes.values())
 
-    if link_id:
+    # a deleted note is missing from `notes`
+    if link_id and link_id in notes:
         graph.add_nodes_from([_get_note_link(notes[link_id])])
         graph.add_edge(str(note_id), str(link_id))
 
         _link_cohesive_notes(graph, notes, link_id, visited=visited)
-
-    # mark note as visited in reverse recursion road
-    visited.add(note_id)
 
     for link in links_from:
         graph.add_nodes_from([_get_note_link(notes[link.note_id])])
@@ -577,11 +625,12 @@ def link_all_notes(notes: list[Note]) -> nx.DiGraph:
 
     logger.debug("Linking all %s notes started", len(notes))
 
+    note_ids = {note.note_id for note in notes}
     nodes, edges = [], []
 
     for note in notes:
         nodes.append(_get_note_link(note))
-        if note.link_id:
+        if note.link_id and note.link_id in note_ids:
             edges.append((str(note.note_id), str(note.link_id)))
 
     graph = nx.DiGraph()
@@ -688,9 +737,9 @@ async def get_links_from_page(
     notes_model = stmt.selected_columns
     return await pagination.fetch_page(
         stmt,
-        cursor_expr=pagination.cursor(
-            pagination.int_part(notes_model.note_number),
-            notes_model.sort_key,
+        cursor_expr=pagination.keyset(
+            pagination.int_key(notes_model.note_number),
+            pagination.text_key(notes_model.sort_key),
         ),
         request=pagination.page_request(
             params,

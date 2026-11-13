@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 from uuid import UUID
 
 import pytest
@@ -5,6 +6,8 @@ import pytest
 from tests.unit.api import factories
 from tracker.cards import db as cards_db
 from tracker.common import database, pagination
+from tracker.materials import db as materials_db
+from tracker.notes import db as notes_db
 
 
 URL = "/api/v1/cards/"
@@ -128,10 +131,67 @@ async def test_list_cards_maps_invalid_token_to_422(client, get_cards_page):
 
 
 @pytest.fixture
-def add_card(mocker):
+def card_refs(mocker):
+    """The material and the note of the card exist and belong together."""
+    return SimpleNamespace(
+        get_material=mocker.patch.object(
+            materials_db,
+            "get_material_api",
+            mocker.AsyncMock(return_value=factories.material()),
+        ),
+        get_note=mocker.patch.object(
+            notes_db, "get_note", mocker.AsyncMock(return_value=factories.note())
+        ),
+    )
+
+
+@pytest.fixture
+def add_card(mocker, card_refs):
     return mocker.patch.object(
         cards_db, "add_card", mocker.AsyncMock(return_value=factories.CARD_ID)
     )
+
+
+CARD_BODY = {
+    "material_id": str(factories.MATERIAL_ID),
+    "note_id": str(factories.NOTE_ID),
+    "question": "q",
+}
+
+
+async def test_create_card_checks_the_material_and_the_note(client, add_card, card_refs):
+    response = await client.post(URL, json=CARD_BODY)
+
+    assert response.status_code == 201
+    card_refs.get_material.assert_awaited_once_with(material_id=factories.MATERIAL_ID)
+    card_refs.get_note.assert_awaited_once_with(note_id=factories.NOTE_ID)
+
+
+@pytest.mark.parametrize("missing", ["get_material", "get_note"])
+async def test_create_card_with_a_missing_reference_is_404(
+    client, add_card, card_refs, missing
+):
+    getattr(card_refs, missing).side_effect = database.NotFoundException("not found")
+
+    response = await client.post(URL, json=CARD_BODY)
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "NotFoundError: not found"}
+    add_card.assert_not_awaited()
+
+
+async def test_create_card_for_a_note_of_another_material_is_400(
+    client, add_card, card_refs
+):
+    card_refs.get_note.return_value = factories.note(
+        material_id=factories.OTHER_MATERIAL_ID
+    )
+
+    response = await client.post(URL, json=CARD_BODY)
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Note belongs to another material"}
+    add_card.assert_not_awaited()
 
 
 async def test_create_card(client, add_card):

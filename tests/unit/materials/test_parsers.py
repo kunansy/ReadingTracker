@@ -59,26 +59,12 @@ def test_parse_habr_without_title_and_authors_raises(html):
         db.parse_habr(html)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/materials/db.py:1010 `not (title or authors)` only fails when both "
-        "are missing, so an article without a title is returned with title=''"
-    ),
-)
 @pytest.mark.parametrize("title", [None, "", "   "], ids=["no-tag", "empty-tag", "blank-tag"])
 def test_parse_habr_without_title_raises(title):
     with pytest.raises(ValueError, match="^Title or authors not found$"):
         db.parse_habr(_habr_page(title=title))
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/materials/db.py:1010 `not (title or authors)` only fails when both "
-        "are missing, so an article without an author is returned with authors=''"
-    ),
-)
 @pytest.mark.parametrize("author", [None, "", "   "], ids=["no-tag", "empty-tag", "blank-tag"])
 def test_parse_habr_without_authors_raises(author):
     with pytest.raises(ValueError, match="^Title or authors not found$"):

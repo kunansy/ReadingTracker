@@ -19,13 +19,14 @@ MATERIAL_COLUMNS = (
     "materials.material_type, materials.tags, materials.link, materials.added_at, "
     "materials.is_outlined, materials.started_at, materials.completed_at, materials.sort_key"
 )
+LAST_LOG_DATE = (
+    "(SELECT max(reading_log.date) AS max_1 FROM reading_log "
+    "WHERE reading_log.material_id = materials.material_id)"
+)
 READING_MATERIALS = (
-    "WITH reading_logs AS (SELECT reading_log.material_id AS material_id, "
-    "max(reading_log.date) AS date FROM reading_log GROUP BY reading_log.material_id) "
     f"{MATERIAL_COLUMNS}, "
-    "coalesce(reading_logs.date, date(materials.started_at)) AS last_read_at "
-    "FROM materials LEFT OUTER JOIN reading_logs "
-    "ON reading_logs.material_id = materials.material_id "
+    f"coalesce({LAST_LOG_DATE}, date(materials.started_at)) AS last_read_at "
+    "FROM materials "
     "WHERE materials.started_at IS NOT NULL AND materials.completed_at IS NULL"
 )
 
@@ -42,7 +43,7 @@ def test_free_materials_are_not_started_ordered_by_sort_key():
 def test_reading_materials_are_ordered_by_the_last_log_date():
     sql = compile_sql(db._get_reading_materials_stmt())
 
-    assert sql == f"{READING_MATERIALS} ORDER BY reading_logs.date DESC"
+    assert sql == f"{READING_MATERIALS} ORDER BY {LAST_LOG_DATE} DESC"
 
 
 def test_completed_materials_without_filters():
@@ -62,12 +63,12 @@ def test_completed_materials_without_filters():
         ({"is_outlined": False}, "materials.is_outlined = false"),
         (
             {"tags": {"sql"}},
-            "(string_to_array(materials.tags, ', ') @> CAST(ARRAY['sql'] AS TEXT[]))",
+            "(regexp_split_to_array(lower(trim(materials.tags)), '\\\\s*,\\\\s*') @> CAST(ARRAY['sql'] AS TEXT[]))",
         ),
         (
-            {"tags": {"sql", "python", "Ядро"}},
-            "(string_to_array(materials.tags, ', ') "
-            "@> CAST(ARRAY['python', 'sql', 'Ядро'] AS TEXT[]))",
+            {"tags": {"sql", " Python ", "Ядро"}},
+            "(regexp_split_to_array(lower(trim(materials.tags)), '\\\\s*,\\\\s*') "
+            "@> CAST(ARRAY['python', 'sql', 'ядро'] AS TEXT[]))",
         ),
         (
             {
@@ -76,10 +77,10 @@ def test_completed_materials_without_filters():
                 "tags": {"b", "a"},
             },
             "materials.material_type = 'book' AND materials.is_outlined = false "
-            "AND (string_to_array(materials.tags, ', ') @> CAST(ARRAY['a', 'b'] AS TEXT[]))",
+            "AND (regexp_split_to_array(lower(trim(materials.tags)), '\\\\s*,\\\\s*') @> CAST(ARRAY['a', 'b'] AS TEXT[]))",
         ),
     ],
-    ids=["type", "outlined", "not-outlined", "one-tag", "sorted-tags", "all-filters"],
+    ids=["type", "outlined", "not-outlined", "one-tag", "normalized-sorted-tags", "all-filters"],
 )
 def test_completed_materials_filters(filters, expected_where):
     sql = compile_sql(db._get_completed_materials_stmt(**filters))
@@ -93,8 +94,14 @@ def test_completed_materials_filters(filters, expected_where):
 
 @pytest.mark.parametrize(
     "filters",
-    [{"material_type": None}, {"is_outlined": None}, {"tags": None}, {"tags": set()}],
-    ids=["no-type", "no-outlined", "no-tags", "empty-tags"],
+    [
+        {"material_type": None},
+        {"is_outlined": None},
+        {"tags": None},
+        {"tags": set()},
+        {"tags": {" ", ""}},
+    ],
+    ids=["no-type", "no-outlined", "no-tags", "empty-tags", "blank-tags"],
 )
 def test_completed_materials_empty_filter_is_not_applied(filters):
     assert compile_sql(db._get_completed_materials_stmt(**filters)) == compile_sql(
@@ -109,7 +116,7 @@ def test_tag_filter_quotes_tag_literals():
 
 
 @pytest.mark.parametrize("is_outlined", [True, False], ids=["outlined-only", "all"])
-def test_repeating_queue_statement(is_outlined):
+def test_repeating_queue_statement(is_outlined, frozen_now):
     stmt, repeat_at = db._get_repeating_queue_stmt(is_outlined=is_outlined)
 
     sql = compile_sql(stmt)
@@ -117,7 +124,8 @@ def test_repeating_queue_statement(is_outlined):
     where = (
         "WHERE materials.completed_at IS NOT NULL "
         "AND NOT (materials.is_outlined AND coalesce(notes_stat.notes_count, 0) = 0) "
-        f"AND date(now()) - {last_seen} >= 30 * (coalesce(repeats_stat.repeats_count, 0) + 1)"
+        f"AND '{frozen_now.date().isoformat()}' - {last_seen} "
+        ">= 30 * (coalesce(repeats_stat.repeats_count, 0) + 1)"
     )
     if is_outlined:
         where += " AND materials.is_outlined"
@@ -159,14 +167,6 @@ async def test_last_material_started_is_none_when_nothing_is_read(executed):
     assert await db.get_last_material_started() is None
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/materials/db.py:280-282 the second order_by() is appended to "
-        "`ORDER BY reading_logs.date DESC`, so the material with the latest log wins "
-        "over the last started one"
-    ),
-)
 async def test_last_material_started_is_ordered_by_the_start_date(executed):
     session = executed(None)
 
@@ -174,18 +174,6 @@ async def test_last_material_started_is_ordered_by_the_start_date(executed):
 
     sql = compile_sql(session.execute.await_args.args[0])
     assert sql == f"{READING_MATERIALS} ORDER BY materials.started_at DESC LIMIT 1"
-
-
-async def test_last_material_started_order_current_behaviour(executed):
-    session = executed(None)
-
-    await db.get_last_material_started()
-
-    sql = compile_sql(session.execute.await_args.args[0])
-    assert sql == (
-        f"{READING_MATERIALS} "
-        "ORDER BY reading_logs.date DESC, materials.started_at DESC LIMIT 1"
-    )
 
 
 @pytest.fixture
@@ -225,11 +213,15 @@ async def test_material_tags_are_split_stripped_and_lowercased(tags_in_db, store
     assert await db.get_material_tags() == expected
 
 
-@pytest.mark.parametrize("stored", ["", "python,", ", ,"], ids=["empty", "trailing", "blank"])
-async def test_material_tags_keep_empty_tag_current_behaviour(tags_in_db, stored):
+@pytest.mark.parametrize(
+    ("stored", "expected"),
+    [("", set()), ("python,", {"python"}), (", ,", set())],
+    ids=["empty", "trailing", "blank"],
+)
+async def test_material_tags_skip_empty_tags(tags_in_db, stored, expected):
     tags_in_db([stored])
 
-    assert "" in await db.get_material_tags()
+    assert await db.get_material_tags() == expected
 
 
 async def test_material_tags_query_skips_materials_without_tags(tags_in_db):
@@ -242,14 +234,14 @@ async def test_material_tags_query_skips_materials_without_tags(tags_in_db):
     )
 
 
-def test_listed_tag_cannot_be_found_by_the_filter_when_stored_without_space_current_behaviour():
-    """`get_material_tags` lists 'sql' for a stored 'Python,SQL'; the filter looks for
-    an element of string_to_array(tags, ', '), which is the whole 'Python,SQL' string.
-    """
-    sql = compile_sql(db._get_completed_materials_stmt(tags={"sql"}))
+def test_tag_filter_splits_like_the_tag_listing():
+    """`get_material_tags` splits by ',' with spaces around and lowers; so does the filter."""
+    sql = compile_sql(db._get_completed_materials_stmt(tags={"SQL"}))
 
-    assert "string_to_array(materials.tags, ', ') @> CAST(ARRAY['sql'] AS TEXT[])" in sql
-    assert "lower(" not in sql
+    assert (
+        "regexp_split_to_array(lower(trim(materials.tags)), '\\\\s*,\\\\s*') "
+        "@> CAST(ARRAY['sql'] AS TEXT[])"
+    ) in sql
 
 
 @pytest.fixture

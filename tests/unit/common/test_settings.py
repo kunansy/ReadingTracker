@@ -137,13 +137,6 @@ def test_db_uri_does_not_escape_the_password_current_behaviour(load_settings):
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/common/settings.py:29 the validator returns False instead of "
-        "raising, which marshmallow 4 ignores, so a trailing slash is accepted"
-    ),
-)
 @pytest.mark.parametrize(
     "url",
     ["http://tracker.test/", "/", "http://tracker.test//"],
@@ -152,6 +145,17 @@ def test_db_uri_does_not_escape_the_password_current_behaviour(load_settings):
 def test_tracker_url_with_trailing_slash_is_rejected(load_settings, url):
     with pytest.raises(environs.EnvValidationError, match="TRACKER_URL"):
         load_settings(TRACKER_URL=url)
+
+
+def test_hostname_survives_the_environment_clear(load_settings):
+    loaded = load_settings(HOSTNAME="tracker-pod-1")
+
+    assert loaded.HOSTNAME == "tracker-pod-1"
+    assert "HOSTNAME" not in os.environ
+
+
+def test_hostname_is_none_when_not_set(load_settings):
+    assert load_settings().HOSTNAME is None
 
 
 def test_tracker_url_with_path_is_accepted(load_settings):

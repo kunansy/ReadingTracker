@@ -12,7 +12,7 @@ async def test_database_is_the_throwaway_container_at_head():
 
     assert db_name == "tracker_test"
     assert settings.DB_URI.endswith("/tracker_test")
-    assert version == "0007"
+    assert version == "0008"
 
 
 async def test_factories_write_rows_the_test_reads_back():

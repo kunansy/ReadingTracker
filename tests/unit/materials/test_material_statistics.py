@@ -469,10 +469,12 @@ async def test_completed_statistics_page_binds_filters_and_replaces_items(mocker
             tags={"sql", "python"},
         ),
     )
-    assert compile_sql(kwargs["cursor_expr"]) == (
+    key = kwargs["cursor_expr"]
+    assert compile_sql(key.text) == (
         "to_char(materials.completed_at, 'YYYY-MM-DD\"T\"HH24:MI:SS.US') "
         f"|| '{SEPARATOR}' || materials.sort_key COLLATE \"C\""
     )
+    assert [part.column.name for part in key.parts] == ["completed_at", "sort_key"]
     # the extra pagination columns of the row must not break the model
     assert kwargs["to_item"](_Row(material, sort_key="k", cursor="c")) == material
 
@@ -519,7 +521,7 @@ async def test_completed_statistics_page_rejects_token_of_other_filters(fetch_pa
     fetch_page.assert_not_awaited()
 
 
-async def test_reading_statistics_page_orders_by_last_read_date(mocker, fetch_page):
+async def test_reading_statistics_page_orders_by_the_start_date(mocker, fetch_page):
     material = make_material(started_at=midnight(-5))
     stat = _statistics(material=material)
     fetch_page.return_value = pagination.Page(
@@ -541,10 +543,12 @@ async def test_reading_statistics_page_orders_by_last_read_date(mocker, fetch_pa
     kwargs = fetch_page.await_args.kwargs
     assert compile_sql(stmt) == compile_sql(db._get_reading_materials_stmt())
     assert kwargs["request"].params == {"order": "desc", "max_items": "20"}
-    assert compile_sql(kwargs["cursor_expr"]) == (
-        "to_char(coalesce(reading_logs.date, date(materials.started_at)), 'YYYY-MM-DD') "
+    key = kwargs["cursor_expr"]
+    assert compile_sql(key.text) == (
+        "to_char(materials.started_at, 'YYYY-MM-DD\"T\"HH24:MI:SS.US') "
         f"|| '{SEPARATOR}' || materials.sort_key COLLATE \"C\""
     )
+    assert [part.column.name for part in key.parts] == ["started_at", "sort_key"]
     row = _Row(material, last_read_at=datetime.date(2024, 3, 9), sort_key="k")
     assert kwargs["to_item"](row) == material
 

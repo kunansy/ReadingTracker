@@ -1,5 +1,6 @@
 """Keyset pagination of the two paginated reads in tracker/notes/db.py."""
 
+import re
 import uuid
 from collections.abc import Awaitable, Callable
 
@@ -438,14 +439,21 @@ async def test_rejected_token_does_not_touch_the_database():
     assert statements == []
 
 
+# the links cursor is parsed into (note_number, sort_key), the search one is a sort_key
+FORGED_CURSORS = {
+    "search": {"end": "~", "start": ""},
+    "links": {"end": "2147483647$$~", "start": "0000000000$$"},
+}
+
+
 @pytest.mark.parametrize("name", LISTINGS)
 @pytest.mark.parametrize(
-    ("cursor", "order", "expected_slice"),
+    ("position", "order", "expected_slice"),
     [
-        ("~", Order.ASC, slice(0, 0)),
-        ("", Order.ASC, slice(0, 2)),
-        ("", Order.DESC, slice(0, 0)),
-        ("~", Order.DESC, slice(None, None, -1)),
+        ("end", Order.ASC, slice(0, 0)),
+        ("start", Order.ASC, slice(0, 2)),
+        ("start", Order.DESC, slice(0, 0)),
+        ("end", Order.DESC, slice(None, None, -1)),
     ],
     ids=[
         "asc-past-the-end",
@@ -454,7 +462,8 @@ async def test_rejected_token_does_not_touch_the_database():
         "desc-before-the-start",
     ],
 )
-async def test_forged_cursor_gives_a_consistent_page(name, cursor, order, expected_slice):
+async def test_forged_cursor_gives_a_consistent_page(name, position, order, expected_slice):
+    cursor = FORGED_CURSORS[name][position]
     fetch, ids = await _listing(name, 3)
     first = await fetch(PageParams(page_size=2, order=order))
 
@@ -587,35 +596,38 @@ async def test_search_by_material_reads_the_sort_key_index_without_sorting():
     assert "Sort" not in plan
 
 
-async def test_links_page_sorts_because_no_index_backs_its_cursor_current_behaviour():
+@pytest.mark.parametrize("order", [Order.ASC, Order.DESC], ids=["asc", "desc"])
+async def test_links_page_is_read_from_the_links_index_without_sorting(order):
     target, _ = await _insert_links(5)
-    first = await _links(target)(PageParams(page_size=2))
+    first_plan = await _plan_of(_links(target), PageParams(page_size=2, order=order))
+    first = await _links(target)(PageParams(page_size=2, order=order))
 
-    plan = await _plan_of(
+    next_plan = await _plan_of(
         _links(target),
-        PageParams(page_size=2, next_token=first.next_token),
+        PageParams(page_size=2, order=order, next_token=first.next_token),
     )
 
-    assert "Sort" in plan
-    assert "Index Cond: ((lpad(" not in plan
+    for plan in (first_plan, next_plan):
+        assert "ix_notes_link_id_note_number_sort_key" in plan, plan
+        assert "Sort" not in plan, plan
+    assert re.search(
+        r"Index Cond: \(\(link_id = .*ROW\(note_number, \(sort_key\)::text\) [<>]= ROW\(",
+        next_plan,
+    ), next_plan
 
 
-async def test_links_count_subquery_scans_notes_for_every_row_current_behaviour():
+async def test_links_count_subquery_reads_the_links_index():
     await _insert_search_notes(5)
 
     plan = await _plan_of(_search(), PageParams(page_size=2))
 
-    # no index on notes.link_id: the correlated links_count subquery cannot avoid a full scan
-    assert plan.count("Seq Scan on notes") == 1
-    assert "Filter: ((NOT is_deleted) AND (link_id = n.note_id))" in plan
+    assert "Seq Scan on notes" not in plan, plan
+    assert re.search(
+        r"Index (Only )?Scan using ix_notes_link_id_note_number_sort_key on notes\b", plan
+    ), plan
+    assert "Index Cond: (link_id = n.note_id)" in plan, plan
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG: tracker/common/pagination.py:47 a lone surrogate in the cursor passes token "
-    "validation and fails in the driver as a generic DatabaseException instead of "
-    "InvalidNextTokenException",
-)
 @pytest.mark.parametrize("name", LISTINGS)
 async def test_token_with_a_lone_surrogate_cursor_is_rejected_as_invalid(name):
     fetch, _ = await _listing(name, 3)

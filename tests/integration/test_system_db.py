@@ -194,12 +194,6 @@ async def test_create_reading_graphic_raises_not_found_for_a_missing_material():
         await system_db.create_reading_graphic(material_id=MISSING_ID, last_days=7)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=IndexError,
-    reason="BUG: tracker/system/db.py:50 data.counts[-1] raises IndexError "
-    "for a material that has no reading log yet",
-)
 async def test_create_reading_graphic_of_a_material_without_logs():
     material_id = await factories.start_material(pages=50)
 
@@ -273,18 +267,10 @@ async def test_create_outline_percentage_graphic_stacks_the_percents_of_every_ty
     assert not_outlined_call.kwargs["label"] == "not_outlined"
 
 
-OUTLINE_BUG = (
-    "BUG: tracker/system/db.py:117-141 the graphic needs every material type to have both "
-    "outlined and not outlined completed materials, otherwise the lists get out of step"
-)
-
-
-@pytest.mark.xfail(strict=True, reason=OUTLINE_BUG)
 async def test_create_outline_percentage_graphic_on_an_empty_database():
     assert _is_svg(await system_db.create_outline_percentage_graphic())
 
 
-@pytest.mark.xfail(strict=True, reason=OUTLINE_BUG)
 @pytest.mark.parametrize(
     ("outlined", "not_outlined"),
     [(2, 0), (0, 2)],
@@ -311,7 +297,6 @@ async def test_create_outline_percentage_graphic_with_a_type_having_one_kind(
     )
 
 
-@pytest.mark.xfail(strict=True, reason=OUTLINE_BUG)
 async def test_create_outline_percentage_graphic_with_a_type_never_completed(mocker):
     for material_type in enums.MaterialTypesEnum:
         if material_type != enums.MaterialTypesEnum.article:

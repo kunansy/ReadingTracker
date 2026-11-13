@@ -2,7 +2,7 @@ import asyncio
 import datetime
 import re
 import time
-from collections.abc import Mapping
+from collections.abc import Iterable, Mapping
 from decimal import Decimal
 from typing import Any, Final, cast
 from uuid import UUID
@@ -11,9 +11,9 @@ import aiohttp
 import bs4
 import sqlalchemy.sql as sa
 from pydantic import ConfigDict, computed_field, field_validator
-from sqlalchemy import Integer, Text
+from sqlalchemy import Date, Integer, Text
 from sqlalchemy.dialects import postgresql
-from sqlalchemy.engine import Row
+from sqlalchemy.engine import Result, Row
 
 from tracker.common import database, pagination, schemas, settings, sort_keys
 from tracker.common.logger import logger
@@ -182,28 +182,37 @@ async def _get_free_materials() -> list[Material]:
 
 
 def _get_reading_materials_stmt() -> sa.Select:
-    reading_logs_cte = (
-        sa.select(
-            models.ReadingLog.c.material_id,
-            sa.func.max(models.ReadingLog.c.date).label("date"),
-        )
-        .group_by(models.ReadingLog.c.material_id)
-        .cte("reading_logs")
+    # A correlated subquery, not a join with the grouped log: the page is then read
+    # in the order of the materials index instead of being sorted.
+    last_log_date = (
+        sa.select(sa.func.max(models.ReadingLog.c.date))
+        .where(models.ReadingLog.c.material_id == models.Materials.c.material_id)
+        .scalar_subquery()
     )
-
     last_read_at = sa.func.coalesce(
-        reading_logs_cte.c.date,
+        last_log_date,
         sa.func.date(models.Materials.c.started_at),
     )
     return (
         sa.select(models.Materials, last_read_at.label("last_read_at"))
-        .join(
-            reading_logs_cte,
-            reading_logs_cte.c.material_id == models.Materials.c.material_id,
-            isouter=True,
-        )
         .where(models.MATERIAL_IS_READING)
-        .order_by(reading_logs_cte.c.date.desc())
+        .order_by(last_log_date.desc())
+    )
+
+
+# The SQL filter and `get_material_tags` must split the stored tags the same way,
+# or a listed tag finds nothing.
+_MATERIAL_TAGS_SEPARATOR = ","
+
+
+def _normalize_material_tags(tags: Iterable[str]) -> set[str]:
+    return {tag.strip().lower() for tag in tags if tag.strip()}
+
+
+def _material_tags_array() -> sa.ColumnElement:
+    return sa.func.regexp_split_to_array(
+        sa.func.lower(sa.func.trim(models.Materials.c.tags)),
+        rf"\s*{_MATERIAL_TAGS_SEPARATOR}\s*",
     )
 
 
@@ -222,11 +231,10 @@ def _get_completed_materials_stmt(
         stmt = stmt.where(models.Materials.c.material_type == material_type)
     if is_outlined is not None:
         stmt = stmt.where(models.Materials.c.is_outlined == is_outlined)
-    if tags:
-        material_tags = sa.func.string_to_array(models.Materials.c.tags, ", ")
+    if requested_tags := _normalize_material_tags(tags or ()):
         stmt = stmt.where(
-            material_tags.op("@>")(
-                sa.cast(postgresql.array(sorted(tags)), postgresql.ARRAY(Text)),
+            _material_tags_array().op("@>")(
+                sa.cast(postgresql.array(sorted(requested_tags)), postgresql.ARRAY(Text)),
             ),
         )
     return stmt
@@ -278,6 +286,7 @@ async def get_last_material_started() -> UUID | None:
 
     stmt = (
         _get_reading_materials_stmt()
+        .order_by(None)
         .order_by(models.Materials.c.started_at.desc())
         .limit(1)
     )
@@ -435,9 +444,9 @@ async def completed_statistics_page(
     )
     page = await pagination.fetch_page(
         stmt,
-        cursor_expr=pagination.cursor(
-            pagination.datetime_part(models.Materials.c.completed_at),
-            models.Materials.c.sort_key,
+        cursor_expr=pagination.keyset(
+            pagination.datetime_key(models.Materials.c.completed_at),
+            pagination.text_key(models.Materials.c.sort_key),
         ),
         request=request,
         to_item=lambda row: _to_material(row._asdict()),
@@ -474,13 +483,12 @@ async def reading_statistics_page(
 ) -> pagination.Page[MaterialStatistics]:
     logger.info("Calculating reading materials statistics page")
 
-    stmt = _get_reading_materials_stmt()
-    columns = stmt.selected_columns
+    # started_at is never rewritten, unlike the date of the last log
     page = await pagination.fetch_page(
-        stmt,
-        cursor_expr=pagination.cursor(
-            pagination.date_part(columns.last_read_at),
-            models.Materials.c.sort_key,
+        _get_reading_materials_stmt(),
+        cursor_expr=pagination.keyset(
+            pagination.datetime_key(models.Materials.c.started_at),
+            pagination.text_key(models.Materials.c.sort_key),
         ),
         request=pagination.page_request(params, default_order=pagination.Order.DESC),
         to_item=lambda row: _to_material(row._asdict()),
@@ -497,9 +505,9 @@ async def get_material_tags() -> set[str]:
     async with database.session() as ses:
         tags_db = await ses.scalars(stmt)
 
-    tags = set()
-    for tag in tags_db:
-        tags |= {tag.strip().lower() for tag in tag.split(",")}
+    tags: set[str] = set()
+    for material_tags in tags_db:
+        tags |= _normalize_material_tags(material_tags.split(_MATERIAL_TAGS_SEPARATOR))
 
     logger.debug("%s tags got", len(tags))
     return tags
@@ -601,6 +609,21 @@ async def update_material(
     logger.debug("Material updated")
 
 
+async def _check_material_transition(
+    result: Result[Any],
+    *,
+    material_id: UUID,
+    conflict_msg: str,
+) -> None:
+    if database.affected_rows(result) == 1:
+        return
+    if await get_material(material_id=material_id) is None:
+        msg = f"Material id={material_id!r} not found"
+        logger.info(msg)
+        raise database.NotFoundException(msg)
+    database.check_state_changed(result, msg=conflict_msg)
+
+
 async def start_material(
     *,
     material_id: UUID,
@@ -619,9 +642,10 @@ async def start_material(
     async with database.session() as ses:
         result = await ses.execute(stmt)
 
-    database.check_state_changed(
+    await _check_material_transition(
         result,
-        msg=f"Material id={material_id!r} is not in the queue",
+        material_id=material_id,
+        conflict_msg=f"Material id={material_id!r} is not in the queue",
     )
 
     logger.debug("Material started")
@@ -675,9 +699,10 @@ async def complete_material(
     async with database.session() as ses:
         result = await ses.execute(stmt)
 
-    database.check_state_changed(
+    await _check_material_transition(
         result,
-        msg=f"Material id={material_id!r} is not being read",
+        material_id=material_id,
+        conflict_msg=f"Material id={material_id!r} is not being read",
     )
 
     logger.debug("Material completed at %s", completed_at)
@@ -804,6 +829,11 @@ def _get_priority_days(priority_days: datetime.timedelta | None) -> int:
     return getattr(priority_days, "days", 0)
 
 
+def _utc_today_param() -> sa.ColumnElement[datetime.date]:
+    # `now()` would give the date in the session time zone, not in UTC.
+    return sa.literal(database.utc_today(), type_=Date)
+
+
 async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
     logger.debug("Getting repeat analytics")
 
@@ -818,7 +848,7 @@ async def get_repeats_analytics() -> dict[UUID, RepeatAnalytics]:
             models.Materials.c.material_id,
             sa.func.count(models.Repeats.c.repeat_id).label("repeats_count"),
             last_repeated_at,
-            (_dt(sa.func.now()) - _dt(repet_or_compl_date)).label("priority_days"),
+            (_utc_today_param() - _dt(repet_or_compl_date)).label("priority_days"),
         )
         .join(
             models.Repeats,
@@ -876,7 +906,7 @@ def _get_repeating_queue_stmt(*, is_outlined: bool) -> tuple[sa.Select, sa.Colum
     last_seen_at = sa.func.date(
         sa.func.coalesce(repeats.c.last_repeated_at, models.Materials.c.completed_at),
     )
-    priority_days = sa.func.date(sa.func.now()) - last_seen_at
+    priority_days = _utc_today_param() - last_seen_at
     repeat_at = last_seen_at + REPEAT_PERIOD_DAYS * sa.cast(repeats_count, Integer)
 
     stmt = (
@@ -1007,7 +1037,7 @@ def parse_habr(html: str) -> HabrArticle:
             snippet,
         )
 
-    if not (title or authors):
+    if not (title and authors):
         raise ValueError("Title or authors not found")
 
     return HabrArticle(title=cast("str", title), authors=cast("str", authors))

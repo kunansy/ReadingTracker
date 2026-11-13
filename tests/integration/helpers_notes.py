@@ -23,7 +23,7 @@ from tracker.models import models
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 ALEMBIC_INI = str(REPO_ROOT / "alembic.ini")
-HEAD_REVISION = "0007"
+HEAD_REVISION = "0008"
 
 FROZEN_NOW = datetime.datetime(2024, 3, 15, 12, 30, 45)  # noqa: DTZ001
 FROZEN_TODAY = FROZEN_NOW.date()

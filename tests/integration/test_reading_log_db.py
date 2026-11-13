@@ -444,13 +444,6 @@ async def test_data_yields_nothing_when_every_log_is_after_today_current_behavio
     assert await collect_data() == []
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/reading_log/db.py:170 a day without logs while no started material is "
-        "left builds LogRecord(material_id=None) and raises a pydantic ValidationError"
-    ),
-)
 async def test_data_covers_days_after_the_only_material_is_completed(clock):
     material_id = await h.completed(clock, started=h.day(3), finished=h.day(2))
     await db.insert_log_record(material_id=material_id, count=100, date=h.day(2))
@@ -487,13 +480,6 @@ async def test_material_reading_now_is_the_material_logged_today(clock):
     assert await db.get_material_reading_now() == material_id
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/reading_log/db.py:170 data() raises on the empty day after the last "
-        "completion, so the fallback to the last started material (:233) is never reached"
-    ),
-)
 async def test_material_reading_now_falls_back_to_the_last_started_material(clock):
     completed_id = await h.completed(clock, started=h.day(5), finished=h.day(3))
     await db.insert_log_record(material_id=completed_id, count=100, date=h.day(3))

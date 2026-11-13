@@ -15,6 +15,10 @@ from tracker.models import enums
 
 router = APIRouter(prefix="/materials", tags=["materials-api"])
 
+HABR_HOSTS = frozenset({"habr.com", "habr.ru", "www.habr.com", "www.habr.ru"})
+YOUTUBE_WATCH_HOSTS = frozenset({"youtube.com", "www.youtube.com", "m.youtube.com"})
+YOUTUBE_SHORT_HOSTS = frozenset({"youtu.be", "www.youtu.be"})
+
 
 @router.get("/queue", response_model=schemas.ListMaterialsQueueResponse)
 async def list_materials_queue(
@@ -171,14 +175,15 @@ async def is_material_reading(material_id: UUID):
 @router.post("/parse/habr", response_model=schemas.ParsedMaterialResponse)
 async def parse_habr(payload: schemas.ParseLinkRequest):
     link = payload.link
-    if not (host := link.host):
-        raise HTTPException(detail="Invalid habr url", status_code=400)
-
-    if not (host.startswith("habr.") and host.endswith((".com", ".ru"))):
+    if link.host not in HABR_HOSTS:
         raise HTTPException(detail="Invalid habr url", status_code=400)
 
     html = await db.get_html(str(link))
-    article_info = db.parse_habr(html)
+    try:
+        article_info = db.parse_habr(html)
+    except ValueError as e:
+        logger.error("Failed to parse habr, link=%s, e=%r", link, e)
+        raise HTTPException(detail=str(e), status_code=400) from None
 
     return schemas.ParsedMaterialResponse(
         title=article_info.title,
@@ -192,16 +197,14 @@ async def parse_habr(payload: schemas.ParseLinkRequest):
 @router.post("/parse/youtube", response_model=schemas.ParsedMaterialResponse)
 async def parse_youtube(payload: schemas.ParseLinkRequest):
     link = payload.link
-    if not (host := link.host):
-        raise HTTPException(detail="Invalid YouTube url", status_code=400)
-
-    if host.replace("www.", "") not in ("youtube.com", "youtu.be"):
-        raise HTTPException(detail="Invalid YouTube url", status_code=400)
-
-    if "youtube.com" in host:
-        video_id = link.query_params()[0][1]
-    else:
+    host = link.host
+    if host in YOUTUBE_WATCH_HOSTS:
+        if not (video_id := dict(link.query_params()).get("v")):
+            raise HTTPException(detail="Invalid YouTube url", status_code=400)
+    elif host in YOUTUBE_SHORT_HOSTS:
         video_id = (link.path or "").replace("/", "")
+    else:
+        raise HTTPException(detail="Invalid YouTube url", status_code=400)
 
     try:
         video_info = await db.parse_youtube(video_id)
@@ -301,6 +304,7 @@ async def outline_material(material_id: UUID):
 
 @router.post("/{material_id}/repeat", status_code=204)
 async def repeat_material(material_id: UUID):
+    await db.get_material_api(material_id=material_id)
     await db.repeat_material(material_id=material_id)
 
 

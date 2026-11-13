@@ -13,6 +13,8 @@ from tracker.common.manticoresearch import Note, SearchResult
 NOTE_ID = UUID("018e9dbe-1d3d-7a5a-b437-9bfa65171b42")
 OTHER_ID = UUID("1c2fc59d-5313-4615-9290-e8668abe2fc0")
 ADDED_AT = datetime.datetime(2024, 1, 2, 3, 4, 5, 6)
+# 2024-01-02 03:04:05 UTC, the fraction of a second is dropped
+ADDED_AT_UNIX = 1_704_164_645
 
 
 class _FakeConnection:
@@ -234,8 +236,8 @@ async def test_insert_all_inserts_every_note_in_one_batch(conn):
     query, rows = conn.cur.executemany.await_args.args
     assert query == "INSERT INTO notes (note_id, content, added_at) VALUES (%s,%s,%s)"
     assert list(rows) == [
-        [NOTE_ID, "first", ADDED_AT],
-        [OTHER_ID, "Вторая", ADDED_AT],
+        (NOTE_ID, "first", ADDED_AT_UNIX),
+        (OTHER_ID, "Вторая", ADDED_AT_UNIX),
     ]
     assert conn.events[-2:] == ["commit", "close"]
 
@@ -296,7 +298,7 @@ async def test_insert_note_inserts_one_row(conn):
 
     query, rows = conn.cur.executemany.await_args.args
     assert query == manticoresearch.INSERT_QUERY
-    assert list(rows) == [[NOTE_ID, "content", ADDED_AT]]
+    assert list(rows) == [(NOTE_ID, "content", ADDED_AT_UNIX)]
 
 
 async def test_insert_note_strips_content_current_behaviour(conn):
@@ -307,7 +309,7 @@ async def test_insert_note_strips_content_current_behaviour(conn):
     )
 
     _, rows = conn.cur.executemany.await_args.args
-    assert list(rows) == [[NOTE_ID, "padded", ADDED_AT]]
+    assert list(rows) == [(NOTE_ID, "padded", ADDED_AT_UNIX)]
 
 
 async def test_update_content_deletes_then_inserts_in_one_transaction(conn, mocker):
@@ -321,7 +323,7 @@ async def test_update_content_deletes_then_inserts_in_one_transaction(conn, mock
         mocker.call("DELETE FROM notes WHERE note_id=%s", NOTE_ID),
         mocker.call(
             "INSERT INTO notes (note_id, content, added_at) VALUES (%s,%s,%s)",
-            (NOTE_ID, "Новый текст", ADDED_AT),
+            (NOTE_ID, "Новый текст", ADDED_AT_UNIX),
         ),
     ]
     assert conn.events.count("commit") == 1
@@ -438,11 +440,12 @@ async def test_autocompletion_without_matches(conn):
 async def test_autocompletion_builds_prefix_match_with_default_limit(conn):
     await manticoresearch.autocompletion(query="при")
 
-    sql, limit = conn.cur.execute.await_args.args
+    sql, (match, limit) = conn.cur.execute.await_args.args
     assert " ".join(sql.split()) == (
         "SELECT HIGHLIGHT({snippet_separator='',before_match='**',after_match='**'}) "
-        "FROM notes WHERE MATCH('@content при* ') ORDER BY WEIGHT() DESC LIMIT %s"
+        "FROM notes WHERE MATCH(%s) ORDER BY WEIGHT() DESC LIMIT %s"
     )
+    assert match == "@content при*"
     assert limit == 5
 
 
@@ -452,17 +455,10 @@ async def test_autocompletion_builds_prefix_match_with_default_limit(conn):
 async def test_autocompletion_passes_limit_unchecked_current_behaviour(conn, limit):
     await manticoresearch.autocompletion(query="a", limit=limit)
 
-    _, argument = conn.cur.execute.await_args.args
+    _, (_, argument) = conn.cur.execute.await_args.args
     assert argument == limit
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/common/manticoresearch.py:216 autocompletion interpolates the "
-        "user query into the SQL text, a quote in it changes the statement"
-    ),
-)
 async def test_autocompletion_sends_user_query_as_parameter(conn):
     query = "x') OR 1=1; DROP TABLE notes; --"
 
@@ -470,6 +466,42 @@ async def test_autocompletion_sends_user_query_as_parameter(conn):
 
     sql, *_ = conn.cur.execute.await_args.args
     assert query not in sql
+
+
+@pytest.mark.parametrize(
+    ("query", "match"),
+    [
+        ("dog's", "@content dog\\'s*"),
+        ("a-b (c)", "@content a\\-b \\(c\\)*"),
+        ('!"$/<@^|~', '@content \\!\\"\\$\\/\\<\\@\\^\\|\\~*'),
+        ("back\\slash", "@content back\\\\slash*"),
+        ("при", "@content при*"),
+    ],
+    ids=["quote", "operators", "every-other-special", "backslash", "plain"],
+)
+async def test_autocompletion_escapes_the_query_syntax(conn, query, match):
+    await manticoresearch.autocompletion(query=query)
+
+    _, (sent, _) = conn.cur.execute.await_args.args
+    assert sent == match
+
+
+@pytest.mark.parametrize(
+    ("added_at", "expected"),
+    [
+        (ADDED_AT, ADDED_AT_UNIX),
+        (ADDED_AT.replace(tzinfo=datetime.UTC), ADDED_AT_UNIX),
+        (
+            datetime.datetime(
+                2024, 1, 2, 6, 4, 5, tzinfo=datetime.timezone(datetime.timedelta(hours=3))
+            ),
+            ADDED_AT_UNIX,
+        ),
+    ],
+    ids=["naive-is-utc", "utc", "other-zone"],
+)
+def test_to_unix_time(added_at, expected):
+    assert manticoresearch._to_unix_time(added_at) == expected
 
 
 @pytest.mark.parametrize(

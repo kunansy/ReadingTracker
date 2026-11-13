@@ -164,14 +164,6 @@ def test_record_without_added_at_is_an_error(field):
         Record(**{"after": None, field: payload})
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: kafka/debezium_parser.py:18 Record validates rows with notes.db.Note, "
-        "which forbids extras and has no sort_key, so every row of the current notes "
-        "table is rejected"
-    ),
-)
 def test_record_accepts_every_column_of_the_notes_table():
     row = {
         **_note_payload(),
@@ -186,13 +178,6 @@ def test_record_accepts_every_column_of_the_notes_table():
     assert record.note_id == NOTE_ID
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: kafka/debezium_parser.py:46 the before-validators divide added_at in the "
-        "caller's dict in place"
-    ),
-)
 @pytest.mark.parametrize("field", ["after", "before"])
 def test_record_does_not_change_the_given_payload(field):
     payload = _note_payload()
@@ -203,16 +188,14 @@ def test_record_does_not_change_the_given_payload(field):
     assert payload == original
 
 
-def test_same_payload_parsed_twice_gets_another_time_current_behaviour():
+def test_same_payload_parsed_twice_gets_the_same_time():
     payload = _note_payload()
 
     first = Record(after=payload)
     second = Record(after=payload)
 
-    assert first.added_at == ADDED_AT
-    # the second division turns milliseconds into seconds
-    assert second.added_at == ADDED_AT.replace(microsecond=0)
-    assert payload["added_at"] == ADDED_AT_MICROSECONDS // 1_000_000
+    assert first.added_at == second.added_at == ADDED_AT
+    assert payload["added_at"] == ADDED_AT_MICROSECONDS
 
 
 def test_note_id_prefers_after():
@@ -396,33 +379,22 @@ async def test_iter_updates_ends_silently_on_unparsable_message_current_behaviou
     ]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=UnboundLocalError,
-    reason=(
-        "BUG: kafka/debezium_parser.py:88 the except block reads `msg`, which is unbound "
-        "when the consumer fails before the first message"
-    ),
-)
 async def test_iter_updates_failure_before_first_message_is_reported(consumer):
     fake = consumer([], fail_with=errors.KafkaError("broker down"))
 
-    try:
-        records = [record async for record in debezium_parser.iter_updates()]
-    except errors.KafkaError:
-        records = []
+    records = [record async for record in debezium_parser.iter_updates()]
 
     assert records == []
     assert fake.events == ["start", "stop"]
 
 
-async def test_iter_updates_stops_consumer_when_first_message_fails(consumer):
-    fake = consumer([], fail_with=errors.KafkaError("broker down"))
+async def test_iter_updates_logs_a_failure_before_the_first_message(consumer, caplog):
+    consumer([], fail_with=errors.KafkaError("broker down"))
 
-    with pytest.raises(Exception):  # noqa: B017, PT011
-        [record async for record in debezium_parser.iter_updates()]
+    records = [record async for record in debezium_parser.iter_updates()]
 
-    assert fake.events == ["start", "stop"]
+    assert records == []
+    assert _error_messages(caplog) == ["Error consuming before the first message"]
 
 
 async def test_iter_updates_start_failure_leaves_consumer_unstopped_current_behaviour(

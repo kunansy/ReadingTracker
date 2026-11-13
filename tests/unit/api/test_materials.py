@@ -498,8 +498,13 @@ def habr(mocker):
 
 @pytest.mark.parametrize(
     "link",
-    ["https://habr.com/ru/articles/1/", "http://habr.ru/post/1"],
-    ids=["com", "ru"],
+    [
+        "https://habr.com/ru/articles/1/",
+        "http://habr.ru/post/1",
+        "https://www.habr.com/ru/articles/1/",
+        "https://www.habr.ru/post/1",
+    ],
+    ids=["com", "ru", "www-com", "www-ru"],
 )
 async def test_parse_habr(client, habr, link):
     response = await client.post(f"{BASE}/parse/habr", json={"link": link})
@@ -525,8 +530,19 @@ async def test_parse_habr(client, habr, link):
         "https://habrahabr.ru/post",
         "https://127.0.0.1/habr.com",
         "https://evil.com/?u=habr.com",
+        "https://habr.evil.com/post",
+        "https://m.habr.com/post",
     ],
-    ids=["other-site", "other-tld", "suffix-match", "old-domain", "ip", "habr-in-query"],
+    ids=[
+        "other-site",
+        "other-tld",
+        "suffix-match",
+        "old-domain",
+        "ip",
+        "habr-in-query",
+        "lookalike",
+        "unlisted-subdomain",
+    ],
 )
 async def test_parse_habr_rejects_a_foreign_host(client, habr, link):
     response = await client.post(f"{BASE}/parse/habr", json={"link": link})
@@ -536,13 +552,6 @@ async def test_parse_habr_rejects_a_foreign_host(client, habr, link):
     habr.get_html.assert_not_awaited()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/api/v1/materials.py:177 the host check is startswith('habr.') + "
-        "endswith('.com'), so habr.evil.com passes and the server fetches a foreign page"
-    ),
-)
 async def test_parse_habr_rejects_a_lookalike_host(client, habr):
     response = await client.post(
         f"{BASE}/parse/habr", json={"link": "https://habr.evil.com/post"}
@@ -550,14 +559,6 @@ async def test_parse_habr_rejects_a_lookalike_host(client, habr):
 
     assert response.status_code == 400
     habr.get_html.assert_not_awaited()
-
-
-async def test_parse_habr_rejects_the_www_host_current_behaviour(client, habr):
-    response = await client.post(
-        f"{BASE}/parse/habr", json={"link": "https://www.habr.com/ru/articles/1/"}
-    )
-
-    assert response.status_code == 400
 
 
 @pytest.mark.parametrize(
@@ -595,13 +596,6 @@ async def test_parse_rejects_a_link_without_host(endpoint, detail):
     assert e.value.detail == detail
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/api/v1/materials.py:181 ValueError of db.parse_habr (a page that "
-        "is not a habr article) is not caught, giving 500 instead of 400 as parse/youtube does"
-    ),
-)
 async def test_parse_habr_maps_an_unparsable_page_to_400(lenient_client, habr):
     habr.parse.side_effect = ValueError("Title or authors not found")
 
@@ -687,13 +681,6 @@ async def test_parse_youtube_rejects_a_foreign_host(client, youtube, link):
     youtube.assert_not_awaited()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/api/v1/materials.py:198 host.replace('www.', '') removes 'www.' "
-        "anywhere in the host, so youwww.tube.com is accepted as youtube.com"
-    ),
-)
 async def test_parse_youtube_rejects_a_host_with_www_inside(client, youtube):
     response = await client.post(
         f"{BASE}/parse/youtube", json={"link": "https://youwww.tube.com/watch?v=X"}
@@ -703,22 +690,15 @@ async def test_parse_youtube_rejects_a_host_with_www_inside(client, youtube):
     youtube.assert_not_awaited()
 
 
-async def test_parse_youtube_rejects_the_mobile_host_current_behaviour(client, youtube):
+async def test_parse_youtube_accepts_the_mobile_host(client, youtube):
     response = await client.post(
         f"{BASE}/parse/youtube", json={"link": "https://m.youtube.com/watch?v=X"}
     )
 
-    assert response.status_code == 400
-    assert response.json() == {"detail": "Invalid YouTube url"}
+    assert response.status_code == 200
+    youtube.assert_awaited_once_with("X")
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/api/v1/materials.py:202 link.query_params()[0][1] takes the first "
-        "query parameter instead of 'v', so watch?t=10&v=X looks up video '10'"
-    ),
-)
 @pytest.mark.parametrize(
     "link",
     [
@@ -735,13 +715,6 @@ async def test_parse_youtube_takes_the_v_parameter(client, youtube, link):
     assert response.json()["link"] == "https://youtube.com/watch?v=dQw4w9WgXcQ"
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/api/v1/materials.py:202 link.query_params()[0] raises IndexError "
-        "for a youtube.com link without a query string, giving 500 instead of 400"
-    ),
-)
 @pytest.mark.parametrize(
     "link",
     [
@@ -1181,6 +1154,10 @@ async def test_complete_material_rejects_invalid_body(client, complete, request_
     [("outline", "outline_material"), ("repeat", "repeat_material")],
 )
 class TestMaterialAction:
+    @pytest.fixture(autouse=True)
+    def _material_exists(self, get_material_api):
+        return get_material_api
+
     async def test_runs_the_action(self, client, mocker, action, db_function):
         run = _patch(mocker, db_function, return_value=None)
 
@@ -1219,6 +1196,18 @@ class TestMaterialAction:
 
         assert response.status_code == 422
         run.assert_not_awaited()
+
+
+async def test_repeat_of_a_missing_material_is_404(client, mocker, get_material_api):
+    get_material_api.side_effect = NOT_FOUND
+    repeat = _patch(mocker, "repeat_material", return_value=None)
+
+    response = await client.post(f"{MATERIAL_URL}/repeat")
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "NotFoundError: Material not found"}
+    get_material_api.assert_awaited_once_with(material_id=factories.MATERIAL_ID)
+    repeat.assert_not_awaited()
 
 
 @pytest.fixture

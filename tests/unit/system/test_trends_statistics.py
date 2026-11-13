@@ -270,15 +270,6 @@ class CompilingSession:
         return self._rows
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=sqlalchemy.exc.InvalidRequestError,
-    reason=(
-        "BUG: tracker/system/trends.py:472 .join(models.ReadingLog) has no ON clause "
-        "and the tables define no foreign key, so the statement cannot be compiled "
-        "and the span report always fails"
-    ),
-)
 async def test_reading_analytics_groups_read_pages_by_material_type(mocker):
     session = CompilingSession(
         [mocker.Mock(material_type=enums.MaterialTypesEnum.book, cnt=30)],

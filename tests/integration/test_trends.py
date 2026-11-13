@@ -264,13 +264,6 @@ async def test_materials_analytics_on_an_empty_database_are_zero():
     )
 
 
-READING_ANALYTICS_BUG = (
-    "BUG: tracker/system/trends.py:472 .join(models.ReadingLog) has no ON clause and the "
-    "tables have no ForeignKey, so SQLAlchemy raises InvalidRequestError"
-)
-
-
-@pytest.mark.xfail(strict=True, reason=READING_ANALYTICS_BUG)
 async def test_reading_analytics_group_pages_read_in_the_span_by_type():
     await _seed_reading_log()
 
@@ -282,7 +275,6 @@ async def test_reading_analytics_group_pages_read_in_the_span_by_type():
     )
 
 
-@pytest.mark.xfail(strict=True, reason=READING_ANALYTICS_BUG)
 async def test_reading_analytics_on_an_empty_database_are_zero():
     assert await trends._reading_analytics(SPAN) == trends._MaterialAnalytics(
         stats={},
@@ -426,7 +418,6 @@ def _report_request() -> schemas.GetSpanReportRequest:
     return schemas.GetSpanReportRequest(start=FIRST_DAY, stop=LAST_DAY)
 
 
-@pytest.mark.xfail(strict=True, reason=READING_ANALYTICS_BUG)
 async def test_get_span_analytics_combines_every_statistic():
     await _seed_reading_log()
     await _seed_notes()
@@ -448,7 +439,6 @@ async def test_get_span_analytics_combines_every_statistic():
     )
 
 
-@pytest.mark.xfail(strict=True, reason=READING_ANALYTICS_BUG)
 async def test_get_span_analytics_on_an_empty_database():
     analysis = await trends.get_span_analytics(_report_request())
 
@@ -456,17 +446,11 @@ async def test_get_span_analytics_on_an_empty_database():
     assert analysis.notes.total == 0
 
 
-async def test_get_span_analytics_combines_the_statistics_that_work(mocker):
+async def test_get_span_analytics_gives_the_whole_analysis():
     await _seed_reading_log()
     await _seed_notes()
     await _seed_completed_materials()
     await _seed_repeats()
-    reading_analytics = trends._MaterialAnalytics(
-        stats={enums.MaterialTypesEnum.book: 30},
-        total=30,
-    )
-    # the real _reading_analytics always raises, see READING_ANALYTICS_BUG
-    mocker.patch.object(trends, "_reading_analytics", return_value=reading_analytics)
 
     analysis = await trends.get_span_analytics(_report_request())
 
@@ -481,7 +465,10 @@ async def test_get_span_analytics_combines_the_statistics_that_work(mocker):
             },
             total=4,
         ),
-        reading_analytics=reading_analytics,
+        reading_analytics=trends._MaterialAnalytics(
+            stats={enums.MaterialTypesEnum.book: 30, enums.MaterialTypesEnum.article: 12},
+            total=42,
+        ),
         repeat_analytics=trends._RepeatAnalytics(
             repeats_count=5,
             unique_materials_count=2,

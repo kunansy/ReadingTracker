@@ -264,13 +264,6 @@ async def test_failed_completion_dates_lookup_is_treated_as_nothing_completed(db
     assert days == [(day(-2), A, 10), (day(-1), B, 10), (day(0), B, 0)]
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/reading_log/db.py:141 `log_records or await list_log_records()` "
-        "treats an explicitly passed [] as not passed and reads the whole log from the db"
-    ),
-)
 async def test_explicit_empty_log_gives_nothing_without_reading_the_database(db_lookups):
     list_log_records, _ = db_lookups
     list_log_records.return_value = [_log(A, 0)]
@@ -281,13 +274,6 @@ async def test_explicit_empty_log_gives_nothing_without_reading_the_database(db_
     list_log_records.assert_not_awaited()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/reading_log/db.py:151 `completion_dates or await get_completion_dates()` "
-        "treats an explicitly passed {} as not passed and replaces it with the db values"
-    ),
-)
 async def test_explicit_empty_completion_dates_are_not_replaced_by_the_database(db_lookups):
     _, get_completion_dates = db_lookups
     get_completion_dates.return_value = {B: midnight(-1)}
@@ -298,14 +284,6 @@ async def test_explicit_empty_completion_dates_are_not_replaced_by_the_database(
     assert days[-1] == (day(0), B, 0)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    raises=ValidationError,
-    reason=(
-        "BUG: tracker/reading_log/db.py:170-171 an empty day when every earlier material "
-        "is completed builds LogRecord(material_id=None), which fails validation"
-    ),
-)
 @pytest.mark.parametrize(
     ("records", "completion_dates", "logged_days"),
     [

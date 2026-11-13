@@ -80,6 +80,7 @@ def _body(response) -> dict:
 async def test_client_database_error_is_mapped_to_its_status(
     client, mocker, tracker_log, exc, status_code, detail
 ):
+    mocker.patch.object(notes_db, "count_links_to", mocker.AsyncMock(return_value=0))
     mocker.patch.object(notes_db, "delete_note", mocker.AsyncMock(side_effect=exc))
 
     response = await client.delete(NOTE_PATH)
@@ -100,6 +101,7 @@ async def test_client_database_error_is_mapped_to_its_status(
 async def test_other_database_error_is_500_and_logged_as_error(
     client, mocker, tracker_log, exc
 ):
+    mocker.patch.object(notes_db, "count_links_to", mocker.AsyncMock(return_value=0))
     mocker.patch.object(notes_db, "delete_note", mocker.AsyncMock(side_effect=exc))
 
     response = await client.delete(NOTE_PATH)
@@ -360,14 +362,6 @@ def test_service_routes_are_hidden_from_the_schema():
     assert not {"/liveness", "/readiness", "/metrics", "/{path}"} & paths.keys()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/main.py:38 os.getenv('HOSTNAME') runs after "
-        "tracker/common/settings.py:99 cleared os.environ, so the server_name "
-        "metric label is always None"
-    ),
-)
 def test_metrics_are_labelled_with_the_hostname():
     script = (
         "from tracker.main import app\n"

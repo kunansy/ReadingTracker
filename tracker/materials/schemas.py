@@ -135,7 +135,7 @@ class SearchParams(CustomBaseModel):
         if not (tags_query := self.tags_query):
             return set()
 
-        return {tag.strip() for tag in tags_query.split() if tag.strip()}
+        return {tag.lower() for tag in tags_query.split()}
 
     def get_material_type(self) -> enums.MaterialTypesEnum | None:
         if isinstance(self.material_type, enums.MaterialTypesEnum):

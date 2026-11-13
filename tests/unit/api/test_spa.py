@@ -123,14 +123,21 @@ async def test_non_get_to_a_client_route_is_405(client, spa_index):
     assert response.status_code == 405
 
 
-async def test_missing_bundle_makes_spa_routes_500_current_behaviour(
-    lenient_client, tmp_path, monkeypatch
-):
+async def test_missing_bundle_makes_spa_routes_503(client, tmp_path, monkeypatch):
     monkeypatch.setattr(spa, "SPA_INDEX", tmp_path / "absent.html")
 
-    response = await lenient_client.get("/notes")
+    response = await client.get("/notes")
 
-    assert response.status_code == 500
+    assert response.status_code == 503
+    assert response.json() == {"detail": "SPA bundle is not built"}
+
+
+async def test_missing_bundle_keeps_reserved_prefixes_404(client, tmp_path, monkeypatch):
+    monkeypatch.setattr(spa, "SPA_INDEX", tmp_path / "absent.html")
+
+    response = await client.get("/api/unknown")
+
+    assert response.status_code == 404
 
 
 @pytest.mark.parametrize(

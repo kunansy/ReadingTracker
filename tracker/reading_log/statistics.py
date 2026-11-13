@@ -275,16 +275,17 @@ def _tracker_mean(means: enums.MEANS) -> float:
         return 0.0
 
 
-async def get_tracker_statistics() -> TrackerStatistics:
+async def get_tracker_statistics() -> TrackerStatistics | None:
+    """Statistics of the whole reading log, None while the log is empty."""
+    if not (log_records := await db.list_log_records()):
+        return None
+
     async with asyncio.TaskGroup() as tg:
-        log_records_task = tg.create_task(db.list_log_records())
         mean_task = tg.create_task(get_means())
         read_pages_task = tg.create_task(_get_read_pages())
         min_log_record_task = tg.create_task(_get_min_record())
         max_log_record_task = tg.create_task(_get_max_record())
         materials_completed_task = tg.create_task(_get_materials_completed())
-
-    log_records = log_records_task.result()
 
     started_at = _calc_started_at(log_records)
     finished_at = _calc_finished_at(log_records)

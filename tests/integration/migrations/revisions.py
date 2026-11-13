@@ -34,6 +34,7 @@ REVISION_0004 = load("0004_material_status_columns.py")
 REVISION_0005 = load("0005_drop_statuses.py")
 REVISION_0006 = load("0006_materials_completed_at_index.py")
 REVISION_0007 = load("0007_drop_materials_index.py")
+REVISION_0008 = load("0008_listing_indexes.py")
 ALL_REVISIONS = (
     REVISION_0001,
     REVISION_0002,
@@ -42,6 +43,7 @@ ALL_REVISIONS = (
     REVISION_0005,
     REVISION_0006,
     REVISION_0007,
+    REVISION_0008,
 )
 
 

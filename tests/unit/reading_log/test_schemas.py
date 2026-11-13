@@ -114,13 +114,15 @@ def test_material_reading_now_is_nullable_but_required():
         schemas.GetMaterialReadingNowResponse()
 
 
-def test_log_record_defaults_and_required_material():
+def test_log_record_defaults_and_nullable_but_required_material():
     record = db.LogRecord(material_id=uid(1), count=0, date=datetime.date(2024, 3, 10))
 
     assert record.log_id is None
     assert record.material_title is None
+    empty_day = db.LogRecord(material_id=None, count=0, date=datetime.date(2024, 3, 10))
+    assert empty_day.material_id is None
     with pytest.raises(ValidationError):
-        db.LogRecord(material_id=None, count=0, date=datetime.date(2024, 3, 10))
+        db.LogRecord(count=0, date=datetime.date(2024, 3, 10))
 
 
 def test_log_record_from_a_row_with_extra_columns_is_rejected():
