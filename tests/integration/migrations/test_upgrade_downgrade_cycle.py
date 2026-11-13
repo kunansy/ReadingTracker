@@ -6,10 +6,8 @@ import uuid
 import pytest
 import sqlalchemy.sql as sa
 
-from tests.integration import (
-    factories,
-    helpers_notes as helpers,
-)
+from tests.integration import factories, helpers
+from tests.integration.migrations import helpers as migration_helpers
 from tracker.common import sort_keys
 from tracker.models import models
 
@@ -48,7 +46,7 @@ async def _run(query: str, **params) -> None:
 
 
 async def _tables() -> list[str]:
-    return sorted(await helpers.schema_snapshot())
+    return sorted(await migration_helpers.schema_snapshot())
 
 
 async def _material_at_0001(material_id: uuid.UUID, days: int) -> None:
@@ -151,51 +149,51 @@ async def _matview_statuses() -> dict[uuid.UUID, str]:
 
 
 async def test_upgrade_downgrade_cycle_on_an_empty_database():
-    schema_at_head = await helpers.schema_snapshot()
+    schema_at_head = await migration_helpers.schema_snapshot()
 
     try:
-        await helpers.alembic_downgrade("base")
+        await migration_helpers.alembic_downgrade("base")
         tables_at_base = await _tables()
         revision_at_base = await helpers.scalar("SELECT count(*) FROM alembic_version")
 
-        await helpers.alembic_upgrade("head")
+        await migration_helpers.alembic_upgrade("head")
 
         assert tables_at_base == ["alembic_version"]
         assert revision_at_base == 0
-        assert await helpers.current_revision() == helpers.HEAD_REVISION
-        assert await helpers.schema_snapshot() == schema_at_head
+        assert await migration_helpers.current_revision() == migration_helpers.HEAD_REVISION
+        assert await migration_helpers.schema_snapshot() == schema_at_head
         assert await _tables() == TABLES_AT_HEAD
         for table in models.metadata.sorted_tables:
             assert await factories.count_rows(table) == 0, table.name
     finally:
-        await helpers.reset_schema_to_head()
+        await migration_helpers.reset_schema_to_head()
 
 
 @pytest.mark.parametrize(
     "revision", ["0001", "0002", "0003", "0004", "0005", "0006", "0007"]
 )
 async def test_every_revision_can_be_reached_and_left_on_an_empty_database(revision):
-    schema_at_head = await helpers.schema_snapshot()
+    schema_at_head = await migration_helpers.schema_snapshot()
 
     try:
-        await helpers.alembic_downgrade(revision)
-        reached = await helpers.current_revision()
-        await helpers.alembic_upgrade("head")
+        await migration_helpers.alembic_downgrade(revision)
+        reached = await migration_helpers.current_revision()
+        await migration_helpers.alembic_upgrade("head")
 
         assert reached == revision
-        assert await helpers.schema_snapshot() == schema_at_head
+        assert await migration_helpers.schema_snapshot() == schema_at_head
     finally:
-        await helpers.reset_schema_to_head()
+        await migration_helpers.reset_schema_to_head()
 
 
 async def test_upgrade_downgrade_cycle_with_rows_seeded_at_every_revision():
     try:
-        await helpers.alembic_downgrade("base")
+        await migration_helpers.alembic_downgrade("base")
 
-        await helpers.alembic_upgrade("0001")
+        await migration_helpers.alembic_upgrade("0001")
         await _seed_at_0001()
 
-        await helpers.alembic_upgrade("0002")
+        await migration_helpers.alembic_upgrade("0002")
         assert await _sort_keys("materials", "material_id") == {
             material_id: sort_keys.material_sort_key(
                 added_at=ADDED_AT + datetime.timedelta(days=days),
@@ -230,7 +228,7 @@ async def test_upgrade_downgrade_cycle_with_rows_seeded_at_every_revision():
         )
         await _status(ADDED_AT_0002, COMPLETED_AT)
 
-        await helpers.alembic_upgrade("0003")
+        await migration_helpers.alembic_upgrade("0003")
         await _run(
             "INSERT INTO notes (note_id, material_id, content, added_at, chapter, page, tags, "
             "is_deleted, sort_key) VALUES (:id, :material_id, 'At 0003', :added_at, :chapter, 1, "
@@ -242,7 +240,7 @@ async def test_upgrade_downgrade_cycle_with_rows_seeded_at_every_revision():
         )
         assert await _matview_statuses() == {NOTE_AT_0003: "queue"}
 
-        await helpers.alembic_upgrade("0004")
+        await migration_helpers.alembic_upgrade("0004")
         expected_dates = {
             QUEUED: (None, None),
             READING: (STARTED_AT, None),
@@ -252,7 +250,7 @@ async def test_upgrade_downgrade_cycle_with_rows_seeded_at_every_revision():
         assert await _material_dates() == expected_dates
         assert await _matview_statuses() == {NOTE_AT_0003: "queue"}
 
-        await helpers.alembic_upgrade("0005")
+        await migration_helpers.alembic_upgrade("0005")
         assert "statuses" not in await _tables()
         await _run(
             "INSERT INTO materials (material_id, title, authors, pages, material_type, "
@@ -268,8 +266,8 @@ async def test_upgrade_downgrade_cycle_with_rows_seeded_at_every_revision():
         )
         expected_dates[ADDED_AT_0005] = (STARTED_AT, None)
 
-        await helpers.alembic_upgrade("head")
-        assert await helpers.current_revision() == helpers.HEAD_REVISION
+        await migration_helpers.alembic_upgrade("head")
+        assert await migration_helpers.current_revision() == migration_helpers.HEAD_REVISION
         assert await _material_dates() == expected_dates
         assert await factories.count_rows(models.Notes) == 3
         assert await factories.count_rows(models.ReadingLog) == 1
@@ -286,7 +284,7 @@ async def test_upgrade_downgrade_cycle_with_rows_seeded_at_every_revision():
             "tags"
         ] is None
 
-        await helpers.alembic_downgrade("0006")
+        await migration_helpers.alembic_downgrade("0006")
         indexes = await helpers.fetch_all('SELECT material_id, "index" FROM materials')
         assert {row[0]: row[1] for row in indexes} == {
             ADDED_AT_0005: 1,
@@ -296,7 +294,7 @@ async def test_upgrade_downgrade_cycle_with_rows_seeded_at_every_revision():
             ADDED_AT_0002: 5,
         }
 
-        await helpers.alembic_downgrade("0004")
+        await migration_helpers.alembic_downgrade("0004")
         expected_statuses = {
             material_id: dates
             for material_id, dates in expected_dates.items()
@@ -305,35 +303,35 @@ async def test_upgrade_downgrade_cycle_with_rows_seeded_at_every_revision():
         assert await _statuses() == expected_statuses
         assert await _material_dates() == expected_dates
 
-        await helpers.alembic_downgrade("0003")
+        await migration_helpers.alembic_downgrade("0003")
         assert await _statuses() == expected_statuses
         assert await _matview_statuses() == {NOTE_AT_0003: "queue"}
 
-        await helpers.alembic_downgrade("0002")
+        await migration_helpers.alembic_downgrade("0002")
         assert (await factories.fetch_row(models.Notes, NOTE_AT_0003))[
             "chapter"
         ] == "9" * 256
 
-        await helpers.alembic_downgrade("0001")
+        await migration_helpers.alembic_downgrade("0001")
         assert await helpers.scalar("SELECT count(*) FROM materials") == 5
         assert await helpers.scalar("SELECT count(*) FROM notes") == 3
         assert await helpers.scalar("SELECT count(*) FROM statuses") == 4
 
-        await helpers.alembic_upgrade("head")
+        await migration_helpers.alembic_upgrade("head")
         assert await _material_dates() == expected_dates
         assert (await _sort_keys("notes", "note_id"))[NOTE_AT_0003] == (
             f"{QUEUED}$${'9' * 256}$$0000000001$${NOTE_AT_0003}"
         )
 
-        await helpers.alembic_downgrade("base")
+        await migration_helpers.alembic_downgrade("base")
         assert await _tables() == ["alembic_version"]
     finally:
-        await helpers.reset_schema_to_head()
+        await migration_helpers.reset_schema_to_head()
 
 
 async def test_upgrade_to_0003_stops_on_a_long_chapter_and_keeps_the_revision():
     try:
-        await helpers.alembic_downgrade("0002")
+        await migration_helpers.alembic_downgrade("0002")
         await _run(
             "INSERT INTO notes (note_id, material_id, content, added_at, chapter, page, "
             "is_deleted, sort_key) VALUES (:id, :material_id, 'Long', :added_at, :chapter, 1, "
@@ -348,13 +346,13 @@ async def test_upgrade_to_0003_stops_on_a_long_chapter_and_keeps_the_revision():
             RuntimeError,
             match="1 notes have a chapter over 256 characters",
         ):
-            await helpers.alembic_upgrade("head")
+            await migration_helpers.alembic_upgrade("head")
 
-        assert await helpers.current_revision() == "0002"
+        assert await migration_helpers.current_revision() == "0002"
         assert await helpers.scalar("SELECT char_length(chapter) FROM notes") == 257
 
         await _run("UPDATE notes SET chapter = '1'")
-        await helpers.alembic_upgrade("head")
-        assert await helpers.current_revision() == helpers.HEAD_REVISION
+        await migration_helpers.alembic_upgrade("head")
+        assert await migration_helpers.current_revision() == migration_helpers.HEAD_REVISION
     finally:
-        await helpers.reset_schema_to_head()
+        await migration_helpers.reset_schema_to_head()

@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from tests.unit.materials.helpers import compile_sql, make_material, uid
+from tests.unit.helpers import compile_sql, make_material, uid
 from tracker.common import database, pagination
 from tracker.materials import db
 from tracker.models import enums
@@ -74,7 +74,7 @@ async def test_queue_is_read_in_sort_key_order_by_default_desc(fetch_rows, means
     assert compile_sql(stmt).endswith(
         "FROM materials WHERE materials.started_at IS NULL ORDER BY materials.sort_key",
     )
-    assert compile_sql(kwargs["cursor_expr"]) == 'materials.sort_key COLLATE "C"'
+    assert compile_sql(kwargs["key"]) == 'materials.sort_key COLLATE "C"'
     assert kwargs["request"].order == pagination.Order.DESC
     assert kwargs["request"].params == {"order": "desc", "max_items": "7"}
     assert kwargs["request"].cursor is None
@@ -170,7 +170,7 @@ async def test_token_without_valid_start_date_is_rejected(fetch_rows, means, con
         continue_from,
     )
 
-    with pytest.raises(database.InvalidNextTokenException, match="no valid start date"):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
         await db.estimate_page(
             start_date=START,
             params=pagination.PageParams(next_token=token),

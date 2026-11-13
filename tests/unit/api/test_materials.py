@@ -137,14 +137,12 @@ async def test_queue_rejects_invalid_query(
 async def test_queue_maps_invalid_token_to_422(
     lenient_client, estimate_page, get_means, today
 ):
-    estimate_page.side_effect = database.InvalidNextTokenException(
-        "next_token is malformed"
-    )
+    estimate_page.side_effect = database.InvalidNextTokenException("Invalid nextToken")
 
     response = await lenient_client.get(f"{BASE}/queue", params={"next_token": "garbage"})
 
     assert response.status_code == 422
-    assert response.json() == {"detail": "InvalidNextToken: next_token is malformed"}
+    assert response.json() == {"detail": "InvalidNextToken: Invalid nextToken"}
 
 
 @pytest.mark.parametrize(
@@ -281,13 +279,13 @@ async def test_listing_maps_invalid_token_to_422(client, mocker, path, db_functi
     _patch(
         mocker,
         db_function,
-        side_effect=database.InvalidNextTokenException("next_token is malformed"),
+        side_effect=database.InvalidNextTokenException("Invalid nextToken"),
     )
 
     response = await client.get(f"{BASE}/{path}", params={"next_token": "garbage"})
 
     assert response.status_code == 422
-    assert response.json() == {"detail": "InvalidNextToken: next_token is malformed"}
+    assert response.json() == {"detail": "InvalidNextToken: Invalid nextToken"}
 
 
 async def test_get_completed_material(client, mocker):

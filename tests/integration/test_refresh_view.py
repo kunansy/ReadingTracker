@@ -7,10 +7,7 @@ from types import ModuleType
 import pytest
 import sqlalchemy.sql as sa
 
-from tests.integration import (
-    factories,
-    helpers_notes as helpers,
-)
+from tests.integration import factories, helpers
 from tracker.common import database
 from tracker.materials import db as materials_db
 from tracker.models import enums
@@ -150,11 +147,11 @@ async def test_matview_joins_the_material_repeats_only_for_started_materials():
     completed_note = await factories.insert_note(material_id=completed_material)
     queued_note = await factories.insert_note(material_id=queued_material)
     for material_id in (completed_material, queued_material):
-        await helpers.insert_repeat(
+        await factories.insert_repeat(
             material_id=material_id,
             repeated_at=helpers.at(helpers.day(-10), 8),
         )
-        await helpers.insert_repeat(
+        await factories.insert_repeat(
             material_id=material_id,
             repeated_at=helpers.at(helpers.day(-3), 9),
         )
@@ -173,7 +170,7 @@ async def test_matview_keeps_only_notes_never_repeated_while_any_exist():
     never_repeated = await factories.insert_note(material_id=material_id)
     also_never_repeated = await factories.insert_note(material_id=material_id)
     repeated = await factories.insert_note(material_id=material_id)
-    await helpers.insert_note_repeat(
+    await factories.insert_note_repeat(
         note_id=repeated,
         repeated_at=helpers.at(helpers.day(-400)),
     )
@@ -191,26 +188,26 @@ async def test_matview_keeps_the_notes_last_repeated_on_the_oldest_day():
     also_january = await factories.insert_note(material_id=material_id)
     february = await factories.insert_note(material_id=material_id)
     repeated_again = await factories.insert_note(material_id=material_id)
-    january_day = helpers.FROZEN_TODAY.replace(month=1, day=10)
-    february_day = helpers.FROZEN_TODAY.replace(month=2, day=1)
-    await helpers.insert_note_repeat(
+    january_day = helpers.TODAY.replace(month=1, day=10)
+    february_day = helpers.TODAY.replace(month=2, day=1)
+    await factories.insert_note_repeat(
         note_id=january,
         repeated_at=helpers.at(january_day, 1),
     )
-    await helpers.insert_note_repeat(
+    await factories.insert_note_repeat(
         note_id=also_january,
         repeated_at=helpers.at(january_day, 23),
     )
-    await helpers.insert_note_repeat(
+    await factories.insert_note_repeat(
         note_id=february,
         repeated_at=helpers.at(february_day),
     )
     # its last repeat is in February, the January one no longer counts
-    await helpers.insert_note_repeat(
+    await factories.insert_note_repeat(
         note_id=repeated_again,
         repeated_at=helpers.at(january_day),
     )
-    await helpers.insert_note_repeat(
+    await factories.insert_note_repeat(
         note_id=repeated_again,
         repeated_at=helpers.at(february_day, 5),
     )
@@ -222,15 +219,15 @@ async def test_matview_keeps_the_notes_last_repeated_on_the_oldest_day():
 
 async def test_matview_groups_by_day_and_prefers_the_smaller_group_current_behaviour():
     material_id = await factories.insert_material()
-    january_day = helpers.FROZEN_TODAY.replace(month=1, day=10)
+    january_day = helpers.TODAY.replace(month=1, day=10)
     for _ in range(2):
         note_id = await factories.insert_note(material_id=material_id)
-        await helpers.insert_note_repeat(
+        await factories.insert_note_repeat(
             note_id=note_id,
             repeated_at=helpers.at(january_day),
         )
     later_in_january = await factories.insert_note(material_id=material_id)
-    await helpers.insert_note_repeat(
+    await factories.insert_note_repeat(
         note_id=later_in_january,
         repeated_at=helpers.at(january_day.replace(day=20)),
     )
@@ -246,11 +243,11 @@ async def test_matview_ignores_the_repeat_history_of_deleted_notes():
     material_id = await factories.insert_material()
     live = await factories.insert_note(material_id=material_id)
     deleted = await factories.insert_note(material_id=material_id)
-    await helpers.insert_note_repeat(
+    await factories.insert_note_repeat(
         note_id=live,
         repeated_at=helpers.at(helpers.day(-5)),
     )
-    await helpers.insert_note_repeat(
+    await factories.insert_note_repeat(
         note_id=deleted,
         repeated_at=helpers.at(helpers.day(-500)),
     )
@@ -263,11 +260,11 @@ async def test_matview_ignores_the_repeat_history_of_deleted_notes():
 
 async def test_matview_is_empty_when_the_oldest_history_has_no_note_current_behaviour():
     note_id = await factories.insert_note(material_id=await factories.insert_material())
-    await helpers.insert_note_repeat(
+    await factories.insert_note_repeat(
         note_id=note_id,
         repeated_at=helpers.at(helpers.day(-5)),
     )
-    await helpers.insert_note_repeat(
+    await factories.insert_note_repeat(
         note_id=uuid.uuid4(),
         repeated_at=helpers.at(helpers.day(-500)),
     )

@@ -5,10 +5,7 @@ import uuid
 import pytest
 from matplotlib.axes import Axes
 
-from tests.integration import (
-    factories,
-    helpers_notes as helpers,
-)
+from tests.integration import factories, helpers
 from tracker.common import database, settings
 from tracker.materials import db as materials_db
 from tracker.models import enums
@@ -18,9 +15,7 @@ from tracker.system import db as system_db
 MISSING_ID = uuid.UUID("00000000-0000-4000-8000-000000000000")
 
 
-@pytest.fixture(autouse=True)
-def frozen_clock(mocker) -> None:
-    mocker.patch.object(database, "utcnow", return_value=helpers.FROZEN_NOW)
+pytestmark = pytest.mark.usefixtures("frozen_clock")
 
 
 async def _material_with_logs(*, pages: int = 100) -> uuid.UUID:

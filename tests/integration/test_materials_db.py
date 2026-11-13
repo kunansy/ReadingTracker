@@ -7,7 +7,7 @@ from uuid import UUID
 import pytest
 import sqlalchemy.sql as sa
 
-from tests.integration import factories, helpers_materials as h
+from tests.integration import factories, helpers, helpers_materials as h
 from tracker.common import database, sort_keys
 from tracker.common.pagination import Order, PageParams
 from tracker.materials import db
@@ -33,7 +33,7 @@ def sql_today(clock: h.Clock) -> datetime.date:
 
 
 def seconds_after_now(seconds: int) -> datetime.datetime:
-    return h.NOW + datetime.timedelta(seconds=seconds)
+    return helpers.NOW + datetime.timedelta(seconds=seconds)
 
 
 def expected_material(material_id: UUID, *, added_at: datetime.datetime, **values: Any):
@@ -79,7 +79,7 @@ async def test_insert_material_stores_every_column(mocker):
         "material_type": "book",
         "tags": "programming, craft",
         "link": "https://example.com/clean-code",
-        "added_at": h.NOW,
+        "added_at": helpers.NOW,
         "is_outlined": False,
         "started_at": None,
         "completed_at": None,
@@ -228,8 +228,8 @@ async def test_get_material_api_raises_not_found_when_missing(clock):
 
 async def test_get_materials_returns_materials_in_every_state(clock):
     queued_id = await h.queued(clock)
-    reading_id = await h.reading(clock, started=h.day(5))
-    completed_id = await h.completed(clock, started=h.day(5), finished=h.day(2))
+    reading_id = await h.reading(clock, started=helpers.day(-5))
+    completed_id = await h.completed(clock, started=helpers.day(-5), finished=helpers.day(-2))
 
     materials = await db.get_materials()
 
@@ -238,13 +238,13 @@ async def test_get_materials_returns_materials_in_every_state(clock):
         expected_material(
             reading_id,
             added_at=seconds_after_now(2),
-            started_at=h.midnight(h.day(5)),
+            started_at=helpers.at(helpers.day(-5)),
         ),
         expected_material(
             completed_id,
             added_at=seconds_after_now(3),
-            started_at=h.midnight(h.day(5)),
-            completed_at=h.midnight(h.day(2)),
+            started_at=helpers.at(helpers.day(-5)),
+            completed_at=helpers.at(helpers.day(-2)),
         ),
     ]
 
@@ -269,7 +269,7 @@ async def test_aggregates_are_empty_on_an_empty_database():
     assert await db.get_repeats_analytics() == {}
     assert await db.reading_statistics() == []
     assert await db._get_materials_statistics([]) == []
-    assert await db._end_of_reading() == h.TODAY
+    assert await db._end_of_reading() == helpers.TODAY
 
 
 # _get_free_materials, get_reading_materials, _get_completed_materials
@@ -277,8 +277,8 @@ async def test_aggregates_are_empty_on_an_empty_database():
 
 async def test_free_materials_are_only_queued_ones_in_insertion_order(clock):
     first = await h.queued(clock)
-    await h.reading(clock, started=h.day(5))
-    await h.completed(clock, started=h.day(5), finished=h.day(2))
+    await h.reading(clock, started=helpers.day(-5))
+    await h.completed(clock, started=helpers.day(-5), finished=helpers.day(-2))
     second = await h.queued(clock)
 
     materials = await db._get_free_materials()
@@ -299,25 +299,25 @@ async def test_started_material_leaves_the_queue(clock):
 
 async def test_reading_materials_are_only_started_and_not_completed(clock):
     await h.queued(clock)
-    reading_id = await h.reading(clock, started=h.day(5))
-    await h.completed(clock, started=h.day(5), finished=h.day(2))
+    reading_id = await h.reading(clock, started=helpers.day(-5))
+    await h.completed(clock, started=helpers.day(-5), finished=helpers.day(-2))
 
     assert await db.get_reading_materials() == [
         expected_material(
             reading_id,
             added_at=seconds_after_now(2),
-            started_at=h.midnight(h.day(5)),
+            started_at=helpers.at(helpers.day(-5)),
         ),
     ]
 
 
 async def test_reading_materials_go_from_the_most_recently_read(clock):
-    read_long_ago = await h.reading(clock, started=h.day(9))
-    read_yesterday = await h.reading(clock, started=h.day(9))
-    never_read = await h.reading(clock, started=h.day(9))
-    await logs_db.insert_log_record(material_id=read_long_ago, count=1, date=h.day(5))
-    await logs_db.insert_log_record(material_id=read_long_ago, count=1, date=h.day(8))
-    await logs_db.insert_log_record(material_id=read_yesterday, count=1, date=h.day(1))
+    read_long_ago = await h.reading(clock, started=helpers.day(-9))
+    read_yesterday = await h.reading(clock, started=helpers.day(-9))
+    never_read = await h.reading(clock, started=helpers.day(-9))
+    await logs_db.insert_log_record(material_id=read_long_ago, count=1, date=helpers.day(-5))
+    await logs_db.insert_log_record(material_id=read_long_ago, count=1, date=helpers.day(-8))
+    await logs_db.insert_log_record(material_id=read_yesterday, count=1, date=helpers.day(-1))
 
     materials = await db.get_reading_materials()
 
@@ -330,9 +330,9 @@ async def test_reading_materials_go_from_the_most_recently_read(clock):
 
 
 async def test_completed_materials_go_from_the_earliest_completion(clock):
-    late = await h.completed(clock, started=h.day(9), finished=h.day(1))
-    early = await h.completed(clock, started=h.day(9), finished=h.day(7))
-    await h.reading(clock, started=h.day(9))
+    late = await h.completed(clock, started=helpers.day(-9), finished=helpers.day(-1))
+    early = await h.completed(clock, started=helpers.day(-9), finished=helpers.day(-7))
+    await h.reading(clock, started=helpers.day(-9))
     await h.queued(clock)
 
     materials = await db._get_completed_materials()
@@ -341,14 +341,14 @@ async def test_completed_materials_go_from_the_earliest_completion(clock):
         expected_material(
             early,
             added_at=seconds_after_now(2),
-            started_at=h.midnight(h.day(9)),
-            completed_at=h.midnight(h.day(7)),
+            started_at=helpers.at(helpers.day(-9)),
+            completed_at=helpers.at(helpers.day(-7)),
         ),
         expected_material(
             late,
             added_at=seconds_after_now(1),
-            started_at=h.midnight(h.day(9)),
-            completed_at=h.midnight(h.day(1)),
+            started_at=helpers.at(helpers.day(-9)),
+            completed_at=helpers.at(helpers.day(-1)),
         ),
     ]
 
@@ -359,34 +359,34 @@ async def completed_set(clock: h.Clock) -> dict[str, UUID]:
     ids = {
         "book_plain": await h.completed(
             clock,
-            started=h.day(20),
-            finished=h.day(9),
+            started=helpers.day(-20),
+            finished=helpers.day(-9),
             tags="history, science",
         ),
         "book_outlined": await h.completed(
             clock,
-            started=h.day(20),
-            finished=h.day(8),
+            started=helpers.day(-20),
+            finished=helpers.day(-8),
             tags="history",
         ),
         "article_plain": await h.completed(
             clock,
-            started=h.day(20),
-            finished=h.day(7),
+            started=helpers.day(-20),
+            finished=helpers.day(-7),
             material_type=ARTICLE,
             tags="science",
         ),
         "article_outlined": await h.completed(
             clock,
-            started=h.day(20),
-            finished=h.day(6),
+            started=helpers.day(-20),
+            finished=helpers.day(-6),
             material_type=ARTICLE,
             tags=None,
         ),
     }
     await db.outline_material(material_id=ids["book_outlined"])
     await db.outline_material(material_id=ids["article_outlined"])
-    await h.reading(clock, started=h.day(20), tags="history, science")
+    await h.reading(clock, started=helpers.day(-20), tags="history, science")
     return ids
 
 
@@ -476,8 +476,8 @@ async def test_completed_statistics_page_filters(completed_set, filters, expecte
 async def test_every_listed_material_tag_finds_its_material(clock, stored_tags):
     material_id = await h.completed(
         clock,
-        started=h.day(5),
-        finished=h.day(1),
+        started=helpers.day(-5),
+        finished=helpers.day(-1),
         tags=stored_tags,
     )
 
@@ -494,7 +494,7 @@ async def test_every_listed_material_tag_finds_its_material(clock, stored_tags):
 
 
 async def test_update_material_changes_only_the_given_columns(clock):
-    material_id = await h.reading(clock, started=h.day(3), tags="old", link="https://old")
+    material_id = await h.reading(clock, started=helpers.day(-3), tags="old", link="https://old")
     before = await factories.fetch_row(models.Materials, material_id)
 
     await db.update_material(
@@ -576,7 +576,7 @@ async def test_update_material_rejects_a_title_taken_by_the_same_type(clock):
 async def test_start_material_stores_the_given_date_at_midnight(clock):
     material_id = await h.queued(clock)
 
-    await db.start_material(material_id=material_id, started_at=h.day(3))
+    await db.start_material(material_id=material_id, started_at=helpers.day(-3))
 
     row = await factories.fetch_row(models.Materials, material_id)
     assert row["started_at"] == datetime.datetime(2024, 3, 12, 0, 0)
@@ -593,23 +593,23 @@ async def test_start_material_defaults_to_the_current_date(clock):
 
 
 async def test_start_material_twice_raises_conflict_and_keeps_the_first_date(clock):
-    material_id = await h.reading(clock, started=h.day(3))
+    material_id = await h.reading(clock, started=helpers.day(-3))
 
     with pytest.raises(database.ConflictException, match="is not in the queue"):
-        await db.start_material(material_id=material_id, started_at=h.day(1))
+        await db.start_material(material_id=material_id, started_at=helpers.day(-1))
 
     row = await factories.fetch_row(models.Materials, material_id)
-    assert row["started_at"] == h.midnight(h.day(3))
+    assert row["started_at"] == helpers.at(helpers.day(-3))
 
 
 async def test_start_completed_material_raises_conflict(clock):
-    material_id = await h.completed(clock, started=h.day(3), finished=h.day(2))
+    material_id = await h.completed(clock, started=helpers.day(-3), finished=helpers.day(-2))
 
     with pytest.raises(database.ConflictException, match="is not in the queue"):
-        await db.start_material(material_id=material_id, started_at=h.day(1))
+        await db.start_material(material_id=material_id, started_at=helpers.day(-1))
 
     row = await factories.fetch_row(models.Materials, material_id)
-    assert row["started_at"] == h.midnight(h.day(3))
+    assert row["started_at"] == helpers.at(helpers.day(-3))
 
 
 async def test_start_missing_material_raises_conflict(clock):
@@ -629,17 +629,17 @@ async def test_start_material_starts_only_the_given_material(clock):
 
 
 async def test_complete_material_stores_the_given_date_at_midnight(clock):
-    material_id = await h.reading(clock, started=h.day(3))
+    material_id = await h.reading(clock, started=helpers.day(-3))
 
-    await db.complete_material(material_id=material_id, completed_at=h.day(1))
+    await db.complete_material(material_id=material_id, completed_at=helpers.day(-1))
 
     row = await factories.fetch_row(models.Materials, material_id)
     assert row["completed_at"] == datetime.datetime(2024, 3, 14, 0, 0)
-    assert row["started_at"] == h.midnight(h.day(3))
+    assert row["started_at"] == helpers.at(helpers.day(-3))
 
 
 async def test_complete_material_defaults_to_the_current_date(clock):
-    material_id = await h.reading(clock, started=h.day(3))
+    material_id = await h.reading(clock, started=helpers.day(-3))
 
     await db.complete_material(material_id=material_id)
 
@@ -658,38 +658,38 @@ async def test_complete_queued_material_raises_conflict(clock):
 
 
 async def test_complete_material_twice_raises_conflict_and_keeps_the_first_date(clock):
-    material_id = await h.completed(clock, started=h.day(3), finished=h.day(2))
+    material_id = await h.completed(clock, started=helpers.day(-3), finished=helpers.day(-2))
 
     with pytest.raises(database.ConflictException, match="is not being read"):
-        await db.complete_material(material_id=material_id, completed_at=h.day(1))
+        await db.complete_material(material_id=material_id, completed_at=helpers.day(-1))
 
     row = await factories.fetch_row(models.Materials, material_id)
-    assert row["completed_at"] == h.midnight(h.day(2))
+    assert row["completed_at"] == helpers.at(helpers.day(-2))
 
 
 async def test_complete_missing_material_raises_conflict(clock):
-    await h.reading(clock, started=h.day(3))
+    await h.reading(clock, started=helpers.day(-3))
 
     with pytest.raises(database.ConflictException, match="is not being read"):
         await db.complete_material(material_id=h.MISSING_ID)
 
 
 async def test_complete_material_accepts_a_date_before_the_start_current_behaviour(clock):
-    material_id = await h.reading(clock, started=h.day(3))
+    material_id = await h.reading(clock, started=helpers.day(-3))
 
-    await db.complete_material(material_id=material_id, completed_at=h.day(9))
+    await db.complete_material(material_id=material_id, completed_at=helpers.day(-9))
 
     row = await factories.fetch_row(models.Materials, material_id)
-    assert row["completed_at"] == h.midnight(h.day(9))
+    assert row["completed_at"] == helpers.at(helpers.day(-9))
 
 
 @pytest.mark.parametrize("state", ["queued", "reading", "completed"])
 async def test_outline_material_sets_the_flag_in_any_state(clock, state):
     material_id = await h.queued(clock)
     if state != "queued":
-        await db.start_material(material_id=material_id, started_at=h.day(3))
+        await db.start_material(material_id=material_id, started_at=helpers.day(-3))
     if state == "completed":
-        await db.complete_material(material_id=material_id, completed_at=h.day(1))
+        await db.complete_material(material_id=material_id, completed_at=helpers.day(-1))
     before = await factories.fetch_row(models.Materials, material_id)
 
     await db.outline_material(material_id=material_id)
@@ -719,24 +719,24 @@ async def test_outline_missing_material_raises_not_found(clock):
 
 
 async def test_repeat_material_inserts_a_repeat_at_the_current_time(clock):
-    material_id = await h.completed(clock, started=h.day(3), finished=h.day(2))
+    material_id = await h.completed(clock, started=helpers.day(-3), finished=helpers.day(-2))
 
     await db.repeat_material(material_id=material_id)
 
-    [repeat] = await h.fetch_all(models.Repeats)
+    [repeat] = await helpers.fetch_table(models.Repeats)
     assert repeat["material_id"] == material_id
     assert repeat["repeated_at"] == clock.now
     assert isinstance(repeat["repeat_id"], UUID)
 
 
 async def test_repeat_material_twice_inserts_two_repeats(clock):
-    material_id = await h.completed(clock, started=h.day(3), finished=h.day(2))
+    material_id = await h.completed(clock, started=helpers.day(-3), finished=helpers.day(-2))
 
     await db.repeat_material(material_id=material_id)
     clock.tick(60)
     await db.repeat_material(material_id=material_id)
 
-    repeats = await h.fetch_all(models.Repeats, models.Repeats.c.repeated_at)
+    repeats = await helpers.fetch_table(models.Repeats, models.Repeats.c.repeated_at)
     assert [(r["material_id"], r["repeated_at"]) for r in repeats] == [
         (material_id, clock.now - datetime.timedelta(seconds=60)),
         (material_id, clock.now),
@@ -746,7 +746,7 @@ async def test_repeat_material_twice_inserts_two_repeats(clock):
 async def test_repeat_material_accepts_an_unknown_material_current_behaviour():
     await db.repeat_material(material_id=h.MISSING_ID)
 
-    [repeat] = await h.fetch_all(models.Repeats)
+    [repeat] = await helpers.fetch_table(models.Repeats)
     assert repeat["material_id"] == h.MISSING_ID
 
 
@@ -755,32 +755,32 @@ async def test_repeat_material_accepts_an_unknown_material_current_behaviour():
 
 async def test_last_material_started_ignores_queued_and_completed(clock):
     await h.queued(clock)
-    await h.completed(clock, started=h.day(1), finished=h.day(0))
+    await h.completed(clock, started=helpers.day(-1), finished=helpers.day(0))
 
     assert await db.get_last_material_started() is None
 
 
 async def test_last_material_started_is_the_latest_start_among_unread_materials(clock):
-    await h.reading(clock, started=h.day(5))
-    latest = await h.reading(clock, started=h.day(2))
-    await h.reading(clock, started=h.day(8))
+    await h.reading(clock, started=helpers.day(-5))
+    latest = await h.reading(clock, started=helpers.day(-2))
+    await h.reading(clock, started=helpers.day(-8))
 
     assert await db.get_last_material_started() == latest
 
 
 async def test_last_material_started_does_not_prefer_a_material_without_logs(clock):
-    logged = await h.reading(clock, started=h.day(2))
-    await h.reading(clock, started=h.day(8))
-    await logs_db.insert_log_record(material_id=logged, count=1, date=h.day(1))
+    logged = await h.reading(clock, started=helpers.day(-2))
+    await h.reading(clock, started=helpers.day(-8))
+    await logs_db.insert_log_record(material_id=logged, count=1, date=helpers.day(-1))
 
     assert await db.get_last_material_started() == logged
 
 
 async def test_last_material_started_is_the_latest_start_whatever_the_logs_are(clock):
-    started_long_ago = await h.reading(clock, started=h.day(10))
-    started_recently = await h.reading(clock, started=h.day(5))
-    await logs_db.insert_log_record(material_id=started_long_ago, count=1, date=h.day(1))
-    await logs_db.insert_log_record(material_id=started_recently, count=1, date=h.day(3))
+    started_long_ago = await h.reading(clock, started=helpers.day(-10))
+    started_recently = await h.reading(clock, started=helpers.day(-5))
+    await logs_db.insert_log_record(material_id=started_long_ago, count=1, date=helpers.day(-1))
+    await logs_db.insert_log_record(material_id=started_recently, count=1, date=helpers.day(-3))
 
     assert await db.get_last_material_started() == started_recently
 
@@ -792,7 +792,7 @@ async def test_material_tags_are_split_stripped_lowered_and_merged(clock):
     await h.queued(clock, tags="History, Science")
     await h.queued(clock, tags="history,  ФИЗИКА ,math")
     await h.queued(clock, tags=None)
-    await h.reading(clock, started=h.day(1), tags="single")
+    await h.reading(clock, started=helpers.day(-1), tags="single")
 
     assert await db.get_material_tags() == {
         "history",
@@ -823,11 +823,11 @@ async def test_authors_are_distinct_and_not_split(clock):
 
 async def test_titles_by_material_state(clock):
     queued_id = await h.queued(clock, title="Queued")
-    reading_id = await h.reading(clock, started=h.day(3), title="Reading")
+    reading_id = await h.reading(clock, started=helpers.day(-3), title="Reading")
     completed_id = await h.completed(
         clock,
-        started=h.day(3),
-        finished=h.day(1),
+        started=helpers.day(-3),
+        finished=helpers.day(-1),
         title="Completed",
     )
 
@@ -856,8 +856,8 @@ async def test_material_titles_with_cards_lists_each_material_once(clock):
 
 async def test_is_reading_by_material_state(clock):
     queued_id = await h.queued(clock)
-    reading_id = await h.reading(clock, started=h.day(3))
-    completed_id = await h.completed(clock, started=h.day(3), finished=h.day(1))
+    reading_id = await h.reading(clock, started=helpers.day(-3))
+    completed_id = await h.completed(clock, started=helpers.day(-3), finished=helpers.day(-1))
 
     assert await db.is_reading(material_id=queued_id) is False
     assert await db.is_reading(material_id=reading_id) is True
@@ -869,17 +869,17 @@ async def test_is_reading_by_material_state(clock):
 
 
 async def read_material(clock: h.Clock, *, pages: int = 100, read: int = 100) -> UUID:
-    material_id = await h.reading(clock, started=h.day(5), pages=pages)
+    material_id = await h.reading(clock, started=helpers.day(-5), pages=pages)
     if read:
         await logs_db.insert_log_record(
-            material_id=material_id, count=read, date=h.day(4)
+            material_id=material_id, count=read, date=helpers.day(-4)
         )
     return material_id
 
 
 @pytest.mark.parametrize(
     "completed_at",
-    [None, h.TODAY, h.day(4), h.day(5)],
+    [None, helpers.TODAY, helpers.day(-4), helpers.day(-5)],
     ids=["default date", "today", "past", "the start date"],
 )
 async def test_completion_request_is_valid_for_a_fully_read_material(clock, completed_at):
@@ -895,7 +895,7 @@ async def test_completion_request_is_valid_for_a_fully_read_material(clock, comp
 
 async def test_completion_request_is_valid_when_pages_are_read_over_several_days(clock):
     material_id = await read_material(clock, pages=100, read=60)
-    await logs_db.insert_log_record(material_id=material_id, count=40, date=h.day(3))
+    await logs_db.insert_log_record(material_id=material_id, count=40, date=helpers.day(-3))
 
     assert await db.is_completion_request_valid(material_id=material_id) is None
 
@@ -916,7 +916,7 @@ async def test_completion_request_rejects_a_queued_material(clock):
 
 async def test_completion_request_rejects_a_completed_material(clock):
     material_id = await read_material(clock)
-    await db.complete_material(material_id=material_id, completed_at=h.day(1))
+    await db.complete_material(material_id=material_id, completed_at=helpers.day(-1))
 
     with pytest.raises(ValueError, match=r"^Material is already completed$"):
         await db.is_completion_request_valid(material_id=material_id)
@@ -927,7 +927,7 @@ async def test_completion_request_rejects_a_future_date(clock):
 
     with pytest.raises(ValueError, match=r"^Completion date must not be in the future$"):
         await db.is_completion_request_valid(
-            material_id=material_id, completed_at=h.day(-1)
+            material_id=material_id, completed_at=helpers.day(1)
         )
 
 
@@ -939,7 +939,7 @@ async def test_completion_request_rejects_a_date_before_the_start(clock):
         match=r"^Completion date must not be before the start date$",
     ):
         await db.is_completion_request_valid(
-            material_id=material_id, completed_at=h.day(6)
+            material_id=material_id, completed_at=helpers.day(-6)
         )
 
 
@@ -960,14 +960,11 @@ async def test_completion_request_rejects_a_wrong_pages_sum(clock, read):
 
 async def test_completion_request_counts_only_logs_of_the_material(clock):
     material_id = await read_material(clock, pages=100, read=60)
-    other_id = await h.reading(clock, started=h.day(5))
-    await logs_db.insert_log_record(material_id=other_id, count=40, date=h.day(3))
+    other_id = await h.reading(clock, started=helpers.day(-5))
+    await logs_db.insert_log_record(material_id=other_id, count=40, date=helpers.day(-3))
 
     with pytest.raises(ValueError, match=r"^Invalid pages count, something is unread$"):
         await db.is_completion_request_valid(material_id=material_id)
-
-
-# statistics of materials
 
 
 def book_material(history: h.ReadingHistory) -> db.Material:
@@ -976,8 +973,8 @@ def book_material(history: h.ReadingHistory) -> db.Material:
         added_at=seconds_after_now(1),
         title="Book",
         pages=h.BOOK_PAGES,
-        started_at=h.midnight(h.day(10)),
-        completed_at=h.midnight(h.day(7)),
+        started_at=helpers.at(helpers.day(-10)),
+        completed_at=helpers.at(helpers.day(-7)),
     )
 
 
@@ -988,15 +985,15 @@ def article_material(history: h.ReadingHistory) -> db.Material:
         title="Article",
         pages=h.ARTICLE_PAGES,
         material_type=ARTICLE,
-        started_at=h.midnight(h.day(9)),
+        started_at=helpers.at(helpers.day(-9)),
     )
 
 
 def book_statistics(history: h.ReadingHistory, *, notes_count: int = 0):
     return db.MaterialStatistics(
         material=book_material(history),
-        started_at=h.day(10),
-        completed_at=h.day(7),
+        started_at=helpers.day(-10),
+        completed_at=helpers.day(-7),
         total_reading_duration="4 days",
         duration=3,
         lost_time=0,
@@ -1004,13 +1001,13 @@ def book_statistics(history: h.ReadingHistory, *, notes_count: int = 0):
         min_record=database.MinMax(
             log_id=history.book_last,
             material_id=history.book,
-            date=h.day(7),
+            date=helpers.day(-7),
             count=22,
         ),
         max_record=database.MinMax(
             log_id=history.book_max,
             material_id=history.book,
-            date=h.day(9),
+            date=helpers.day(-9),
             count=50,
         ),
         mean=34,
@@ -1024,7 +1021,7 @@ def book_statistics(history: h.ReadingHistory, *, notes_count: int = 0):
 def article_statistics(history: h.ReadingHistory, *, notes_count: int = 0):
     return db.MaterialStatistics(
         material=article_material(history),
-        started_at=h.day(9),
+        started_at=helpers.day(-9),
         completed_at=None,
         # 9.5 days since the start plus the inclusive day
         total_reading_duration="10 days",
@@ -1035,13 +1032,13 @@ def article_statistics(history: h.ReadingHistory, *, notes_count: int = 0):
         min_record=database.MinMax(
             log_id=history.article_min,
             material_id=history.article,
-            date=h.day(6),
+            date=helpers.day(-6),
             count=5,
         ),
         max_record=database.MinMax(
             log_id=history.article_max,
             material_id=history.article,
-            date=h.day(9),
+            date=helpers.day(-9),
             count=10,
         ),
         # round(15 / 2) with banker's rounding
@@ -1050,7 +1047,7 @@ def article_statistics(history: h.ReadingHistory, *, notes_count: int = 0):
         remaining_pages=25,
         # round(25 / 8)
         remaining_days=3,
-        would_be_completed=h.day(-3),
+        would_be_completed=helpers.day(3),
     )
 
 
@@ -1083,8 +1080,8 @@ async def test_completed_statistics_page_matches_the_single_material_read(clock)
 
 
 async def test_completed_statistics_of_a_material_without_logs(clock):
-    await h.reading(clock, started=h.day(9))
-    material_id = await h.completed(clock, started=h.day(4), finished=h.day(4))
+    await h.reading(clock, started=helpers.day(-9))
+    material_id = await h.completed(clock, started=helpers.day(-4), finished=helpers.day(-4))
 
     statistics = await db.get_completed_statistics(material_id=material_id)
 
@@ -1092,11 +1089,11 @@ async def test_completed_statistics_of_a_material_without_logs(clock):
         material=expected_material(
             material_id,
             added_at=seconds_after_now(2),
-            started_at=h.midnight(h.day(4)),
-            completed_at=h.midnight(h.day(4)),
+            started_at=helpers.at(helpers.day(-4)),
+            completed_at=helpers.at(helpers.day(-4)),
         ),
-        started_at=h.day(4),
-        completed_at=h.day(4),
+        started_at=helpers.day(-4),
+        completed_at=helpers.day(-4),
         total_reading_duration="1 days",
         duration=0,
         lost_time=0,
@@ -1111,7 +1108,7 @@ async def test_completed_statistics_of_a_material_without_logs(clock):
 
 
 async def test_statistics_of_a_material_without_pages_is_zero_percent_completed(clock):
-    material_id = await h.completed(clock, started=h.day(0), finished=h.day(0), pages=0)
+    material_id = await h.completed(clock, started=helpers.day(0), finished=helpers.day(0), pages=0)
 
     statistics = await db.get_completed_statistics(material_id=material_id)
 
@@ -1152,12 +1149,33 @@ async def test_reading_statistics_page_matches_the_full_listing(clock):
     assert page.next_token is None
 
 
+async def test_reading_page_orders_by_start_while_the_full_listing_orders_by_last_read(
+    clock,
+):
+    started_first = await h.reading(clock, started=helpers.day(-20))
+    started_last = await h.reading(clock, started=helpers.day(-10))
+    await factories.insert_log(material_id=started_first, date=helpers.day(-1))
+    await factories.insert_log(material_id=started_last, date=helpers.day(-5))
+
+    page = await db.reading_statistics_page(params=PageParams())
+    listing = await db.get_reading_materials()
+
+    assert [stat.material.material_id for stat in page.items] == [
+        started_last,
+        started_first,
+    ]
+    assert [material.material_id for material in listing] == [
+        started_first,
+        started_last,
+    ]
+
+
 async def test_reading_statistics_of_unread_materials_use_the_mean_of_their_type(clock):
     await h.reading_history(clock)
-    book_id = await h.reading(clock, started=h.day(2), title="Unread book", pages=100)
+    book_id = await h.reading(clock, started=helpers.day(-2), title="Unread book", pages=100)
     lecture_id = await h.reading(
         clock,
-        started=h.day(1),
+        started=helpers.day(-1),
         title="Unread lecture",
         pages=7,
         material_type=LECTURE,
@@ -1172,12 +1190,12 @@ async def test_reading_statistics_of_unread_materials_use_the_mean_of_their_type
     assert (book.mean, book.total, book.duration, book.lost_time) == (34, 0, 0, 0)
     assert (book.min_record, book.max_record) == (None, None)
     assert (book.remaining_pages, book.remaining_days) == (100, 3)
-    assert book.would_be_completed == h.day(-3)
+    assert book.would_be_completed == helpers.day(3)
     assert book.total_reading_duration == "3 days"
     lecture = statistics[lecture_id]
     # no lecture was ever logged: the default mean of 1
     assert (lecture.mean, lecture.remaining_pages, lecture.remaining_days) == (1, 7, 7)
-    assert lecture.would_be_completed == h.day(-7)
+    assert lecture.would_be_completed == helpers.day(7)
 
 
 async def test_materials_statistics_keep_the_order_of_the_given_materials(clock):
@@ -1191,21 +1209,21 @@ async def test_materials_statistics_keep_the_order_of_the_given_materials(clock)
 
 async def test_end_of_reading_adds_remaining_days_of_every_reading_material(clock):
     await h.reading_history(clock)
-    await h.reading(clock, started=h.day(2), title="Unread book", pages=100)
+    await h.reading(clock, started=helpers.day(-2), title="Unread book", pages=100)
 
     # 3 days for the article and 3 for the unread book
-    assert await db._end_of_reading() == h.day(-6)
+    assert await db._end_of_reading() == helpers.day(6)
 
 
 async def test_end_of_reading_is_today_when_only_completed_materials_exist(clock):
-    await h.completed(clock, started=h.day(4), finished=h.day(0))
+    await h.completed(clock, started=helpers.day(-4), finished=helpers.day(0))
 
-    assert await db._end_of_reading() == h.TODAY
+    assert await db._end_of_reading() == helpers.TODAY
 
 
 async def test_reading_statistics_fail_on_a_zero_count_log_current_behaviour(clock):
-    material_id = await h.reading(clock, started=h.day(0))
-    await logs_db.insert_log_record(material_id=material_id, count=0, date=h.day(0))
+    material_id = await h.reading(clock, started=helpers.day(0))
+    await logs_db.insert_log_record(material_id=material_id, count=0, date=helpers.day(0))
 
     # materials/db.py:347 divides the remaining pages by the mean of 0
     with pytest.raises(ZeroDivisionError):
@@ -1213,18 +1231,18 @@ async def test_reading_statistics_fail_on_a_zero_count_log_current_behaviour(clo
 
 
 async def test_estimate_fails_when_the_mean_is_zero_current_behaviour(clock):
-    material_id = await h.reading(clock, started=h.day(0))
-    await logs_db.insert_log_record(material_id=material_id, count=0, date=h.day(0))
+    material_id = await h.reading(clock, started=helpers.day(0))
+    await logs_db.insert_log_record(material_id=material_id, count=0, date=helpers.day(0))
     await h.queued(clock)
 
     # materials/db.py:752 divides the pages by the mean of 0.00
     with pytest.raises(ZeroDivisionError):
-        await db.estimate_page(start_date=h.TODAY, params=PageParams())
+        await db.estimate_page(start_date=helpers.TODAY, params=PageParams())
 
 
 async def test_completed_statistics_survive_days_after_the_last_completion(clock):
-    material_id = await h.completed(clock, started=h.day(3), finished=h.day(2))
-    await logs_db.insert_log_record(material_id=material_id, count=100, date=h.day(2))
+    material_id = await h.completed(clock, started=helpers.day(-3), finished=helpers.day(-2))
+    await logs_db.insert_log_record(material_id=material_id, count=100, date=helpers.day(-2))
 
     statistics = await db.get_completed_statistics(material_id=material_id)
 
@@ -1294,9 +1312,9 @@ async def test_estimate_page_goes_from_the_newest_material_by_default(clock):
 
 
 async def test_estimate_page_is_empty_without_queued_materials(clock):
-    await h.reading(clock, started=h.day(1))
+    await h.reading(clock, started=helpers.day(-1))
 
-    page = await db.estimate_page(start_date=h.TODAY, params=PageParams())
+    page = await db.estimate_page(start_date=helpers.TODAY, params=PageParams())
 
     assert (page.items, page.total_count, page.next_token) == ([], 0, None)
 
@@ -1304,11 +1322,11 @@ async def test_estimate_page_is_empty_without_queued_materials(clock):
 async def test_estimate_page_of_a_material_without_pages(clock):
     material_id = await h.queued(clock, pages=0)
 
-    page = await db.estimate_page(start_date=h.TODAY, params=PageParams())
+    page = await db.estimate_page(start_date=helpers.TODAY, params=PageParams())
 
     [estimate] = page.items
     assert (estimate.material.material_id, estimate.expected_duration) == (material_id, 1)
-    assert (estimate.will_be_started, estimate.will_be_completed) == (h.TODAY, h.TODAY)
+    assert (estimate.will_be_started, estimate.will_be_completed) == (helpers.TODAY, helpers.TODAY)
 
 
 # get_repeats_analytics, get_repeating_queue_page
@@ -1515,7 +1533,7 @@ async def test_repeating_queue_item_of_a_never_repeated_material(clock, sql_toda
             notes_count=1,
             cards_count=3,
             repeats_count=0,
-            completed_at=h.midnight(days_before(sql_today, 45)),
+            completed_at=helpers.at(days_before(sql_today, 45)),
             last_repeated_at=None,
             priority_days=45,
             priority_months=1.5,
@@ -1539,7 +1557,7 @@ async def test_repeating_queue_item_of_a_repeated_material(clock, sql_today):
 
     assert (item.material_id, item.repeats_count) == (material_id, 2)
     assert item.last_repeated_at == last_repeated_at
-    assert item.completed_at == h.midnight(days_before(sql_today, 200))
+    assert item.completed_at == helpers.at(days_before(sql_today, 200))
     assert (item.priority_days, item.priority_months) == (90, 1.0)
     assert (item.notes_count, item.cards_count) == (0, 0)
 

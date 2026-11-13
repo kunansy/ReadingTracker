@@ -12,6 +12,7 @@ import sqlalchemy.sql as sa
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from testcontainers.core.container import DockerContainer
 
+from tests.integration import helpers
 from tracker.common import database, manticoresearch, settings
 from tracker.models import models
 
@@ -132,6 +133,11 @@ async def clean_database(db_engine: AsyncEngine) -> AsyncGenerator[None]:
     """Every test starts on empty tables and reads back only what it wrote."""
     yield
     await truncate_all(db_engine)
+
+
+@pytest.fixture
+def frozen_clock(mocker) -> None:
+    mocker.patch.object(database, "utcnow", return_value=helpers.NOW)
 
 
 @pytest.fixture(scope="session")

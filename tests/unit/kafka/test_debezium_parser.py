@@ -340,16 +340,16 @@ async def test_iter_updates_does_not_commit_message_whose_processing_failed(cons
     assert fake.events == ["start", "message 1", "stop"]
 
 
-async def test_iter_updates_ends_silently_on_failure_mid_stream_current_behaviour(
-    consumer,
-    caplog,
-):
+async def test_iter_updates_raises_on_failure_mid_stream(consumer, caplog):
     fake = consumer(
         [_message(before=None, after=_note_payload(), offset=7)],
         fail_with=errors.KafkaError("broker down"),
     )
+    records = []
 
-    records = [record async for record in debezium_parser.iter_updates()]
+    with pytest.raises(errors.KafkaError, match="broker down"):
+        async for record in debezium_parser.iter_updates():
+            records.append(record)
 
     assert [record.note_id for record in records] == [NOTE_ID]
     assert fake.events == ["start", "message 7", "commit", "stop"]
@@ -359,41 +359,73 @@ async def test_iter_updates_ends_silently_on_failure_mid_stream_current_behaviou
     )
 
 
-async def test_iter_updates_ends_silently_on_unparsable_message_current_behaviour(
+async def test_iter_updates_raises_on_commit_failure(consumer):
+    fake = consumer([_message(before=None, after=_note_payload(), offset=1)])
+    fake.commit.side_effect = errors.CommitFailedError("rebalanced")
+
+    with pytest.raises(errors.CommitFailedError):
+        [record async for record in debezium_parser.iter_updates()]
+
+    assert fake.events == ["start", "message 1", "stop"]
+
+
+def _unparsable_messages() -> list:
+    not_json = _message(before=None, after=None, offset=1)
+    not_json.value = b"not json"
+    no_payload = _message(before=None, after=None, offset=2)
+    no_payload.value = orjson.dumps({"schema": {}})
+    no_after = _message(before=None, after=None, offset=3)
+    no_after.value = orjson.dumps({"payload": {"before": None}})
+    not_an_object = _message(before=None, after=None, offset=4)
+    not_an_object.value = orjson.dumps([1, 2])
+    invalid_note = _message(before=None, after={"note_id": "not a uuid"}, offset=5)
+    return [not_json, no_payload, no_after, not_an_object, invalid_note]
+
+
+@pytest.mark.parametrize(
+    "broken",
+    _unparsable_messages(),
+    ids=["not-json", "no-payload", "no-after", "not-an-object", "invalid-note"],
+)
+async def test_iter_updates_skips_and_commits_an_unparsable_message(
     consumer,
     caplog,
+    broken,
 ):
-    broken = _message(before=None, after=None, offset=3)
-    broken.value = b"not json"
-    fake = consumer(
-        [broken, _message(before=None, after=_note_payload(), offset=4)],
-    )
+    fake = consumer([broken, _message(before=None, after=_note_payload(), offset=9)])
 
     records = [record async for record in debezium_parser.iter_updates()]
 
-    assert records == []
-    assert fake.events == ["start", "message 3", "stop"]
+    assert [record.note_id for record in records] == [NOTE_ID]
+    assert fake.events == [
+        "start",
+        f"message {broken.offset}",
+        "commit",
+        "message 9",
+        "commit",
+        "stop",
+    ]
     assert _error_messages(caplog) == [
-        "Error consuming the message: topic=cache-notes-test, offset=3\n"
-        "value=b'not json'",
+        "Skip the unparsable message: topic=cache-notes-test, "
+        f"offset={broken.offset}\nvalue={broken.value!r}",
     ]
 
 
-async def test_iter_updates_failure_before_first_message_is_reported(consumer):
+async def test_iter_updates_raises_on_failure_before_first_message(consumer):
     fake = consumer([], fail_with=errors.KafkaError("broker down"))
 
-    records = [record async for record in debezium_parser.iter_updates()]
+    with pytest.raises(errors.KafkaError, match="broker down"):
+        [record async for record in debezium_parser.iter_updates()]
 
-    assert records == []
     assert fake.events == ["start", "stop"]
 
 
 async def test_iter_updates_logs_a_failure_before_the_first_message(consumer, caplog):
     consumer([], fail_with=errors.KafkaError("broker down"))
 
-    records = [record async for record in debezium_parser.iter_updates()]
+    with pytest.raises(errors.KafkaError):
+        [record async for record in debezium_parser.iter_updates()]
 
-    assert records == []
     assert _error_messages(caplog) == ["Error consuming before the first message"]
 
 
@@ -615,3 +647,17 @@ async def test_parse_does_not_commit_the_record_it_failed_on(
         await debezium_parser.parse()
 
     assert fake.events == ["start", "message 1", "commit", "message 2", "stop"]
+
+
+async def test_parse_fails_when_the_consumer_fails(consumer, search_engine, mocker):
+    mocker.patch.object(settings, "EX_ENABLE_KAFKA_TO_NOTIFY", False)
+    fake = consumer(
+        [_message(before=None, after=_note_payload(), offset=1)],
+        fail_with=errors.KafkaError("broker down"),
+    )
+
+    with pytest.raises(errors.KafkaError, match="broker down"):
+        await debezium_parser.parse()
+
+    search_engine.update_content.assert_awaited_once()
+    assert fake.events == ["start", "message 1", "commit", "stop"]

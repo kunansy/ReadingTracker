@@ -4,7 +4,7 @@ from uuid import UUID
 import pytest
 from pydantic import ValidationError
 
-from tests.unit.materials.helpers import day, midnight, uid
+from tests.unit.helpers import day, midnight, uid
 from tracker.reading_log import db
 
 

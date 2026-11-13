@@ -3,7 +3,7 @@ from types import SimpleNamespace
 import pytest
 from pydantic import ValidationError
 
-from tests.unit.materials.helpers import NOW, compile_sql, uid
+from tests.unit.helpers import NOW, compile_sql, uid
 from tracker.cards import db, schemas
 from tracker.common import database, pagination
 from tracker.models import enums
@@ -97,7 +97,7 @@ async def test_cards_page_is_bound_to_the_material_filter(mocker, material_id):
         "max_items": "100",
         "material_id": str(material_id) if material_id else "",
     }
-    assert compile_sql(kwargs["cursor_expr"]) == 'cards.sort_key COLLATE "C"'
+    assert compile_sql(kwargs["key"]) == 'cards.sort_key COLLATE "C"'
     row = SimpleNamespace(**_card_fields(), sort_key="k", cursor="c")
     assert kwargs["to_item"](row) == db.Card(**_card_fields())
 

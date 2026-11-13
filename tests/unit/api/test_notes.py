@@ -242,16 +242,14 @@ async def test_search_rejects_invalid_query(client, search_db, params, location)
     ),
 )
 async def test_search_maps_invalid_token_to_422(lenient_client, search_db):
-    search_db["search_notes_page"].side_effect = database.InvalidNextTokenException(
-        "next_token is malformed"
-    )
+    search_db["search_notes_page"].side_effect = database.InvalidNextTokenException("Invalid nextToken")
 
     response = await lenient_client.get(
         f"{BASE}/search", params={"next_token": "garbage"}
     )
 
     assert response.status_code == 422
-    assert response.json() == {"detail": "InvalidNextToken: next_token is malformed"}
+    assert response.json() == {"detail": "InvalidNextToken: Invalid nextToken"}
 
 
 async def test_search_maps_a_search_engine_failure_to_500(client, search_db):
@@ -995,9 +993,7 @@ async def test_links_of_a_note_linked_to_a_missing_note_is_404(
     ),
 )
 async def test_links_maps_invalid_token_to_422(lenient_client, get_note, links_from_page):
-    links_from_page.side_effect = database.InvalidNextTokenException(
-        "next_token is malformed"
-    )
+    links_from_page.side_effect = database.InvalidNextTokenException("Invalid nextToken")
 
     response = await lenient_client.get(
         f"{BASE}/links",

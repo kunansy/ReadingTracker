@@ -5,8 +5,8 @@ from contextlib import aclosing
 from uuid import UUID
 
 import orjson
-from aiokafka import AIOKafkaConsumer
-from pydantic import ConfigDict, field_validator
+from aiokafka import AIOKafkaConsumer, ConsumerRecord
+from pydantic import ConfigDict, ValidationError, field_validator
 
 from tracker.common import kafka, manticoresearch, settings
 from tracker.common.logger import logger
@@ -22,7 +22,7 @@ class _NoteRow(Note):
 def _added_at_to_microseconds(row: dict | None) -> dict | None:
     if not row:
         return None
-    # TODO: compare value and divide depends on it
+    # Debezium sends added_at in nanoseconds; Note expects microseconds
     return {**row, "added_at": row["added_at"] // 1_000}
 
 
@@ -64,6 +64,20 @@ class Record(CustomBaseModel):
         return not self.after or self.after.is_deleted
 
 
+def _parse_message(msg: ConsumerRecord) -> Record | None:
+    try:
+        payload = orjson.loads(msg.value)["payload"]
+        return Record(before=payload["before"], after=payload["after"])
+    except orjson.JSONDecodeError, KeyError, TypeError, ValidationError:
+        logger.exception(
+            "Skip the unparsable message: topic=%s, offset=%s\nvalue=%s",
+            msg.topic,
+            msg.offset,
+            msg.value,
+        )
+        return None
+
+
 async def iter_updates() -> AsyncGenerator[Record]:
     consumer = AIOKafkaConsumer(
         settings.KAFKA_CACHE_NOTES_TOPIC,
@@ -79,8 +93,8 @@ async def iter_updates() -> AsyncGenerator[Record]:
     msg = None
     try:
         async for msg in consumer:
-            payload = orjson.loads(msg.value)["payload"]
-            yield Record(before=payload["before"], after=payload["after"])
+            if (record := _parse_message(msg)) is not None:
+                yield record
 
             await consumer.commit()
     except Exception:
@@ -93,6 +107,7 @@ async def iter_updates() -> AsyncGenerator[Record]:
                 msg.offset,
                 msg.value,
             )
+        raise
     finally:
         await consumer.stop()
 

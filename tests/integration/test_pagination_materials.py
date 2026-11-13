@@ -9,7 +9,7 @@ from uuid import UUID
 
 import pytest
 
-from tests.integration import factories, helpers_materials as h
+from tests.integration import factories, helpers, helpers_materials as h
 from tracker.cards import db as cards_db
 from tracker.common import database, pagination
 from tracker.common.pagination import Order, Page, PageParams
@@ -30,9 +30,9 @@ def clock(monkeypatch: pytest.MonkeyPatch) -> h.Clock:
 @dataclass(frozen=True)
 class Listing:
     fetch: Callable[[PageParams], Awaitable[Page[Any]]]
-    # creates `count` rows and returns their ids in the ascending order of the listing
+    # ids in ascending listing order
     seed: Callable[[h.Clock, int], Awaitable[list[UUID]]]
-    # creates one more row that sorts after every seeded one
+    # sorts after every seeded row
     add_last: Callable[[h.Clock], Awaitable[UUID]]
     get_id: Callable[[Any], UUID]
     default_order: Order
@@ -68,7 +68,7 @@ async def seed_logs(clock: h.Clock, count: int) -> list[UUID]:
             count=number + 1,
             date=ago(60 - number // 2),
         )
-    rows = await h.fetch_all(
+    rows = await helpers.fetch_table(
         models.ReadingLog,
         models.ReadingLog.c.date,
         models.ReadingLog.c.sort_key,
@@ -185,9 +185,6 @@ def page_ids(listing: Listing, pages: list[Page[Any]]) -> list[list[UUID]]:
     return [[listing.get_id(item) for item in page.items] for page in pages]
 
 
-# page boundaries
-
-
 @every_listing
 @both_orders
 @pytest.mark.parametrize(
@@ -214,7 +211,7 @@ async def test_walk_lists_every_row_once(
 ):
     ids = await listing.seed(clock, rows)
 
-    pages = await h.walk(listing.fetch, page_size=PAGE_SIZE, order=order)
+    pages = await helpers.walk_pages(listing.fetch, page_size=PAGE_SIZE, order=order)
 
     listed = page_ids(listing, pages)
     assert [len(page) for page in listed] == expected_page_sizes
@@ -229,7 +226,7 @@ async def test_walk_lists_every_row_once(
 async def test_default_order(clock, listing):
     ids = await listing.seed(clock, 4)
 
-    pages = await h.walk(listing.fetch, page_size=PAGE_SIZE)
+    pages = await helpers.walk_pages(listing.fetch, page_size=PAGE_SIZE)
 
     listed = [item for page in page_ids(listing, pages) for item in page]
     assert listed == in_order(ids, listing.default_order)
@@ -240,7 +237,7 @@ async def test_default_order(clock, listing):
 async def test_walk_with_the_smallest_and_the_largest_page(clock, listing, page_size):
     ids = await listing.seed(clock, 4)
 
-    pages = await h.walk(listing.fetch, page_size=page_size, order=Order.ASC)
+    pages = await helpers.walk_pages(listing.fetch, page_size=page_size, order=Order.ASC)
 
     listed = [item for page in page_ids(listing, pages) for item in page]
     assert listed == ids
@@ -258,7 +255,7 @@ async def test_row_added_between_two_pages_neither_repeats_nor_skips_listed_rows
     first = await listing.fetch(PageParams(page_size=2, order=order))
 
     added_id = await listing.add_last(clock)
-    rest = await h.walk(
+    rest = await helpers.walk_pages(
         lambda params: listing.fetch(
             params.model_copy(
                 update={"next_token": params.next_token or first.next_token}
@@ -279,7 +276,7 @@ async def test_reading_material_logged_between_two_pages_is_not_skipped(clock):
     first = await listing.fetch(PageParams(page_size=1))
 
     await logs_db.insert_log_record(material_id=ids[0], count=1, date=ago(0))
-    rest = await h.walk(
+    rest = await helpers.walk_pages(
         lambda params: listing.fetch(
             params.model_copy(
                 update={"next_token": params.next_token or first.next_token}
@@ -290,9 +287,6 @@ async def test_reading_material_logged_between_two_pages_is_not_skipped(clock):
 
     listed = [item for page in page_ids(listing, [first, *rest]) for item in page]
     assert sorted(listed) == sorted(ids)
-
-
-# tokens
 
 
 def card_cursor(row: dict[str, Any]) -> str:
@@ -341,11 +335,11 @@ async def test_token_holds_the_request_and_the_first_row_of_the_next_page(
     listing = LISTINGS[name]
     ids = await listing.seed(clock, 3)
     primary_key = next(iter(table.primary_key.columns)).name
-    rows = {row[primary_key]: row for row in await h.fetch_all(table)}
+    rows = {row[primary_key]: row for row in await helpers.fetch_table(table)}
 
     page = await listing.fetch(PageParams(page_size=2, order=Order.ASC))
 
-    assert h.decode_token(page.next_token) == {
+    assert helpers.decode_token(page.next_token) == {
         "params": {"order": "asc", "max_items": "2"} | params,
         "continue_from": {"cursor": cursor_of(rows[ids[2]])},
     }
@@ -361,7 +355,7 @@ async def test_estimate_token_also_holds_the_start_date_of_the_next_page(clock):
     )
 
     # 1 and 2 pages at one page a day: 2024-04-01..02 and 2024-04-03..05
-    assert h.decode_token(page.next_token) == {
+    assert helpers.decode_token(page.next_token) == {
         "params": {"order": "asc", "max_items": "2"},
         "continue_from": {"cursor": third["sort_key"], "start_date": "2024-04-06"},
     }
@@ -370,27 +364,27 @@ async def test_estimate_token_also_holds_the_start_date_of_the_next_page(clock):
 BAD_TOKENS: dict[str, Callable[[dict[str, Any]], str]] = {
     "not base64": lambda _: "%%%",
     "not json": lambda _: "aGVsbG8=",
-    "json list": lambda _: h.encode_token([]),
-    "no continue_from": lambda payload: h.encode_token({"params": payload["params"]}),
-    "no params": lambda payload: h.encode_token(
+    "json list": lambda _: helpers.encode_token([]),
+    "no continue_from": lambda payload: helpers.encode_token({"params": payload["params"]}),
+    "no params": lambda payload: helpers.encode_token(
         {"continue_from": payload["continue_from"]},
     ),
-    "extra key": lambda payload: h.encode_token(payload | {"version": "1"}),
-    "no cursor": lambda payload: h.encode_token(payload | {"continue_from": {}}),
-    "cursor is a number": lambda payload: h.encode_token(
+    "extra key": lambda payload: helpers.encode_token(payload | {"version": "1"}),
+    "no cursor": lambda payload: helpers.encode_token(payload | {"continue_from": {}}),
+    "cursor is a number": lambda payload: helpers.encode_token(
         payload | {"continue_from": payload["continue_from"] | {"cursor": 1}},
     ),
-    "NUL in the cursor": lambda payload: h.encode_token(
+    "NUL in the cursor": lambda payload: helpers.encode_token(
         payload | {"continue_from": payload["continue_from"] | {"cursor": "a\x00b"}},
     ),
-    "params are a list": lambda payload: h.encode_token(payload | {"params": []}),
-    "another page size": lambda payload: h.encode_token(
+    "params are a list": lambda payload: helpers.encode_token(payload | {"params": []}),
+    "another page size": lambda payload: helpers.encode_token(
         payload | {"params": payload["params"] | {"max_items": "2"}},
     ),
-    "another order": lambda payload: h.encode_token(
+    "another order": lambda payload: helpers.encode_token(
         payload | {"params": payload["params"] | {"order": "sideways"}},
     ),
-    "extra filter": lambda payload: h.encode_token(
+    "extra filter": lambda payload: helpers.encode_token(
         payload | {"params": payload["params"] | {"owner": "someone"}},
     ),
 }
@@ -401,7 +395,7 @@ BAD_TOKENS: dict[str, Callable[[dict[str, Any]], str]] = {
 async def test_tampered_token_is_rejected(clock, listing, make_token):
     await listing.seed(clock, 2)
     first = await listing.fetch(PageParams(page_size=1))
-    token = make_token(h.decode_token(first.next_token))
+    token = make_token(helpers.decode_token(first.next_token))
 
     with pytest.raises(database.InvalidNextTokenException):
         await listing.fetch(PageParams(page_size=1, next_token=token))
@@ -423,7 +417,7 @@ async def test_token_is_rejected_with_changed_page_params(clock, listing, change
         update=changed
     )
 
-    with pytest.raises(database.InvalidNextTokenException, match="does not match"):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
         await listing.fetch(params)
 
 
@@ -453,7 +447,7 @@ async def test_forged_cursor_gives_a_page_of_seeded_rows(clock, listing, cursor)
     first = await listing.fetch(PageParams(page_size=1))
 
     page = await listing.fetch(
-        PageParams(page_size=1, next_token=h.with_cursor(first.next_token, cursor)),
+        PageParams(page_size=1, next_token=helpers.with_cursor(first.next_token, cursor)),
     )
 
     assert len(page.items) <= 1
@@ -472,40 +466,52 @@ async def test_forged_cursor_gives_a_page_of_seeded_rows(clock, listing, cursor)
         "'; DROP TABLE materials; --",
         "2024-13-01$$key",
         "2024-01-01T25:00:00.000000$$key",
+        "2024-01-01T00:00:00.000000+05:00$$key",
+        "2024-01-01T00:00:00.000000Z$$key",
     ],
 )
 async def test_forged_cursor_of_a_keyset_listing_is_rejected(clock, listing, cursor):
     await listing.seed(clock, 2)
     first = await listing.fetch(PageParams(page_size=1))
 
-    with pytest.raises(database.InvalidNextTokenException, match="no valid cursor"):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
         await listing.fetch(
-            PageParams(page_size=1, next_token=h.with_cursor(first.next_token, cursor)),
+            PageParams(page_size=1, next_token=helpers.with_cursor(first.next_token, cursor)),
         )
+
+
+LAST_CURSOR = {"date": "9999-12-31$$~", "datetime": "9999-12-31T23:59:59.999999$$~"}
+FIRST_CURSOR = {"date": "0001-01-01$$", "datetime": "0001-01-01T00:00:00.000000$$"}
+
+
+def _cursor_kind(token: str) -> str:
+    cursor = helpers.decode_token(token)["continue_from"]["cursor"]
+    return "datetime" if "T" in cursor.split("$$", 1)[0] else "date"
 
 
 @keyset_listing
 @pytest.mark.parametrize(
-    ("cursor", "order", "is_empty"),
+    ("bound", "order", "is_empty"),
     [
-        ("9999-12-31$$~", Order.ASC, True),
-        ("9999-12-31$$~", Order.DESC, False),
-        ("0001-01-01$$", Order.ASC, False),
-        ("0001-01-01$$", Order.DESC, True),
+        (LAST_CURSOR, Order.ASC, True),
+        (LAST_CURSOR, Order.DESC, False),
+        (FIRST_CURSOR, Order.ASC, False),
+        (FIRST_CURSOR, Order.DESC, True),
     ],
     ids=["asc-past-the-end", "desc-from-the-end", "asc-from-the-start", "desc-past-the-start"],
 )
 async def test_forged_but_well_formed_keyset_cursor_gives_a_consistent_page(
-    clock, listing, cursor, order, is_empty
+    clock, listing, bound, order, is_empty
 ):
     ids = await listing.seed(clock, 2)
     first = await listing.fetch(PageParams(page_size=1, order=order))
+    cursor = bound[_cursor_kind(first.next_token)]
 
     page = await listing.fetch(
         PageParams(
             page_size=1,
             order=order,
-            next_token=h.with_cursor(first.next_token, cursor),
+            next_token=helpers.with_cursor(first.next_token, cursor),
         ),
     )
 
@@ -525,7 +531,7 @@ async def test_cursor_past_the_end_gives_an_empty_last_page(clock):
         params=PageParams(
             page_size=1,
             order=Order.ASC,
-            next_token=h.with_cursor(first.next_token, "~"),
+            next_token=helpers.with_cursor(first.next_token, "~"),
         ),
     )
 
@@ -541,14 +547,11 @@ async def test_logs_listing_rejects_a_token_of_the_cards_listing(clock):
 
     # both listings bind the same params (order, max_items, material_id): only the cursor
     # of a card, which is not a date, tells the token apart
-    with pytest.raises(database.InvalidNextTokenException, match="no valid cursor"):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
         await logs_db.list_log_records_page(
             material_id=None,
             params=PageParams(page_size=1, next_token=cards_page.next_token),
         )
-
-
-# filters
 
 
 async def test_cards_page_walks_only_the_cards_of_the_material(clock):
@@ -556,7 +559,7 @@ async def test_cards_page_walks_only_the_cards_of_the_material(clock):
     ids = await seed_cards(clock, 4)
     material_id = (await factories.fetch_row(models.Cards, ids[0]))["material_id"]
 
-    pages = await h.walk(
+    pages = await helpers.walk_pages(
         lambda params: cards_db.get_cards_page(material_id=material_id, params=params),
         page_size=PAGE_SIZE,
     )
@@ -574,7 +577,7 @@ async def test_cards_token_is_rejected_for_another_material(clock):
         material_id=None, params=PageParams(page_size=1)
     )
 
-    with pytest.raises(database.InvalidNextTokenException, match="does not match"):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
         await cards_db.get_cards_page(
             material_id=h.MISSING_ID,
             params=PageParams(page_size=1, next_token=first.next_token),
@@ -587,7 +590,7 @@ async def test_logs_page_walks_only_the_logs_of_the_material(clock):
     material_id = logs[0].material_id
     expected = [log.log_id for log in logs if log.material_id == material_id]
 
-    pages = await h.walk(
+    pages = await helpers.walk_pages(
         lambda params: logs_db.list_log_records_page(
             material_id=material_id, params=params
         ),
@@ -609,7 +612,7 @@ async def test_logs_token_is_rejected_for_another_material(clock):
         params=PageParams(page_size=1),
     )
 
-    with pytest.raises(database.InvalidNextTokenException, match="does not match"):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
         await logs_db.list_log_records_page(
             material_id=h.MISSING_ID,
             params=PageParams(page_size=1, next_token=first.next_token),
@@ -640,7 +643,7 @@ async def test_completed_page_walks_only_the_filtered_materials(clock):
         await materials_db.outline_material(material_id=material_id)
         matching.append(material_id)
 
-    pages = await h.walk(
+    pages = await helpers.walk_pages(
         lambda params: materials_db.completed_statistics_page(
             material_type=book,
             is_outlined=True,
@@ -656,7 +659,7 @@ async def test_completed_page_walks_only_the_filtered_materials(clock):
         matching[3:],
     ]
     assert [page.total_count for page in pages] == [4, 4]
-    assert h.decode_token(pages[0].next_token)["params"] == {
+    assert helpers.decode_token(pages[0].next_token)["params"] == {
         "order": "asc",
         "max_items": "3",
         "material_type": "book",
@@ -679,7 +682,7 @@ async def test_completed_token_is_rejected_with_a_changed_filter(clock, changed)
     await seed_completed(clock, 2)
     first = await materials_db.completed_statistics_page(params=PageParams(page_size=1))
 
-    with pytest.raises(database.InvalidNextTokenException, match="does not match"):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
         await materials_db.completed_statistics_page(
             **changed,
             params=PageParams(page_size=1, next_token=first.next_token),
@@ -697,7 +700,7 @@ async def test_repeating_queue_page_walks_only_outlined_materials(clock):
         await factories.insert_note(material_id=material_id)
         outlined.append(material_id)
 
-    pages = await h.walk(
+    pages = await helpers.walk_pages(
         lambda params: materials_db.get_repeating_queue_page(
             is_outlined=True, params=params
         ),
@@ -718,7 +721,7 @@ async def test_repeating_queue_token_is_rejected_with_a_changed_filter(clock):
         params=PageParams(page_size=1),
     )
 
-    with pytest.raises(database.InvalidNextTokenException, match="does not match"):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
         await materials_db.get_repeating_queue_page(
             is_outlined=True,
             params=PageParams(page_size=1, next_token=first.next_token),
@@ -731,7 +734,7 @@ async def test_repeating_queue_follows_the_repeat_date_not_the_completion_date(c
     at = datetime.datetime.combine(ago(100), datetime.time(9))
     await h.repeat(clock, repeated, at=at)
 
-    pages = await h.walk(
+    pages = await helpers.walk_pages(
         lambda params: materials_db.get_repeating_queue_page(
             is_outlined=False, params=params
         ),
@@ -743,9 +746,6 @@ async def test_repeating_queue_follows_the_repeat_date_not_the_completion_date(c
         [plain],
         [repeated],
     ]
-
-
-# estimate
 
 
 def estimates(page: Page[materials_db.MaterialEstimate]) -> list[tuple[Any, ...]]:
@@ -769,7 +769,7 @@ async def test_estimate_pages_continue_the_dates_of_the_previous_page(clock, ord
         return await materials_db.estimate_page(start_date=start, params=params)
 
     whole = await fetch(PageParams(page_size=100, order=order))
-    pages = await h.walk(fetch, page_size=2, order=order)
+    pages = await helpers.walk_pages(fetch, page_size=2, order=order)
 
     assert [item for page in pages for item in estimates(page)] == estimates(whole)
     assert whole.items[0].will_be_started == start
@@ -806,18 +806,15 @@ async def test_estimate_token_without_a_valid_start_date_is_rejected(
     first = await materials_db.estimate_page(
         start_date=ago(0), params=PageParams(page_size=1)
     )
-    payload = h.decode_token(first.next_token)
+    payload = helpers.decode_token(first.next_token)
     cursor = {"cursor": payload["continue_from"]["cursor"]}
-    token = h.encode_token(payload | {"continue_from": cursor | continue_from})
+    token = helpers.encode_token(payload | {"continue_from": cursor | continue_from})
 
-    with pytest.raises(database.InvalidNextTokenException, match="no valid start date"):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
         await materials_db.estimate_page(
             start_date=ago(0),
             params=PageParams(page_size=1, next_token=token),
         )
-
-
-# query plans
 
 
 @pytest.mark.parametrize(
@@ -837,9 +834,9 @@ async def test_page_is_read_from_the_sort_key_index_without_sorting(
     paginate = mocker.spy(pagination, "paginate")
 
     first = await listing.fetch(PageParams(page_size=2, order=order))
-    first_plan = await h.explain(paginate.spy_return)
+    first_plan = await helpers.explain(paginate.spy_return)
     await listing.fetch(PageParams(page_size=2, order=order, next_token=first.next_token))
-    next_plan = await h.explain(paginate.spy_return)
+    next_plan = await helpers.explain(paginate.spy_return)
 
     for plan in (first_plan, next_plan):
         assert index in plan
@@ -871,9 +868,9 @@ async def test_keyset_page_is_read_from_its_index_without_sorting(
     paginate = mocker.spy(pagination, "paginate")
 
     first = await listing.fetch(PageParams(page_size=2, order=order))
-    first_plan = await h.explain(paginate.spy_return)
+    first_plan = await helpers.explain(paginate.spy_return)
     await listing.fetch(PageParams(page_size=2, order=order, next_token=first.next_token))
-    next_plan = await h.explain(paginate.spy_return)
+    next_plan = await helpers.explain(paginate.spy_return)
 
     for plan in (first_plan, next_plan):
         assert index in plan, plan
@@ -893,7 +890,7 @@ async def test_repeating_queue_page_sorts_the_whole_listing_current_behaviour(cl
 
     first = await listing.fetch(PageParams(page_size=2))
     await listing.fetch(PageParams(page_size=2, next_token=first.next_token))
-    plan = await h.explain(paginate.spy_return)
+    plan = await helpers.explain(paginate.spy_return)
 
     assert "Sort Key" in plan
     assert "sort_key_key" not in plan

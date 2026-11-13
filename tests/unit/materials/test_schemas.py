@@ -4,7 +4,7 @@ from uuid import UUID
 import pytest
 from pydantic import ValidationError
 
-from tests.unit.materials.helpers import uid
+from tests.unit.helpers import uid
 from tracker.materials import schemas
 from tracker.models import enums
 

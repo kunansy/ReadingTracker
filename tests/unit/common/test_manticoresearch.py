@@ -4,8 +4,8 @@ from types import SimpleNamespace
 from uuid import UUID
 
 import pytest
-from sqlalchemy.dialects import postgresql
 
+from tests.unit.helpers import compile_sql
 from tracker.common import manticoresearch
 from tracker.common.manticoresearch import Note, SearchResult
 
@@ -84,14 +84,6 @@ def database_session(mocker):
     return _install
 
 
-def _compile(stmt) -> str:
-    compiled = stmt.compile(
-        dialect=postgresql.dialect(),
-        compile_kwargs={"literal_binds": True},
-    )
-    return " ".join(str(compiled).split())
-
-
 def _row(note_id: UUID = NOTE_ID, content: str = "content") -> SimpleNamespace:
     return SimpleNamespace(note_id=note_id, content=content, added_at=ADDED_AT)
 
@@ -151,7 +143,7 @@ async def test_cursor_propagates_connection_failure_unwrapped(mocker):
 
 
 def test_get_note_stmt_skips_deleted_notes():
-    assert _compile(manticoresearch._get_note_stmt()) == (
+    assert compile_sql(manticoresearch._get_note_stmt()) == (
         "SELECT notes.note_id, notes.content, notes.added_at "
         "FROM notes WHERE NOT notes.is_deleted"
     )
@@ -166,7 +158,7 @@ async def test_get_notes_maps_rows(database_session):
         Note(note_id=NOTE_ID, content="content", added_at=ADDED_AT),
         Note(note_id=OTHER_ID, content="Заметка", added_at=ADDED_AT),
     ]
-    assert [_compile(stmt) for stmt in executed] == [
+    assert [compile_sql(stmt) for stmt in executed] == [
         "SELECT notes.note_id, notes.content, notes.added_at "
         "FROM notes WHERE NOT notes.is_deleted",
     ]
@@ -184,7 +176,7 @@ async def test_get_note_returns_found_note(database_session):
     note = await manticoresearch._get_note(note_id=NOTE_ID)
 
     assert note == Note(note_id=NOTE_ID, content="content", added_at=ADDED_AT)
-    assert [_compile(stmt) for stmt in executed] == [
+    assert [compile_sql(stmt) for stmt in executed] == [
         "SELECT notes.note_id, notes.content, notes.added_at "
         "FROM notes WHERE NOT notes.is_deleted "
         "AND notes.note_id = '018e9dbe-1d3d-7a5a-b437-9bfa65171b42'",

@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from tests.unit.materials.helpers import compile_sql, day, make_material, midnight, uid
+from tests.unit.helpers import compile_sql, day, make_material, midnight, uid
 from tracker.common import database, pagination
 from tracker.common.sort_keys import SEPARATOR
 from tracker.materials import db as materials_db
@@ -131,7 +131,11 @@ async def test_valid_record_is_accepted(lookups, date, count):
 async def test_first_record_may_cover_the_whole_material(lookups):
     lookups.list_log_records.return_value = []
 
-    await db.check_record_correct(material_id=MATERIAL_ID, date=day(0), count=100)
+    result = await db.check_record_correct(material_id=MATERIAL_ID, date=day(0), count=100)
+
+    assert result is None
+    lookups.get_reading_materials.assert_awaited_once_with()
+    lookups.list_log_records.assert_awaited_once_with(material_id=MATERIAL_ID)
 
 
 @pytest.mark.parametrize("offset", [1, 400], ids=["tomorrow", "far-future"])
@@ -180,7 +184,10 @@ async def test_date_of_start_is_compared_without_time_of_day(lookups):
         _reading_material(started_at=midnight(-5).replace(hour=18)),
     ]
 
-    await db.check_record_correct(material_id=MATERIAL_ID, date=day(-5), count=1)
+    result = await db.check_record_correct(material_id=MATERIAL_ID, date=day(-5), count=1)
+
+    assert result is None
+    lookups.list_log_records.assert_awaited_once_with(material_id=MATERIAL_ID)
 
 
 @pytest.mark.parametrize("count", [11, 1000], ids=["one-page-over", "far-over"])
@@ -197,7 +204,10 @@ async def test_more_pages_than_remain_is_rejected(lookups, count):
 
 async def test_record_for_an_already_logged_date_is_accepted_current_behaviour(lookups):
     """The (material_id, date) uniqueness is left to the `uix_reading_log` constraint."""
-    await db.check_record_correct(material_id=MATERIAL_ID, date=day(-1), count=1)
+    result = await db.check_record_correct(material_id=MATERIAL_ID, date=day(-1), count=1)
+
+    assert result is None
+    lookups.list_log_records.assert_awaited_once_with(material_id=MATERIAL_ID)
 
 
 def _data_of(*material_ids):
@@ -278,7 +288,7 @@ async def test_log_records_page_is_bound_to_the_material_filter(mocker, material
         "max_items": "2",
         "material_id": str(material_id) if material_id else "",
     }
-    key = kwargs["cursor_expr"]
+    key = kwargs["key"]
     assert compile_sql(key.text) == (
         f"to_char(reading_log.date, 'YYYY-MM-DD') || '{SEPARATOR}' "
         '|| reading_log.sort_key COLLATE "C"'

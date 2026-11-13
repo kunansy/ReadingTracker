@@ -6,12 +6,12 @@ import io
 import pytest
 from alembic import command
 
-from tests.integration import helpers_notes as helpers
+from tests.integration.migrations import helpers as migration_helpers
 
 
 async def _offline_upgrade(revision: str) -> str:
     buffer = io.StringIO()
-    config = helpers.alembic_config(output_buffer=buffer)
+    config = migration_helpers.alembic_config(output_buffer=buffer)
     await asyncio.to_thread(command.upgrade, config, revision, sql=True)
     return buffer.getvalue()
 
@@ -27,7 +27,7 @@ async def test_offline_upgrade_emits_the_script_without_touching_the_database():
     assert "UPDATE reading_log SET sort_key = material_id::text || '$$'" in script
     assert "UPDATE alembic_version SET version_num='0002' WHERE" in script
     assert script.rstrip().endswith("COMMIT;")
-    assert await helpers.current_revision() == helpers.HEAD_REVISION
+    assert await migration_helpers.current_revision() == migration_helpers.HEAD_REVISION
 
 
 async def test_offline_upgrade_of_a_revision_range_emits_only_that_range():

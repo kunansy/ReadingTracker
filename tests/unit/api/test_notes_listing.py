@@ -36,7 +36,15 @@ def test_highlight_snippets_leaves_content_without_the_substring_untouched():
 
 
 def test_highlight_snippets_ignores_results_of_notes_outside_the_page():
-    listing.highlight_snippets([], {factories.NOTE_ID: _result("a", "b")})
+    note = factories.note(content="Content #tag")
+    results = {
+        note.note_id: _result("Content", "Own"),
+        factories.OTHER_NOTE_ID: _result("Content", "Other"),
+    }
+
+    listing.highlight_snippets([note], results)
+
+    assert note.content == "Own #tag"
 
 
 def test_highlight_snippets_fails_on_a_note_without_a_result_current_behaviour():

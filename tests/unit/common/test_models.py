@@ -10,18 +10,11 @@ from sqlalchemy import Integer, Unicode
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.schema import CreateTable
 
+from tests.unit.helpers import compile_sql
 from tracker.models import enums, models
 
 
 MS = 1_000_000
-
-
-def _compile(element) -> str:
-    compiled = element.compile(
-        dialect=postgresql.dialect(),
-        compile_kwargs={"literal_binds": True},
-    )
-    return " ".join(str(compiled).split())
 
 
 @pytest.fixture
@@ -220,7 +213,7 @@ def test_nullable_columns():
 
 
 def test_notes_table_ddl():
-    assert _compile(CreateTable(models.Notes)) == (
+    assert compile_sql(CreateTable(models.Notes)) == (
         "CREATE TABLE notes ( "
         "note_id UUID NOT NULL, "
         "note_number serial NOT NULL, "
@@ -242,7 +235,7 @@ def test_notes_table_ddl():
 
 
 def test_reading_log_table_ddl():
-    assert _compile(CreateTable(models.ReadingLog)) == (
+    assert compile_sql(CreateTable(models.ReadingLog)) == (
         "CREATE TABLE reading_log ( "
         "log_id UUID NOT NULL, "
         "material_id UUID NOT NULL, "
@@ -256,7 +249,7 @@ def test_reading_log_table_ddl():
 
 
 def _create_index_sql(table: sqlalchemy.Table) -> set[str]:
-    return {_compile(sqlalchemy.schema.CreateIndex(index)) for index in table.indexes}
+    return {compile_sql(sqlalchemy.schema.CreateIndex(index)) for index in table.indexes}
 
 
 def test_materials_listing_indexes():
@@ -346,7 +339,7 @@ def test_reading_log_date_defaults_to_a_datetime_current_behaviour(mocker):
     ids=["queued", "started", "completed", "reading"],
 )
 def test_material_state_conditions(condition, expected):
-    assert _compile(condition) == expected
+    assert compile_sql(condition) == expected
 
 
 def test_max_chapter_length_matches_the_column():

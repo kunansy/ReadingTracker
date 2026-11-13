@@ -444,9 +444,11 @@ async def completed_statistics_page(
     )
     page = await pagination.fetch_page(
         stmt,
-        cursor_expr=pagination.keyset(
-            pagination.datetime_key(models.Materials.c.completed_at),
-            pagination.text_key(models.Materials.c.sort_key),
+        key=pagination.Keyset(
+            (
+                pagination.datetime_key(models.Materials.c.completed_at),
+                pagination.text_key(models.Materials.c.sort_key),
+            ),
         ),
         request=request,
         to_item=lambda row: _to_material(row._asdict()),
@@ -483,12 +485,15 @@ async def reading_statistics_page(
 ) -> pagination.Page[MaterialStatistics]:
     logger.info("Calculating reading materials statistics page")
 
-    # started_at is never rewritten, unlike the date of the last log
+    # Ordered by started_at, not by the last log like `get_reading_materials`: the date
+    # of the last log changes while a client walks the pages, started_at never does
     page = await pagination.fetch_page(
         _get_reading_materials_stmt(),
-        cursor_expr=pagination.keyset(
-            pagination.datetime_key(models.Materials.c.started_at),
-            pagination.text_key(models.Materials.c.sort_key),
+        key=pagination.Keyset(
+            (
+                pagination.datetime_key(models.Materials.c.started_at),
+                pagination.text_key(models.Materials.c.sort_key),
+            ),
         ),
         request=pagination.page_request(params, default_order=pagination.Order.DESC),
         to_item=lambda row: _to_material(row._asdict()),
@@ -747,7 +752,7 @@ async def estimate_page(
 
     materials, next_cursor, total_count = await pagination.fetch_rows(
         _get_free_materials_stmt(),
-        cursor_expr=pagination.cursor(models.Materials.c.sort_key),
+        key=pagination.cursor(models.Materials.c.sort_key),
         request=request,
         to_item=lambda row: Material.model_validate(row, from_attributes=True),
     )
@@ -789,8 +794,7 @@ def _token_start_date(continue_from: pagination.TokenMap) -> datetime.date:
     try:
         return datetime.date.fromisoformat(continue_from[_START_DATE_KEY])
     except (KeyError, ValueError) as e:
-        msg = "next_token has no valid start date"
-        raise database.InvalidNextTokenException(msg) from e
+        raise database.InvalidNextTokenException(database.INVALID_NEXT_TOKEN_MSG) from e
 
 
 def _calculate_priority_months(
@@ -961,7 +965,7 @@ async def get_repeating_queue_page(
     stmt, repeat_at = _get_repeating_queue_stmt(is_outlined=is_outlined)
     page = await pagination.fetch_page(
         stmt,
-        cursor_expr=pagination.cursor(
+        key=pagination.cursor(
             pagination.date_part(repeat_at),
             models.Materials.c.sort_key,
         ),

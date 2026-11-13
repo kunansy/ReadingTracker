@@ -42,9 +42,9 @@ def _body(response) -> dict:
     ("exc", "status_code", "detail"),
     [
         (
-            database.InvalidNextTokenException("next_token is malformed"),
+            database.InvalidNextTokenException("Invalid nextToken"),
             422,
-            "InvalidNextToken: next_token is malformed",
+            "InvalidNextToken: Invalid nextToken",
         ),
         (
             database.AlreadyExistsException("Card exists"),

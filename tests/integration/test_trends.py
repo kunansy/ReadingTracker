@@ -6,11 +6,7 @@ from decimal import Decimal
 import pytest
 from matplotlib.axes import Axes
 
-from tests.integration import (
-    factories,
-    helpers_notes as helpers,
-)
-from tracker.common import database
+from tests.integration import factories, helpers
 from tracker.materials import db as materials_db
 from tracker.models import enums, models
 from tracker.notes import db as notes_db
@@ -26,9 +22,7 @@ SPAN = trends.TimeSpan(start=FIRST_DAY, stop=LAST_DAY, span_size=SPAN_SIZE)
 ONE_DAY_SPAN = trends.TimeSpan(start=LAST_DAY, stop=LAST_DAY, span_size=1)
 
 
-@pytest.fixture(autouse=True)
-def frozen_clock(mocker) -> None:
-    mocker.patch.object(database, "utcnow", return_value=helpers.FROZEN_NOW)
+pytestmark = pytest.mark.usefixtures("frozen_clock")
 
 
 def _days(
@@ -50,7 +44,7 @@ async def _log(material_id: uuid.UUID, date: datetime.date, count: int) -> None:
 
 
 async def _note(material_id: uuid.UUID, added_at: datetime.datetime) -> uuid.UUID:
-    return await helpers.insert_raw_note(material_id=material_id, added_at=added_at)
+    return await factories.insert_raw_note(material_id=material_id, added_at=added_at)
 
 
 async def _completed(
@@ -143,28 +137,28 @@ async def test_completed_materials_statistics_count_completions_per_day_inside_t
 
 async def _seed_repeats() -> tuple[uuid.UUID, uuid.UUID]:
     first, second = uuid.uuid4(), uuid.uuid4()
-    await helpers.insert_repeat(
+    await factories.insert_repeat(
         material_id=first,
         repeated_at=helpers.at(DAY_BEFORE, 23, 59, 59),
     )
-    await helpers.insert_repeat(material_id=first, repeated_at=helpers.at(FIRST_DAY))
-    await helpers.insert_repeat(
+    await factories.insert_repeat(material_id=first, repeated_at=helpers.at(FIRST_DAY))
+    await factories.insert_repeat(
         material_id=first,
         repeated_at=helpers.at(helpers.day(-4), 7),
     )
-    await helpers.insert_repeat(
+    await factories.insert_repeat(
         material_id=first,
         repeated_at=helpers.at(helpers.day(-4), 8),
     )
-    await helpers.insert_repeat(
+    await factories.insert_repeat(
         material_id=second,
         repeated_at=helpers.at(helpers.day(-4), 9),
     )
-    await helpers.insert_repeat(
+    await factories.insert_repeat(
         material_id=second,
         repeated_at=helpers.at(LAST_DAY, 23, 59, 59),
     )
-    await helpers.insert_repeat(material_id=second, repeated_at=helpers.at(DAY_AFTER))
+    await factories.insert_repeat(material_id=second, repeated_at=helpers.at(DAY_AFTER))
     return first, second
 
 
@@ -234,7 +228,7 @@ async def test_span_statistics_ignore_rows_outside_the_span(calculate):
         await _log(material_id, date, 5)
         await _note(material_id, helpers.at(date, 12))
         await _completed(helpers.at(date, 12))
-        await helpers.insert_repeat(
+        await factories.insert_repeat(
             material_id=material_id,
             repeated_at=helpers.at(date, 12),
         )

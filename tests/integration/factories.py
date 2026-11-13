@@ -10,8 +10,9 @@ from typing import Any
 import sqlalchemy.sql as sa
 from sqlalchemy import Table
 
+from tests.integration import helpers
 from tracker.cards import db as cards_db
-from tracker.common import database
+from tracker.common import database, sort_keys
 from tracker.materials import db as materials_db
 from tracker.models import enums, models
 from tracker.notes import db as notes_db
@@ -43,27 +44,34 @@ async def insert_material(
 
 async def start_material(
     *,
+    started: datetime.date | None = None,
     started_days_ago: int = 10,
     **material: Any,
 ) -> uuid.UUID:
     material_id = await insert_material(**material)
     await materials_db.start_material(
         material_id=material_id,
-        started_at=days_ago(started_days_ago),
+        started_at=started or days_ago(started_days_ago),
     )
     return material_id
 
 
 async def complete_material(
     *,
+    started: datetime.date | None = None,
+    completed: datetime.date | None = None,
     started_days_ago: int = 10,
     completed_days_ago: int = 1,
     **material: Any,
 ) -> uuid.UUID:
-    material_id = await start_material(started_days_ago=started_days_ago, **material)
+    material_id = await start_material(
+        started=started,
+        started_days_ago=started_days_ago,
+        **material,
+    )
     await materials_db.complete_material(
         material_id=material_id,
-        completed_at=days_ago(completed_days_ago),
+        completed_at=completed or days_ago(completed_days_ago),
     )
     return material_id
 
@@ -100,6 +108,69 @@ async def insert_note(
         page=page,
         tags=tags or [],
     )
+
+
+async def insert_raw_note(
+    *,
+    material_id: uuid.UUID,
+    note_id: uuid.UUID | None = None,
+    chapter: str = "1",
+    page: int = 1,
+    **columns: Any,
+) -> uuid.UUID:
+    """Insert a note bypassing `notes_db.insert_note`, e.g. to control added_at or tags."""
+    note_id = note_id or uuid.uuid4()
+    values = {
+        "note_id": note_id,
+        "material_id": material_id,
+        "content": "Raw note.",
+        "chapter": chapter,
+        "page": page,
+        "tags": [],
+        "sort_key": sort_keys.note_sort_key(
+            material_id=material_id,
+            chapter=chapter,
+            page=page,
+            note_id=note_id,
+        ),
+        **columns,
+    }
+    await helpers.execute(models.Notes.insert().values(values))
+    return note_id
+
+
+async def insert_repeat(
+    *,
+    material_id: uuid.UUID,
+    repeated_at: datetime.datetime,
+) -> uuid.UUID:
+    repeat_id = uuid.uuid4()
+    await helpers.execute(
+        models.Repeats.insert().values(
+            repeat_id=repeat_id,
+            material_id=material_id,
+            repeated_at=repeated_at,
+        ),
+    )
+    return repeat_id
+
+
+async def insert_note_repeat(
+    *,
+    note_id: uuid.UUID,
+    repeated_at: datetime.datetime,
+    user_id: int = 1,
+) -> uuid.UUID:
+    repeat_id = uuid.uuid4()
+    await helpers.execute(
+        models.NoteRepeatsHistory.insert().values(
+            repeat_id=repeat_id,
+            note_id=note_id,
+            user_id=user_id,
+            repeated_at=repeated_at,
+        ),
+    )
+    return repeat_id
 
 
 async def insert_card(
@@ -157,7 +228,9 @@ __all__ = [
     "insert_log",
     "insert_material",
     "insert_note",
-    "models",
+    "insert_note_repeat",
+    "insert_raw_note",
+    "insert_repeat",
     "refresh_repeat_notes_matview",
     "set_columns",
     "start_material",

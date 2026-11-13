@@ -155,7 +155,7 @@ async def search_notes_page(
     stmt = _search_notes_stmt(material_id=material_id, tags=tags, note_ids=note_ids)
     page = await pagination.fetch_page(
         stmt,
-        cursor_expr=pagination.cursor(stmt.selected_columns.sort_key),
+        key=pagination.cursor(stmt.selected_columns.sort_key),
         request=request,
         to_item=_to_note,
     )
@@ -734,9 +734,11 @@ async def get_links_from_page(
     notes_model = stmt.selected_columns
     return await pagination.fetch_page(
         stmt,
-        cursor_expr=pagination.keyset(
-            pagination.int_key(notes_model.note_number),
-            pagination.text_key(notes_model.sort_key),
+        key=pagination.Keyset(
+            (
+                pagination.int_key(notes_model.note_number),
+                pagination.text_key(notes_model.sort_key),
+            ),
         ),
         request=pagination.page_request(
             params,
