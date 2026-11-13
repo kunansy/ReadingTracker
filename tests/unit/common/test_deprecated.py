@@ -67,25 +67,15 @@ def test_deprecated_propagates_error_of_the_function(caplog):
     assert _warnings(caplog) == ["Call to deprecated function 'broken'"]
 
 
-def test_deprecated_marks_the_wrapped_function_only_after_a_call_current_behaviour():
+def test_deprecated_marks_at_decoration_and_leaves_the_original_untouched():
     @deprecated
     def old() -> None:
         return None
 
+    assert old.__deprecated__ is True
     assert not hasattr(old.__wrapped__, "__deprecated__")
 
-    old()
 
-    assert old.__wrapped__.__deprecated__ is True
-
-
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/common/__init__.py:12 __deprecated__ is set on the inner function "
-        "at call time, the decorated function itself never carries the marker"
-    ),
-)
 def test_deprecated_marks_the_decorated_function():
     @deprecated
     def old() -> None:
@@ -133,23 +123,15 @@ async def test_deprecated_async_propagates_error_of_the_function():
         await broken()
 
 
-async def test_deprecated_async_marks_the_wrapped_function_current_behaviour():
+def test_deprecated_async_marks_at_decoration_and_leaves_the_original_untouched():
     @deprecated_async
     async def old() -> None:
         return None
 
-    await old()
+    assert old.__deprecated__ is True
+    assert not hasattr(old.__wrapped__, "__deprecated__")
 
-    assert old.__wrapped__.__deprecated__ is True
 
-
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/common/__init__.py:24 __deprecated__ is set on the inner function "
-        "at call time, the decorated coroutine function never carries the marker"
-    ),
-)
 async def test_deprecated_async_marks_the_decorated_function():
     @deprecated_async
     async def old() -> None:

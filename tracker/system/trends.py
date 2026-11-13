@@ -1,10 +1,8 @@
 import asyncio
-import base64
 import datetime
 import statistics
 from collections.abc import Generator, Iterator
 from decimal import Decimal
-from io import BytesIO
 from typing import Any
 
 import matplotlib.pyplot as plt
@@ -18,6 +16,7 @@ from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
 from tracker.reading_log import db as logs_db
 from tracker.system import schemas
+from tracker.system.figures import render_svg_base64
 
 
 class TrendException(database.DatabaseException):
@@ -469,7 +468,10 @@ async def _reading_analytics(span: TimeSpan) -> _MaterialAnalytics:
             models.Materials.c.material_type,
             sa.func.sum(models.ReadingLog.c.count).label("cnt"),
         )
-        .join(models.ReadingLog)
+        .join(
+            models.ReadingLog,
+            models.ReadingLog.c.material_id == models.Materials.c.material_id,
+        )
         .where(models.ReadingLog.c.date >= span.start)
         .where(models.ReadingLog.c.date <= span.stop)
         .group_by(models.Materials.c.material_type)
@@ -548,10 +550,7 @@ def _create_graphic(
         ax.legend()
     plt.gca().invert_yaxis()
 
-    tmpbuf = BytesIO()
-    fig.savefig(tmpbuf, format="svg")
-
-    image = base64.b64encode(tmpbuf.getvalue()).decode("utf-8")
+    image = render_svg_base64(fig)
 
     logger.debug("Creating graphic completed")
     return image
@@ -620,10 +619,7 @@ def create_total_read_graphic(
 
     ax.legend()
 
-    tmpbuf = BytesIO()
-    fig.savefig(tmpbuf, format="svg")
-
-    image = base64.b64encode(tmpbuf.getvalue()).decode("utf-8")
+    image = render_svg_base64(fig)
 
     logger.debug("Creating graphic completed")
     return image

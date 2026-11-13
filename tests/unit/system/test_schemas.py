@@ -51,12 +51,13 @@ class TestGetSpanReportRequest:
         assert (request.start, request.stop) == (START, datetime.date(2024, 1, 11))
 
     def test_stop_before_start_is_rejected(self):
-        with pytest.raises(ValidationError, match="Start must be less than stop"):
+        with pytest.raises(ValidationError, match="Start must not be after stop"):
             schemas.GetSpanReportRequest(start=START, stop=datetime.date(2024, 1, 9))
 
-    def test_one_day_span_is_rejected_current_behaviour(self):
-        with pytest.raises(ValidationError, match="Start must be less than stop"):
-            schemas.GetSpanReportRequest(start=START, stop=START)
+    def test_one_day_span_is_accepted(self):
+        request = schemas.GetSpanReportRequest(start=START, stop=START)
+
+        assert request.size == 1
 
     def test_default_stop_is_not_validated_against_start_current_behaviour(
         self,
@@ -66,27 +67,11 @@ class TestGetSpanReportRequest:
 
         assert request.size == 0
 
-    @pytest.mark.xfail(
-        strict=True,
-        raises=KeyError,
-        reason=(
-            "BUG: tracker/system/schemas.py:26 info.data['start'] raises KeyError "
-            "when start itself failed validation, instead of a ValidationError"
-        ),
-    )
     @pytest.mark.parametrize("start", ["garbage", None, "2024-13-01"])
     def test_invalid_start_is_a_validation_error(self, start):
         with pytest.raises(ValidationError, match="start"):
             schemas.GetSpanReportRequest(start=start, stop=datetime.date(2024, 1, 12))
 
-    @pytest.mark.xfail(
-        strict=True,
-        raises=KeyError,
-        reason=(
-            "BUG: tracker/system/schemas.py:26 info.data['start'] raises KeyError "
-            "when start is missing, instead of a ValidationError"
-        ),
-    )
     def test_missing_start_is_a_validation_error(self):
         with pytest.raises(ValidationError, match="start"):
             schemas.GetSpanReportRequest(stop=datetime.date(2024, 1, 12))

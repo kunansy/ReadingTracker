@@ -278,10 +278,12 @@ async def test_log_records_page_is_bound_to_the_material_filter(mocker, material
         "max_items": "2",
         "material_id": str(material_id) if material_id else "",
     }
-    assert compile_sql(kwargs["cursor_expr"]) == (
+    key = kwargs["cursor_expr"]
+    assert compile_sql(key.text) == (
         f"to_char(reading_log.date, 'YYYY-MM-DD') || '{SEPARATOR}' "
         '|| reading_log.sort_key COLLATE "C"'
     )
+    assert [part.column.name for part in key.parts] == ["date", "sort_key"]
     row = SimpleNamespace(log_id=uid(5), material_id=MATERIAL_ID, count=3, date=day(0))
     assert kwargs["to_item"](row) == db.LogRecord(
         log_id=uid(5),

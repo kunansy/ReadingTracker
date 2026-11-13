@@ -171,7 +171,9 @@ async def test_upgrade_downgrade_cycle_on_an_empty_database():
         await helpers.reset_schema_to_head()
 
 
-@pytest.mark.parametrize("revision", ["0001", "0002", "0003", "0004", "0005", "0006"])
+@pytest.mark.parametrize(
+    "revision", ["0001", "0002", "0003", "0004", "0005", "0006", "0007"]
+)
 async def test_every_revision_can_be_reached_and_left_on_an_empty_database(revision):
     schema_at_head = await helpers.schema_snapshot()
 

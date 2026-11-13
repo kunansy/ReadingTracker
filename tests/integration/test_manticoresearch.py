@@ -37,11 +37,6 @@ async def test_insert_note_stores_the_content(manticore):
     assert await _stored() == {note_id: RUSSIAN}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG: tracker/common/manticoresearch.py:31 added_at is sent as a datetime string to "
-    "a Manticore timestamp attribute, which stores 0 instead of the time",
-)
 async def test_insert_note_stores_added_at(manticore):
     await _insert(RUSSIAN)
 
@@ -339,14 +334,12 @@ AUTOCOMPLETION_BUG = (
 )
 
 
-@pytest.mark.xfail(strict=True, reason=AUTOCOMPLETION_BUG)
 async def test_autocompletion_accepts_an_apostrophe(manticore):
     await _insert("The dog's bone.")
 
     assert await manticoresearch.autocompletion(query="dog's") == ["The **dog's** bone."]
 
 
-@pytest.mark.xfail(strict=True, reason=AUTOCOMPLETION_BUG)
 async def test_autocompletion_cannot_be_used_to_change_the_statement(manticore):
     for index in range(3):
         await _insert(f"Dogs number {index}.")

@@ -84,9 +84,16 @@ Materials = Table(
     SortKey(),
     UniqueConstraint("title", "material_type", name="uix_material"),
     Index(
-        "ix_materials_completed_at",
+        "ix_materials_completed_at_sort_key",
         "completed_at",
+        "sort_key",
         postgresql_where=sqlalchemy.text("completed_at IS NOT NULL"),
+    ),
+    Index(
+        "ix_materials_started_at_sort_key",
+        "started_at",
+        "sort_key",
+        postgresql_where=sqlalchemy.text("started_at IS NOT NULL"),
     ),
 )
 
@@ -104,10 +111,10 @@ ReadingLog = Table(
     PrimaryKey("log_id"),
     Column("material_id", UUID, index=True),
     Column("count", Integer),
-    # TODO: add btree index
     Column("date", Date, default=_utc_now),
     SortKey(),
     UniqueConstraint("material_id", "date", name="uix_reading_log"),
+    Index("ix_reading_log_date_sort_key", "date", "sort_key"),
 )
 
 Notes = Table(
@@ -131,6 +138,7 @@ Notes = Table(
     Column("is_deleted", Boolean, default=False),
     SortKey(),
     UniqueConstraint("note_number", name="uix_notes_note_number", deferrable=True),
+    Index("ix_notes_link_id_note_number_sort_key", "link_id", "note_number", "sort_key"),
 )
 
 Cards = Table(

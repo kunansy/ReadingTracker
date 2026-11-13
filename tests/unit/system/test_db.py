@@ -221,14 +221,6 @@ class TestCreateReadingGraphic:
         assert [bar.get_height() for bar in ax.patches] == [60]
         assert ax.get_legend().get_texts()[1].get_text() == "40 items remains"
 
-    @pytest.mark.xfail(
-        strict=True,
-        raises=IndexError,
-        reason=(
-            "BUG: tracker/system/db.py:50 data.counts[-1] raises IndexError for a "
-            "material that has no reading log yet"
-        ),
-    )
     async def test_material_without_logs_is_rendered(self, material, reading_log):
         material(100)
         reading_log([])
@@ -248,13 +240,6 @@ class TestCreateReadingGraphic:
         with pytest.raises(ValueError, match="not found"):
             await db.create_reading_graphic(material_id=MATERIAL_ID, last_days=7)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "BUG: tracker/system/db.py:54 the figure is never closed, so every "
-            "rendered graphic stays registered in pyplot (memory leak)"
-        ),
-    )
     async def test_figure_is_closed_after_rendering(self, material, reading_log):
         material(100)
         reading_log([_record(1, 10)])
@@ -327,15 +312,6 @@ class TestCreateOutlinePercentageGraphic:
         assert bars["not_outlined"] == pytest.approx([50, 90, 75, 33.33, 10])
         assert ax.get_title() == "Outline percentage"
 
-    @pytest.mark.xfail(
-        strict=True,
-        raises=ValueError,
-        reason=(
-            "BUG: tracker/system/db.py:126-141 a type whose completed materials are "
-            "all outlined has no False entry, the two lists get out of step and "
-            "ax.bar() fails with a shape mismatch"
-        ),
-    )
     async def test_type_with_only_outlined_materials_is_100_percent(self, outline, axes):
         outline(_every_type({True: 1, False: 1}) | {Types.book: {True: 5}})
 
@@ -345,15 +321,6 @@ class TestCreateOutlinePercentageGraphic:
         assert bars["outlined"] == pytest.approx([50, 50, 100, 50, 50])
         assert bars["not_outlined"] == pytest.approx([50, 50, 0, 50, 50])
 
-    @pytest.mark.xfail(
-        strict=True,
-        raises=ValueError,
-        reason=(
-            "BUG: tracker/system/db.py:126-141 a type whose completed materials are "
-            "all not outlined has no True entry, the two lists get out of step and "
-            "ax.bar() fails with a shape mismatch"
-        ),
-    )
     async def test_type_with_only_not_outlined_materials_is_0_percent(self, outline, axes):
         outline(_every_type({True: 1, False: 1}) | {Types.book: {False: 5}})
 
@@ -363,15 +330,6 @@ class TestCreateOutlinePercentageGraphic:
         assert bars["outlined"] == pytest.approx([50, 50, 0, 50, 50])
         assert bars["not_outlined"] == pytest.approx([50, 50, 100, 50, 50])
 
-    @pytest.mark.xfail(
-        strict=True,
-        raises=AssertionError,
-        reason=(
-            "BUG: tracker/system/db.py:117-118 a material type with no completed "
-            "materials is missing from the statistics, so the species assertion "
-            "fails (or, for the first type only, its bar is copied to every type)"
-        ),
-    )
     async def test_type_without_completed_materials_has_empty_bars(self, outline, axes):
         outline({Types.book: {True: 1, False: 3}})
 
@@ -381,13 +339,6 @@ class TestCreateOutlinePercentageGraphic:
         assert bars["outlined"] == pytest.approx([0, 0, 25, 0, 0])
         assert bars["not_outlined"] == pytest.approx([0, 0, 75, 0, 0])
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "BUG: tracker/system/db.py:117,152 when only the alphabetically first "
-            "type has completed materials its single bar is broadcast to all types"
-        ),
-    )
     async def test_only_first_type_completed_does_not_fill_other_types(self, outline, axes):
         outline({Types.article: {True: 1, False: 3}})
 
@@ -395,14 +346,6 @@ class TestCreateOutlinePercentageGraphic:
 
         assert self._bars(axes())["outlined"] == pytest.approx([25, 0, 0, 0, 0])
 
-    @pytest.mark.xfail(
-        strict=True,
-        raises=ValueError,
-        reason=(
-            "BUG: tracker/system/db.py:152 with no completed materials at all the "
-            "count lists are empty and ax.bar() fails with a shape mismatch"
-        ),
-    )
     async def test_no_completed_materials_are_rendered(self, outline):
         outline({})
 
@@ -410,13 +353,6 @@ class TestCreateOutlinePercentageGraphic:
 
         assert "<svg" in decode_svg(image)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "BUG: tracker/system/db.py:123 the figure is never closed, so every "
-            "rendered graphic stays registered in pyplot (memory leak)"
-        ),
-    )
     async def test_figure_is_closed_after_rendering(self, outline):
         outline(_every_type({True: 1, False: 3}))
 

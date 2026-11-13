@@ -51,17 +51,9 @@ class TestLoadTags:
         with pytest.raises(ValidationError, match="tags"):
             build_note(1, tags=tags)
 
-    def test_json_null_is_rejected(self):
-        with pytest.raises(TypeError, match="not iterable"):
-            build_note(1, tags="null")
+    def test_json_null_is_loaded_as_no_tags(self):
+        assert build_note(1, tags="null").tags == set()
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "BUG: tracker/notes/db.py:37 tags is a required set but notes.tags is "
-            "a nullable column, so a row with NULL tags fails validation"
-        ),
-    )
     def test_null_tags_column_is_loaded_as_no_tags(self):
         assert build_note(1, tags=None).tags == set()
 

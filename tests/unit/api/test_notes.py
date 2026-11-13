@@ -5,6 +5,7 @@ import pytest
 
 from tests.unit.api import factories
 from tracker.common import database, kafka, manticoresearch, pagination
+from tracker.materials import db as materials_db
 from tracker.models import enums
 from tracker.notes import db as notes_db
 from tracker.notes.schemas import MAX_SEARCH_QUERY_LENGTH
@@ -362,13 +363,6 @@ async def test_graph_of_one_material_marks_foreign_notes(client, graph_db, mocke
     assert graph.nodes[str(factories.NOTE_ID)].get("color") is None
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/api/v1/notes.py:69 create_material_graph raises ValueError('No "
-        "notes passed') for a material without notes, giving 500 on a valid request"
-    ),
-)
 async def test_graph_of_a_material_without_notes_is_empty(lenient_client, graph_db):
     response = await lenient_client.get(
         f"{BASE}/graph", params={"material_id": str(UUID(int=1))}
@@ -433,6 +427,17 @@ async def test_meta(client, mocker, params, material_id):
 def write_db(mocker):
     mocker.patch.object(database, "utcnow", return_value=NOW)
     return {
+        "get_material": mocker.patch.object(
+            materials_db,
+            "get_material_api",
+            mocker.AsyncMock(return_value=factories.material()),
+        ),
+        "get_link": _patch(
+            mocker,
+            "get_note",
+            return_value=factories.note(note_id=factories.OTHER_NOTE_ID),
+        ),
+        "is_link_cyclic": _patch(mocker, "is_link_cyclic", return_value=False),
         "insert_note": _patch(mocker, "insert_note", return_value=factories.NOTE_ID),
         "update_note": _patch(mocker, "update_note", return_value=None),
         "index_insert": mocker.patch.object(
@@ -653,6 +658,105 @@ async def test_update_note_rejects_bad_uuid(client, write_db):
     write_db["update_note"].assert_not_awaited()
 
 
+async def test_update_note_formats_content_like_a_new_note(client, write_db):
+    response = await client.patch(
+        NOTE_URL,
+        json=_update_body(content='он сказал  "да" -- и x^2 ушёл', tags=["B", "a"]),
+    )
+
+    assert response.status_code == 204
+    content = "Он сказал «да» — и x<sup>2</sup> ушёл"
+    assert write_db["update_note"].await_args.kwargs["content"] == content
+    assert write_db["update_note"].await_args.kwargs["tags"] == ["a", "b"]
+    assert write_db["index_update"].await_args.kwargs["content"] == content
+
+
+async def test_add_note_checks_the_material_and_the_linked_note(client, write_db):
+    response = await client.post(
+        f"{BASE}/add",
+        json={
+            "material_id": str(factories.MATERIAL_ID),
+            "content": "c",
+            "link_id": str(factories.OTHER_NOTE_ID),
+        },
+    )
+
+    assert response.status_code == 201
+    write_db["get_material"].assert_awaited_once_with(material_id=factories.MATERIAL_ID)
+    write_db["get_link"].assert_awaited_once_with(note_id=factories.OTHER_NOTE_ID)
+
+
+async def test_add_note_without_a_link_does_not_look_one_up(client, write_db):
+    response = await client.post(
+        f"{BASE}/add", json={"material_id": str(factories.MATERIAL_ID), "content": "c"}
+    )
+
+    assert response.status_code == 201
+    write_db["get_link"].assert_not_awaited()
+
+
+@pytest.mark.parametrize("missing", ["get_material", "get_link"])
+@pytest.mark.parametrize(
+    ("method", "url", "body"),
+    [
+        (
+            "POST",
+            f"{BASE}/add",
+            {
+                "material_id": str(factories.MATERIAL_ID),
+                "content": "c",
+                "link_id": str(factories.OTHER_NOTE_ID),
+            },
+        ),
+        ("PATCH", NOTE_URL, _update_body(link_id=str(factories.OTHER_NOTE_ID))),
+    ],
+    ids=["add", "update"],
+)
+async def test_write_with_a_missing_reference_is_404_and_writes_nothing(
+    client, write_db, missing, method, url, body
+):
+    write_db[missing].side_effect = NOT_FOUND
+
+    response = await client.request(method, url, json=body)
+
+    assert response.status_code == 404
+    assert response.json() == NOT_FOUND_BODY
+    for writer in ("insert_note", "update_note", "index_insert", "index_update"):
+        write_db[writer].assert_not_awaited()
+
+
+async def test_update_note_checks_the_new_link_for_a_cycle(client, write_db):
+    response = await client.patch(
+        NOTE_URL, json=_update_body(link_id=str(factories.OTHER_NOTE_ID))
+    )
+
+    assert response.status_code == 204
+    write_db["is_link_cyclic"].assert_awaited_once_with(
+        note_id=factories.NOTE_ID, link_id=factories.OTHER_NOTE_ID
+    )
+
+
+async def test_update_note_without_a_link_does_not_check_for_a_cycle(client, write_db):
+    response = await client.patch(NOTE_URL, json=_update_body())
+
+    assert response.status_code == 204
+    write_db["get_link"].assert_not_awaited()
+    write_db["is_link_cyclic"].assert_not_awaited()
+
+
+async def test_update_note_creating_a_cycle_is_400(client, write_db):
+    write_db["is_link_cyclic"].return_value = True
+
+    response = await client.patch(
+        NOTE_URL, json=_update_body(link_id=str(factories.OTHER_NOTE_ID))
+    )
+
+    assert response.status_code == 400
+    assert response.json() == {"detail": "Link would create a cycle"}
+    write_db["update_note"].assert_not_awaited()
+    write_db["index_update"].assert_not_awaited()
+
+
 @pytest.fixture
 def autocompletion(mocker):
     return mocker.patch.object(
@@ -750,6 +854,7 @@ async def test_possible_links_of_a_note_without_candidates(client, mocker, get_n
 
 
 async def test_links_network_draws_the_linked_notes(client, mocker):
+    get_note = _patch(mocker, "get_note", return_value=factories.note())
     root = factories.note()
     child = factories.note(note_id=factories.OTHER_NOTE_ID, link_id=root.note_id)
     unrelated = factories.note(note_id=OTHER_MATERIAL_NOTE_ID)
@@ -765,6 +870,7 @@ async def test_links_network_draws_the_linked_notes(client, mocker):
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/html")
     assert response.text == "<html>network</html>"
+    get_note.assert_awaited_once_with(note_id=factories.NOTE_ID)
     get_notes.assert_awaited_once_with()
     (graph,), kwargs = create_graphic.call_args
     assert kwargs == {}
@@ -772,21 +878,17 @@ async def test_links_network_draws_the_linked_notes(client, mocker):
     assert set(graph.edges) == {(str(factories.OTHER_NOTE_ID), str(factories.NOTE_ID))}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/api/v1/notes.py:163 link_notes does notes[note_id] without "
-        "checking the note exists: KeyError gives 500 instead of 404 for an unknown note"
-    ),
-)
 async def test_links_network_of_a_missing_note_is_404(lenient_client, mocker):
-    _patch(mocker, "get_notes", return_value=[factories.note()])
+    _patch(mocker, "get_note", side_effect=NOT_FOUND)
+    get_notes = _patch(mocker, "get_notes", return_value=[factories.note()])
 
     response = await lenient_client.get(
         f"{BASE}/links-network", params={"note_id": str(factories.OTHER_NOTE_ID)}
     )
 
     assert response.status_code == 404
+    assert response.json() == NOT_FOUND_BODY
+    get_notes.assert_not_awaited()
 
 
 def _info(note_id: UUID) -> str:
@@ -967,6 +1069,10 @@ async def test_get_note_rejects_bad_uuid(client, get_note):
     ids=["delete", "restore"],
 )
 class TestDeleteAndRestore:
+    @pytest.fixture(autouse=True)
+    def _not_linked(self, mocker):
+        return _patch(mocker, "count_links_to", return_value=0)
+
     async def test_runs_the_action(self, client, mocker, method, suffix, db_function):
         run = _patch(mocker, db_function, return_value=None)
 
@@ -993,6 +1099,18 @@ class TestDeleteAndRestore:
         run.assert_not_awaited()
 
 
+async def test_delete_of_a_linked_note_is_409(client, mocker):
+    count_links_to = _patch(mocker, "count_links_to", return_value=2)
+    delete = _patch(mocker, "delete_note", return_value=None)
+
+    response = await client.delete(NOTE_URL)
+
+    assert response.status_code == 409
+    assert response.json() == {"detail": "Note is linked from 2 notes"}
+    count_links_to.assert_awaited_once_with(note_id=factories.NOTE_ID)
+    delete.assert_not_awaited()
+
+
 async def test_deleted_note_is_404_until_restored(client, mocker):
     state = {"is_deleted": False}
 
@@ -1006,6 +1124,7 @@ async def test_deleted_note_is_404_until_restored(client, mocker):
 
     mocker.patch.object(notes_db, "get_note", get)
     mocker.patch.object(notes_db, "_del_or_restore", set_deleted)
+    _patch(mocker, "count_links_to", return_value=0)
 
     assert (await client.get(NOTE_URL)).status_code == 200
     assert (await client.delete(NOTE_URL)).status_code == 204

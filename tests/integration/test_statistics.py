@@ -76,18 +76,8 @@ async def test_statistics_parts_are_empty_on_an_empty_database():
     assert await statistics._get_materials_completed() == {}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/reading_log/statistics.py:289 an empty reading log raises ValueError "
-        "instead of giving empty statistics, GET /system/summary answers 500"
-    ),
-)
 async def test_tracker_statistics_on_an_empty_database():
-    result = await statistics.get_tracker_statistics()
-
-    assert result.total_materials_completed == 0
-    assert result.pages_read == {}
+    assert await statistics.get_tracker_statistics() is None
 
 
 # calculate_materials_stat

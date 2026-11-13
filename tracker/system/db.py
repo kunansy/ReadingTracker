@@ -1,6 +1,4 @@
-import base64
 import datetime
-from io import BytesIO
 from typing import NamedTuple
 from uuid import UUID
 
@@ -15,6 +13,7 @@ from tracker.models import enums, models
 from tracker.reading_log import (
     db as logs_db,
 )
+from tracker.system.figures import render_svg_base64
 
 
 class ReadingData(NamedTuple):
@@ -47,7 +46,7 @@ async def create_reading_graphic(*, material_id: UUID, last_days: int) -> str:
     material = await materials_db.get_material_api(material_id=material_id)
 
     data = await _get_graphic_data(material_id=material_id, last_days=last_days)
-    total_pages_read = data.counts[-1]
+    total_pages_read = data.counts[-1] if data.counts else 0
     material_pages = material.pages
 
     _set_plot_style()
@@ -63,7 +62,7 @@ async def create_reading_graphic(*, material_id: UUID, last_days: int) -> str:
     ax.set_ylabel("Items count")
     ax.set_xlabel("Date")
 
-    if (remains := material_pages - total_pages_read) > 0:
+    if (remains := material_pages - total_pages_read) > 0 and data.counts:
         last_rect = bar[-1]
         vline_x = last_rect.get_x() + last_rect.get_width() / 2
 
@@ -79,9 +78,7 @@ async def create_reading_graphic(*, material_id: UUID, last_days: int) -> str:
     ax.set(ylim=(0, material_pages + material_pages * 0.1))
     ax.legend()
 
-    buff = BytesIO()
-    fig.savefig(buff, format="svg")
-    return base64.b64encode(buff.getvalue()).decode("utf-8")
+    return render_svg_base64(fig)
 
 
 async def _calculate_outline_percentage() -> dict[
@@ -111,11 +108,18 @@ async def _calculate_outline_percentage() -> dict[
 
 async def create_outline_percentage_graphic() -> str:
     stat = await _calculate_outline_percentage()
-    stat = dict(sorted(stat.items()))
-    species = sorted(item.value for item in enums.MaterialTypesEnum)
+    material_types = sorted(enums.MaterialTypesEnum)
+    species = [material_type.value for material_type in material_types]
 
-    for lhs, rhs in zip(species, stat.keys(), strict=False):
-        assert lhs == rhs, f"{lhs!r} != {rhs!r}"  # noqa: S101
+    outlined, not_outlined = [], []
+    for material_type in material_types:
+        counts = stat.get(material_type, {})
+        outlined_count, not_outlined_count = counts.get(True, 0), counts.get(False, 0)
+        total = outlined_count + not_outlined_count
+
+        percent = round(outlined_count / total, 4) * 100 if total else 0
+        outlined.append(percent)
+        not_outlined.append(100 - percent if total else 0)
 
     width = 0.6
 
@@ -123,34 +127,9 @@ async def create_outline_percentage_graphic() -> str:
     fig, ax = plt.subplots(figsize=(12, 10))
     bottom = np.zeros(len(species))
 
-    outlined = [
-        count
-        for stat in stat.values()
-        for is_outlined, count in stat.items()
-        if is_outlined
-    ]
-    not_outlined = [
-        count
-        for stat in stat.values()
-        for is_outlined, count in stat.items()
-        if not is_outlined
-    ]
-    percents = [
-        round(o / (o + no), 4) * 100
-        for o, no in zip(outlined, not_outlined, strict=False)
-    ]
-
-    outlined[::] = percents  # type: ignore[assignment]
-    not_outlined[::] = [100 - v for v in percents]  # type: ignore[misc]
-
-    outlines = {
-        "outlined": outlined,
-        "not_outlined": not_outlined,
-    }
-
-    for material_type, counts in outlines.items():
-        p = ax.bar(species, counts, width, label=material_type, bottom=bottom)
-        bottom += counts
+    for label, percents in {"outlined": outlined, "not_outlined": not_outlined}.items():
+        p = ax.bar(species, percents, width, label=label, bottom=bottom)
+        bottom += percents
 
         ax.bar_label(p, label_type="center")
 
@@ -158,6 +137,4 @@ async def create_outline_percentage_graphic() -> str:
     ax.yaxis.set_major_formatter(mtick.PercentFormatter())
     ax.legend()
 
-    buff = BytesIO()
-    fig.savefig(buff, format="svg")
-    return base64.b64encode(buff.getvalue()).decode("utf-8")
+    return render_svg_base64(fig)

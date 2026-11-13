@@ -13,6 +13,7 @@ from tests.integration.migrations.revisions import (
     REVISION_0005,
     REVISION_0006,
     REVISION_0007,
+    REVISION_0008,
     in_rolled_back_migration,
 )
 from tracker.common import sort_keys
@@ -417,3 +418,42 @@ async def test_0007_downgrade_on_an_empty_table_starts_the_sequence_at_one():
         return _next_index(conn)
 
     assert await in_rolled_back_migration(check) == 1
+
+
+def _index_definitions(conn: Connection) -> dict[str, str]:
+    rows = conn.execute(
+        sa.text(
+            "SELECT indexname, indexdef FROM pg_indexes "
+            "WHERE tablename IN ('materials', 'reading_log', 'notes') "
+            "AND indexname LIKE 'ix\\_%'",
+        ),
+    )
+    return {name: definition.split(" USING btree ", 1)[1] for name, definition in rows}
+
+
+LISTING_INDEXES_AT_0008 = {
+    REVISION_0008.READING_LOG_INDEX_NAME: "(date, sort_key)",
+    REVISION_0008.COMPLETED_INDEX_NAME: (
+        "(completed_at, sort_key) WHERE (completed_at IS NOT NULL)"
+    ),
+    REVISION_0008.STARTED_INDEX_NAME: "(started_at, sort_key) WHERE (started_at IS NOT NULL)",
+    REVISION_0008.LINKS_INDEX_NAME: "(link_id, note_number, sort_key)",
+}
+
+
+async def test_0008_replaces_the_completed_at_index_by_the_listing_indexes():
+    def check(conn: Connection) -> tuple[dict[str, str], dict[str, str]]:
+        revisions.downgrade_to(REVISION_0007)
+        at_0007 = _index_definitions(conn)
+        REVISION_0008.upgrade()
+        return at_0007, _index_definitions(conn)
+
+    at_0007, at_0008 = await in_rolled_back_migration(check)
+
+    assert REVISION_0008.COMPLETED_AT_INDEX_NAME in at_0007
+    assert not set(LISTING_INDEXES_AT_0008) & set(at_0007)
+    assert REVISION_0008.COMPLETED_AT_INDEX_NAME not in at_0008
+    assert {name: at_0008[name] for name in LISTING_INDEXES_AT_0008} == LISTING_INDEXES_AT_0008
+    assert set(at_0008) - set(LISTING_INDEXES_AT_0008) == set(at_0007) - {
+        REVISION_0008.COMPLETED_AT_INDEX_NAME,
+    }

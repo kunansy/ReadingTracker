@@ -1,5 +1,4 @@
 import asyncio
-import os
 from http import HTTPStatus
 
 from fastapi import FastAPI, Request
@@ -35,7 +34,7 @@ app.add_middleware(
     app_name="tracker",
     prefix="tracker",
     labels={
-        "server_name": os.getenv("HOSTNAME"),  # type: ignore[dict-item]
+        "server_name": settings.HOSTNAME,  # type: ignore[dict-item]
     },
     group_paths=True,
     skip_paths=["/readiness", "/liveness"],

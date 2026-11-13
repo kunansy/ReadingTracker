@@ -2,11 +2,13 @@ import asyncio
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+import networkx as nx
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 
 from tracker.common import database, kafka, manticoresearch
 from tracker.common.pagination import PageParams
+from tracker.materials import db as materials_db
 from tracker.notes import db, schemas
 from tracker.notes.listing import build_notes_search_result
 
@@ -66,10 +68,14 @@ async def notes_graph_json(material_id: UUID | None = None):
     if material_id:
         notes_dict = {note.note_id: note for note in notes}
         material_notes = {note.note_id for note in get_material_notes_task.result()}
-        graph = db.create_material_graph(
-            material_id=material_id,
-            material_notes=material_notes,
-            notes=notes_dict,
+        graph = (
+            db.create_material_graph(
+                material_id=material_id,
+                material_notes=material_notes,
+                notes=notes_dict,
+            )
+            if material_notes
+            else nx.DiGraph()
         )
     else:
         graph = db.link_all_notes(notes)
@@ -95,8 +101,16 @@ async def get_notes_meta(material_id: UUID | None = None):
     }
 
 
+async def _check_note_refs(*, material_id: UUID, link_id: UUID | None) -> None:
+    await materials_db.get_material_api(material_id=material_id)
+    if link_id:
+        await db.get_note(note_id=link_id)
+
+
 @router.post("/add", status_code=201, response_model=schemas.AddNoteResponse)
 async def add_note(note: schemas.AddNoteRequest):
+    await _check_note_refs(material_id=note.material_id, link_id=note.link_id)
+
     note_id = await db.insert_note(
         material_id=note.material_id,
         link_id=note.link_id,
@@ -116,6 +130,10 @@ async def add_note(note: schemas.AddNoteRequest):
 
 @router.patch("/{note_id}", status_code=204)
 async def update_note(note_id: UUID, body: schemas.UpdateNoteRequest):
+    await _check_note_refs(material_id=body.material_id, link_id=body.link_id)
+    if body.link_id and await db.is_link_cyclic(note_id=note_id, link_id=body.link_id):
+        raise HTTPException(status_code=400, detail="Link would create a cycle")
+
     await db.update_note(
         note_id=note_id,
         material_id=body.material_id,
@@ -158,6 +176,7 @@ async def list_possible_note_links(note_id: UUID):
 
 @router.get("/links-network", response_class=HTMLResponse)
 async def get_note_links_network(note_id: UUID):
+    await db.get_note(note_id=note_id)
     # TODO: try to refactor without full listing
     notes = {note.note_id: note for note in await db.get_notes()}
     graph = db.link_notes(note_id=note_id, notes=notes)
@@ -197,6 +216,12 @@ async def get_note(note_id: UUID):
 
 @router.delete("/{note_id}", status_code=204)
 async def delete_note(note_id: UUID):
+    if links_count := await db.count_links_to(note_id=note_id):
+        raise HTTPException(
+            status_code=409,
+            detail=f"Note is linked from {links_count} notes",
+        )
+
     await db.delete_note(note_id=note_id)
 
 

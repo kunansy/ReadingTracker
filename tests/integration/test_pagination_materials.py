@@ -23,12 +23,8 @@ ago = factories.days_ago
 
 
 @pytest.fixture(autouse=True)
-async def clock(monkeypatch: pytest.MonkeyPatch) -> h.Clock:
-    """The repeating queue reads `now()` in SQL, so the Python clock follows the database."""
-    today = await h.db_today()
-    return h.freeze_clock(
-        monkeypatch, datetime.datetime.combine(today, datetime.time(12))
-    )
+def clock(monkeypatch: pytest.MonkeyPatch) -> h.Clock:
+    return h.freeze_clock(monkeypatch)
 
 
 @dataclass(frozen=True)
@@ -166,6 +162,18 @@ LISTINGS = {
 }
 
 every_listing = pytest.mark.parametrize("listing", LISTINGS.values(), ids=LISTINGS.keys())
+# listings whose cursor is parsed into the values of several columns
+KEYSET_LISTINGS = ("reading logs", "completed materials", "reading materials")
+string_cursor_listing = pytest.mark.parametrize(
+    "listing",
+    [LISTINGS[name] for name in LISTINGS if name not in KEYSET_LISTINGS],
+    ids=[name for name in LISTINGS if name not in KEYSET_LISTINGS],
+)
+keyset_listing = pytest.mark.parametrize(
+    "listing",
+    [LISTINGS[name] for name in KEYSET_LISTINGS],
+    ids=KEYSET_LISTINGS,
+)
 both_orders = pytest.mark.parametrize("order", list(Order), ids=lambda order: order.value)
 
 
@@ -265,13 +273,6 @@ async def test_row_added_between_two_pages_neither_repeats_nor_skips_listed_rows
     assert listed == (ids + [added_id] if order == Order.ASC else ids[::-1])
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/materials/db.py:482 the reading page is keyed by the last log date, "
-        "which a new reading log rewrites: a material logged between two pages is skipped"
-    ),
-)
 async def test_reading_material_logged_between_two_pages_is_not_skipped(clock):
     listing = LISTINGS["reading materials"]
     ids = await listing.seed(clock, 3)
@@ -307,7 +308,7 @@ def completed_cursor(row: dict[str, Any]) -> str:
 
 
 def started_cursor(row: dict[str, Any]) -> str:
-    return f"{row['started_at'].date().isoformat()}$${row['sort_key']}"
+    return f"{row['started_at'].isoformat()}.000000$${row['sort_key']}"
 
 
 def repeat_cursor(row: dict[str, Any]) -> str:
@@ -440,8 +441,13 @@ async def test_token_is_accepted_with_the_default_order_given_explicitly(clock, 
     ]
 
 
-@every_listing
-@pytest.mark.parametrize("cursor", ["", "~", "0", "$$", "'; DROP TABLE materials; --"])
+FORGED_CURSORS = pytest.mark.parametrize(
+    "cursor", ["", "~", "0", "$$", "'; DROP TABLE materials; --"]
+)
+
+
+@string_cursor_listing
+@FORGED_CURSORS
 async def test_forged_cursor_gives_a_page_of_seeded_rows(clock, listing, cursor):
     ids = await listing.seed(clock, 2)
     first = await listing.fetch(PageParams(page_size=1))
@@ -453,6 +459,58 @@ async def test_forged_cursor_gives_a_page_of_seeded_rows(clock, listing, cursor)
     assert len(page.items) <= 1
     assert set(page_ids(listing, [page])[0]) <= set(ids)
     assert await factories.count_rows(models.Materials) > 0
+
+
+@keyset_listing
+@pytest.mark.parametrize(
+    "cursor",
+    [
+        "",
+        "~",
+        "0",
+        "$$",
+        "'; DROP TABLE materials; --",
+        "2024-13-01$$key",
+        "2024-01-01T25:00:00.000000$$key",
+    ],
+)
+async def test_forged_cursor_of_a_keyset_listing_is_rejected(clock, listing, cursor):
+    await listing.seed(clock, 2)
+    first = await listing.fetch(PageParams(page_size=1))
+
+    with pytest.raises(database.InvalidNextTokenException, match="no valid cursor"):
+        await listing.fetch(
+            PageParams(page_size=1, next_token=h.with_cursor(first.next_token, cursor)),
+        )
+
+
+@keyset_listing
+@pytest.mark.parametrize(
+    ("cursor", "order", "is_empty"),
+    [
+        ("9999-12-31$$~", Order.ASC, True),
+        ("9999-12-31$$~", Order.DESC, False),
+        ("0001-01-01$$", Order.ASC, False),
+        ("0001-01-01$$", Order.DESC, True),
+    ],
+    ids=["asc-past-the-end", "desc-from-the-end", "asc-from-the-start", "desc-past-the-start"],
+)
+async def test_forged_but_well_formed_keyset_cursor_gives_a_consistent_page(
+    clock, listing, cursor, order, is_empty
+):
+    ids = await listing.seed(clock, 2)
+    first = await listing.fetch(PageParams(page_size=1, order=order))
+
+    page = await listing.fetch(
+        PageParams(
+            page_size=1,
+            order=order,
+            next_token=h.with_cursor(first.next_token, cursor),
+        ),
+    )
+
+    expected = [] if is_empty else in_order(ids, order)[:1]
+    assert page_ids(listing, [page]) == [expected]
 
 
 async def test_cursor_past_the_end_gives_an_empty_last_page(clock):
@@ -474,20 +532,20 @@ async def test_cursor_past_the_end_gives_an_empty_last_page(clock):
     assert (page.items, page.next_token, page.total_count) == ([], None, 2)
 
 
-async def test_logs_listing_accepts_a_token_of_the_cards_listing_current_behaviour(clock):
+async def test_logs_listing_rejects_a_token_of_the_cards_listing(clock):
     await seed_cards(clock, 2)
-    log_ids = await seed_logs(clock, 2)
+    await seed_logs(clock, 2)
     cards_page = await cards_db.get_cards_page(
         material_id=None, params=PageParams(page_size=1)
     )
 
-    # both listings bind the same params (order, max_items, material_id): no operation name
-    page = await logs_db.list_log_records_page(
-        material_id=None,
-        params=PageParams(page_size=1, next_token=cards_page.next_token),
-    )
-
-    assert [log.log_id for log in page.items] == [log_ids[1]]
+    # both listings bind the same params (order, max_items, material_id): only the cursor
+    # of a card, which is not a date, tells the token apart
+    with pytest.raises(database.InvalidNextTokenException, match="no valid cursor"):
+        await logs_db.list_log_records_page(
+            material_id=None,
+            params=PageParams(page_size=1, next_token=cards_page.next_token),
+        )
 
 
 # filters
@@ -793,11 +851,42 @@ async def test_page_is_read_from_the_sort_key_index_without_sorting(
 
 
 @pytest.mark.parametrize(
-    "name",
-    ["reading logs", "completed materials", "reading materials", "repeating queue"],
+    ("name", "index"),
+    [
+        ("reading logs", "ix_reading_log_date_sort_key"),
+        ("completed materials", "ix_materials_completed_at_sort_key"),
+        ("reading materials", "ix_materials_started_at_sort_key"),
+    ],
 )
-async def test_page_sorts_the_whole_listing_current_behaviour(clock, mocker, name):
-    """The cursor is an expression over several columns and no index covers it."""
+@both_orders
+async def test_keyset_page_is_read_from_its_index_without_sorting(
+    clock,
+    mocker,
+    name,
+    index,
+    order,
+):
+    listing = LISTINGS[name]
+    await listing.seed(clock, 4)
+    paginate = mocker.spy(pagination, "paginate")
+
+    first = await listing.fetch(PageParams(page_size=2, order=order))
+    first_plan = await h.explain(paginate.spy_return)
+    await listing.fetch(PageParams(page_size=2, order=order, next_token=first.next_token))
+    next_plan = await h.explain(paginate.spy_return)
+
+    for plan in (first_plan, next_plan):
+        assert index in plan, plan
+        assert "Sort" not in plan, plan
+    # the row value of the cursor is an index condition, not a filter
+    assert re.search(r"Index Cond: .*ROW\(\w+, \(sort_key\)::text\) [<>]= ROW\(", next_plan), (
+        next_plan
+    )
+
+
+async def test_repeating_queue_page_sorts_the_whole_listing_current_behaviour(clock, mocker):
+    """The queue is ordered by a computed repeat date, which no index can cover."""
+    name = "repeating queue"
     listing = LISTINGS[name]
     await listing.seed(clock, 4)
     paginate = mocker.spy(pagination, "paginate")

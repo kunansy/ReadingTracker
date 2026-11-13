@@ -1,4 +1,5 @@
 import base64
+import datetime
 import json
 from contextlib import asynccontextmanager
 from types import SimpleNamespace
@@ -300,13 +301,6 @@ def test_decode_accepts_standard_base64_alphabet_current_behaviour():
     assert result == {"cursor": "~~~???>>>"}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/common/pagination.py:47 a lone surrogate in the token passes "
-        "_is_token_map although, like NUL, it cannot be sent to Postgres as text"
-    ),
-)
 def test_decode_rejects_cursor_that_cannot_be_encoded_as_utf8():
     token = _raw_token({"params": PARAMS, "continue_from": {"cursor": "\ud800"}})
 
@@ -322,6 +316,7 @@ def test_decode_rejects_cursor_that_cannot_be_encoded_as_utf8():
         ({"a": ""}, True),
         ({"a\x00": "b"}, True),
         ({"a": "b\x00"}, False),
+        ({"a": "\ud800"}, False),
         ({"a": 1}, False),
         ({"a": None}, False),
         ({"a": {"b": "c"}}, False),
@@ -338,6 +333,7 @@ def test_decode_rejects_cursor_that_cannot_be_encoded_as_utf8():
         "empty-value",
         "nul-in-key",
         "nul-in-value",
+        "lone-surrogate-in-value",
         "int-value",
         "none-value",
         "nested",
@@ -869,3 +865,144 @@ async def test_fetch_page_of_empty_result(fake_session):
     )
 
     assert page == Page(items=[], next_token=None, total_count=0)
+
+
+LOG_KEYSET = pagination.keyset(
+    pagination.date_key(models.ReadingLog.c.date),
+    pagination.text_key(models.ReadingLog.c.sort_key),
+)
+LOG_STMT = sa.select(models.ReadingLog.c.log_id)
+
+
+def test_keyset_text_is_the_cursor_of_its_parts():
+    assert _compile(LOG_KEYSET.text) == _compile(
+        pagination.cursor(
+            pagination.date_part(models.ReadingLog.c.date),
+            models.ReadingLog.c.sort_key,
+        ),
+    )
+
+
+@pytest.mark.parametrize(
+    ("key", "cursor", "expected"),
+    [
+        (LOG_KEYSET, "2024-01-02$$k", (datetime.date(2024, 1, 2), "k")),
+        (LOG_KEYSET, "2024-01-02$$a$$b", (datetime.date(2024, 1, 2), "a$$b")),
+        (LOG_KEYSET, "2024-01-02$$", (datetime.date(2024, 1, 2), "")),
+        (
+            pagination.keyset(
+                pagination.datetime_key(models.Materials.c.completed_at),
+                pagination.text_key(models.Materials.c.sort_key),
+            ),
+            "2024-01-02T03:04:05.000006$$k",
+            (datetime.datetime(2024, 1, 2, 3, 4, 5, 6), "k"),  # noqa: DTZ001
+        ),
+        (
+            pagination.keyset(
+                pagination.int_key(models.Notes.c.note_number),
+                pagination.text_key(models.Notes.c.sort_key),
+            ),
+            "0000000042$$k",
+            (42, "k"),
+        ),
+        (
+            pagination.keyset(
+                pagination.int_key(models.Notes.c.note_number),
+                pagination.text_key(models.Notes.c.sort_key),
+            ),
+            "2147483647$$k",
+            (2**31 - 1, "k"),
+        ),
+    ],
+    ids=["date", "separator-in-the-last-part", "empty-last-part", "datetime", "int", "max-int"],
+)
+def test_keyset_start_parses_every_part(key, cursor, expected):
+    assert key.start(cursor) == expected
+
+
+NOTE_KEYSET = pagination.keyset(
+    pagination.int_key(models.Notes.c.note_number),
+    pagination.text_key(models.Notes.c.sort_key),
+)
+
+
+@pytest.mark.parametrize(
+    ("key", "cursor"),
+    [
+        (LOG_KEYSET, ""),
+        (LOG_KEYSET, "2024-01-02"),
+        (LOG_KEYSET, "garbage$$k"),
+        (LOG_KEYSET, "2024-13-01$$k"),
+        (NOTE_KEYSET, "2147483648$$k"),
+        (NOTE_KEYSET, "-1$$k"),
+        (NOTE_KEYSET, "+1$$k"),
+        (NOTE_KEYSET, " 1$$k"),
+        (NOTE_KEYSET, "1_0$$k"),
+        (NOTE_KEYSET, "١$$k"),
+    ],
+    ids=[
+        "empty",
+        "one-part",
+        "not-a-date",
+        "bad-month",
+        "over-int4",
+        "negative",
+        "plus-sign",
+        "space",
+        "underscore",
+        "non-ascii-digit",
+    ],
+)
+def test_keyset_start_rejects_a_malformed_cursor(key, cursor):
+    with pytest.raises(database.InvalidNextTokenException, match="no valid cursor"):
+        key.start(cursor)
+
+
+def test_paginate_keyset_first_page_orders_by_the_columns():
+    stmt = pagination.paginate(LOG_STMT, cursor_expr=LOG_KEYSET, request=_request())
+
+    assert _compile(stmt).endswith(
+        "FROM reading_log ORDER BY reading_log.date ASC, reading_log.sort_key ASC LIMIT 3",
+    )
+
+
+@pytest.mark.parametrize(
+    ("order", "operator", "direction"),
+    [(Order.ASC, ">=", "ASC"), (Order.DESC, "<=", "DESC")],
+    ids=["asc", "desc"],
+)
+def test_paginate_keyset_next_page_compares_a_row_value(order, operator, direction):
+    stmt = pagination.paginate(
+        LOG_STMT,
+        cursor_expr=LOG_KEYSET,
+        request=_request(order=order, cursor="2024-01-02$$k"),
+    )
+
+    assert _compile(stmt).endswith(
+        f"FROM reading_log WHERE (reading_log.date, reading_log.sort_key) {operator} "
+        "('2024-01-02', 'k') "
+        f"ORDER BY reading_log.date {direction}, reading_log.sort_key {direction} LIMIT 3",
+    )
+
+
+def test_paginate_keyset_selects_the_cursor_text():
+    stmt = pagination.paginate(LOG_STMT, cursor_expr=LOG_KEYSET, request=_request())
+
+    assert _compile(stmt).startswith(
+        "SELECT reading_log.log_id, to_char(reading_log.date, 'YYYY-MM-DD') || '$$' "
+        '|| reading_log.sort_key COLLATE "C" AS cursor ',
+    )
+
+
+def test_paginate_keyset_sends_the_cursor_values_as_bound_parameters():
+    stmt = pagination.paginate(
+        LOG_STMT,
+        cursor_expr=LOG_KEYSET,
+        request=_request(cursor="2024-01-02$$a'; DROP TABLE materials; --"),
+    )
+
+    compiled = stmt.compile(dialect=postgresql.dialect())
+
+    assert "DROP TABLE" not in str(compiled)
+    assert "a'; DROP TABLE materials; --" in compiled.params.values()
+    assert datetime.date(2024, 1, 2) in compiled.params.values()

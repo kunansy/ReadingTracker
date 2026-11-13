@@ -89,26 +89,28 @@ class TestNoteForm:
         with pytest.raises(ValidationError, match="Invalid tags"):
             _form(tags=tags)
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "BUG: tracker/notes/schemas.py:140 a list of several tags reaches "
-            "tags.lower() and raises AttributeError instead of being validated"
-        ),
-    )
     def test_multi_element_tags_list_is_accepted(self):
         assert _form(tags=["b", "#A"]).tags == ["a", "b"]
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "BUG: tracker/notes/schemas.py:134 a one-element list holding a "
-            "non-string reaches tags.lower() and raises AttributeError"
-        ),
+    @pytest.mark.parametrize(
+        "tags", [[1], ["a", None], 5], ids=["int", "none-in-list", "int-value"]
     )
-    def test_non_string_tag_is_a_validation_error(self):
-        with pytest.raises(ValidationError):
-            _form(tags=[1])
+    def test_non_string_tag_is_a_validation_error(self, tags):
+        with pytest.raises(ValidationError, match="Invalid tags"):
+            _form(tags=tags)
+
+    def test_validation_does_not_change_the_given_data(self):
+        data = {
+            "material_id": str(MATERIAL_ID),
+            "content": "c",
+            "tags": "#B a",
+            "page": "3",
+        }
+        original = dict(data)
+
+        schemas.Note.model_validate(data)
+
+        assert data == original
 
     @pytest.mark.parametrize(
         ("page", "expected"),
@@ -136,14 +138,6 @@ class TestNoteForm:
         assert _form(page=1.9).page == 1
 
     @pytest.mark.parametrize("data", [[1], "text", None, 5], ids=repr)
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "BUG: tracker/notes/schemas.py:134,154 the before-validators call "
-            "data.pop() on any input, so a non-dict body raises TypeError / "
-            "AttributeError instead of a ValidationError"
-        ),
-    )
     def test_non_dict_input_is_a_validation_error(self, data):
         with pytest.raises(ValidationError):
             schemas.Note.model_validate(data)
@@ -314,16 +308,18 @@ class TestUpdateNoteRequest:
         with pytest.raises(ValidationError, match=field):
             schemas.UpdateNoteRequest(**values)
 
-    def test_content_is_not_formatted_current_behaviour(self):
-        request = _update(content='he   said "x^2 -> \\inf" -- ok')
+    def test_content_is_formatted_like_a_new_note(self):
+        content = 'he   said "x^2 -> \\inf" -- ok'
 
-        assert request.content == 'he   said "x^2 -> \\inf" -- ok'
+        assert _update(content=content).content == _add(content=content).content
+        assert _update(content=content).content == "He said «x<sup>2</sup> → ∞» — ok"
 
-    def test_unbalanced_quotes_are_accepted_current_behaviour(self):
-        assert _update(content='a "b').content == 'a "b'
+    def test_unbalanced_quotes_are_rejected(self):
+        with pytest.raises(ValidationError, match="Quotes are not balanced"):
+            _update(content='a "b')
 
-    def test_tags_are_lowercased_but_not_sorted_current_behaviour(self):
-        assert _update(tags=["b", " A "]).tags == ["b", "a"]
+    def test_tags_are_lowercased_and_sorted(self):
+        assert _update(tags=["b", " A "]).tags == ["a", "b"]
 
     def test_invalid_tag_is_rejected(self):
         with pytest.raises(ValidationError, match="tags"):

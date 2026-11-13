@@ -505,11 +505,6 @@ async def test_get_note_raises_not_found_for_a_deleted_note(material_id):
         await notes_db.get_note(note_id=note_id)
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG: tracker/notes/db.py:37 notes.tags is nullable but Note.tags is set[str], "
-    "so one row with NULL tags makes every note read fail",
-)
 @pytest.mark.parametrize("null", [sa.null(), None], ids=["sql-null", "json-null"])
 async def test_get_note_reads_a_note_without_tags(material_id, null):
     note_id = await helpers.insert_raw_note(material_id=material_id, tags=null)
@@ -519,10 +514,6 @@ async def test_get_note_reads_a_note_without_tags(material_id, null):
     assert note.tags == set()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG: tracker/notes/db.py:37 a single note with NULL tags breaks the whole listing",
-)
 async def test_get_notes_lists_notes_without_tags(material_id):
     with_tags = await factories.insert_note(material_id=material_id, tags=["tag"])
     without_tags = await helpers.insert_raw_note(material_id=material_id, tags=sa.null())
@@ -660,11 +651,6 @@ async def test_get_tags_includes_tags_of_deleted_notes_current_behaviour(materia
     assert await notes_db._get_tags() == {"gone"}
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="BUG: tracker/notes/db.py:426 a JSON null in notes.tags passes `tags != []` "
-    "and sum() fails on list + None",
-)
 async def test_get_tags_ignores_a_json_null(material_id):
     await factories.insert_note(material_id=material_id, tags=["a"])
     await helpers.insert_raw_note(material_id=material_id, tags=None)
@@ -1222,3 +1208,96 @@ async def test_note_accepts_tags_serialized_as_a_json_string(material_id):
     note = notes_db.Note.model_validate({**row, "tags": '["a", "b"]'})
 
     assert note.tags == {"a", "b"}
+
+
+# is_link_cyclic, count_links_to
+
+
+async def _set_link(note_id: uuid.UUID, link_id: uuid.UUID | None) -> None:
+    stmt = (
+        models.Notes.update()
+        .values(link_id=link_id)
+        .where(models.Notes.c.note_id == note_id)
+    )
+    async with database.session() as ses:
+        await ses.execute(stmt)
+
+
+async def _chain(material_id: uuid.UUID, length: int) -> list[uuid.UUID]:
+    """Notes n0 <- n1 <- ... <- n(length-1): every note links to the previous one."""
+    note_ids = [await factories.insert_note(material_id=material_id)]
+    for _ in range(length - 1):
+        note_ids.append(
+            await factories.insert_note(material_id=material_id, link_id=note_ids[-1])
+        )
+    return note_ids
+
+
+async def test_is_link_cyclic_for_a_self_link(material_id):
+    note_id = await factories.insert_note(material_id=material_id)
+
+    assert await notes_db.is_link_cyclic(note_id=note_id, link_id=note_id) is True
+
+
+@pytest.mark.parametrize(
+    "length", [2, 3, 4], ids=["cycle-of-2", "cycle-of-3", "cycle-of-4"]
+)
+async def test_is_link_cyclic_when_the_target_leads_back(material_id, length):
+    note_ids = await _chain(material_id, length)
+
+    # the first note of the chain would link to the last one, which leads back to it
+    assert (
+        await notes_db.is_link_cyclic(note_id=note_ids[0], link_id=note_ids[-1]) is True
+    )
+
+
+async def test_is_link_cyclic_is_false_for_a_chain_without_the_note(material_id):
+    note_ids = await _chain(material_id, 3)
+    other = await factories.insert_note(material_id=material_id)
+
+    assert await notes_db.is_link_cyclic(note_id=other, link_id=note_ids[-1]) is False
+
+
+async def test_is_link_cyclic_is_false_for_a_target_without_a_link(material_id):
+    note_id = await factories.insert_note(material_id=material_id)
+    target = await factories.insert_note(material_id=material_id)
+
+    assert await notes_db.is_link_cyclic(note_id=note_id, link_id=target) is False
+
+
+async def test_is_link_cyclic_is_false_for_an_unknown_target(material_id):
+    note_id = await factories.insert_note(material_id=material_id)
+
+    assert await notes_db.is_link_cyclic(note_id=note_id, link_id=uuid.uuid4()) is False
+
+
+async def test_is_link_cyclic_terminates_on_a_cycle_already_in_the_data(material_id):
+    first, second = await _chain(material_id, 2)
+    await _set_link(first, second)
+    other = await factories.insert_note(material_id=material_id)
+
+    assert await notes_db.is_link_cyclic(note_id=other, link_id=first) is False
+
+
+async def test_is_link_cyclic_follows_deleted_notes(material_id):
+    first, second, third = await _chain(material_id, 3)
+    await notes_db.delete_note(note_id=second)
+
+    assert await notes_db.is_link_cyclic(note_id=first, link_id=third) is True
+
+
+async def test_count_links_to_counts_only_live_linking_notes(material_id):
+    target = await factories.insert_note(material_id=material_id)
+    await factories.insert_note(material_id=material_id, link_id=target)
+    deleted = await factories.insert_note(material_id=material_id, link_id=target)
+    await factories.insert_note(material_id=material_id, link_id=target)
+    await factories.insert_note(material_id=material_id)
+    await notes_db.delete_note(note_id=deleted)
+
+    assert await notes_db.count_links_to(note_id=target) == 2
+
+
+async def test_count_links_to_a_note_without_links_is_zero(material_id):
+    target = await factories.insert_note(material_id=material_id)
+
+    assert await notes_db.count_links_to(note_id=target) == 0

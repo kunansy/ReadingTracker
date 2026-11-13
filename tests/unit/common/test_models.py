@@ -255,17 +255,31 @@ def test_reading_log_table_ddl():
     )
 
 
-def test_materials_completed_at_index_is_partial():
-    [index] = [
-        index
-        for index in models.Materials.indexes
-        if index.name == "ix_materials_completed_at"
-    ]
+def _create_index_sql(table: sqlalchemy.Table) -> set[str]:
+    return {_compile(sqlalchemy.schema.CreateIndex(index)) for index in table.indexes}
 
-    assert _compile(sqlalchemy.schema.CreateIndex(index)) == (
-        "CREATE INDEX ix_materials_completed_at ON materials (completed_at) "
-        "WHERE completed_at IS NOT NULL"
-    )
+
+def test_materials_listing_indexes():
+    assert _create_index_sql(models.Materials) == {
+        "CREATE INDEX ix_materials_completed_at_sort_key ON materials "
+        "(completed_at, sort_key) WHERE completed_at IS NOT NULL",
+        "CREATE INDEX ix_materials_started_at_sort_key ON materials "
+        "(started_at, sort_key) WHERE started_at IS NOT NULL",
+    }
+
+
+def test_reading_log_listing_index():
+    assert _create_index_sql(models.ReadingLog) == {
+        "CREATE INDEX ix_reading_log_material_id ON reading_log (material_id)",
+        "CREATE INDEX ix_reading_log_date_sort_key ON reading_log (date, sort_key)",
+    }
+
+
+def test_notes_links_index():
+    assert (
+        "CREATE INDEX ix_notes_link_id_note_number_sort_key ON notes "
+        "(link_id, note_number, sort_key)"
+    ) in _create_index_sql(models.Notes)
 
 
 def test_python_side_column_defaults():

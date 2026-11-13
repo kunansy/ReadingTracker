@@ -2,7 +2,6 @@ import asyncio
 import datetime
 from collections import defaultdict
 from collections.abc import AsyncGenerator
-from typing import cast
 from uuid import UUID
 
 import sqlalchemy.sql as sa
@@ -18,7 +17,8 @@ class LogRecord(CustomBaseModel):
     log_id: UUID | None = None
     date: datetime.date
     count: int
-    material_id: UUID
+    # None on an empty day when no material is being read
+    material_id: UUID | None
     material_title: str | None = None
 
 
@@ -84,9 +84,9 @@ async def list_log_records_page(
 
     return await pagination.fetch_page(
         _list_log_records_stmt(material_id=material_id),
-        cursor_expr=pagination.cursor(
-            pagination.date_part(models.ReadingLog.c.date),
-            models.ReadingLog.c.sort_key,
+        cursor_expr=pagination.keyset(
+            pagination.date_key(models.ReadingLog.c.date),
+            pagination.text_key(models.ReadingLog.c.sort_key),
         ),
         request=request,
         to_item=lambda row: LogRecord.model_validate(row, from_attributes=True),
@@ -126,6 +126,20 @@ async def get_completion_dates() -> dict[UUID | None, datetime.datetime]:
     return dates
 
 
+async def _log_records_or_all(log_records: list[LogRecord] | None) -> list[LogRecord]:
+    if log_records is None:
+        return await list_log_records()
+    return log_records
+
+
+async def _get_completion_dates_or_empty() -> dict[UUID | None, datetime.datetime]:
+    try:
+        return await get_completion_dates()
+    except Exception as e:
+        logger.exception(e)
+        return {}
+
+
 async def data(
     *,
     log_records: list[LogRecord] | None = None,
@@ -134,24 +148,22 @@ async def data(
     """Get pairs: (date, info) of all days from start to stop.
 
     If the day is empty, material_id is supposed
-    as the material_id of the last not empty day.
+    as the material_id of the last not empty day,
+    or None when every earlier material is completed.
     """
     logger.debug("Getting logging data")
 
-    if not (log_records := log_records or await list_log_records()):
+    if not (log_records := await _log_records_or_all(log_records)):
         return
+    if completion_dates is None:
+        completion_dates = await _get_completion_dates_or_empty()
 
     log_records_dict: defaultdict[datetime.date, list[LogRecord]] = defaultdict(list)
     for log_record in log_records:
         log_records_dict[log_record.date].append(log_record)
 
     # stack for materials
-    materials: list[UUID] = []
-    try:
-        completion_dates = completion_dates or await get_completion_dates()
-    except Exception as e:
-        logger.exception(e)
-        completion_dates = {}
+    materials: list[UUID | None] = []
 
     step = datetime.timedelta(days=1)
     iter_over_dates = min(log_records_dict.keys())
@@ -168,7 +180,7 @@ async def data(
 
         if not (log_records_ := log_records_dict.get(iter_over_dates)):
             log_record = LogRecord(
-                material_id=cast("UUID", last_material_id),
+                material_id=last_material_id,
                 count=0,
                 date=iter_over_dates,
             )

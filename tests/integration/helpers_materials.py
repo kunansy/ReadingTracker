@@ -60,12 +60,6 @@ def midnight(date: datetime.date) -> datetime.datetime:
     return datetime.datetime.combine(date, datetime.time())
 
 
-async def db_today() -> datetime.date:
-    """`date(now())` as the SQL of the repeat queue sees it; that clock cannot be frozen."""
-    async with database.session() as ses:
-        return await ses.scalar(sa.text("SELECT date(now())"))
-
-
 async def queued(clock: Clock, **material: Any) -> UUID:
     """Insert a queued material; the clock ticks first so `added_at` and `sort_key` are distinct."""
     clock.tick()
@@ -227,7 +221,6 @@ __all__ = [
     "ReadingHistory",
     "completed",
     "day",
-    "db_today",
     "decode_token",
     "encode_token",
     "explain",

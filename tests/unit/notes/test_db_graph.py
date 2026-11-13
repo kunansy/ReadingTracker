@@ -122,14 +122,6 @@ class TestAddLinksTo:
 
         assert list(graph.edges) == [_edge(1, 1)]
 
-    @pytest.mark.xfail(
-        strict=True,
-        raises=KeyError,
-        reason=(
-            "BUG: tracker/notes/db.py:516 notes[link_id] raises KeyError when the "
-            "linked note is deleted and so missing from the dict"
-        ),
-    )
     def test_link_to_missing_note_does_not_crash(self):
         graph = nx.DiGraph()
 
@@ -188,14 +180,6 @@ class TestLinkNotes:
         with pytest.raises(KeyError):
             db.link_notes(note_id=note_id(1), notes={})
 
-    @pytest.mark.xfail(
-        strict=True,
-        raises=RecursionError,
-        reason=(
-            "BUG: tracker/notes/db.py:540 the note is marked visited only after "
-            "following its link, so two notes linking each other recurse forever"
-        ),
-    )
     def test_cycle_terminates(self):
         notes = by_id(build_note(1, link=2), build_note(2, link=1))
 
@@ -203,26 +187,11 @@ class TestLinkNotes:
 
         assert set(graph.edges) == {_edge(1, 2), _edge(2, 1)}
 
-    @pytest.mark.xfail(
-        strict=True,
-        raises=RecursionError,
-        reason=(
-            "BUG: tracker/notes/db.py:540 a note linking to itself recurses forever"
-        ),
-    )
     def test_self_link_terminates(self):
         graph = db.link_notes(note_id=note_id(1), notes=by_id(build_note(1, link=1)))
 
         assert set(graph.edges) == {_edge(1, 1)}
 
-    @pytest.mark.xfail(
-        strict=True,
-        raises=KeyError,
-        reason=(
-            "BUG: tracker/notes/db.py:537 notes[link_id] raises KeyError when the "
-            "linked note is deleted (get_notes skips deleted notes)"
-        ),
-    )
     def test_link_to_missing_note_does_not_crash(self):
         graph = db.link_notes(note_id=note_id(1), notes=by_id(build_note(1, link=9)))
 
@@ -261,11 +230,11 @@ class TestLinkAllNotes:
 
         assert set(graph.edges) == {_edge(1, 2), _edge(2, 1), _edge(3, 3)}
 
-    def test_link_to_missing_note_adds_bare_node_current_behaviour(self):
+    def test_link_to_missing_note_is_skipped(self):
         graph = db.link_all_notes([build_note(1, link=9)])
 
-        assert dict(graph.nodes(data=True)) == {_node(1): _attrs(1), _node(9): {}}
-        assert list(graph.edges) == [_edge(1, 9)]
+        assert dict(graph.nodes(data=True)) == {_node(1): _attrs(1)}
+        assert list(graph.edges) == []
 
 
 class TestCreateMaterialGraph:
@@ -346,14 +315,6 @@ class TestCreateMaterialGraph:
 
         assert link_notes.call_count == 2
 
-    @pytest.mark.xfail(
-        strict=True,
-        raises=KeyError,
-        reason=(
-            "BUG: tracker/notes/db.py:537 a material note linking to a deleted "
-            "note raises KeyError while building the material graph"
-        ),
-    )
     def test_link_to_missing_note_does_not_crash(self):
         graph = db.create_material_graph(
             material_id=MATERIAL_ID,
@@ -405,7 +366,8 @@ class TestHighlightOtherMaterialNotes:
         assert len(graph.nodes) == 0
 
     def test_node_missing_from_notes_raises_key_error_current_behaviour(self):
-        graph = db.link_all_notes([build_note(1, link=9)])
+        graph = db.link_all_notes([build_note(1)])
+        graph.add_edge(_node(1), _node(9))
 
         with pytest.raises(KeyError):
             db._highlight_other_material_notes(
@@ -446,6 +408,9 @@ class TestCreateGraphic:
         assert "width: 45%;" in html
 
     def test_node_missing_from_notes_is_rendered(self):
-        html = db.create_graphic(db.link_all_notes([build_note(1, link=9)]))
+        graph = db.link_all_notes([build_note(1)])
+        graph.add_edge(_node(1), _node(9))
+
+        html = db.create_graphic(graph)
 
         assert f'"id": "{_node(9)}"' in html

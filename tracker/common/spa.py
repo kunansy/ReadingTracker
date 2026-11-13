@@ -30,4 +30,6 @@ def check_spa_bundle(index: Path) -> bool:
 async def spa_catch_all(path: str) -> FileResponse:
     if path.split("/", 1)[0] in NOT_SPA_PREFIXES:
         raise HTTPException(status_code=404, detail="Not found")
+    if not SPA_INDEX.exists():
+        raise HTTPException(status_code=503, detail="SPA bundle is not built")
     return spa_response()

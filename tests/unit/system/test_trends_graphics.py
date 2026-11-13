@@ -109,23 +109,16 @@ class TestCreateGraphic:
         assert GREEN not in svg
         assert STEELBLUE not in svg
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "BUG: tracker/system/trends.py:532 the figure is never closed, so every "
-            "rendered graphic stays registered in pyplot (memory leak)"
-        ),
-    )
     def test_figure_is_closed_after_rendering(self):
         trends._create_graphic(stat=build_statistics([1, 2]))
 
         assert plt.get_fignums() == []
 
-    def test_every_call_leaves_one_more_open_figure_current_behaviour(self):
+    def test_repeated_calls_leave_no_open_figures(self):
         trends._create_graphic(stat=build_statistics([1, 2]))
         trends._create_graphic(stat=build_statistics([1, 2]))
 
-        assert plt.get_fignums() == [1, 2]
+        assert plt.get_fignums() == []
 
 
 @pytest.mark.filterwarnings("ignore:No artists with labels:UserWarning")
@@ -187,13 +180,6 @@ class TestCreateTotalReadGraphic:
 
         assert axes().get_legend().get_texts() == []
 
-    @pytest.mark.xfail(
-        strict=True,
-        reason=(
-            "BUG: tracker/system/trends.py:612 the figure is never closed, so every "
-            "rendered graphic stays registered in pyplot (memory leak)"
-        ),
-    )
     def test_figure_is_closed_after_rendering(self):
         trends.create_total_read_graphic(self.STAT)
 

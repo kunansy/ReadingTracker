@@ -23,8 +23,11 @@ class GetSpanReportRequest(CustomBaseModel):
         stop: datetime.date,
         info: ValidationInfo,
     ) -> datetime.date:
-        start = info.data["start"]
-        assert stop > start, "Start must be less than stop"
+        # A failed `start` is absent here; pydantic reports it on its own.
+        if (start := info.data.get("start")) is None:
+            return stop
+        if stop < start:
+            raise ValueError("Start must not be after stop")
 
         return stop
 
@@ -105,7 +108,7 @@ class _SpanStatsResponse(CustomBaseModel):
 
 
 class GetSystemSummaryResponse(CustomBaseModel):
-    tracker_statistics: TrackerStatistics
+    tracker_statistics: TrackerStatistics | None
     reading_trend: _SpanStatsResponse
     notes_trend: _SpanStatsResponse
     completed_materials_trend: _SpanStatsResponse

@@ -120,6 +120,15 @@ async def test_summary(client, summary):
         summary[name].assert_awaited_once_with(span_size=3)
 
 
+async def test_summary_of_an_empty_reading_log_has_no_tracker_statistics(client, summary):
+    summary["get_tracker_statistics"].return_value = None
+
+    response = await client.get(f"{BASE}/summary", params={"last_days": 3})
+
+    assert response.status_code == 200
+    assert response.json()["tracker_statistics"] is None
+
+
 async def test_summary_of_an_all_zero_span(client, summary):
     for name in SPAN_TRENDS:
         summary[name].return_value = _span(0)
@@ -507,7 +516,7 @@ async def test_report_accepts_a_two_day_span(client, get_span_analytics):
     [
         (
             {"start": "2026-01-02", "stop": "2026-01-01"},
-            "body.stop: Assertion failed, Start must be less than stop",
+            "body.stop: Value error, Start must not be after stop",
         ),
         ({"start": "garbage"}, "body.start: Input should be a valid date"),
         (
@@ -530,26 +539,15 @@ async def test_report_rejects_invalid_body(client, get_span_analytics, body, det
     get_span_analytics.assert_not_awaited()
 
 
-async def test_report_rejects_a_one_day_span_current_behaviour(
-    client, get_span_analytics
-):
+async def test_report_accepts_a_one_day_span(client, get_span_analytics):
     response = await client.post(
         f"{BASE}/report", json={"start": "2026-01-01", "stop": "2026-01-01"}
     )
 
-    assert response.status_code == 422
-    assert response.json() == {
-        "detail": "body.stop: Assertion failed, Start must be less than stop",
-    }
+    assert response.status_code == 200
+    assert get_span_analytics.await_args.args[0].size == 1
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/system/schemas.py:26 info.data['start'] raises KeyError when "
-        "'start' is missing or invalid and 'stop' is given, giving 500 instead of 422"
-    ),
-)
 @pytest.mark.parametrize(
     "body",
     [{"stop": "2026-01-03"}, {"start": "garbage", "stop": "2026-01-03"}],

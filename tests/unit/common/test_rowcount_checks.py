@@ -153,11 +153,29 @@ STATE_TRANSITIONS = {
 
 
 @pytest.mark.parametrize("case", STATE_TRANSITIONS.values(), ids=STATE_TRANSITIONS.keys())
-async def test_state_transition_that_matches_no_rows_raises_conflict(
+async def test_state_transition_of_an_existing_material_that_matches_no_rows_is_conflict(
     zero_rowcount_session,
+    mocker,
     case,
 ):
+    get_material = mocker.patch.object(
+        materials_db, "get_material", mocker.AsyncMock(return_value=object())
+    )
     call, reason = case
 
     with pytest.raises(database.ConflictException, match=reason):
+        await call(ENTITY_ID)
+    get_material.assert_awaited_once_with(material_id=ENTITY_ID)
+
+
+@pytest.mark.parametrize("case", STATE_TRANSITIONS.values(), ids=STATE_TRANSITIONS.keys())
+async def test_state_transition_of_a_missing_material_is_not_found(
+    zero_rowcount_session,
+    mocker,
+    case,
+):
+    mocker.patch.object(materials_db, "get_material", mocker.AsyncMock(return_value=None))
+    call, _ = case
+
+    with pytest.raises(database.NotFoundException, match="Material id=.*not found"):
         await call(ENTITY_ID)

@@ -1,9 +1,11 @@
 import datetime
+from contextlib import asynccontextmanager
 from decimal import Decimal
 from typing import Any
 from uuid import UUID
 
 import pytest
+import sqlalchemy.sql as sa
 
 from tests.integration import factories, helpers_materials as h
 from tracker.common import database, sort_keys
@@ -25,11 +27,9 @@ def clock(monkeypatch: pytest.MonkeyPatch) -> h.Clock:
 
 
 @pytest.fixture
-async def sql_today(clock: h.Clock) -> datetime.date:
-    """Align the Python clock with `now()` of the database, which SQL reads directly."""
-    today = await h.db_today()
-    clock.now = datetime.datetime.combine(today, datetime.time(12))
-    return today
+def sql_today(clock: h.Clock) -> datetime.date:
+    """The date the repeat queue SQL compares with: the frozen UTC date of the app."""
+    return clock.utc_today()
 
 
 def seconds_after_now(seconds: int) -> datetime.datetime:
@@ -468,13 +468,6 @@ async def test_completed_statistics_page_filters(completed_set, filters, expecte
     assert page.next_token is None
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/materials/db.py:226 the tags filter splits by ', ' and keeps the case, "
-        "get_material_tags (:502) splits by ',' and lowers: a listed tag finds nothing"
-    ),
-)
 @pytest.mark.parametrize(
     "stored_tags",
     ["History,Science", "history,science", "History, Science"],
@@ -619,10 +612,10 @@ async def test_start_completed_material_raises_conflict(clock):
     assert row["started_at"] == h.midnight(h.day(3))
 
 
-async def test_start_missing_material_raises_conflict_current_behaviour(clock):
+async def test_start_missing_material_raises_not_found(clock):
     await h.queued(clock)
 
-    with pytest.raises(database.ConflictException, match="is not in the queue"):
+    with pytest.raises(database.NotFoundException, match="not found"):
         await db.start_material(material_id=h.MISSING_ID)
 
 
@@ -674,10 +667,10 @@ async def test_complete_material_twice_raises_conflict_and_keeps_the_first_date(
     assert row["completed_at"] == h.midnight(h.day(2))
 
 
-async def test_complete_missing_material_raises_conflict_current_behaviour(clock):
+async def test_complete_missing_material_raises_not_found(clock):
     await h.reading(clock, started=h.day(3))
 
-    with pytest.raises(database.ConflictException, match="is not being read"):
+    with pytest.raises(database.NotFoundException, match="not found"):
         await db.complete_material(material_id=h.MISSING_ID)
 
 
@@ -775,22 +768,14 @@ async def test_last_material_started_is_the_latest_start_among_unread_materials(
     assert await db.get_last_material_started() == latest
 
 
-async def test_last_material_started_prefers_a_material_without_logs(clock):
+async def test_last_material_started_does_not_prefer_a_material_without_logs(clock):
     logged = await h.reading(clock, started=h.day(2))
-    never_read = await h.reading(clock, started=h.day(8))
+    await h.reading(clock, started=h.day(8))
     await logs_db.insert_log_record(material_id=logged, count=1, date=h.day(1))
 
-    # the NULL log date sorts first, whatever the start dates are
-    assert await db.get_last_material_started() == never_read
+    assert await db.get_last_material_started() == logged
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/materials/db.py:281 order_by is appended to the statement's own "
-        "ORDER BY last log date DESC, so started_at only breaks ties"
-    ),
-)
 async def test_last_material_started_is_the_latest_start_whatever_the_logs_are(clock):
     started_long_ago = await h.reading(clock, started=h.day(10))
     started_recently = await h.reading(clock, started=h.day(5))
@@ -818,11 +803,11 @@ async def test_material_tags_are_split_stripped_lowered_and_merged(clock):
     }
 
 
-async def test_material_tags_keep_an_empty_tag_current_behaviour(clock):
+async def test_material_tags_skip_an_empty_tag(clock):
     await h.queued(clock, tags="trailing,")
     await h.queued(clock, tags="")
 
-    assert await db.get_material_tags() == {"trailing", ""}
+    assert await db.get_material_tags() == {"trailing"}
 
 
 async def test_authors_are_distinct_and_not_split(clock):
@@ -1237,13 +1222,6 @@ async def test_estimate_fails_when_the_mean_is_zero_current_behaviour(clock):
         await db.estimate_page(start_date=h.TODAY, params=PageParams())
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/reading_log/db.py:170 a day without logs after every started material "
-        "is completed builds LogRecord(material_id=None), so every statistics read raises"
-    ),
-)
 async def test_completed_statistics_survive_days_after_the_last_completion(clock):
     material_id = await h.completed(clock, started=h.day(3), finished=h.day(2))
     await logs_db.insert_log_record(material_id=material_id, count=100, date=h.day(2))
@@ -1448,6 +1426,64 @@ async def repeating_queue(*, is_outlined: bool = False) -> list[db.RepeatingQueu
     assert page.next_token is None
     assert page.total_count == len(page.items)
     return page.items
+
+
+@pytest.fixture
+def session_time_zone(monkeypatch: pytest.MonkeyPatch):
+    """Run every database session of the code under test in the given time zone."""
+    original = database.session
+
+    def install(time_zone: str) -> None:
+        @asynccontextmanager
+        async def session(**kwargs):
+            async with original(**kwargs) as ses:
+                # LOCAL: the setting ends with the transaction, the pooled
+                # connection goes back in UTC
+                await ses.execute(sa.text(f"SET LOCAL TIME ZONE '{time_zone}'"))
+                yield ses
+
+        monkeypatch.setattr(database, "session", session)
+
+    return install
+
+
+TIME_ZONES = pytest.mark.parametrize(
+    "time_zone",
+    ["Pacific/Kiritimati", "Etc/GMT+12"],
+    ids=["utc+14", "utc-12"],
+)
+
+
+@TIME_ZONES
+async def test_repeats_analytics_do_not_depend_on_the_session_time_zone(
+    clock, sql_today, session_time_zone, time_zone
+):
+    material_id = await h.completed(
+        clock,
+        started=days_before(sql_today, 50),
+        finished=days_before(sql_today, 40),
+    )
+    session_time_zone(time_zone)
+
+    analytics = await db.get_repeats_analytics()
+
+    assert analytics[material_id].priority_days == 40
+
+
+@TIME_ZONES
+async def test_repeating_queue_does_not_depend_on_the_session_time_zone(
+    clock, sql_today, session_time_zone, time_zone
+):
+    material_id = await h.completed(
+        clock,
+        started=days_before(sql_today, 60),
+        finished=days_before(sql_today, 45),
+    )
+    session_time_zone(time_zone)
+
+    [item] = await repeating_queue()
+
+    assert (item.material_id, item.priority_days) == (material_id, 45)
 
 
 async def test_repeating_queue_is_empty_on_an_empty_database():
