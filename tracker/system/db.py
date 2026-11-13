@@ -13,7 +13,7 @@ from tracker.models import enums, models
 from tracker.reading_log import (
     db as logs_db,
 )
-from tracker.system.figures import render_svg_base64
+from tracker.system import figures
 
 
 class ReadingData(NamedTuple):
@@ -50,9 +50,9 @@ async def create_reading_graphic(*, material_id: UUID, last_days: int) -> str:
     material_pages = material.pages
 
     _set_plot_style()
-    fig, ax = plt.subplots(figsize=(12, 10))
+    fig, ax = figures.create_figure()
 
-    line = plt.axhline(y=material.pages, color="r", linestyle="-")
+    line = ax.axhline(y=material.pages, color="r", linestyle="-")
     line.set_label(f"Overall {material.pages} items")
 
     bar = ax.bar(data.dates, data.counts, width=1, edgecolor="white")  # type: ignore[arg-type]
@@ -78,7 +78,7 @@ async def create_reading_graphic(*, material_id: UUID, last_days: int) -> str:
     ax.set(ylim=(0, material_pages + material_pages * 0.1))
     ax.legend()
 
-    return render_svg_base64(fig)
+    return figures.render_svg_base64(fig)
 
 
 async def _calculate_outline_percentage() -> dict[
@@ -124,7 +124,7 @@ async def create_outline_percentage_graphic() -> str:
     width = 0.6
 
     _set_plot_style()
-    fig, ax = plt.subplots(figsize=(12, 10))
+    fig, ax = figures.create_figure()
     bottom = np.zeros(len(species))
 
     for label, percents in {"outlined": outlined, "not_outlined": not_outlined}.items():
@@ -137,4 +137,4 @@ async def create_outline_percentage_graphic() -> str:
     ax.yaxis.set_major_formatter(mtick.PercentFormatter())
     ax.legend()
 
-    return render_svg_base64(fig)
+    return figures.render_svg_base64(fig)

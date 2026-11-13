@@ -126,20 +126,6 @@ async def get_completion_dates() -> dict[UUID | None, datetime.datetime]:
     return dates
 
 
-async def _log_records_or_all(log_records: list[LogRecord] | None) -> list[LogRecord]:
-    if log_records is None:
-        return await list_log_records()
-    return log_records
-
-
-async def _get_completion_dates_or_empty() -> dict[UUID | None, datetime.datetime]:
-    try:
-        return await get_completion_dates()
-    except Exception as e:
-        logger.exception(e)
-        return {}
-
-
 async def data(
     *,
     log_records: list[LogRecord] | None = None,
@@ -153,10 +139,13 @@ async def data(
     """
     logger.debug("Getting logging data")
 
-    if not (log_records := await _log_records_or_all(log_records)):
+    if log_records is None:
+        log_records = await list_log_records()
+    if not log_records:
         return
-    if completion_dates is None:
-        completion_dates = await _get_completion_dates_or_empty()
+    completion_dates = (
+        await get_completion_dates() if completion_dates is None else completion_dates
+    )
 
     log_records_dict: defaultdict[datetime.date, list[LogRecord]] = defaultdict(list)
     for log_record in log_records:

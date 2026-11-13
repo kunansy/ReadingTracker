@@ -612,10 +612,10 @@ async def test_start_completed_material_raises_conflict(clock):
     assert row["started_at"] == h.midnight(h.day(3))
 
 
-async def test_start_missing_material_raises_not_found(clock):
+async def test_start_missing_material_raises_conflict(clock):
     await h.queued(clock)
 
-    with pytest.raises(database.NotFoundException, match="not found"):
+    with pytest.raises(database.ConflictException, match="is not in the queue"):
         await db.start_material(material_id=h.MISSING_ID)
 
 
@@ -667,10 +667,10 @@ async def test_complete_material_twice_raises_conflict_and_keeps_the_first_date(
     assert row["completed_at"] == h.midnight(h.day(2))
 
 
-async def test_complete_missing_material_raises_not_found(clock):
+async def test_complete_missing_material_raises_conflict(clock):
     await h.reading(clock, started=h.day(3))
 
-    with pytest.raises(database.NotFoundException, match="not found"):
+    with pytest.raises(database.ConflictException, match="is not being read"):
         await db.complete_material(material_id=h.MISSING_ID)
 
 

@@ -2,7 +2,6 @@ import asyncio
 from typing import Annotated
 from uuid import UUID
 
-import networkx as nx
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 
@@ -68,14 +67,10 @@ async def notes_graph_json(material_id: UUID | None = None):
     if material_id:
         notes_dict = {note.note_id: note for note in notes}
         material_notes = {note.note_id for note in get_material_notes_task.result()}
-        graph = (
-            db.create_material_graph(
-                material_id=material_id,
-                material_notes=material_notes,
-                notes=notes_dict,
-            )
-            if material_notes
-            else nx.DiGraph()
+        graph = db.create_material_graph(
+            material_id=material_id,
+            material_notes=material_notes,
+            notes=notes_dict,
         )
     else:
         graph = db.link_all_notes(notes)

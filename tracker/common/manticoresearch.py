@@ -118,15 +118,6 @@ def _to_unix_time(value: datetime.datetime) -> int:
     return int(value.timestamp())
 
 
-def _insert_args(
-    *,
-    note_id: UUID | str,
-    content: str,
-    added_at: datetime.datetime,
-) -> tuple:
-    return note_id, content, _to_unix_time(added_at)
-
-
 async def _insert_all(*notes: Note) -> None:
     logger.debug("Inserting all %s notes", len(notes))
     if not notes:
@@ -136,11 +127,7 @@ async def _insert_all(*notes: Note) -> None:
         await cur.executemany(
             INSERT_QUERY,
             [
-                _insert_args(
-                    note_id=note.note_id,
-                    content=note.content,
-                    added_at=note.added_at,
-                )
+                (note.note_id, note.content, _to_unix_time(note.added_at))
                 for note in notes
             ],
         )
@@ -195,10 +182,7 @@ async def update_content(
     # because SQL updating don't work, replace don't delete the old doc
     async with _cursor() as cur:
         await cur.execute(DELETE_QUERY, note_id)
-        await cur.execute(
-            INSERT_QUERY,
-            _insert_args(note_id=note_id, content=content, added_at=added_at),
-        )
+        await cur.execute(INSERT_QUERY, (note_id, content, _to_unix_time(added_at)))
 
     logger.debug("Note updated")
 

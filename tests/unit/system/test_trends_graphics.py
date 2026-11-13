@@ -6,6 +6,7 @@ import pytest
 
 from tests.unit.system.conftest import build_statistics, decode_svg
 from tracker.system import trends
+from tracker.system import figures
 
 
 D = datetime.date
@@ -25,8 +26,8 @@ WRAPPERS = [
 @pytest.fixture
 def axes(mocker):
     """The axes of the figure the code under test creates."""
-    subplots = mocker.spy(plt, "subplots")
-    return lambda: subplots.spy_return[1]
+    create = mocker.spy(figures, "create_figure")
+    return lambda: create.spy_return[1]
 
 
 @pytest.mark.parametrize(("create", "title"), WRAPPERS, ids=[title for _, title in WRAPPERS])
@@ -109,8 +110,16 @@ class TestCreateGraphic:
         assert GREEN not in svg
         assert STEELBLUE not in svg
 
-    def test_figure_is_closed_after_rendering(self):
+    def test_figure_is_not_registered_in_pyplot(self):
         trends._create_graphic(stat=build_statistics([1, 2]))
+
+        assert plt.get_fignums() == []
+
+    def test_figure_of_a_failed_rendering_is_not_kept(self, mocker):
+        mocker.patch.object(figures.Figure, "savefig", side_effect=RuntimeError("disk full"))
+
+        with pytest.raises(RuntimeError, match="disk full"):
+            trends._create_graphic(stat=build_statistics([1, 2]))
 
         assert plt.get_fignums() == []
 
@@ -180,7 +189,7 @@ class TestCreateTotalReadGraphic:
 
         assert axes().get_legend().get_texts() == []
 
-    def test_figure_is_closed_after_rendering(self):
+    def test_figure_is_not_registered_in_pyplot(self):
         trends.create_total_read_graphic(self.STAT)
 
         assert plt.get_fignums() == []

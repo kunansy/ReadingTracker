@@ -10,6 +10,7 @@ from tracker.materials import db as materials_db
 from tracker.models import enums
 from tracker.reading_log import db as logs_db
 from tracker.system import db
+from tracker.system import figures
 
 
 D = datetime.date
@@ -37,8 +38,8 @@ def reading_log(mocker):
 
 @pytest.fixture
 def axes(mocker):
-    subplots = mocker.spy(plt, "subplots")
-    return lambda: subplots.spy_return[1]
+    create = mocker.spy(figures, "create_figure")
+    return lambda: create.spy_return[1]
 
 
 class TestGetGraphicData:
@@ -240,7 +241,7 @@ class TestCreateReadingGraphic:
         with pytest.raises(ValueError, match="not found"):
             await db.create_reading_graphic(material_id=MATERIAL_ID, last_days=7)
 
-    async def test_figure_is_closed_after_rendering(self, material, reading_log):
+    async def test_figure_is_not_registered_in_pyplot(self, material, reading_log):
         material(100)
         reading_log([_record(1, 10)])
 
@@ -353,7 +354,7 @@ class TestCreateOutlinePercentageGraphic:
 
         assert "<svg" in decode_svg(image)
 
-    async def test_figure_is_closed_after_rendering(self, outline):
+    async def test_figure_is_not_registered_in_pyplot(self, outline):
         outline(_every_type({True: 1, False: 3}))
 
         await db.create_outline_percentage_graphic()
