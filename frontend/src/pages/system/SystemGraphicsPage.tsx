@@ -174,6 +174,9 @@ export function SystemGraphicsPage() {
             <h3 id="stats-header" className="header">Tracker statistics</h3>
             {(() => {
               const stat = summaryQ.data.tracker_statistics;
+              if (!stat) {
+                return <p>Reading log is empty.</p>;
+              }
               return (
                 <>
                   <p>First record date: {stat.started_at}</p>

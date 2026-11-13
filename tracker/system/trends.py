@@ -1,13 +1,10 @@
 import asyncio
-import base64
 import datetime
 import statistics
 from collections.abc import Generator, Iterator
 from decimal import Decimal
-from io import BytesIO
 from typing import Any
 
-import matplotlib.pyplot as plt
 import sqlalchemy.sql as sa
 from matplotlib import ticker
 from pydantic import NonNegativeInt, computed_field, model_validator
@@ -17,7 +14,7 @@ from tracker.common.logger import logger
 from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
 from tracker.reading_log import db as logs_db
-from tracker.system import schemas
+from tracker.system import figures, schemas
 
 
 class TrendException(database.DatabaseException):
@@ -469,7 +466,10 @@ async def _reading_analytics(span: TimeSpan) -> _MaterialAnalytics:
             models.Materials.c.material_type,
             sa.func.sum(models.ReadingLog.c.count).label("cnt"),
         )
-        .join(models.ReadingLog)
+        .join(
+            models.ReadingLog,
+            models.ReadingLog.c.material_id == models.Materials.c.material_id,
+        )
         .where(models.ReadingLog.c.date >= span.start)
         .where(models.ReadingLog.c.date <= span.stop)
         .group_by(models.Materials.c.material_type)
@@ -529,12 +529,12 @@ def _create_graphic(
     # set completion dates color to green
     colors = _get_colors(completion_dates, days)
 
-    fig, ax = plt.subplots(figsize=(12, 10))
+    fig, ax = figures.create_figure()
     bar = ax.barh(days, stat.values, edgecolor="white", color=colors)
     ax.bar_label(bar)
 
     if show_mean_line:
-        line = plt.axvline(x=float(stat.mean), color="black", linestyle="-")
+        line = ax.axvline(x=float(stat.mean), color="black", linestyle="-")
         line.set_label(f"Mean {stat.mean} items")
 
     a_percent = stat.max_record.amount / 100
@@ -546,12 +546,9 @@ def _create_graphic(
     ax.set_xlim(xlim)
     if show_mean_line:
         ax.legend()
-    plt.gca().invert_yaxis()
+    ax.invert_yaxis()
 
-    tmpbuf = BytesIO()
-    fig.savefig(tmpbuf, format="svg")
-
-    image = base64.b64encode(tmpbuf.getvalue()).decode("utf-8")
+    image = figures.render_svg_base64(fig)
 
     logger.debug("Creating graphic completed")
     return image
@@ -609,7 +606,7 @@ def create_total_read_graphic(
     logger.info("Creating total pages read graphic")
 
     keys = [d.strftime(settings.DATE_FORMAT) for d in stat]
-    fig, ax = plt.subplots(figsize=(12, 10))
+    fig, ax = figures.create_figure()
     ax.plot(keys, list(stat.values()))
     ax.set_yscale("log")
 
@@ -620,10 +617,7 @@ def create_total_read_graphic(
 
     ax.legend()
 
-    tmpbuf = BytesIO()
-    fig.savefig(tmpbuf, format="svg")
-
-    image = base64.b64encode(tmpbuf.getvalue()).decode("utf-8")
+    image = figures.render_svg_base64(fig)
 
     logger.debug("Creating graphic completed")
     return image

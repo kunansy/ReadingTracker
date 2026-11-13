@@ -1,11 +1,9 @@
 import asyncio
-import os
 from http import HTTPStatus
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import HTTPException, RequestValidationError
 from fastapi.responses import JSONResponse
-from fastapi.staticfiles import StaticFiles
 from starlette_exporter import PrometheusMiddleware, handle_metrics
 
 from tracker.api.v1.cards import router as api_v1_cards_router
@@ -18,6 +16,7 @@ from tracker.common.logger import logger
 from tracker.common.spa import (
     SPA_DIR,
     SPA_INDEX,
+    SpaStaticFiles,
     check_spa_bundle,
     router as spa_router,
 )
@@ -35,14 +34,18 @@ app.add_middleware(
     app_name="tracker",
     prefix="tracker",
     labels={
-        "server_name": os.getenv("HOSTNAME"),  # type: ignore[dict-item]
+        "server_name": settings.HOSTNAME,  # type: ignore[dict-item]
     },
     group_paths=True,
     skip_paths=["/readiness", "/liveness"],
 )
 app.add_route("/metrics", handle_metrics)
 
-app.mount("/static/app-spa", StaticFiles(directory=SPA_DIR, check_dir=False), name="spa")
+app.mount(
+    "/static/app-spa",
+    SpaStaticFiles(directory=SPA_DIR, check_dir=False),
+    name="spa",
+)
 check_spa_bundle(SPA_INDEX)
 
 app.include_router(api_v1_materials_router, prefix="/api/v1")

@@ -28,6 +28,9 @@ class SearchResult(CustomBaseModel):
     snippet: str
 
 
+# https://manual.manticoresearch.com/Searching/Full_text_matching/Escaping
+_QUERY_SPECIAL_CHARACTERS = frozenset("!\"$'()-/<@\\^|~")
+
 INSERT_QUERY = "INSERT INTO notes (note_id, content, added_at) VALUES (%s,%s,%s)"
 DELETE_QUERY = "DELETE FROM notes WHERE note_id=%s"
 
@@ -108,6 +111,13 @@ async def _create_table() -> None:
         await cur.execute(CREATE_TABLE_QUERY)
 
 
+def _to_unix_time(value: datetime.datetime) -> int:
+    # Manticore `timestamp` stores 0 for a datetime string; naive values are UTC.
+    if value.tzinfo is None:
+        value = value.replace(tzinfo=datetime.UTC)
+    return int(value.timestamp())
+
+
 async def _insert_all(*notes: Note) -> None:
     logger.debug("Inserting all %s notes", len(notes))
     if not notes:
@@ -116,7 +126,10 @@ async def _insert_all(*notes: Note) -> None:
     async with _cursor() as cur:
         await cur.executemany(
             INSERT_QUERY,
-            (list(note.model_dump().values()) for note in notes),
+            [
+                (note.note_id, note.content, _to_unix_time(note.added_at))
+                for note in notes
+            ],
         )
 
     logger.debug("Notes inserted")
@@ -169,7 +182,7 @@ async def update_content(
     # because SQL updating don't work, replace don't delete the old doc
     async with _cursor() as cur:
         await cur.execute(DELETE_QUERY, note_id)
-        await cur.execute(INSERT_QUERY, (note_id, content, added_at))
+        await cur.execute(INSERT_QUERY, (note_id, content, _to_unix_time(added_at)))
 
     logger.debug("Note updated")
 
@@ -207,17 +220,24 @@ async def search(query: str) -> dict[UUID, SearchResult]:
     return results
 
 
+def _escape_query(query: str) -> str:
+    return "".join(
+        f"\\{char}" if char in _QUERY_SPECIAL_CHARACTERS else char for char in query
+    )
+
+
 async def autocompletion(*, query: str, limit: int = 5) -> list[str]:
     logger.debug("Searching autocompletions for: '%s'", query)
 
-    db_query = f"""
+    db_query = """
     SELECT
-       HIGHLIGHT({{snippet_separator='',before_match='**',after_match='**'}})
-       FROM notes WHERE MATCH('@content {query}* ') ORDER BY WEIGHT() DESC LIMIT %s
-   """  # noqa: S608
+       HIGHLIGHT({snippet_separator='',before_match='**',after_match='**'})
+       FROM notes WHERE MATCH(%s) ORDER BY WEIGHT() DESC LIMIT %s
+   """
+    match = f"@content {_escape_query(query)}*"
 
     async with _cursor() as cur:
-        await cur.execute(db_query, limit)
+        await cur.execute(db_query, (match, limit))
         autocompletions = [row[0] for row in await cur.fetchall()]
 
     logger.debug("%s autocompletions found", len(autocompletions))

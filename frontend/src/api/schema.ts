@@ -1140,7 +1140,7 @@ export interface components {
             outlined_materials_trend: components["schemas"]["_SpanStatsResponse"];
             reading_trend: components["schemas"]["_SpanStatsResponse"];
             repeated_materials_trend: components["schemas"]["_SpanStatsResponse"];
-            tracker_statistics: components["schemas"]["TrackerStatistics"];
+            tracker_statistics: components["schemas"]["TrackerStatistics"] | null;
         };
         /** HTTPValidationError */
         HTTPValidationError: {

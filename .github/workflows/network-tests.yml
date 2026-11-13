@@ -1,0 +1,38 @@
+name: Network tests
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  network:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.14'
+
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Install required packages
+      run: |
+        sudo apt-get install -y portaudio19-dev libasound-dev
+
+    - name: Install dependencies
+      run: |
+        poetry config virtualenvs.create false
+        poetry install --no-interaction --no-root
+
+    # habr.com and the YouTube API change without notice; the offline parser tests cannot see it
+    - name: Run network tests
+      env:
+        NETWORK_YOUTUBE_API_KEY: ${{ secrets.NETWORK_YOUTUBE_API_KEY }}
+      run: make test-network

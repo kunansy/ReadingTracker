@@ -5,8 +5,8 @@ from contextlib import aclosing
 from uuid import UUID
 
 import orjson
-from aiokafka import AIOKafkaConsumer
-from pydantic import field_validator
+from aiokafka import AIOKafkaConsumer, ConsumerRecord
+from pydantic import ConfigDict, ValidationError, field_validator
 
 from tracker.common import kafka, manticoresearch, settings
 from tracker.common.logger import logger
@@ -14,9 +14,21 @@ from tracker.common.schemas import CustomBaseModel
 from tracker.notes.db import Note
 
 
+class _NoteRow(Note):
+    # Debezium sends every column of the table, not only the ones the model knows.
+    model_config = ConfigDict(extra="ignore")
+
+
+def _added_at_to_microseconds(row: dict | None) -> dict | None:
+    if not row:
+        return None
+    # Debezium sends added_at in nanoseconds; Note expects microseconds
+    return {**row, "added_at": row["added_at"] // 1_000}
+
+
 class Record(CustomBaseModel):
-    after: Note | None
-    before: Note | None = None
+    after: _NoteRow | None
+    before: _NoteRow | None = None
 
     @property
     def note_id(self) -> UUID:
@@ -38,21 +50,9 @@ class Record(CustomBaseModel):
             return self.after.added_at
         raise ValueError("Added at not found")
 
-    @field_validator("after", mode="before")
-    def validate_after(cls, after: dict | None) -> dict | None:
-        if not after:
-            return None
-        # TODO: compare value and divide depends on it
-        after["added_at"] //= 1_000
-        return after
-
-    @field_validator("before", mode="before")
-    def validate_before(cls, before: dict | None) -> dict | None:
-        if not before:
-            return None
-        # TODO: compare value and divide depends on it
-        before["added_at"] //= 1_000
-        return before
+    @field_validator("after", "before", mode="before")
+    def validate_added_at(cls, row: dict | None) -> dict | None:
+        return _added_at_to_microseconds(row)
 
     def is_insert(self) -> bool:
         return self.after is not None and self.before is None
@@ -62,6 +62,20 @@ class Record(CustomBaseModel):
 
     def is_delete(self) -> bool:
         return not self.after or self.after.is_deleted
+
+
+def _parse_message(msg: ConsumerRecord) -> Record | None:
+    try:
+        payload = orjson.loads(msg.value)["payload"]
+        return Record(before=payload["before"], after=payload["after"])
+    except orjson.JSONDecodeError, KeyError, TypeError, ValidationError:
+        logger.exception(
+            "Skip the unparsable message: topic=%s, offset=%s\nvalue=%s",
+            msg.topic,
+            msg.offset,
+            msg.value,
+        )
+        return None
 
 
 async def iter_updates() -> AsyncGenerator[Record]:
@@ -76,19 +90,24 @@ async def iter_updates() -> AsyncGenerator[Record]:
 
     await consumer.start()
 
+    msg = None
     try:
         async for msg in consumer:
-            payload = orjson.loads(msg.value)["payload"]
-            yield Record(before=payload["before"], after=payload["after"])
+            if (record := _parse_message(msg)) is not None:
+                yield record
 
             await consumer.commit()
     except Exception:
-        logger.exception(
-            "Error consuming the message: topic=%s, offset=%s\nvalue=%s",
-            msg.topic,
-            msg.offset,
-            msg.value,
-        )
+        if msg is None:
+            logger.exception("Error consuming before the first message")
+        else:
+            logger.exception(
+                "Error consuming the message: topic=%s, offset=%s\nvalue=%s",
+                msg.topic,
+                msg.offset,
+                msg.value,
+            )
+        raise
     finally:
         await consumer.stop()
 

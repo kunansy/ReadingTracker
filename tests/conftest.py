@@ -1,46 +1,41 @@
-import asyncio
-from contextlib import asynccontextmanager
-from typing import AsyncGenerator
+"""Pin the whole configuration before `tracker` is imported.
 
-import pytest
-from sqlalchemy.ext.asyncio import AsyncSession
+`tracker.common.settings` reads the environment at import time and then clears it, and
+`environs.read_env` never overrides a variable that is already set. Setting every variable
+here keeps the developer's `.env` (and the database it points to) out of the test run.
+"""
 
-from tracker.common import database
-
-
-@pytest.fixture(scope="session")
-def event_loop(request):
-    """Create an instance of the default event loop for each test case."""
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
+import os
 
 
-@asynccontextmanager
-async def mock_trans(**kwargs) -> AsyncGenerator[AsyncSession, None]:
-    new_session = AsyncSession(**kwargs, bind=database.engine)
+TEST_ENVIRONMENT = {
+    "TRACKER_URL": "http://tracker.test",
+    "API_DEBUG": "false",
+    "DB_HOST": "127.0.0.1",
+    # nothing listens here: a test that reaches for the database fails instead of reading real data
+    "DB_PORT": "1",
+    "DB_NAME": "tracker_unit",
+    "DB_USERNAME": "tracker",
+    "DB_PASSWORD": "tracker",
+    "DB_TIMEOUT": "5",
+    "DB_ISOLATION_LEVEL": "REPEATABLE READ",
+    "LOGGER_NAME": "ReadingTrackerTests",
+    "LOGGER_LEVEL": "DEBUG",
+    "DRIVE_CREDS": "{}",
+    "MANTICORE_MYSQL_HOST": "127.0.0.1",
+    "MANTICORE_MYSQL_PORT": "1",
+    "MANTICORE_MYSQL_DB_NAME": "Manticore",
+    "BACKUP_HOST": "127.0.0.1",
+    "BACKUP_PORT": "1",
+    "YOUTUBE_API_URL": "https://youtube.test/v3/videos",
+    "YOUTUBE_API_KEY": "test-youtube-key",
+    "KAFKA_HOST": "127.0.0.1",
+    "KAFKA_PORT": "1",
+    "KAFKA_REPEAT_NOTES_TOPIC": "repeat-notes-test",
+    "KAFKA_CACHE_NOTES_TOPIC": "cache-notes-test",
+    "KAFKA_CONNECT_TIMEOUT": "1",
+    "EX_ENABLE_KAFKA_TO_NOTIFY": "false",
+    "EX_DARKMODE_ENABLE": "15:00:00",
+}
 
-    try:
-        async with new_session.begin() as t:
-            yield new_session
-            await t.rollback()
-    finally:
-        await new_session.close()
-
-
-@pytest.fixture
-async def shared_session(mocker) -> AsyncGenerator[AsyncSession, None]:
-    """Route every database.session() through one transaction rolled back after the test."""
-    ses = AsyncSession(bind=database.engine)
-    try:
-        async with ses.begin() as trans:
-
-            @asynccontextmanager
-            async def _session(**_kwargs) -> AsyncGenerator[AsyncSession, None]:
-                yield ses
-
-            mocker.patch("tracker.common.database.session", _session)
-            yield ses
-            await trans.rollback()
-    finally:
-        await ses.close()
+os.environ.update(TEST_ENVIRONMENT)

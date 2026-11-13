@@ -44,6 +44,43 @@ jobs:
         poetry run ruff format --check --quiet
         poetry run mypy .
 
+  tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
+      with:
+        python-version: '3.14'
+
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+    - name: Install required packages
+      run: |
+        sudo apt-get install -y portaudio19-dev libasound-dev
+
+    - name: Install dependencies
+      run: |
+        poetry config virtualenvs.create false
+        poetry install --no-interaction --no-root
+
+    # tests/conftest.py pins the configuration; the integration suite starts
+    # its own PostgreSQL and Manticore containers through testcontainers
+    - name: Run unit and integration tests with coverage
+      run: |
+        coverage run -m pytest -p no:sugar
+        coverage report
+
+    - name: Publish coverage badge
+      uses: py-cov-action/python-coverage-comment-action@v4.6
+      with:
+        GITHUB_TOKEN: ${{ github.token }}
+
   frontend:
     runs-on: ubuntu-latest
     env:

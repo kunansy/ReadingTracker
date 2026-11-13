@@ -109,6 +109,21 @@ def demark_note(string: str) -> str:
 type Chapter = Annotated[str, Field(max_length=MAX_CHAPTER_LENGTH)]
 
 
+def _normalize_form_tags(tags: object) -> list[str]:
+    if isinstance(tags, list):
+        if not all(isinstance(tag, str) for tag in tags):
+            raise ValueError("Invalid tags")
+        tags = " ".join(tags)
+    if not isinstance(tags, str):
+        # pydantic turns only ValueError into a validation error
+        raise ValueError("Invalid tags")  # noqa: TRY004
+
+    normalized = {tag for tag in tags.lower().replace("#", "").split() if tag}
+    if any(not TAG_PATTERN.match(tag) for tag in normalized):
+        raise ValueError("Invalid tags")
+    return sorted(normalized)
+
+
 class Note(CustomBaseModel):
     material_id: UUID
     title: Annotated[str | None, BeforeValidator(skip_empty_value)] = None
@@ -131,37 +146,50 @@ class Note(CustomBaseModel):
     @model_validator(mode="before")
     @classmethod
     def validate_tags(cls, data: Any) -> Any:
-        if tags := data.pop("tags", None):
-            if isinstance(tags, list) and len(tags) == 1:
-                tags = tags[0]
-            # fmt: off
-            tags = {
-                tag.strip()
-                for tag in tags.lower().replace("#", "").split()
-                if tag.strip()
-            }
-            # fmt: on
+        if not isinstance(data, dict):
+            return data
 
-            if any(not TAG_PATTERN.match(tag) for tag in tags):
-                raise ValueError("Invalid tags")
-
-            data["tags"] = sorted(tags)
-        return data
+        tags = data.get("tags")
+        rest = {key: value for key, value in data.items() if key != "tags"}
+        if not tags:
+            return rest
+        return {**rest, "tags": _normalize_form_tags(tags)}
 
     @model_validator(mode="before")
     @classmethod
     def validate_page(cls, data: Any) -> Any:
-        if page := data.pop("page", None):
-            if page == "":
-                page = 0
-            data["page"] = int(page)
-        return data
+        if not isinstance(data, dict):
+            return data
+
+        page = data.get("page")
+        rest = {key: value for key, value in data.items() if key != "page"}
+        if not page:
+            return rest
+        return {**rest, "page": int(page)}
 
 
 type Tags = conlist(constr(pattern=TAG_PATTERN, to_lower=True, strip_whitespace=True))
 
 
-class AddNoteRequest(CustomBaseModel):
+class _NoteBody(CustomBaseModel):
+    """Formatting shared by the requests that write a note."""
+
+    @field_validator("content", check_fields=False)
+    def format_content(cls, content: str) -> str:
+        for formatter in NOTES_FORMATTERS:
+            content = formatter(content)
+        return content
+
+    @field_validator("content", check_fields=False)
+    def fix_double_spaces(cls, content: str) -> str:
+        return " ".join(word for word in content.split(" ") if word)
+
+    @field_validator("tags", check_fields=False)
+    def format_tags(cls, tags: list[str]) -> list[str]:
+        return sorted(tags)
+
+
+class AddNoteRequest(_NoteBody):
     material_id: UUID
     title: str | None = None
     content: str
@@ -170,26 +198,12 @@ class AddNoteRequest(CustomBaseModel):
     chapter: Chapter = ""
     page: NonNegativeInt = 0
 
-    @field_validator("content")
-    def format_content(cls, content: str) -> str:
-        for formatter in NOTES_FORMATTERS:
-            content = formatter(content)
-        return content
-
-    @field_validator("content")
-    def fix_double_spaces(cls, content: str) -> str:
-        return " ".join(word for word in content.split(" ") if word)
-
-    @field_validator("tags")
-    def format_tags(cls, tags: list[str]) -> list[str]:
-        return sorted(tags)
-
 
 class AddNoteResponse(CustomBaseModel):
     note_id: UUID
 
 
-class UpdateNoteRequest(CustomBaseModel):
+class UpdateNoteRequest(_NoteBody):
     material_id: UUID
     link_id: UUID | None
     title: str | None

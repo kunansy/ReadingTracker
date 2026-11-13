@@ -763,7 +763,14 @@
             "$ref": "#/components/schemas/_SpanStatsResponse"
           },
           "tracker_statistics": {
-            "$ref": "#/components/schemas/TrackerStatistics"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TrackerStatistics"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [

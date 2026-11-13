@@ -41,6 +41,9 @@ class ConflictException(DatabaseException):
     pass
 
 
+INVALID_NEXT_TOKEN_MSG: Final[str] = "Invalid nextToken"  # noqa: S105
+
+
 class InvalidNextTokenException(DatabaseException):
     pass
 
