@@ -84,9 +84,11 @@ async def list_log_records_page(
 
     return await pagination.fetch_page(
         _list_log_records_stmt(material_id=material_id),
-        cursor_expr=pagination.keyset(
-            pagination.date_key(models.ReadingLog.c.date),
-            pagination.text_key(models.ReadingLog.c.sort_key),
+        key=pagination.Keyset(
+            (
+                pagination.date_key(models.ReadingLog.c.date),
+                pagination.text_key(models.ReadingLog.c.sort_key),
+            ),
         ),
         request=request,
         to_item=lambda row: LogRecord.model_validate(row, from_attributes=True),

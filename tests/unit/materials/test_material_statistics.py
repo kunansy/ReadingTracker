@@ -5,7 +5,7 @@ from types import SimpleNamespace
 import pytest
 from pydantic import ValidationError
 
-from tests.unit.materials.helpers import TODAY, compile_sql, day, make_material, midnight, uid
+from tests.unit.helpers import TODAY, compile_sql, day, make_material, midnight, uid
 from tracker.common import database, pagination
 from tracker.common.sort_keys import SEPARATOR
 from tracker.materials import db
@@ -469,7 +469,7 @@ async def test_completed_statistics_page_binds_filters_and_replaces_items(mocker
             tags={"sql", "python"},
         ),
     )
-    key = kwargs["cursor_expr"]
+    key = kwargs["key"]
     assert compile_sql(key.text) == (
         "to_char(materials.completed_at, 'YYYY-MM-DD\"T\"HH24:MI:SS.US') "
         f"|| '{SEPARATOR}' || materials.sort_key COLLATE \"C\""
@@ -543,7 +543,7 @@ async def test_reading_statistics_page_orders_by_the_start_date(mocker, fetch_pa
     kwargs = fetch_page.await_args.kwargs
     assert compile_sql(stmt) == compile_sql(db._get_reading_materials_stmt())
     assert kwargs["request"].params == {"order": "desc", "max_items": "20"}
-    key = kwargs["cursor_expr"]
+    key = kwargs["key"]
     assert compile_sql(key.text) == (
         "to_char(materials.started_at, 'YYYY-MM-DD\"T\"HH24:MI:SS.US') "
         f"|| '{SEPARATOR}' || materials.sort_key COLLATE \"C\""
@@ -573,7 +573,7 @@ async def test_repeating_queue_page_is_fetched_in_repeat_date_order(fetch_page):
     }
     assert kwargs["to_item"] is db._to_repeating_queue
     assert compile_sql(stmt) == compile_sql(db._get_repeating_queue_stmt(is_outlined=True)[0])
-    assert compile_sql(kwargs["cursor_expr"]) == (
+    assert compile_sql(kwargs["key"]) == (
         "to_char(date(coalesce(repeats_stat.last_repeated_at, materials.completed_at)) "
         "+ 30 * CAST(coalesce(repeats_stat.repeats_count, 0) AS INTEGER), 'YYYY-MM-DD') "
         f"|| '{SEPARATOR}' || materials.sort_key COLLATE \"C\""

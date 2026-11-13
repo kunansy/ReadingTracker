@@ -5,7 +5,7 @@ from uuid import UUID
 
 import pytest
 
-from tests.unit.materials.helpers import day, midnight, uid
+from tests.unit.helpers import day, midnight, uid
 from tracker.common import database
 from tracker.models import enums
 from tracker.reading_log import db, statistics as st

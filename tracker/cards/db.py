@@ -130,7 +130,7 @@ async def get_cards_page(
 
     return await pagination.fetch_page(
         _get_cards_stmt(material_id=material_id),
-        cursor_expr=pagination.cursor(models.Cards.c.sort_key),
+        key=pagination.cursor(models.Cards.c.sort_key),
         request=request,
         to_item=lambda row: Card.model_validate(row, from_attributes=True),
     )

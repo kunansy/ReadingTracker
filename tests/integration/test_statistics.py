@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from tests.integration import helpers_materials as h
+from tests.integration import helpers, helpers_materials as h
 from tracker.common import database
 from tracker.materials import db as materials_db
 from tracker.models import enums
@@ -28,13 +28,13 @@ def book_log_statistics(history: h.ReadingHistory) -> statistics.LogStatistics:
         min_record=database.MinMax(
             log_id=history.book_last,
             material_id=history.book,
-            date=h.day(7),
+            date=helpers.day(-7),
             count=22,
         ),
         max_record=database.MinMax(
             log_id=history.book_max,
             material_id=history.book,
-            date=h.day(9),
+            date=helpers.day(-9),
             count=50,
         ),
     )
@@ -50,19 +50,16 @@ def article_log_statistics(history: h.ReadingHistory) -> statistics.LogStatistic
         min_record=database.MinMax(
             log_id=history.article_min,
             material_id=history.article,
-            date=h.day(6),
+            date=helpers.day(-6),
             count=5,
         ),
         max_record=database.MinMax(
             log_id=history.article_max,
             material_id=history.article,
-            date=h.day(9),
+            date=helpers.day(-9),
             count=10,
         ),
     )
-
-
-# empty database
 
 
 async def test_statistics_parts_are_empty_on_an_empty_database():
@@ -113,18 +110,18 @@ async def test_materials_stat_is_empty_for_no_materials(clock):
 
 async def test_materials_stat_skips_a_material_without_logs(clock):
     await h.reading_history(clock)
-    unread = await h.reading(clock, started=h.day(3))
+    unread = await h.reading(clock, started=helpers.day(-3))
 
     assert await statistics.calculate_materials_stat({unread}) == {}
 
 
 async def test_materials_stat_of_a_single_log_today(clock):
-    material_id = await h.reading(clock, started=h.day(0))
+    material_id = await h.reading(clock, started=helpers.day(0))
     log_id = await logs_db.insert_log_record(
-        material_id=material_id, count=9, date=h.day(0)
+        material_id=material_id, count=9, date=helpers.day(0)
     )
     record = database.MinMax(
-        log_id=log_id, material_id=material_id, date=h.TODAY, count=9
+        log_id=log_id, material_id=material_id, date=helpers.TODAY, count=9
     )
 
     stat = await statistics.calculate_materials_stat({material_id})
@@ -147,7 +144,7 @@ async def test_materials_stat_of_a_single_log_today(clock):
 
 async def test_read_pages_are_summed_by_material_type(clock):
     await h.reading_history(clock)
-    await logs_db.insert_log_record(material_id=h.MISSING_ID, count=1000, date=h.day(1))
+    await logs_db.insert_log_record(material_id=h.MISSING_ID, count=1000, date=helpers.day(-1))
 
     assert await statistics._get_read_pages() == {"book": 102, "article": 15}
 
@@ -163,8 +160,8 @@ async def test_means_are_the_average_of_daily_sums_by_type(clock):
 
 async def test_means_sum_several_logs_of_one_type_within_a_day(clock):
     await h.reading_history(clock)
-    second_book = await h.reading(clock, started=h.day(10), title="Second book")
-    await logs_db.insert_log_record(material_id=second_book, count=10, date=h.day(10))
+    second_book = await h.reading(clock, started=helpers.day(-10), title="Second book")
+    await logs_db.insert_log_record(material_id=second_book, count=10, date=helpers.day(-10))
 
     means = await statistics.get_means()
 
@@ -173,9 +170,9 @@ async def test_means_sum_several_logs_of_one_type_within_a_day(clock):
 
 
 async def test_means_skip_types_without_logs(clock):
-    await h.reading(clock, started=h.day(3), material_type=COURSE)
-    book = await h.reading(clock, started=h.day(3))
-    await logs_db.insert_log_record(material_id=book, count=3, date=h.day(1))
+    await h.reading(clock, started=helpers.day(-3), material_type=COURSE)
+    book = await h.reading(clock, started=helpers.day(-3))
+    await logs_db.insert_log_record(material_id=book, count=3, date=helpers.day(-1))
 
     assert await statistics.get_means() == {BOOK: Decimal("3.00")}
 
@@ -185,7 +182,7 @@ async def test_means_skip_types_without_logs(clock):
 
 async def test_contains_is_true_only_for_a_material_with_logs(clock):
     history = await h.reading_history(clock)
-    unread = await h.reading(clock, started=h.day(3))
+    unread = await h.reading(clock, started=helpers.day(-3))
 
     assert await statistics.contains(material_id=history.book) is True
     assert await statistics.contains(material_id=unread) is False
@@ -200,14 +197,14 @@ async def test_min_record_of_the_whole_log_and_of_a_material(clock):
         material_id=history.article,
         material_title="Article",
         count=5,
-        date=h.day(6),
+        date=helpers.day(-6),
     )
     assert await statistics._get_min_record(material_id=history.book) == database.MinMax(
         log_id=history.book_last,
         material_id=history.book,
         material_title="Book",
         count=22,
-        date=h.day(7),
+        date=helpers.day(-7),
     )
 
 
@@ -219,7 +216,7 @@ async def test_max_record_of_the_whole_log_and_of_a_material(clock):
         material_id=history.book,
         material_title="Book",
         count=50,
-        date=h.day(9),
+        date=helpers.day(-9),
     )
     assert await statistics._get_max_record(
         material_id=history.article
@@ -228,23 +225,23 @@ async def test_max_record_of_the_whole_log_and_of_a_material(clock):
         material_id=history.article,
         material_title="Article",
         count=10,
-        date=h.day(9),
+        date=helpers.day(-9),
     )
 
 
 async def test_min_and_max_records_are_none_for_a_material_without_logs(clock):
     await h.reading_history(clock)
-    unread = await h.reading(clock, started=h.day(3))
+    unread = await h.reading(clock, started=helpers.day(-3))
 
     assert await statistics._get_min_record(material_id=unread) is None
     assert await statistics._get_max_record(material_id=unread) is None
 
 
 async def test_completed_materials_are_counted_by_type(clock):
-    await h.completed(clock, started=h.day(9), finished=h.day(5))
-    await h.completed(clock, started=h.day(9), finished=h.day(0))
-    await h.completed(clock, started=h.day(9), finished=h.day(1), material_type=ARTICLE)
-    await h.reading(clock, started=h.day(9), material_type=COURSE)
+    await h.completed(clock, started=helpers.day(-9), finished=helpers.day(-5))
+    await h.completed(clock, started=helpers.day(-9), finished=helpers.day(0))
+    await h.completed(clock, started=helpers.day(-9), finished=helpers.day(-1), material_type=ARTICLE)
+    await h.reading(clock, started=helpers.day(-9), material_type=COURSE)
     await h.queued(clock, material_type=COURSE)
 
     assert await statistics._get_materials_completed() == {"book": 2, "article": 1}
@@ -252,7 +249,7 @@ async def test_completed_materials_are_counted_by_type(clock):
 
 
 async def test_no_materials_are_completed_when_all_are_queued_or_reading(clock):
-    await h.reading(clock, started=h.day(9))
+    await h.reading(clock, started=helpers.day(-9))
     await h.queued(clock)
 
     assert await statistics._get_materials_completed() == {}
@@ -268,8 +265,8 @@ async def test_tracker_statistics_of_a_reading_history(clock):
     result = await statistics.get_tracker_statistics()
 
     assert result == statistics.TrackerStatistics(
-        started_at=h.day(10),
-        finished_at=h.day(6),
+        started_at=helpers.day(-10),
+        finished_at=helpers.day(-6),
         duration=5,
         # day(8) is the only day without logs between the first and the last log
         lost_time=1,
@@ -287,14 +284,14 @@ async def test_tracker_statistics_of_a_reading_history(clock):
             material_id=history.article,
             material_title="Article",
             count=5,
-            date=h.day(6),
+            date=helpers.day(-6),
         ),
         max_log_record=database.MinMax(
             log_id=history.book_max,
             material_id=history.book,
             material_title="Book",
             count=50,
-            date=h.day(9),
+            date=helpers.day(-9),
         ),
     )
     assert result.duration_period == "5 days"
@@ -306,23 +303,23 @@ async def test_tracker_statistics_of_a_reading_history(clock):
 
 
 async def test_tracker_statistics_of_a_single_log(clock):
-    material_id = await h.reading(clock, started=h.day(1), title="Only")
+    material_id = await h.reading(clock, started=helpers.day(-1), title="Only")
     log_id = await logs_db.insert_log_record(
-        material_id=material_id, count=7, date=h.day(1)
+        material_id=material_id, count=7, date=helpers.day(-1)
     )
     record = database.MinMax(
         log_id=log_id,
         material_id=material_id,
         material_title="Only",
         count=7,
-        date=h.day(1),
+        date=helpers.day(-1),
     )
 
     result = await statistics.get_tracker_statistics()
 
     assert result == statistics.TrackerStatistics(
-        started_at=h.day(1),
-        finished_at=h.day(1),
+        started_at=helpers.day(-1),
+        finished_at=helpers.day(-1),
         duration=1,
         lost_time=0,
         mean=7.0,
@@ -341,10 +338,10 @@ async def test_tracker_statistics_of_a_single_log(clock):
 
 
 async def test_tracker_mean_ignores_courses(clock):
-    book = await h.reading(clock, started=h.day(1))
-    course = await h.reading(clock, started=h.day(1), material_type=COURSE)
-    await logs_db.insert_log_record(material_id=book, count=10, date=h.day(1))
-    await logs_db.insert_log_record(material_id=course, count=100, date=h.day(1))
+    book = await h.reading(clock, started=helpers.day(-1))
+    course = await h.reading(clock, started=helpers.day(-1), material_type=COURSE)
+    await logs_db.insert_log_record(material_id=book, count=10, date=helpers.day(-1))
+    await logs_db.insert_log_record(material_id=course, count=100, date=helpers.day(-1))
 
     result = await statistics.get_tracker_statistics()
 
@@ -355,8 +352,8 @@ async def test_tracker_mean_ignores_courses(clock):
 
 
 async def test_tracker_mean_is_zero_when_only_courses_are_logged(clock):
-    course = await h.reading(clock, started=h.day(1), material_type=COURSE)
-    await logs_db.insert_log_record(material_id=course, count=100, date=h.day(1))
+    course = await h.reading(clock, started=helpers.day(-1), material_type=COURSE)
+    await logs_db.insert_log_record(material_id=course, count=100, date=helpers.day(-1))
 
     result = await statistics.get_tracker_statistics()
 
@@ -365,9 +362,9 @@ async def test_tracker_mean_is_zero_when_only_courses_are_logged(clock):
 
 
 async def test_tracker_statistics_count_materials_completed_without_logs(clock):
-    await h.completed(clock, started=h.day(9), finished=h.day(5), material_type=ARTICLE)
-    book = await h.reading(clock, started=h.day(1))
-    await logs_db.insert_log_record(material_id=book, count=10, date=h.day(1))
+    await h.completed(clock, started=helpers.day(-9), finished=helpers.day(-5), material_type=ARTICLE)
+    book = await h.reading(clock, started=helpers.day(-1))
+    await logs_db.insert_log_record(material_id=book, count=10, date=helpers.day(-1))
 
     result = await statistics.get_tracker_statistics()
 
@@ -378,8 +375,8 @@ async def test_tracker_statistics_count_materials_completed_without_logs(clock):
 async def test_tracker_statistics_percent_fails_on_zero_pages_read_current_behaviour(
     clock,
 ):
-    material_id = await h.reading(clock, started=h.day(1))
-    await logs_db.insert_log_record(material_id=material_id, count=0, date=h.day(1))
+    material_id = await h.reading(clock, started=helpers.day(-1))
+    await logs_db.insert_log_record(material_id=material_id, count=0, date=helpers.day(-1))
 
     result = await statistics.get_tracker_statistics()
 
@@ -390,7 +387,7 @@ async def test_tracker_statistics_percent_fails_on_zero_pages_read_current_behav
 
 
 async def test_tracker_statistics_fail_on_logs_of_unknown_materials_current_behaviour():
-    await logs_db.insert_log_record(material_id=h.MISSING_ID, count=5, date=h.day(1))
+    await logs_db.insert_log_record(material_id=h.MISSING_ID, count=5, date=helpers.day(-1))
 
     # reading_log/statistics.py:235 no material joins the log, so there are no means
     with pytest.raises(ZeroDivisionError):

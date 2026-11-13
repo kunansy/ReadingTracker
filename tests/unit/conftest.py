@@ -1,3 +1,4 @@
+import datetime
 from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from typing import Any, NamedTuple
@@ -5,6 +6,7 @@ from typing import Any, NamedTuple
 import httpx
 import pytest
 
+from tests.unit.helpers import NOW
 from tracker.common import database
 from tracker.main import app
 
@@ -52,3 +54,9 @@ async def client() -> AsyncGenerator[httpx.AsyncClient]:
 def dependency_overrides():
     yield app.dependency_overrides
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def frozen_now(mocker) -> datetime.datetime:
+    mocker.patch.object(database, "utcnow", return_value=NOW)
+    return NOW

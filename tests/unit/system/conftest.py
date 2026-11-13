@@ -1,7 +1,7 @@
 import base64
 import datetime
 import types
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -52,8 +52,3 @@ def build_statistics(
         for shift, amount in enumerate(amounts)
     ]
     return trends.SpanStatistics(data=days, span_size=len(amounts))
-
-
-@pytest.fixture
-def make_statistics() -> Callable[..., trends.SpanStatistics]:
-    return build_statistics

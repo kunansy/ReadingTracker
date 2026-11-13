@@ -120,14 +120,12 @@ async def test_list_cards_rejects_invalid_query(client, get_cards_page, params, 
 
 
 async def test_list_cards_maps_invalid_token_to_422(client, get_cards_page):
-    get_cards_page.side_effect = database.InvalidNextTokenException(
-        "next_token is malformed"
-    )
+    get_cards_page.side_effect = database.InvalidNextTokenException("Invalid nextToken")
 
     response = await client.get(URL, params={"next_token": "garbage"})
 
     assert response.status_code == 422
-    assert response.json() == {"detail": "InvalidNextToken: next_token is malformed"}
+    assert response.json() == {"detail": "InvalidNextToken: Invalid nextToken"}
 
 
 @pytest.fixture

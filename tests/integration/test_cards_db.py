@@ -2,7 +2,7 @@ from uuid import UUID
 
 import pytest
 
-from tests.integration import factories, helpers_materials as h
+from tests.integration import factories, helpers, helpers_materials as h
 from tracker.cards import db
 from tracker.common import sort_keys
 from tracker.common.pagination import PageParams
@@ -187,7 +187,7 @@ async def test_get_cards_returns_a_card_with_its_note_and_material(clock, cards)
         question="Вопрос?",
         answer="Ответ.",
         # the two materials took the first two seconds of the clock
-        added_at=h.NOW.replace(second=h.NOW.second + 3),
+        added_at=helpers.NOW.replace(second=helpers.NOW.second + 3),
         note_title="First note",
         note_content="First content.",
         note_chapter="3",

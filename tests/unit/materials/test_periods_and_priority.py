@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 from pydantic import ValidationError
 
-from tests.unit.materials.helpers import NOW, midnight, uid
+from tests.unit.helpers import NOW, midnight, uid
 from tracker.common import database
 from tracker.materials import db
 from tracker.models import enums
@@ -218,7 +218,7 @@ def test_token_start_date_parses_iso_date(start_date):
 def test_token_start_date_rejects_invalid_token(continue_from):
     with pytest.raises(
         database.InvalidNextTokenException,
-        match="^next_token has no valid start date$",
+        match="^Invalid nextToken$",
     ):
         db._token_start_date(continue_from)
 

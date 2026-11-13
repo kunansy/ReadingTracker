@@ -2,13 +2,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from tests.unit.materials.helpers import (
-    compile_sql,
-    fake_session_factory,
-    make_material,
-    midnight,
-    uid,
-)
+from tests.unit.helpers import compile_sql, make_material, midnight, uid
+from tests.unit.materials.helpers import fake_session_factory
 from tracker.common import database
 from tracker.materials import db
 from tracker.models import enums

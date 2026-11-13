@@ -1,56 +1,7 @@
-import datetime
 from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from typing import Any
-from uuid import UUID
 
-import sqlalchemy.sql as sa
-from sqlalchemy.dialects import postgresql
-
-from tracker.materials import db as materials_db
-from tracker.models import enums
-
-
-NOW = datetime.datetime(2024, 3, 10, 12, 30, 45)
-TODAY = NOW.date()
-
-
-def uid(number: int) -> UUID:
-    return UUID(int=number)
-
-
-def day(offset: int) -> datetime.date:
-    """The date `offset` days away from the frozen today."""
-    return TODAY + datetime.timedelta(days=offset)
-
-
-def midnight(offset: int) -> datetime.datetime:
-    return datetime.datetime.combine(day(offset), datetime.time())
-
-
-def compile_sql(stmt: sa.ClauseElement) -> str:
-    compiled = stmt.compile(
-        dialect=postgresql.dialect(),
-        compile_kwargs={"literal_binds": True},
-    )
-    return " ".join(str(compiled).split())
-
-
-def make_material(**overrides: Any) -> materials_db.Material:
-    fields: dict[str, Any] = {
-        "material_id": uid(1),
-        "title": "Преступление и наказание",
-        "authors": "Достоевский",
-        "pages": 100,
-        "material_type": enums.MaterialTypesEnum.book,
-        "tags": None,
-        "link": None,
-        "added_at": datetime.datetime(2024, 1, 1, 8, 0),
-        "is_outlined": False,
-        "started_at": None,
-        "completed_at": None,
-    }
-    return materials_db.Material(**(fields | overrides))
 
 
 def fake_session_factory(session: object) -> Callable[..., Any]:

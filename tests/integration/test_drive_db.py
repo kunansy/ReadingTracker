@@ -4,10 +4,7 @@ import uuid
 
 import pytest
 
-from tests.integration import (
-    factories,
-    helpers_notes as helpers,
-)
+from tests.integration import factories, helpers
 from tracker.common import database, settings, sort_keys
 from tracker.google_drive import db as drive_db
 from tracker.models import models
@@ -423,9 +420,9 @@ async def test_get_tables_analytics_counts_every_row_including_deleted_notes():
             date=factories.days_ago(days_ago),
         )
     await factories.insert_card(material_id=material_id, note_id=note_id)
-    await helpers.insert_repeat(material_id=material_id, repeated_at=ADDED_AT)
-    await helpers.insert_repeat(material_id=material_id, repeated_at=ADDED_AT)
-    await helpers.insert_note_repeat(note_id=note_id, repeated_at=ADDED_AT)
+    await factories.insert_repeat(material_id=material_id, repeated_at=ADDED_AT)
+    await factories.insert_repeat(material_id=material_id, repeated_at=ADDED_AT)
+    await factories.insert_note_repeat(note_id=note_id, repeated_at=ADDED_AT)
 
     assert await drive_db.get_tables_analytics() == {
         "materials_count": 2,
@@ -443,7 +440,7 @@ def test_table_snapshot_counts_its_rows():
 
 
 def test_dump_filename_carries_the_current_time(mocker):
-    mocker.patch.object(database, "utcnow", return_value=helpers.FROZEN_NOW)
+    mocker.patch.object(database, "utcnow", return_value=helpers.NOW)
 
     assert (
         drive_db.get_dump_filename()

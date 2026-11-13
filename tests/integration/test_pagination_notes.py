@@ -6,10 +6,7 @@ from collections.abc import Awaitable, Callable
 
 import pytest
 
-from tests.integration import (
-    factories,
-    helpers_notes as helpers,
-)
+from tests.integration import factories, helpers
 from tracker.common import database
 from tracker.common.pagination import Order, Page, PageParams
 from tracker.models import models
@@ -137,7 +134,7 @@ async def test_walk_returns_every_row_once_in_order(
 ):
     fetch, ids = await _listing(name, rows)
 
-    pages = await helpers.collect_pages(fetch, page_size=page_size, order=order)
+    pages = await helpers.walk_pages(fetch, page_size=page_size, order=order)
 
     assert _ids(pages) == (ids[::-1] if order == Order.DESC else ids)
     assert len(pages) == expected_pages
@@ -169,7 +166,7 @@ async def test_search_orders_by_material_chapter_number_page_then_id():
             (first_material, "", 500),
         ]
     ]
-    pages = await helpers.collect_pages(_search(), page_size=2)
+    pages = await helpers.walk_pages(_search(), page_size=2)
 
     tie = sorted(expected[3:5], key=str)
     assert _ids(pages) == [expected[5], *tie, expected[2], expected[1], expected[0]]
@@ -178,7 +175,7 @@ async def test_search_orders_by_material_chapter_number_page_then_id():
 async def test_links_order_by_note_number_not_by_sort_key():
     target, links = await _insert_links(4)
 
-    pages = await helpers.collect_pages(_links(target), page_size=3)
+    pages = await helpers.walk_pages(_links(target), page_size=3)
 
     notes = helpers.page_items(pages)
     assert [note.note_id for note in notes] == links
@@ -284,7 +281,7 @@ async def test_search_rejects_a_token_issued_for_another_request(case):
         update=changed_params,
     )
 
-    with pytest.raises(database.InvalidNextTokenException, match="does not match"):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
         await _search(**changed_filters)(params)
 
 
@@ -323,7 +320,7 @@ async def test_links_reject_a_token_with_changed_page_params(changed):
         update=changed,
     )
 
-    with pytest.raises(database.InvalidNextTokenException, match="does not match"):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
         await _links(target)(params)
 
 
@@ -332,7 +329,7 @@ async def test_links_reject_a_token_of_another_note():
     other_target, _ = await _insert_links(4)
     first = await _links(target)(PageParams(page_size=2))
 
-    with pytest.raises(database.InvalidNextTokenException, match="does not match"):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
         await _links(other_target)(PageParams(page_size=2, next_token=first.next_token))
 
 
@@ -340,7 +337,7 @@ async def test_links_token_is_bound_to_the_spelling_of_the_note_id_current_behav
     target, _ = await _insert_links(4)
     first = await _links(target)(PageParams(page_size=2))
 
-    with pytest.raises(database.InvalidNextTokenException, match="does not match"):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
         await _links(str(target).upper())(
             PageParams(page_size=2, next_token=first.next_token),
         )
@@ -357,7 +354,7 @@ async def test_token_of_the_other_listing_is_rejected(name):
         (search_fetch, links_token) if name == "search" else (links_fetch, search_token)
     )
 
-    with pytest.raises(database.InvalidNextTokenException, match="does not match"):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
         await fetch(PageParams(page_size=1, next_token=foreign_token))
 
 

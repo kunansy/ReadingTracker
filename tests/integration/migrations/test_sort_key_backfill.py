@@ -6,7 +6,7 @@ import uuid
 import pytest
 import sqlalchemy.sql as sa
 
-from tests.integration import helpers_notes as helpers
+from tests.integration import helpers
 from tests.integration.migrations.revisions import REVISION_0002
 from tracker.common import sort_keys
 

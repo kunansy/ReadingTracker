@@ -2,6 +2,7 @@ import datetime
 from typing import Any
 from uuid import UUID
 
+from tests.unit.helpers import make_material, make_note
 from tracker.cards import db as cards_db
 from tracker.common import database, pagination
 from tracker.materials import db as materials_db
@@ -39,7 +40,7 @@ def note(**fields: Any) -> notes_db.Note:
         "is_deleted": False,
         "note_number": 7,
     }
-    return notes_db.Note(**{**defaults, **fields})
+    return make_note(**{"link_id": None, **defaults, **fields})
 
 
 def note_json(**fields: Any) -> dict[str, Any]:
@@ -72,7 +73,7 @@ def material(**fields: Any) -> materials_db.Material:
         "added_at": ADDED_AT,
         "is_outlined": False,
     }
-    return materials_db.Material(**{**defaults, **fields})
+    return make_material(**{**defaults, **fields})
 
 
 def material_json(**fields: Any) -> dict[str, Any]:

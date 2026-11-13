@@ -9,10 +9,8 @@ from sqlalchemy.exc import DBAPIError, IntegrityError
 from sqlalchemy.ext.asyncio import create_async_engine
 from sqlalchemy.sql.ddl import DropTable
 
-from tests.integration import (
-    factories,
-    helpers_notes as helpers,
-)
+from tests.integration import factories, helpers
+from tests.integration.migrations import helpers as migration_helpers
 from tracker.common import database, settings
 from tracker.models import models
 
@@ -167,7 +165,7 @@ async def test_transaction_rolls_back_when_the_block_raises():
 
 async def test_json_columns_round_trip_through_the_engine_serializer():
     tags = ["тег", "emoji-🙂", 'quote"']
-    note_id = await helpers.insert_raw_note(material_id=MATERIAL_ID, tags=tags)
+    note_id = await factories.insert_raw_note(material_id=MATERIAL_ID, tags=tags)
 
     raw = await helpers.scalar(
         "SELECT tags::text FROM notes WHERE note_id = :id",
@@ -335,21 +333,21 @@ async def test_recreate_db_empties_every_table_and_restarts_the_sequences():
     await factories.insert_note(material_id=material_id)
     await factories.insert_log(material_id=material_id)
     await factories.insert_card(material_id=material_id, note_id=note_id)
-    await helpers.insert_repeat(material_id=material_id, repeated_at=ADDED_AT)
-    await helpers.insert_note_repeat(note_id=note_id, repeated_at=ADDED_AT)
-    schema_before = await helpers.schema_snapshot()
+    await factories.insert_repeat(material_id=material_id, repeated_at=ADDED_AT)
+    await factories.insert_note_repeat(note_id=note_id, repeated_at=ADDED_AT)
+    schema_before = await migration_helpers.schema_snapshot()
 
     try:
         await database.recreate_db()
 
         for table in models.metadata.sorted_tables:
             assert await factories.count_rows(table) == 0, table.name
-        assert await helpers.schema_snapshot() == schema_before
-        assert await helpers.current_revision() == helpers.HEAD_REVISION
+        assert await migration_helpers.schema_snapshot() == schema_before
+        assert await migration_helpers.current_revision() == migration_helpers.HEAD_REVISION
         new_note_id = await factories.insert_note(material_id=material_id)
         assert (await factories.fetch_row(models.Notes, new_note_id))["note_number"] == 1
     finally:
-        await helpers.reset_schema_to_head()
+        await migration_helpers.reset_schema_to_head()
 
 
 async def test_recreate_db_leaves_the_matview_unpopulated_current_behaviour():
@@ -366,16 +364,16 @@ async def test_recreate_db_leaves_the_matview_unpopulated_current_behaviour():
         await factories.refresh_repeat_notes_matview()
         assert await helpers.fetch_all("SELECT * FROM mvw_repeat_notes") == []
     finally:
-        await helpers.reset_schema_to_head()
+        await migration_helpers.reset_schema_to_head()
 
 
 async def test_reset_schema_to_head_restores_the_migrated_database():
-    schema_before = await helpers.schema_snapshot()
+    schema_before = await migration_helpers.schema_snapshot()
 
-    await helpers.reset_schema_to_head()
+    await migration_helpers.reset_schema_to_head()
 
-    assert await helpers.schema_snapshot() == schema_before
-    assert await helpers.current_revision() == helpers.HEAD_REVISION
+    assert await migration_helpers.schema_snapshot() == schema_before
+    assert await migration_helpers.current_revision() == migration_helpers.HEAD_REVISION
     assert await _is_matview_populated() is True
 
 
@@ -389,32 +387,32 @@ async def test_is_unversioned_db_is_true_without_the_alembic_version_table():
 
         assert await database._is_unversioned_db() is True
     finally:
-        await helpers.reset_schema_to_head()
+        await migration_helpers.reset_schema_to_head()
 
 
 async def test_is_unversioned_db_is_false_for_an_empty_database():
     try:
-        await helpers.drop_everything()
+        await migration_helpers.drop_everything()
 
         assert await database._is_unversioned_db() is False
     finally:
-        await helpers.reset_schema_to_head()
+        await migration_helpers.reset_schema_to_head()
 
 
 async def test_create_db_on_an_empty_database_migrates_to_head_without_stamping(mocker):
     stamp = mocker.spy(command, "stamp")
-    schema_before = await helpers.schema_snapshot()
+    schema_before = await migration_helpers.schema_snapshot()
 
     try:
-        await helpers.drop_everything()
+        await migration_helpers.drop_everything()
 
         await database.create_db()
 
         assert stamp.call_count == 0
-        assert await helpers.current_revision() == helpers.HEAD_REVISION
-        assert await helpers.schema_snapshot() == schema_before
+        assert await migration_helpers.current_revision() == migration_helpers.HEAD_REVISION
+        assert await migration_helpers.schema_snapshot() == schema_before
     finally:
-        await helpers.reset_schema_to_head()
+        await migration_helpers.reset_schema_to_head()
 
 
 async def test_create_db_on_a_migrated_database_changes_nothing(mocker):
@@ -424,7 +422,7 @@ async def test_create_db_on_a_migrated_database_changes_nothing(mocker):
     await database.create_db()
 
     assert stamp.call_count == 0
-    assert await helpers.current_revision() == helpers.HEAD_REVISION
+    assert await migration_helpers.current_revision() == migration_helpers.HEAD_REVISION
     assert (await factories.fetch_row(models.Materials, material_id))[
         "title"
     ] == "Survivor"
@@ -435,7 +433,7 @@ async def test_create_db_stamps_a_pre_alembic_database_and_upgrades_it(mocker):
     note_id = uuid.uuid4()
 
     try:
-        await helpers.alembic_downgrade("0001")
+        await migration_helpers.alembic_downgrade("0001")
         await helpers.execute(sa.text("DROP TABLE alembic_version"))
         await helpers.execute(
             sa.text(
@@ -467,7 +465,7 @@ async def test_create_db_stamps_a_pre_alembic_database_and_upgrades_it(mocker):
 
         assert stamp.call_count == 1
         assert stamp.call_args.args[1] == "0001"
-        assert await helpers.current_revision() == helpers.HEAD_REVISION
+        assert await migration_helpers.current_revision() == migration_helpers.HEAD_REVISION
         material = await factories.fetch_row(models.Materials, MATERIAL_ID)
         assert material["started_at"] == ADDED_AT
         assert material["completed_at"] is None
@@ -475,7 +473,7 @@ async def test_create_db_stamps_a_pre_alembic_database_and_upgrades_it(mocker):
         note = await factories.fetch_row(models.Notes, note_id)
         assert note["sort_key"] == f"{MATERIAL_ID}$$0000000003$$0000000007$${note_id}"
     finally:
-        await helpers.reset_schema_to_head()
+        await migration_helpers.reset_schema_to_head()
 
 
 async def test_create_db_fails_on_tables_made_by_create_all_current_behaviour():
@@ -491,14 +489,14 @@ async def test_create_db_fails_on_tables_made_by_create_all_current_behaviour():
         ):
             await database.create_db()
 
-        assert await helpers.current_revision() == "0001"
+        assert await migration_helpers.current_revision() == "0001"
     finally:
-        await helpers.reset_schema_to_head()
+        await migration_helpers.reset_schema_to_head()
 
 
 def test_utcnow_is_naive_and_utc_today_is_its_date(mocker):
     now = database.utcnow()
-    mocker.patch.object(database, "utcnow", return_value=helpers.FROZEN_NOW)
+    mocker.patch.object(database, "utcnow", return_value=helpers.NOW)
 
     assert now.tzinfo is None
-    assert database.utc_today() == helpers.FROZEN_TODAY
+    assert database.utc_today() == helpers.TODAY

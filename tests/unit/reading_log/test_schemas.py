@@ -3,7 +3,7 @@ import datetime
 import pytest
 from pydantic import ValidationError
 
-from tests.unit.materials.helpers import uid
+from tests.unit.helpers import uid
 from tracker.reading_log import db, schemas
 
 

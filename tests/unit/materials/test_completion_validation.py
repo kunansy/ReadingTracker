@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from tests.unit.materials.helpers import day, make_material, midnight, uid
+from tests.unit.helpers import day, make_material, midnight, uid
 from tracker.common import database
 from tracker.materials import db
 from tracker.reading_log import db as log_db
@@ -57,7 +57,13 @@ async def test_material_started_later_today_can_be_completed_today(lookups):
         started_at=midnight(0).replace(hour=23, minute=59),
     )
 
-    await db.is_completion_request_valid(material_id=MATERIAL_ID, completed_at=day(0))
+    result = await db.is_completion_request_valid(
+        material_id=MATERIAL_ID,
+        completed_at=day(0),
+    )
+
+    assert result is None
+    lookups.get_material.assert_awaited_once_with(material_id=MATERIAL_ID)
 
 
 async def test_missing_material_raises_not_found(lookups):

@@ -9,6 +9,7 @@ import sqlalchemy.sql as sa
 from pydantic import ValidationError
 from sqlalchemy.dialects import postgresql
 
+from tests.unit.helpers import compile_sql
 from tracker.common import database, pagination
 from tracker.common.pagination import Order, Page, PageParams, PageRequest
 from tracker.models import models
@@ -30,14 +31,6 @@ PINNED_URLSAFE_TOKEN = (
 
 def _raw_token(payload: object) -> str:
     return base64.urlsafe_b64encode(json.dumps(payload).encode()).decode()
-
-
-def _compile(stmt: sa.ClauseElement) -> str:
-    compiled = stmt.compile(
-        dialect=postgresql.dialect(),
-        compile_kwargs={"literal_binds": True},
-    )
-    return " ".join(str(compiled).split())
 
 
 def _request(
@@ -165,7 +158,7 @@ def test_next_token_round_trip(continue_from):
 )
 def test_decode_rejects_bad_base64(token):
     with pytest.raises(
-        database.InvalidNextTokenException, match="^next_token is malformed$"
+        database.InvalidNextTokenException, match="^Invalid nextToken$"
     ):
         pagination.decode_and_check_next_token(token, PARAMS)
 
@@ -185,7 +178,7 @@ def test_decode_rejects_bad_json(raw):
     token = base64.urlsafe_b64encode(raw).decode()
 
     with pytest.raises(
-        database.InvalidNextTokenException, match="^next_token is malformed$"
+        database.InvalidNextTokenException, match="^Invalid nextToken$"
     ):
         pagination.decode_and_check_next_token(token, PARAMS)
 
@@ -217,7 +210,7 @@ def test_decode_rejects_bad_json(raw):
 )
 def test_decode_rejects_wrong_shape(payload):
     with pytest.raises(
-        database.InvalidNextTokenException, match="^next_token is malformed$"
+        database.InvalidNextTokenException, match="^Invalid nextToken$"
     ):
         pagination.decode_and_check_next_token(_raw_token(payload), PARAMS)
 
@@ -249,7 +242,7 @@ def test_decode_rejects_wrong_shape(payload):
 )
 def test_decode_rejects_non_string_maps(payload):
     with pytest.raises(
-        database.InvalidNextTokenException, match="^next_token is malformed$"
+        database.InvalidNextTokenException, match="^Invalid nextToken$"
     ):
         pagination.decode_and_check_next_token(_raw_token(payload), PARAMS)
 
@@ -271,7 +264,7 @@ def test_decode_rejects_token_issued_for_other_params(request_params):
 
     with pytest.raises(
         database.InvalidNextTokenException,
-        match="^next_token does not match the request parameters$",
+        match="^Invalid nextToken$",
     ):
         pagination.decode_and_check_next_token(token, request_params)
 
@@ -285,7 +278,7 @@ def test_decode_rejects_token_without_cursor(continue_from):
     token = _raw_token({"params": PARAMS, "continue_from": continue_from})
 
     with pytest.raises(
-        database.InvalidNextTokenException, match="^next_token has no cursor$"
+        database.InvalidNextTokenException, match="^Invalid nextToken$"
     ):
         pagination.decode_and_check_next_token(token, PARAMS)
 
@@ -517,7 +510,7 @@ def test_page_request_rejects_token_of_another_request(params, filters):
 
     with pytest.raises(
         database.InvalidNextTokenException,
-        match="does not match the request parameters",
+        match="^Invalid nextToken$",
     ):
         pagination.page_request(params, default_order=Order.ASC, **filters)
 
@@ -533,7 +526,7 @@ def test_page_request_token_for_none_filter_matches_empty_filter_current_behavio
 
 
 def test_page_request_rejects_malformed_token():
-    with pytest.raises(database.InvalidNextTokenException, match="malformed"):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
         pagination.page_request(PageParams(next_token="~"), default_order=Order.ASC)
 
 
@@ -616,7 +609,7 @@ def test_split_page(rows_count, expected_cursors, expected_next):
 def test_datetime_part_formats_with_microseconds():
     expr = pagination.datetime_part(models.Materials.c.added_at)
 
-    assert _compile(expr) == (
+    assert compile_sql(expr) == (
         "to_char(materials.added_at, 'YYYY-MM-DD\"T\"HH24:MI:SS.US')"
     )
 
@@ -624,17 +617,17 @@ def test_datetime_part_formats_with_microseconds():
 def test_date_part_formats_iso_date():
     expr = pagination.date_part(models.ReadingLog.c.date)
 
-    assert _compile(expr) == "to_char(reading_log.date, 'YYYY-MM-DD')"
+    assert compile_sql(expr) == "to_char(reading_log.date, 'YYYY-MM-DD')"
 
 
 def test_int_part_pads_to_sort_key_width():
     expr = pagination.int_part(models.ReadingLog.c.count)
 
-    assert _compile(expr) == "lpad(CAST(reading_log.count AS TEXT), 10, '0')"
+    assert compile_sql(expr) == "lpad(CAST(reading_log.count AS TEXT), 10, '0')"
 
 
 def test_cursor_of_single_part_is_collated():
-    assert _compile(CURSOR_EXPR) == 'materials.sort_key COLLATE "C"'
+    assert compile_sql(CURSOR_EXPR) == 'materials.sort_key COLLATE "C"'
 
 
 def test_cursor_joins_parts_with_separator():
@@ -644,7 +637,7 @@ def test_cursor_joins_parts_with_separator():
         models.ReadingLog.c.sort_key,
     )
 
-    assert _compile(expr) == (
+    assert compile_sql(expr) == (
         "to_char(reading_log.date, 'YYYY-MM-DD') || '$$' || "
         "lpad(CAST(reading_log.count AS TEXT), 10, '0') || '$$' || "
         'reading_log.sort_key COLLATE "C"'
@@ -657,9 +650,9 @@ def test_cursor_without_parts_is_an_error():
 
 
 def test_paginate_first_page_asc():
-    stmt = pagination.paginate(STMT, cursor_expr=CURSOR_EXPR, request=_request())
+    stmt = pagination.paginate(STMT, key=CURSOR_EXPR, request=_request())
 
-    assert _compile(stmt) == (
+    assert compile_sql(stmt) == (
         'SELECT materials.material_id, materials.sort_key COLLATE "C" AS cursor '
         "FROM materials WHERE materials.pages > 3 "
         'ORDER BY materials.sort_key COLLATE "C" ASC LIMIT 3'
@@ -669,11 +662,11 @@ def test_paginate_first_page_asc():
 def test_paginate_first_page_desc():
     stmt = pagination.paginate(
         STMT,
-        cursor_expr=CURSOR_EXPR,
+        key=CURSOR_EXPR,
         request=_request(order=Order.DESC),
     )
 
-    assert _compile(stmt) == (
+    assert compile_sql(stmt) == (
         'SELECT materials.material_id, materials.sort_key COLLATE "C" AS cursor '
         "FROM materials WHERE materials.pages > 3 "
         'ORDER BY materials.sort_key COLLATE "C" DESC LIMIT 3'
@@ -683,11 +676,11 @@ def test_paginate_first_page_desc():
 def test_paginate_next_page_asc_starts_at_cursor_inclusive():
     stmt = pagination.paginate(
         STMT,
-        cursor_expr=CURSOR_EXPR,
+        key=CURSOR_EXPR,
         request=_request(cursor="k", page_size=20),
     )
 
-    assert _compile(stmt) == (
+    assert compile_sql(stmt) == (
         'SELECT materials.material_id, materials.sort_key COLLATE "C" AS cursor '
         "FROM materials WHERE materials.pages > 3 "
         "AND (materials.sort_key COLLATE \"C\") >= 'k' "
@@ -698,11 +691,11 @@ def test_paginate_next_page_asc_starts_at_cursor_inclusive():
 def test_paginate_next_page_desc_starts_at_cursor_inclusive():
     stmt = pagination.paginate(
         STMT,
-        cursor_expr=CURSOR_EXPR,
+        key=CURSOR_EXPR,
         request=_request(order=Order.DESC, cursor="k", page_size=100),
     )
 
-    assert _compile(stmt) == (
+    assert compile_sql(stmt) == (
         'SELECT materials.material_id, materials.sort_key COLLATE "C" AS cursor '
         "FROM materials WHERE materials.pages > 3 "
         "AND (materials.sort_key COLLATE \"C\") <= 'k' "
@@ -711,15 +704,15 @@ def test_paginate_next_page_desc_starts_at_cursor_inclusive():
 
 
 def test_paginate_applies_empty_cursor():
-    stmt = pagination.paginate(STMT, cursor_expr=CURSOR_EXPR, request=_request(cursor=""))
+    stmt = pagination.paginate(STMT, key=CURSOR_EXPR, request=_request(cursor=""))
 
-    assert "(materials.sort_key COLLATE \"C\") >= ''" in _compile(stmt)
+    assert "(materials.sort_key COLLATE \"C\") >= ''" in compile_sql(stmt)
 
 
 def test_paginate_sends_cursor_as_bound_parameter():
     stmt = pagination.paginate(
         STMT,
-        cursor_expr=CURSOR_EXPR,
+        key=CURSOR_EXPR,
         request=_request(cursor="a'; DROP TABLE materials; --"),
     )
 
@@ -732,22 +725,22 @@ def test_paginate_sends_cursor_as_bound_parameter():
 def test_paginate_replaces_ordering_of_the_statement():
     stmt = pagination.paginate(
         STMT.order_by(models.Materials.c.title.desc()),
-        cursor_expr=CURSOR_EXPR,
+        key=CURSOR_EXPR,
         request=_request(),
     )
 
-    compiled = _compile(stmt)
+    compiled = compile_sql(stmt)
 
     assert "materials.title" not in compiled
     assert compiled.endswith('ORDER BY materials.sort_key COLLATE "C" ASC LIMIT 3')
 
 
 def test_paginate_does_not_change_the_given_statement():
-    before = _compile(STMT)
+    before = compile_sql(STMT)
 
-    pagination.paginate(STMT, cursor_expr=CURSOR_EXPR, request=_request(cursor="k"))
+    pagination.paginate(STMT, key=CURSOR_EXPR, request=_request(cursor="k"))
 
-    assert _compile(STMT) == before
+    assert compile_sql(STMT) == before
 
 
 async def test_count_wraps_statement_without_ordering():
@@ -756,7 +749,7 @@ async def test_count_wraps_statement_without_ordering():
     result = await pagination.count(ses, STMT.order_by(models.Materials.c.title))
 
     assert result == 42
-    assert [_compile(stmt) for stmt in ses.scalars] == [
+    assert [compile_sql(stmt) for stmt in ses.scalars] == [
         "SELECT count(*) AS count_1 FROM (SELECT materials.material_id AS material_id "
         "FROM materials WHERE materials.pages > 3) AS anon_1",
     ]
@@ -789,7 +782,7 @@ async def test_fetch_rows_splits_page_and_maps_items(
 
     result = await pagination.fetch_rows(
         STMT,
-        cursor_expr=CURSOR_EXPR,
+        key=CURSOR_EXPR,
         request=_request(page_size=2),
         to_item=lambda row: f"item-{row.cursor}",
     )
@@ -806,18 +799,18 @@ async def test_fetch_rows_executes_paginated_statement_and_counts_the_original(
 
     await pagination.fetch_rows(
         STMT,
-        cursor_expr=CURSOR_EXPR,
+        key=CURSOR_EXPR,
         request=_request(order=Order.DESC, cursor="k", page_size=2),
         to_item=lambda row: row,
     )
 
-    assert _compile(ses.executed[0]) == (
+    assert compile_sql(ses.executed[0]) == (
         'SELECT materials.material_id, materials.sort_key COLLATE "C" AS cursor '
         "FROM materials WHERE materials.pages > 3 "
         "AND (materials.sort_key COLLATE \"C\") <= 'k' "
         'ORDER BY materials.sort_key COLLATE "C" DESC LIMIT 3'
     )
-    assert _compile(ses.scalars[0]) == (
+    assert compile_sql(ses.scalars[0]) == (
         "SELECT count(*) AS count_1 FROM (SELECT materials.material_id AS material_id "
         "FROM materials WHERE materials.pages > 3) AS anon_1"
     )
@@ -829,7 +822,7 @@ async def test_fetch_page_emits_token_when_extra_row_exists(fake_session):
 
     page = await pagination.fetch_page(
         STMT,
-        cursor_expr=CURSOR_EXPR,
+        key=CURSOR_EXPR,
         request=request,
         to_item=lambda row: row.cursor,
     )
@@ -846,7 +839,7 @@ async def test_fetch_page_emits_no_token_for_exactly_full_last_page(fake_session
 
     page = await pagination.fetch_page(
         STMT,
-        cursor_expr=CURSOR_EXPR,
+        key=CURSOR_EXPR,
         request=_request(page_size=2, params=PARAMS),
         to_item=lambda row: row.cursor,
     )
@@ -859,7 +852,7 @@ async def test_fetch_page_of_empty_result(fake_session):
 
     page = await pagination.fetch_page(
         STMT,
-        cursor_expr=CURSOR_EXPR,
+        key=CURSOR_EXPR,
         request=_request(),
         to_item=lambda row: row.cursor,
     )
@@ -867,15 +860,15 @@ async def test_fetch_page_of_empty_result(fake_session):
     assert page == Page(items=[], next_token=None, total_count=0)
 
 
-LOG_KEYSET = pagination.keyset(
+LOG_KEYSET = pagination.Keyset((
     pagination.date_key(models.ReadingLog.c.date),
     pagination.text_key(models.ReadingLog.c.sort_key),
-)
+))
 LOG_STMT = sa.select(models.ReadingLog.c.log_id)
 
 
 def test_keyset_text_is_the_cursor_of_its_parts():
-    assert _compile(LOG_KEYSET.text) == _compile(
+    assert compile_sql(LOG_KEYSET.text) == compile_sql(
         pagination.cursor(
             pagination.date_part(models.ReadingLog.c.date),
             models.ReadingLog.c.sort_key,
@@ -890,26 +883,26 @@ def test_keyset_text_is_the_cursor_of_its_parts():
         (LOG_KEYSET, "2024-01-02$$a$$b", (datetime.date(2024, 1, 2), "a$$b")),
         (LOG_KEYSET, "2024-01-02$$", (datetime.date(2024, 1, 2), "")),
         (
-            pagination.keyset(
+            pagination.Keyset((
                 pagination.datetime_key(models.Materials.c.completed_at),
                 pagination.text_key(models.Materials.c.sort_key),
-            ),
+            )),
             "2024-01-02T03:04:05.000006$$k",
             (datetime.datetime(2024, 1, 2, 3, 4, 5, 6), "k"),  # noqa: DTZ001
         ),
         (
-            pagination.keyset(
+            pagination.Keyset((
                 pagination.int_key(models.Notes.c.note_number),
                 pagination.text_key(models.Notes.c.sort_key),
-            ),
+            )),
             "0000000042$$k",
             (42, "k"),
         ),
         (
-            pagination.keyset(
+            pagination.Keyset((
                 pagination.int_key(models.Notes.c.note_number),
                 pagination.text_key(models.Notes.c.sort_key),
-            ),
+            )),
             "2147483647$$k",
             (2**31 - 1, "k"),
         ),
@@ -920,10 +913,10 @@ def test_keyset_start_parses_every_part(key, cursor, expected):
     assert key.start(cursor) == expected
 
 
-NOTE_KEYSET = pagination.keyset(
+NOTE_KEYSET = pagination.Keyset((
     pagination.int_key(models.Notes.c.note_number),
     pagination.text_key(models.Notes.c.sort_key),
-)
+))
 
 
 @pytest.mark.parametrize(
@@ -954,14 +947,61 @@ NOTE_KEYSET = pagination.keyset(
     ],
 )
 def test_keyset_start_rejects_a_malformed_cursor(key, cursor):
-    with pytest.raises(database.InvalidNextTokenException, match="no valid cursor"):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
         key.start(cursor)
 
 
-def test_paginate_keyset_first_page_orders_by_the_columns():
-    stmt = pagination.paginate(LOG_STMT, cursor_expr=LOG_KEYSET, request=_request())
+DATETIME_KEYSET = pagination.Keyset((
+    pagination.datetime_key(models.Materials.c.completed_at),
+    pagination.text_key(models.Materials.c.sort_key),
+))
 
-    assert _compile(stmt).endswith(
+
+@pytest.mark.parametrize(
+    ("key", "cursor"),
+    [
+        (DATETIME_KEYSET, "2024-01-02T03:04:05.000006+05:00$$k"),
+        (DATETIME_KEYSET, "2024-01-02T03:04:05.000006Z$$k"),
+        (DATETIME_KEYSET, "2024-01-02T03:04:05$$k"),
+        (DATETIME_KEYSET, "2024-01-02$$k"),
+        (DATETIME_KEYSET, "2024-01-02 03:04:05.000006$$k"),
+        (LOG_KEYSET, "20240102$$k"),
+        (LOG_KEYSET, "2024-W01-2$$k"),
+        (LOG_KEYSET, "2024-01-02T00:00:00$$k"),
+    ],
+    ids=[
+        "utc-offset",
+        "zulu",
+        "no-microseconds",
+        "date-only",
+        "space-separator",
+        "basic-date",
+        "iso-week",
+        "date-with-time",
+    ],
+)
+def test_keyset_start_accepts_only_the_emitted_format(key, cursor):
+    with pytest.raises(database.InvalidNextTokenException, match="^Invalid nextToken$"):
+        key.start(cursor)
+
+
+def test_keyset_requires_a_part():
+    with pytest.raises(ValueError, match="at least one part"):
+        pagination.Keyset(())
+
+
+def test_keyset_rejects_a_text_part_before_the_last():
+    with pytest.raises(ValueError, match="Only the last part"):
+        pagination.Keyset((
+            pagination.text_key(models.Materials.c.sort_key),
+            pagination.date_key(models.Materials.c.completed_at),
+        ))
+
+
+def test_paginate_keyset_first_page_orders_by_the_columns():
+    stmt = pagination.paginate(LOG_STMT, key=LOG_KEYSET, request=_request())
+
+    assert compile_sql(stmt).endswith(
         "FROM reading_log ORDER BY reading_log.date ASC, reading_log.sort_key ASC LIMIT 3",
     )
 
@@ -974,11 +1014,11 @@ def test_paginate_keyset_first_page_orders_by_the_columns():
 def test_paginate_keyset_next_page_compares_a_row_value(order, operator, direction):
     stmt = pagination.paginate(
         LOG_STMT,
-        cursor_expr=LOG_KEYSET,
+        key=LOG_KEYSET,
         request=_request(order=order, cursor="2024-01-02$$k"),
     )
 
-    assert _compile(stmt).endswith(
+    assert compile_sql(stmt).endswith(
         f"FROM reading_log WHERE (reading_log.date, reading_log.sort_key) {operator} "
         "('2024-01-02', 'k') "
         f"ORDER BY reading_log.date {direction}, reading_log.sort_key {direction} LIMIT 3",
@@ -986,9 +1026,9 @@ def test_paginate_keyset_next_page_compares_a_row_value(order, operator, directi
 
 
 def test_paginate_keyset_selects_the_cursor_text():
-    stmt = pagination.paginate(LOG_STMT, cursor_expr=LOG_KEYSET, request=_request())
+    stmt = pagination.paginate(LOG_STMT, key=LOG_KEYSET, request=_request())
 
-    assert _compile(stmt).startswith(
+    assert compile_sql(stmt).startswith(
         "SELECT reading_log.log_id, to_char(reading_log.date, 'YYYY-MM-DD') || '$$' "
         '|| reading_log.sort_key COLLATE "C" AS cursor ',
     )
@@ -997,7 +1037,7 @@ def test_paginate_keyset_selects_the_cursor_text():
 def test_paginate_keyset_sends_the_cursor_values_as_bound_parameters():
     stmt = pagination.paginate(
         LOG_STMT,
-        cursor_expr=LOG_KEYSET,
+        key=LOG_KEYSET,
         request=_request(cursor="2024-01-02$$a'; DROP TABLE materials; --"),
     )
 
