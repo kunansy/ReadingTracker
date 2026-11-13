@@ -1,7 +1,9 @@
 import logging
 
+import httpx
 import pytest
 from fastapi import HTTPException
+from starlette.applications import Starlette
 from starlette.routing import Mount
 
 from tracker.common import spa
@@ -93,6 +95,30 @@ async def test_missing_bundle_file_is_404_from_the_static_mount(client, spa_inde
 
     assert response.status_code == 404
     assert SPA_HTML not in response.text
+
+
+async def _get_from_bundle(directory, path):
+    bundle = Starlette(
+        routes=[Mount("/", spa.SpaStaticFiles(directory=directory, check_dir=False))]
+    )
+    transport = httpx.ASGITransport(app=bundle)
+    async with httpx.AsyncClient(transport=transport, base_url="http://test") as http:
+        return await http.get(path)
+
+
+async def test_bundle_mount_answers_404_when_the_directory_is_absent(tmp_path):
+    response = await _get_from_bundle(tmp_path / "absent", "/app.js")
+
+    assert response.status_code == 404
+
+
+async def test_bundle_mount_serves_a_built_file(tmp_path):
+    (tmp_path / "app.js").write_text("built")
+
+    response = await _get_from_bundle(tmp_path, "/app.js")
+
+    assert response.status_code == 200
+    assert response.text == "built"
 
 
 @pytest.mark.parametrize("path", ["api", "api/v1/x", "static", "static/app.js"])
