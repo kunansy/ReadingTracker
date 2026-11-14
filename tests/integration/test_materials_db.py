@@ -530,7 +530,7 @@ async def test_update_material_raises_not_found_for_a_missing_id(clock):
             authors="A",
             pages=1,
             material_type=BOOK,
-            tags=None,
+            tags=[],
             link=None,
         )
 
@@ -548,7 +548,7 @@ async def test_update_material_rejects_a_title_taken_by_the_same_type(clock):
             authors="A",
             pages=1,
             material_type=BOOK,
-            tags=None,
+            tags=[],
             link=None,
         )
 

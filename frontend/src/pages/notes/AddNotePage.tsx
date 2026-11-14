@@ -12,6 +12,8 @@ import { loadWithTtl, saveWithTtl } from "../../lib/ttlStorage.ts";
 import { NoteDraft, parseNoteDraft, resolveNoteDraft } from "./noteDraft.ts";
 import { useMaterial, useMaterialTitles } from "../../materials/queries";
 import { useNoteTags } from "../../notes/queries";
+import { TAGS_MAX_ITEMS } from "../../api/constraints";
+import { sanitizeTagInput } from "../../tags";
 
 type AddNoteForm = NoteDraft & {
   title: string;
@@ -181,6 +183,8 @@ export function AddNotePage() {
                   value={formData.tags}
                   onChange={(tags) => updateFormData({ tags })}
                   allowCreate
+                  sanitizeInput={sanitizeTagInput}
+                  maxSelected={TAGS_MAX_ITEMS}
               >
                 <ComboboxInput
                     className="input"

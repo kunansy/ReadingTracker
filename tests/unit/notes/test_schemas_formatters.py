@@ -1,6 +1,5 @@
 import pytest
 
-from tracker.common.schemas import TAG_PATTERN
 from tracker.notes import schemas
 
 
@@ -332,24 +331,3 @@ def test_link_pattern_finds_every_link():
 )
 def test_link_pattern_rejects_non_uuid(string):
     assert schemas.LINK_PATTERN.search(string) is None
-
-
-@pytest.mark.parametrize(
-    "tag",
-    ["a", "a_b", "tag1", "1", "тег", "Tag", "_"],
-)
-def test_tag_pattern_accepts_word_characters(tag):
-    assert TAG_PATTERN.match(tag).group(1) == tag
-
-
-@pytest.mark.parametrize(
-    "tag",
-    ["", "a-b", "a b", " a", "a ", "#a", "a.b", "a,b"],
-    ids=["empty", "hyphen", "space", "leading-space", "trailing-space", "hash", "dot", "comma"],
-)
-def test_tag_pattern_rejects_other_characters(tag):
-    assert TAG_PATTERN.match(tag) is None
-
-
-def test_tag_pattern_accepts_trailing_newline_current_behaviour():
-    assert TAG_PATTERN.match("a\n") is not None

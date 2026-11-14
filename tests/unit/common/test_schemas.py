@@ -2,7 +2,7 @@ import datetime
 from uuid import UUID
 
 import pytest
-from pydantic import ValidationError
+from pydantic import TypeAdapter, ValidationError
 
 from tracker.common import schemas
 from tracker.common.schemas import CustomBaseModel, MinMax, Tags, TagsQuery
@@ -117,8 +117,12 @@ def test_normalize_tags(raw, expected):
     assert schemas.normalize_tags(raw) == expected
 
 
-@pytest.mark.parametrize("raw", ["a-b", "a,b", "a.b"], ids=["hyphen", "comma", "dot"])
-def test_normalize_tags_rejects_non_word_tags(raw):
+@pytest.mark.parametrize(
+    "raw",
+    ["a-b", "a,b", "a.b", "c++", "a" * (schemas.MAX_TAG_LENGTH + 1)],
+    ids=["hyphen", "comma", "dot", "plus", "too-long"],
+)
+def test_normalize_tags_rejects_invalid_tags(raw):
     with pytest.raises(ValueError, match="^Invalid tags$"):
         schemas.normalize_tags(raw)
 
@@ -151,3 +155,74 @@ def test_tags_query_rejects_a_query_over_the_limit():
     with pytest.raises(ValidationError, match="at most 512 characters"):
         _TagsModel(tags_query="a" * (schemas.MAX_SEARCH_QUERY_LENGTH + 1))
 
+
+
+_TAG = TypeAdapter(schemas.Tag)
+
+
+@pytest.mark.parametrize(
+    ("tag", "expected"),
+    [
+        ("a", "a"),
+        ("a_b", "a_b"),
+        ("tag1", "tag1"),
+        ("1", "1"),
+        ("_", "_"),
+        ("Тег", "тег"),
+        ("ŞİŇ", "şi̇ň"),
+        ("a\n", "a"),
+        (" A ", "a"),
+    ],
+    ids=["letter", "underscore", "alnum", "digit", "only-underscore", "cyrillic", "latin-ext",
+         "trailing-newline", "padded"],
+)
+def test_tag_accepts_unicode_letters_digits_and_underscore(tag, expected):
+    assert _TAG.validate_python(tag) == expected
+
+
+@pytest.mark.parametrize(
+    "tag",
+    ["", "a-b", "a b", "#a", "a.b", "a,b", "c++"],
+    ids=["empty", "hyphen", "space", "hash", "dot", "comma", "plus"],
+)
+def test_tag_rejects_other_characters(tag):
+    with pytest.raises(ValidationError, match="String should match pattern"):
+        _TAG.validate_python(tag)
+
+
+def test_tag_accepts_the_maximum_length():
+    tag = "a" * schemas.MAX_TAG_LENGTH
+
+    assert _TAG.validate_python(tag) == tag
+
+
+def test_tag_rejects_a_tag_over_the_maximum_length():
+    with pytest.raises(ValidationError, match="at most 128 characters"):
+        _TAG.validate_python("a" * (schemas.MAX_TAG_LENGTH + 1))
+
+
+def test_tags_accept_the_maximum_count():
+    tags = [f"t{i:02}" for i in range(schemas.MAX_TAGS)]
+
+    assert _TagsModel(tags=tags).tags == tags
+
+
+def test_tags_reject_a_list_over_the_maximum_count():
+    with pytest.raises(ValidationError, match="at most 32 items"):
+        _TagsModel(tags=[f"t{i:02}" for i in range(schemas.MAX_TAGS + 1)])
+
+
+def test_tag_limits_are_published_in_the_json_schema():
+    defs = _TagsModel.model_json_schema()["$defs"]
+
+    assert defs["Tag"] == {"maxLength": 128, "pattern": "^[\\p{L}\\p{N}_]+$", "type": "string"}
+    assert defs["Tags"]["maxItems"] == 32
+
+
+@pytest.mark.parametrize(
+    ("tags_query", "expected"),
+    [(None, set()), ("b a", {"a", "b"}), ("#B a", {"a", "b"})],
+    ids=["none", "plain", "normalized"],
+)
+def test_requested_tags_splits_the_normalized_query(tags_query, expected):
+    assert schemas.TagsSearchParams(tags_query=tags_query).requested_tags() == expected

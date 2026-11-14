@@ -138,11 +138,8 @@ def test_create_material_request_accepts_blank_text_current_behaviour(field):
     assert getattr(request, field) == ""
 
 
-@pytest.mark.parametrize(
-    "model",
-    [schemas.UpdateMaterialRequest, schemas.UpdateMaterialResponse],
-)
-def test_update_material_models_require_material_id(model):
+def test_update_material_request_requires_material_id():
+    model = schemas.UpdateMaterialRequest
     with pytest.raises(ValidationError) as exc_info:
         model(**_create_payload())
 

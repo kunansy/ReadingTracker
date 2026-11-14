@@ -833,6 +833,9 @@ async def test_create_material_with_every_field(client, insert_material):
         ({"link": ""}, "body.link: Input should be a valid URL"),
         ({"material_id": str(factories.MATERIAL_ID)}, "body.material_id: Extra inputs"),
         ({"title": None}, "body.title: Input should be a valid string"),
+        ({"tags": ["sci-fi"]}, "body.tags.0: String should match pattern"),
+        ({"tags": ["a" * 129]}, "body.tags.0: String should have at most 128 characters"),
+        ({"tags": [f"t{i}" for i in range(33)]}, "body.tags: List should have at most 32"),
     ],
     ids=[
         "zero-pages",
@@ -842,6 +845,9 @@ async def test_create_material_with_every_field(client, insert_material):
         "empty-link",
         "extra",
         "null-title",
+        "non-word-tag",
+        "long-tag",
+        "too-many-tags",
     ],
 )
 async def test_create_material_rejects_invalid_body(

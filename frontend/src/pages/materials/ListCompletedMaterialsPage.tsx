@@ -21,6 +21,7 @@ import {
   ComboboxInput, ComboboxList, ComboboxRoot,
 } from "../../components/Combobox";
 import { materialKeys, useMaterialTags } from "../../materials/queries";
+import { sanitizeTagInput } from "../../tags";
 
 type OutlinedParam = "true" | "false" | "";
 
@@ -135,6 +136,7 @@ export function ListCompletedMaterialsPage() {
                       options={materialTags}
                       multiple
                       allowCreate
+                      sanitizeInput={sanitizeTagInput}
                   >
                       <ComboboxInput placeholder="Enter material tags" />
                       <ComboboxList />

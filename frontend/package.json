@@ -8,7 +8,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "gen:api": "openapi-typescript openapi.json -o src/api/schema.ts --root-types --root-types-no-schema-prefix --enum-values"
+    "gen:api": "openapi-typescript openapi.json -o src/api/schema.ts --root-types --root-types-no-schema-prefix --enum-values && node scripts/gen-constraints.mjs openapi.json src/api/constraints.ts"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.0",
