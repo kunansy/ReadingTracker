@@ -1127,32 +1127,15 @@ async def test_stored_note_renders_its_derived_fields(material_id):
     note = await notes_db.get_note(note_id=note_id)
 
     assert note.content_md == str(note) == "a < b, " + "x" * 60
-    assert note.content_html == "a &lt; b, " + "x" * 60
     assert note.short_content == ("a < b, " + "x" * 43) + "..."
     assert note.info == (
         f"ID: {note_id}\nNumber: 2\nMaterial ID: {material_id}\n\n" + "a < b, " + "x" * 60
     )
     assert note.chapter_int == 12
-    assert note.tags_html == (
-        '<a href=http://tracker.test/notes/?tags_query=longer_tag target="_blank">#longer_tag</a> '
-        '<a href=http://tracker.test/notes/?tags_query=tag target="_blank">#tag</a>'
-    )
-    assert note.link_html == (
-        f'<a class="link-ref" href=http://tracker.test/notes/{target} '
-        f'target="_blank">[[{target}]]</a>'
-    )
+    assert (note.tags, note.link_id) == (["longer_tag", "tag"], target)
     assert note.model_dump()["added_at"] == note.added_at.strftime("%Y-%m-%d %H:%M:%S")
     note.highlight("a &lt; b", "**a &lt; b**")
     assert note.content.startswith("**a &lt; b**, ")
-
-
-async def test_stored_note_without_a_link_has_no_link_html(material_id):
-    note_id = await factories.insert_note(material_id=material_id)
-
-    note = await notes_db.get_note(note_id=note_id)
-
-    assert note.link_html == ""
-    assert note.tags_html == ""
 
 
 async def test_add_links_to_follows_the_chain_of_links_and_stops_on_a_cycle(material_id):

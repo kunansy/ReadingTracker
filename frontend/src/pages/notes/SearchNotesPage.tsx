@@ -6,6 +6,7 @@ import { api, errorMessage, unwrap } from "../../api/client";
 import type { SearchNotesItem } from "../../api/schema";
 import { useContextMenu } from "../../contexts/ContextMenuContext";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
+import { NoteLinkRef, NoteTags } from "../../components/NoteRefs";
 import { ScrollArrows } from "../../components/ScrollArrows";
 import { PageNav } from "../../components/PageNav";
 import { PageLoadError } from "../../components/PageLoadError";
@@ -492,20 +493,10 @@ export function SearchNotesPage() {
                           ) : null}
                           <p
                             className="note-content"
-                            dangerouslySetInnerHTML={{ __html: parseMarkdown(note.content_html) }}
+                            dangerouslySetInnerHTML={{ __html: parseMarkdown(note.content) }}
                           />
-                          {note.tags_html ? (
-                            <p
-                              className="note-content"
-                              dangerouslySetInnerHTML={{ __html: note.tags_html }}
-                            />
-                          ) : null}
-                          {note.link_html ? (
-                            <p
-                              className="note-content link-ref"
-                              dangerouslySetInnerHTML={{ __html: note.link_html }}
-                            />
-                          ) : null}
+                          <NoteTags tags={note.tags} />
+                          <NoteLinkRef linkId={note.link_id} />
                           <p className="note-page">
                             {" "}
                             {pageName}: {note.page}{" "}

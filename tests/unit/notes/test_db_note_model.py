@@ -5,18 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from tests.unit.notes.conftest import MATERIAL_ID, build_note, note_id
-from tracker.common import settings
 from tracker.notes import db
-
-
-def _tag_link(tag: str) -> str:
-    return (
-        f'<a href={settings.TRACKER_URL}/notes/?tags_query={tag} target="_blank">#{tag}</a>'
-    )
-
-
-def test_tracker_url_is_pinned():
-    assert settings.TRACKER_URL == "http://tracker.test"
 
 
 class TestTags:
@@ -108,9 +97,6 @@ class TestContent:
         assert str(note) == "a <b> c"
         assert note.content_md == "a <b> c"
 
-    def test_content_html_is_the_raw_content(self):
-        assert build_note(1, content="a &lt;b&gt; c").content_html == "a &lt;b&gt; c"
-
     @pytest.mark.parametrize(
         ("content", "expected"),
         [
@@ -161,40 +147,6 @@ class TestContent:
         note.highlight(from_, to)
 
         assert note.content == expected
-
-
-class TestHtmlProperties:
-    def test_link_html_points_to_note_page(self):
-        note = build_note(1, link=2)
-
-        assert note.link_html == (
-            f'<a class="link-ref" href=http://tracker.test/notes/{note_id(2)} '
-            f'target="_blank">[[{note_id(2)}]]</a>'
-        )
-
-    def test_link_html_is_empty_without_link(self):
-        assert build_note(1).link_html == ""
-
-    @pytest.mark.parametrize(
-        ("tags", "expected"),
-        [
-            ([], ""),
-            (["one"], _tag_link("one")),
-            (["tag", "tags"], f"{_tag_link('tag')} {_tag_link('tags')}"),
-            (["abc", "тег"], f"{_tag_link('abc')} {_tag_link('тег')}"),
-        ],
-        ids=["empty", "single", "prefix-tag", "cyrillic"],
-    )
-    def test_tags_html(self, tags, expected):
-        assert build_note(1, tags=tags).tags_html == expected
-
-    def test_tags_html_links_every_tag(self):
-        note = build_note(1, tags=["tag", "tags"])
-
-        assert note.tags_html == f"{_tag_link('tag')} {_tag_link('tags')}"
-
-    def test_tags_html_is_empty_without_tags(self):
-        assert build_note(1).tags_html == ""
 
 
 def test_note_rejects_unknown_field():

@@ -22,18 +22,19 @@ vi.mock("../../api/client", async (importOriginal) => {
 const MATERIAL_ID = "m1";
 const ACTIVE_NOTE_ID = "note-active";
 const DELETED_NOTE_ID = "note-deleted";
+const LINKED_NOTE_ID = "note-linked";
 
 type Reply = { status: number; body?: unknown };
 type ActionReplies = Record<string, Reply>;
 
-function note(noteId: string, isDeleted: boolean) {
+function note(noteId: string, isDeleted: boolean, tags: string[] = [], linkId: string | null = null) {
   return {
     note_id: noteId,
     material_id: MATERIAL_ID,
     title: null,
-    content_html: `<p>${noteId} content</p>`,
-    tags_html: "",
-    link_html: "",
+    content: `<p>${noteId} content</p>`,
+    tags,
+    link_id: linkId,
     chapter: "1",
     chapter_int: 1,
     page: 1,
@@ -43,7 +44,7 @@ function note(noteId: string, isDeleted: boolean) {
 }
 
 const SEARCH_RESPONSE = {
-  notes: [note(ACTIVE_NOTE_ID, false), note(DELETED_NOTE_ID, true)],
+  notes: [note(ACTIVE_NOTE_ID, false, ["тег"], LINKED_NOTE_ID), note(DELETED_NOTE_ID, true)],
   total_count: 2,
   titles: { [MATERIAL_ID]: "Material" },
   material_types: { [MATERIAL_ID]: "book" },
@@ -125,6 +126,29 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   vi.unstubAllGlobals();
+});
+
+describe("SearchNotesPage note references", () => {
+  it("renders the tags and the linked note as in-app links", async () => {
+    stubFetch();
+    renderPage();
+
+    const tag = await screen.findByRole("link", { name: "#тег" });
+    const link = screen.getByRole("link", { name: `[[${LINKED_NOTE_ID}]]` });
+
+    expect(tag.getAttribute("href")).toBe(`/notes?tags_query=${encodeURIComponent("тег")}`);
+    expect(link.getAttribute("href")).toBe(`/notes/${LINKED_NOTE_ID}`);
+  });
+
+  it("renders no references for a note without tags and link", async () => {
+    stubFetch();
+    renderPage();
+
+    await screen.findByRole("link", { name: "#тег" });
+
+    expect(screen.getAllByRole("link", { name: /^#/ })).toHaveLength(1);
+    expect(screen.getAllByRole("link", { name: /^\[\[/ })).toHaveLength(1);
+  });
 });
 
 describe("SearchNotesPage note actions", () => {

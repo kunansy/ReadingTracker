@@ -150,7 +150,7 @@ export function AddCardPage() {
     if (noteId) {
       const note = notesById.get(noteId);
       if (note) {
-        setQuestion((prev) => (prev.trim() ? prev : stripHtml(note.content_html)));
+        setQuestion((prev) => (prev.trim() ? prev : stripHtml(note.content)));
       }
     }
   }, [noteId, notesById]);
@@ -202,7 +202,7 @@ export function AddCardPage() {
                     setNoteId(n.note_id);
                     setMaterialId(n.material_id);
                     if (!question.trim()) {
-                      setQuestion(stripHtml(n.content_html));
+                      setQuestion(stripHtml(n.content));
                     }
                     const p = new URLSearchParams(searchParams);
                     p.set("note_id", n.note_id);
@@ -211,7 +211,7 @@ export function AddCardPage() {
               >
                 <p
                     className="note-content"
-                    dangerouslySetInnerHTML={{ __html: parseMarkdown(n.content_html) }}
+                    dangerouslySetInnerHTML={{ __html: parseMarkdown(n.content) }}
                 />
                 <p className="note-page">Page: {n.page}</p>
                 <p className="note-id">ID: {n.note_id}</p>
@@ -272,7 +272,7 @@ export function AddCardPage() {
                 setQuestion("");
                 setAnswer("");
                 if (!question.trim()) {
-                  setQuestion(stripHtml(n.content_html));
+                  setQuestion(stripHtml(n.content));
                 }
                 const p = new URLSearchParams(searchParams);
                 p.set("material_id", n.material_id);
@@ -290,7 +290,7 @@ export function AddCardPage() {
             }}
             getOptionLabel={(id) => {
               const n = notesById.get(id);
-              return n ? stripHtml(n.content_html) : "";
+              return n ? stripHtml(n.content) : "";
             }}
           >
             <ComboboxInput

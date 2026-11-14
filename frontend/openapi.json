@@ -1619,17 +1619,25 @@
             "title": "Chapter Int",
             "type": "integer"
           },
-          "content_html": {
-            "title": "Content Html",
+          "content": {
+            "title": "Content",
             "type": "string"
           },
           "is_deleted": {
             "title": "Is Deleted",
             "type": "boolean"
           },
-          "link_html": {
-            "title": "Link Html",
-            "type": "string"
+          "link_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Link Id"
           },
           "links_count": {
             "anyOf": [
@@ -1656,9 +1664,12 @@
             "title": "Page",
             "type": "integer"
           },
-          "tags_html": {
-            "title": "Tags Html",
-            "type": "string"
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
           },
           "title": {
             "anyOf": [
@@ -1676,9 +1687,9 @@
           "note_id",
           "material_id",
           "title",
-          "content_html",
-          "tags_html",
-          "link_html",
+          "content",
+          "tags",
+          "link_id",
           "chapter",
           "chapter_int",
           "page",
