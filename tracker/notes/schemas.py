@@ -16,8 +16,7 @@ from tracker.common.schemas import (
     MAX_SEARCH_QUERY_LENGTH,
     CustomBaseModel,
     Tags,
-    TagsQuery,
-    normalize_tags,
+    TagsSearchParams,
 )
 from tracker.models.enums import MaterialTypesEnum
 from tracker.models.models import MAX_CHAPTER_LENGTH
@@ -137,13 +136,9 @@ class UpdateNoteRequest(_NoteBody):
     page: NonNegativeInt = 0
 
 
-class SearchParams(CustomBaseModel):
+class SearchParams(TagsSearchParams):
     material_id: UUID | None = None
     query: Annotated[str | None, Field(max_length=MAX_SEARCH_QUERY_LENGTH)] = None
-    tags_query: TagsQuery = None
-
-    def requested_tags(self) -> set[str]:
-        return set(normalize_tags(self.tags_query or ""))
 
 
 class NoteJson(CustomBaseModel):

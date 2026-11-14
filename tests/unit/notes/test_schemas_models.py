@@ -218,11 +218,16 @@ class TestSearchParams:
 
         assert params.requested_tags() == expected
 
-    @pytest.mark.parametrize("field", ["query", "tags_query"])
-    def test_query_at_the_limit_is_accepted(self, field):
+    def test_query_at_the_limit_is_accepted(self):
         value = "a" * schemas.MAX_SEARCH_QUERY_LENGTH
 
-        assert getattr(schemas.SearchParams(**{field: value}), field) == value
+        assert schemas.SearchParams(query=value).query == value
+
+    def test_tags_query_at_the_limit_is_accepted(self):
+        value = " ".join(["a" * 128, "b" * 128, "c" * 128, "d" * 125])
+        assert len(value) == schemas.MAX_SEARCH_QUERY_LENGTH
+
+        assert schemas.SearchParams(tags_query=value).tags_query == value
 
     @pytest.mark.parametrize("field", ["query", "tags_query"])
     def test_query_over_the_limit_is_rejected(self, field):

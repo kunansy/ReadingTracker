@@ -30,7 +30,10 @@ type ComboboxContextType = {
     remove: (v: string) => void;
 
     canCreate: boolean;
+    sanitizeInput: (raw: string) => string;
 };
+
+const identity = (raw: string) => raw;
 
 const ComboboxContext = createContext<ComboboxContextType | null>(null);
 
@@ -45,6 +48,7 @@ type BaseProps = {
     options: readonly string[];
     getOptionLabel?: (opt: string) => string;
     allowCreate?: boolean;
+    sanitizeInput?: (raw: string) => string;
 };
 
 type SingleProps = BaseProps & {
@@ -59,6 +63,7 @@ type MultiProps = BaseProps & {
 
     value: string[];
     onChange: (v: string[]) => void;
+    maxSelected?: number;
 };
 
 type RootProps = SingleProps | MultiProps;
@@ -69,9 +74,11 @@ export function ComboboxRoot(props: RootProps) {
         options,
         getOptionLabel,
         allowCreate = false,
+        sanitizeInput = identity,
     } = props;
 
     const multiple = props.multiple === true;
+    const maxSelected = props.multiple === true ? props.maxSelected : undefined;
 
     const [open, setOpen] = useState(false);
     const [input, setInput] = useState("");
@@ -109,8 +116,10 @@ export function ComboboxRoot(props: RootProps) {
     ]);
 
     const normalized = input.trim();
+    const isFull = maxSelected !== undefined && selected.length >= maxSelected;
 
     const canCreate =
+        !isFull &&
         allowCreate &&
         normalized.length > 0 &&
         !options.some(
@@ -126,6 +135,9 @@ export function ComboboxRoot(props: RootProps) {
 
     const select = (v: string) => {
         if (multiple) {
+            if (isFull) {
+                return;
+            }
             props.onChange([...selected, v]);
             setInput("");
             return;
@@ -180,6 +192,7 @@ export function ComboboxRoot(props: RootProps) {
                 select,
                 remove,
                 canCreate,
+                sanitizeInput,
             }}
         >
             <div ref={ref} style={{ position: "relative" }}>
@@ -213,6 +226,7 @@ export function ComboboxInput({
         multiple,
         selected,
         remove,
+        sanitizeInput,
     } = useComboboxCtx();
 
     return (
@@ -246,7 +260,7 @@ export function ComboboxInput({
                 placeholder={placeholder}
                 onFocus={() => setOpen(true)}
                 onChange={(e) => {
-                    setInput(e.target.value);
+                    setInput(sanitizeInput(e.target.value));
                     setOpen(true);
                     setHighlight(0);
                 }}

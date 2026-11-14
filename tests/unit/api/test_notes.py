@@ -8,6 +8,7 @@ from tracker.common import database, kafka, manticoresearch, pagination
 from tracker.materials import db as materials_db
 from tracker.models import enums
 from tracker.notes import db as notes_db
+from tracker.common.schemas import MAX_TAG_LENGTH
 from tracker.notes.schemas import MAX_SEARCH_QUERY_LENGTH
 
 
@@ -187,13 +188,30 @@ async def test_search_with_query_highlights_the_found_notes(client, search_db):
     assert list(kwargs["note_ids"]) == [factories.NOTE_ID]
 
 
-@pytest.mark.parametrize("param", ["query", "tags_query"])
-async def test_search_accepts_a_query_of_max_length(client, search_db, param):
-    response = await client.get(
-        f"{BASE}/search", params={param: "a" * MAX_SEARCH_QUERY_LENGTH}
-    )
+_TAGS_QUERY_OF_MAX_LENGTH = " ".join(
+    f"{i}" + "a" * (MAX_TAG_LENGTH - 2) for i in range(4)
+).ljust(MAX_SEARCH_QUERY_LENGTH)
+
+
+@pytest.mark.parametrize(
+    ("param", "value"),
+    [("query", "a" * MAX_SEARCH_QUERY_LENGTH), ("tags_query", _TAGS_QUERY_OF_MAX_LENGTH)],
+    ids=["query", "tags_query"],
+)
+async def test_search_accepts_a_query_of_max_length(client, search_db, param, value):
+    assert len(value) == MAX_SEARCH_QUERY_LENGTH
+
+    response = await client.get(f"{BASE}/search", params={param: value})
 
     assert response.status_code == 200
+
+
+async def test_search_rejects_a_tags_query_with_a_tag_over_the_limit(client, search_db):
+    response = await client.get(
+        f"{BASE}/search", params={"tags_query": "a" * (MAX_TAG_LENGTH + 1)}
+    )
+
+    assert response.status_code == 422
 
 
 @pytest.mark.parametrize(
@@ -495,6 +513,8 @@ async def test_add_note_formats_content_and_normalizes_tags(client, write_db):
         ({"page": -1}, "body.page: Input should be greater than or equal to 0"),
         ({"tags": ["two words"]}, "body.tags.0: String should match pattern"),
         ({"tags": "tag"}, "body.tags: Input should be a valid list"),
+        ({"tags": ["a" * 129]}, "body.tags.0: String should have at most 128 characters"),
+        ({"tags": [f"t{i}" for i in range(33)]}, "body.tags: List should have at most 32"),
         ({"link_id": "x"}, "body.link_id: Input should be a valid UUID"),
         ({"chapter": "c" * 300}, "body.chapter: String should have at most"),
         (
@@ -507,6 +527,8 @@ async def test_add_note_formats_content_and_normalizes_tags(client, write_db):
         "negative-page",
         "bad-tag",
         "tags-not-list",
+        "long-tag",
+        "too-many-tags",
         "bad-link",
         "long-chapter",
         "extra",

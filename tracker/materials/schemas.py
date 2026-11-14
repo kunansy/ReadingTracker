@@ -10,8 +10,7 @@ from tracker.common.schemas import (
     CustomBaseModel,
     MinMax,
     Tags,
-    TagsQuery,
-    normalize_tags,
+    TagsSearchParams,
 )
 from tracker.models import enums
 from tracker.models.enums import MaterialTypesEnum
@@ -118,10 +117,6 @@ class UpdateMaterialRequest(CreateMaterialRequest):
     material_id: UUID
 
 
-class UpdateMaterialResponse(CreateMaterialRequest):
-    material_id: UUID
-
-
 class ParsedMaterialResponse(CustomBaseModel):
     authors: str
     title: str
@@ -130,13 +125,9 @@ class ParsedMaterialResponse(CustomBaseModel):
     duration: int | None = None
 
 
-class SearchParams(CustomBaseModel):
+class SearchParams(TagsSearchParams):
     material_type: enums.MaterialTypesEnum | None | Literal[""] = None
     is_outlined: bool | None = None
-    tags_query: TagsQuery = None
-
-    def requested_tags(self) -> set[str]:
-        return set(normalize_tags(self.tags_query or ""))
 
     def get_material_type(self) -> enums.MaterialTypesEnum | None:
         if isinstance(self.material_type, enums.MaterialTypesEnum):

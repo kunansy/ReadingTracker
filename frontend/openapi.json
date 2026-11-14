@@ -36,11 +36,7 @@
             "type": "integer"
           },
           "tags": {
-            "items": {
-              "$ref": "#/components/schemas/Tag"
-            },
-            "title": "Tags",
-            "type": "array"
+            "$ref": "#/components/schemas/Tags"
           },
           "title": {
             "anyOf": [
@@ -243,11 +239,7 @@
             "type": "integer"
           },
           "tags": {
-            "items": {
-              "$ref": "#/components/schemas/Tag"
-            },
-            "title": "Tags",
-            "type": "array"
+            "$ref": "#/components/schemas/Tags"
           },
           "title": {
             "title": "Title",
@@ -1850,8 +1842,16 @@
         "type": "object"
       },
       "Tag": {
-        "pattern": "^(\\w+)$",
+        "maxLength": 128,
+        "pattern": "^[\\p{L}\\p{N}_]+$",
         "type": "string"
+      },
+      "Tags": {
+        "items": {
+          "$ref": "#/components/schemas/Tag"
+        },
+        "maxItems": 32,
+        "type": "array"
       },
       "TrackerStatistics": {
         "additionalProperties": false,
@@ -2014,11 +2014,7 @@
             "type": "integer"
           },
           "tags": {
-            "items": {
-              "$ref": "#/components/schemas/Tag"
-            },
-            "title": "Tags",
-            "type": "array"
+            "$ref": "#/components/schemas/Tags"
           },
           "title": {
             "title": "Title",
@@ -2070,11 +2066,7 @@
             "type": "integer"
           },
           "tags": {
-            "items": {
-              "$ref": "#/components/schemas/Tag"
-            },
-            "title": "Tags",
-            "type": "array"
+            "$ref": "#/components/schemas/Tags"
           },
           "title": {
             "anyOf": [
@@ -2718,6 +2710,23 @@
         "parameters": [
           {
             "in": "query",
+            "name": "tags_query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tags Query"
+            }
+          },
+          {
+            "in": "query",
             "name": "material_type",
             "required": false,
             "schema": {
@@ -2750,23 +2759,6 @@
                 }
               ],
               "title": "Is Outlined"
-            }
-          },
-          {
-            "in": "query",
-            "name": "tags_query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "maxLength": 512,
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Tags Query"
             }
           },
           {
@@ -4049,6 +4041,23 @@
         "parameters": [
           {
             "in": "query",
+            "name": "tags_query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 512,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Tags Query"
+            }
+          },
+          {
+            "in": "query",
             "name": "material_id",
             "required": false,
             "schema": {
@@ -4079,23 +4088,6 @@
                 }
               ],
               "title": "Query"
-            }
-          },
-          {
-            "in": "query",
-            "name": "tags_query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "maxLength": 512,
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Tags Query"
             }
           },
           {

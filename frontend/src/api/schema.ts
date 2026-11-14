@@ -882,8 +882,7 @@ export interface components {
              * @default 0
              */
             page: number;
-            /** Tags */
-            tags?: components["schemas"]["Tag"][];
+            tags?: components["schemas"]["Tags"];
             /** Title */
             title?: string | null;
         };
@@ -955,8 +954,7 @@ export interface components {
             material_type: components["schemas"]["MaterialTypesEnum"];
             /** Pages */
             pages: number;
-            /** Tags */
-            tags?: components["schemas"]["Tag"][];
+            tags?: components["schemas"]["Tags"];
             /** Title */
             title: string;
         };
@@ -1479,6 +1477,7 @@ export interface components {
             started_at?: string | null;
         };
         Tag: string;
+        Tags: components["schemas"]["Tag"][];
         /** TrackerStatistics */
         TrackerStatistics: {
             /** Duration */
@@ -1541,8 +1540,7 @@ export interface components {
             material_type: components["schemas"]["MaterialTypesEnum"];
             /** Pages */
             pages: number;
-            /** Tags */
-            tags?: components["schemas"]["Tag"][];
+            tags?: components["schemas"]["Tags"];
             /** Title */
             title: string;
         };
@@ -1564,8 +1562,7 @@ export interface components {
              * @default 0
              */
             page: number;
-            /** Tags */
-            tags?: components["schemas"]["Tag"][];
+            tags?: components["schemas"]["Tags"];
             /** Title */
             title: string | null;
         };
@@ -1790,6 +1787,7 @@ export type SearchNotesItem = components['schemas']['SearchNotesItem'];
 export type SearchNotesResponse = components['schemas']['SearchNotesResponse'];
 export type StartMaterialRequest = components['schemas']['StartMaterialRequest'];
 export type Tag = components['schemas']['Tag'];
+export type Tags = components['schemas']['Tags'];
 export type TrackerStatistics = components['schemas']['TrackerStatistics'];
 export type UpdateMaterialRequest = components['schemas']['UpdateMaterialRequest'];
 export type UpdateNoteRequest = components['schemas']['UpdateNoteRequest'];
@@ -1957,9 +1955,9 @@ export interface operations {
     list_completed_materials_api_v1_materials_completed_get: {
         parameters: {
             query?: {
+                tags_query?: string | null;
                 material_type?: components["schemas"]["MaterialTypesEnum"] | "" | null;
                 is_outlined?: boolean | null;
-                tags_query?: string | null;
                 next_token?: string | null;
                 page_size?: number;
                 order?: components["schemas"]["Order"] | null;
@@ -2764,9 +2762,9 @@ export interface operations {
     notes_search_json_api_v1_notes_search_get: {
         parameters: {
             query?: {
+                tags_query?: string | null;
                 material_id?: string | null;
                 query?: string | null;
-                tags_query?: string | null;
                 next_token?: string | null;
                 page_size?: number;
                 order?: components["schemas"]["Order"] | null;

@@ -10,6 +10,8 @@ import {isUuid} from "../../utils/isUuid.ts";
 import {SpellTextarea} from "../../components/SpellTextrea.tsx";
 import { useMaterialTitles } from "../../materials/queries";
 import { noteKeys, useNote, useNoteTags } from "../../notes/queries";
+import { TAGS_MAX_ITEMS } from "../../api/constraints";
+import { sanitizeTagInput } from "../../tags";
 
 
 export function UpdateNotePage() {
@@ -168,6 +170,8 @@ export function UpdateNotePage() {
                   options={noteTags}
                   multiple
                   allowCreate
+                  sanitizeInput={sanitizeTagInput}
+                  maxSelected={TAGS_MAX_ITEMS}
               >
                 <ComboboxInput placeholder="Enter tags" />
                 <ComboboxList />

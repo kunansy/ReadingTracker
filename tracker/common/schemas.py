@@ -1,13 +1,23 @@
 import datetime
-import re
 from typing import Annotated, Final
 from uuid import UUID
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, NonNegativeInt, constr
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    NonNegativeInt,
+    TypeAdapter,
+    ValidationError,
+    constr,
+)
 
 
 MAX_SEARCH_QUERY_LENGTH: Final[int] = 512
-TAG_PATTERN: Final[re.Pattern[str]] = re.compile(r"^(\w+)$")
+TAG_PATTERN: Final[str] = r"^[\p{L}\p{N}_]+$"
+MAX_TAG_LENGTH: Final[int] = 128
+MAX_TAGS: Final[int] = 32
 
 
 class CustomBaseModel(BaseModel):
@@ -22,26 +32,46 @@ class MinMax(CustomBaseModel):
     date: datetime.date
 
 
+def _dedupe_tags(tags: list[str]) -> list[str]:
+    return sorted(set(tags))
+
+
+type Tag = constr(
+    pattern=TAG_PATTERN,
+    max_length=MAX_TAG_LENGTH,
+    to_lower=True,
+    strip_whitespace=True,
+)
+type Tags = Annotated[list[Tag], Field(max_length=MAX_TAGS), AfterValidator(_dedupe_tags)]
+
+_TAG_ADAPTER: Final[TypeAdapter[str]] = TypeAdapter(Tag)
+
+
 def normalize_tags(raw: str) -> list[str]:
-    """Parse whitespace-separated, optionally `#`-prefixed tags."""
-    normalized = set(raw.lower().replace("#", "").split())
-    if any(not TAG_PATTERN.match(tag) for tag in normalized):
-        raise ValueError("Invalid tags")
-    return sorted(normalized)
+    """Split whitespace-separated tags, drop every `#`, lowercase, dedupe and sort them.
+
+    Raises ValueError if a tag does not satisfy `Tag`.
+    """
+    try:
+        tags = {_TAG_ADAPTER.validate_python(tag) for tag in raw.replace("#", "").split()}
+    except ValidationError:
+        raise ValueError("Invalid tags") from None
+    return sorted(tags)
 
 
 def _normalize_tags_query(tags_query: str | None) -> str | None:
     return " ".join(normalize_tags(tags_query or "")) or None
 
 
-def _dedupe_tags(tags: list[str]) -> list[str]:
-    return sorted(set(tags))
-
-
-type Tag = constr(pattern=TAG_PATTERN.pattern, to_lower=True, strip_whitespace=True)
-Tags = Annotated[list[Tag], AfterValidator(_dedupe_tags)]
 TagsQuery = Annotated[
     str | None,
     Field(max_length=MAX_SEARCH_QUERY_LENGTH),
     AfterValidator(_normalize_tags_query),
 ]
+
+
+class TagsSearchParams(CustomBaseModel):
+    tags_query: TagsQuery = None
+
+    def requested_tags(self) -> set[str]:
+        return set((self.tags_query or "").split())
