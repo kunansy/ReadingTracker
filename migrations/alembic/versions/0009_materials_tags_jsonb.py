@@ -1,11 +1,12 @@
 r"""Store material and note tags as a non-null JSONB list.
 
 Material tags were a comma separated string: it is split, trimmed and lowercased, and
-every run of non-word characters becomes `_`, so each tag matches the `\\w+` pattern the
-API validates. Note tags were already JSONB, but nullable: SQL NULL and a JSON `null`
-become `[]`. Whitespace around material strings is trimmed once here, so reads do not
-strip it any more. The downgrade joins material tags back with ", " and makes both columns
-nullable again; the `[]` note tags stay as they are.
+every run of non-word characters becomes `_`, so each tag matches the API tag pattern.
+Note tags were already JSONB, but nullable: SQL NULL and any non-array value become `[]`,
+and arrays are trimmed, lowercased, deduplicated and sorted the way the API stores them.
+Whitespace around material strings is trimmed once here, so reads do not strip it any
+more. The downgrade joins material tags back with ", " and makes both columns nullable
+again; the `[]` note tags stay as they are.
 
 Revision ID: 0009
 Revises: 0008
@@ -55,9 +56,15 @@ UPDATE materials SET
     link = btrim(link, E' \t\n\r\v\f')
 """
 
-FIX_NOTE_TAGS = """
-UPDATE notes SET tags = '[]'::jsonb
-WHERE tags IS NULL OR jsonb_typeof(tags) <> 'array'
+NORMALIZE_NOTE_TAGS_FUNCTION = """
+CREATE OR REPLACE FUNCTION pg_temp.normalize_note_tags(tags jsonb) RETURNS jsonb
+LANGUAGE sql IMMUTABLE AS $$
+    SELECT coalesce(jsonb_agg(DISTINCT tag ORDER BY tag), '[]'::jsonb)
+    FROM jsonb_array_elements_text(
+        CASE WHEN jsonb_typeof(tags) = 'array' THEN tags ELSE '[]'::jsonb END
+    ) AS raw, lower(trim(raw)) AS tag
+    WHERE tag <> ''
+$$
 """
 
 
@@ -81,7 +88,8 @@ def upgrade() -> None:
         server_default=EMPTY_TAGS,
     )
 
-    op.execute(FIX_NOTE_TAGS)
+    op.execute(NORMALIZE_NOTE_TAGS_FUNCTION)
+    op.execute("UPDATE notes SET tags = pg_temp.normalize_note_tags(tags)")
     op.alter_column(
         "notes",
         "tags",

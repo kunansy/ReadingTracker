@@ -523,8 +523,16 @@ async def test_0009_upgrade_splits_and_normalizes_the_material_tags():
     ]
 
 
-async def test_0009_upgrade_replaces_null_note_tags_with_an_empty_list():
-    stored = ['["a", "b"]', "[]", "null", None]
+async def test_0009_upgrade_normalizes_the_note_tags():
+    stored = [
+        '["a", "b"]',
+        '["B", "a", "a", "", " c "]',
+        "[]",
+        "null",
+        None,
+        '"x"',
+        '{"a": 1}',
+    ]
 
     def check(conn: Connection) -> tuple[list, tuple]:
         REVISION_0009.downgrade()
@@ -538,7 +546,7 @@ async def test_0009_upgrade_replaces_null_note_tags_with_an_empty_list():
     tags, column = await in_rolled_back_migration(check)
 
     assert column == ("jsonb", "NO", "'[]'::jsonb")
-    assert tags == [["a", "b"], [], [], []]
+    assert tags == [["a", "b"], ["a", "b", "c"], [], [], [], [], []]
 
 
 async def test_0009_downgrade_joins_the_material_tags_back_into_a_string():
