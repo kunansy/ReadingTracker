@@ -280,9 +280,7 @@ async def test_upgrade_downgrade_cycle_with_rows_seeded_at_every_revision():
             ["тег"],
             1,
         )
-        assert (await factories.fetch_row(models.Notes, NOTE_WITHOUT_TAGS))[
-            "tags"
-        ] is None
+        assert (await factories.fetch_row(models.Notes, NOTE_WITHOUT_TAGS))["tags"] == []
 
         await migration_helpers.alembic_downgrade("0006")
         indexes = await helpers.fetch_all('SELECT material_id, "index" FROM materials')

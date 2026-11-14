@@ -882,7 +882,8 @@ export interface components {
              * @default 0
              */
             page: number;
-            tags?: components["schemas"]["Tags"];
+            /** Tags */
+            tags?: components["schemas"]["Tag"][];
             /** Title */
             title?: string | null;
         };
@@ -955,7 +956,7 @@ export interface components {
             /** Pages */
             pages: number;
             /** Tags */
-            tags?: string | null;
+            tags?: components["schemas"]["Tag"][];
             /** Title */
             title: string;
         };
@@ -1036,7 +1037,7 @@ export interface components {
             /** Pages */
             pages: number;
             /** Tags */
-            tags?: string | null;
+            tags: string[];
             /** Title */
             title: string;
         };
@@ -1477,7 +1478,7 @@ export interface components {
             /** Started At */
             started_at?: string | null;
         };
-        Tags: string[];
+        Tag: string;
         /** TrackerStatistics */
         TrackerStatistics: {
             /** Duration */
@@ -1541,7 +1542,7 @@ export interface components {
             /** Pages */
             pages: number;
             /** Tags */
-            tags?: string | null;
+            tags?: components["schemas"]["Tag"][];
             /** Title */
             title: string;
         };
@@ -1563,7 +1564,8 @@ export interface components {
              * @default 0
              */
             page: number;
-            tags?: components["schemas"]["Tags"];
+            /** Tags */
+            tags?: components["schemas"]["Tag"][];
             /** Title */
             title: string | null;
         };
@@ -1787,7 +1789,7 @@ export type RestoreResponse = components['schemas']['RestoreResponse'];
 export type SearchNotesItem = components['schemas']['SearchNotesItem'];
 export type SearchNotesResponse = components['schemas']['SearchNotesResponse'];
 export type StartMaterialRequest = components['schemas']['StartMaterialRequest'];
-export type Tags = components['schemas']['Tags'];
+export type Tag = components['schemas']['Tag'];
 export type TrackerStatistics = components['schemas']['TrackerStatistics'];
 export type UpdateMaterialRequest = components['schemas']['UpdateMaterialRequest'];
 export type UpdateNoteRequest = components['schemas']['UpdateNoteRequest'];

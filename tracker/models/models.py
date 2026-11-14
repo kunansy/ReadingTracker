@@ -57,6 +57,9 @@ def SortKey() -> sqlalchemy.Column:
     return Column("sort_key", Unicode(512, collation="C"), nullable=False, unique=True)
 
 
+EMPTY_TAGS: Final = sqlalchemy.text("'[]'::jsonb")
+
+
 def _utc_now() -> datetime.datetime:
     return datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
 
@@ -75,7 +78,7 @@ Materials = Table(
         Unicode(50),
         default=enums.MaterialTypesEnum.book,
     ),
-    Column("tags", Unicode(256), nullable=True),
+    Column("tags", JSONB, nullable=False, server_default=EMPTY_TAGS),
     Column("link", Unicode(2048), nullable=True),
     Column("added_at", DateTime, default=_utc_now),
     Column("is_outlined", Boolean, default=False),
@@ -134,7 +137,7 @@ Notes = Table(
     Column("added_at", DateTime, default=_utc_now),
     Column("chapter", Unicode(MAX_CHAPTER_LENGTH)),
     Column("page", Integer),
-    Column("tags", JSONB, nullable=True),
+    Column("tags", JSONB, nullable=False, server_default=EMPTY_TAGS),
     Column("is_deleted", Boolean, default=False),
     SortKey(),
     UniqueConstraint("note_number", name="uix_notes_note_number", deferrable=True),

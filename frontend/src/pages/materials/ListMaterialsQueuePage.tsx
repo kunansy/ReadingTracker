@@ -137,7 +137,7 @@ export function ListMaterialsQueuePage() {
               {il}: {material.pages}{" "}
             </p>
             <p> Type: {material.material_type} </p>
-            {material.tags ? <p> Tags: {material.tags} </p> : null}
+            {material.tags.length > 0 ? <p> Tags: {material.tags.join(", ")} </p> : null}
             {material.link ? <p> Link: {material.link} </p> : null}
             <hr />
             <p> Will be started: {estimate.will_be_started} </p>

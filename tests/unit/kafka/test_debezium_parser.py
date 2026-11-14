@@ -114,7 +114,7 @@ def test_record_parses_after_note():
     assert record.after.note_id == NOTE_ID
     assert record.after.material_id == MATERIAL_ID
     assert record.after.content == "Текст заметки"
-    assert record.after.tags == {"tag"}
+    assert record.after.tags == ["tag"]
     assert record.after.added_at == ADDED_AT
 
 

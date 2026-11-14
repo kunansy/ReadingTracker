@@ -35,6 +35,7 @@ REVISION_0005 = load("0005_drop_statuses.py")
 REVISION_0006 = load("0006_materials_completed_at_index.py")
 REVISION_0007 = load("0007_drop_materials_index.py")
 REVISION_0008 = load("0008_listing_indexes.py")
+REVISION_0009 = load("0009_materials_tags_jsonb.py")
 ALL_REVISIONS = (
     REVISION_0001,
     REVISION_0002,
@@ -44,6 +45,7 @@ ALL_REVISIONS = (
     REVISION_0006,
     REVISION_0007,
     REVISION_0008,
+    REVISION_0009,
 )
 
 

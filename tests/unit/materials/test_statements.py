@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 
 import pytest
+from sqlalchemy.dialects import postgresql
 
 from tests.unit.helpers import compile_sql, make_material, midnight, uid
 from tests.unit.materials.helpers import fake_session_factory
@@ -56,26 +57,8 @@ def test_completed_materials_without_filters():
         ({"material_type": enums.MaterialTypesEnum.lecture}, "materials.material_type = 'lecture'"),
         ({"is_outlined": True}, "materials.is_outlined = true"),
         ({"is_outlined": False}, "materials.is_outlined = false"),
-        (
-            {"tags": {"sql"}},
-            "(regexp_split_to_array(lower(trim(materials.tags)), '\\\\s*,\\\\s*') @> CAST(ARRAY['sql'] AS TEXT[]))",
-        ),
-        (
-            {"tags": {"sql", " Python ", "Ядро"}},
-            "(regexp_split_to_array(lower(trim(materials.tags)), '\\\\s*,\\\\s*') "
-            "@> CAST(ARRAY['python', 'sql', 'ядро'] AS TEXT[]))",
-        ),
-        (
-            {
-                "material_type": enums.MaterialTypesEnum.book,
-                "is_outlined": False,
-                "tags": {"b", "a"},
-            },
-            "materials.material_type = 'book' AND materials.is_outlined = false "
-            "AND (regexp_split_to_array(lower(trim(materials.tags)), '\\\\s*,\\\\s*') @> CAST(ARRAY['a', 'b'] AS TEXT[]))",
-        ),
     ],
-    ids=["type", "outlined", "not-outlined", "one-tag", "normalized-sorted-tags", "all-filters"],
+    ids=["type", "outlined", "not-outlined"],
 )
 def test_completed_materials_filters(filters, expected_where):
     sql = compile_sql(db._get_completed_materials_stmt(**filters))
@@ -87,6 +70,44 @@ def test_completed_materials_filters(filters, expected_where):
     )
 
 
+def _compile_params(stmt):
+    compiled = stmt.compile(dialect=postgresql.dialect())
+    return " ".join(str(compiled).split()), compiled.params
+
+
+@pytest.mark.parametrize(
+    ("tags", "expected"),
+    [({"sql"}, ["sql"]), ({"b", "a", "c"}, ["a", "b", "c"])],
+    ids=["one-tag", "sorted-tags"],
+)
+def test_completed_materials_filter_by_tags_with_jsonb_containment(tags, expected):
+    sql, params = _compile_params(db._get_completed_materials_stmt(tags=tags))
+
+    assert sql.endswith(
+        "WHERE materials.completed_at IS NOT NULL "
+        "AND materials.tags @> %(tags_1)s::JSONB ORDER BY materials.completed_at",
+    )
+    assert params == {"tags_1": expected}
+
+
+def test_completed_materials_all_filters():
+    sql, params = _compile_params(
+        db._get_completed_materials_stmt(
+            material_type=enums.MaterialTypesEnum.book,
+            is_outlined=False,
+            tags={"a"},
+        ),
+    )
+
+    assert sql.endswith(
+        "WHERE materials.completed_at IS NOT NULL "
+        "AND materials.material_type = %(material_type_1)s "
+        "AND materials.is_outlined = false "
+        "AND materials.tags @> %(tags_1)s::JSONB ORDER BY materials.completed_at",
+    )
+    assert params == {"material_type_1": enums.MaterialTypesEnum.book, "tags_1": ["a"]}
+
+
 @pytest.mark.parametrize(
     "filters",
     [
@@ -94,20 +115,13 @@ def test_completed_materials_filters(filters, expected_where):
         {"is_outlined": None},
         {"tags": None},
         {"tags": set()},
-        {"tags": {" ", ""}},
     ],
-    ids=["no-type", "no-outlined", "no-tags", "empty-tags", "blank-tags"],
+    ids=["no-type", "no-outlined", "no-tags", "empty-tags"],
 )
 def test_completed_materials_empty_filter_is_not_applied(filters):
     assert compile_sql(db._get_completed_materials_stmt(**filters)) == compile_sql(
         db._get_completed_materials_stmt(),
     )
-
-
-def test_tag_filter_quotes_tag_literals():
-    sql = compile_sql(db._get_completed_materials_stmt(tags={"o'reilly"}))
-
-    assert "ARRAY['o''reilly']" in sql
 
 
 @pytest.mark.parametrize("is_outlined", [True, False], ids=["outlined-only", "all"])
@@ -184,37 +198,14 @@ def tags_in_db(mocker):
 @pytest.mark.parametrize(
     ("stored", "expected"),
     [
-        ([], set()),
-        (["python"], {"python"}),
-        (["python, sql"], {"python", "sql"}),
-        (["python,sql"], {"python", "sql"}),
-        (["  Python ,SQL  ", "sql, Go"], {"python", "sql", "go"}),
-        (["Ядро, ЯДРО , ядро"], {"ядро"}),
-        (["data science, machine learning"], {"data science", "machine learning"}),
+        ([], []),
+        ([["python"]], ["python"]),
+        ([["sql", "python"], ["go", "sql"], []], ["go", "python", "sql"]),
     ],
-    ids=[
-        "no-materials",
-        "single",
-        "comma-space",
-        "comma-only",
-        "strip-lower-dedupe",
-        "cyrillic-case",
-        "tag-with-space",
-    ],
+    ids=["no-materials", "single", "deduplicated-and-sorted"],
 )
-async def test_material_tags_are_split_stripped_and_lowercased(tags_in_db, stored, expected):
+async def test_material_tags_are_flattened_deduplicated_and_sorted(tags_in_db, stored, expected):
     tags_in_db(stored)
-
-    assert await db.get_material_tags() == expected
-
-
-@pytest.mark.parametrize(
-    ("stored", "expected"),
-    [("", set()), ("python,", {"python"}), (", ,", set())],
-    ids=["empty", "trailing", "blank"],
-)
-async def test_material_tags_skip_empty_tags(tags_in_db, stored, expected):
-    tags_in_db([stored])
 
     assert await db.get_material_tags() == expected
 
@@ -224,19 +215,9 @@ async def test_material_tags_query_skips_materials_without_tags(tags_in_db):
 
     await db.get_material_tags()
 
-    assert compile_sql(session.scalars.await_args.args[0]) == (
-        "SELECT materials.tags FROM materials WHERE materials.tags IS NOT NULL"
-    )
-
-
-def test_tag_filter_splits_like_the_tag_listing():
-    """`get_material_tags` splits by ',' with spaces around and lowers; so does the filter."""
-    sql = compile_sql(db._get_completed_materials_stmt(tags={"SQL"}))
-
-    assert (
-        "regexp_split_to_array(lower(trim(materials.tags)), '\\\\s*,\\\\s*') "
-        "@> CAST(ARRAY['sql'] AS TEXT[])"
-    ) in sql
+    sql, params = _compile_params(session.scalars.await_args.args[0])
+    assert sql == "SELECT materials.tags FROM materials WHERE materials.tags != %(tags_1)s::JSONB"
+    assert params == {"tags_1": []}
 
 
 @pytest.fixture
@@ -267,12 +248,12 @@ async def test_completed_materials_pass_filters_to_the_statement(parse_response)
     materials = await db._get_completed_materials(**filters)
 
     assert materials == parse_response.return_value
-    assert compile_sql(parse_response.await_args.kwargs["stmt"]) == compile_sql(
+    assert _compile_params(parse_response.await_args.kwargs["stmt"]) == _compile_params(
         db._get_completed_materials_stmt(**filters),
     )
 
 
-def test_to_material_ignores_extra_columns_and_strips_strings():
+def test_to_material_ignores_extra_columns_and_keeps_strings_as_stored():
     row = make_material().model_dump() | {
         "title": "  Title  ",
         "sort_key": "key",
@@ -281,4 +262,4 @@ def test_to_material_ignores_extra_columns_and_strips_strings():
 
     material = db._to_material(row)
 
-    assert material == make_material(title="Title")
+    assert material == make_material(title="  Title  ")

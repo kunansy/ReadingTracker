@@ -19,43 +19,14 @@ def test_tracker_url_is_pinned():
     assert settings.TRACKER_URL == "http://tracker.test"
 
 
-class TestLoadTags:
-    @pytest.mark.parametrize(
-        ("tags", "expected"),
-        [
-            ('["a", "b"]', {"a", "b"}),
-            ("[]", set()),
-            ('["a", "a"]', {"a"}),
-            ('["тег"]', {"тег"}),
-            (["b", "a", "a"], {"a", "b"}),
-            ([], set()),
-            ({"a"}, {"a"}),
-            (("a",), {"a"}),
-        ],
-        ids=[
-            "json-string",
-            "empty-json-array",
-            "json-duplicates",
-            "json-cyrillic",
-            "list",
-            "empty-list",
-            "set",
-            "tuple",
-        ],
-    )
-    def test_tags_are_loaded_into_a_set(self, tags, expected):
-        assert build_note(1, tags=tags).tags == expected
+class TestTags:
+    def test_tags_are_kept_in_the_stored_order(self):
+        assert build_note(1, tags=["b", "a"]).tags == ["b", "a"]
 
-    @pytest.mark.parametrize("tags", ["not json", "", "{"])
-    def test_invalid_json_string_is_rejected(self, tags):
+    @pytest.mark.parametrize("tags", [None, '["a"]'], ids=["null", "json-text"])
+    def test_non_list_tags_are_rejected(self, tags):
         with pytest.raises(ValidationError, match="tags"):
             build_note(1, tags=tags)
-
-    def test_json_null_is_loaded_as_no_tags(self):
-        assert build_note(1, tags="null").tags == set()
-
-    def test_null_tags_column_is_loaded_as_no_tags(self):
-        assert build_note(1, tags=None).tags == set()
 
 
 class TestSerialization:
@@ -110,7 +81,7 @@ class TestSerialization:
             added_at=datetime.datetime(2024, 1, 1),  # noqa: DTZ001
             chapter="2",
             page=3,
-            tags='["x"]',
+            tags=["x"],
             is_deleted=False,
             note_number=9,
             links_count=0,
@@ -124,7 +95,7 @@ class TestSerialization:
             added_at=datetime.datetime(2024, 1, 1),  # noqa: DTZ001
             chapter="2",
             page=3,
-            tags={"x"},
+            tags=["x"],
             note_number=9,
             links_count=0,
         )
@@ -263,18 +234,18 @@ class TestHtmlProperties:
     @pytest.mark.parametrize(
         ("tags", "expected"),
         [
-            (set(), ""),
-            ({"one"}, "#one"),
-            ({"b", "a", "c"}, "#a #b #c"),
-            ({"тег", "abc"}, "#abc #тег"),
+            ([], ""),
+            (["one"], "#one"),
+            (["a", "b", "c"], "#a #b #c"),
+            (["abc", "тег"], "#abc #тег"),
         ],
-        ids=["empty", "single", "sorted", "cyrillic-after-latin"],
+        ids=["empty", "single", "several", "cyrillic"],
     )
     def test_tags_str(self, tags, expected):
         assert build_note(1, tags=tags).tags_str == expected
 
     def test_tags_html_links_every_tag(self):
-        note = build_note(1, tags={"tags", "tag"})
+        note = build_note(1, tags=["tag", "tags"])
 
         assert note.tags_html == f"{_tag_link('tag')} {_tag_link('tags')}"
 

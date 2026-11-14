@@ -1,8 +1,15 @@
 import datetime
-from typing import Literal
+import itertools
+import re
+from collections.abc import Iterable
+from typing import Annotated, Final
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, NonNegativeInt
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field, NonNegativeInt, constr
+
+
+MAX_SEARCH_QUERY_LENGTH: Final[int] = 512
+TAG_PATTERN: Final[re.Pattern[str]] = re.compile(r"^(\w+)$")
 
 
 class CustomBaseModel(BaseModel):
@@ -17,8 +24,30 @@ class MinMax(CustomBaseModel):
     date: datetime.date
 
 
-def skip_empty_value(v: Literal[""] | UUID | None) -> UUID | None:
-    """Needed to work with html forms, that sends empty string as default."""
-    if not v:
-        return None
-    return v
+def normalize_tags(raw: str) -> list[str]:
+    """Parse whitespace-separated, optionally `#`-prefixed tags."""
+    normalized = set(raw.lower().replace("#", "").split())
+    if any(not TAG_PATTERN.match(tag) for tag in normalized):
+        raise ValueError("Invalid tags")
+    return sorted(normalized)
+
+
+def _normalize_tags_query(tags_query: str | None) -> str | None:
+    return " ".join(normalize_tags(tags_query or "")) or None
+
+
+def _dedupe_tags(tags: list[str]) -> list[str]:
+    return sorted(set(tags))
+
+
+type Tag = constr(pattern=TAG_PATTERN.pattern, to_lower=True, strip_whitespace=True)
+Tags = Annotated[list[Tag], AfterValidator(_dedupe_tags)]
+TagsQuery = Annotated[
+    str | None,
+    Field(max_length=MAX_SEARCH_QUERY_LENGTH),
+    AfterValidator(_normalize_tags_query),
+]
+
+
+def flatten_tags(rows: Iterable[list[str]]) -> list[str]:
+    return list(itertools.chain.from_iterable(rows))

@@ -29,7 +29,7 @@ async def insert_material(
     authors: str = "Author",
     pages: int = 100,
     material_type: enums.MaterialTypesEnum = enums.MaterialTypesEnum.book,
-    tags: str | None = None,
+    tags: list[str] | None = None,
     link: str | None = None,
 ) -> uuid.UUID:
     return await materials_db.insert_material(
@@ -37,7 +37,7 @@ async def insert_material(
         authors=authors,
         pages=pages,
         material_type=material_type,
-        tags=tags,
+        tags=tags or [],
         link=link,
     )
 

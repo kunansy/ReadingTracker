@@ -47,7 +47,7 @@ export function UpdateMaterialPage() {
     setAuthors(m.authors);
     setPages(String(m.pages));
     setMaterialType(m.material_type);
-    setTags(m.tags ? m.tags.split(", ") : []);
+    setTags(m.tags);
     setLink(m.link ?? "");
   }, [q.data, materialId]);
 
@@ -62,7 +62,7 @@ export function UpdateMaterialPage() {
         authors,
         pages: Number(pages),
         material_type: materialType,
-        tags: tags.join(", "),
+        tags,
         link: link.trim() || null,
       };
       await unwrapEmpty(
@@ -87,7 +87,7 @@ export function UpdateMaterialPage() {
             authors,
             pages: Number(pages),
             material_type: materialType,
-            tags: tags.join(", "),
+            tags,
             link: link.trim() || null,
           },
         };

@@ -157,7 +157,7 @@ async def test_search_serializes_notes_and_side_data(client, search_db):
         "chapters": {key: ["", "1.2"]},
         "query": None,
         "tags": ["tag", "тег"],
-        "tags_query": "тег tag",
+        "tags_query": "tag тег",
         "next_token": "next",
         "page_size": 2,
         "material_id": key,
@@ -427,7 +427,7 @@ def write_db(mocker):
     return {
         "get_material": mocker.patch.object(
             materials_db,
-            "get_material_api",
+            "get_material",
             mocker.AsyncMock(return_value=factories.material()),
         ),
         "get_link": _patch(

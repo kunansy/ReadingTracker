@@ -1,5 +1,6 @@
 import pytest
 
+from tracker.common.schemas import TAG_PATTERN
 from tracker.notes import schemas
 
 
@@ -45,41 +46,6 @@ def test_replace_quotes_pairs_double_quotes(string, expected):
 def test_replace_quotes_rejects_unbalanced_quotes(string):
     with pytest.raises(AssertionError, match="Quotes are not balanced"):
         schemas._replace_quotes(string)
-
-
-@pytest.mark.parametrize(
-    ("string", "expected"),
-    [
-        ("", ""),
-        (".", "."),
-        ("?", "?"),
-        ("!", "!"),
-        ("text.", "text."),
-        ("text?", "text?"),
-        ("text!", "text!"),
-        ("text", "text."),
-        ("text,", "text,."),
-        ("text…", "text…."),
-        ("text. ", "text. ."),
-        ("текст", "текст."),
-    ],
-    ids=[
-        "empty",
-        "only-dot",
-        "only-question",
-        "only-exclamation",
-        "ends-with-dot",
-        "ends-with-question",
-        "ends-with-exclamation",
-        "plain",
-        "comma",
-        "ellipsis-char",
-        "trailing-space",
-        "cyrillic",
-    ],
-)
-def test_add_dot(string, expected):
-    assert schemas.add_dot(string) == expected
 
 
 @pytest.mark.parametrize(
@@ -273,14 +239,14 @@ def test_demark_note(string, expected):
 
 
 def test_notes_formatters_run_in_declared_order():
-    assert schemas.NOTES_FORMATTERS == (
+    assert (
         schemas._replace_quotes,
         schemas._up_first_letter,
         schemas._replace_punctuation,
         schemas._replace_up_index,
         schemas._replace_inf,
-    )
-    assert schemas.NOTES_DEMARKERS == (schemas._dereplace_lt, schemas._dereplace_gt)
+    ) == schemas.NOTES_FORMATTERS
+    assert (schemas._dereplace_lt, schemas._dereplace_gt) == schemas.NOTES_DEMARKERS
 
 
 def test_all_formatters_compose_on_one_string():
@@ -373,7 +339,7 @@ def test_link_pattern_rejects_non_uuid(string):
     ["a", "a_b", "tag1", "1", "тег", "Tag", "_"],
 )
 def test_tag_pattern_accepts_word_characters(tag):
-    assert schemas.TAG_PATTERN.match(tag).group(1) == tag
+    assert TAG_PATTERN.match(tag).group(1) == tag
 
 
 @pytest.mark.parametrize(
@@ -382,8 +348,8 @@ def test_tag_pattern_accepts_word_characters(tag):
     ids=["empty", "hyphen", "space", "leading-space", "trailing-space", "hash", "dot", "comma"],
 )
 def test_tag_pattern_rejects_other_characters(tag):
-    assert schemas.TAG_PATTERN.match(tag) is None
+    assert TAG_PATTERN.match(tag) is None
 
 
 def test_tag_pattern_accepts_trailing_newline_current_behaviour():
-    assert schemas.TAG_PATTERN.match("a\n") is not None
+    assert TAG_PATTERN.match("a\n") is not None

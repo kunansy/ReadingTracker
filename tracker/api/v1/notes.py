@@ -97,9 +97,11 @@ async def get_notes_meta(material_id: UUID | None = None):
 
 
 async def _check_note_refs(*, material_id: UUID, link_id: UUID | None) -> None:
-    await materials_db.get_material_api(material_id=material_id)
-    if link_id:
-        await db.get_note(note_id=link_id)
+    with database.unwrap_database_errors():
+        async with asyncio.TaskGroup() as tg:
+            tg.create_task(materials_db.get_material(material_id=material_id))
+            if link_id:
+                tg.create_task(db.get_note(note_id=link_id))
 
 
 @router.post("/add", status_code=201, response_model=schemas.AddNoteResponse)
@@ -164,7 +166,10 @@ async def get_note_tags(material_id: UUID | None = None):
 async def list_possible_note_links(note_id: UUID):
     note = await db.get_note(note_id=note_id)
 
-    possible_links = await db.get_possible_links(note_id=note_id, note_tags=note.tags)
+    possible_links = await db.get_possible_links(
+        note_id=note_id,
+        note_tags=set(note.tags),
+    )
 
     return {"items": possible_links}
 

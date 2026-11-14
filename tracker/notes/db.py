@@ -7,16 +7,15 @@ from typing import Any
 from uuid import UUID
 
 import networkx as nx
-import orjson
 import sqlalchemy.sql as sa
 from fastapi.encoders import jsonable_encoder
-from pydantic import field_serializer, field_validator
+from pydantic import field_serializer
 from pyvis.network import Network
 from sqlalchemy.engine import Row
 
 from tracker.common import database, pagination, settings, sort_keys
 from tracker.common.logger import logger
-from tracker.common.schemas import CustomBaseModel
+from tracker.common.schemas import CustomBaseModel, flatten_tags
 from tracker.models import enums, models
 from tracker.notes import schemas
 
@@ -34,18 +33,11 @@ class Note(CustomBaseModel):
     added_at: datetime.datetime
     chapter: str
     page: int
-    tags: set[str]
+    tags: list[str]
     is_deleted: bool
     note_number: int
     # only for listing/one-page view
     links_count: int | None = None
-
-    @field_validator("tags", mode="before")
-    def load_tags(cls, tags: set[str] | list[str] | str | None) -> Any:
-        # the column is nullable: SQL NULL arrives as None, a JSON null as "null"
-        if isinstance(tags, str):
-            tags = orjson.loads(tags)
-        return tags or set()
 
     @field_serializer("added_at")
     def serialize_added_at(self, added_at: datetime.datetime) -> str:
@@ -79,7 +71,7 @@ class Note(CustomBaseModel):
         return schemas.demark_note(self.content)
 
     @classmethod
-    def _mark_tags_with_ref(cls, text: str, tags: set[str]) -> str:
+    def _mark_tags_with_ref(cls, text: str, tags: list[str]) -> str:
         link_text_template = (
             f"<a href={settings.TRACKER_URL}{_NOTES_PATH}?"
             'tags_query={tag} target="_blank">#{tag}</a>'
@@ -107,7 +99,7 @@ class Note(CustomBaseModel):
 
     @property
     def tags_str(self) -> str:
-        return " ".join(f"#{tag}" for tag in sorted(self.tags))
+        return " ".join(f"#{tag}" for tag in self.tags)
 
     @property
     def tags_html(self) -> str:
@@ -459,18 +451,13 @@ async def restore_note(*, note_id: UUID) -> None:
     logger.debug("Note restored")
 
 
-def _flatten_tags(rows: Iterable[list[str] | None]) -> list[str]:
-    # a JSON null passes `tags != []`
-    return [tag for tags in rows if tags for tag in tags]
-
-
 async def _get_tags() -> set[str]:
     logger.debug("Getting tags")
 
     stmt = sa.select(models.Notes.c.tags).where(models.Notes.c.tags != [])
 
     async with database.session() as ses:
-        tags = _flatten_tags((await ses.scalars(stmt)).all())
+        tags = flatten_tags(await ses.scalars(stmt))
 
     tags_set = set(tags)
     logger.debug("Total %s unique tags got", len(tags_set))
@@ -488,7 +475,7 @@ async def _get_material_tags(material_id: str | UUID) -> list[str]:
     )
 
     async with database.session() as ses:
-        tags = _flatten_tags((await ses.scalars(stmt)).all())
+        tags = flatten_tags(await ses.scalars(stmt))
 
     tags_counter = Counter(tags)
     logger.debug("Total %s unique tags got", len(tags_counter))
@@ -522,7 +509,7 @@ async def get_possible_links(note_id: UUID, note_tags: set[str]) -> list[Note]:
         ]
 
     # most possible first
-    links.sort(key=lambda link: len(link.tags & note_tags), reverse=True)
+    links.sort(key=lambda link: len(note_tags.intersection(link.tags)), reverse=True)
 
     logger.debug("%s possible links got", len(links))
     return links

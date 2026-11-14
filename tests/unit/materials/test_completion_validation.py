@@ -67,7 +67,9 @@ async def test_material_started_later_today_can_be_completed_today(lookups):
 
 
 async def test_missing_material_raises_not_found(lookups):
-    lookups.get_material.return_value = None
+    lookups.get_material.side_effect = database.NotFoundException(
+        "Material id=1 not found"
+    )
 
     with pytest.raises(database.NotFoundException, match="Material id=.* not found"):
         await db.is_completion_request_valid(material_id=MATERIAL_ID)

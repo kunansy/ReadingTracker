@@ -14,6 +14,7 @@ from tests.integration.migrations.revisions import (
     REVISION_0006,
     REVISION_0007,
     REVISION_0008,
+    REVISION_0009,
     in_rolled_back_migration,
 )
 from tracker.common import sort_keys
@@ -457,3 +458,143 @@ async def test_0008_replaces_the_completed_at_index_by_the_listing_indexes():
     assert set(at_0008) - set(LISTING_INDEXES_AT_0008) == set(at_0007) - {
         REVISION_0008.COMPLETED_AT_INDEX_NAME,
     }
+
+
+def _tags(conn: Connection, table: str, key: str, ids: list[uuid.UUID]) -> list:
+    tags = dict(_rows(conn, sa.text(f"SELECT {key}, tags FROM {table}")))  # noqa: S608
+    return [tags[row_id] for row_id in ids]
+
+
+def _tags_column(conn: Connection, table: str) -> tuple[str, str, str | None]:
+    row = conn.execute(
+        sa.text(
+            "SELECT data_type, is_nullable, column_default FROM information_schema.columns "
+            "WHERE table_name = :table AND column_name = 'tags'",
+        ),
+        {"table": table},
+    ).one()
+    return tuple(row)
+
+
+def _set_tags(
+    conn: Connection, table: str, key: str, row_id: uuid.UUID, tags: str | None
+) -> None:
+    conn.execute(
+        sa.text(
+            f"UPDATE {table} SET tags = CAST(:tags AS {_TAGS_CAST[table]}) WHERE {key} = :id"
+        ),  # noqa: S608
+        {"tags": tags, "id": row_id},
+    )
+
+
+_TAGS_CAST = {"materials": "varchar", "notes": "jsonb"}
+
+
+async def test_0009_upgrade_splits_and_normalizes_the_material_tags():
+    stored = [
+        "Код, Практика",
+        " b ,a,, A ",
+        "c++, machine learning, data-science",
+        "  ,  ",
+        "",
+        None,
+    ]
+
+    def check(conn: Connection) -> tuple[list, tuple]:
+        REVISION_0009.downgrade()
+        ids = [_insert_material(conn) for _ in stored]
+        for material_id, tags in zip(ids, stored, strict=True):
+            _set_tags(conn, "materials", "material_id", material_id, tags)
+        REVISION_0009.upgrade()
+        return _tags(conn, "materials", "material_id", ids), _tags_column(
+            conn, "materials"
+        )
+
+    tags, column = await in_rolled_back_migration(check)
+
+    assert column == ("jsonb", "NO", "'[]'::jsonb")
+    assert tags == [
+        ["код", "практика"],
+        ["a", "b"],
+        ["c", "data_science", "machine_learning"],
+        [],
+        [],
+        [],
+    ]
+
+
+async def test_0009_upgrade_replaces_null_note_tags_with_an_empty_list():
+    stored = ['["a", "b"]', "[]", "null", None]
+
+    def check(conn: Connection) -> tuple[list, tuple]:
+        REVISION_0009.downgrade()
+        material_id = _insert_material(conn)
+        ids = [_insert_note(conn, material_id=material_id) for _ in stored]
+        for note_id, tags in zip(ids, stored, strict=True):
+            _set_tags(conn, "notes", "note_id", note_id, tags)
+        REVISION_0009.upgrade()
+        return _tags(conn, "notes", "note_id", ids), _tags_column(conn, "notes")
+
+    tags, column = await in_rolled_back_migration(check)
+
+    assert column == ("jsonb", "NO", "'[]'::jsonb")
+    assert tags == [["a", "b"], [], [], []]
+
+
+async def test_0009_downgrade_joins_the_material_tags_back_into_a_string():
+    stored = [["b", "a"], []]
+
+    def check(conn: Connection) -> tuple[list, tuple, tuple]:
+        ids = [_insert_material(conn) for _ in stored]
+        for material_id, tags in zip(ids, stored, strict=True):
+            conn.execute(
+                models.Materials.update()
+                .values(tags=tags)
+                .where(models.Materials.c.material_id == material_id),
+            )
+        REVISION_0009.downgrade()
+        return (
+            _tags(conn, "materials", "material_id", ids),
+            _tags_column(conn, "materials"),
+            _tags_column(conn, "notes"),
+        )
+
+    tags, materials_column, notes_column = await in_rolled_back_migration(check)
+
+    assert materials_column == ("character varying", "YES", None)
+    assert notes_column == ("jsonb", "YES", None)
+    assert tags == ["a, b", None]
+
+
+async def test_0009_upgrade_trims_whitespace_around_material_strings():
+    def check(conn: Connection) -> tuple:
+        REVISION_0009.downgrade()
+        material_id = _insert_material(conn)
+        conn.execute(
+            sa.text(
+                "UPDATE materials SET title = :title, authors = :authors, link = :link "
+                "WHERE material_id = :material_id",
+            ),
+            {
+                "title": "  Padded title\n",
+                "authors": "\tAuthor ",
+                "link": " https://example.com ",
+                "material_id": material_id,
+            },
+        )
+        REVISION_0009.upgrade()
+        return tuple(
+            conn.execute(
+                sa.text(
+                    "SELECT title, authors, link FROM materials "
+                    "WHERE material_id = :material_id",
+                ),
+                {"material_id": material_id},
+            ).one(),
+        )
+
+    assert await in_rolled_back_migration(check) == (
+        "Padded title",
+        "Author",
+        "https://example.com",
+    )

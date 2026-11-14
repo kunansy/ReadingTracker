@@ -99,13 +99,13 @@ def test_format_content_replaces_a_final_question_or_exclamation_mark_current_be
 
 
 def test_format_content_demarks_html_entities():
-    note = _note("a &lt; b &gt; c #tag", tags={"tag"})
+    note = _note("a &lt; b &gt; c #tag", tags=["tag"])
 
     assert update_notes_format.format_content(note) == "a < b > c."
 
 
 def test_format_content_warns_when_hashes_and_tags_disagree(caplog):
-    note = _note("Issue #42 #tag", tags={"tag"})
+    note = _note("Issue #42 #tag", tags=["tag"])
 
     with caplog.at_level(logging.WARNING):
         content = update_notes_format.format_content(note)
@@ -117,7 +117,7 @@ def test_format_content_warns_when_hashes_and_tags_disagree(caplog):
 
 
 def test_format_content_does_not_warn_when_every_hash_is_a_tag(caplog):
-    note = _note("Text #one #two", tags={"one", "two"})
+    note = _note("Text #one #two", tags=["one", "two"])
 
     with caplog.at_level(logging.WARNING):
         update_notes_format.format_content(note)
