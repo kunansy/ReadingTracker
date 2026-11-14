@@ -202,9 +202,9 @@ class SearchNotesItem(CustomBaseModel):
     note_id: UUID
     material_id: UUID
     title: str | None
-    content_html: str
-    tags_html: str
-    link_html: str
+    content: str
+    tags: list[str]
+    link_id: UUID | None
     chapter: str
     chapter_int: int
     page: int

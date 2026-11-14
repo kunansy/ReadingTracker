@@ -9,7 +9,6 @@ import os
 
 
 TEST_ENVIRONMENT = {
-    "TRACKER_URL": "http://tracker.test",
     "API_DEBUG": "false",
     "DB_HOST": "127.0.0.1",
     # nothing listens here: a test that reaches for the database fails instead of reading real data

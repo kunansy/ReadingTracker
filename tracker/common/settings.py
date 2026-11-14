@@ -5,7 +5,6 @@ from pathlib import Path
 
 import orjson
 from environs import Env
-from marshmallow import ValidationError
 from marshmallow.validate import OneOf
 
 
@@ -24,17 +23,6 @@ if (version_file := Path("VERSION")).exists():
 DATA_DIR = Path("data/")
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
-
-def _validate_no_trailing_slash(url: str) -> None:
-    if url.endswith("/"):
-        raise ValidationError("must not end with '/'")
-
-
-TRACKER_URL = env(
-    "TRACKER_URL",
-    "http://tracker-app:8000",
-    validate=_validate_no_trailing_slash,
-)
 
 with env.prefixed("API_"):
     API_DEBUG = env.bool("DEBUG", False)

@@ -19,16 +19,6 @@ from tracker.models import enums, models
 from tracker.notes import schemas
 
 
-_NOTES_PATH = "/notes/"
-
-
-def _tag_link(tag: str) -> str:
-    return (
-        f"<a href={settings.TRACKER_URL}{_NOTES_PATH}?"
-        f'tags_query={tag} target="_blank">#{tag}</a>'
-    )
-
-
 class Note(CustomBaseModel):
     note_id: UUID
     link_id: UUID | None = None
@@ -74,23 +64,6 @@ class Note(CustomBaseModel):
 
     def __str__(self) -> str:
         return schemas.demark_note(self.content)
-
-    @property
-    def link_html(self) -> str:
-        if not self.link_id:
-            return ""
-
-        link_text = f"[[{self.link_id}]]"
-
-        return f'<a class="link-ref" href={settings.TRACKER_URL}{_NOTES_PATH}{self.link_id} target="_blank">{link_text}</a>'  # noqa: E501
-
-    @property
-    def content_html(self) -> str:
-        return self.content
-
-    @property
-    def tags_html(self) -> str:
-        return " ".join(_tag_link(tag) for tag in self.tags)
 
 
 def _to_note(row: Row) -> Note:

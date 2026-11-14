@@ -1,10 +1,11 @@
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { useMemo, useEffect, useState } from "react";
-import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { api, errorMessage, PAGE_SIZE, unwrap } from "../../api/client";
 import type { GetMaterialResponse, GetNoteLinksResponse, GetNoteResponse } from "../../api/schema";
 import { NetworkIframe } from "../../components/NetworkIframe";
+import { NoteLinkRef, NoteTags } from "../../components/NoteRefs";
 import { QueryStateFromResult } from "../../components/QueryState";
 import {parseMarkdown} from "../../utils/parseMarkdown.ts";
 import {isUuid} from "../../utils/isUuid.ts";
@@ -112,40 +113,8 @@ export function NotePage() {
                   className="note-content"
                   dangerouslySetInnerHTML={{ __html: parseMarkdown(note.content) }}
                 />
-                {note.tags?.length ? (
-                  <div
-                    className="note-tags"
-                    style={{
-                      display: "flex",
-                      margin: "auto",
-                      flexDirection: "row",
-                      gap: "5px",
-                    }}
-                  >
-                    {note.tags.map((t) => (
-                      <Link
-                        key={t}
-                        className="note-tag"
-                        to={`/notes?tags_query=${t}`}
-                      >
-                        #{t}
-                      </Link>
-                    ))}
-                  </div>
-                ) : null}
-                {note.link_id ? (
-                  <p className="note-content">
-                    <Link
-                        to={`/notes/${note.link_id}`}
-                        style={{
-                          textAlign: "left",
-                          fontSize: "2.5vh",
-                        }}
-                    >
-                      [[{note.link_id}]]
-                    </Link>
-                  </p>
-                ) : null}
+                <NoteTags tags={note.tags} />
+                <NoteLinkRef linkId={note.link_id} />
                 <p className="medium-text">{pageName}: {note.page} of {materialQ.data?.material.pages}</p>
                 <p className="medium-text">Added at: {note.added_at}</p>
                 <hr />

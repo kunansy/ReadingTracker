@@ -1413,12 +1413,12 @@ export interface components {
             chapter: string;
             /** Chapter Int */
             chapter_int: number;
-            /** Content Html */
-            content_html: string;
+            /** Content */
+            content: string;
             /** Is Deleted */
             is_deleted: boolean;
-            /** Link Html */
-            link_html: string;
+            /** Link Id */
+            link_id: string | null;
             /** Links Count */
             links_count: number | null;
             /**
@@ -1433,8 +1433,8 @@ export interface components {
             note_id: string;
             /** Page */
             page: number;
-            /** Tags Html */
-            tags_html: string;
+            /** Tags */
+            tags: string[];
             /** Title */
             title: string | null;
         };

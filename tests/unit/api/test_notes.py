@@ -118,18 +118,9 @@ async def test_search_serializes_notes_and_side_data(client, search_db):
                 "note_id": str(factories.NOTE_ID),
                 "material_id": key,
                 "title": "Заголовок",
-                "content_html": "Content #tag",
-                "tags_html": (
-                    '<a href=http://tracker.test/notes/?tags_query=tag target="_blank">'
-                    "#tag</a> "
-                    '<a href=http://tracker.test/notes/?tags_query=тег target="_blank">'
-                    "#тег</a>"
-                ),
-                "link_html": (
-                    '<a class="link-ref" '
-                    f"href=http://tracker.test/notes/{factories.OTHER_NOTE_ID} "
-                    f'target="_blank">[[{factories.OTHER_NOTE_ID}]]</a>'
-                ),
+                "content": "Content #tag",
+                "tags": ["tag", "тег"],
+                "link_id": str(factories.OTHER_NOTE_ID),
                 "chapter": "1.2",
                 "chapter_int": 12,
                 "page": 10,
@@ -140,9 +131,9 @@ async def test_search_serializes_notes_and_side_data(client, search_db):
                 "note_id": str(factories.OTHER_NOTE_ID),
                 "material_id": key,
                 "title": None,
-                "content_html": "plain",
-                "tags_html": "",
-                "link_html": "",
+                "content": "plain",
+                "tags": [],
+                "link_id": None,
                 "chapter": "",
                 "chapter_int": 0,
                 "page": 0,
@@ -189,7 +180,7 @@ async def test_search_with_query_highlights_the_found_notes(client, search_db):
     assert response.status_code == 200
     body = response.json()
     assert body["query"] == "мир"
-    assert [n["content_html"] for n in body["notes"]] == ["Война и <b>мир</b>"]
+    assert [n["content"] for n in body["notes"]] == ["Война и <b>мир</b>"]
     search_db["search"].assert_awaited_once_with("мир")
     kwargs = search_db["search_notes_page"].await_args.kwargs
     assert kwargs["query"] == "мир"

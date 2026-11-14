@@ -44,7 +44,6 @@ def load_settings(monkeypatch, tmp_path):
 def test_reload_with_test_environment_gives_pinned_values(load_settings):
     loaded = load_settings()
 
-    assert loaded.TRACKER_URL == "http://tracker.test"
     assert loaded.API_DEBUG is False
     assert loaded.DB_HOST == "127.0.0.1"
     assert loaded.DB_PORT == 1
@@ -76,7 +75,6 @@ def test_reload_with_test_environment_gives_pinned_values(load_settings):
 def test_optional_variables_fall_back_to_defaults(load_settings):
     loaded = load_settings(
         without=(
-            "TRACKER_URL",
             "API_DEBUG",
             "DB_TIMEOUT",
             "DB_ISOLATION_LEVEL",
@@ -93,7 +91,6 @@ def test_optional_variables_fall_back_to_defaults(load_settings):
         ),
     )
 
-    assert loaded.TRACKER_URL == "http://tracker-app:8000"
     assert loaded.API_DEBUG is False
     assert loaded.DB_TIMEOUT == 5
     assert loaded.DB_ISOLATION_LEVEL == "REPEATABLE READ"
@@ -137,16 +134,6 @@ def test_db_uri_does_not_escape_the_password_current_behaviour(load_settings):
     )
 
 
-@pytest.mark.parametrize(
-    "url",
-    ["http://tracker.test/", "/", "http://tracker.test//"],
-    ids=["trailing-slash", "only-slash", "double-slash"],
-)
-def test_tracker_url_with_trailing_slash_is_rejected(load_settings, url):
-    with pytest.raises(environs.EnvValidationError, match="TRACKER_URL"):
-        load_settings(TRACKER_URL=url)
-
-
 def test_hostname_survives_the_environment_clear(load_settings):
     loaded = load_settings(HOSTNAME="tracker-pod-1")
 
@@ -156,12 +143,6 @@ def test_hostname_survives_the_environment_clear(load_settings):
 
 def test_hostname_is_none_when_not_set(load_settings):
     assert load_settings().HOSTNAME is None
-
-
-def test_tracker_url_with_path_is_accepted(load_settings):
-    assert load_settings(TRACKER_URL="https://host/prefix").TRACKER_URL == (
-        "https://host/prefix"
-    )
 
 
 @pytest.mark.parametrize(
@@ -305,12 +286,11 @@ def test_constants():
 def test_settings_are_restored_after_a_reload(load_settings):
     env_before, data_dir_before = settings.env, settings.DATA_DIR
 
-    load_settings(TRACKER_URL="http://other.test", DB_PORT="5432")
-    assert settings.TRACKER_URL == "http://other.test"
+    load_settings(DB_PORT="5432")
+    assert settings.DB_PORT == 5432
 
     # restore by hand what the fixture does on teardown, to assert it in a test
     load_settings()
-    assert settings.TRACKER_URL == "http://tracker.test"
     assert settings.DB_PORT == 1
     assert settings.env is not env_before
     assert settings.DATA_DIR == data_dir_before
