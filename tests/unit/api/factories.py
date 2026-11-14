@@ -36,7 +36,7 @@ def note(**fields: Any) -> notes_db.Note:
         "added_at": ADDED_AT,
         "chapter": "3",
         "page": 10,
-        "tags": {"tag"},
+        "tags": ["tag"],
         "is_deleted": False,
         "note_number": 7,
     }

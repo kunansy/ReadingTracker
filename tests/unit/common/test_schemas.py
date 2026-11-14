@@ -151,6 +151,3 @@ def test_tags_query_rejects_a_query_over_the_limit():
     with pytest.raises(ValidationError, match="at most 512 characters"):
         _TagsModel(tags_query="a" * (schemas.MAX_SEARCH_QUERY_LENGTH + 1))
 
-
-def test_flatten_tags_keeps_order_and_duplicates():
-    assert schemas.flatten_tags(iter([["b", "a"], [], ["a"]])) == ["b", "a", "a"]

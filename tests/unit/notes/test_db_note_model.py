@@ -163,62 +163,6 @@ class TestContent:
         assert note.content == expected
 
 
-class TestMarkTagsWithRef:
-    @pytest.mark.parametrize(
-        ("text", "tags", "expected"),
-        [
-            ("#a_tag", {"a_tag"}, _tag_link("a_tag")),
-            (
-                "any text #with or #without a tag",
-                set(),
-                "any text #with or #without a tag",
-            ),
-            (
-                "#a_tag #another-tag #tag",
-                {"a_tag", "another-tag", "tag"},
-                f"{_tag_link('a_tag')} {_tag_link('another-tag')} {_tag_link('tag')}",
-            ),
-            (
-                "text with tags, some content and #some #tags",
-                {"some", "tags", "tag"},
-                "text with tags, some content and "
-                f"{_tag_link('some')} {_tag_link('tags')}",
-            ),
-            (
-                "a link https://blog.burntsushi.net/ripgrep#single-file-benchmarks "
-                "#and #tags",
-                {"and", "tags", "single"},
-                "a link https://blog.burntsushi.net/ripgrep#single-file-benchmarks "
-                f"{_tag_link('and')} {_tag_link('tags')}",
-            ),
-            ("text # only", {"text", "only"}, "text # only"),
-            ("#тег в конце", {"тег"}, f"{_tag_link('тег')} в конце"),
-            ("#tag #tag", {"tag"}, f"{_tag_link('tag')} {_tag_link('tag')}"),
-            ("#Tag", {"tag"}, "#Tag"),
-            ("", {"tag"}, ""),
-        ],
-        ids=[
-            "single",
-            "no-tags-requested",
-            "several",
-            "longer-tag-wins-over-its-prefix",
-            "url-fragment-is-not-a-tag",
-            "lonely-hash",
-            "cyrillic",
-            "repeated",
-            "case-sensitive",
-            "empty-text",
-        ],
-    )
-    def test_requested_tags_become_links(self, text, tags, expected):
-        assert db.Note._mark_tags_with_ref(text, tags) == expected
-
-    def test_tag_is_not_regex_escaped_current_behaviour(self):
-        marked = db.Note._mark_tags_with_ref("#a.c #abc", {"a.c"})
-
-        assert marked == f"{_tag_link('a.c')} {_tag_link('a.c')}"
-
-
 class TestHtmlProperties:
     def test_link_html_points_to_note_page(self):
         note = build_note(1, link=2)
@@ -235,14 +179,14 @@ class TestHtmlProperties:
         ("tags", "expected"),
         [
             ([], ""),
-            (["one"], "#one"),
-            (["a", "b", "c"], "#a #b #c"),
-            (["abc", "тег"], "#abc #тег"),
+            (["one"], _tag_link("one")),
+            (["tag", "tags"], f"{_tag_link('tag')} {_tag_link('tags')}"),
+            (["abc", "тег"], f"{_tag_link('abc')} {_tag_link('тег')}"),
         ],
-        ids=["empty", "single", "several", "cyrillic"],
+        ids=["empty", "single", "prefix-tag", "cyrillic"],
     )
-    def test_tags_str(self, tags, expected):
-        assert build_note(1, tags=tags).tags_str == expected
+    def test_tags_html(self, tags, expected):
+        assert build_note(1, tags=tags).tags_html == expected
 
     def test_tags_html_links_every_tag(self):
         note = build_note(1, tags=["tag", "tags"])

@@ -9,9 +9,12 @@ from tracker.notes import (
 )
 
 
+_TAG_PATTERN = r"(\B)#({tag})(\b)"
+
+
 def _delete_tags(text: str, tags: list[str]) -> str:
     for tag in tags:
-        text = re.sub(notes_db._TAG_PATTERN.format(tag=tag), "", text)  # noqa: SLF001
+        text = re.sub(_TAG_PATTERN.format(tag=tag), "", text)
     return text
 
 

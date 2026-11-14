@@ -1,7 +1,6 @@
 import asyncio
 import datetime
-import re
-from collections import Counter, defaultdict
+from collections import defaultdict
 from collections.abc import Collection, Iterable
 from typing import Any
 from uuid import UUID
@@ -15,13 +14,19 @@ from sqlalchemy.engine import Row
 
 from tracker.common import database, pagination, settings, sort_keys
 from tracker.common.logger import logger
-from tracker.common.schemas import CustomBaseModel, flatten_tags
+from tracker.common.schemas import CustomBaseModel
 from tracker.models import enums, models
 from tracker.notes import schemas
 
 
-_TAG_PATTERN = r"(\B)#({tag})(\b)"
 _NOTES_PATH = "/notes/"
+
+
+def _tag_link(tag: str) -> str:
+    return (
+        f"<a href={settings.TRACKER_URL}{_NOTES_PATH}?"
+        f'tags_query={tag} target="_blank">#{tag}</a>'
+    )
 
 
 class Note(CustomBaseModel):
@@ -70,20 +75,6 @@ class Note(CustomBaseModel):
     def __str__(self) -> str:
         return schemas.demark_note(self.content)
 
-    @classmethod
-    def _mark_tags_with_ref(cls, text: str, tags: list[str]) -> str:
-        link_text_template = (
-            f"<a href={settings.TRACKER_URL}{_NOTES_PATH}?"
-            'tags_query={tag} target="_blank">#{tag}</a>'
-        )
-
-        for tag in sorted(tags, key=len, reverse=True):
-            link_text = link_text_template.format(tag=tag)
-
-            text = re.sub(_TAG_PATTERN.format(tag=tag), rf"\1{link_text}\3", text)
-
-        return text
-
     @property
     def link_html(self) -> str:
         if not self.link_id:
@@ -98,12 +89,8 @@ class Note(CustomBaseModel):
         return self.content
 
     @property
-    def tags_str(self) -> str:
-        return " ".join(f"#{tag}" for tag in self.tags)
-
-    @property
     def tags_html(self) -> str:
-        return self._mark_tags_with_ref(self.tags_str, self.tags)
+        return " ".join(_tag_link(tag) for tag in self.tags)
 
 
 def _to_note(row: Row) -> Note:
@@ -451,37 +438,38 @@ async def restore_note(*, note_id: UUID) -> None:
     logger.debug("Note restored")
 
 
+def _note_tag() -> sa.ColumnElement[str]:
+    return sa.func.jsonb_array_elements_text(models.Notes.c.tags).label("tag")
+
+
 async def _get_tags() -> set[str]:
     logger.debug("Getting tags")
 
-    stmt = sa.select(models.Notes.c.tags).where(models.Notes.c.tags != [])
+    stmt = sa.select(_note_tag()).distinct()
 
     async with database.session() as ses:
-        tags = flatten_tags(await ses.scalars(stmt))
+        tags = set(await ses.scalars(stmt))
 
-    tags_set = set(tags)
-    logger.debug("Total %s unique tags got", len(tags_set))
-
-    return tags_set
+    logger.debug("Total %s unique tags got", len(tags))
+    return tags
 
 
 async def _get_material_tags(material_id: str | UUID) -> list[str]:
     logger.debug("Getting tags for material_id=%s", material_id)
 
+    tag = _note_tag()
     stmt = (
-        sa.select(models.Notes.c.tags)
+        sa.select(tag)
         .where(models.Notes.c.material_id == str(material_id))
-        .where(models.Notes.c.tags != [])
+        .group_by(tag)
+        .order_by(sa.func.count().desc(), tag)
     )
 
     async with database.session() as ses:
-        tags = flatten_tags(await ses.scalars(stmt))
+        tags = list(await ses.scalars(stmt))
 
-    tags_counter = Counter(tags)
-    logger.debug("Total %s unique tags got", len(tags_counter))
-
-    # sort by frequency
-    return [tag for tag, _ in tags_counter.most_common()]
+    logger.debug("Total %s unique tags got", len(tags))
+    return tags
 
 
 async def get_possible_links(note_id: UUID, note_tags: set[str]) -> list[Note]:

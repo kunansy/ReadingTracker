@@ -97,11 +97,8 @@ async def get_notes_meta(material_id: UUID | None = None):
 
 
 async def _check_note_refs(*, material_id: UUID, link_id: UUID | None) -> None:
-    with database.unwrap_database_errors():
-        async with asyncio.TaskGroup() as tg:
-            tg.create_task(materials_db.get_material(material_id=material_id))
-            if link_id:
-                tg.create_task(db.get_note(note_id=link_id))
+    link_lookup = [db.get_note(note_id=link_id)] if link_id else []
+    await asyncio.gather(materials_db.get_material(material_id=material_id), *link_lookup)
 
 
 @router.post("/add", status_code=201, response_model=schemas.AddNoteResponse)
