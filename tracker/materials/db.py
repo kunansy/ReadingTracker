@@ -468,10 +468,11 @@ async def reading_statistics_page(
 async def get_material_tags() -> list[str]:
     logger.info("Getting material tags")
 
-    stmt = sa.select(models.Materials.c.tags).where(models.Materials.c.tags != [])
+    tag = sa.func.jsonb_array_elements_text(models.Materials.c.tags).label("tag")
+    stmt = sa.select(tag).distinct().order_by(tag)
 
     async with database.session() as ses:
-        tags = sorted(set(schemas.flatten_tags(await ses.scalars(stmt))))
+        tags = list(await ses.scalars(stmt))
 
     logger.debug("%s tags got", len(tags))
     return tags
@@ -606,13 +607,11 @@ async def is_completion_request_valid(
 ) -> None:
     from tracker.reading_log.db import list_log_records
 
-    with database.unwrap_database_errors():
-        async with asyncio.TaskGroup() as tg:
-            get_logs_task = tg.create_task(list_log_records(material_id=material_id))
-            get_material_task = tg.create_task(get_material(material_id=material_id))
-
+    reading_logs, material = await asyncio.gather(
+        list_log_records(material_id=material_id),
+        get_material(material_id=material_id),
+    )
     completed_at = completed_at or database.utc_today()
-    material = get_material_task.result()
 
     if material.started_at is None:
         raise ValueError("Material is not started")
@@ -622,7 +621,7 @@ async def is_completion_request_valid(
         raise ValueError("Completion date must not be in the future")
     if material.started_at.date() > completed_at:
         raise ValueError("Completion date must not be before the start date")
-    if not (reading_logs := get_logs_task.result()):
+    if not reading_logs:
         raise ValueError("Reading logs not found")
     if sum(log.count for log in reading_logs) != material.pages:
         raise ValueError("Invalid pages count, something is unread")

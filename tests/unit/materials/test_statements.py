@@ -195,29 +195,14 @@ def tags_in_db(mocker):
     return _install
 
 
-@pytest.mark.parametrize(
-    ("stored", "expected"),
-    [
-        ([], []),
-        ([["python"]], ["python"]),
-        ([["sql", "python"], ["go", "sql"], []], ["go", "python", "sql"]),
-    ],
-    ids=["no-materials", "single", "deduplicated-and-sorted"],
-)
-async def test_material_tags_are_flattened_deduplicated_and_sorted(tags_in_db, stored, expected):
-    tags_in_db(stored)
+async def test_material_tags_are_unnested_deduplicated_and_sorted_in_sql(tags_in_db):
+    session = tags_in_db(["go", "python"])
 
-    assert await db.get_material_tags() == expected
-
-
-async def test_material_tags_query_skips_materials_without_tags(tags_in_db):
-    session = tags_in_db([])
-
-    await db.get_material_tags()
-
-    sql, params = _compile_params(session.scalars.await_args.args[0])
-    assert sql == "SELECT materials.tags FROM materials WHERE materials.tags != %(tags_1)s::JSONB"
-    assert params == {"tags_1": []}
+    assert await db.get_material_tags() == ["go", "python"]
+    assert compile_sql(session.scalars.await_args.args[0]) == (
+        "SELECT DISTINCT jsonb_array_elements_text(materials.tags) AS tag "
+        "FROM materials ORDER BY tag"
+    )
 
 
 @pytest.fixture

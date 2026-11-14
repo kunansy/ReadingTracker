@@ -81,12 +81,12 @@ async def test_search_serializes_notes_and_side_data(client, search_db):
         title="Заголовок",
         link_id=factories.OTHER_NOTE_ID,
         links_count=2,
-        tags={"tag", "тег"},
+        tags=["tag", "тег"],
         chapter="1.2",
         is_deleted=True,
     )
     plain = factories.note(
-        note_id=factories.OTHER_NOTE_ID, content="plain", tags=set(), chapter="", page=0
+        note_id=factories.OTHER_NOTE_ID, content="plain", tags=[], chapter="", page=0
     )
     search_db["search_notes_page"].return_value = pagination.Page(
         items=[linked, plain], next_token="next", total_count=22

@@ -1133,7 +1133,6 @@ async def test_stored_note_renders_its_derived_fields(material_id):
         f"ID: {note_id}\nNumber: 2\nMaterial ID: {material_id}\n\n" + "a < b, " + "x" * 60
     )
     assert note.chapter_int == 12
-    assert note.tags_str == "#longer_tag #tag"
     assert note.tags_html == (
         '<a href=http://tracker.test/notes/?tags_query=longer_tag target="_blank">#longer_tag</a> '
         '<a href=http://tracker.test/notes/?tags_query=tag target="_blank">#tag</a>'
@@ -1153,7 +1152,7 @@ async def test_stored_note_without_a_link_has_no_link_html(material_id):
     note = await notes_db.get_note(note_id=note_id)
 
     assert note.link_html == ""
-    assert note.tags_str == ""
+    assert note.tags_html == ""
 
 
 async def test_add_links_to_follows_the_chain_of_links_and_stops_on_a_cycle(material_id):

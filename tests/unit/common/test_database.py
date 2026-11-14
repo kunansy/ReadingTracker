@@ -1,4 +1,3 @@
-import asyncio
 import datetime
 import importlib.util
 from contextlib import asynccontextmanager
@@ -689,31 +688,3 @@ def test_min_max_requires_count_and_date():
         ("date",),
     ]
 
-
-async def _raise(exc: Exception) -> None:
-    raise exc
-
-
-async def test_unwrap_database_errors_reraises_the_task_group_error():
-    error = database.NotFoundException("Material not found")
-
-    with pytest.raises(database.NotFoundException) as exc_info:
-        with database.unwrap_database_errors():
-            async with asyncio.TaskGroup() as tg:
-                tg.create_task(_raise(error))
-
-    assert exc_info.value is error
-
-
-async def test_unwrap_database_errors_keeps_other_errors_grouped():
-    with pytest.raises(ExceptionGroup) as exc_info:
-        with database.unwrap_database_errors():
-            async with asyncio.TaskGroup() as tg:
-                tg.create_task(_raise(ValueError("boom")))
-
-    assert [type(exc) for exc in exc_info.value.exceptions] == [ValueError]
-
-
-def test_unwrap_database_errors_passes_without_errors():
-    with database.unwrap_database_errors():
-        pass

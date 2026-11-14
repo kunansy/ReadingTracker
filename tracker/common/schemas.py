@@ -1,7 +1,5 @@
 import datetime
-import itertools
 import re
-from collections.abc import Iterable
 from typing import Annotated, Final
 from uuid import UUID
 
@@ -47,7 +45,3 @@ TagsQuery = Annotated[
     Field(max_length=MAX_SEARCH_QUERY_LENGTH),
     AfterValidator(_normalize_tags_query),
 ]
-
-
-def flatten_tags(rows: Iterable[list[str]]) -> list[str]:
-    return list(itertools.chain.from_iterable(rows))
