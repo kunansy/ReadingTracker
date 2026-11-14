@@ -158,7 +158,7 @@ export function ListReadingMaterialsPage() {
               {il}: {material.pages}{" "}
             </p>
             <p> Type: {material.material_type} </p>
-            {material.tags ? <p> Tags: {material.tags} </p> : null}
+            {material.tags.length > 0 ? <p> Tags: {material.tags.join(", ")} </p> : null}
             {material.link ? <p> Link: {material.link} </p> : null}
             <hr title="Analytics" />
             <p> Started at: {ms.started_at} </p>

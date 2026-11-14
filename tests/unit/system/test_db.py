@@ -151,7 +151,7 @@ class TestCreateReadingGraphic:
         def install(pages: int):
             return mocker.patch.object(
                 materials_db,
-                "get_material_api",
+                "get_material",
                 mocker.AsyncMock(return_value=mocker.Mock(pages=pages)),
             )
 
@@ -233,7 +233,7 @@ class TestCreateReadingGraphic:
     async def test_missing_material_error_is_propagated(self, mocker, reading_log):
         mocker.patch.object(
             materials_db,
-            "get_material_api",
+            "get_material",
             mocker.AsyncMock(side_effect=ValueError("not found")),
         )
         reading_log([])

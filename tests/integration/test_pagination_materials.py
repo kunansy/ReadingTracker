@@ -629,16 +629,16 @@ async def test_completed_page_walks_only_the_filtered_materials(clock):
             started=ago(300),
             finished=ago(200 - number),
             material_type=article,
-            tags="keyset, paging",
+            tags=["keyset", "paging"],
         )
         await h.completed(
-            clock, started=ago(300), finished=ago(200 - number), tags="keyset"
+            clock, started=ago(300), finished=ago(200 - number), tags=["keyset"]
         )
         material_id = await h.completed(
             clock,
             started=ago(300),
             finished=ago(200 - number),
-            tags="keyset, paging",
+            tags=["keyset", "paging"],
         )
         await materials_db.outline_material(material_id=material_id)
         matching.append(material_id)

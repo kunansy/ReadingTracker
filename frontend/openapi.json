@@ -36,7 +36,11 @@
             "type": "integer"
           },
           "tags": {
-            "$ref": "#/components/schemas/Tags"
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            },
+            "title": "Tags",
+            "type": "array"
           },
           "title": {
             "anyOf": [
@@ -239,15 +243,11 @@
             "type": "integer"
           },
           "tags": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tags"
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            },
+            "title": "Tags",
+            "type": "array"
           },
           "title": {
             "title": "Title",
@@ -439,15 +439,11 @@
             "type": "integer"
           },
           "tags": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tags"
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
           },
           "title": {
             "title": "Title",
@@ -460,6 +456,7 @@
           "authors",
           "pages",
           "material_type",
+          "tags",
           "added_at",
           "is_outlined"
         ],
@@ -509,8 +506,7 @@
               "type": "string"
             },
             "title": "Tags",
-            "type": "array",
-            "uniqueItems": true
+            "type": "array"
           }
         },
         "required": [
@@ -980,8 +976,7 @@
               "type": "string"
             },
             "title": "Tags",
-            "type": "array",
-            "uniqueItems": true
+            "type": "array"
           },
           "title": {
             "anyOf": [
@@ -1363,8 +1358,7 @@
               "type": "string"
             },
             "title": "Tags",
-            "type": "array",
-            "uniqueItems": true
+            "type": "array"
           },
           "title": {
             "anyOf": [
@@ -1844,12 +1838,9 @@
         "title": "StartMaterialRequest",
         "type": "object"
       },
-      "Tags": {
-        "items": {
-          "pattern": "^(\\w+)$",
-          "type": "string"
-        },
-        "type": "array"
+      "Tag": {
+        "pattern": "^(\\w+)$",
+        "type": "string"
       },
       "TrackerStatistics": {
         "additionalProperties": false,
@@ -2012,15 +2003,11 @@
             "type": "integer"
           },
           "tags": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tags"
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            },
+            "title": "Tags",
+            "type": "array"
           },
           "title": {
             "title": "Title",
@@ -2072,7 +2059,11 @@
             "type": "integer"
           },
           "tags": {
-            "$ref": "#/components/schemas/Tags"
+            "items": {
+              "$ref": "#/components/schemas/Tag"
+            },
+            "title": "Tags",
+            "type": "array"
           },
           "title": {
             "anyOf": [
@@ -2757,6 +2748,7 @@
             "schema": {
               "anyOf": [
                 {
+                  "maxLength": 512,
                   "type": "string"
                 },
                 {

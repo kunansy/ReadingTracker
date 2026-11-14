@@ -44,7 +44,7 @@ def expected_material(material_id: UUID, *, added_at: datetime.datetime, **value
             "authors": "Author",
             "pages": 100,
             "material_type": BOOK,
-            "tags": None,
+            "tags": [],
             "link": None,
             "added_at": added_at,
             "is_outlined": False,
@@ -66,7 +66,7 @@ async def test_insert_material_stores_every_column(mocker):
         authors="Robert Martin",
         pages=464,
         material_type=BOOK,
-        tags="programming, craft",
+        tags=["craft", "programming"],
         link="https://example.com/clean-code",
     )
 
@@ -77,7 +77,7 @@ async def test_insert_material_stores_every_column(mocker):
         "authors": "Robert Martin",
         "pages": 464,
         "material_type": "book",
-        "tags": "programming, craft",
+        "tags": ["craft", "programming"],
         "link": "https://example.com/clean-code",
         "added_at": helpers.NOW,
         "is_outlined": False,
@@ -98,12 +98,12 @@ async def test_insert_material_sort_key_matches_the_generator(clock):
     )
 
 
-async def test_insert_material_stores_none_tags_and_link(clock):
-    material_id = await h.queued(clock, tags=None, link=None)
+async def test_insert_material_stores_empty_tags_and_none_link(clock):
+    material_id = await h.queued(clock, tags=[], link=None)
 
     row = await factories.fetch_row(models.Materials, material_id)
 
-    assert row["tags"] is None
+    assert row["tags"] == []
     assert row["link"] is None
 
 
@@ -111,7 +111,7 @@ async def test_insert_material_stores_none_tags_and_link(clock):
 async def test_insert_material_stores_every_material_type(clock, material_type):
     material_id = await h.queued(clock, material_type=material_type)
 
-    material = await db.get_material_api(material_id=material_id)
+    material = await db.get_material(material_id=material_id)
 
     assert material.material_type is material_type
 
@@ -135,7 +135,7 @@ async def test_insert_material_allows_same_title_with_another_type(clock):
 async def test_insert_material_stores_cyrillic_values_at_max_length(clock):
     title = "Ж" * 256
     authors = "Ё" * 256
-    tags = "я" * 256
+    tags = ["я" * 256]
     link = "https://пример.рф/" + "ы" * (2048 - 18)
 
     material_id = await h.queued(
@@ -162,11 +162,10 @@ async def test_insert_material_stores_cyrillic_values_at_max_length(clock):
     [
         {"title": "t" * 257},
         {"authors": "a" * 257},
-        {"tags": "g" * 257},
         {"link": "l" * 2049},
         {"pages": 2**31},
     ],
-    ids=["title", "authors", "tags", "link", "pages"],
+    ids=["title", "authors", "link", "pages"],
 )
 async def test_insert_material_rejects_a_value_one_past_the_limit(clock, values):
     with pytest.raises(database.DatabaseException):
@@ -175,7 +174,7 @@ async def test_insert_material_rejects_a_value_one_past_the_limit(clock, values)
     assert await factories.count_rows(models.Materials) == 0
 
 
-# get_material, get_material_api, get_materials
+# get_material, get_material, get_materials
 
 
 async def test_get_material_returns_the_inserted_material(clock):
@@ -185,7 +184,7 @@ async def test_get_material_returns_the_inserted_material(clock):
         authors="Роберт Мартин",
         pages=464,
         material_type=LECTURE,
-        tags="код, практика",
+        tags=["код", "практика"],
         link="https://example.com",
     )
     expected = expected_material(
@@ -195,35 +194,26 @@ async def test_get_material_returns_the_inserted_material(clock):
         authors="Роберт Мартин",
         pages=464,
         material_type=LECTURE,
-        tags="код, практика",
+        tags=["код", "практика"],
         link="https://example.com",
     )
 
     assert await db.get_material(material_id=material_id) == expected
-    assert await db.get_material_api(material_id=material_id) == expected
 
 
-async def test_get_material_strips_whitespace_stored_around_strings(clock):
-    material_id = await h.queued(clock, title="  Padded  ", authors=" A ", tags=" t ")
+async def test_get_material_returns_strings_as_stored(clock):
+    material_id = await h.queued(clock, title="  Padded  ", authors=" A ")
 
-    material = await db.get_material_api(material_id=material_id)
-    row = await factories.fetch_row(models.Materials, material_id)
+    material = await db.get_material(material_id=material_id)
 
-    assert (material.title, material.authors, material.tags) == ("Padded", "A", "t")
-    assert row["title"] == "  Padded  "
+    assert (material.title, material.authors) == ("  Padded  ", " A ")
 
 
-async def test_get_material_returns_none_when_missing(clock):
-    await h.queued(clock)
-
-    assert await db.get_material(material_id=h.MISSING_ID) is None
-
-
-async def test_get_material_api_raises_not_found_when_missing(clock):
+async def test_get_material_raises_not_found_when_missing(clock):
     await h.queued(clock)
 
     with pytest.raises(database.NotFoundException, match=str(h.MISSING_ID)):
-        await db.get_material_api(material_id=h.MISSING_ID)
+        await db.get_material(material_id=h.MISSING_ID)
 
 
 async def test_get_materials_returns_materials_in_every_state(clock):
@@ -255,7 +245,7 @@ async def test_listings_are_empty_on_an_empty_database():
     assert await db.get_reading_materials() == []
     assert await db._get_completed_materials() == []
     assert await db.get_last_material_started() is None
-    assert await db.get_material_tags() == set()
+    assert await db.get_material_tags() == []
     assert await db.get_authors() == ()
     assert await db.get_titles() == {}
     assert await db.get_read_material_titles() == {}
@@ -361,32 +351,32 @@ async def completed_set(clock: h.Clock) -> dict[str, UUID]:
             clock,
             started=helpers.day(-20),
             finished=helpers.day(-9),
-            tags="history, science",
+            tags=["history", "science"],
         ),
         "book_outlined": await h.completed(
             clock,
             started=helpers.day(-20),
             finished=helpers.day(-8),
-            tags="history",
+            tags=["history"],
         ),
         "article_plain": await h.completed(
             clock,
             started=helpers.day(-20),
             finished=helpers.day(-7),
             material_type=ARTICLE,
-            tags="science",
+            tags=["science"],
         ),
         "article_outlined": await h.completed(
             clock,
             started=helpers.day(-20),
             finished=helpers.day(-6),
             material_type=ARTICLE,
-            tags=None,
+            tags=[],
         ),
     }
     await db.outline_material(material_id=ids["book_outlined"])
     await db.outline_material(material_id=ids["article_outlined"])
-    await h.reading(clock, started=helpers.day(-20), tags="history, science")
+    await h.reading(clock, started=helpers.day(-20), tags=["history", "science"])
     return ids
 
 
@@ -468,17 +458,12 @@ async def test_completed_statistics_page_filters(completed_set, filters, expecte
     assert page.next_token is None
 
 
-@pytest.mark.parametrize(
-    "stored_tags",
-    ["History,Science", "history,science", "History, Science"],
-    ids=["no space and capitals", "no space", "capitals"],
-)
-async def test_every_listed_material_tag_finds_its_material(clock, stored_tags):
+async def test_every_listed_material_tag_finds_its_material(clock):
     material_id = await h.completed(
         clock,
         started=helpers.day(-5),
         finished=helpers.day(-1),
-        tags=stored_tags,
+        tags=["history", "science"],
     )
 
     listed_tags = await db.get_material_tags()
@@ -494,7 +479,7 @@ async def test_every_listed_material_tag_finds_its_material(clock, stored_tags):
 
 
 async def test_update_material_changes_only_the_given_columns(clock):
-    material_id = await h.reading(clock, started=helpers.day(-3), tags="old", link="https://old")
+    material_id = await h.reading(clock, started=helpers.day(-3), tags=["old"], link="https://old")
     before = await factories.fetch_row(models.Materials, material_id)
 
     await db.update_material(
@@ -503,7 +488,7 @@ async def test_update_material_changes_only_the_given_columns(clock):
         authors="Новый автор",
         pages=7,
         material_type=ARTICLE,
-        tags=None,
+        tags=[],
         link=None,
     )
 
@@ -512,7 +497,7 @@ async def test_update_material_changes_only_the_given_columns(clock):
         "authors": "Новый автор",
         "pages": 7,
         "material_type": "article",
-        "tags": None,
+        "tags": [],
         "link": None,
     }
 
@@ -528,7 +513,7 @@ async def test_update_material_does_not_touch_other_materials(clock):
         authors="A",
         pages=1,
         material_type=BOOK,
-        tags="t",
+        tags=["t"],
         link="l",
     )
 
@@ -549,7 +534,7 @@ async def test_update_material_raises_not_found_for_a_missing_id(clock):
             link=None,
         )
 
-    assert (await db.get_material_api(material_id=material_id)).title == "Untouched"
+    assert (await db.get_material(material_id=material_id)).title == "Untouched"
 
 
 async def test_update_material_rejects_a_title_taken_by_the_same_type(clock):
@@ -567,7 +552,7 @@ async def test_update_material_rejects_a_title_taken_by_the_same_type(clock):
             link=None,
         )
 
-    assert (await db.get_material_api(material_id=material_id)).title == "Free"
+    assert (await db.get_material(material_id=material_id)).title == "Free"
 
 
 # start_material, complete_material, outline_material, repeat_material
@@ -706,7 +691,7 @@ async def test_outline_material_twice_keeps_the_flag(clock):
     await db.outline_material(material_id=material_id)
     await db.outline_material(material_id=material_id)
 
-    assert (await db.get_material_api(material_id=material_id)).is_outlined is True
+    assert (await db.get_material(material_id=material_id)).is_outlined is True
 
 
 async def test_outline_missing_material_raises_not_found(clock):
@@ -715,7 +700,7 @@ async def test_outline_missing_material_raises_not_found(clock):
     with pytest.raises(database.NotFoundException, match=str(h.MISSING_ID)):
         await db.outline_material(material_id=h.MISSING_ID)
 
-    assert (await db.get_material_api(material_id=material_id)).is_outlined is False
+    assert (await db.get_material(material_id=material_id)).is_outlined is False
 
 
 async def test_repeat_material_inserts_a_repeat_at_the_current_time(clock):
@@ -788,26 +773,13 @@ async def test_last_material_started_is_the_latest_start_whatever_the_logs_are(c
 # tags, authors, titles, is_reading
 
 
-async def test_material_tags_are_split_stripped_lowered_and_merged(clock):
-    await h.queued(clock, tags="History, Science")
-    await h.queued(clock, tags="history,  ФИЗИКА ,math")
-    await h.queued(clock, tags=None)
-    await h.reading(clock, started=helpers.day(-1), tags="single")
+async def test_material_tags_are_merged_deduplicated_and_sorted(clock):
+    await h.queued(clock, tags=["history", "science"])
+    await h.queued(clock, tags=["history", "math", "физика"])
+    await h.queued(clock, tags=[])
+    await h.reading(clock, started=helpers.day(-1), tags=["single"])
 
-    assert await db.get_material_tags() == {
-        "history",
-        "science",
-        "физика",
-        "math",
-        "single",
-    }
-
-
-async def test_material_tags_skip_an_empty_tag(clock):
-    await h.queued(clock, tags="trailing,")
-    await h.queued(clock, tags="")
-
-    assert await db.get_material_tags() == {"trailing"}
+    assert await db.get_material_tags() == ["history", "math", "science", "single", "физика"]
 
 
 async def test_authors_are_distinct_and_not_split(clock):

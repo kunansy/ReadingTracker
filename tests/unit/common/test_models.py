@@ -201,13 +201,11 @@ def test_nullable_columns():
     }
 
     assert nullable == {
-        "materials.tags",
         "materials.link",
         "materials.started_at",
         "materials.completed_at",
         "notes.link_id",
         "notes.title",
-        "notes.tags",
         "cards.answer",
     }
 
@@ -224,7 +222,7 @@ def test_notes_table_ddl():
         "added_at TIMESTAMP WITHOUT TIME ZONE NOT NULL, "
         "chapter VARCHAR(256) NOT NULL, "
         "page INTEGER NOT NULL, "
-        "tags JSONB, "
+        "tags JSONB DEFAULT '[]'::jsonb NOT NULL, "
         "is_deleted BOOLEAN NOT NULL, "
         'sort_key VARCHAR(512) COLLATE "C" NOT NULL, '
         "PRIMARY KEY (note_id), "

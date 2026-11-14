@@ -25,6 +25,7 @@ def _item_payload(**overrides):
         "authors": "Author",
         "pages": 10,
         "material_type": "book",
+        "tags": [],
         "added_at": "2024-03-10T12:00:00",
         "is_outlined": False,
     } | overrides
@@ -49,17 +50,27 @@ def test_create_material_request_defaults():
     request = schemas.CreateMaterialRequest(**_create_payload())
 
     assert request.material_type is enums.MaterialTypesEnum.book
-    assert request.tags is None
+    assert request.tags == []
     assert request.link is None
     assert request.get_link() is None
 
 
 def test_create_material_request_strips_strings():
     request = schemas.CreateMaterialRequest(
-        **_create_payload(title="  Война и мир ", authors="\tТолстой\n", tags=" a, b "),
+        **_create_payload(title="  Война и мир ", authors="\tТолстой\n", tags=[" B", "a", "b "]),
     )
 
-    assert (request.title, request.authors, request.tags) == ("Война и мир", "Толстой", "a, b")
+    assert (request.title, request.authors, request.tags) == ("Война и мир", "Толстой", ["a", "b"])
+
+
+@pytest.mark.parametrize(
+    "tags",
+    [["a-b"], ["a b"], [""], "a, b"],
+    ids=["hyphen", "space", "empty", "comma-string"],
+)
+def test_create_material_request_rejects_invalid_tags(tags):
+    with pytest.raises(ValidationError, match="tags"):
+        schemas.CreateMaterialRequest(**_create_payload(tags=tags))
 
 
 @pytest.mark.parametrize(
@@ -159,7 +170,7 @@ def test_update_material_request_inherits_create_limits():
         ("  python \t sql\npython ", {"python", "sql"}),
         ("Python python", {"python"}),
         ("ЯДРО Linux", {"ядро", "linux"}),
-        ("a,b", {"a,b"}),
+        ("#a #B", {"a", "b"}),
     ],
     ids=[
         "none",
@@ -170,11 +181,17 @@ def test_update_material_request_inherits_create_limits():
         "any-whitespace-and-duplicates",
         "lowered-and-deduplicated",
         "cyrillic",
-        "comma-is-not-a-separator",
+        "hash-is-dropped",
     ],
 )
 def test_requested_tags(tags_query, expected):
     assert schemas.SearchParams(tags_query=tags_query).requested_tags() == expected
+
+
+@pytest.mark.parametrize("tags_query", ["a,b", "a-b"], ids=["comma", "hyphen"])
+def test_tags_query_with_a_non_word_tag_is_rejected(tags_query):
+    with pytest.raises(ValidationError, match="Invalid tags"):
+        schemas.SearchParams(tags_query=tags_query)
 
 
 @pytest.mark.parametrize(
@@ -283,7 +300,7 @@ def test_get_material_item_optional_fields():
     item = schemas.GetMaterialItem(**_item_payload())
 
     assert item.material_id == uid(1)
-    assert item.tags is None
+    assert item.tags == []
     assert item.link is None
 
 
@@ -447,7 +464,7 @@ def test_single_item_responses_wrap_models():
 def test_simple_responses():
     assert schemas.CreateMaterialResponse(material_id=str(uid(2))).material_id == uid(2)
     assert schemas.IsMaterialReadingResponse(is_reading=True).is_reading is True
-    assert schemas.GetMaterialTagsResponse(tags=["a", "a", "b"]).tags == {"a", "b"}
+    assert schemas.GetMaterialTagsResponse(tags=["a", "b"]).tags == ["a", "b"]
     assert list(schemas.GetAuthorsResponse(authors=("x", "y")).authors) == ["x", "y"]
     assert schemas.ListMaterialTitlesResponse(items={str(uid(1)): "t"}).items == {
         UUID(int=1): "t",

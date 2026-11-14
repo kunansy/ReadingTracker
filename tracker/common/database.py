@@ -1,7 +1,7 @@
 import asyncio
 import datetime
-from collections.abc import AsyncGenerator
-from contextlib import asynccontextmanager
+from collections.abc import AsyncGenerator, Generator
+from contextlib import asynccontextmanager, contextmanager
 from typing import Any, Final, cast
 from uuid import UUID
 
@@ -46,6 +46,19 @@ INVALID_NEXT_TOKEN_MSG: Final[str] = "Invalid nextToken"  # noqa: S105
 
 class InvalidNextTokenException(DatabaseException):
     pass
+
+
+@contextmanager
+def unwrap_database_errors() -> Generator[None]:
+    """Re-raise the first database error of a `TaskGroup` so the API handlers map it."""
+    try:
+        yield
+    except ExceptionGroup as group:
+        # `except*` is not used: under coverage on 3.15 it lets the group through
+        database_errors, _ = group.split(DatabaseException)
+        if database_errors is None:
+            raise
+        raise database_errors.exceptions[0] from None
 
 
 class MinMax(CustomBaseModel):

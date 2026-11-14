@@ -5,7 +5,7 @@ from collections import defaultdict
 import pytest
 import sqlalchemy.sql as sa
 
-from tests.integration import factories
+from tests.integration import factories, helpers
 from tracker.common import database, sort_keys
 from tracker.common.pagination import PageParams
 from tracker.models import enums, models
@@ -145,7 +145,7 @@ async def test_insert_note_tags_round_trip_through_jsonb(material_id, tags):
     note_id = await factories.insert_note(material_id=material_id, tags=tags)
 
     assert (await _note_row(note_id))["tags"] == tags
-    assert (await notes_db.get_note(note_id=note_id)).tags == set(tags)
+    assert (await notes_db.get_note(note_id=note_id)).tags == tags
 
 
 async def test_insert_note_rejects_a_duplicate_title(material_id):
@@ -465,7 +465,7 @@ async def test_get_note_returns_the_stored_note(material_id):
         added_at=row["added_at"],
         chapter="Глава 4",
         page=8,
-        tags={"a", "b"},
+        tags=["a", "b"],
         is_deleted=False,
         note_number=2,
         links_count=0,
@@ -502,22 +502,25 @@ async def test_get_note_raises_not_found_for_a_deleted_note(material_id):
         await notes_db.get_note(note_id=note_id)
 
 
-@pytest.mark.parametrize("null", [sa.null(), None], ids=["sql-null", "json-null"])
-async def test_get_note_reads_a_note_without_tags(material_id, null):
-    note_id = await factories.insert_raw_note(material_id=material_id, tags=null)
+async def test_note_tags_default_to_an_empty_list(material_id):
+    note_id = uuid.uuid4()
+    await helpers.execute(
+        models.Notes.insert().values(
+            note_id=note_id,
+            material_id=material_id,
+            content="No tags.",
+            chapter="1",
+            page=1,
+            sort_key=f"default-tags-{note_id}",
+        ),
+    )
 
-    note = await notes_db.get_note(note_id=note_id)
-
-    assert note.tags == set()
+    assert (await notes_db.get_note(note_id=note_id)).tags == []
 
 
-async def test_get_notes_lists_notes_without_tags(material_id):
-    with_tags = await factories.insert_note(material_id=material_id, tags=["tag"])
-    without_tags = await factories.insert_raw_note(material_id=material_id, tags=sa.null())
-
-    notes = await notes_db.get_notes()
-
-    assert [note.note_id for note in notes] == [with_tags, without_tags]
+async def test_note_tags_reject_sql_null(material_id):
+    with pytest.raises(database.DatabaseException, match="not-null constraint"):
+        await factories.insert_raw_note(material_id=material_id, tags=sa.null())
 
 
 async def test_get_notes_returns_live_notes_in_note_number_order(material_id):
@@ -632,7 +635,6 @@ async def test_get_tags_returns_the_union_of_all_note_tags(material_id):
         tags=["b", "тег"],
     )
     await factories.insert_note(material_id=material_id, tags=[])
-    await factories.insert_raw_note(material_id=material_id, tags=sa.null())
 
     assert await notes_db._get_tags() == {"a", "b", "тег"}
 
@@ -646,13 +648,6 @@ async def test_get_tags_includes_tags_of_deleted_notes_current_behaviour(materia
     await notes_db.delete_note(note_id=note_id)
 
     assert await notes_db._get_tags() == {"gone"}
-
-
-async def test_get_tags_ignores_a_json_null(material_id):
-    await factories.insert_note(material_id=material_id, tags=["a"])
-    await factories.insert_raw_note(material_id=material_id, tags=None)
-
-    assert await notes_db._get_tags() == {"a"}
 
 
 @pytest.mark.parametrize("as_type", [uuid.UUID, str], ids=["uuid", "str"])
@@ -745,9 +740,8 @@ async def test_get_possible_links_uses_the_stored_tags_not_the_passed_ones(mater
     assert [link.note_id for link in links] == [match]
 
 
-@pytest.mark.parametrize("tags", [[], sa.null()], ids=["empty-tags", "null-tags"])
-async def test_get_possible_links_of_a_note_without_tags_is_empty(material_id, tags):
-    note_id = await factories.insert_raw_note(material_id=material_id, tags=tags)
+async def test_get_possible_links_of_a_note_without_tags_is_empty(material_id):
+    note_id = await factories.insert_raw_note(material_id=material_id, tags=[])
     await factories.insert_note(material_id=material_id, tags=["a"])
 
     assert await notes_db.get_possible_links(note_id, set()) == []
@@ -915,15 +909,6 @@ async def test_search_notes_page_accepts_note_ids_as_a_set(material_id, notes):
     found = await _search(note_ids={notes["a"], notes["none"]})
 
     assert set(found) == {notes["a"], notes["none"]}
-
-
-async def test_search_notes_page_with_a_tag_filter_skips_notes_with_null_tags(
-    material_id,
-):
-    tagged = await factories.insert_note(material_id=material_id, tags=["a"])
-    await factories.insert_raw_note(material_id=material_id, tags=sa.null())
-
-    assert await _search(tags={"a"}) == [tagged]
 
 
 async def test_search_notes_page_on_an_empty_database_is_empty():
@@ -1136,7 +1121,7 @@ async def test_stored_note_renders_its_derived_fields(material_id):
         link_id=target,
         content="a &lt; b, " + "x" * 60,
         chapter="Глава 12",
-        tags=["tag", "longer_tag"],
+        tags=["longer_tag", "tag"],
     )
 
     note = await notes_db.get_note(note_id=note_id)
@@ -1197,17 +1182,6 @@ async def test_add_links_to_follows_the_chain_of_links_and_stops_on_a_cycle(mate
         (str(second), str(first)),
         (str(first), str(third)),
     }
-
-
-async def test_note_accepts_tags_serialized_as_a_json_string(material_id):
-    note_id = await factories.insert_note(material_id=material_id, tags=["a", "b"])
-    row = await _note_row(note_id)
-
-    del row["sort_key"]
-
-    note = notes_db.Note.model_validate({**row, "tags": '["a", "b"]'})
-
-    assert note.tags == {"a", "b"}
 
 
 # is_link_cyclic, count_links_to

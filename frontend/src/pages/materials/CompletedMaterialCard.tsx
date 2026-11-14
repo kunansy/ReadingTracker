@@ -79,7 +79,7 @@ export function CompletedMaterialCard({ stats: ms, position }: CompletedMaterial
         {il}: {material.pages}
       </p>
       <p>Type: {material.material_type}</p>
-      {material.tags && <p>Tags: {material.tags}</p>}
+      {material.tags.length > 0 && <p>Tags: {material.tags.join(", ")}</p>}
       {material.link && <p>Link: {material.link}</p>}
       <p>Is outlined: {material.is_outlined ? "Yes" : "No"}</p>
 

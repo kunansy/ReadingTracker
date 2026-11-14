@@ -5,7 +5,7 @@ import pytest
 from pydantic import ValidationError
 
 from tracker.common import schemas
-from tracker.common.schemas import CustomBaseModel, MinMax, skip_empty_value
+from tracker.common.schemas import CustomBaseModel, MinMax, Tags, TagsQuery
 
 
 LOG_ID = UUID("018e9dbe-1d3d-7a5a-b437-9bfa65171b42")
@@ -96,16 +96,61 @@ def test_min_max_rejects_empty_ids():
     ]
 
 
-@pytest.mark.parametrize("value", ["", None], ids=["empty-string", "none"])
-def test_skip_empty_value_turns_empty_into_none(value):
-    assert skip_empty_value(value) is None
+class _TagsModel(CustomBaseModel):
+    tags: Tags = []
+    tags_query: TagsQuery = None
 
 
-def test_skip_empty_value_keeps_uuid():
-    assert skip_empty_value(LOG_ID) is LOG_ID
+@pytest.mark.parametrize(
+    ("raw", "expected"),
+    [
+        ("", []),
+        ("   ", []),
+        ("b a", ["a", "b"]),
+        ("#B  a\tb", ["a", "b"]),
+        ("Тег tag", ["tag", "тег"]),
+        ("a\nb", ["a", "b"]),
+    ],
+    ids=["empty", "blank", "sorted", "hash-case-dedupe", "cyrillic", "newline"],
+)
+def test_normalize_tags(raw, expected):
+    assert schemas.normalize_tags(raw) == expected
 
 
-def test_skip_empty_value_keeps_nil_uuid():
-    nil = UUID(int=0)
+@pytest.mark.parametrize("raw", ["a-b", "a,b", "a.b"], ids=["hyphen", "comma", "dot"])
+def test_normalize_tags_rejects_non_word_tags(raw):
+    with pytest.raises(ValueError, match="^Invalid tags$"):
+        schemas.normalize_tags(raw)
 
-    assert schemas.skip_empty_value(nil) is nil
+
+def test_tags_are_stripped_lowercased_deduplicated_and_sorted():
+    assert _TagsModel(tags=[" B", "a", "b "]).tags == ["a", "b"]
+
+
+@pytest.mark.parametrize("tag", ["a-b", "", "a b"], ids=["hyphen", "empty", "space"])
+def test_tags_reject_a_non_word_tag(tag):
+    with pytest.raises(ValidationError, match="tags.0"):
+        _TagsModel(tags=[tag])
+
+
+@pytest.mark.parametrize(
+    ("tags_query", "expected"),
+    [(None, None), ("", None), ("  ", None), (" #B a b", "a b")],
+    ids=["none", "empty", "blank", "normalized"],
+)
+def test_tags_query_is_normalized(tags_query, expected):
+    assert _TagsModel(tags_query=tags_query).tags_query == expected
+
+
+def test_tags_query_rejects_a_non_word_tag():
+    with pytest.raises(ValidationError, match="Invalid tags"):
+        _TagsModel(tags_query="a-b")
+
+
+def test_tags_query_rejects_a_query_over_the_limit():
+    with pytest.raises(ValidationError, match="at most 512 characters"):
+        _TagsModel(tags_query="a" * (schemas.MAX_SEARCH_QUERY_LENGTH + 1))
+
+
+def test_flatten_tags_keeps_order_and_duplicates():
+    assert schemas.flatten_tags(iter([["b", "a"], [], ["a"]])) == ["b", "a", "a"]

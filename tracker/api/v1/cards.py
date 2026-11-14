@@ -27,7 +27,7 @@ async def list_cards(
 
 @router.post("/", status_code=201, response_model=schemas.CreateCardResponse)
 async def create_card(card: schemas.CreateCardRequest):
-    await materials_db.get_material_api(material_id=card.material_id)
+    await materials_db.get_material(material_id=card.material_id)
     note = await notes_db.get_note(note_id=card.note_id)
     if note.material_id != card.material_id:
         raise HTTPException(status_code=400, detail="Note belongs to another material")

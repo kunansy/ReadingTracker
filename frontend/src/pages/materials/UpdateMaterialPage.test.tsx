@@ -26,7 +26,7 @@ const MATERIAL = {
   authors: "Author",
   pages: 100,
   material_type: "book",
-  tags: null,
+  tags: [],
   link: null,
   added_at: "2026-01-01T00:00:00",
   is_outlined: false,

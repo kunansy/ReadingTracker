@@ -134,7 +134,7 @@ def card_refs(mocker):
     return SimpleNamespace(
         get_material=mocker.patch.object(
             materials_db,
-            "get_material_api",
+            "get_material",
             mocker.AsyncMock(return_value=factories.material()),
         ),
         get_note=mocker.patch.object(

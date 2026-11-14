@@ -54,7 +54,7 @@ export function AddMaterialPage() {
         authors: authors.join(", "),
         pages: Number(pages),
         material_type: materialType,
-        tags: tags.length ? tags.join(", ") : undefined,
+        tags,
         link: link.trim() || undefined,
       };
       await unwrap(api.POST("/api/v1/materials/", { body }));

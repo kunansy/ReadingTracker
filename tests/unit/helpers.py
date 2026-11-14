@@ -44,7 +44,7 @@ def make_material(**overrides: Any) -> materials_db.Material:
         "authors": "Достоевский",
         "pages": 100,
         "material_type": enums.MaterialTypesEnum.book,
-        "tags": None,
+        "tags": [],
         "link": None,
         "added_at": datetime.datetime(2024, 1, 1, 8, 0),
         "is_outlined": False,
@@ -63,7 +63,7 @@ def make_note(**overrides: Any) -> notes_db.Note:
         "added_at": datetime.datetime(2024, 1, 2, 3, 4, 5),
         "chapter": "1",
         "page": 1,
-        "tags": set(),
+        "tags": [],
         "is_deleted": False,
         "note_number": 1,
     }

@@ -9,7 +9,7 @@ from tracker.notes import (
 )
 
 
-def _delete_tags(text: str, tags: set[str]) -> str:
+def _delete_tags(text: str, tags: list[str]) -> str:
     for tag in tags:
         text = re.sub(notes_db._TAG_PATTERN.format(tag=tag), "", text)  # noqa: SLF001
     return text
@@ -32,7 +32,7 @@ def add_dot(string: str) -> str:
     return f"{string}."
 
 
-def _format_content(content: str, tags: set[str], link_id: UUID | None) -> str:
+def _format_content(content: str, tags: list[str], link_id: UUID | None) -> str:
     content = _delete_link(content, link_id)
     content = _delete_tags(content, tags)
     content = _dereplace_new_lines(content).strip()
@@ -72,7 +72,7 @@ async def update_note(note: notes_db.Note) -> None:
         content=format_content(note),
         page=note.page,
         chapter=note.chapter,
-        tags=list(note.tags),
+        tags=note.tags,
     )
 
 

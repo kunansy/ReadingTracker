@@ -243,7 +243,7 @@ async def create_material(material: schemas.CreateMaterialRequest):
 
 @router.get("/{material_id}", response_model=schemas.GetMaterialResponse)
 async def get_material(material_id: UUID):
-    material = await db.get_material_api(material_id=material_id)
+    material = await db.get_material(material_id=material_id)
 
     return {"material": material}
 
@@ -269,7 +269,7 @@ async def start_material(
     material_id: UUID,
     body: Annotated[schemas.StartMaterialRequest, Body()],
 ):
-    material = await db.get_material_api(material_id=material_id)
+    material = await db.get_material(material_id=material_id)
     if material.started_at is not None:
         raise HTTPException(status_code=400, detail="Material is already started")
     if body.started_at and body.started_at > database.utc_today():
@@ -304,7 +304,7 @@ async def outline_material(material_id: UUID):
 
 @router.post("/{material_id}/repeat", status_code=204)
 async def repeat_material(material_id: UUID):
-    await db.get_material_api(material_id=material_id)
+    await db.get_material(material_id=material_id)
     await db.repeat_material(material_id=material_id)
 
 
@@ -315,7 +315,7 @@ async def repeat_material(material_id: UUID):
 async def get_material_completion_info(material_id: UUID):
     from tracker.reading_log import db as logs_db
 
-    material = await db.get_material_api(material_id=material_id)
+    material = await db.get_material(material_id=material_id)
     reading_logs = await logs_db.list_log_records(material_id=material_id)
 
     return {

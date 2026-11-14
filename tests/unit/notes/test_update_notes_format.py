@@ -104,7 +104,7 @@ def test_format_content_demarks_html_entities():
 
 
 def test_format_content_is_silent_when_every_hash_is_a_tag(caplog):
-    note = build_note(1, content="text #a #b", tags={"a", "b"})
+    note = build_note(1, content="text #a #b", tags=["a", "b"])
 
     with caplog.at_level(logging.WARNING, logger=settings.LOGGER_NAME):
         content = migration.format_content(note)
@@ -114,7 +114,7 @@ def test_format_content_is_silent_when_every_hash_is_a_tag(caplog):
 
 
 def test_format_content_warns_when_hash_count_differs_from_tags(caplog):
-    note = build_note(1, content="text #a # b", tags={"a"})
+    note = build_note(1, content="text #a # b", tags=["a"])
 
     with caplog.at_level(logging.WARNING, logger=settings.LOGGER_NAME):
         content = migration.format_content(note)
@@ -122,14 +122,14 @@ def test_format_content_warns_when_hash_count_differs_from_tags(caplog):
     assert content == "text  # b."
     assert caplog.messages == [
         "Might be an error when deleting tags: "
-        f"note_id={note_id(1)}, tags={{'a'}}, content='text #a # b'",
+        f"note_id={note_id(1)}, tags=['a'], content='text #a # b'",
         "Clean content: 'text  # b.'",
     ]
 
 
 async def test_update_note_saves_formatted_content(mocker):
     update = mocker.patch.object(notes_db, "update_note", mocker.AsyncMock())
-    note = build_note(1, link=2, title="Title", content="text #tag", tags={"tag"}, page=5)
+    note = build_note(1, link=2, title="Title", content="text #tag", tags=["tag"], page=5)
 
     await migration.update_note(note)
 

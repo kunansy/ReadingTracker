@@ -3,10 +3,16 @@ import typing
 from typing import Literal
 from uuid import UUID
 
-from pydantic import HttpUrl, NonNegativeFloat, NonNegativeInt, PositiveInt
+from pydantic import Field, HttpUrl, NonNegativeFloat, NonNegativeInt, PositiveInt
 
 from tracker.common.pagination import PageResponse
-from tracker.common.schemas import CustomBaseModel, MinMax
+from tracker.common.schemas import (
+    CustomBaseModel,
+    MinMax,
+    Tags,
+    TagsQuery,
+    normalize_tags,
+)
 from tracker.models import enums
 from tracker.models.enums import MaterialTypesEnum
 
@@ -17,9 +23,7 @@ class GetMaterialItem(CustomBaseModel):
     authors: str
     pages: NonNegativeInt
     material_type: enums.MaterialTypesEnum
-    # TODO: store material tags as a list (JSONB/ARRAY) and expose list[str]
-    #  in the API, like note tags.
-    tags: str | None = None
+    tags: list[str]
     link: HttpUrl | None = None
     added_at: datetime.datetime
     is_outlined: bool
@@ -97,7 +101,7 @@ class CreateMaterialRequest(CustomBaseModel):
     authors: str
     pages: PositiveInt
     material_type: enums.MaterialTypesEnum
-    tags: str | None = None
+    tags: Tags = Field(default_factory=list)
     link: HttpUrl | None = None
 
     def get_link(self) -> str | None:
@@ -129,13 +133,10 @@ class ParsedMaterialResponse(CustomBaseModel):
 class SearchParams(CustomBaseModel):
     material_type: enums.MaterialTypesEnum | None | Literal[""] = None
     is_outlined: bool | None = None
-    tags_query: str | None = None
+    tags_query: TagsQuery = None
 
     def requested_tags(self) -> set[str]:
-        if not (tags_query := self.tags_query):
-            return set()
-
-        return {tag.lower() for tag in tags_query.split()}
+        return set(normalize_tags(self.tags_query or ""))
 
     def get_material_type(self) -> enums.MaterialTypesEnum | None:
         if isinstance(self.material_type, enums.MaterialTypesEnum):
@@ -148,7 +149,7 @@ class IsMaterialReadingResponse(CustomBaseModel):
 
 
 class GetMaterialTagsResponse(CustomBaseModel):
-    tags: set[str]
+    tags: list[str]
 
 
 class GetAuthorsResponse(CustomBaseModel):

@@ -2,7 +2,7 @@ import asyncio
 import datetime
 import re
 import time
-from collections.abc import Iterable, Mapping
+from collections.abc import Mapping
 from decimal import Decimal
 from typing import Any, Final, cast
 from uuid import UUID
@@ -11,8 +11,7 @@ import aiohttp
 import bs4
 import sqlalchemy.sql as sa
 from pydantic import ConfigDict, computed_field, field_validator
-from sqlalchemy import Date, Integer, Text
-from sqlalchemy.dialects import postgresql
+from sqlalchemy import Date, Integer
 from sqlalchemy.engine import Row
 
 from tracker.common import database, pagination, schemas, settings, sort_keys
@@ -28,14 +27,14 @@ _START_DATE_KEY: Final[str] = "start_date"
 
 
 class Material(CustomBaseModel):
-    model_config = ConfigDict(extra="ignore", str_strip_whitespace=True)
+    model_config = ConfigDict(extra="ignore", str_strip_whitespace=False)
 
     material_id: UUID
     title: str
     authors: str
     pages: int
     material_type: enums.MaterialTypesEnum
-    tags: str | None
+    tags: list[str]
     link: str | None
     added_at: datetime.datetime
     is_outlined: bool
@@ -117,23 +116,7 @@ async def get_means() -> enums.MEANS:
     return await get_means()
 
 
-# TODO: pending to remove
-async def get_material(*, material_id: UUID) -> Material | None:
-    logger.debug("Getting material=%s", material_id)
-    stmt = sa.select(models.Materials).where(
-        models.Materials.c.material_id == material_id,
-    )
-
-    async with database.session() as ses:
-        if material := (await ses.execute(stmt)).one_or_none():
-            logger.debug("Material got")
-            return Material.model_validate(material, from_attributes=True)
-
-    logger.warning("Material id=%s not found", material_id)
-    return None
-
-
-async def get_material_api(*, material_id: UUID) -> Material:
+async def get_material(*, material_id: UUID) -> Material:
     logger.debug("Getting material=%s", material_id)
     stmt = sa.select(models.Materials).where(
         models.Materials.c.material_id == material_id,
@@ -200,22 +183,6 @@ def _get_reading_materials_stmt() -> sa.Select:
     )
 
 
-# The SQL filter and `get_material_tags` must split the stored tags the same way,
-# or a listed tag finds nothing.
-_MATERIAL_TAGS_SEPARATOR = ","
-
-
-def _normalize_material_tags(tags: Iterable[str]) -> set[str]:
-    return {tag.strip().lower() for tag in tags if tag.strip()}
-
-
-def _material_tags_array() -> sa.ColumnElement:
-    return sa.func.regexp_split_to_array(
-        sa.func.lower(sa.func.trim(models.Materials.c.tags)),
-        rf"\s*{_MATERIAL_TAGS_SEPARATOR}\s*",
-    )
-
-
 def _get_completed_materials_stmt(
     *,
     material_type: enums.MaterialTypesEnum | None = None,
@@ -231,12 +198,8 @@ def _get_completed_materials_stmt(
         stmt = stmt.where(models.Materials.c.material_type == material_type)
     if is_outlined is not None:
         stmt = stmt.where(models.Materials.c.is_outlined == is_outlined)
-    if requested_tags := _normalize_material_tags(tags or ()):
-        stmt = stmt.where(
-            _material_tags_array().op("@>")(
-                sa.cast(postgresql.array(sorted(requested_tags)), postgresql.ARRAY(Text)),
-            ),
-        )
+    if tags:
+        stmt = stmt.where(models.Materials.c.tags.contains(sorted(tags)))
     return stmt
 
 
@@ -502,17 +465,13 @@ async def reading_statistics_page(
     return page.with_items(await _get_materials_statistics(page.items))
 
 
-async def get_material_tags() -> set[str]:
+async def get_material_tags() -> list[str]:
     logger.info("Getting material tags")
 
-    stmt = sa.select(models.Materials.c.tags).where(models.Materials.c.tags != None)
+    stmt = sa.select(models.Materials.c.tags).where(models.Materials.c.tags != [])
 
     async with database.session() as ses:
-        tags_db = await ses.scalars(stmt)
-
-    tags: set[str] = set()
-    for material_tags in tags_db:
-        tags |= _normalize_material_tags(material_tags.split(_MATERIAL_TAGS_SEPARATOR))
+        tags = sorted(set(schemas.flatten_tags(await ses.scalars(stmt))))
 
     logger.debug("%s tags got", len(tags))
     return tags
@@ -546,7 +505,7 @@ async def insert_material(
     authors: str,
     pages: int,
     material_type: enums.MaterialTypesEnum,
-    tags: str | None,
+    tags: list[str],
     link: str | None,
 ) -> UUID:
     logger.debug("Inserting material title=%s", title)
@@ -586,7 +545,7 @@ async def update_material(
     authors: str,
     pages: int,
     material_type: enums.MaterialTypesEnum,
-    tags: str | None,
+    tags: list[str],
     link: str | None,
 ) -> None:
     logger.debug("Updating material='%s'", material_id)
@@ -647,15 +606,14 @@ async def is_completion_request_valid(
 ) -> None:
     from tracker.reading_log.db import list_log_records
 
-    async with asyncio.TaskGroup() as tg:
-        get_logs_task = tg.create_task(list_log_records(material_id=material_id))
-        get_material_task = tg.create_task(get_material(material_id=material_id))
+    with database.unwrap_database_errors():
+        async with asyncio.TaskGroup() as tg:
+            get_logs_task = tg.create_task(list_log_records(material_id=material_id))
+            get_material_task = tg.create_task(get_material(material_id=material_id))
 
     completed_at = completed_at or database.utc_today()
+    material = get_material_task.result()
 
-    if not (material := get_material_task.result()):
-        msg = f"Material id={material_id!r} not found"
-        raise database.NotFoundException(msg)
     if material.started_at is None:
         raise ValueError("Material is not started")
     if material.completed_at is not None:

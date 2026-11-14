@@ -18,6 +18,11 @@ class _NoteRow(Note):
     # Debezium sends every column of the table, not only the ones the model knows.
     model_config = ConfigDict(extra="ignore")
 
+    @field_validator("tags", mode="before")
+    def parse_tags(cls, tags: str | list[str]) -> list[str]:
+        # Debezium sends a JSONB column as its JSON text
+        return orjson.loads(tags) if isinstance(tags, str) else tags
+
 
 def _added_at_to_microseconds(row: dict | None) -> dict | None:
     if not row:

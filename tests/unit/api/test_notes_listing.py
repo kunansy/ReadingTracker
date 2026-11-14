@@ -103,7 +103,7 @@ async def test_search_without_query_skips_full_text_search(mocker, db_mocks):
         "chapters": {factories.MATERIAL_ID: ["1", "2"]},
         "query": None,
         "tags": ["tag"],
-        "tags_query": "b  a b",
+        "tags_query": "a b",
         "page_size": 1,
         "material_id": factories.MATERIAL_ID,
         "DATE_FORMAT": "%Y-%m-%d",

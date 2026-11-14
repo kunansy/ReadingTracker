@@ -795,7 +795,7 @@ async def test_create_material_with_required_fields_only(client, insert_material
         authors="Лев Толстой",
         pages=1300,
         material_type=enums.MaterialTypesEnum.book,
-        tags=None,
+        tags=[],
         link=None,
     )
 
@@ -807,7 +807,7 @@ async def test_create_material_with_every_field(client, insert_material):
             title="  Padded  ",
             pages=1,
             material_type="audiobook",
-            tags="a, b",
+            tags=["B", "a", "b"],
             link="https://example.com/book?x=1",
         ),
     )
@@ -818,7 +818,7 @@ async def test_create_material_with_every_field(client, insert_material):
         authors="Лев Толстой",
         pages=1,
         material_type=enums.MaterialTypesEnum.audiobook,
-        tags="a, b",
+        tags=["a", "b"],
         link="https://example.com/book?x=1",
     )
 
@@ -864,12 +864,12 @@ async def test_create_material_maps_a_duplicate_to_409(client, insert_material):
 
 
 @pytest.fixture
-def get_material_api(mocker):
-    return _patch(mocker, "get_material_api", return_value=factories.material())
+def get_material(mocker):
+    return _patch(mocker, "get_material", return_value=factories.material())
 
 
-async def test_get_material(client, get_material_api):
-    get_material_api.return_value = factories.material(
+async def test_get_material(client, get_material):
+    get_material.return_value = factories.material(
         link="https://example.com/book",
         started_at=datetime.datetime(2026, 1, 10),
         completed_at=datetime.datetime(2026, 1, 30),
@@ -881,11 +881,11 @@ async def test_get_material(client, get_material_api):
     assert response.json() == {
         "material": factories.material_json(link="https://example.com/book"),
     }
-    get_material_api.assert_awaited_once_with(material_id=factories.MATERIAL_ID)
+    get_material.assert_awaited_once_with(material_id=factories.MATERIAL_ID)
 
 
-async def test_get_material_that_is_missing_is_404(client, get_material_api):
-    get_material_api.side_effect = NOT_FOUND
+async def test_get_material_that_is_missing_is_404(client, get_material):
+    get_material.side_effect = NOT_FOUND
 
     response = await client.get(MATERIAL_URL)
 
@@ -893,11 +893,11 @@ async def test_get_material_that_is_missing_is_404(client, get_material_api):
     assert response.json() == NOT_FOUND_BODY
 
 
-async def test_get_material_rejects_bad_uuid(client, get_material_api):
+async def test_get_material_rejects_bad_uuid(client, get_material):
     response = await client.get(f"{BASE}/not-a-uuid")
 
     assert response.status_code == 422
-    get_material_api.assert_not_awaited()
+    get_material.assert_not_awaited()
 
 
 @pytest.fixture
@@ -910,7 +910,7 @@ async def test_update_material(client, update_material):
         MATERIAL_URL,
         json=_material_body(
             material_id=str(factories.MATERIAL_ID),
-            tags="a",
+            tags=["a"],
             link="https://example.com/book",
         ),
     )
@@ -923,7 +923,7 @@ async def test_update_material(client, update_material):
         authors="Лев Толстой",
         pages=1300,
         material_type=enums.MaterialTypesEnum.book,
-        tags="a",
+        tags=["a"],
         link="https://example.com/book",
     )
 
@@ -937,7 +937,7 @@ async def test_update_material_clears_optional_fields_when_omitted(
 
     assert response.status_code == 204
     kwargs = update_material.await_args.kwargs
-    assert kwargs["tags"] is None
+    assert kwargs["tags"] == []
     assert kwargs["link"] is None
 
 
@@ -981,7 +981,7 @@ async def test_update_material_that_is_missing_is_404(client, update_material):
 
 
 @pytest.fixture
-def start(mocker, get_material_api):
+def start(mocker, get_material):
     mocker.patch.object(database, "utc_today", return_value=factories.TODAY)
     return _patch(mocker, "start_material", return_value=None)
 
@@ -997,11 +997,11 @@ def start(mocker, get_material_api):
     ],
     ids=["omitted", "null", "today", "yesterday", "long-ago"],
 )
-async def test_start_material(client, start, get_material_api, body, started_at):
+async def test_start_material(client, start, get_material, body, started_at):
     response = await client.post(f"{MATERIAL_URL}/start", json=body)
 
     assert response.status_code == 204
-    get_material_api.assert_awaited_once_with(material_id=factories.MATERIAL_ID)
+    get_material.assert_awaited_once_with(material_id=factories.MATERIAL_ID)
     start.assert_awaited_once_with(
         material_id=factories.MATERIAL_ID, started_at=started_at
     )
@@ -1022,9 +1022,9 @@ async def test_start_material_rejects_a_future_date(client, start, started_at):
     "body", [{}, {"started_at": "2100-01-01"}], ids=["no-date", "future"]
 )
 async def test_start_material_rejects_a_started_material(
-    client, start, get_material_api, body
+    client, start, get_material, body
 ):
-    get_material_api.return_value = factories.material(
+    get_material.return_value = factories.material(
         started_at=datetime.datetime(2026, 1, 10)
     )
 
@@ -1035,8 +1035,8 @@ async def test_start_material_rejects_a_started_material(
     start.assert_not_awaited()
 
 
-async def test_start_material_that_is_missing_is_404(client, start, get_material_api):
-    get_material_api.side_effect = NOT_FOUND
+async def test_start_material_that_is_missing_is_404(client, start, get_material):
+    get_material.side_effect = NOT_FOUND
 
     response = await client.post(f"{MATERIAL_URL}/start", json={})
 
@@ -1153,8 +1153,8 @@ async def test_complete_material_rejects_invalid_body(client, complete, request_
 )
 class TestMaterialAction:
     @pytest.fixture(autouse=True)
-    def _material_exists(self, get_material_api):
-        return get_material_api
+    def _material_exists(self, get_material):
+        return get_material
 
     async def test_runs_the_action(self, client, mocker, action, db_function):
         run = _patch(mocker, db_function, return_value=None)
@@ -1196,15 +1196,15 @@ class TestMaterialAction:
         run.assert_not_awaited()
 
 
-async def test_repeat_of_a_missing_material_is_404(client, mocker, get_material_api):
-    get_material_api.side_effect = NOT_FOUND
+async def test_repeat_of_a_missing_material_is_404(client, mocker, get_material):
+    get_material.side_effect = NOT_FOUND
     repeat = _patch(mocker, "repeat_material", return_value=None)
 
     response = await client.post(f"{MATERIAL_URL}/repeat")
 
     assert response.status_code == 404
     assert response.json() == {"detail": "NotFoundError: Material not found"}
-    get_material_api.assert_awaited_once_with(material_id=factories.MATERIAL_ID)
+    get_material.assert_awaited_once_with(material_id=factories.MATERIAL_ID)
     repeat.assert_not_awaited()
 
 
@@ -1221,7 +1221,7 @@ def list_log_records(mocker):
     ids=["no-logs", "one-day", "with-zero-day", "more-than-material-pages"],
 )
 async def test_completion_info_sums_the_logs(
-    client, get_material_api, list_log_records, counts, pages_read
+    client, get_material, list_log_records, counts, pages_read
 ):
     list_log_records.return_value = [
         factories.log_record(count=count, date=datetime.date(2026, 1, day))
@@ -1237,14 +1237,14 @@ async def test_completion_info_sums_the_logs(
         "pages_read": pages_read,
         "read_days": len(counts),
     }
-    get_material_api.assert_awaited_once_with(material_id=factories.MATERIAL_ID)
+    get_material.assert_awaited_once_with(material_id=factories.MATERIAL_ID)
     list_log_records.assert_awaited_once_with(material_id=factories.MATERIAL_ID)
 
 
 async def test_completion_info_of_a_missing_material_is_404(
-    client, get_material_api, list_log_records
+    client, get_material, list_log_records
 ):
-    get_material_api.side_effect = NOT_FOUND
+    get_material.side_effect = NOT_FOUND
 
     response = await client.get(f"{MATERIAL_URL}/completion-info")
 

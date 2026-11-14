@@ -3,6 +3,7 @@ from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
+from sqlalchemy.dialects import postgresql
 from pydantic import ValidationError
 
 from tests.unit.helpers import TODAY, compile_sql, day, make_material, midnight, uid
@@ -462,13 +463,14 @@ async def test_completed_statistics_page_binds_filters_and_replaces_items(mocker
         "tags": "python,sql",
     }
     assert kwargs["request"].order == pagination.Order.DESC
-    assert compile_sql(stmt) == compile_sql(
-        db._get_completed_materials_stmt(
-            material_type=enums.MaterialTypesEnum.book,
-            is_outlined=True,
-            tags={"sql", "python"},
-        ),
+    expected_stmt = db._get_completed_materials_stmt(
+        material_type=enums.MaterialTypesEnum.book,
+        is_outlined=True,
+        tags={"sql", "python"},
     )
+    dialect = postgresql.dialect()
+    assert str(stmt.compile(dialect=dialect)) == str(expected_stmt.compile(dialect=dialect))
+    assert stmt.compile(dialect=dialect).params == expected_stmt.compile(dialect=dialect).params
     key = kwargs["key"]
     assert compile_sql(key.text) == (
         "to_char(materials.completed_at, 'YYYY-MM-DD\"T\"HH24:MI:SS.US') "
