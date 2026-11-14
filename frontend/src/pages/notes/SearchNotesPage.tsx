@@ -214,16 +214,14 @@ export function SearchNotesPage() {
     if (!root) {
       return;
     }
-    const links = root.querySelectorAll("p.link-ref");
+    const links = root.querySelectorAll<HTMLElement>("p[data-link-id]");
     const cleanups: (() => void)[] = [];
-    for (const link of links) {
-      const el = link as HTMLElement;
+    for (const el of links) {
+      const linkId = el.dataset.linkId;
+      if (!linkId) {
+        continue;
+      }
       const onEnter = async () => {
-        const text = el.textContent ?? "";
-        const linkId = text.replace(/\[\[/g, "").replace(/\]\]/g, "").trim();
-        if (!linkId) {
-          return;
-        }
         const cacheKey = `link-ref-${linkId}`;
         const cached = localStorage.getItem(cacheKey);
         if (cached) {

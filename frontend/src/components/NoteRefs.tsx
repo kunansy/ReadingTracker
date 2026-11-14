@@ -38,7 +38,7 @@ export function NoteLinkRef({ linkId }: NoteLinkRefProps) {
   }
 
   return (
-    <p className="note-content">
+    <p className="note-content" data-link-id={linkId}>
       <Link
         to={`/notes/${linkId}`}
         style={{
