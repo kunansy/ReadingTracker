@@ -636,18 +636,18 @@ async def test_get_tags_returns_the_union_of_all_note_tags(material_id):
     )
     await factories.insert_note(material_id=material_id, tags=[])
 
-    assert await notes_db._get_tags() == {"a", "b", "тег"}
+    assert await notes_db._get_tags() == ["a", "b", "тег"]
 
 
 async def test_get_tags_on_an_empty_database_is_empty():
-    assert await notes_db._get_tags() == set()
+    assert await notes_db._get_tags() == []
 
 
 async def test_get_tags_includes_tags_of_deleted_notes_current_behaviour(material_id):
     note_id = await factories.insert_note(material_id=material_id, tags=["gone"])
     await notes_db.delete_note(note_id=note_id)
 
-    assert await notes_db._get_tags() == {"gone"}
+    assert await notes_db._get_tags() == ["gone"]
 
 
 @pytest.mark.parametrize("as_type", [uuid.UUID, str], ids=["uuid", "str"])
@@ -664,6 +664,13 @@ async def test_get_material_tags_orders_by_frequency(material_id, as_type):
     tags = await notes_db._get_material_tags(as_type(str(material_id)))
 
     assert tags == ["common", "usual", "rare"]
+
+
+async def test_get_material_tags_breaks_frequency_ties_alphabetically(material_id):
+    await factories.insert_note(material_id=material_id, tags=["zeta", "alpha", "mid"])
+    await factories.insert_note(material_id=material_id, tags=["mid"])
+
+    assert await notes_db._get_material_tags(material_id) == ["mid", "alpha", "zeta"]
 
 
 async def test_get_material_tags_of_a_material_without_notes_is_empty(material_id):

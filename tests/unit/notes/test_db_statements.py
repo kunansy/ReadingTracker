@@ -217,7 +217,7 @@ class TestGetPossibleLinks:
 class TestGetSortedTags:
     @pytest.fixture
     def tag_sources(self, mocker):
-        def install(*, tags: set[str], material_tags: list[str]):
+        def install(*, tags: list[str], material_tags: list[str]):
             all_tags = mocker.patch.object(
                 db,
                 "_get_tags",
@@ -234,7 +234,7 @@ class TestGetSortedTags:
 
     @pytest.mark.parametrize("material_id", [None, ""], ids=["none", "empty-string"])
     async def test_without_material_all_tags_are_sorted(self, tag_sources, material_id):
-        _, for_material = tag_sources(tags={"b", "c", "a"}, material_tags=["z"])
+        _, for_material = tag_sources(tags=["a", "b", "c"], material_tags=["z"])
 
         result = await db.get_sorted_tags(material_id=material_id)
 
@@ -242,13 +242,13 @@ class TestGetSortedTags:
         for_material.assert_not_awaited()
 
     async def test_without_material_and_tags_is_empty(self, tag_sources):
-        tag_sources(tags=set(), material_tags=[])
+        tag_sources(tags=[], material_tags=[])
 
         assert await db.get_sorted_tags(material_id=None) == []
 
     async def test_material_tags_come_first_in_their_own_order(self, tag_sources):
         all_tags, for_material = tag_sources(
-            tags={"a", "b", "c", "d"},
+            tags=["a", "b", "c", "d"],
             material_tags=["d", "b"],
         )
 
@@ -261,10 +261,10 @@ class TestGetSortedTags:
     @pytest.mark.parametrize(
         ("tags", "material_tags", "expected"),
         [
-            ({"a", "b"}, [], ["a", "b"]),
-            ({"a", "b"}, ["b", "a"], ["b", "a"]),
-            (set(), [], []),
-            ({"a"}, ["only_material"], ["only_material", "a"]),
+            (["a", "b"], [], ["a", "b"]),
+            (["a", "b"], ["b", "a"], ["b", "a"]),
+            ([], [], []),
+            (["a"], ["only_material"], ["only_material", "a"]),
         ],
         ids=[
             "material-without-tags",
