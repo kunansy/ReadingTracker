@@ -415,13 +415,14 @@ def _note_tag() -> sa.ColumnElement[str]:
     return sa.func.jsonb_array_elements_text(models.Notes.c.tags).label("tag")
 
 
-async def _get_tags() -> set[str]:
+async def _get_tags() -> list[str]:
     logger.debug("Getting tags")
 
-    stmt = sa.select(_note_tag()).distinct()
+    tag = _note_tag()
+    stmt = sa.select(tag).distinct().order_by(tag)
 
     async with database.session() as ses:
-        tags = set(await ses.scalars(stmt))
+        tags = list(await ses.scalars(stmt))
 
     logger.debug("Total %s unique tags got", len(tags))
     return tags
@@ -657,17 +658,18 @@ async def get_sorted_tags(*, material_id: str | UUID | None) -> list[str]:
     logger.debug("Getting sorted tags for material_id=%s", material_id)
 
     if not material_id:
-        tags = await _get_tags()
-        return sorted(tags)
+        return await _get_tags()
 
     async with asyncio.TaskGroup() as tg:
         get_tags_task = tg.create_task(_get_tags())
         get_materials_tags = tg.create_task(_get_material_tags(material_id))
 
-    tags, materials_tags = get_tags_task.result(), get_materials_tags.result()
-    tags -= set(materials_tags)
+    materials_tags = get_materials_tags.result()
+    material_set = set(materials_tags)
 
-    result = materials_tags + sorted(tags)
+    other_tags = [tag for tag in get_tags_task.result() if tag not in material_set]
+
+    result = materials_tags + other_tags
     logger.debug("%s sorted tags got", len(result))
 
     return result
