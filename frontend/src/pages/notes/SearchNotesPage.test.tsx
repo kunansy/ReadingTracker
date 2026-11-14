@@ -149,6 +149,26 @@ describe("SearchNotesPage note references", () => {
     expect(screen.getAllByRole("link", { name: /^#/ })).toHaveLength(1);
     expect(screen.getAllByRole("link", { name: /^\[\[/ })).toHaveLength(1);
   });
+
+  it("previews the linked note on hover", async () => {
+    const fetchMock = stubFetch({
+      [`GET /${LINKED_NOTE_ID}`]: { status: 200, body: { note: { content: "linked content" } } },
+    });
+    renderPage();
+
+    const link = await screen.findByRole("link", { name: `[[${LINKED_NOTE_ID}]]` });
+    const ref = link.closest("p") as HTMLElement;
+    fireEvent.mouseEnter(ref);
+
+    await waitFor(() => {
+      expect(ref.title).toBe("linked content");
+    });
+    const previewCalls = fetchMock.mock.calls.filter(
+      ([request]) => new URL(request.url).pathname === `/api/v1/notes/${LINKED_NOTE_ID}`,
+    );
+    expect(previewCalls).toHaveLength(1);
+    expect(localStorage.getItem(`link-ref-${LINKED_NOTE_ID}`)).toBe("linked content");
+  });
 });
 
 describe("SearchNotesPage note actions", () => {
