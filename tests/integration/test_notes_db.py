@@ -639,6 +639,16 @@ async def test_get_tags_returns_the_union_of_all_note_tags(material_id):
     assert await notes_db._get_tags() == ["a", "b", "тег"]
 
 
+CODE_POINT_TAGS = ["ab", "a_b", "a1", "ё", "я"]
+CODE_POINT_ORDER = ["a1", "a_b", "ab", "я", "ё"]
+
+
+async def test_get_tags_sorts_by_code_point(material_id):
+    await factories.insert_note(material_id=material_id, tags=CODE_POINT_TAGS)
+
+    assert await notes_db._get_tags() == CODE_POINT_ORDER
+
+
 async def test_get_tags_on_an_empty_database_is_empty():
     assert await notes_db._get_tags() == []
 
@@ -671,6 +681,12 @@ async def test_get_material_tags_breaks_frequency_ties_alphabetically(material_i
     await factories.insert_note(material_id=material_id, tags=["mid"])
 
     assert await notes_db._get_material_tags(material_id) == ["mid", "alpha", "zeta"]
+
+
+async def test_get_material_tags_breaks_frequency_ties_by_code_point(material_id):
+    await factories.insert_note(material_id=material_id, tags=CODE_POINT_TAGS)
+
+    assert await notes_db._get_material_tags(material_id) == CODE_POINT_ORDER
 
 
 async def test_get_material_tags_of_a_material_without_notes_is_empty(material_id):

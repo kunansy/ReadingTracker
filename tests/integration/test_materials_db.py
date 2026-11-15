@@ -782,6 +782,13 @@ async def test_material_tags_are_merged_deduplicated_and_sorted(clock):
     assert await db.get_material_tags() == ["history", "math", "science", "single", "физика"]
 
 
+async def test_material_tags_are_sorted_by_code_point(clock):
+    await h.queued(clock, tags=["ab", "a_b", "a1"])
+    await h.queued(clock, tags=["ё", "я"])
+
+    assert await db.get_material_tags() == ["a1", "a_b", "ab", "я", "ё"]
+
+
 async def test_authors_are_distinct_and_not_split(clock):
     await h.queued(clock, authors="Knuth")
     await h.queued(clock, authors="Knuth")
