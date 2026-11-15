@@ -1,7 +1,13 @@
 import { describe, expect, test } from "vitest";
 
 import { TAG_MAX_LENGTH } from "./api/constraints";
-import { TAG_LENGTH_NOTICE, TAG_SEPARATOR_NOTICE, sanitizeTagInput, toTag } from "./tags";
+import {
+  TAG_LENGTH_NOTICE,
+  TAG_SEPARATOR_NOTICE,
+  sanitizeTagInput,
+  sanitizeTagsQuery,
+  toTag,
+} from "./tags";
 
 describe("sanitizeTagInput", () => {
   test.each([
@@ -53,5 +59,30 @@ describe("toTag", () => {
     ["__", ""],
   ])("turns '%s' into '%s'", (input, expected) => {
     expect(toTag(input)).toBe(expected);
+  });
+});
+
+describe("sanitizeTagsQuery", () => {
+  test.each([
+    ["", ""],
+    ["  ", ""],
+    ["a b", "a b"],
+    ["#Тег  #b", "тег b"],
+  ])("keeps '%s' as '%s' without a notice", (raw, expected) => {
+    expect(sanitizeTagsQuery(raw)).toEqual({ value: expected, notice: null });
+  });
+
+  test.each([
+    ["c++ #A a-b", "c a a_b"],
+    ["ok -", "ok"],
+  ])("rewrites the tags in '%s' into '%s' with a notice", (raw, expected) => {
+    expect(sanitizeTagsQuery(raw)).toEqual({ value: expected, notice: TAG_SEPARATOR_NOTICE });
+  });
+
+  test("reports a tag over the maximum length", () => {
+    expect(sanitizeTagsQuery(`a ${"b".repeat(TAG_MAX_LENGTH + 1)}`)).toEqual({
+      value: `a ${"b".repeat(TAG_MAX_LENGTH)}`,
+      notice: TAG_LENGTH_NOTICE,
+    });
   });
 });

@@ -14,6 +14,7 @@ import { useNoteActions } from "./useNoteActions";
 import { noteKeys, useNotesMeta } from "../../notes/queries";
 import { useCursorPagination } from "../../hooks/useCursorPagination";
 import { useDebounce } from "../../lib/debounce.ts";
+import { sanitizeTagsQuery } from "../../tags";
 
 const SEARCH_PAGE_SIZE = 10;
 const AUTOCOMPLETE_LIMIT = 5;
@@ -79,6 +80,7 @@ export function SearchNotesPage() {
   const nextToken = pagination.cursor;
 
   const [hintInput, setHintInput] = useState("");
+  const [tagsNotice, setTagsNotice] = useState<string | null>(null);
   const hintQuery = useDebounce(hintInput.trim(), AUTOCOMPLETE_DEBOUNCE_MS);
   const isHintEnabled = hintQuery !== "";
 
@@ -304,7 +306,9 @@ export function SearchNotesPage() {
             const next = new URLSearchParams();
             const mid = String(fd.get("material_id") ?? "").trim();
             const q = String(fd.get("query") ?? "").trim();
-            const tq = String(fd.get("tags_query") ?? "").trim();
+            const tags = sanitizeTagsQuery(String(fd.get("tags_query") ?? ""));
+            const tq = tags.value;
+            setTagsNotice(tags.notice);
             if (mid) {
               next.set("material_id", mid);
             }
@@ -349,7 +353,11 @@ export function SearchNotesPage() {
             name="tags_query"
             defaultValue={tagsQuery}
             placeholder="Enter tags"
+            aria-describedby={tagsNotice ? "tags-query-notice" : undefined}
           />
+          <small id="tags-query-notice" aria-live="polite">
+            {tagsNotice}
+          </small>
           <datalist id="tags">
             {data.tags.map((tag) => (
               <option key={tag} value={tag}>
