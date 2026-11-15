@@ -32,3 +32,15 @@ export function sanitizeTagInput(raw: string): SanitizedInput {
 export function toTag(input: string): string {
   return input.trim().replace(/^_+|_+$/g, "");
 }
+
+export function sanitizeTagsQuery(raw: string): SanitizedInput {
+  const tags = raw
+    .split(/\s+/)
+    .filter((token) => token.length > 0)
+    .map((token) => sanitizeTagInput(token.replace(/^#+/, "")));
+  const value = tags
+    .map((tag) => toTag(tag.value))
+    .filter((tag) => tag.length > 0)
+    .join(" ");
+  return { value, notice: tags.find((tag) => tag.notice !== null)?.notice ?? null };
+}

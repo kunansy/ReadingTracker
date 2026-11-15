@@ -133,6 +133,7 @@ export function ComboboxRoot(props: RootProps) {
 
     const created = toCreated(input);
     const isFull = maxSelected !== undefined && selected.length >= maxSelected;
+    const shownNotice = notice ?? (isFull ? `At most ${maxSelected} items can be selected` : null);
 
     const canCreate =
         !isFull &&
@@ -198,7 +199,7 @@ export function ComboboxRoot(props: RootProps) {
                 setOpen,
                 input,
                 changeInput,
-                notice,
+                notice: shownNotice,
                 noticeId,
                 options,
                 filtered,

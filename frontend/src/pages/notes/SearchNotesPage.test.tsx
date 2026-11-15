@@ -5,6 +5,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ContextMenuProvider } from "../../contexts/ContextMenuContext";
+import { TAG_SEPARATOR_NOTICE } from "../../tags";
 import { SearchNotesPage } from "./SearchNotesPage";
 
 vi.mock("../../api/client", async (importOriginal) => {
@@ -361,5 +362,26 @@ describe("SearchNotesPage search request", () => {
       expect(p.get("query")).toBe("foo");
       expect(p.has("tags_query")).toBe(false);
     }
+  });
+
+  it("normalizes the typed tags before searching and says so", async () => {
+    const fetchMock = stubFetch();
+    renderPage("/notes");
+    await waitFor(() => {
+      expect(document.getElementById(ACTIVE_NOTE_ID)).not.toBeNull();
+    });
+
+    const input = screen.getByPlaceholderText("Enter tags") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "c++ #Тег" } });
+    fireEvent.submit(input.form as HTMLFormElement);
+
+    await waitFor(() => {
+      const sent = fetchMock.mock.calls
+        .map(([request]) => new URL(request.url))
+        .filter((url) => url.pathname === "/api/v1/notes/search")
+        .map((url) => url.searchParams.get("tags_query"));
+      expect(sent).toContain("c тег");
+    });
+    expect(screen.getByText(TAG_SEPARATOR_NOTICE)).not.toBeNull();
   });
 });

@@ -131,4 +131,21 @@ describe("Combobox", () => {
     expect(screen.getByRole("status").textContent).toBe("a,b");
     expect(screen.queryByText('Create: "c"')).toBeNull();
   });
+
+  it("explains why nothing more can be selected once maxSelected is reached", () => {
+    render(<TagsField initial={["a", "b"]} maxSelected={2} />);
+
+    const input = type("c");
+    const notice = screen.getByText("At most 2 items can be selected");
+
+    expect(input.getAttribute("aria-describedby")).toBe(notice.id);
+  });
+
+  it("drops the maxSelected notice once an item is removed", () => {
+    render(<TagsField initial={["a", "b"]} maxSelected={2} />);
+
+    fireEvent.click(screen.getByText("b ×"));
+
+    expect(screen.queryByText("At most 2 items can be selected")).toBeNull();
+  });
 });
