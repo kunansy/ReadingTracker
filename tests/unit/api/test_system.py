@@ -1,4 +1,5 @@
 import datetime
+import logging
 from decimal import Decimal
 
 import pytest
@@ -414,6 +415,16 @@ async def test_backup_service_failure_is_500_current_behaviour(lenient_client, s
     assert response.text == "Internal Server Error"
 
 
+@pytest.mark.xfail(strict=True, reason=TASK_GROUP_BUG.format(line=148))
+async def test_backup_service_failure_is_503_as_json(lenient_client, service):
+    service["backup"].side_effect = backup_client.BackupException("no quota")
+
+    response = await lenient_client.post(f"{BASE}/backup")
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Backup error: no quota"}
+
+
 async def test_restore_counts_the_rows_after_restoring(client, service, mocker):
     response = await client.post(f"{BASE}/restore")
 
@@ -422,13 +433,21 @@ async def test_restore_counts_the_rows_after_restoring(client, service, mocker):
     assert service["calls"].mock_calls == [mocker.call.restore(), mocker.call.analytics()]
 
 
-async def test_restore_failure_does_not_count_rows(lenient_client, service):
+async def test_restore_failure_is_503_as_json_and_does_not_count_rows(
+    client,
+    service,
+    tracker_log,
+):
     service["restore"].side_effect = backup_client.BackupException("no dump")
 
-    response = await lenient_client.post(f"{BASE}/restore")
+    response = await client.post(f"{BASE}/restore")
 
-    assert response.status_code == 500
+    assert response.status_code == 503
+    assert response.json() == {"detail": "Backup error: no dump"}
     service["analytics"].assert_not_awaited()
+    errors = tracker_log(logging.ERROR)
+    assert len(errors) == 1
+    assert "no dump" in errors[0].getMessage()
 
 
 @pytest.mark.parametrize("endpoint", ["backup", "restore"])

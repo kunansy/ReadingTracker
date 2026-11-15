@@ -11,6 +11,7 @@ from tracker.api.v1.materials import router as api_v1_materials_router
 from tracker.api.v1.notes import router as api_v1_notes_router
 from tracker.api.v1.reading_logs import router as api_v1_reading_logs_router
 from tracker.api.v1.system import router as api_v1_system_router
+from tracker.backup import client as backup_client
 from tracker.common import database, kafka, manticoresearch, settings
 from tracker.common.logger import logger
 from tracker.common.spa import (
@@ -103,6 +104,16 @@ async def kafka_exception_handler(request: Request, exc: kafka.KafkaSendError):
     return JSONResponse(
         status_code=503,
         content={"detail": "Kafka unavailable"},
+    )
+
+
+@app.exception_handler(backup_client.BackupException)
+async def backup_exception_handler(request: Request, exc: backup_client.BackupException):
+    logger.error("Backup exception occurred, (%s), %s", request.url, exc, exc_info=exc)
+
+    return JSONResponse(
+        status_code=503,
+        content={"detail": f"Backup error: {exc}"},
     )
 
 

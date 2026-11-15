@@ -9,23 +9,17 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Backup/restore the database via the fastbackup service",
     )
-    parser.add_argument(
-        "--backup",
-        help="Create a backup",
-        action="store_true",
-        dest="backup",
-    )
-    parser.add_argument(
+    actions = parser.add_mutually_exclusive_group(required=True)
+    actions.add_argument("--backup", help="Create a backup", action="store_true")
+    actions.add_argument(
         "--restore",
         help="Restore the database from the latest backup",
         action="store_true",
-        dest="restore",
     )
-    parser.add_argument(
+    actions.add_argument(
         "--get-last-dump",
         help="Download the latest backup: .pgdump, or .json for legacy backups",
         action="store_true",
-        dest="get_last_dump",
     )
     return parser.parse_args()
 
@@ -37,7 +31,7 @@ async def main() -> None:
         await client.backup()
     elif args.restore:
         await client.restore()
-    elif args.get_last_dump:
+    else:
         await client.download_latest()
 
 

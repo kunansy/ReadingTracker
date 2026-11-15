@@ -54,6 +54,8 @@ The guide below is a good starting point (use the first steps about service acco
 The same operations are available from the command line:
 `docker exec -it tracker-app python3 -m tracker.backup.main --backup|--restore|--get-last-dump`
 
+After a restore, run `docker compose restart tracker-app`: a restore drops the pooled database connections only in the process that ran it.
+
 ## Structure
 ### Queue
 This page contains books/articles/courses you plan to read, with basic analytics (for example,

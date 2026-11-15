@@ -29,14 +29,13 @@ def _awaited(api) -> list[str]:
 
 
 class TestParseArgs:
-    def test_no_flags(self, argv):
+    def test_no_flag_exits(self, argv):
         argv()
 
-        assert vars(main.parse_args()) == {
-            "backup": False,
-            "restore": False,
-            "get_last_dump": False,
-        }
+        with pytest.raises(SystemExit) as e:
+            main.parse_args()
+
+        assert e.value.code == 2
 
     @pytest.mark.parametrize(
         ("flag", "dest"),
@@ -88,29 +87,33 @@ class TestMain:
         api["download_latest"].assert_awaited_once_with()
         assert _awaited(api) == ["download_latest"]
 
-    async def test_no_flag_does_nothing(self, argv, api):
+    async def test_no_flag_exits_and_runs_nothing(self, argv, api):
         argv()
 
-        await main.main()
+        with pytest.raises(SystemExit) as e:
+            await main.main()
 
+        assert e.value.code == 2
         assert _awaited(api) == []
 
     @pytest.mark.parametrize(
-        ("flags", "action"),
+        "flags",
         [
-            (["--restore", "--backup"], "backup"),
-            (["--get-last-dump", "--restore"], "restore"),
-            (["--get-last-dump", "--backup"], "backup"),
+            ["--restore", "--backup"],
+            ["--get-last-dump", "--restore"],
+            ["--get-last-dump", "--backup"],
         ],
         ids=[
-            "backup-over-restore",
-            "restore-over-get-last-dump",
-            "backup-over-get-last-dump",
+            "backup-and-restore",
+            "restore-and-get-last-dump",
+            "backup-and-get-last-dump",
         ],
     )
-    async def test_only_the_first_matching_action_runs(self, argv, api, flags, action):
+    async def test_conflicting_flags_exit_and_run_nothing(self, argv, api, flags):
         argv(*flags)
 
-        await main.main()
+        with pytest.raises(SystemExit) as e:
+            await main.main()
 
-        assert _awaited(api) == [action]
+        assert e.value.code == 2
+        assert _awaited(api) == []

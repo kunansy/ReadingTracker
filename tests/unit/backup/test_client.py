@@ -2,20 +2,47 @@ import datetime
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+import grpc
 import pytest
+from grpc.aio import AioRpcError, Metadata
 
-from tracker.common import settings
 from tracker.backup import client
+from tracker.common import settings
 from tracker.protos import backup_pb2, backup_pb2_grpc
 
 
 PG_CUSTOM = backup_pb2.BACKUP_FORMAT_PG_CUSTOM
 LEGACY_JSON = backup_pb2.BACKUP_FORMAT_LEGACY_JSON_ZSTD
 UNSPECIFIED = backup_pb2.BACKUP_FORMAT_UNSPECIFIED
+RPC_ERROR_MESSAGE = "Backup service error: UNAVAILABLE: service down"
 
 
 def _info(fmt: int, backup_id: str = "id1") -> backup_pb2.BackupInfo:
     return backup_pb2.BackupInfo(id=backup_id, name=f"{backup_id}.file", format=fmt)
+
+
+def _rpc_error() -> AioRpcError:
+    return AioRpcError(
+        grpc.StatusCode.UNAVAILABLE,
+        Metadata(),
+        Metadata(),
+        details="service down",
+    )
+
+
+class UnavailableStub:
+    def __init__(self) -> None:
+        self.error = _rpc_error()
+
+    async def Restore(self, req):  # noqa: N802
+        raise self.error
+
+    async def CreateBackup(self, req):  # noqa: N802
+        raise self.error
+
+    async def DownloadBackup(self, ref):  # noqa: N802
+        raise self.error
+        yield
 
 
 class FakeStub:
@@ -169,19 +196,36 @@ class TestRestore:
         assert opened == [stub]
         assert not stub.download_refs
 
-    async def test_service_failure_keeps_the_pool(self, mocker, backup_stub):
+    async def test_service_failure_still_disposes_the_pool(self, mocker, backup_stub):
+        engine = mocker.patch.object(client.database, "engine")
+        engine.dispose = mocker.AsyncMock()
+        stub = UnavailableStub()
+        backup_stub(stub)
+
+        with pytest.raises(client.BackupException) as e:
+            await client.restore()
+
+        assert str(e.value) == RPC_ERROR_MESSAGE
+        assert e.value.__cause__ is stub.error
+        engine.dispose.assert_awaited_once_with()
+
+    async def test_unexpected_failure_propagates_and_disposes_the_pool(
+        self,
+        mocker,
+        backup_stub,
+    ):
         class FailingStub(FakeStub):
             async def Restore(self, req):  # noqa: N802
-                raise RuntimeError("legacy backup")
+                raise RuntimeError("boom")
 
         engine = mocker.patch.object(client.database, "engine")
         engine.dispose = mocker.AsyncMock()
-        backup_stub(FailingStub(_info(LEGACY_JSON), []))
+        backup_stub(FailingStub(_info(PG_CUSTOM), []))
 
-        with pytest.raises(RuntimeError, match="legacy backup"):
+        with pytest.raises(RuntimeError, match="boom"):
             await client.restore()
 
-        engine.dispose.assert_not_awaited()
+        engine.dispose.assert_awaited_once_with()
 
 
 class TestBackup:
@@ -193,6 +237,16 @@ class TestBackup:
 
         assert backup_id == "created"
         assert stub.create_requests == [backup_pb2.CreateBackupRequest()]
+
+    async def test_service_failure_is_a_backup_exception(self, backup_stub):
+        stub = UnavailableStub()
+        backup_stub(stub)
+
+        with pytest.raises(client.BackupException) as e:
+            await client.backup()
+
+        assert str(e.value) == RPC_ERROR_MESSAGE
+        assert e.value.__cause__ is stub.error
 
 
 class TestDownloadLatest:
@@ -250,6 +304,29 @@ class TestDownloadLatest:
         assert str(e.value) == "Unsupported backup format of 'id1.file'"
         assert list(data_dir.iterdir()) == []
 
+    async def test_service_failure_is_a_backup_exception_and_saves_nothing(
+        self,
+        backup_stub,
+        data_dir,
+    ):
+        stub = UnavailableStub()
+        backup_stub(stub)
+
+        with pytest.raises(client.BackupException) as e:
+            await client.download_latest()
+
+        assert str(e.value) == RPC_ERROR_MESSAGE
+        assert e.value.__cause__ is stub.error
+        assert list(data_dir.iterdir()) == []
+
+    async def test_file_is_written_off_the_event_loop(self, mocker, backup_stub):
+        backup_stub(FakeStub(_info(PG_CUSTOM), [b"x"]))
+        to_thread = mocker.spy(client.asyncio, "to_thread")
+
+        filepath = await client.download_latest()
+
+        to_thread.assert_awaited_once_with(filepath.write_bytes, b"x")
+
 
 def test_dump_extensions_cover_both_backup_formats():
     assert client.DUMP_EXTENSIONS == {PG_CUSTOM: "pgdump", LEGACY_JSON: "json"}
@@ -265,14 +342,12 @@ class TestGetDumpFilename:
             return_value=datetime.datetime(2024, 1, 2, 3, 4, 5, 678, tzinfo=datetime.UTC),
         )
 
-    def test_default_prefix(self):
-        assert client.get_dump_filename() == Path("data/tracker_2024-01-02_03-04-05.json")
+    @pytest.mark.parametrize("prefix", ["last_dump", "", "дамп", "v1.2"])
+    @pytest.mark.parametrize("extension", ["pgdump", "json"])
+    def test_name_is_the_prefix_the_time_and_the_extension(self, prefix, extension):
+        filename = client.get_dump_filename(prefix=prefix, extension=extension)
 
-    @pytest.mark.parametrize("prefix", ["last_dump", "", "дамп"])
-    def test_custom_prefix(self, prefix):
-        filename = client.get_dump_filename(prefix=prefix)
-
-        assert filename == settings.DATA_DIR / f"{prefix}_2024-01-02_03-04-05.json"
+        assert filename == settings.DATA_DIR / f"{prefix}_2024-01-02_03-04-05.{extension}"
 
 
 def test_utcnow_is_timezone_aware_utc():

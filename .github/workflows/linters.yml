@@ -89,7 +89,6 @@ jobs:
       DB_NAME: tracker
       DB_USERNAME: tracker
       DB_PASSWORD: tracker
-      DRIVE_CREDS: '{}'
       MANTICORE_MYSQL_HOST: localhost
       BACKUP_HOST: localhost
       BACKUP_PORT: 50051

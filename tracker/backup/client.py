@@ -1,10 +1,14 @@
+import asyncio
 import datetime
 import time
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from grpc.aio import insecure_channel as grpc_chan
+from grpc.aio import (
+    AioRpcError,
+    insecure_channel as grpc_chan,
+)
 
 from tracker.common import database, settings
 from tracker.common.logger import logger
@@ -21,6 +25,16 @@ DUMP_TIME_FORMAT = "%Y-%m-%d_%H-%M-%S"
 
 class BackupException(Exception):
     pass
+
+
+@asynccontextmanager
+async def _rpc_errors() -> AsyncGenerator[None]:
+    try:
+        yield
+    except AioRpcError as e:
+        raise BackupException(
+            f"Backup service error: {e.code().name}: {e.details()}",
+        ) from e
 
 
 @asynccontextmanager
@@ -51,8 +65,8 @@ def _utcnow() -> datetime.datetime:
     return datetime.datetime.now(datetime.UTC)
 
 
-def get_dump_filename(*, prefix: str = "tracker") -> Path:
-    filename = f"{prefix}_{_utcnow().strftime(DUMP_TIME_FORMAT)}.json"
+def get_dump_filename(*, prefix: str, extension: str) -> Path:
+    filename = f"{prefix}_{_utcnow().strftime(DUMP_TIME_FORMAT)}.{extension}"
     return settings.DATA_DIR / filename
 
 
@@ -60,12 +74,18 @@ async def restore() -> None:
     logger.info("Restoring started")
     start_time = time.perf_counter()
 
-    async with _backup_stub() as stub:
-        reply: backup_pb2.RestoreReply = await stub.Restore(
-            backup_pb2.RestoreRequest(backup=LATEST, confirm_db_name=settings.DB_NAME),
-        )
-    # pg_restore recreated tables and types; pooled connections hold stale OIDs.
-    await database.engine.dispose()
+    try:
+        async with _rpc_errors(), _backup_stub() as stub:
+            reply: backup_pb2.RestoreReply = await stub.Restore(
+                backup_pb2.RestoreRequest(
+                    backup=LATEST,
+                    confirm_db_name=settings.DB_NAME,
+                ),
+            )
+    finally:
+        # pg_restore may have recreated tables and types even when the call failed,
+        # so pooled connections can hold stale OIDs.
+        await database.engine.dispose()
 
     logger.info(
         "Restored from '%s' for %ss, previous state saved as '%s'",
@@ -78,7 +98,7 @@ async def restore() -> None:
 async def backup() -> str:
     start = time.perf_counter()
 
-    async with _backup_stub() as stub:
+    async with _rpc_errors(), _backup_stub() as stub:
         info: backup_pb2.BackupInfo = await stub.CreateBackup(
             backup_pb2.CreateBackupRequest(),
         )
@@ -91,15 +111,15 @@ async def backup() -> str:
 
 async def download_latest(*, prefix: str = "last_dump") -> Path:
     """Save the latest backup to DATA_DIR: `.pgdump` or decompressed legacy `.json`."""
-    async with _backup_stub() as stub:
+    async with _rpc_errors(), _backup_stub() as stub:
         info, content = await _download(stub, LATEST)
 
     extension = DUMP_EXTENSIONS.get(info.format)
     if extension is None:
         raise BackupException(f"Unsupported backup format of '{info.name}'")
 
-    filepath = get_dump_filename(prefix=prefix).with_suffix(f".{extension}")
-    filepath.write_bytes(content)
+    filepath = get_dump_filename(prefix=prefix, extension=extension)
+    await asyncio.to_thread(filepath.write_bytes, content)
     logger.info("Backup '%s' saved to %s", info.name, filepath)
 
     return filepath
