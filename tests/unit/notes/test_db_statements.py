@@ -329,3 +329,9 @@ class TestGetSortedTags:
         tag_sources(tags=tags, material_tags=material_tags)
 
         assert await db.get_sorted_tags(material_id=str(MATERIAL_ID)) == expected
+
+
+def test_note_tags_are_compared_by_code_point():
+    assert str(_compile(db._note_tag())) == (
+        'jsonb_array_elements_text(notes.tags) COLLATE "C"'
+    )
