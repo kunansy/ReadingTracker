@@ -14,7 +14,7 @@ import { isMaterialType } from "../../types";
 import {ComboboxInput, ComboboxList, ComboboxRoot} from "../../components/Combobox";
 import { materialKeys, useMaterial, useMaterialTags } from "../../materials/queries";
 import { TAGS_MAX_ITEMS } from "../../api/constraints";
-import { sanitizeTagInput } from "../../tags";
+import { sanitizeTagInput, toTag } from "../../tags";
 
 export function UpdateMaterialPage() {
   const [searchParams] = useSearchParams();
@@ -186,6 +186,7 @@ export function UpdateMaterialPage() {
                 multiple
                 allowCreate
                 sanitizeInput={sanitizeTagInput}
+                toCreated={toTag}
                 maxSelected={TAGS_MAX_ITEMS}
             >
               <ComboboxInput placeholder="Enter tags" />

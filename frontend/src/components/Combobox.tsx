@@ -5,15 +5,20 @@ import React, {
     useState,
     useRef,
     useEffect,
+    useId,
     ReactNode,
 } from "react";
+
+import type { SanitizedInput } from "../tags";
 
 type ComboboxContextType = {
     open: boolean;
     setOpen: (v: boolean) => void;
 
     input: string;
-    setInput: (v: string) => void;
+    changeInput: (raw: string) => void;
+    notice: string | null;
+    noticeId: string;
 
     options: readonly string[];
     filtered: string[];
@@ -30,10 +35,11 @@ type ComboboxContextType = {
     remove: (v: string) => void;
 
     canCreate: boolean;
-    sanitizeInput: (raw: string) => string;
+    created: string;
 };
 
-const identity = (raw: string) => raw;
+const keepInput = (raw: string): SanitizedInput => ({ value: raw, notice: null });
+const trimInput = (input: string) => input.trim();
 
 const ComboboxContext = createContext<ComboboxContextType | null>(null);
 
@@ -48,7 +54,8 @@ type BaseProps = {
     options: readonly string[];
     getOptionLabel?: (opt: string) => string;
     allowCreate?: boolean;
-    sanitizeInput?: (raw: string) => string;
+    sanitizeInput?: (raw: string) => SanitizedInput;
+    toCreated?: (input: string) => string;
 };
 
 type SingleProps = BaseProps & {
@@ -74,7 +81,8 @@ export function ComboboxRoot(props: RootProps) {
         options,
         getOptionLabel,
         allowCreate = false,
-        sanitizeInput = identity,
+        sanitizeInput = keepInput,
+        toCreated = trimInput,
     } = props;
 
     const multiple = props.multiple === true;
@@ -82,6 +90,14 @@ export function ComboboxRoot(props: RootProps) {
 
     const [open, setOpen] = useState(false);
     const [input, setInput] = useState("");
+    const [notice, setNotice] = useState<string | null>(null);
+    const noticeId = useId();
+
+    const changeInput = (raw: string) => {
+        const sanitized = sanitizeInput(raw);
+        setInput(sanitized.value);
+        setNotice(sanitized.notice);
+    };
     const [highlight, setHighlight] = useState(0);
 
     const ref = useRef<HTMLDivElement>(null);
@@ -115,22 +131,22 @@ export function ComboboxRoot(props: RootProps) {
         optionLabel,
     ]);
 
-    const normalized = input.trim();
+    const created = toCreated(input);
     const isFull = maxSelected !== undefined && selected.length >= maxSelected;
 
     const canCreate =
         !isFull &&
         allowCreate &&
-        normalized.length > 0 &&
+        created.length > 0 &&
         !options.some(
             (o) =>
                 o.toLowerCase() ===
-                normalized.toLowerCase(),
+                created.toLowerCase(),
         ) &&
         !selected.some(
             (s) =>
                 s.toLowerCase() ===
-                normalized.toLowerCase(),
+                created.toLowerCase(),
         );
 
     const select = (v: string) => {
@@ -140,6 +156,7 @@ export function ComboboxRoot(props: RootProps) {
             }
             props.onChange([...selected, v]);
             setInput("");
+            setNotice(null);
             return;
         }
 
@@ -180,7 +197,9 @@ export function ComboboxRoot(props: RootProps) {
                 open,
                 setOpen,
                 input,
-                setInput,
+                changeInput,
+                notice,
+                noticeId,
                 options,
                 filtered,
                 getOptionLabel: optionLabel,
@@ -192,7 +211,7 @@ export function ComboboxRoot(props: RootProps) {
                 select,
                 remove,
                 canCreate,
-                sanitizeInput,
+                created,
             }}
         >
             <div ref={ref} style={{ position: "relative" }}>
@@ -215,7 +234,9 @@ export function ComboboxInput({
 }) {
     const {
         input,
-        setInput,
+        changeInput,
+        notice,
+        noticeId,
         open,
         setOpen,
         highlight,
@@ -226,7 +247,7 @@ export function ComboboxInput({
         multiple,
         selected,
         remove,
-        sanitizeInput,
+        created,
     } = useComboboxCtx();
 
     return (
@@ -258,9 +279,10 @@ export function ComboboxInput({
                 style={{ border: "none", outline: "none", flex: 1 }}
                 value={input}
                 placeholder={placeholder}
+                aria-describedby={notice ? noticeId : undefined}
                 onFocus={() => setOpen(true)}
                 onChange={(e) => {
-                    setInput(sanitizeInput(e.target.value));
+                    changeInput(e.target.value);
                     setOpen(true);
                     setHighlight(0);
                 }}
@@ -289,11 +311,14 @@ export function ComboboxInput({
                         if (highlight < filtered.length) {
                             select(filtered[highlight]);
                         } else if (canCreate) {
-                            select(input.trim());
+                            select(created);
                         }
                     }
                 }}
             />
+            <small id={noticeId} aria-live="polite" style={{ flexBasis: "100%" }}>
+                {notice}
+            </small>
         </div>
     );
 }
@@ -306,7 +331,7 @@ export function ComboboxList() {
         setHighlight,
         select,
         canCreate,
-        input,
+        created,
         getOptionLabel,
     } = useComboboxCtx();
 
@@ -336,9 +361,9 @@ export function ComboboxList() {
                         margin: "auto",
                     }}
                     onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => select(input.trim())}
+                    onClick={() => select(created)}
                 >
-                    Create: "{input.trim()}"
+                    Create: "{created}"
                 </div>
             )}
 

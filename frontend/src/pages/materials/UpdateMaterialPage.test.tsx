@@ -1,9 +1,15 @@
 // @vitest-environment jsdom
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { cleanup, fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import {
+  FULL_TAGS,
+  expectNoTagIsCreatedOnceFull,
+  expectTagInputIsSanitized,
+  json,
+  renderPage as renderWithClient,
+  stubGetRoutes,
+} from "../../test/tagInput";
 import { UpdateMaterialPage } from "./UpdateMaterialPage";
 
 vi.mock("../../api/client", async (importOriginal) => {
@@ -32,12 +38,6 @@ const MATERIAL = {
   is_outlined: false,
 };
 
-function json(status: number, body: unknown): Promise<Response> {
-  return Promise.resolve(
-    new Response(JSON.stringify(body), { status, headers: { "Content-Type": "application/json" } }),
-  );
-}
-
 function stubFetch(patchReply: () => Promise<Response>) {
   const fetchMock = vi.fn((request: Request) => {
     const path = new URL(request.url).pathname;
@@ -55,17 +55,10 @@ function stubFetch(patchReply: () => Promise<Response>) {
   vi.stubGlobal("fetch", fetchMock);
 }
 
+const PAGE_URL = `/materials/update?material_id=${MATERIAL_ID}`;
+
 function renderPage() {
-  const qc = new QueryClient({
-    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
-  });
-  render(
-    <MemoryRouter initialEntries={[`/materials/update?material_id=${MATERIAL_ID}`]}>
-      <QueryClientProvider client={qc}>
-        <UpdateMaterialPage />
-      </QueryClientProvider>
-    </MemoryRouter>,
-  );
+  renderWithClient(<UpdateMaterialPage />, PAGE_URL);
 }
 
 afterEach(() => {
@@ -81,5 +74,33 @@ describe("UpdateMaterialPage", () => {
     fireEvent.click(await screen.findByRole("button", { name: "Update" }));
 
     expect(await screen.findByText("Pages must be positive")).not.toBeNull();
+  });
+});
+
+describe("UpdateMaterialPage tags", () => {
+  async function renderLoadedPage() {
+    renderPage();
+    await screen.findByDisplayValue(MATERIAL.title);
+  }
+
+  function stubMaterial(tags: readonly string[]) {
+    stubGetRoutes({
+      "/api/v1/materials/tags": { tags: [] },
+      [`/api/v1/materials/${MATERIAL_ID}`]: { material: { ...MATERIAL, tags } },
+    });
+  }
+
+  it("sanitizes the typed tag and says so", async () => {
+    stubMaterial([]);
+    await renderLoadedPage();
+
+    await expectTagInputIsSanitized();
+  });
+
+  it("does not create a tag past the maximum", async () => {
+    stubMaterial(FULL_TAGS);
+    await renderLoadedPage();
+
+    await expectNoTagIsCreatedOnceFull();
   });
 });
