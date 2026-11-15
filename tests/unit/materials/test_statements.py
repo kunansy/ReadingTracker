@@ -54,7 +54,10 @@ def test_completed_materials_without_filters():
 @pytest.mark.parametrize(
     ("filters", "expected_where"),
     [
-        ({"material_type": enums.MaterialTypesEnum.lecture}, "materials.material_type = 'lecture'"),
+        (
+            {"material_type": enums.MaterialTypesEnum.lecture},
+            "materials.material_type = 'lecture'",
+        ),
         ({"is_outlined": True}, "materials.is_outlined = true"),
         ({"is_outlined": False}, "materials.is_outlined = false"),
     ],
@@ -195,12 +198,14 @@ def tags_in_db(mocker):
     return _install
 
 
-async def test_material_tags_are_unnested_deduplicated_and_sorted_in_sql(tags_in_db):
+async def test_material_tags_are_unnested_deduplicated_and_sorted_by_code_point_in_sql(
+    tags_in_db,
+):
     session = tags_in_db(["go", "python"])
 
     assert await db.get_material_tags() == ["go", "python"]
     assert compile_sql(session.scalars.await_args.args[0]) == (
-        "SELECT DISTINCT jsonb_array_elements_text(materials.tags) AS tag "
+        'SELECT DISTINCT jsonb_array_elements_text(materials.tags) COLLATE "C" AS tag '
         "FROM materials ORDER BY tag"
     )
 

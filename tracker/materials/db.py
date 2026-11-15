@@ -468,7 +468,8 @@ async def reading_statistics_page(
 async def get_material_tags() -> list[str]:
     logger.info("Getting material tags")
 
-    tag = sa.func.jsonb_array_elements_text(models.Materials.c.tags).label("tag")
+    elements = sa.func.jsonb_array_elements_text(models.Materials.c.tags)
+    tag = sa.collate(elements, "C").label("tag")
     stmt = sa.select(tag).distinct().order_by(tag)
 
     async with database.session() as ses:

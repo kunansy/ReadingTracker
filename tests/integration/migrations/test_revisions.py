@@ -1,4 +1,5 @@
 import datetime
+import json
 import uuid
 
 import pytest
@@ -454,7 +455,9 @@ async def test_0008_replaces_the_completed_at_index_by_the_listing_indexes():
     assert REVISION_0008.COMPLETED_AT_INDEX_NAME in at_0007
     assert not set(LISTING_INDEXES_AT_0008) & set(at_0007)
     assert REVISION_0008.COMPLETED_AT_INDEX_NAME not in at_0008
-    assert {name: at_0008[name] for name in LISTING_INDEXES_AT_0008} == LISTING_INDEXES_AT_0008
+    assert {
+        name: at_0008[name] for name in LISTING_INDEXES_AT_0008
+    } == LISTING_INDEXES_AT_0008
     assert set(at_0008) - set(LISTING_INDEXES_AT_0008) == set(at_0007) - {
         REVISION_0008.COMPLETED_AT_INDEX_NAME,
     }
@@ -495,6 +498,8 @@ async def test_0009_upgrade_splits_and_normalizes_the_material_tags():
         "Код, Практика",
         " b ,a,, A ",
         "c++, machine learning, data-science",
+        "++, -a-, A_",
+        "ab, a_b",
         "  ,  ",
         "",
         None,
@@ -517,10 +522,27 @@ async def test_0009_upgrade_splits_and_normalizes_the_material_tags():
         ["код", "практика"],
         ["a", "b"],
         ["c", "data_science", "machine_learning"],
+        ["a"],
+        ["a_b", "ab"],
         [],
         [],
         [],
     ]
+
+
+async def test_0009_upgrade_keeps_the_first_32_material_tags():
+    stored = ", ".join(f"t{i:02}" for i in range(33))
+
+    def check(conn: Connection) -> list:
+        REVISION_0009.downgrade()
+        material_id = _insert_material(conn)
+        _set_tags(conn, "materials", "material_id", material_id, stored)
+        REVISION_0009.upgrade()
+        return _tags(conn, "materials", "material_id", [material_id])
+
+    [tags] = await in_rolled_back_migration(check)
+
+    assert tags == [f"t{i:02}" for i in range(32)]
 
 
 async def test_0009_upgrade_normalizes_the_note_tags():
@@ -532,6 +554,9 @@ async def test_0009_upgrade_normalizes_the_note_tags():
         None,
         '"x"',
         '{"a": 1}',
+        '["sci-fi", "a b", "#x", "X", "++"]',
+        json.dumps(["b" * 127 + "-x", "a" * 130]),
+        json.dumps([f"t{i:02}" for i in range(33)]),
     ]
 
     def check(conn: Connection) -> tuple[list, tuple]:
@@ -546,7 +571,18 @@ async def test_0009_upgrade_normalizes_the_note_tags():
     tags, column = await in_rolled_back_migration(check)
 
     assert column == ("jsonb", "NO", "'[]'::jsonb")
-    assert tags == [["a", "b"], ["a", "b", "c"], [], [], [], [], []]
+    assert tags == [
+        ["a", "b"],
+        ["a", "b", "c"],
+        [],
+        [],
+        [],
+        [],
+        [],
+        ["a_b", "sci_fi", "x"],
+        ["a" * 128, "b" * 127],
+        [f"t{i:02}" for i in range(32)],
+    ]
 
 
 async def test_0009_downgrade_joins_the_material_tags_back_into_a_string():
