@@ -109,11 +109,16 @@ async def kafka_exception_handler(request: Request, exc: kafka.KafkaSendError):
 
 @app.exception_handler(backup_client.BackupException)
 async def backup_exception_handler(request: Request, exc: backup_client.BackupException):
-    logger.error("Backup exception occurred, (%s), %s", request.url, exc, exc_info=exc)
+    logger.error(
+        "Backup service exception occurred, (%s), %s",
+        request.url,
+        exc,
+        exc_info=exc,
+    )
 
     return JSONResponse(
         status_code=503,
-        content={"detail": "Backup failed"},
+        content={"detail": "Backup service failed"},
     )
 
 

@@ -64,6 +64,8 @@ with env.prefixed("BACKUP_"):
     BACKUP_HOST = env("HOST")
     BACKUP_PORT = env.int("PORT")
     BACKUP_TARGET = f"{BACKUP_HOST}:{BACKUP_PORT}"
+    BACKUP_TIMEOUT = env.float("TIMEOUT", 600)
+    BACKUP_RESTORE_TIMEOUT = env.float("RESTORE_TIMEOUT", 1800)
 
 
 with env.prefixed("YOUTUBE_API_"):

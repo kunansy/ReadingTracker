@@ -140,7 +140,7 @@ async def create_outline_percentage_graphic() -> str:
     return figures.render_svg_base64(fig)
 
 
-# Exact counts in one round trip: query_to_xml runs count(*) per model table.
+# Exact counts (not reltuples estimates) in one round trip.
 TABLES_ROWS_COUNT_QUERY = """
 SELECT
     t.table_name || '_count' AS name,
@@ -161,10 +161,13 @@ WHERE t.table_schema = current_schema()
 
 
 async def get_tables_analytics() -> dict[str, int]:
+    tables = sorted(models.metadata.tables)
     async with database.session() as ses:
-        stmt = sa.text(TABLES_ROWS_COUNT_QUERY).bindparams(
-            names=sorted(models.metadata.tables),
-        )
+        stmt = sa.text(TABLES_ROWS_COUNT_QUERY).bindparams(names=tables)
         res = (await ses.execute(stmt)).all()
 
-    return {r.name: r.cnt for r in res}
+    counts = {r.name: r.cnt for r in res}
+    keys = [f"{table}_count" for table in tables]
+    if missing := [key for key in keys if key not in counts]:
+        raise database.DatabaseException(f"Missing row counts: {', '.join(missing)}")
+    return {key: counts[key] for key in keys}

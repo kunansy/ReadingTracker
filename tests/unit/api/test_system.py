@@ -5,12 +5,18 @@ from decimal import Decimal
 import pytest
 
 from tests.unit.api import factories
-from tracker.api.v1 import system as system_api
 from tracker.backup import client as backup_client
-from tracker.common import database
+from tracker.common import database, workers
 from tracker.models import enums
-from tracker.reading_log import db as logs_db, statistics
-from tracker.system import db as system_db, schemas, trends
+from tracker.reading_log import (
+    db as logs_db,
+    statistics,
+)
+from tracker.system import (
+    db as system_db,
+    schemas,
+    trends,
+)
 
 
 BASE = "/api/v1/system"
@@ -361,27 +367,6 @@ class TestTrendGraphic:
         create.assert_not_called()
 
 
-def test_tables_stat_keeps_only_the_known_counters():
-    assert system_api._tables_stat({**TABLES_STAT, "statuses_count": 9}) == TABLES_STAT
-
-
-@pytest.mark.parametrize("missing", sorted(TABLES_STAT))
-def test_tables_stat_names_a_missing_counter(missing):
-    stat = {key: value for key, value in TABLES_STAT.items() if key != missing}
-
-    with pytest.raises(database.DatabaseException, match=f"^Missing row counts: {missing}$"):
-        system_api._tables_stat(stat)
-
-
-async def test_missing_counter_after_a_restore_is_a_json_error(lenient_client, service):
-    service["analytics"].return_value = {}
-
-    response = await lenient_client.post(f"{BASE}/restore")
-
-    assert response.status_code == 500
-    assert response.json()["detail"].startswith("Database error: Missing row counts: ")
-
-
 @pytest.fixture
 def service(mocker):
     calls = mocker.Mock()
@@ -390,6 +375,7 @@ def service(mocker):
             backup_client, "backup", mocker.AsyncMock(return_value="dump.json")
         ),
         "restore": mocker.patch.object(backup_client, "restore", mocker.AsyncMock()),
+        "reload": mocker.patch.object(workers, "reload_workers", mocker.Mock()),
         "analytics": mocker.patch.object(
             system_db, "get_tables_analytics", mocker.AsyncMock(return_value=TABLES_STAT)
         ),
@@ -407,13 +393,19 @@ async def test_backup_counts_the_rows_after_the_backup(client, service, mocker):
     assert service["calls"].mock_calls == [mocker.call.backup(), mocker.call.analytics()]
 
 
-async def test_backup_reports_a_database_failure_as_json(lenient_client, service):
+async def test_backup_reports_a_database_failure_as_json_and_names_the_backup(
+    lenient_client,
+    service,
+    tracker_log,
+):
     service["analytics"].side_effect = database.DatabaseException("connection lost")
 
     response = await lenient_client.post(f"{BASE}/backup")
 
     assert response.status_code == 500
     assert response.text == '{"detail":"Database error: connection lost"}'
+    messages = [record.getMessage() for record in tracker_log(logging.ERROR)]
+    assert "Backup 'dump.json' created, but its row counts failed" in messages
 
 
 async def test_backup_service_failure_is_503_as_json_and_does_not_count_rows(
@@ -426,19 +418,36 @@ async def test_backup_service_failure_is_503_as_json_and_does_not_count_rows(
     response = await client.post(f"{BASE}/backup")
 
     assert response.status_code == 503
-    assert response.json() == {"detail": "Backup failed"}
+    assert response.json() == {"detail": "Backup service failed"}
     service["analytics"].assert_not_awaited()
     errors = tracker_log(logging.ERROR)
     assert len(errors) == 1
     assert "no quota" in errors[0].getMessage()
 
 
-async def test_restore_counts_the_rows_after_restoring(client, service, mocker):
+async def test_restore_counts_the_rows_then_reloads_the_workers(client, service, mocker):
     response = await client.post(f"{BASE}/restore")
 
     assert response.status_code == 200
     assert response.json() == TABLES_STAT
-    assert service["calls"].mock_calls == [mocker.call.restore(), mocker.call.analytics()]
+    assert service["calls"].mock_calls == [
+        mocker.call.restore(),
+        mocker.call.analytics(),
+        mocker.call.reload(),
+    ]
+
+
+async def test_workers_are_reloaded_when_counting_fails_after_a_restore(
+    lenient_client,
+    service,
+):
+    service["analytics"].side_effect = database.DatabaseException("Missing row counts: x")
+
+    response = await lenient_client.post(f"{BASE}/restore")
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Database error: Missing row counts: x"}
+    service["reload"].assert_called_once_with()
 
 
 async def test_restore_failure_is_503_as_json_and_does_not_count_rows(
@@ -451,8 +460,9 @@ async def test_restore_failure_is_503_as_json_and_does_not_count_rows(
     response = await client.post(f"{BASE}/restore")
 
     assert response.status_code == 503
-    assert response.json() == {"detail": "Backup failed"}
+    assert response.json() == {"detail": "Backup service failed"}
     service["analytics"].assert_not_awaited()
+    service["reload"].assert_not_called()
     errors = tracker_log(logging.ERROR)
     assert len(errors) == 1
     assert "no dump" in errors[0].getMessage()

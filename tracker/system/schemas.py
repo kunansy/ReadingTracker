@@ -66,7 +66,7 @@ class GetSpanReportResponse(CustomBaseModel):
     repeat_materials_count: int
 
 
-class BackupResponse(CustomBaseModel):
+class TablesCountResponse(CustomBaseModel):
     materials_count: NonNegativeInt
     reading_log_count: NonNegativeInt
     notes_count: NonNegativeInt
@@ -75,13 +75,12 @@ class BackupResponse(CustomBaseModel):
     note_repeats_history_count: NonNegativeInt
 
 
-class RestoreResponse(CustomBaseModel):
-    materials_count: NonNegativeInt
-    reading_log_count: NonNegativeInt
-    notes_count: NonNegativeInt
-    cards_count: NonNegativeInt
-    repeats_count: NonNegativeInt
-    note_repeats_history_count: NonNegativeInt
+class BackupResponse(TablesCountResponse):
+    pass
+
+
+class RestoreResponse(TablesCountResponse):
+    pass
 
 
 class GetImageResponse(CustomBaseModel):

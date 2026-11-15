@@ -363,45 +363,68 @@ class TestCreateOutlinePercentageGraphic:
         assert plt.get_fignums() == []
 
 
+MODEL_TABLES = (
+    "cards",
+    "materials",
+    "note_repeats_history",
+    "notes",
+    "reading_log",
+    "repeats",
+)
+
+
 class TestGetTablesAnalytics:
-    async def test_counts_rows_of_every_table_in_one_query(self, mocker):
-        rows = [mocker.Mock(cnt=index) for index in range(2)]
-        rows[0].name, rows[1].name = "notes_count", "alembic_version_count"
-        result = mocker.Mock()
-        result.all.return_value = rows
-        session = mocker.Mock(execute=mocker.AsyncMock(return_value=result))
+    @pytest.fixture
+    def counted(self, mocker):
+        def install(counts: dict[str, int]):
+            rows = []
+            for name, cnt in counts.items():
+                row = mocker.Mock(cnt=cnt)
+                row.name = name
+                rows.append(row)
+            result = mocker.Mock()
+            result.all.return_value = rows
+            session = mocker.Mock(execute=mocker.AsyncMock(return_value=result))
 
-        @asynccontextmanager
-        async def open_session(**_kwargs):
-            yield session
+            @asynccontextmanager
+            async def open_session(**_kwargs):
+                yield session
 
-        mocker.patch.object(database, "session", open_session)
+            mocker.patch.object(database, "session", open_session)
+            return session
 
-        assert await db.get_tables_analytics() == {
-            "notes_count": 0,
-            "alembic_version_count": 1,
-        }
+        return install
+
+    async def test_counts_rows_of_every_model_table_in_one_query(self, counted):
+        counts = {f"{table}_count": index for index, table in enumerate(MODEL_TABLES)}
+        session = counted(counts)
+
+        assert await db.get_tables_analytics() == counts
         [call] = session.execute.await_args_list
-        assert call.args[0].compile().params == {
-            "names": [
-                "cards",
-                "materials",
-                "note_repeats_history",
-                "notes",
-                "reading_log",
-                "repeats",
-            ],
-        }
+        assert call.args[0].compile().params == {"names": list(MODEL_TABLES)}
 
-    async def test_no_rows_give_empty_analytics(self, mocker):
-        result = mocker.Mock()
-        result.all.return_value = []
-        session = mocker.Mock(execute=mocker.AsyncMock(return_value=result))
+    async def test_rows_of_other_tables_are_dropped(self, counted):
+        counts = {f"{table}_count": 1 for table in MODEL_TABLES}
+        counted({**counts, "alembic_version_count": 1})
 
-        @asynccontextmanager
-        async def open_session(**_kwargs):
-            yield session
+        assert await db.get_tables_analytics() == counts
 
-        mocker.patch.object(database, "session", open_session)
+    @pytest.mark.parametrize("missing", MODEL_TABLES)
+    async def test_a_missing_table_is_named(self, counted, missing):
+        counted({f"{table}_count": 1 for table in MODEL_TABLES if table != missing})
 
-        assert await db.get_tables_analytics() == {}
+        with pytest.raises(
+            database.DatabaseException,
+            match=f"^Missing row counts: {missing}_count$",
+        ):
+            await db.get_tables_analytics()
+
+    async def test_no_rows_name_every_table(self, counted):
+        counted({})
+
+        with pytest.raises(database.DatabaseException) as e:
+            await db.get_tables_analytics()
+
+        assert str(e.value) == "Missing row counts: " + ", ".join(
+            f"{table}_count" for table in MODEL_TABLES
+        )

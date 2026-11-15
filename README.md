@@ -54,7 +54,8 @@ The guide below is a good starting point (use the first steps about service acco
 The same operations are available from the command line:
 `docker exec -it tracker-app python3 -m tracker.backup.main --backup|--restore|--get-last-dump`
 
-After a restore, run `docker compose restart tracker-app`: a restore drops the pooled database connections only in the process that ran it.
+A restore from the System page (`POST /api/v1/system/restore`) restarts the tracker workers itself, so none of them keeps
+connections to the replaced tables. After `--restore` from the command line, run `docker compose restart tracker-app`.
 
 ## Structure
 ### Queue
