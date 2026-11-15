@@ -5,7 +5,7 @@
 | Name                       |    Stmts |     Miss |   Branch |   BrPart |      Cover |   Missing |
 |--------------------------- | -------: | -------: | -------: | -------: | ---------: | --------: |
 | tracker/reading\_log/db.py |      152 |        1 |       50 |        1 |     99.01% |       208 |
-| **TOTAL**                  | **3363** |    **1** |  **458** |    **1** | **99.95%** |           |
+| **TOTAL**                  | **3308** |    **1** |  **430** |    **1** | **99.95%** |           |
 
 63 files skipped due to complete coverage.
 
