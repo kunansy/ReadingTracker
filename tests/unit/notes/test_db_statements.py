@@ -1,4 +1,5 @@
 import itertools
+from types import SimpleNamespace
 from contextlib import asynccontextmanager
 from uuid import UUID
 
@@ -115,7 +116,9 @@ class TestSearchNotesStmt:
         assert _compile(stmt).params == {"material_id_1": str(MATERIAL_ID)}
 
     def test_tags_filter_uses_sorted_tags(self):
-        stmt = db._search_notes_stmt(material_id=None, tags={"b", "a", "c"}, note_ids=None)
+        stmt = db._search_notes_stmt(
+            material_id=None, tags={"b", "a", "c"}, note_ids=None
+        )
 
         assert _where(stmt) == f"{BASE_WHERE} AND n.tags @> %(tags_1)s::JSONB"
         assert _compile(stmt).params == {"tags_1": ["a", "b", "c"]}
@@ -127,13 +130,17 @@ class TestSearchNotesStmt:
             note_ids=[note_id(1), note_id(2)],
         )
 
-        assert _where(stmt) == f"{BASE_WHERE} AND n.note_id IN (__[POSTCOMPILE_note_id_1])"
+        assert (
+            _where(stmt) == f"{BASE_WHERE} AND n.note_id IN (__[POSTCOMPILE_note_id_1])"
+        )
         assert _compile(stmt).params == {"note_id_1": [str(note_id(1)), str(note_id(2))]}
 
     def test_empty_note_ids_still_filter(self):
         stmt = db._search_notes_stmt(material_id=None, tags=set(), note_ids=[])
 
-        assert _where(stmt) == f"{BASE_WHERE} AND n.note_id IN (__[POSTCOMPILE_note_id_1])"
+        assert (
+            _where(stmt) == f"{BASE_WHERE} AND n.note_id IN (__[POSTCOMPILE_note_id_1])"
+        )
         assert _compile(stmt).params == {"note_id_1": []}
 
     def test_all_filters_together(self):
@@ -195,8 +202,11 @@ class TestGetPossibleLinks:
 
         [stmt] = session.statements
         compiled = _compile(stmt)
-        assert "WHERE NOT notes.is_deleted AND notes.note_id != %(note_id_1)s::UUID" in str(
-            compiled,
+        assert (
+            "WHERE NOT notes.is_deleted AND notes.note_id != %(note_id_1)s::UUID"
+            in str(
+                compiled,
+            )
         )
         assert compiled.params == {"note_id_1": note_id(99)}
 
@@ -212,6 +222,48 @@ class TestGetPossibleLinks:
             "tags ?| array(SELECT jsonb_array_elements_text(tags) FROM notes "
             f"WHERE note_id = '{note_id(99)}')"
         ) in str(_compile(session.statements[0]))
+
+
+@pytest.fixture
+def tags_in_db(mocker):
+    def install(tags: list[str]) -> SimpleNamespace:
+        session = SimpleNamespace(scalars=mocker.AsyncMock(return_value=iter(tags)))
+
+        @asynccontextmanager
+        async def open_session(**_kwargs):
+            yield session
+
+        mocker.patch.object(database, "session", open_session)
+        return session
+
+    return install
+
+
+async def test_all_tags_are_unnested_deduplicated_and_sorted_by_code_point_in_sql(
+    tags_in_db,
+):
+    session = tags_in_db(["a", "b"])
+
+    assert await db._get_tags() == ["a", "b"]
+    assert str(_compile(session.scalars.await_args.args[0])) == (
+        'SELECT DISTINCT jsonb_array_elements_text(notes.tags) COLLATE "C" AS tag \n'
+        "FROM notes ORDER BY tag"
+    )
+
+
+async def test_material_tags_are_sorted_by_frequency_then_by_code_point_in_sql(
+    tags_in_db,
+):
+    session = tags_in_db(["b", "a"])
+
+    assert await db._get_material_tags(MATERIAL_ID) == ["b", "a"]
+    assert str(_compile(session.scalars.await_args.args[0])) == (
+        'SELECT jsonb_array_elements_text(notes.tags) COLLATE "C" AS tag \n'
+        "FROM notes \n"
+        "WHERE notes.material_id = %(material_id_1)s::UUID "
+        'GROUP BY jsonb_array_elements_text(notes.tags) COLLATE "C" '
+        "ORDER BY count(*) DESC, tag"
+    )
 
 
 class TestGetSortedTags:

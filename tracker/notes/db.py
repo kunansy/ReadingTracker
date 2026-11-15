@@ -412,7 +412,8 @@ async def restore_note(*, note_id: UUID) -> None:
 
 
 def _note_tag() -> sa.ColumnElement[str]:
-    return sa.func.jsonb_array_elements_text(models.Notes.c.tags).label("tag")
+    tag = sa.func.jsonb_array_elements_text(models.Notes.c.tags)
+    return sa.collate(tag, "C").label("tag")
 
 
 async def _get_tags() -> list[str]:
