@@ -5,9 +5,9 @@
 | Name                       |    Stmts |     Miss |   Branch |   BrPart |      Cover |   Missing |
 |--------------------------- | -------: | -------: | -------: | -------: | ---------: | --------: |
 | tracker/reading\_log/db.py |      152 |        1 |       50 |        1 |     99.01% |       208 |
-| **TOTAL**                  | **3426** |    **1** |  **496** |    **1** | **99.95%** |           |
+| **TOTAL**                  | **3363** |    **1** |  **458** |    **1** | **99.95%** |           |
 
-62 files skipped due to complete coverage.
+63 files skipped due to complete coverage.
 
 
 ## Setup coverage badge
