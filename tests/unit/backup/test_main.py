@@ -117,3 +117,20 @@ class TestMain:
 
         assert e.value.code == 2
         assert _awaited(api) == []
+
+    @pytest.mark.parametrize(
+        ("flag", "action"),
+        [
+            ("--backup", "backup"),
+            ("--restore", "restore"),
+            ("--get-last-dump", "download_latest"),
+        ],
+    )
+    async def test_backup_service_failure_propagates(self, argv, api, flag, action):
+        argv(flag)
+        api[action].side_effect = client.BackupException("service down")
+
+        with pytest.raises(client.BackupException, match="service down"):
+            await main.main()
+
+        assert _awaited(api) == [action]

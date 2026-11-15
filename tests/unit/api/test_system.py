@@ -16,7 +16,7 @@ from tracker.system import db as system_db, schemas, trends
 BASE = "/api/v1/system"
 DAY = datetime.date(2026, 1, 3)
 TASK_GROUP_BUG = (
-    "BUG: tracker/api/v1/system.py:{line} an error raised inside asyncio.TaskGroup "
+    "BUG: tracker/api/v1/system.py {endpoint}: an error raised inside asyncio.TaskGroup "
     "reaches the app as ExceptionGroup, so the database exception handler is bypassed "
     "and the client gets a bare 500 instead of the JSON error body"
 )
@@ -172,7 +172,9 @@ async def test_last_days_must_be_a_positive_integer(client, path, params):
     assert response.json()["detail"].startswith("query.last_days: ")
 
 
-@pytest.mark.xfail(strict=True, reason=TASK_GROUP_BUG.format(line=25))
+@pytest.mark.xfail(
+    strict=True, reason=TASK_GROUP_BUG.format(endpoint="get_system_summary")
+)
 async def test_summary_reports_a_database_failure_as_json(lenient_client, summary):
     summary["get_span_notes_statistics"].side_effect = trends.TrendException(
         "Wrong span size"
@@ -284,7 +286,9 @@ async def test_reading_trend_graphic(client, reading_trend):
     )
 
 
-@pytest.mark.xfail(strict=True, reason=TASK_GROUP_BUG.format(line=76))
+@pytest.mark.xfail(
+    strict=True, reason=TASK_GROUP_BUG.format(endpoint="graphic_reading_trend")
+)
 async def test_reading_trend_graphic_reports_a_database_failure_as_json(
     lenient_client, reading_trend
 ):
@@ -362,11 +366,20 @@ def test_tables_stat_keeps_only_the_known_counters():
 
 
 @pytest.mark.parametrize("missing", sorted(TABLES_STAT))
-def test_tables_stat_fails_on_a_missing_counter_current_behaviour(missing):
+def test_tables_stat_names_a_missing_counter(missing):
     stat = {key: value for key, value in TABLES_STAT.items() if key != missing}
 
-    with pytest.raises(KeyError, match=missing):
+    with pytest.raises(database.DatabaseException, match=f"^Missing row counts: {missing}$"):
         system_api._tables_stat(stat)
+
+
+async def test_missing_counter_after_a_restore_is_a_json_error(lenient_client, service):
+    service["analytics"].return_value = {}
+
+    response = await lenient_client.post(f"{BASE}/restore")
+
+    assert response.status_code == 500
+    assert response.json()["detail"].startswith("Database error: Missing row counts: ")
 
 
 @pytest.fixture
@@ -386,17 +399,14 @@ def service(mocker):
     return {**mocks, "calls": calls}
 
 
-async def test_backup(client, service):
+async def test_backup_counts_the_rows_after_the_backup(client, service, mocker):
     response = await client.post(f"{BASE}/backup")
 
     assert response.status_code == 200
     assert response.json() == TABLES_STAT
-    service["backup"].assert_awaited_once_with()
-    service["analytics"].assert_awaited_once_with()
-    service["restore"].assert_not_awaited()
+    assert service["calls"].mock_calls == [mocker.call.backup(), mocker.call.analytics()]
 
 
-@pytest.mark.xfail(strict=True, reason=TASK_GROUP_BUG.format(line=148))
 async def test_backup_reports_a_database_failure_as_json(lenient_client, service):
     service["analytics"].side_effect = database.DatabaseException("connection lost")
 
@@ -406,23 +416,21 @@ async def test_backup_reports_a_database_failure_as_json(lenient_client, service
     assert response.text == '{"detail":"Database error: connection lost"}'
 
 
-async def test_backup_service_failure_is_500_current_behaviour(lenient_client, service):
+async def test_backup_service_failure_is_503_as_json_and_does_not_count_rows(
+    client,
+    service,
+    tracker_log,
+):
     service["backup"].side_effect = backup_client.BackupException("no quota")
 
-    response = await lenient_client.post(f"{BASE}/backup")
-
-    assert response.status_code == 500
-    assert response.text == "Internal Server Error"
-
-
-@pytest.mark.xfail(strict=True, reason=TASK_GROUP_BUG.format(line=148))
-async def test_backup_service_failure_is_503_as_json(lenient_client, service):
-    service["backup"].side_effect = backup_client.BackupException("no quota")
-
-    response = await lenient_client.post(f"{BASE}/backup")
+    response = await client.post(f"{BASE}/backup")
 
     assert response.status_code == 503
-    assert response.json() == {"detail": "Backup error: no quota"}
+    assert response.json() == {"detail": "Backup failed"}
+    service["analytics"].assert_not_awaited()
+    errors = tracker_log(logging.ERROR)
+    assert len(errors) == 1
+    assert "no quota" in errors[0].getMessage()
 
 
 async def test_restore_counts_the_rows_after_restoring(client, service, mocker):
@@ -443,7 +451,7 @@ async def test_restore_failure_is_503_as_json_and_does_not_count_rows(
     response = await client.post(f"{BASE}/restore")
 
     assert response.status_code == 503
-    assert response.json() == {"detail": "Backup error: no dump"}
+    assert response.json() == {"detail": "Backup failed"}
     service["analytics"].assert_not_awaited()
     errors = tracker_log(logging.ERROR)
     assert len(errors) == 1
