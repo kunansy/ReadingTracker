@@ -8,7 +8,7 @@ from matplotlib.axes import Axes
 from tests.integration import factories, helpers
 from tracker.common import database, settings
 from tracker.materials import db as materials_db
-from tracker.models import enums
+from tracker.models import enums, models
 from tracker.system import db as system_db
 
 
@@ -302,3 +302,58 @@ async def test_create_outline_percentage_graphic_with_a_type_never_completed(moc
 
     assert _is_svg(image)
     assert bar.call_args_list[0].args[2] == pytest.approx([0.0, 50.0, 50.0, 50.0, 50.0])
+
+
+async def test_get_tables_analytics_on_an_empty_database_is_all_zero():
+    assert await system_db.get_tables_analytics() == {
+        "alembic_version_count": 1,
+        "materials_count": 0,
+        "reading_log_count": 0,
+        "notes_count": 0,
+        "cards_count": 0,
+        "repeats_count": 0,
+        "note_repeats_history_count": 0,
+    }
+
+
+async def test_get_tables_analytics_counts_every_row_including_deleted_notes():
+    repeated_at = datetime.datetime(2024, 1, 1, 10, 20, 30)  # noqa: DTZ001
+    material_id = await factories.start_material()
+    await factories.insert_material()
+    note_id = await factories.insert_note(material_id=material_id)
+    deleted = await factories.insert_note(material_id=material_id)
+    await helpers.execute(
+        models.Notes.update()
+        .values(is_deleted=True)
+        .where(models.Notes.c.note_id == deleted),
+    )
+    for days_ago in (1, 2, 3):
+        await factories.insert_log(
+            material_id=material_id,
+            date=factories.days_ago(days_ago),
+        )
+    await factories.insert_card(material_id=material_id, note_id=note_id)
+    await factories.insert_repeat(material_id=material_id, repeated_at=repeated_at)
+    await factories.insert_repeat(material_id=material_id, repeated_at=repeated_at)
+    await factories.insert_note_repeat(note_id=note_id, repeated_at=repeated_at)
+
+    assert await system_db.get_tables_analytics() == {
+        "alembic_version_count": 1,
+        "materials_count": 2,
+        "reading_log_count": 3,
+        "notes_count": 2,
+        "cards_count": 1,
+        "repeats_count": 2,
+        "note_repeats_history_count": 1,
+    }
+
+
+async def test_get_tables_analytics_covers_every_table_of_the_schema():
+    tables = await helpers.fetch_all(
+        "SELECT tablename FROM pg_tables WHERE schemaname = current_schema()",
+    )
+
+    analytics = await system_db.get_tables_analytics()
+
+    assert analytics.keys() == {f"{row.tablename}_count" for row in tables}
+    assert "mvw_repeat_notes_count" not in analytics

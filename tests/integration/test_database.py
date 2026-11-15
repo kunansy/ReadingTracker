@@ -308,63 +308,10 @@ def test_drop_table_cascades_on_postgresql():
     assert ddl.strip() == "DROP TABLE notes CASCADE"
 
 
-async def test_create_repeat_notes_matview_is_idempotent():
-    async with database.session() as ses:
-        await database.create_repeat_notes_matview(ses)
-        await database.create_repeat_notes_matview(ses)
-
-    assert (
-        await helpers.scalar(
-            "SELECT count(*) FROM pg_matviews WHERE matviewname = 'mvw_repeat_notes'",
-        )
-        == 1
-    )
-
-
 async def _is_matview_populated() -> bool:
     return await helpers.scalar(
         "SELECT ispopulated FROM pg_matviews WHERE matviewname = 'mvw_repeat_notes'",
     )
-
-
-async def test_recreate_db_empties_every_table_and_restarts_the_sequences():
-    material_id = await factories.start_material()
-    note_id = await factories.insert_note(material_id=material_id)
-    await factories.insert_note(material_id=material_id)
-    await factories.insert_log(material_id=material_id)
-    await factories.insert_card(material_id=material_id, note_id=note_id)
-    await factories.insert_repeat(material_id=material_id, repeated_at=ADDED_AT)
-    await factories.insert_note_repeat(note_id=note_id, repeated_at=ADDED_AT)
-    schema_before = await migration_helpers.schema_snapshot()
-
-    try:
-        await database.recreate_db()
-
-        for table in models.metadata.sorted_tables:
-            assert await factories.count_rows(table) == 0, table.name
-        assert await migration_helpers.schema_snapshot() == schema_before
-        assert await migration_helpers.current_revision() == migration_helpers.HEAD_REVISION
-        new_note_id = await factories.insert_note(material_id=material_id)
-        assert (await factories.fetch_row(models.Notes, new_note_id))["note_number"] == 1
-    finally:
-        await migration_helpers.reset_schema_to_head()
-
-
-async def test_recreate_db_leaves_the_matview_unpopulated_current_behaviour():
-    populated_before = await _is_matview_populated()
-
-    try:
-        await database.recreate_db()
-
-        assert populated_before is True
-        assert await _is_matview_populated() is False
-        with pytest.raises(database.DatabaseException, match="has not been populated"):
-            await helpers.fetch_all("SELECT * FROM mvw_repeat_notes")
-
-        await factories.refresh_repeat_notes_matview()
-        assert await helpers.fetch_all("SELECT * FROM mvw_repeat_notes") == []
-    finally:
-        await migration_helpers.reset_schema_to_head()
 
 
 async def test_reset_schema_to_head_restores_the_migrated_database():
@@ -478,7 +425,9 @@ async def test_create_db_stamps_a_pre_alembic_database_and_upgrades_it(mocker):
 
 async def test_create_db_fails_on_tables_made_by_create_all_current_behaviour():
     try:
-        await database.recreate_db()
+        async with database.engine.begin() as conn:
+            await conn.run_sync(models.metadata.drop_all)
+            await conn.run_sync(models.metadata.create_all)
         await helpers.execute(sa.text("DROP TABLE alembic_version"))
         await database.engine.dispose()
 

@@ -4,10 +4,7 @@ from typing import Annotated
 from fastapi import APIRouter
 from fastapi.params import Depends
 
-from tracker.google_drive import (
-    db as drive_db,
-    drive_api,
-)
+from tracker.backup import client as backup_client
 from tracker.reading_log import (
     db as logs_db,
     statistics,
@@ -146,17 +143,17 @@ def _tables_stat(stat: dict[str, int]) -> dict[str, int]:
 @router.post("/backup", response_model=schemas.BackupResponse)
 async def backup_api():
     async with asyncio.TaskGroup() as tg:
-        tg.create_task(drive_api.backup())
-        get_stat_task = tg.create_task(drive_db.get_tables_analytics())
+        tg.create_task(backup_client.backup())
+        get_stat_task = tg.create_task(db.get_tables_analytics())
 
     return schemas.BackupResponse(**_tables_stat(get_stat_task.result()))
 
 
 @router.post("/restore", response_model=schemas.RestoreResponse)
 async def restore_api():
-    await drive_api.restore()
+    await backup_client.restore()
 
-    stat = await drive_db.get_tables_analytics()
+    stat = await db.get_tables_analytics()
     return schemas.RestoreResponse(**_tables_stat(stat))
 
 

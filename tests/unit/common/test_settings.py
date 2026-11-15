@@ -57,7 +57,6 @@ def test_reload_with_test_environment_gives_pinned_values(load_settings):
     )
     assert loaded.LOGGER_NAME == "ReadingTrackerTests"
     assert loaded.LOGGER_LEVEL == logging.DEBUG
-    assert loaded.DRIVE_CREDS == {}
     assert loaded.MANTICORE_MYSQL_HOST == "127.0.0.1"
     assert loaded.MANTICORE_MYSQL_PORT == 1
     assert loaded.MANTICORE_MYSQL_DB_NAME == "Manticore"
@@ -112,7 +111,6 @@ def test_values_are_parsed_from_environment(load_settings):
         DB_PASSWORD="p@ss:word/1",
         DB_ISOLATION_LEVEL="SERIALIZABLE",
         LOGGER_LEVEL="WARNING",
-        DRIVE_CREDS='{"type": "service_account", "nested": {"a": [1, 2]}}',
         EX_ENABLE_KAFKA_TO_NOTIFY="1",
         EX_DARKMODE_ENABLE="07:30:15",
     )
@@ -121,7 +119,6 @@ def test_values_are_parsed_from_environment(load_settings):
     assert loaded.DB_PORT == 5432
     assert loaded.DB_ISOLATION_LEVEL == "SERIALIZABLE"
     assert loaded.LOGGER_LEVEL == logging.WARNING
-    assert loaded.DRIVE_CREDS == {"type": "service_account", "nested": {"a": [1, 2]}}
     assert loaded.EX_ENABLE_KAFKA_TO_NOTIFY is True
     assert loaded.EX_DARKMODE_ENABLE == datetime.time(7, 30, 15)
 
@@ -171,7 +168,6 @@ def test_unsupported_isolation_level_is_rejected(load_settings, level):
         "DB_NAME",
         "DB_USERNAME",
         "DB_PASSWORD",
-        "DRIVE_CREDS",
         "MANTICORE_MYSQL_HOST",
         "BACKUP_HOST",
         "BACKUP_PORT",
@@ -200,16 +196,6 @@ def test_missing_required_variable_is_an_error(load_settings, name):
 def test_unparsable_value_is_an_error(load_settings, name, value):
     with pytest.raises(environs.EnvError, match=name):
         load_settings(**{name: value})
-
-
-@pytest.mark.parametrize(
-    "creds",
-    ["{", "not json", "", "{'single': 'quotes'}"],
-    ids=["truncated", "text", "empty", "python-dict"],
-)
-def test_invalid_drive_creds_json_is_an_error(load_settings, creds):
-    with pytest.raises(ValueError):
-        load_settings(DRIVE_CREDS=creds)
 
 
 def test_api_version_is_read_from_version_file(load_settings, tmp_path):

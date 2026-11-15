@@ -5,8 +5,8 @@ import pytest
 
 from tests.unit.api import factories
 from tracker.api.v1 import system as system_api
+from tracker.backup import client as backup_client
 from tracker.common import database
-from tracker.google_drive import db as drive_db, drive_api
 from tracker.models import enums
 from tracker.reading_log import db as logs_db, statistics
 from tracker.system import db as system_db, schemas, trends
@@ -368,20 +368,16 @@ def test_tables_stat_fails_on_a_missing_counter_current_behaviour(missing):
         system_api._tables_stat(stat)
 
 
-def test_tables_stat_matches_the_tables_the_analytics_counts():
-    assert {f"{table}_count" for table in drive_db.TABLES} == TABLES_STAT.keys()
-
-
 @pytest.fixture
-def drive(mocker):
+def service(mocker):
     calls = mocker.Mock()
     mocks = {
         "backup": mocker.patch.object(
-            drive_api, "backup", mocker.AsyncMock(return_value="dump.json")
+            backup_client, "backup", mocker.AsyncMock(return_value="dump.json")
         ),
-        "restore": mocker.patch.object(drive_api, "restore", mocker.AsyncMock()),
+        "restore": mocker.patch.object(backup_client, "restore", mocker.AsyncMock()),
         "analytics": mocker.patch.object(
-            drive_db, "get_tables_analytics", mocker.AsyncMock(return_value=TABLES_STAT)
+            system_db, "get_tables_analytics", mocker.AsyncMock(return_value=TABLES_STAT)
         ),
     }
     for name, mock in mocks.items():
@@ -389,19 +385,19 @@ def drive(mocker):
     return {**mocks, "calls": calls}
 
 
-async def test_backup(client, drive):
+async def test_backup(client, service):
     response = await client.post(f"{BASE}/backup")
 
     assert response.status_code == 200
     assert response.json() == TABLES_STAT
-    drive["backup"].assert_awaited_once_with()
-    drive["analytics"].assert_awaited_once_with()
-    drive["restore"].assert_not_awaited()
+    service["backup"].assert_awaited_once_with()
+    service["analytics"].assert_awaited_once_with()
+    service["restore"].assert_not_awaited()
 
 
 @pytest.mark.xfail(strict=True, reason=TASK_GROUP_BUG.format(line=148))
-async def test_backup_reports_a_database_failure_as_json(lenient_client, drive):
-    drive["analytics"].side_effect = database.DatabaseException("connection lost")
+async def test_backup_reports_a_database_failure_as_json(lenient_client, service):
+    service["analytics"].side_effect = database.DatabaseException("connection lost")
 
     response = await lenient_client.post(f"{BASE}/backup")
 
@@ -409,8 +405,8 @@ async def test_backup_reports_a_database_failure_as_json(lenient_client, drive):
     assert response.text == '{"detail":"Database error: connection lost"}'
 
 
-async def test_backup_service_failure_is_500_current_behaviour(lenient_client, drive):
-    drive["backup"].side_effect = drive_api.GoogleDriveException("no quota")
+async def test_backup_service_failure_is_500_current_behaviour(lenient_client, service):
+    service["backup"].side_effect = backup_client.BackupException("no quota")
 
     response = await lenient_client.post(f"{BASE}/backup")
 
@@ -418,26 +414,26 @@ async def test_backup_service_failure_is_500_current_behaviour(lenient_client, d
     assert response.text == "Internal Server Error"
 
 
-async def test_restore_counts_the_rows_after_restoring(client, drive, mocker):
+async def test_restore_counts_the_rows_after_restoring(client, service, mocker):
     response = await client.post(f"{BASE}/restore")
 
     assert response.status_code == 200
     assert response.json() == TABLES_STAT
-    assert drive["calls"].mock_calls == [mocker.call.restore(), mocker.call.analytics()]
+    assert service["calls"].mock_calls == [mocker.call.restore(), mocker.call.analytics()]
 
 
-async def test_restore_failure_does_not_count_rows(lenient_client, drive):
-    drive["restore"].side_effect = drive_api.GoogleDriveException("no dump")
+async def test_restore_failure_does_not_count_rows(lenient_client, service):
+    service["restore"].side_effect = backup_client.BackupException("no dump")
 
     response = await lenient_client.post(f"{BASE}/restore")
 
     assert response.status_code == 500
-    drive["analytics"].assert_not_awaited()
+    service["analytics"].assert_not_awaited()
 
 
 @pytest.mark.parametrize("endpoint", ["backup", "restore"])
-async def test_negative_counter_is_a_server_error(lenient_client, drive, endpoint):
-    drive["analytics"].return_value = {**TABLES_STAT, "notes_count": -1}
+async def test_negative_counter_is_a_server_error(lenient_client, service, endpoint):
+    service["analytics"].return_value = {**TABLES_STAT, "notes_count": -1}
 
     response = await lenient_client.post(f"{BASE}/{endpoint}")
 
