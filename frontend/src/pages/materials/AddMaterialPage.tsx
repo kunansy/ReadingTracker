@@ -8,7 +8,7 @@ import { isMaterialType } from "../../types";
 import {CelebrateButton} from "../../components/CelebrateButton.tsx";
 import { materialKeys, useMaterialAuthors, useMaterialTags } from "../../materials/queries";
 import { TAGS_MAX_ITEMS } from "../../api/constraints";
-import { sanitizeTagInput } from "../../tags";
+import { sanitizeTagInput, toTag } from "../../tags";
 
 
 export function AddMaterialPage() {
@@ -190,6 +190,7 @@ export function AddMaterialPage() {
                 multiple
                 allowCreate
                 sanitizeInput={sanitizeTagInput}
+                toCreated={toTag}
                 maxSelected={TAGS_MAX_ITEMS}
             >
               <ComboboxInput placeholder="Enter tags" />

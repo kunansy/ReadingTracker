@@ -11,7 +11,7 @@ import {SpellTextarea} from "../../components/SpellTextrea.tsx";
 import { useMaterialTitles } from "../../materials/queries";
 import { noteKeys, useNote, useNoteTags } from "../../notes/queries";
 import { TAGS_MAX_ITEMS } from "../../api/constraints";
-import { sanitizeTagInput } from "../../tags";
+import { sanitizeTagInput, toTag } from "../../tags";
 
 
 export function UpdateNotePage() {
@@ -171,6 +171,7 @@ export function UpdateNotePage() {
                   multiple
                   allowCreate
                   sanitizeInput={sanitizeTagInput}
+                  toCreated={toTag}
                   maxSelected={TAGS_MAX_ITEMS}
               >
                 <ComboboxInput placeholder="Enter tags" />

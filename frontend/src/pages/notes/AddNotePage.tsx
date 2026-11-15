@@ -13,7 +13,7 @@ import { NoteDraft, parseNoteDraft, resolveNoteDraft } from "./noteDraft.ts";
 import { useMaterial, useMaterialTitles } from "../../materials/queries";
 import { useNoteTags } from "../../notes/queries";
 import { TAGS_MAX_ITEMS } from "../../api/constraints";
-import { sanitizeTagInput } from "../../tags";
+import { sanitizeTagInput, toTag } from "../../tags";
 
 type AddNoteForm = NoteDraft & {
   title: string;
@@ -184,6 +184,7 @@ export function AddNotePage() {
                   onChange={(tags) => updateFormData({ tags })}
                   allowCreate
                   sanitizeInput={sanitizeTagInput}
+                  toCreated={toTag}
                   maxSelected={TAGS_MAX_ITEMS}
               >
                 <ComboboxInput
