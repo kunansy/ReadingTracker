@@ -110,8 +110,9 @@ class _TagsModel(CustomBaseModel):
         ("#B  a\tb", ["a", "b"]),
         ("Тег tag", ["tag", "тег"]),
         ("a\nb", ["a", "b"]),
+        ("_a_ #_b", ["a", "b"]),
     ],
-    ids=["empty", "blank", "sorted", "hash-case-dedupe", "cyrillic", "newline"],
+    ids=["empty", "blank", "sorted", "hash-case-dedupe", "cyrillic", "newline", "edge-underscores"],
 )
 def test_normalize_tags(raw, expected):
     assert schemas.normalize_tags(raw) == expected
@@ -119,8 +120,8 @@ def test_normalize_tags(raw, expected):
 
 @pytest.mark.parametrize(
     "raw",
-    ["a-b", "a,b", "a.b", "c++", "a" * (schemas.MAX_TAG_LENGTH + 1)],
-    ids=["hyphen", "comma", "dot", "plus", "too-long"],
+    ["a-b", "a,b", "a.b", "c++", "a#b", "_", "a" * (schemas.MAX_TAG_LENGTH + 1)],
+    ids=["hyphen", "comma", "dot", "plus", "inner-hash", "only-underscore", "too-long"],
 )
 def test_normalize_tags_rejects_invalid_tags(raw):
     with pytest.raises(ValueError, match="^Invalid tags$"):
@@ -129,6 +130,10 @@ def test_normalize_tags_rejects_invalid_tags(raw):
 
 def test_tags_are_stripped_lowercased_deduplicated_and_sorted():
     assert _TagsModel(tags=[" B", "a", "b "]).tags == ["a", "b"]
+
+
+def test_tags_drop_a_leading_hash_and_edge_underscores():
+    assert _TagsModel(tags=["#a", "_b_", "#_c"]).tags == ["a", "b", "c"]
 
 
 @pytest.mark.parametrize("tag", ["a-b", "", "a b"], ids=["hyphen", "empty", "space"])
@@ -167,14 +172,15 @@ _TAG = TypeAdapter(schemas.Tag)
         ("a_b", "a_b"),
         ("tag1", "tag1"),
         ("1", "1"),
-        ("_", "_"),
+        ("_a_", "a"),
+        ("#a", "a"),
         ("Тег", "тег"),
-        ("ŞİŇ", "şi̇ň"),
+        ("ŞŇ", "şň"),
         ("a\n", "a"),
         (" A ", "a"),
     ],
-    ids=["letter", "underscore", "alnum", "digit", "only-underscore", "cyrillic", "latin-ext",
-         "trailing-newline", "padded"],
+    ids=["letter", "underscore", "alnum", "digit", "edge-underscores", "leading-hash",
+         "cyrillic", "latin-ext", "trailing-newline", "padded"],
 )
 def test_tag_accepts_unicode_letters_digits_and_underscore(tag, expected):
     assert _TAG.validate_python(tag) == expected
@@ -182,8 +188,18 @@ def test_tag_accepts_unicode_letters_digits_and_underscore(tag, expected):
 
 @pytest.mark.parametrize(
     "tag",
-    ["", "a-b", "a b", "#a", "a.b", "a,b", "c++"],
-    ids=["empty", "hyphen", "space", "hash", "dot", "comma", "plus"],
+    ["", "_", "a-b", "a b", "a#b", "a.b", "a,b", "c++", "İ"],
+    ids=[
+        "empty",
+        "only-underscore",
+        "hyphen",
+        "space",
+        "inner-hash",
+        "dot",
+        "comma",
+        "plus",
+        "lowercases-to-a-combining-mark",
+    ],
 )
 def test_tag_rejects_other_characters(tag):
     with pytest.raises(ValidationError, match="String should match pattern"):
@@ -208,8 +224,14 @@ def test_tags_accept_the_maximum_count():
 
 
 def test_tags_reject_a_list_over_the_maximum_count():
-    with pytest.raises(ValidationError, match="at most 32 items"):
+    with pytest.raises(ValidationError, match="at most 32 tags"):
         _TagsModel(tags=[f"t{i:02}" for i in range(schemas.MAX_TAGS + 1)])
+
+
+def test_tags_count_the_limit_after_deduplication():
+    tags = ["a", "A", " a"] * 11
+
+    assert _TagsModel(tags=tags).tags == ["a"]
 
 
 def test_tag_limits_are_published_in_the_json_schema():
@@ -217,6 +239,7 @@ def test_tag_limits_are_published_in_the_json_schema():
 
     assert defs["Tag"] == {"maxLength": 128, "pattern": "^[\\p{L}\\p{N}_]+$", "type": "string"}
     assert defs["Tags"]["maxItems"] == 32
+    assert defs["Tags"]["items"] == {"$ref": "#/$defs/Tag"}
 
 
 @pytest.mark.parametrize(

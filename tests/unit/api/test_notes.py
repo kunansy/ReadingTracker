@@ -514,7 +514,7 @@ async def test_add_note_formats_content_and_normalizes_tags(client, write_db):
         ({"tags": ["two words"]}, "body.tags.0: String should match pattern"),
         ({"tags": "tag"}, "body.tags: Input should be a valid list"),
         ({"tags": ["a" * 129]}, "body.tags.0: String should have at most 128 characters"),
-        ({"tags": [f"t{i}" for i in range(33)]}, "body.tags: List should have at most 32"),
+        ({"tags": [f"t{i}" for i in range(33)]}, "body.tags: Value error, at most 32 tags"),
         ({"link_id": "x"}, "body.link_id: Input should be a valid UUID"),
         ({"chapter": "c" * 300}, "body.chapter: String should have at most"),
         (

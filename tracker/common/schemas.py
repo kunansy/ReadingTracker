@@ -5,12 +5,13 @@ from uuid import UUID
 from pydantic import (
     AfterValidator,
     BaseModel,
+    BeforeValidator,
     ConfigDict,
     Field,
     NonNegativeInt,
+    StringConstraints,
     TypeAdapter,
     ValidationError,
-    constr,
 )
 
 
@@ -32,28 +33,39 @@ class MinMax(CustomBaseModel):
     date: datetime.date
 
 
+def _canonical_tag(value: object) -> object:
+    if not isinstance(value, str):
+        return value
+    return value.strip().lower().lstrip("#").strip("_")
+
+
 def _dedupe_tags(tags: list[str]) -> list[str]:
-    return sorted(set(tags))
+    unique = sorted(set(tags))
+    if len(unique) > MAX_TAGS:
+        raise ValueError(f"at most {MAX_TAGS} tags")
+    return unique
 
 
-type Tag = constr(
-    pattern=TAG_PATTERN,
-    max_length=MAX_TAG_LENGTH,
-    to_lower=True,
-    strip_whitespace=True,
-)
-type Tags = Annotated[list[Tag], Field(max_length=MAX_TAGS), AfterValidator(_dedupe_tags)]
+type Tag = Annotated[
+    Annotated[str, StringConstraints(pattern=TAG_PATTERN, max_length=MAX_TAG_LENGTH)],
+    BeforeValidator(_canonical_tag),
+]
+type Tags = Annotated[
+    list[Tag],
+    Field(json_schema_extra={"maxItems": MAX_TAGS}),
+    AfterValidator(_dedupe_tags),
+]
 
 _TAG_ADAPTER: Final[TypeAdapter[str]] = TypeAdapter(Tag)
 
 
 def normalize_tags(raw: str) -> list[str]:
-    """Split whitespace-separated tags, drop every `#`, lowercase, dedupe and sort them.
+    """Split whitespace-separated tags, normalize each as `Tag`, dedupe and sort them.
 
     Raises ValueError if a tag does not satisfy `Tag`.
     """
     try:
-        tags = {_TAG_ADAPTER.validate_python(tag) for tag in raw.replace("#", "").split()}
+        tags = {_TAG_ADAPTER.validate_python(tag) for tag in raw.split()}
     except ValidationError:
         raise ValueError("Invalid tags") from None
     return sorted(tags)

@@ -27,6 +27,7 @@ _START_DATE_KEY: Final[str] = "start_date"
 
 
 class Material(CustomBaseModel):
+    # Values are trimmed on write and by migration 0009; read them as stored.
     model_config = ConfigDict(extra="ignore", str_strip_whitespace=False)
 
     material_id: UUID

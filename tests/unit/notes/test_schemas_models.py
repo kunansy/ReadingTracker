@@ -60,8 +60,8 @@ class TestAddNoteRequest:
 
     @pytest.mark.parametrize(
         "tags",
-        [["a b"], ["a-b"], ["#a"], [""], ["ok", "not ok"], "a", [1]],
-        ids=["space", "hyphen", "hash", "empty", "second-invalid", "not-a-list", "int"],
+        [["a b"], ["a-b"], ["a#b"], [""], ["ok", "not ok"], "a", [1]],
+        ids=["space", "hyphen", "inner-hash", "empty", "second-invalid", "not-a-list", "int"],
     )
     def test_invalid_tags_are_rejected(self, tags):
         with pytest.raises(ValidationError, match="tags"):

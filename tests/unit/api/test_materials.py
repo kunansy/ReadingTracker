@@ -835,7 +835,7 @@ async def test_create_material_with_every_field(client, insert_material):
         ({"title": None}, "body.title: Input should be a valid string"),
         ({"tags": ["sci-fi"]}, "body.tags.0: String should match pattern"),
         ({"tags": ["a" * 129]}, "body.tags.0: String should have at most 128 characters"),
-        ({"tags": [f"t{i}" for i in range(33)]}, "body.tags: List should have at most 32"),
+        ({"tags": [f"t{i}" for i in range(33)]}, "body.tags: Value error, at most 32 tags"),
     ],
     ids=[
         "zero-pages",
