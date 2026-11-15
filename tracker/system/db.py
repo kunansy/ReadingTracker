@@ -140,7 +140,7 @@ async def create_outline_percentage_graphic() -> str:
     return figures.render_svg_base64(fig)
 
 
-# Exact counts in one round trip: query_to_xml runs count(*) per catalog table.
+# Exact counts in one round trip: query_to_xml runs count(*) per model table.
 TABLES_ROWS_COUNT_QUERY = """
 SELECT
     t.table_name || '_count' AS name,
@@ -156,11 +156,15 @@ SELECT
 FROM information_schema.tables t
 WHERE t.table_schema = current_schema()
   AND t.table_type = 'BASE TABLE'
+  AND t.table_name::text = ANY(CAST(:names AS text[]))
 """
 
 
 async def get_tables_analytics() -> dict[str, int]:
     async with database.session() as ses:
-        res = (await ses.execute(sa.text(TABLES_ROWS_COUNT_QUERY))).all()
+        stmt = sa.text(TABLES_ROWS_COUNT_QUERY).bindparams(
+            names=sorted(models.metadata.tables),
+        )
+        res = (await ses.execute(stmt)).all()
 
     return {r.name: r.cnt for r in res}

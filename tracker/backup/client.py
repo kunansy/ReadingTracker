@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 import time
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -61,12 +61,8 @@ async def _download(
     return info, b"".join(chunks)
 
 
-def _utcnow() -> datetime.datetime:
-    return datetime.datetime.now(datetime.UTC)
-
-
-def get_dump_filename(*, prefix: str, extension: str) -> Path:
-    filename = f"{prefix}_{_utcnow().strftime(DUMP_TIME_FORMAT)}.{extension}"
+def get_dump_filename(*, prefix: str, extension: str, now: datetime.datetime) -> Path:
+    filename = f"{prefix}_{now.strftime(DUMP_TIME_FORMAT)}.{extension}"
     return settings.DATA_DIR / filename
 
 
@@ -85,7 +81,10 @@ async def restore() -> None:
     finally:
         # pg_restore may have recreated tables and types even when the call failed,
         # so pooled connections can hold stale OIDs.
-        await database.engine.dispose()
+        try:
+            await database.engine.dispose()
+        except Exception:
+            logger.exception("Engine dispose after restore failed")
 
     logger.info(
         "Restored from '%s' for %ss, previous state saved as '%s'",
@@ -109,7 +108,11 @@ async def backup() -> str:
     return info.id
 
 
-async def download_latest(*, prefix: str = "last_dump") -> Path:
+async def download_latest(
+    *,
+    prefix: str = "last_dump",
+    clock: Callable[[], datetime.datetime] = database.utcnow,
+) -> Path:
     """Save the latest backup to DATA_DIR: `.pgdump` or decompressed legacy `.json`."""
     async with _rpc_errors(), _backup_stub() as stub:
         info, content = await _download(stub, LATEST)
@@ -118,7 +121,7 @@ async def download_latest(*, prefix: str = "last_dump") -> Path:
     if extension is None:
         raise BackupException(f"Unsupported backup format of '{info.name}'")
 
-    filepath = get_dump_filename(prefix=prefix, extension=extension)
+    filepath = get_dump_filename(prefix=prefix, extension=extension, now=clock())
     await asyncio.to_thread(filepath.write_bytes, content)
     logger.info("Backup '%s' saved to %s", info.name, filepath)
 

@@ -363,7 +363,6 @@ class TestCreateOutlinePercentageGraphic:
         assert plt.get_fignums() == []
 
 
-
 class TestGetTablesAnalytics:
     async def test_counts_rows_of_every_table_in_one_query(self, mocker):
         rows = [mocker.Mock(cnt=index) for index in range(2)]
@@ -383,7 +382,16 @@ class TestGetTablesAnalytics:
             "alembic_version_count": 1,
         }
         [call] = session.execute.await_args_list
-        assert str(call.args[0]) == db.TABLES_ROWS_COUNT_QUERY
+        assert call.args[0].compile().params == {
+            "names": [
+                "cards",
+                "materials",
+                "note_repeats_history",
+                "notes",
+                "reading_log",
+                "repeats",
+            ],
+        }
 
     async def test_no_rows_give_empty_analytics(self, mocker):
         result = mocker.Mock()

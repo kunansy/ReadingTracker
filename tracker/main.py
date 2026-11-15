@@ -113,7 +113,7 @@ async def backup_exception_handler(request: Request, exc: backup_client.BackupEx
 
     return JSONResponse(
         status_code=503,
-        content={"detail": f"Backup error: {exc}"},
+        content={"detail": "Backup failed"},
     )
 
 

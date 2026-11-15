@@ -310,7 +310,6 @@ async def test_create_outline_percentage_graphic_with_a_type_never_completed(moc
 
 async def test_get_tables_analytics_on_an_empty_database_is_all_zero():
     assert await system_db.get_tables_analytics() == {
-        "alembic_version_count": 1,
         "materials_count": 0,
         "reading_log_count": 0,
         "notes_count": 0,
@@ -342,7 +341,6 @@ async def test_get_tables_analytics_counts_every_row_including_deleted_notes():
     await factories.insert_note_repeat(note_id=note_id, repeated_at=repeated_at)
 
     assert await system_db.get_tables_analytics() == {
-        "alembic_version_count": 1,
         "materials_count": 2,
         "reading_log_count": 3,
         "notes_count": 2,
@@ -352,14 +350,11 @@ async def test_get_tables_analytics_counts_every_row_including_deleted_notes():
     }
 
 
-async def test_get_tables_analytics_covers_every_table_of_the_schema():
-    tables = await helpers.fetch_all(
-        "SELECT tablename FROM pg_tables WHERE schemaname = current_schema()",
-    )
-
+async def test_get_tables_analytics_counts_only_the_model_tables():
     analytics = await system_db.get_tables_analytics()
 
-    assert analytics.keys() == {f"{row.tablename}_count" for row in tables}
+    assert analytics.keys() == {f"{name}_count" for name in models.metadata.tables}
+    assert "alembic_version_count" not in analytics
     assert "mvw_repeat_notes_count" not in analytics
 
 
