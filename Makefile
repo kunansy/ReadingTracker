@@ -42,11 +42,15 @@ build-status:
 
 CURRENT_TAG := $(shell git describe --tags --abbrev=0)
 LAST_TAG := $(shell git describe --tags --abbrev=0 HEAD^)
-IMAGE_LINE := $(shell cat docker-compose.yml | grep -n "image: kunansy/reading_tracker" | cut -f1 -d:)
 
 deploy:
 	@echo "${LAST_TAG} -> ${CURRENT_TAG}"
-	@ssh tracker "cd tracker; sed -i -E '${IMAGE_LINE} s/:[0-9]+/:${CURRENT_TAG}/' docker-compose.yml; docker compose up -d --build --force-recreate tracker-app; sleep 2; docker ps --filter name=tracker-app --format json | jq '.Image,.State,.Status'"
+	@ssh tracker "set -e; cd tracker; \
+		sed -i -E 's#(image: kunansy/reading_tracker):[0-9]+#\1:${CURRENT_TAG}#' docker-compose.yml; \
+		grep -q 'image: kunansy/reading_tracker:${CURRENT_TAG}' docker-compose.yml || { echo 'image tag not updated' >&2; exit 1; }; \
+		docker compose up -d --build --force-recreate tracker-app; sleep 2; \
+		docker ps --filter name=tracker-app --format json | jq '.Image,.State,.Status'; \
+		test \"\$$(docker ps --filter name=tracker-app --format '{{.Image}}')\" = 'kunansy/reading_tracker:${CURRENT_TAG}' || { echo 'wrong image running' >&2; exit 1; }"
 
 cov:
 	coverage run -m pytest
