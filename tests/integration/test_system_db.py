@@ -6,10 +6,14 @@ import pytest
 from matplotlib.axes import Axes
 
 from tests.integration import factories, helpers
+from tracker.api.v1 import system as system_api
 from tracker.common import database, settings
 from tracker.materials import db as materials_db
 from tracker.models import enums, models
-from tracker.system import db as system_db
+from tracker.system import (
+    db as system_db,
+    schemas,
+)
 
 
 MISSING_ID = uuid.UUID("00000000-0000-4000-8000-000000000000")
@@ -357,3 +361,11 @@ async def test_get_tables_analytics_covers_every_table_of_the_schema():
 
     assert analytics.keys() == {f"{row.tablename}_count" for row in tables}
     assert "mvw_repeat_notes_count" not in analytics
+
+
+async def test_get_tables_analytics_has_every_counter_the_backup_responses_need():
+    stat = system_api._tables_stat(await system_db.get_tables_analytics())
+
+    assert stat.keys() == schemas.BackupResponse.model_fields.keys()
+    assert stat.keys() == schemas.RestoreResponse.model_fields.keys()
+    assert set(stat.values()) == {0}
