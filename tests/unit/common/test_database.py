@@ -467,44 +467,6 @@ def test_repeat_notes_matview_query_matches_the_migration():
     )
 
 
-async def test_create_repeat_notes_matview_executes_the_query(mocker):
-    conn = SimpleNamespace(execute=mocker.AsyncMock())
-
-    await database.create_repeat_notes_matview(conn)
-
-    (stmt,), _ = conn.execute.await_args
-    assert conn.execute.await_count == 1
-    assert stmt.text == database.REPEAT_NOTES_MATVIEW_QUERY
-    assert "CREATE MATERIALIZED VIEW IF NOT EXISTS mvw_repeat_notes" in stmt.text
-    assert stmt.text.rstrip().endswith("WITH NO DATA;")
-
-
-async def test_recreate_db_drops_creates_and_builds_matview_in_one_transaction(mocker):
-    conn = mocker.Mock()
-    conn.run_sync = mocker.AsyncMock()
-    conn.execute = mocker.AsyncMock()
-    events: list[str] = []
-
-    @asynccontextmanager
-    async def _begin():
-        events.append("begin")
-        yield conn
-        events.append("commit")
-
-    mocker.patch.object(database, "engine", SimpleNamespace(begin=_begin))
-
-    await database.recreate_db()
-
-    assert events == ["begin", "commit"]
-    assert conn.mock_calls[:2] == [
-        mocker.call.run_sync(models.metadata.drop_all),
-        mocker.call.run_sync(models.metadata.create_all),
-    ]
-    assert len(conn.mock_calls) == 3
-    (stmt,), _ = conn.execute.await_args
-    assert stmt.text == database.REPEAT_NOTES_MATVIEW_QUERY
-
-
 class _FakeMigrationEngine:
     def __init__(self, mocker, *, tables: list[str], connect_error: Exception | None):
         self._mocker = mocker

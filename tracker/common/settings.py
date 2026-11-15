@@ -3,7 +3,6 @@ import logging
 import os
 from pathlib import Path
 
-import orjson
 from environs import Env
 from marshmallow.validate import OneOf
 
@@ -55,9 +54,6 @@ DB_URI = DSN_TEMPLATE.format(
 with env.prefixed("LOGGER_"):
     LOGGER_NAME = env("NAME", "ReadingTracker")
     LOGGER_LEVEL = env.log_level("LEVEL", logging.DEBUG)
-
-with env.prefixed("DRIVE_"):
-    DRIVE_CREDS = orjson.loads(env("CREDS"))
 
 with env.prefixed("MANTICORE_MYSQL_"):
     MANTICORE_MYSQL_HOST = env("HOST")

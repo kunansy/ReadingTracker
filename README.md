@@ -36,7 +36,7 @@ ReadingTracker helps you manage your reading workflow:
 ## Installation
 ### Prerequisites
 - Docker + Docker Compose (`docker compose`).
-- A Google Drive service account is optional (only needed for Drive backup/restore).
+- A Google Drive service account is optional (only needed by the `tracker-backup` service).
 
 ### Steps
 1. Clone the repo: `git clone https://github.com/kunansy/ReadingTracker`
@@ -44,10 +44,15 @@ ReadingTracker helps you manage your reading workflow:
 3. Create the Docker network (required by `docker-compose.yml`): `docker network create tracker-net`
 4. Initialize storage (creates DB objects and search indexes): `docker exec -it tracker-app python3 /app/tracker/main.py`
 
-### Optional: Google Drive backup/restore
-If you want to use Google Drive backup/restore, create a Google Drive service account and put its JSON credentials into `DRIVE_CREDS` in your `.env`.
+### Optional: backup/restore
+Backups are made and restored by the separate fastbackup service (`tracker-backup` in `docker-compose.yml`),
+which stores them in Google Drive. The tracker reaches it over gRPC at `BACKUP_HOST:BACKUP_PORT`.
+Create a Google Drive service account and put its JSON credentials into `DRIVE_CREDS` in your `.env`.
 The guide below is a good starting point (use the first steps about service accounts):
 `https://labnol.org/google-api-service-account-220404`
+
+The same operations are available from the command line:
+`docker exec -it tracker-app python3 -m tracker.backup.main --backup|--restore|--get-last-dump`
 
 ## Structure
 ### Queue
@@ -112,7 +117,7 @@ Tag and link lists can be scrolled left/right.
 ![Edit note](docs/edit_note.png)
 
 ## System
-This page includes charts and system tools (including backup/restore to Google Drive).
+This page includes charts and system tools (including backup/restore via the fastbackup service).
 
 All charts show statistics for the selected time span (a week by default).
 ![System](docs/system.png)

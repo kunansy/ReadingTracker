@@ -1,11 +1,12 @@
 import datetime
+from contextlib import asynccontextmanager
 from uuid import UUID
 
 import matplotlib.pyplot as plt
 import pytest
 
 from tests.unit.system.conftest import decode_svg, frozen_datetime_module
-from tracker.common import settings
+from tracker.common import database, settings
 from tracker.materials import db as materials_db
 from tracker.models import enums
 from tracker.reading_log import db as logs_db
@@ -360,3 +361,39 @@ class TestCreateOutlinePercentageGraphic:
         await db.create_outline_percentage_graphic()
 
         assert plt.get_fignums() == []
+
+
+
+class TestGetTablesAnalytics:
+    async def test_counts_rows_of_every_table_in_one_query(self, mocker):
+        rows = [mocker.Mock(cnt=index) for index in range(2)]
+        rows[0].name, rows[1].name = "notes_count", "alembic_version_count"
+        result = mocker.Mock()
+        result.all.return_value = rows
+        session = mocker.Mock(execute=mocker.AsyncMock(return_value=result))
+
+        @asynccontextmanager
+        async def open_session(**_kwargs):
+            yield session
+
+        mocker.patch.object(database, "session", open_session)
+
+        assert await db.get_tables_analytics() == {
+            "notes_count": 0,
+            "alembic_version_count": 1,
+        }
+        [call] = session.execute.await_args_list
+        assert str(call.args[0]) == db.TABLES_ROWS_COUNT_QUERY
+
+    async def test_no_rows_give_empty_analytics(self, mocker):
+        result = mocker.Mock()
+        result.all.return_value = []
+        session = mocker.Mock(execute=mocker.AsyncMock(return_value=result))
+
+        @asynccontextmanager
+        async def open_session(**_kwargs):
+            yield session
+
+        mocker.patch.object(database, "session", open_session)
+
+        assert await db.get_tables_analytics() == {}

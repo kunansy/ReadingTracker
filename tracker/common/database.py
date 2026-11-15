@@ -10,7 +10,7 @@ import sqlalchemy.sql as sa
 from sqlalchemy import inspect
 from sqlalchemy.engine import CursorResult, Result
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.ext.compiler import compiles
 from sqlalchemy.sql.ddl import DropTable
 
@@ -229,17 +229,6 @@ REPEAT_NOTES_MATVIEW_QUERY: Final[str] = """
             ON r.material_id = m.material_id AND m.started_at IS NOT NULL
     WITH NO DATA;
 """
-
-
-async def create_repeat_notes_matview(conn: AsyncSession | AsyncConnection) -> None:
-    await conn.execute(sa.text(REPEAT_NOTES_MATVIEW_QUERY))
-
-
-async def recreate_db() -> None:
-    async with engine.begin() as conn:
-        await conn.run_sync(models.metadata.drop_all)
-        await conn.run_sync(models.metadata.create_all)
-        await create_repeat_notes_matview(conn)
 
 
 async def _is_unversioned_db() -> bool:
