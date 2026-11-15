@@ -7,6 +7,7 @@ from types import ModuleType
 import pytest
 import sqlalchemy.sql as sa
 
+from migrations.alembic.sql import REPEAT_NOTES_MATVIEW_V2
 from tests.integration import factories, helpers
 from tracker.common import database
 from tracker.materials import db as materials_db
@@ -294,5 +295,5 @@ async def test_refresh_view_fails_when_the_view_is_missing(refresh_view_module):
         with pytest.raises(database.DatabaseException, match="mvw_repeat_notes"):
             await refresh_view_module.refresh_view()
     finally:
-        await helpers.execute(sa.text(database.REPEAT_NOTES_MATVIEW_QUERY))
+        await helpers.execute(sa.text(REPEAT_NOTES_MATVIEW_V2))
         await factories.refresh_repeat_notes_matview()

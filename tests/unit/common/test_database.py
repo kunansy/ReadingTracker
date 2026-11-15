@@ -1,7 +1,5 @@
 import datetime
-import importlib.util
 from contextlib import asynccontextmanager
-from pathlib import Path
 from types import SimpleNamespace
 from uuid import UUID
 
@@ -13,9 +11,6 @@ from sqlalchemy.sql.ddl import DropTable
 
 from tracker.common import database, settings
 from tracker.models import models
-
-
-REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 
 
 class _FakeSession:
@@ -448,23 +443,6 @@ def test_engine_uses_pinned_settings():
     assert database.engine.url.port == 1
     assert database.engine.dialect.name == "postgresql"
     assert database.engine.dialect.driver == "asyncpg"
-
-
-def _normalized(query: str) -> str:
-    return " ".join(query.split())
-
-
-def test_repeat_notes_matview_query_matches_the_migration():
-    spec = importlib.util.spec_from_file_location(
-        "alembic_shared_sql",
-        REPOSITORY_ROOT / "migrations" / "alembic" / "sql.py",
-    )
-    migration_sql = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(migration_sql)
-
-    assert _normalized(database.REPEAT_NOTES_MATVIEW_QUERY) == _normalized(
-        migration_sql.REPEAT_NOTES_MATVIEW_V2,
-    )
 
 
 class _FakeMigrationEngine:

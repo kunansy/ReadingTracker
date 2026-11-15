@@ -6,7 +6,6 @@ import pytest
 from matplotlib.axes import Axes
 
 from tests.integration import factories, helpers
-from tracker.api.v1 import system as system_api
 from tracker.common import database, settings
 from tracker.materials import db as materials_db
 from tracker.models import enums, models
@@ -358,9 +357,9 @@ async def test_get_tables_analytics_counts_only_the_model_tables():
     assert "mvw_repeat_notes_count" not in analytics
 
 
-async def test_get_tables_analytics_has_every_counter_the_backup_responses_need():
-    stat = system_api._tables_stat(await system_db.get_tables_analytics())
+async def test_get_tables_analytics_validates_as_the_backup_responses():
+    stat = await system_db.get_tables_analytics()
 
-    assert stat.keys() == schemas.BackupResponse.model_fields.keys()
-    assert stat.keys() == schemas.RestoreResponse.model_fields.keys()
+    for response in (schemas.BackupResponse, schemas.RestoreResponse):
+        assert response.model_validate(stat).model_dump() == stat
     assert set(stat.values()) == {0}

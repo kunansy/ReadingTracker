@@ -1,5 +1,7 @@
+import asyncio
 import datetime
 import inspect
+import io
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -37,13 +39,13 @@ class UnavailableStub:
     def __init__(self) -> None:
         self.error = _rpc_error()
 
-    async def Restore(self, req):  # noqa: N802
+    async def Restore(self, req, *, timeout):  # noqa: N802
         raise self.error
 
-    async def CreateBackup(self, req):  # noqa: N802
+    async def CreateBackup(self, req, *, timeout):  # noqa: N802
         raise self.error
 
-    async def DownloadBackup(self, ref):  # noqa: N802
+    async def DownloadBackup(self, ref, *, timeout):  # noqa: N802
         raise self.error
         yield
 
@@ -55,15 +57,23 @@ class FakeStub:
         self.restore_requests: list[backup_pb2.RestoreRequest] = []
         self.download_refs: list[backup_pb2.BackupRef] = []
         self.create_requests: list[backup_pb2.CreateBackupRequest] = []
+        self.timeouts: dict[str, float] = {}
 
-    async def Restore(self, req: backup_pb2.RestoreRequest) -> backup_pb2.RestoreReply:  # noqa: N802
+    async def Restore(  # noqa: N802
+        self,
+        req: backup_pb2.RestoreRequest,
+        *,
+        timeout: float,
+    ) -> backup_pb2.RestoreReply:
+        self.timeouts["Restore"] = timeout
         self.restore_requests.append(req)
         return backup_pb2.RestoreReply(
             restored=self.info,
             pre_restore_backup=_info(PG_CUSTOM, "safety"),
         )
 
-    async def DownloadBackup(self, ref: backup_pb2.BackupRef):  # noqa: N802
+    async def DownloadBackup(self, ref: backup_pb2.BackupRef, *, timeout: float):  # noqa: N802
+        self.timeouts["DownloadBackup"] = timeout
         self.download_refs.append(ref)
         yield backup_pb2.DownloadChunk(info=self.info)
         for chunk in self.data:
@@ -72,7 +82,10 @@ class FakeStub:
     async def CreateBackup(  # noqa: N802
         self,
         req: backup_pb2.CreateBackupRequest,
+        *,
+        timeout: float,
     ) -> backup_pb2.BackupInfo:
+        self.timeouts["CreateBackup"] = timeout
         self.create_requests.append(req)
         return self.info
 
@@ -150,57 +163,80 @@ class TestDownload:
         [([b"ab", b"cd"], b"abcd"), ([b"only"], b"only"), ([], b""), ([b"", b"x", b""], b"x")],
         ids=["two-chunks", "one-chunk", "no-chunks", "empty-chunks"],
     )
-    async def test_chunks_are_joined_in_order(self, chunks, content):
+    async def test_chunks_are_written_in_order(self, chunks, content):
         stub = FakeStub(_info(PG_CUSTOM), chunks)
+        sink = io.BytesIO()
 
-        info, downloaded = await client._download(stub, client.LATEST)
+        info = await client._download(stub, client.LATEST, sink)
 
         assert info == _info(PG_CUSTOM)
-        assert downloaded == content
+        assert sink.getvalue() == content
         assert stub.download_refs == [client.LATEST]
+        assert stub.timeouts == {"DownloadBackup": settings.BACKUP_RESTORE_TIMEOUT}
+
+    async def test_each_chunk_is_written_off_the_event_loop(self, mocker):
+        stub = FakeStub(_info(PG_CUSTOM), [b"ab", b"cd"])
+        sink = io.BytesIO()
+        to_thread = mocker.spy(client.asyncio, "to_thread")
+
+        await client._download(stub, client.LATEST, sink)
+
+        assert to_thread.await_args_list == [
+            mocker.call(sink.write, b"ab"),
+            mocker.call(sink.write, b"cd"),
+        ]
 
     async def test_info_message_may_come_after_the_data(self):
         class InfoLastStub(FakeStub):
-            async def DownloadBackup(self, ref):  # noqa: N802
+            async def DownloadBackup(self, ref, *, timeout):  # noqa: N802
                 yield backup_pb2.DownloadChunk(data=b"x")
                 yield backup_pb2.DownloadChunk(info=self.info)
 
         stub = InfoLastStub(_info(PG_CUSTOM), [])
+        sink = io.BytesIO()
 
-        info, downloaded = await client._download(stub, client.LATEST)
+        info = await client._download(stub, client.LATEST, sink)
 
-        assert (info.id, downloaded) == ("id1", b"x")
+        assert (info.id, sink.getvalue()) == ("id1", b"x")
 
     async def test_last_info_message_wins(self):
         class TwoInfosStub(FakeStub):
-            async def DownloadBackup(self, ref):  # noqa: N802
+            async def DownloadBackup(self, ref, *, timeout):  # noqa: N802
                 yield backup_pb2.DownloadChunk(info=_info(PG_CUSTOM, "first"))
                 yield backup_pb2.DownloadChunk(info=_info(PG_CUSTOM, "second"))
 
-        info, _ = await client._download(TwoInfosStub(_info(PG_CUSTOM), []), client.LATEST)
+        info = await client._download(
+            TwoInfosStub(_info(PG_CUSTOM), []),
+            client.LATEST,
+            io.BytesIO(),
+        )
 
         assert info.id == "second"
 
     async def test_stream_without_info_message_raises(self):
         class NoInfoStub(FakeStub):
-            async def DownloadBackup(self, ref):  # noqa: N802
+            async def DownloadBackup(self, ref, *, timeout):  # noqa: N802
                 yield backup_pb2.DownloadChunk(data=b"x")
 
         stub = NoInfoStub(_info(PG_CUSTOM), [])
 
         with pytest.raises(client.BackupException) as e:
-            await client._download(stub, client.LATEST)
+            await client._download(stub, client.LATEST, io.BytesIO())
 
         assert str(e.value) == "Backup stream has no info message"
 
     async def test_empty_stream_raises(self):
         class EmptyStub(FakeStub):
-            async def DownloadBackup(self, ref):  # noqa: N802
+            async def DownloadBackup(self, ref, *, timeout):  # noqa: N802
                 return
                 yield
 
         with pytest.raises(client.BackupException):
-            await client._download(EmptyStub(_info(PG_CUSTOM), []), client.LATEST)
+            await client._download(
+                EmptyStub(_info(PG_CUSTOM), []),
+                client.LATEST,
+                io.BytesIO(),
+            )
 
 
 class TestRestore:
@@ -223,6 +259,7 @@ class TestRestore:
         engine.dispose.assert_awaited_once_with()
         assert opened == [stub]
         assert not stub.download_refs
+        assert stub.timeouts == {"Restore": settings.BACKUP_RESTORE_TIMEOUT}
 
     async def test_service_failure_still_disposes_the_pool(self, mocker, backup_stub):
         engine = mocker.patch.object(client.database, "engine")
@@ -243,7 +280,7 @@ class TestRestore:
         backup_stub,
     ):
         class FailingStub(FakeStub):
-            async def Restore(self, req):  # noqa: N802
+            async def Restore(self, req, *, timeout):  # noqa: N802
                 raise RuntimeError("boom")
 
         engine = mocker.patch.object(client.database, "engine")
@@ -254,7 +291,6 @@ class TestRestore:
             await client.restore()
 
         engine.dispose.assert_awaited_once_with()
-
 
     async def test_dispose_failure_does_not_mask_the_service_failure(
         self,
@@ -272,17 +308,23 @@ class TestRestore:
         assert str(e.value) == RPC_ERROR_MESSAGE
         log.assert_called_once_with("Engine dispose after restore failed")
 
-    async def test_dispose_failure_after_a_restore_is_logged(self, mocker, backup_stub):
+    async def test_dispose_failure_after_a_restore_is_a_backup_exception(
+        self,
+        mocker,
+        backup_stub,
+    ):
         engine = mocker.patch.object(client.database, "engine")
-        engine.dispose = mocker.AsyncMock(side_effect=RuntimeError("dispose failed"))
+        error = RuntimeError("dispose failed")
+        engine.dispose = mocker.AsyncMock(side_effect=error)
         stub = FakeStub(_info(PG_CUSTOM), [])
         backup_stub(stub)
-        log = mocker.patch.object(client.logger, "exception")
 
-        await client.restore()
+        with pytest.raises(client.BackupException) as e:
+            await client.restore()
 
+        assert str(e.value) == "Engine dispose after restore failed"
+        assert e.value.__cause__ is error
         assert len(stub.restore_requests) == 1
-        log.assert_called_once_with("Engine dispose after restore failed")
 
 
 class TestBackup:
@@ -294,6 +336,7 @@ class TestBackup:
 
         assert backup_id == "created"
         assert stub.create_requests == [backup_pb2.CreateBackupRequest()]
+        assert stub.timeouts == {"CreateBackup": settings.BACKUP_TIMEOUT}
 
     async def test_service_failure_is_a_backup_exception(self, backup_stub):
         stub = UnavailableStub()
@@ -379,7 +422,7 @@ class TestDownloadLatest:
         error = _rpc_error(grpc.StatusCode.INTERNAL)
 
         class BrokenStreamStub(FakeStub):
-            async def DownloadBackup(self, ref):  # noqa: N802
+            async def DownloadBackup(self, ref, *, timeout):  # noqa: N802
                 yield backup_pb2.DownloadChunk(info=self.info)
                 yield backup_pb2.DownloadChunk(data=b"x")
                 raise error
@@ -398,13 +441,25 @@ class TestDownloadLatest:
 
         assert clock.default is database.utcnow
 
-    async def test_file_is_written_off_the_event_loop(self, mocker, backup_stub):
+    async def test_only_the_final_file_is_left(self, backup_stub, data_dir):
         backup_stub(FakeStub(_info(PG_CUSTOM), [b"x"]))
-        to_thread = mocker.spy(client.asyncio, "to_thread")
 
         filepath = await client.download_latest(clock=_frozen_clock)
 
-        to_thread.assert_awaited_once_with(filepath.write_bytes, b"x")
+        assert list(data_dir.iterdir()) == [filepath]
+
+    async def test_cancelled_download_leaves_no_file(self, backup_stub, data_dir):
+        class CancelledStub(FakeStub):
+            async def DownloadBackup(self, ref, *, timeout):  # noqa: N802
+                yield backup_pb2.DownloadChunk(data=b"x")
+                raise asyncio.CancelledError
+
+        backup_stub(CancelledStub(_info(PG_CUSTOM), []))
+
+        with pytest.raises(asyncio.CancelledError):
+            await client.download_latest(clock=_frozen_clock)
+
+        assert list(data_dir.iterdir()) == []
 
 
 def test_dump_extensions_cover_both_backup_formats():

@@ -4,6 +4,7 @@ import time
 from collections.abc import AsyncGenerator, Callable
 from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import BinaryIO
 
 from grpc.aio import (
     AioRpcError,
@@ -43,22 +44,32 @@ async def _backup_stub() -> AsyncGenerator[backup_pb2_grpc.BackupStub]:
         yield backup_pb2_grpc.BackupStub(channel)
 
 
+def _elapsed(start: float) -> float:
+    return round(time.perf_counter() - start, 2)
+
+
 async def _download(
     stub: backup_pb2_grpc.BackupStub,
     ref: backup_pb2.BackupRef,
-) -> tuple[backup_pb2.BackupInfo, bytes]:
+    sink: BinaryIO,
+) -> backup_pb2.BackupInfo:
     info: backup_pb2.BackupInfo | None = None
-    chunks: list[bytes] = []
 
-    async for chunk in stub.DownloadBackup(ref):
+    async for chunk in stub.DownloadBackup(ref, timeout=settings.BACKUP_RESTORE_TIMEOUT):
         if chunk.HasField("info"):
             info = chunk.info
-        else:
-            chunks.append(chunk.data)
+        elif chunk.data:
+            await asyncio.to_thread(sink.write, chunk.data)
 
     if info is None:
         raise BackupException("Backup stream has no info message")
-    return info, b"".join(chunks)
+    return info
+
+
+def _dump_extension(info: backup_pb2.BackupInfo) -> str:
+    if (extension := DUMP_EXTENSIONS.get(info.format)) is None:
+        raise BackupException(f"Unsupported backup format of '{info.name}'")
+    return extension
 
 
 def get_dump_filename(*, prefix: str, extension: str, now: datetime.datetime) -> Path:
@@ -66,9 +77,18 @@ def get_dump_filename(*, prefix: str, extension: str, now: datetime.datetime) ->
     return settings.DATA_DIR / filename
 
 
+async def _dispose_engine_after_failed_restore() -> None:
+    # pg_restore may have recreated tables and types even when the call failed,
+    # so pooled connections can hold stale OIDs.
+    try:
+        await database.engine.dispose()
+    except Exception:
+        logger.exception("Engine dispose after restore failed")
+
+
 async def restore() -> None:
-    logger.info("Restoring started")
-    start_time = time.perf_counter()
+    logger.info("Restore started")
+    start = time.perf_counter()
 
     try:
         async with _rpc_errors(), _backup_stub() as stub:
@@ -77,33 +97,36 @@ async def restore() -> None:
                     backup=LATEST,
                     confirm_db_name=settings.DB_NAME,
                 ),
+                timeout=settings.BACKUP_RESTORE_TIMEOUT,
             )
-    finally:
-        # pg_restore may have recreated tables and types even when the call failed,
-        # so pooled connections can hold stale OIDs.
-        try:
-            await database.engine.dispose()
-        except Exception:
-            logger.exception("Engine dispose after restore failed")
+    except BaseException:
+        await _dispose_engine_after_failed_restore()
+        raise
+
+    try:
+        await database.engine.dispose()
+    except Exception as e:
+        raise BackupException("Engine dispose after restore failed") from e
 
     logger.info(
-        "Restored from '%s' for %ss, previous state saved as '%s'",
+        "Restore completed for %ss from '%s', previous state saved as '%s'",
+        _elapsed(start),
         reply.restored.name,
-        round(time.perf_counter() - start_time, 2),
         reply.pre_restore_backup.name,
     )
 
 
 async def backup() -> str:
+    logger.info("Backup started")
     start = time.perf_counter()
 
     async with _rpc_errors(), _backup_stub() as stub:
         info: backup_pb2.BackupInfo = await stub.CreateBackup(
             backup_pb2.CreateBackupRequest(),
+            timeout=settings.BACKUP_TIMEOUT,
         )
 
-    exec_time = round(time.perf_counter() - start, 2)
-    logger.info("Backup completed for %ss, file_id: '%s'", exec_time, info.id)
+    logger.info("Backup completed for %ss, file_id: '%s'", _elapsed(start), info.id)
 
     return info.id
 
@@ -113,16 +136,24 @@ async def download_latest(
     prefix: str = "last_dump",
     clock: Callable[[], datetime.datetime] = database.utcnow,
 ) -> Path:
-    """Save the latest backup to DATA_DIR: `.pgdump` or decompressed legacy `.json`."""
-    async with _rpc_errors(), _backup_stub() as stub:
-        info, content = await _download(stub, LATEST)
+    """Save the latest backup to DATA_DIR: `.pgdump`, or `.json` server-decompressed."""
+    partial = settings.DATA_DIR / f".{prefix}.partial"
 
-    extension = DUMP_EXTENSIONS.get(info.format)
-    if extension is None:
-        raise BackupException(f"Unsupported backup format of '{info.name}'")
+    try:
+        sink = await asyncio.to_thread(partial.open, "wb")
+        with sink:
+            async with _rpc_errors(), _backup_stub() as stub:
+                info = await _download(stub, LATEST, sink)
 
-    filepath = get_dump_filename(prefix=prefix, extension=extension, now=clock())
-    await asyncio.to_thread(filepath.write_bytes, content)
+        filepath = get_dump_filename(
+            prefix=prefix,
+            extension=_dump_extension(info),
+            now=clock(),
+        )
+        await asyncio.to_thread(partial.rename, filepath)
+    except BaseException:
+        partial.unlink(missing_ok=True)
+        raise
+
     logger.info("Backup '%s' saved to %s", info.name, filepath)
-
     return filepath

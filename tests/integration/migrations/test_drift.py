@@ -3,7 +3,6 @@
 import asyncio
 
 import pytest
-import sqlalchemy as sa
 from alembic import command
 from alembic.autogenerate import compare_metadata
 from alembic.runtime.migration import MigrationContext
@@ -13,7 +12,6 @@ from sqlalchemy.engine import Connection
 from migrations.alembic.sql import REPEAT_NOTES_MATVIEW, REPEAT_NOTES_MATVIEW_V2
 from tests.integration import helpers
 from tests.integration.migrations import helpers as migration_helpers
-from tests.integration.migrations.revisions import in_rolled_back_migration
 from tracker.common import database
 from tracker.models import models
 
@@ -70,12 +68,6 @@ async def test_note_number_is_a_serial_owned_by_its_sequence():
     assert owner == "public.notes_note_number_seq"
 
 
-def test_application_matview_query_is_the_latest_migration_definition():
-    assert _normalize(database.REPEAT_NOTES_MATVIEW_QUERY) == _normalize(
-        REPEAT_NOTES_MATVIEW_V2,
-    )
-
-
 def test_first_matview_definition_differs_only_in_reading_the_statuses_table():
     v1_only = set(_normalize_lines(REPEAT_NOTES_MATVIEW)) - set(
         _normalize_lines(REPEAT_NOTES_MATVIEW_V2),
@@ -100,20 +92,6 @@ def test_first_matview_definition_differs_only_in_reading_the_statuses_table():
 
 def _normalize_lines(sql: str) -> list[str]:
     return [_normalize(line) for line in sql.splitlines() if line.strip()]
-
-
-async def test_migrated_matview_is_what_the_application_query_creates():
-    def definitions(conn: Connection) -> tuple[str, str]:
-        view_definition = sa.text("SELECT pg_get_viewdef('mvw_repeat_notes'::regclass)")
-        migrated = conn.scalar(view_definition)
-        conn.execute(sa.text("DROP MATERIALIZED VIEW mvw_repeat_notes"))
-        conn.execute(sa.text(database.REPEAT_NOTES_MATVIEW_QUERY))
-        return migrated, conn.scalar(view_definition)
-
-    migrated, from_application = await in_rolled_back_migration(definitions)
-
-    assert migrated == from_application
-    assert "statuses" not in migrated
 
 
 async def test_migrated_matview_is_populated_and_empty_on_a_new_database():

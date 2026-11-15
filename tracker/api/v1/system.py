@@ -1,11 +1,12 @@
 import asyncio
 from typing import Annotated
 
-from fastapi import APIRouter
+from fastapi import APIRouter, BackgroundTasks
 from fastapi.params import Depends
 
 from tracker.backup import client as backup_client
-from tracker.common import database
+from tracker.common import workers
+from tracker.common.logger import logger
 from tracker.reading_log import (
     db as logs_db,
     statistics,
@@ -130,36 +131,31 @@ async def graphic_total_read(r: Annotated[schemas.GetTotalReadGraphicRequest, De
     return {"image": trends.create_total_read_graphic(stat)}
 
 
-TABLES_STAT_KEYS = (
-    "materials_count",
-    "reading_log_count",
-    "notes_count",
-    "cards_count",
-    "repeats_count",
-    "note_repeats_history_count",
-)
-
-
-def _tables_stat(stat: dict[str, int]) -> dict[str, int]:
-    if missing := [key for key in TABLES_STAT_KEYS if key not in stat]:
-        raise database.DatabaseException(f"Missing row counts: {', '.join(missing)}")
-    return {key: stat[key] for key in TABLES_STAT_KEYS}
-
-
 @router.post("/backup", response_model=schemas.BackupResponse)
 async def backup_api():
-    await backup_client.backup()
+    backup_id = await backup_client.backup()
 
-    stat = await db.get_tables_analytics()
-    return schemas.BackupResponse(**_tables_stat(stat))
+    try:
+        stat = await db.get_tables_analytics()
+    except Exception:
+        logger.error("Backup '%s' created, but its row counts failed", backup_id)
+        raise
+    return schemas.BackupResponse.model_validate(stat)
 
 
 @router.post("/restore", response_model=schemas.RestoreResponse)
-async def restore_api():
+async def restore_api(background_tasks: BackgroundTasks):
     await backup_client.restore()
 
-    stat = await db.get_tables_analytics()
-    return schemas.RestoreResponse(**_tables_stat(stat))
+    # Other workers keep pooled connections to the replaced tables and types.
+    try:
+        response = schemas.RestoreResponse.model_validate(await db.get_tables_analytics())
+    except Exception:
+        workers.reload_workers()
+        raise
+
+    background_tasks.add_task(workers.reload_workers)
+    return response
 
 
 @router.post(
