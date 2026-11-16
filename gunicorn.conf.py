@@ -5,7 +5,10 @@ import signal
 from gunicorn.arbiter import Arbiter
 from gunicorn.workers.base import Worker
 
-from tracker.common import database, workers
+from tracker.common import (
+    database,
+    workers as tracker_workers,
+)
 
 
 def on_starting(server: Arbiter) -> None:  # noqa: ARG001
@@ -15,4 +18,4 @@ def on_starting(server: Arbiter) -> None:  # noqa: ARG001
 
 def post_fork(server: Arbiter, worker: Worker) -> None:  # noqa: ARG001
     """Let a worker ask the master to restart every worker, e.g. after a restore."""
-    workers.set_reloader(functools.partial(os.kill, server.pid, signal.SIGHUP))
+    tracker_workers.set_reloader(functools.partial(os.kill, server.pid, signal.SIGHUP))
