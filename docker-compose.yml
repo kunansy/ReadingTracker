@@ -10,7 +10,7 @@ x-backup-img: &backup-img
   image: kunansy/fast-backup:0.6.0
 
 x-tracker-img: &tracker-img
-  image: kunansy/reading_tracker:288
+  image: kunansy/reading_tracker:289
 
 services:
   tracker-db:
