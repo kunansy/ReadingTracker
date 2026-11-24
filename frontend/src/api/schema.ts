@@ -919,6 +919,11 @@ export interface components {
         CompleteMaterialRequest: {
             /** Completed At */
             completed_at?: string | null;
+            /**
+             * Is Outlined
+             * @default false
+             */
+            is_outlined: boolean;
         };
         /** CreateCardRequest */
         CreateCardRequest: {

@@ -668,6 +668,58 @@ async def test_complete_material_accepts_a_date_before_the_start_current_behavio
     assert row["completed_at"] == helpers.at(helpers.day(-9))
 
 
+
+async def test_complete_material_with_outline_sets_both_fields(clock):
+    material_id = await h.reading(clock, started=helpers.day(-3))
+    before = await factories.fetch_row(models.Materials, material_id)
+
+    await db.complete_material(
+        material_id=material_id, completed_at=helpers.day(-1), is_outlined=True
+    )
+
+    assert before["is_outlined"] is False
+    assert await factories.fetch_row(models.Materials, material_id) == before | {
+        "completed_at": helpers.at(helpers.day(-1)),
+        "is_outlined": True,
+    }
+
+
+async def test_complete_material_without_outline_keeps_an_existing_outline(clock):
+    material_id = await h.reading(clock, started=helpers.day(-3))
+    await db.outline_material(material_id=material_id)
+
+    await db.complete_material(material_id=material_id, completed_at=helpers.day(-1))
+
+    row = await factories.fetch_row(models.Materials, material_id)
+    assert row["completed_at"] == helpers.at(helpers.day(-1))
+    assert row["is_outlined"] is True
+
+
+async def test_complete_material_without_outline_leaves_the_flag_unset(clock):
+    material_id = await h.reading(clock, started=helpers.day(-3))
+
+    await db.complete_material(material_id=material_id, completed_at=helpers.day(-1))
+
+    assert (await factories.fetch_row(models.Materials, material_id))["is_outlined"] is False
+
+
+@pytest.mark.parametrize("state", ["queued", "completed"])
+async def test_complete_material_with_outline_in_a_wrong_state_changes_nothing(clock, state):
+    if state == "queued":
+        material_id = await h.queued(clock)
+    else:
+        material_id = await h.completed(
+            clock, started=helpers.day(-3), finished=helpers.day(-2)
+        )
+    before = await factories.fetch_row(models.Materials, material_id)
+
+    with pytest.raises(database.ConflictException, match="is not being read"):
+        await db.complete_material(
+            material_id=material_id, completed_at=helpers.day(-1), is_outlined=True
+        )
+
+    assert await factories.fetch_row(models.Materials, material_id) == before
+
 @pytest.mark.parametrize("state", ["queued", "reading", "completed"])
 async def test_outline_material_sets_the_flag_in_any_state(clock, state):
     material_id = await h.queued(clock)
