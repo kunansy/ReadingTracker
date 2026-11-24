@@ -1,4 +1,5 @@
 import asyncio
+import inspect
 from http import HTTPStatus
 
 from fastapi import FastAPI, Request
@@ -160,6 +161,26 @@ async def http_exception_handler(request: Request, exc: HTTPException):
         status_code=exc.status_code,
         content={"detail": _http_detail(exc)},
     )
+
+
+def _first_leaf(group: BaseExceptionGroup) -> BaseException:
+    first = group.exceptions[0]
+    if isinstance(first, BaseExceptionGroup):
+        return _first_leaf(first)
+    return first
+
+
+# asyncio.TaskGroup wraps a task's error in ExceptionGroup, which no handler above matches
+@app.exception_handler(ExceptionGroup)
+async def exception_group_handler(request: Request, exc: ExceptionGroup):
+    leaf = _first_leaf(exc)
+    for exc_type in type(leaf).__mro__:
+        handler = app.exception_handlers.get(exc_type)
+        if handler is not None:
+            response = handler(request, leaf)
+            return await response if inspect.isawaitable(response) else response
+
+    raise leaf
 
 
 @app.get("/liveness", include_in_schema=False)

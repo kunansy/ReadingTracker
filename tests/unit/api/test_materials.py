@@ -127,13 +127,6 @@ async def test_queue_rejects_invalid_query(
     estimate_page.assert_not_awaited()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=(
-        "BUG: tracker/api/v1/materials.py:25 an error raised inside asyncio.TaskGroup "
-        "reaches the app as ExceptionGroup, so a malformed next_token is 500 instead of 422"
-    ),
-)
 async def test_queue_maps_invalid_token_to_422(
     lenient_client, estimate_page, get_means, today
 ):

@@ -7,6 +7,7 @@ import orjson
 import pytest
 from fastapi import HTTPException
 from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from starlette.requests import Request
 
 from tests.conftest import TEST_ENVIRONMENT
@@ -123,6 +124,56 @@ async def test_database_handler_called_directly_maps_conflict_to_409():
 
     assert response.status_code == 409
     assert _body(response) == {"detail": "ConflictError: Material is not in the queue"}
+
+
+async def test_exception_group_is_answered_by_the_handler_of_a_nested_leaf():
+    group = ExceptionGroup(
+        "outer",
+        [ExceptionGroup("inner", [database.NotFoundException("Note not found")])],
+    )
+
+    response = await main.exception_group_handler(_request(NOTE_PATH), group)
+
+    assert response.status_code == 404
+    assert _body(response) == {"detail": "NotFoundError: Note not found"}
+
+
+async def test_exception_group_is_answered_by_its_first_error():
+    group = ExceptionGroup(
+        "two failed",
+        [
+            database.InvalidNextTokenException("Invalid nextToken"),
+            database.NotFoundException("Note not found"),
+        ],
+    )
+
+    response = await main.exception_group_handler(_request(), group)
+
+    assert response.status_code == 422
+    assert _body(response) == {"detail": "InvalidNextToken: Invalid nextToken"}
+
+
+async def test_exception_group_is_answered_by_a_sync_handler(monkeypatch):
+    class SyncHandled(Exception):
+        pass
+
+    answer = JSONResponse(status_code=418, content={"detail": "teapot"})
+    monkeypatch.setitem(main.app.exception_handlers, SyncHandled, lambda _r, _e: answer)
+
+    response = await main.exception_group_handler(
+        _request(), ExceptionGroup("failed", [SyncHandled()])
+    )
+
+    assert response is answer
+
+
+async def test_exception_group_reraises_an_error_without_a_handler():
+    leaf = RuntimeError("boom")
+
+    with pytest.raises(RuntimeError) as raised:
+        await main.exception_group_handler(_request(), ExceptionGroup("failed", [leaf]))
+
+    assert raised.value is leaf
 
 
 async def test_unexpected_error_is_500(lenient_client, mocker):
