@@ -37,6 +37,9 @@ def pytest_collection_modifyitems(items):
     for item in items:
         if INTEGRATION_DIR in Path(item.path).parents:
             item.add_marker(pytest.mark.integration)
+        # the Manticore table name is fixed: keep its tests on one xdist worker and one container
+        if "manticore" in item.fixturenames:
+            item.add_marker(pytest.mark.xdist_group("manticore"))
 
 
 def _wait_until_ready(probe, *, what: str) -> None:

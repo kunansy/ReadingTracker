@@ -74,6 +74,7 @@ jobs:
     - name: Run unit and integration tests with coverage
       run: |
         coverage run -m pytest -p no:sugar
+        coverage combine
         coverage report
 
     - name: Publish coverage badge

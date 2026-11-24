@@ -54,6 +54,7 @@ deploy:
 
 cov:
 	coverage run -m pytest
+	coverage combine
 	coverage report
 
 cov-show:
