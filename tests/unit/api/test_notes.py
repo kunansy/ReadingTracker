@@ -17,10 +17,6 @@ NOTE_URL = f"{BASE}/{factories.NOTE_ID}"
 NOW = datetime.datetime(2026, 3, 10, 12, 30, 0)
 NOT_FOUND = database.NotFoundException("Note not found")
 NOT_FOUND_BODY = {"detail": "NotFoundError: Note not found"}
-TASK_GROUP_BUG = (
-    "BUG: {where} an error raised inside asyncio.TaskGroup reaches the app as "
-    "ExceptionGroup, so the registered exception handler is bypassed: {effect}"
-)
 
 
 def _patch(mocker, name: str, **kwargs):
@@ -243,13 +239,6 @@ async def test_search_rejects_invalid_query(client, search_db, params, location)
     search_db["search_notes_page"].assert_not_awaited()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=TASK_GROUP_BUG.format(
-        where="tracker/notes/listing.py:31",
-        effect="a malformed next_token on /notes/search is 500 instead of 422",
-    ),
-)
 async def test_search_maps_invalid_token_to_422(lenient_client, search_db):
     search_db["search_notes_page"].side_effect = database.InvalidNextTokenException("Invalid nextToken")
 
@@ -386,13 +375,6 @@ async def test_graph_rejects_bad_uuid(client, graph_db):
     graph_db["get_notes"].assert_not_awaited()
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=TASK_GROUP_BUG.format(
-        where="tracker/api/v1/notes.py:51,88",
-        effect="a database failure answers a bare 500 instead of the JSON error body",
-    ),
-)
 @pytest.mark.parametrize("path", ["graph", "meta"])
 async def test_task_group_listing_reports_a_database_failure_as_json(
     lenient_client, graph_db, mocker, path
@@ -973,13 +955,6 @@ async def test_links_of_a_linked_note(client, mocker, get_note, links_from_page)
     )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=TASK_GROUP_BUG.format(
-        where="tracker/api/v1/notes.py:171",
-        effect="a note linked to a deleted note gives 500 on /notes/links instead of 404",
-    ),
-)
 async def test_links_of_a_note_linked_to_a_missing_note_is_404(
     lenient_client, get_note, links_from_page
 ):
@@ -998,13 +973,6 @@ async def test_links_of_a_note_linked_to_a_missing_note_is_404(
     assert response.json() == NOT_FOUND_BODY
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason=TASK_GROUP_BUG.format(
-        where="tracker/api/v1/notes.py:171",
-        effect="a malformed next_token on /notes/links is 500 instead of 422",
-    ),
-)
 async def test_links_maps_invalid_token_to_422(lenient_client, get_note, links_from_page):
     links_from_page.side_effect = database.InvalidNextTokenException("Invalid nextToken")
 

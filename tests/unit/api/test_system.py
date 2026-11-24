@@ -21,11 +21,6 @@ from tracker.system import (
 
 BASE = "/api/v1/system"
 DAY = datetime.date(2026, 1, 3)
-TASK_GROUP_BUG = (
-    "BUG: tracker/api/v1/system.py {endpoint}: an error raised inside asyncio.TaskGroup "
-    "reaches the app as ExceptionGroup, so the database exception handler is bypassed "
-    "and the client gets a bare 500 instead of the JSON error body"
-)
 SPAN_TRENDS = {
     "get_span_reading_statistics": "reading_trend",
     "get_span_notes_statistics": "notes_trend",
@@ -178,9 +173,6 @@ async def test_last_days_must_be_a_positive_integer(client, path, params):
     assert response.json()["detail"].startswith("query.last_days: ")
 
 
-@pytest.mark.xfail(
-    strict=True, reason=TASK_GROUP_BUG.format(endpoint="get_system_summary")
-)
 async def test_summary_reports_a_database_failure_as_json(lenient_client, summary):
     summary["get_span_notes_statistics"].side_effect = trends.TrendException(
         "Wrong span size"
@@ -292,9 +284,6 @@ async def test_reading_trend_graphic(client, reading_trend):
     )
 
 
-@pytest.mark.xfail(
-    strict=True, reason=TASK_GROUP_BUG.format(endpoint="graphic_reading_trend")
-)
 async def test_reading_trend_graphic_reports_a_database_failure_as_json(
     lenient_client, reading_trend
 ):
