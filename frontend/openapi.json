@@ -152,6 +152,11 @@
               }
             ],
             "title": "Completed At"
+          },
+          "is_outlined": {
+            "default": false,
+            "title": "Is Outlined",
+            "type": "boolean"
           }
         },
         "title": "CompleteMaterialRequest",

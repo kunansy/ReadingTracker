@@ -294,7 +294,11 @@ async def complete_material(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e)) from e
 
-    await db.complete_material(material_id=material_id, completed_at=body.completed_at)
+    await db.complete_material(
+        material_id=material_id,
+        completed_at=body.completed_at,
+        is_outlined=body.is_outlined,
+    )
 
 
 @router.post("/{material_id}/outline", status_code=204)

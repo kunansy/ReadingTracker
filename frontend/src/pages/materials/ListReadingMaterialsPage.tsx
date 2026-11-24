@@ -20,6 +20,7 @@ export function ListReadingMaterialsPage() {
   const dialogRef = useRef<HTMLDialogElement>(null);
   const [completeId, setCompleteId] = useState<string | null>(null);
   const [dateStr, setDateStr] = useState("");
+  const [withOutline, setWithOutline] = useState(false);
   const navigate = useNavigate();
   const pagination = useCursorPagination(PAGE_SIZE, "", "desc");
   const nextToken = pagination.cursor;
@@ -42,11 +43,11 @@ export function ListReadingMaterialsPage() {
   });
 
   const completeMut = useMutation({
-    mutationFn: (p: { materialId: string; completedAt: string }) =>
+    mutationFn: (p: { materialId: string; completedAt: string; isOutlined: boolean }) =>
       unwrapEmpty(
         api.POST("/api/v1/materials/{material_id}/complete", {
           params: { path: { material_id: p.materialId } },
-          body: { completed_at: p.completedAt },
+          body: { completed_at: p.completedAt, is_outlined: p.isOutlined },
         }),
       ),
     onSuccess: () => {
@@ -105,6 +106,7 @@ export function ListReadingMaterialsPage() {
   const openComplete = (materialId: string) => {
     setCompleteId(materialId);
     setToday();
+    setWithOutline(false);
     dialogRef.current?.showModal();
   };
 
@@ -238,6 +240,19 @@ export function ListReadingMaterialsPage() {
             />
           </label>
         </p>
+        <p>
+          <label className="complete-material-dialog__checkbox">
+            <input
+              type="checkbox"
+              id="complete-material-outlined"
+              checked={withOutline}
+              onChange={(e) => {
+                setWithOutline(e.target.checked);
+              }}
+            />
+            With outline
+          </label>
+        </p>
         <div className="complete-material-dialog__actions">
           <button
             type="button"
@@ -260,6 +275,7 @@ export function ListReadingMaterialsPage() {
                 await completeMut.mutateAsync({
                   materialId: completeId,
                   completedAt: dateStr,
+                  isOutlined: withOutline,
                 });
                 dialogRef.current?.close();
                 navigate(`/materials/completed/${completeId}`);

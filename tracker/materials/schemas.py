@@ -153,6 +153,7 @@ class StartMaterialRequest(CustomBaseModel):
 
 class CompleteMaterialRequest(CustomBaseModel):
     completed_at: datetime.date | None = None
+    is_outlined: bool = False
 
 
 class ParseLinkRequest(CustomBaseModel):

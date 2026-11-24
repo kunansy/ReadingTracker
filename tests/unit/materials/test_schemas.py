@@ -241,6 +241,20 @@ def test_search_params_parse_is_outlined(value, expected):
     assert schemas.SearchParams(is_outlined=value).is_outlined is expected
 
 
+
+def test_complete_request_is_not_outlined_by_default():
+    assert schemas.CompleteMaterialRequest().is_outlined is False
+
+
+def test_complete_request_takes_the_outlined_flag():
+    assert schemas.CompleteMaterialRequest(is_outlined=True).is_outlined is True
+
+
+@pytest.mark.parametrize("invalid", ["maybe", None, 2])
+def test_complete_request_rejects_an_invalid_outlined_flag(invalid):
+    with pytest.raises(ValidationError):
+        schemas.CompleteMaterialRequest(is_outlined=invalid)
+
 @pytest.mark.parametrize(
     ("model", "field"),
     [

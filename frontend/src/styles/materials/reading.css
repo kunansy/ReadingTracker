@@ -29,6 +29,13 @@ hr {
     padding: 0.5vh 0.75vw;
 }
 
+.complete-material-dialog__checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5vw;
+    cursor: pointer;
+}
+
 .complete-material-dialog__actions {
     display: flex;
     justify-content: flex-end;
@@ -42,6 +49,11 @@ hr {
         flex-direction: column-reverse;
         align-items: stretch;
         gap: 0.75rem;
+    }
+
+    .complete-material-dialog__checkbox {
+        gap: 0.5rem;
+        min-height: 44px;
     }
 
     .complete-material-dialog__date {

@@ -633,13 +633,19 @@ async def complete_material(
     *,
     material_id: UUID,
     completed_at: datetime.date | None = None,
+    is_outlined: bool = False,
 ) -> None:
-    logger.debug("Completing material_id=%s", material_id)
+    logger.debug("Completing material_id=%s, is_outlined=%s", material_id, is_outlined)
 
     completed_at = completed_at or database.utcnow().date()
+    # False must not reset a flag set while the material was being read
+    values: dict[str, Any] = {"completed_at": completed_at}
+    if is_outlined:
+        values["is_outlined"] = True
+
     stmt = (
         models.Materials.update()
-        .values(completed_at=completed_at)
+        .values(values)
         .where(models.Materials.c.material_id == material_id)
         .where(models.MATERIAL_IS_READING)
     )

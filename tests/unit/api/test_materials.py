@@ -1081,19 +1081,24 @@ def complete(mocker):
 
 
 @pytest.mark.parametrize(
-    ("body", "completed_at"),
-    [({}, None), ({"completed_at": "2026-03-10"}, factories.TODAY)],
-    ids=["omitted", "explicit"],
+    ("body", "completed_at", "is_outlined"),
+    [
+        ({}, None, False),
+        ({"completed_at": "2026-03-10"}, factories.TODAY, False),
+        ({"is_outlined": True}, None, True),
+        ({"completed_at": "2026-03-10", "is_outlined": False}, factories.TODAY, False),
+    ],
+    ids=["omitted", "explicit", "outlined", "explicit-not-outlined"],
 )
 async def test_complete_material_checks_then_completes(
-    client, complete, body, completed_at
+    client, complete, body, completed_at, is_outlined
 ):
     response = await client.post(f"{MATERIAL_URL}/complete", json=body)
 
     assert response.status_code == 204
     expected = {"material_id": factories.MATERIAL_ID, "completed_at": completed_at}
     complete.check.assert_awaited_once_with(**expected)
-    complete.complete.assert_awaited_once_with(**expected)
+    complete.complete.assert_awaited_once_with(**expected, is_outlined=is_outlined)
 
 
 @pytest.mark.parametrize(
